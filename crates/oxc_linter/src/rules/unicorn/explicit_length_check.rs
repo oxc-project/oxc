@@ -74,9 +74,11 @@ declare_oxc_lint!(
     /// ```javascript
     /// const isEmpty = foo.length == 0;
     /// const isEmpty = foo.length < 1;
+    /// const isEmpty = foo.length <= 0;
     /// const isEmpty = 0 === foo.length;
     /// const isEmpty = 0 == foo.length;
     /// const isEmpty = 1 > foo.length;
+    /// const isEmpty = 0 >= foo.length;
     ///
     /// const isEmpty = !foo.length;
     /// const isEmpty = !(foo.length > 0);
@@ -137,12 +139,16 @@ fn get_length_check_node<'a, 'b>(
                 || is_compare_right(binary_expr, BinaryOperator::Equality, 0.0)
                 // `foo.length < 1`
                 || is_compare_right(binary_expr, BinaryOperator::LessThan, 1.0)
+                // `foo.length <= 0`
+                || is_compare_right(binary_expr, BinaryOperator::LessEqualThan, 0.0)
                 // `0 === foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::StrictEquality, 0.0)
                 // `0 == foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::Equality, 0.0)
                 // `1 > foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::GreaterThan, 1.0)
+                // `0 >= foo.length`
+                || is_compare_left(binary_expr, BinaryOperator::GreaterEqualThan, 0.0)
         {
             return Some((true, parent));
         }
@@ -340,6 +346,17 @@ fn test() {
         ("if (foo.length !== 1) {}", None),
         ("if (foo.length > 1) {}", None),
         ("if (foo.length < 2) {}", None),
+        ("if (foo.length <= 1) {}", None),
+        ("if (foo.length >= 0) {}", None),
+        ("if (0 <= foo.length) {}", None),
+        ("if (1 >= foo.length) {}", None),
+        ("if (foo.length <= -1) {}", None),
+        (r#"if (foo.length <= "0") {}"#, None),
+        ("if (foo.length <= 0n) {}", None),
+        ("if (foo.length <= bar.length) {}", None),
+        ("if (foo?.length <= 0) {}", None),
+        ("if (0 >= foo?.length) {}", None),
+        ("class A { a() { if (this.length <= 0) {} } }", None),
         // need getStaticValue
         // With known static length value
         // (r#"const foo = { size: "small" }; if (foo.size) {}"#, None), // Not a number
@@ -396,6 +413,23 @@ fn test() {
         ("do {} while (foo.length);", "do {} while (foo.length > 0);", None),
         ("for (let i = 0; (bar && !foo.length); i ++) {}", "for (let i = 0; (bar && foo.length === 0); i ++) {}", None),
         ("const isEmpty = foo.length < 1;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = foo.length <= 0;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = 0 >= foo.length;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = foo.size <= 0;", "const isEmpty = foo.size === 0;", None),
+        ("const isEmpty = 0 >= foo.size;", "const isEmpty = foo.size === 0;", None),
+        ("if (!(foo.length <= 0)) {}", "if (foo.length > 0) {}", None),
+        ("if (!(0 >= foo.length)) {}", "if (foo.length > 0) {}", None),
+        (
+            "if (!(foo.length <= 0)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        (
+            "if (!(0 >= foo.length)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        ("const isEmpty = Boolean(foo.length <= 0);", "const isEmpty = foo.length === 0;", None),
         ("bar(foo.length >= 1)", "bar(foo.length > 0)", None),
         // ("const bar = void !foo.length;", "const bar = void (foo.length === 0);", None),
         ("const isNotEmpty = Boolean(foo.length)", "const isNotEmpty = foo.length > 0", None),
