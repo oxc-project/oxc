@@ -707,9 +707,8 @@ impl TsGoLintState {
         }
         let diagnostics = match server.lint(configs, self.fix, self.fix_suggestions) {
             Ok(diagnostics) => diagnostics,
-            Err(server::LintError::Canceled) => {
-                return Err("tsrs-lint server request was canceled".to_string());
-            }
+            // Requests are canceled when their results can no longer be shown.
+            Err(server::LintError::Canceled) => return Ok(vec![]),
             Err(server::LintError::Failed(error)) => return Err(error),
         };
         let disable_directives_map =

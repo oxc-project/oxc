@@ -1072,25 +1072,19 @@ impl ServerLinter {
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
         let line_index = LineIndex::new(source_text);
-        let mut messages: Vec<DiagnosticReport> =
-            match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
-                Ok(results) => results
-                    .into_iter()
-                    .filter_map(|message| {
-                        message_to_lsp_diagnostic(
-                            message,
-                            uri,
-                            &line_index,
-                            self.rules_customization.as_ref(),
-                        )
-                    })
-                    .collect(),
-                Err(e) => {
-                    // clear disable directives on error to prevent stale directives
-                    self.runner.directives_coordinator().remove(path);
-                    return Err(e);
-                }
-            };
+        let mut messages: Vec<DiagnosticReport> = self
+            .runner
+            .run_source(&[Arc::from(path.as_os_str())], &fs)
+            .into_iter()
+            .filter_map(|message| {
+                message_to_lsp_diagnostic(
+                    message,
+                    uri,
+                    &line_index,
+                    self.rules_customization.as_ref(),
+                )
+            })
+            .collect();
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
@@ -1860,7 +1854,7 @@ mod test_tsrs_lint {
 
     use oxc_language_server::{LanguageId, TextDocument, Tool, uri_utils::file_path_to_uri};
     use serde_json::json;
-    use tower_lsp_server::gen_lsp_types::{Code, Diagnostic, FileChangeType, FileEvent};
+    use tower_lsp_server::gen_lsp_types::{Code, Diagnostic, FileChangeType, FileEvent, Message};
 
     use crate::lsp::{
         server_linter::ServerLinterBuilder,
@@ -1869,6 +1863,8 @@ mod test_tsrs_lint {
 
     /// The fixture whose `node_modules/.bin/tsrs-lint` links to a real `tsrs-lint`.
     const SERVER_FIXTURE: &str = "fixtures/lsp/tsrs_server";
+    /// The fixture whose `node_modules/.bin/tsrs-lint` is a script that fails.
+    const FAILURE_FIXTURE: &str = "fixtures/lsp/tsrs_failure";
     /// The watcher pattern for sources, watched only with a `tsrs-lint server`.
     const SOURCES_PATTERN: &str = "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,json}";
 
@@ -2019,5 +2015,30 @@ mod test_tsrs_lint {
         assert!(changes.tool.is_none());
 
         assert_eq!(lint(), [] as [String; 0]);
+    }
+
+    /// A `tsrs-lint` without server mode adds one diagnostic, and keeps the others.
+    #[test]
+    fn test_tsrs_server_failure_keeps_regular_diagnostics() {
+        let tester = Tester::new(FAILURE_FIXTURE, json!({ "typeAware": true }));
+        let linter = tester.create_linter();
+        assert!(linter.runner.has_tsrs_server());
+        let uri = tester.get_file_uri("index.ts");
+
+        // The server is not started again after the first failure, which is reported each time.
+        for _ in 0..2 {
+            let diagnostics = linter
+                .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
+                .expect("lint failed");
+            assert_eq!(diagnostics.len(), 1);
+            let diagnostics = &diagnostics[0].1;
+            assert_eq!(codes(diagnostics), ["eslint(no-debugger)", ""]);
+            let Message::String(failure) = &diagnostics[1].message else {
+                panic!("expected a string message");
+            };
+            assert!(failure.starts_with("Type-aware linting failed"), "{failure}");
+            assert!(failure.contains("exited before the server handshake"), "{failure}");
+        }
+        assert!(linter.workspace.server().expect("no tsrs-lint server").is_disabled());
     }
 }

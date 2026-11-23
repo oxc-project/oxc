@@ -11,8 +11,8 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, DisableDirectives, FixKind, Fixer, LintService, LintServiceOptions, Linter,
-    Message, OsFileSystem, RuleTimingStore, RuntimeFileSystem, TsGoLintState, TsrsLintServer,
-    create_unused_directives_messages, suppression::DiffManager,
+    Message, OsFileSystem, PossibleFixes, RuleTimingStore, RuntimeFileSystem, TsGoLintState,
+    TsrsLintServer, create_unused_directives_messages, suppression::DiffManager,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -361,23 +361,30 @@ impl LintRunner {
         Ok(self)
     }
 
-    /// Run both regular and type-aware linting on files
-    /// # Errors
-    /// Returns an error if type-aware linting fails.
+    /// Run both regular and type-aware linting on files.
+    ///
+    /// When type-aware linting fails, the regular diagnostics are kept and the failure is
+    /// reported as one more diagnostic.
     pub fn run_source(
         &self,
         files: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
-    ) -> Result<Vec<Message>, String> {
+    ) -> Vec<Message> {
         let mut messages = self.lint_service.run_source(file_system, files.to_owned());
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
-            let tsgo_messages =
-                type_aware_linter.lint_source(files, file_system, &self.directives_store.map())?;
-            messages.extend(tsgo_messages);
+            match type_aware_linter.lint_source(files, file_system, &self.directives_store.map()) {
+                Ok(tsgo_messages) => messages.extend(tsgo_messages),
+                Err(error) => messages.push(Message::new(
+                    OxcDiagnostic::error("Type-aware linting failed")
+                        .with_help(error)
+                        .with_label(Span::default()),
+                    PossibleFixes::None,
+                )),
+            }
         }
 
-        Ok(messages)
+        messages
     }
 
     /// Check if type-aware rules are linted through a long-lived `tsrs-lint server`.

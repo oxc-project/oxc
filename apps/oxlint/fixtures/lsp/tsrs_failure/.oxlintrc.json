@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "no-debugger": "error",
+    "typescript/no-floating-promises": "error"
+  }
+}
