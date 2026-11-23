@@ -100,24 +100,18 @@ impl Rule for PreferNodeProtocol {
 }
 
 fn get_builtin_module_call<'a>(call: &'a CallExpression<'a>) -> Option<&'a StringLiteral<'a>> {
-    if call.arguments.len() != 1 {
-        return None;
-    }
-    let Expression::StaticMemberExpression(member_expr) = call.callee.without_parentheses() else {
-        return None;
-    };
-    if member_expr.optional || member_expr.property.name != "getBuiltinModule" {
-        return None;
-    }
-    let Expression::Identifier(obj) = member_expr.object.without_parentheses() else {
-        return None;
-    };
-    if obj.name != "process" {
-        return None;
-    }
-    match call.arguments[0].as_expression()?.without_parentheses() {
-        Expression::StringLiteral(str_lit) => Some(str_lit),
-        _ => None,
+    if call.arguments.len() == 1
+        && let Expression::StaticMemberExpression(member_expr) = call.callee.without_parentheses()
+        && !member_expr.optional
+        && member_expr.property.name == "getBuiltinModule"
+        && let Expression::Identifier(obj) = member_expr.object.without_parentheses()
+        && obj.name == "process"
+        && let Some(Expression::StringLiteral(str_lit)) =
+            call.arguments[0].as_expression().map(Expression::without_parentheses)
+    {
+        Some(str_lit)
+    } else {
+        None
     }
 }
 
