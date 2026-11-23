@@ -10,6 +10,7 @@ use std::{
 use oxc_diagnostics::{DiagnosticService, GraphicalTheme};
 
 use super::{
+    cache::{FileCacheRequest, RunShape},
     command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
     result::CliRunResult,
@@ -73,14 +74,37 @@ impl WalkRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
-            self.options;
+        let FormatCommand {
+            paths,
+            mode,
+            config_options,
+            ignore_options,
+            runtime_options,
+            cache_options,
+        } = self.options;
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
             unreachable!("`WalkRunner` should only be called with Mode::Cli");
         };
         let num_of_threads = rayon::current_num_threads();
+
+        // With `--cache`: requested before anything is read, and opened while the configs load.
+        let cache = cache_options
+            .cache
+            .then(|| {
+                let shape = RunShape {
+                    cwd: &cwd,
+                    paths: &paths,
+                    config: config_options.config.as_deref(),
+                    disable_nested_config: config_options.disable_nested_config,
+                    ignore_paths: &ignore_options.ignore_path,
+                    with_node_modules: ignore_options.with_node_modules,
+                };
+                FileCacheRequest::new(cache_options.cache_location.as_deref(), &shape)
+            })
+            .flatten()
+            .map(|request| std::thread::spawn(move || request.open()));
 
         // Find and load root config file
         let config_scopes = match ConfigScopes::load(
@@ -145,9 +169,15 @@ impl WalkRunner {
 
         // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
         // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
-        std::thread::spawn(move || {
-            let format_service = FormatService::new(cwd_for_format, format_mode, source_formatter);
+        let format_thread = std::thread::spawn(move || {
+            let files = cache.and_then(|opening| opening.join().ok().flatten());
+            let format_service = FormatService::new(cwd_for_format, format_mode, source_formatter)
+                .with_cache(files.clone());
             format_service.run_streaming(rx_entry, &tx_error_for_format, &tx_success);
+            drop(tx_success);
+            if let Some(files) = files {
+                files.save();
+            }
         });
 
         // Run scoped walks (root + nested) sends entries to `tx_entry` and errors to `tx_error`.
@@ -198,6 +228,8 @@ impl WalkRunner {
                 SuccessResult::Unchanged => unchanged_count += 1,
             }
         }
+        // With `--cache`, the service saves it once done: wait for that.
+        let _ = format_thread.join();
 
         // Print sorted changed file paths to stdout
         let changed_count = changed_paths.len();

@@ -56,6 +56,14 @@ search: false
 
 
 
+## Cache Options
+- **`    --cache`** &mdash; 
+  Only read and format files that changed since the last run with `--cache`. Output is the same as without it.
+- **`    --cache-location`**=_`PATH`_ &mdash; 
+  Directory for the cache, used with `--cache`. Defaults to `node_modules/.cache/oxfmt` in the current working directory.
+
+
+
 ## Available positional items:
 - _`PATH`_ &mdash; 
   Single file, path or list of paths. Glob patterns are also supported. (Be sure to quote them, otherwise your shell may expand them before passing.) Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported. If not provided, current working directory is used.
