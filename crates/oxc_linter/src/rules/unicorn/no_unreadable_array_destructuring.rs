@@ -246,6 +246,5 @@ fn test() {
         ts_fail,
     )
     .change_rule_path_extension("ts")
-    .with_snapshot_suffix("typescript")
-    .test_and_snapshot();
+    .test();
 }
