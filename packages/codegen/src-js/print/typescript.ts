@@ -726,7 +726,7 @@ function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void 
   // No `printSpaceBeforeIdentifier` needed, either here or before the name.
   //
   // `last` is always `CAT_LT` or `CAT_OTHER` here:
-  // - `printTypeParameters`, the only caller, writes `<`, `, ` or a newline plus indent before each parameter.
+  // - Each type parameter follows `<`, `, ` or a newline plus indent in its list.
   // - Each modifier below ends in a space.
   // So nothing an identifier could run into ever precedes one.
   //
