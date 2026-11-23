@@ -55,7 +55,6 @@ fn test_remove_unused_private_accessors() {
 
 #[test]
 fn test_keep_decorated_private_members() {
-    // <https://github.com/oxc-project/oxc/issues/30092>
     test_same("class C { @dec #unused = 1; method() { return 1; } } new C();");
     test_same("class C { @dec static #unused = 1; method() { return 1; } } new C();");
     test_same("class C { @dec #unusedMethod() {} method() { return 1; } } new C();");
