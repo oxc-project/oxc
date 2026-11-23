@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-unreadable-array-destructuring): Do not assign destructured values to object properties.
+   ╭─[no_unreadable_array_destructuring.ts:1:7]
+ 1 │ [<any>object.property] = array;
+   ·       ───────────────
+   ╰────
