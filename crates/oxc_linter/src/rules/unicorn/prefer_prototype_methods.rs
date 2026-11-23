@@ -1,13 +1,28 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{BinaryOperator, Expression, IdentifierReference, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
-    utils::pad_fix_with_token_boundary,
+    AstNode,
+    context::LintContext,
+    globals::GLOBAL_OBJECT_NAMES,
+    rule::Rule,
+    utils::{pad_fix_with_token_boundary, static_string_value},
 };
+
+const OBJECT_PROTOTYPE_METHODS: [&str; 6] = [
+    "hasOwnProperty",
+    "isPrototypeOf",
+    "propertyIsEnumerable",
+    "toLocaleString",
+    "toString",
+    "valueOf",
+];
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer using `{obj_name}.prototype.{method_name}`."))
@@ -29,7 +44,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// “Borrowing” a method from an instance of `Array` or `Object` is less clear than getting it from the corresponding prototype.
+    /// “Borrowing” a method from an instance of `Array`, `Object`, or the global object is less clear than getting it from the corresponding prototype.
     ///
     /// ### Examples
     ///
@@ -37,6 +52,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// const array = [].slice.apply(bar);
     /// const type = {}.toString.call(foo);
+    /// const globalType = globalThis.toString.call(foo);
     /// Reflect.apply([].forEach, arrayLike, [callback]);
     /// ```
     ///
@@ -51,11 +67,115 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     recommended,
-    fix,
+    conditional_fix,
     version = "0.0.21",
     short_description =
         "This rule prefers borrowing methods from the prototype instead of the instance.",
 );
+
+fn is_unmodified_global_variable(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
+    if !ctx.is_reference_to_global_variable(ident) {
+        return false;
+    }
+    !ctx.scoping().root_unresolved_references().get(ident.name.as_str()).is_some_and(|refs| {
+        refs.iter().any(|&ref_id| ctx.scoping().get_reference(ref_id).is_write())
+    })
+}
+
+fn is_global_object_reference(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
+    if GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
+        && is_unmodified_global_variable(ident, ctx)
+    {
+        return true;
+    }
+
+    let Some(mut symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    for _ in 0..8 {
+        let decl_id = ctx.scoping().symbol_declaration(symbol_id);
+        let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(decl_id) else {
+            return false;
+        };
+        if !declarator.id.is_binding_identifier() {
+            return false;
+        }
+        if matches!(ctx.nodes().parent_kind(decl_id), AstKind::VariableDeclaration(decl) if decl.kind.is_var())
+        {
+            return false;
+        }
+        let Some(init) = &declarator.init else {
+            return false;
+        };
+        let Expression::Identifier(init_ident) = init.without_parentheses() else {
+            return false;
+        };
+        if ctx.scoping().symbol_is_mutated(symbol_id)
+            || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
+        {
+            return false;
+        }
+        if GLOBAL_OBJECT_NAMES.contains(&init_ident.name.as_str())
+            && is_unmodified_global_variable(init_ident, ctx)
+        {
+            return true;
+        }
+        let Some(next_id) = ctx.scoping().get_reference(init_ident.reference_id()).symbol_id()
+        else {
+            return false;
+        };
+        symbol_id = next_id;
+    }
+    false
+}
+
+fn global_object_prototype_method<'a>(
+    ident: &IdentifierReference<'a>,
+    member_expr: &MemberExpression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<&'a str> {
+    match member_expr {
+        MemberExpression::StaticMemberExpression(static_expr) => {
+            let method_name = static_expr.property.name.as_str();
+            (OBJECT_PROTOTYPE_METHODS.contains(&method_name)
+                && is_global_object_reference(ident, ctx))
+            .then_some(method_name)
+        }
+        MemberExpression::ComputedMemberExpression(computed_expr) => {
+            match computed_expr.expression.get_inner_expression() {
+                Expression::StringLiteral(lit) => {
+                    let method_name = lit.value.as_str()?;
+                    (OBJECT_PROTOTYPE_METHODS.contains(&method_name)
+                        && is_global_object_reference(ident, ctx))
+                    .then_some(method_name)
+                }
+                Expression::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
+                    let method_name = tpl.single_quasi()?.as_str()?;
+                    (OBJECT_PROTOTYPE_METHODS.contains(&method_name)
+                        && is_global_object_reference(ident, ctx))
+                    .then_some(method_name)
+                }
+                expr if matches!(expr, Expression::TemplateLiteral(_))
+                    || matches!(
+                        expr,
+                        Expression::BinaryExpression(bin)
+                            if bin.operator == BinaryOperator::Addition
+                    ) =>
+                {
+                    if !is_global_object_reference(ident, ctx) {
+                        return None;
+                    }
+                    let method_name =
+                        static_string_value(&computed_expr.expression, ctx.allocator())?
+                            .as_str()?;
+                    OBJECT_PROTOTYPE_METHODS.contains(&method_name).then_some(method_name)
+                }
+                _ => None,
+            }
+        }
+        MemberExpression::PrivateFieldExpression(_) => None,
+    }
+}
 
 impl Rule for PreferPrototypeMethods {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -66,29 +186,33 @@ impl Rule for PreferPrototypeMethods {
         if call_expr.optional {
             return;
         }
-        match call_expr.callee.without_parentheses() {
-            Expression::StaticMemberExpression(member_expr) if !member_expr.optional => {}
-            Expression::PrivateFieldExpression(member_expr) if !member_expr.optional => {}
-            _ => return,
+        let Expression::StaticMemberExpression(callee_member) =
+            call_expr.callee.without_parentheses()
+        else {
+            return;
+        };
+        if callee_member.optional {
+            return;
         }
 
-        let mut method_expr: Option<&Expression> = None;
-
-        // `Reflect.apply([].foo, …)`
-        // `Reflect.apply({}.foo, …)`
-        if is_method_call(call_expr, Some(&["Reflect"]), Some(&["apply"]), Some(1), None) {
-            if let Some(argument_expr) = call_expr.arguments[0].as_expression() {
-                method_expr = Some(argument_expr.without_parentheses());
+        let method_expr = match callee_member.property.name.as_str() {
+            // `Reflect.apply([].foo, …)`
+            // `Reflect.apply({}.foo, …)`
+            "apply"
+                if !call_expr.arguments.is_empty()
+                    && matches!(
+                        callee_member.object.without_parentheses(),
+                        Expression::Identifier(ident)
+                            if ident.name == "Reflect" && is_unmodified_global_variable(ident, ctx)
+                    ) =>
+            {
+                call_expr.arguments[0].as_expression().map(Expression::without_parentheses)
             }
-        }
-        // `[].foo.{apply,bind,call}(…)`
-        // `({}).foo.{apply,bind,call}(…)`
-        else if is_method_call(call_expr, None, Some(&["apply", "bind", "call"]), None, None) {
-            method_expr = call_expr
-                .callee
-                .get_member_expr()
-                .map(|member_expr| member_expr.object().without_parentheses());
-        }
+            // `[].foo.{apply,bind,call}(…)`
+            // `({}).foo.{apply,bind,call}(…)`
+            "apply" | "bind" | "call" => Some(callee_member.object.without_parentheses()),
+            _ => return,
+        };
 
         let Some(method_expr) = method_expr else {
             return;
@@ -96,29 +220,48 @@ impl Rule for PreferPrototypeMethods {
         let Some(method_expr) = method_expr.as_member_expression() else {
             return;
         };
+        if method_expr.optional() {
+            return;
+        }
         let object_expr = method_expr.object().without_parentheses();
 
-        let constructor_name = match object_expr {
-            Expression::ArrayExpression(array) if array.elements.is_empty() => "Array",
-            Expression::ObjectExpression(object) if object.properties.is_empty() => "Object",
+        let (constructor_name, method_name, global_method_name) = match object_expr {
+            Expression::ArrayExpression(array) if array.elements.is_empty() => {
+                ("Array", method_expr.static_property_name().and_then(JSStr::as_str), None)
+            }
+            Expression::ObjectExpression(object) if object.properties.is_empty() => {
+                ("Object", method_expr.static_property_name().and_then(JSStr::as_str), None)
+            }
+            Expression::Identifier(ident) => {
+                let Some(method_name) = global_object_prototype_method(ident, method_expr, ctx)
+                else {
+                    return;
+                };
+                ("Object", Some(method_name), Some(method_name))
+            }
             _ => return,
         };
-        // TODO: Replace `static_property_name` with a function similar to `getPropertyName`
-        // in @eslint-community/eslint-utils to generate better error messages for some cases.
-        let method_name = method_expr.static_property_name().and_then(JSStr::as_str);
 
-        ctx.diagnostic_with_fix(
-            method_name.map_or_else(
-                || unknown_method(method_expr.span(), constructor_name),
-                |method_name| known_method(method_expr.span(), constructor_name, method_name),
-            ),
-            |fixer| {
-                let span = object_expr.span();
-                let mut replacement = format!("{constructor_name}.prototype");
-                pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
-                fixer.replace(span, replacement)
-            },
+        let diagnostic = method_name.map_or_else(
+            || unknown_method(method_expr.span(), constructor_name),
+            |method_name| known_method(method_expr.span(), constructor_name, method_name),
         );
+        let replace_span =
+            if global_method_name.is_some() { method_expr.span() } else { object_expr.span() };
+
+        if ctx.has_comments_between(replace_span) {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            let mut replacement = match global_method_name {
+                Some(method_name) => format!("{constructor_name}.prototype.{method_name}"),
+                None => format!("{constructor_name}.prototype"),
+            };
+            pad_fix_with_token_boundary(ctx.source_text(), replace_span, &mut replacement);
+            fixer.replace(replace_span, replacement)
+        });
     }
 }
 
@@ -166,6 +309,23 @@ fn test() {
         "const _globalThis = globalThis; globalThis[hasOwnProperty].call(bar)",
         r#"const _ = globalThis, TO_STRING = "toString"; _[TO_STRING].call(bar)"#,
         "const _ = [globalThis.toString]; _[0].call(bar)",
+        "globalThis.setTimeout.call(bar)",
+        "globalThis?.toString.call(bar)",
+        "const globalThis = {}; globalThis.toString.call(bar)",
+        "const window = {}; window.toString.call(bar)",
+        "self = customObj; self.toString.call(bar)",
+        "globalThis = customObj; globalThis.toString.call(bar)",
+        "global = customObj; const _ = global; _.toString.call(bar)",
+        "let _ = globalThis; _ = customObj; _.toString.call(bar)",
+        "var _ = globalThis; var _ = customObj; _.toString.call(bar)",
+        "var a = b; var b = globalThis; a.toString.call(bar)",
+        "if (cond) { var _ = globalThis; } _.toString.call(bar)",
+        "_.toString.call(bar); var _ = globalThis;",
+        "const Reflect = { apply() {} }; Reflect.apply(globalThis.toString, baz, [])",
+        "const Reflect = { apply() {} }; Reflect.apply([].slice, foo, [])",
+        "Reflect = customReflect; Reflect.apply(globalThis.toString, baz, [])",
+        "const { foo } = globalThis; foo.toString.call(bar)",
+        "const a = b; const b = a; a.toString.call(bar)",
     ];
 
     let fail = vec![
@@ -195,16 +355,23 @@ fn test() {
         // "/* globals hasOwnProperty: readonly */ hasOwnProperty.call(bar)",
         // "/* globals toString: readonly */ toString.apply(bar, [])",
         // "/* globals toString: readonly */ Reflect.apply(toString, baz, [])",
-        // TODO: Fix the rule so these tests pass.
-        // "globalThis.toString.call(bar)",
-        // "const _ = globalThis; _.hasOwnProperty.call(bar)",
-        // r#"const _ = globalThis; _["hasOwnProperty"].call(bar)"#,
-        // r#"const _ = globalThis; _["hasOwn" + "Property"].call(bar)"#,
-        // "Reflect.apply(globalThis.toString, baz, [])",
-        // "Reflect.apply(window.toString, baz, [])",
-        // "Reflect.apply(global.toString, baz, [])",
-        // "/* globals toString: readonly */ Reflect.apply(toString, baz, [])", // Inline globals are not supported.
-        // r#"Reflect.apply(globalThis["toString"], baz, [])"#,
+        "globalThis.toString.call(bar)",
+        "const _ = globalThis; _.hasOwnProperty.call(bar)",
+        r#"const _ = globalThis; _["hasOwnProperty"].call(bar)"#,
+        r#"const _ = globalThis; _["hasOwn" + "Property"].call(bar)"#,
+        "const a = globalThis; const b = a; b.isPrototypeOf.call(bar)",
+        "Reflect.apply(globalThis.toString, baz, [])",
+        "Reflect.apply(window.toString, baz, [])",
+        "Reflect.apply(global.toString, baz, [])",
+        "Reflect.apply(self.toString, baz, [])",
+        r#"Reflect.apply(globalThis["toString"], baz, [])"#,
+        "globalThis[`toString`].call(bar)",
+        "globalThis /* comment */ .toString.call(bar)",
+        r#"Reflect.apply(globalThis[/* comment */ "toString"], baz, [])"#,
+        "[] /* comment */ .slice.call(bar)",
+        "[/* comment */].slice.call(bar)",
+        "({/* keep */}).toString.call(o);",
+        "function foo(){return(globalThis).toString.call(bar)}",
     ];
 
     let fix = vec![
@@ -273,6 +440,59 @@ fn test() {
         ("[][Symbol.iterator].call(foo)", "Array.prototype[Symbol.iterator].call(foo)"),
         ("const foo = [].at.call(bar)", "const foo = Array.prototype.at.call(bar)"),
         ("const foo = [].findLast.call(bar)", "const foo = Array.prototype.findLast.call(bar)"),
+        ("globalThis.toString.call(bar)", "Object.prototype.toString.call(bar)"),
+        (
+            "const _ = globalThis; _.hasOwnProperty.call(bar)",
+            "const _ = globalThis; Object.prototype.hasOwnProperty.call(bar)",
+        ),
+        (
+            r#"const _ = globalThis; _["hasOwnProperty"].call(bar)"#,
+            "const _ = globalThis; Object.prototype.hasOwnProperty.call(bar)",
+        ),
+        (
+            r#"const _ = globalThis; _["hasOwn" + "Property"].call(bar)"#,
+            "const _ = globalThis; Object.prototype.hasOwnProperty.call(bar)",
+        ),
+        (
+            "const a = globalThis; const b = a; b.isPrototypeOf.call(bar)",
+            "const a = globalThis; const b = a; Object.prototype.isPrototypeOf.call(bar)",
+        ),
+        (
+            "Reflect.apply(globalThis.toString, baz, [])",
+            "Reflect.apply(Object.prototype.toString, baz, [])",
+        ),
+        (
+            "Reflect.apply(window.toString, baz, [])",
+            "Reflect.apply(Object.prototype.toString, baz, [])",
+        ),
+        (
+            "Reflect.apply(global.toString, baz, [])",
+            "Reflect.apply(Object.prototype.toString, baz, [])",
+        ),
+        (
+            "Reflect.apply(self.toString, baz, [])",
+            "Reflect.apply(Object.prototype.toString, baz, [])",
+        ),
+        (
+            r#"Reflect.apply(globalThis["toString"], baz, [])"#,
+            "Reflect.apply(Object.prototype.toString, baz, [])",
+        ),
+        ("globalThis[`toString`].call(bar)", "Object.prototype.toString.call(bar)"),
+        (
+            "globalThis /* comment */ .toString.call(bar)",
+            "globalThis /* comment */ .toString.call(bar)",
+        ),
+        (
+            r#"Reflect.apply(globalThis[/* comment */ "toString"], baz, [])"#,
+            r#"Reflect.apply(globalThis[/* comment */ "toString"], baz, [])"#,
+        ),
+        ("[] /* comment */ .slice.call(bar)", "Array.prototype /* comment */ .slice.call(bar)"),
+        ("[/* comment */].slice.call(bar)", "[/* comment */].slice.call(bar)"),
+        ("({/* keep */}).toString.call(o);", "({/* keep */}).toString.call(o);"),
+        (
+            "function foo(){return(globalThis).toString.call(bar)}",
+            "function foo(){return Object.prototype.toString.call(bar)}",
+        ),
     ];
 
     Tester::new(PreferPrototypeMethods::NAME, PreferPrototypeMethods::PLUGIN, pass, fail)
