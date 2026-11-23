@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 🚀 Features
+
+- 42f62d6 formatter/sort_imports: Break ties for the same source by subgroup (#29817) (leaysgur)
+
 ## [0.73.0] - 2026-10-13
 
 ### 🚀 Features

@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- d615de4 codegen: Parenthesize TypeScript instantiation expressions used as operands (#30065) (Cameron)
+- 90b5af9 codegen: Keep `()` on minified `new` expressions with type arguments (#30062) (Cameron)
+- 7fa5d50 codegen: Keep comments from ending a line after code (#29814) (Yuji Sugiura)
+- 8488767 codegen: Parenthesize private `in` tests in `for` initializers (#30037) (Cameron)
+- e9e80b1 codegen: Parenthesize for-of heads that print a leading `let` or `async` (#30025) (Cameron)
+- a54befb codegen: Avoid double parentheses around `as`/`satisfies` for-of heads (#30024) (Cameron)
+- 157673a codegen: Parenthesize comma expressions in export assignments (#30022) (Cameron)
+- bedf3f5 codegen: Parenthesize comma expressions in enum initializers (#30021) (Cameron)
+- 11bafb6 codegen: Parenthesize comma expressions in JSX containers (#30020) (Cameron)
+- 967a97c codegen: Print a computed key for renamed `__proto__` shorthand (#30019) (Cameron)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
 ## [0.159.0] - 2026-11-16
 
 ### 🚀 Features

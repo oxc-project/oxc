@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     GlobalContext, StringToNumber, ToBoolean, ToJsString,
@@ -30,10 +31,16 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 _ => None,
             },
             Expression::StringLiteral(lit) => Some(lit.value.string_to_number()),
-            Expression::UnaryExpression(unary) if unary.operator.is_not() => {
-                let boolean = unary.argument.to_boolean(ctx)?;
-                Some(if boolean { 0.0 } else { 1.0 })
-            }
+            Expression::UnaryExpression(unary) => match unary.operator {
+                UnaryOperator::LogicalNot => {
+                    let boolean = unary.argument.to_boolean(ctx)?;
+                    Some(if boolean { 0.0 } else { 1.0 })
+                }
+                UnaryOperator::UnaryPlus => unary.argument.to_number(ctx),
+                UnaryOperator::UnaryNegation => unary.argument.to_number(ctx).map(|value| -value),
+                UnaryOperator::Void => Some(f64::NAN),
+                _ => None,
+            },
             Expression::ObjectExpression(obj) => {
                 // If `toString` / `valueOf` / `Symbol.toPrimitive` is not overridden,
                 // (assuming that those methods in Object.prototype are not modified)

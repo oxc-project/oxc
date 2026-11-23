@@ -1,5 +1,5 @@
 import { dec } from "dec";
-let _default = class {
+let _default = class _default {
   foo = 0;
 };
 babelHelpers.decorate([dec], _default.prototype, "foo", void 0);

@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::IsInt32OrUint32;
+use oxc_ecmascript::constant_evaluation::{DetermineValueType, IsInt32OrUint32};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::TraverseCtx;
@@ -45,6 +45,8 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
 
+        Self::remove_redundant_bitwise_or_zero(bin_expr, ctx);
+
         if bin_expr.operator == BinaryOperator::BitwiseOR {
             if bin_expr.right.is_number_0() && Self::is_bitwise_int(&bin_expr.left, ctx) {
                 // `(a OP b) | 0` -> `a OP b`
@@ -53,6 +55,46 @@ impl<'a> PeepholeOptimizations {
                 // `0 | (a OP b)` -> `a OP b`
                 ctx.replace_expression_with(expr, Self::unwrap_right_from_binary_expr);
             }
+        }
+    }
+
+    /// Removes `| 0` from an operand of another bitwise operator.
+    ///
+    /// - `(a | 0) OP b` -> `a OP b`
+    /// - `b OP (a | 0)` -> `b OP a`
+    ///
+    /// Bitwise operators reduce their number operands modulo 2^32, so applying
+    /// `ToInt32` first is redundant. `b` must be a number because `a | 0` throws for
+    /// a BigInt `a`, while every operator except `>>>` accepts two BigInts.
+    ///
+    /// In `(a | 0) OP b`, `a | 0` can throw before `b` is evaluated. Removing
+    /// `| 0` delays that conversion until after `b`, so require `b` to be a
+    /// numeric literal: evaluating it cannot throw or run user code.
+    fn remove_redundant_bitwise_or_zero(e: &mut BinaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if e.right.is_number()
+            && let Some(unwrap) = Self::bitwise_or_zero_unwrapper(&e.left)
+        {
+            ctx.replace_expression_with(&mut e.left, unwrap);
+        }
+        if let Some(unwrap) = Self::bitwise_or_zero_unwrapper(&e.right)
+            && e.left.value_type(ctx).is_number()
+        {
+            ctx.replace_expression_with(&mut e.right, unwrap);
+        }
+    }
+
+    fn bitwise_or_zero_unwrapper(
+        expr: &Expression<'a>,
+    ) -> Option<fn(Expression<'a>, &mut TraverseCtx<'a>) -> Expression<'a>> {
+        let Expression::BinaryExpression(e) = expr else { return None };
+        if e.operator != BinaryOperator::BitwiseOR {
+            None
+        } else if e.right.is_number_0() {
+            Some(Self::unwrap_left_from_binary_expr)
+        } else if e.left.is_number_0() {
+            Some(Self::unwrap_right_from_binary_expr)
+        } else {
+            None
         }
     }
 

@@ -24,7 +24,7 @@ use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, N
 #[cfg(target_arch = "aarch64")]
 use std::arch::aarch64::*;
 #[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
+use std::arch::{asm, x86_64::*};
 
 use super::{
     CpuSimd, Vec128, VecData256,
@@ -738,6 +738,52 @@ impl<C: CpuSimd> Vec256<C> {
             }
             _ => {
                 Self::from_halves(self.into_halves().1, other.into_halves().1)
+            }
+        })
+    }
+}
+
+/// Optimizer control.
+impl<C: CpuSimd> Vec256<C> {
+    /// Hide the value of this [`Vec256`] from the compiler. Compiles to no instructions.
+    ///
+    /// LLVM can't see through the result, so it can't rewrite the operations which use it
+    /// based on what it knows about the value.
+    ///
+    /// Useful where LLVM "optimizes" code in a way that's actually a pessimization.
+    #[inline(always)]
+    pub fn opaque(self) -> Self {
+        cpu_select!(self.cpu(), {
+            Avx2 => {
+                /// Pass `v` through an empty `asm!` block.
+                ///
+                /// A separate function, because a `ymm_reg` operand needs AVX enabled
+                /// in the function containing the `asm!`.
+                #[target_feature(enable = "avx")]
+                #[inline]
+                fn opaque_inner(mut v: __m256i) -> __m256i {
+                    // SAFETY: The `asm!` block is empty, so it doesn't access memory
+                    // or change any state
+                    unsafe {
+                        // The template is only a comment, so it emits no instructions.
+                        // It contains `{0}` in a comment because `asm!` requires every operand
+                        // to appear somewhere in the template.
+                        asm!(
+                            "/* {0} */",
+                            inout(ymm_reg) v,
+                            options(pure, nomem, nostack, preserves_flags),
+                        );
+                    }
+                    v
+                }
+
+                // SAFETY: `Avx2` arm only runs if `self` is a `Vec256<Avx2>`, so CPU supports AVX2,
+                // which includes AVX
+                Self::new(unsafe { opaque_inner(self.inner()) }, self.cpu())
+            }
+            _ => {
+                let (low, high) = self.into_halves();
+                Self::from_halves(low.opaque(), high.opaque())
             }
         })
     }

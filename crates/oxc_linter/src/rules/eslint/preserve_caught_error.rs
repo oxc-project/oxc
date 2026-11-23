@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
-        ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+        Argument, ArrowFunctionExpression, BindingPattern, CatchClause, Expression, Function,
+        IdentifierReference, ObjectExpression, ObjectPropertyKind, PropertyKey, StaticBlock,
+        ThrowStatement, TryStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -43,7 +44,8 @@ fn missing_catch_parameter_diagnostic(span: Span) -> OxcDiagnostic {
 #[schemars(rename_all = "camelCase")]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct PreserveCaughtErrorOptions {
-    /// When set to `true`, requires that catch clauses always have a parameter.
+    /// When set to `true`, requires catch clauses that throw a new error to have a
+    /// caught error parameter, so the caught error is not discarded when re-throwing.
     require_catch_parameter: bool,
 }
 
@@ -51,7 +53,7 @@ struct PreserveCaughtErrorOptions {
 pub struct PreserveCaughtError(PreserveCaughtErrorOptions);
 
 struct ThrowFinder<'a, 'ctx> {
-    catch_param: &'a BindingPattern<'a>,
+    catch_param: Option<&'a BindingPattern<'a>>,
     ctx: &'ctx LintContext<'a>,
 }
 
@@ -71,8 +73,13 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             return;
         };
 
+        let Some(catch_param) = self.catch_param else {
+            self.ctx.diagnostic(missing_catch_parameter_diagnostic(throw_stmt.span));
+            return;
+        };
+
         if let Some(Argument::ObjectExpression(obj_expr)) = args.get(options_argument_index)
-            && has_cause_property(obj_expr, self.catch_param, self.ctx)
+            && has_cause_property(obj_expr, catch_param, self.ctx)
         {
             return;
         }
@@ -83,12 +90,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         }
 
         self.ctx.diagnostic_with_fix(preserve_caught_error_diagnostic(throw_stmt.span), |fixer| {
-            let Some(ident) = self.catch_param.get_identifier_name() else {
+            let Some(ident) = catch_param.get_identifier_name() else {
                 return fixer.noop();
             };
             // Keep the catch binding unchanged as part of each fix, so removing or renaming it
             // conflicts with inserting a reference to it (e.g. `prefer-optional-catch-binding`).
-            let preserve_catch_param = || fixer.replace_with(self.catch_param, self.catch_param);
+            let preserve_catch_param = || fixer.replace_with(catch_param, catch_param);
             let cause_prop_text = format!("cause: {}", ident.as_str());
 
             match args.len() {
@@ -163,7 +170,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                         if let Some(cause_prop) = cause_prop {
                             // if the identifier name is not the catch parameter, replace it
                             if let ObjectPropertyKind::ObjectProperty(prop) = cause_prop
-                                && !is_catch_parameter(&prop.value, self.catch_param, self.ctx)
+                                && !is_catch_parameter(&prop.value, catch_param, self.ctx)
                             {
                                 if prop.shorthand || prop.method || prop.kind.is_accessor() {
                                     return fixer
@@ -203,8 +210,12 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         });
     }
 
-    // Do not traverse into nested functions/closures within the catch block
+    // Do not traverse into nested functions/closures or static blocks within the catch block
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
+
+    fn visit_static_block(&mut self, _block: &StaticBlock<'a>) {}
 
     // Do not traverse into nested catch clauses. They have their own caught error and will be
     // analyzed separately when visiting their associated `TryStatement`.
@@ -318,13 +329,12 @@ impl PreserveCaughtError {
     }
 
     fn check_catch_clause<'a>(&self, catch_clause: &'a CatchClause<'a>, ctx: &LintContext<'a>) {
-        if let Some(catch_param) = &catch_clause.param {
-            let mut finder: ThrowFinder<'a, '_> =
-                ThrowFinder { catch_param: &catch_param.pattern, ctx };
-            finder.visit_block_statement(catch_clause.body.as_ref());
-        } else if self.0.require_catch_parameter {
-            ctx.diagnostic(missing_catch_parameter_diagnostic(catch_clause.span));
+        let catch_param = catch_clause.param.as_ref().map(|param| &param.pattern);
+        if catch_param.is_none() && !self.0.require_catch_parameter {
+            return;
         }
+        let mut finder = ThrowFinder { catch_param, ctx };
+        finder.visit_block_statement(catch_clause.body.as_ref());
     }
 }
 
@@ -439,6 +449,46 @@ fn test() {
         (
             r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: error }); }"#,
             None,
+        ),
+        (
+            "try {
+					return JSON.parse(text);
+				} catch {
+					return {};
+				}",
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            "try { doSomething(); } catch {}",
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch { throw "failed"; }"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try {
+					doSomething();
+				} catch {
+					foo = { bar() { throw new Error("Something went wrong"); } };
+				}"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (err) { const fail = () => { throw new Error("Something went wrong"); }; }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (err) { class Foo { static { throw new Error("Something went wrong"); } } }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch { const fail = () => { throw new Error("Something went wrong"); }; }"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch { class Foo { static { throw new Error("Something went wrong"); } } }"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
         ),
     ];
 
@@ -697,6 +747,10 @@ fn test() {
         (
             r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: unrelated }); }"#,
             None,
+        ),
+        (
+            r#"try { doSomething(); } catch { if (shouldThrow) { throw new Error("Something went wrong"); } }"#,
+            Some(serde_json::json!([{ "requireCatchParameter": true }])),
         ),
     ];
 

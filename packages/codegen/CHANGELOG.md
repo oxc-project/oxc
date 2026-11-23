@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 🐛 Bug Fixes
+
+- 6838760 packages/codegen: Parenthesize for-of targets that start with `let` (#30071) (Cameron)
+- 13dd5ac packages/codegen: Parenthesize comma expressions in enum initializers (#30070) (Cameron)
+- c4e4fcc packages/codegen: Parenthesize private `in` checks in for initializers (#30073) (Cameron)
+- 32882ef packages/codegen: Parenthesize comma expressions in export assignments (#30072) (Cameron)
+- 7d8998d packages/codegen: Parenthesize comma expressions in JSX containers (#30074) (Cameron)
+- c98b8b1 packages/codegen: Parenthesize TypeScript instantiation operands (#30068) (Cameron)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
 ## [0.159.0] - 2026-11-16
 
 ### 🐛 Bug Fixes

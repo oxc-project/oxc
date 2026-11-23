@@ -18,22 +18,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace this expression with `import.meta.dirname`.
 
-  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
-   ╭─[prefer_import_meta_properties.tsx:2:29]
- 1 │ import { fileURLToPath } from "url";
- 2 │             const dirname = fileURLToPath(new URL(".", import.meta.url));
-   ·                             ────────────────────────────────────────────
-   ╰────
-  help: Replace this expression with `import.meta.dirname`.
-
-  ⚠ unicorn(prefer-import-meta-properties): Do not construct dirname.
-   ╭─[prefer_import_meta_properties.tsx:2:29]
- 1 │ import { fileURLToPath } from "url";
- 2 │             const dirname = fileURLToPath(new URL("./", import.meta.url));
-   ·                             ─────────────────────────────────────────────
-   ╰────
-  help: Replace this expression with `import.meta.dirname`.
-
   ⚠ unicorn(prefer-import-meta-properties): Do not construct filename using `fileURLToPath()`.
    ╭─[prefer_import_meta_properties.tsx:2:30]
  1 │ import { fileURLToPath } from "url";

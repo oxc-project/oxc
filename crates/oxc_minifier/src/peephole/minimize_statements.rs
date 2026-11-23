@@ -606,7 +606,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
+        !FindNestedBreak::has_unlabelled_break(&case.consequent)
     }
 
     fn handle_switch_statement(
@@ -731,7 +731,7 @@ impl<'a> PeepholeOptimizations {
             };
             if can_merge_with_alternate {
                 // Don't do this transformation if the branch condition could
-                // potentially access symbols declared later on on this scope below.
+                // potentially access symbols declared later on in this scope below.
                 // If so, inverting the branch condition and nesting statements after
                 // this in a block would break that access which is a behavior change.
                 //
@@ -1390,6 +1390,12 @@ impl<'a> PeepholeOptimizations {
             // carries the catch parameter's symbol because its initializer assigns there;
             // `Scoping::catch_var_binding` identifies the separate enclosing binding.
             if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
+                return true;
+            }
+            // A `var` in a block is bound in the enclosing var scope, where a direct eval
+            // can read it even when the current block has no eval.
+            let binding_scope_id = ctx.scoping().symbol_scope_id(prev_decl_id.symbol_id());
+            if ctx.scoping().scope_flags(binding_scope_id).contains_direct_eval() {
                 return true;
             }
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
@@ -2066,14 +2072,16 @@ impl<'a> PeepholeOptimizations {
 }
 
 #[derive(Default)]
-struct FindNestedBreak {
+pub(super) struct FindNestedBreak {
     found_unlabelled_break: bool,
 }
 
 impl FindNestedBreak {
-    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+    pub(super) fn has_unlabelled_break(stmts: &[Statement]) -> bool {
         let mut visitor = Self::default();
-        visitor.visit_switch_case(node);
+        for stmt in stmts {
+            visitor.visit_statement(stmt);
+        }
         visitor.found_unlabelled_break
     }
 }

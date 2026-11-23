@@ -366,6 +366,27 @@ fn test_bind_to_call() {
 }
 
 #[test]
+fn test_rotate_string_addition() {
+    test(
+        "function f(a, b) { return typeof a + ('in ' + b) }",
+        "function f(a, b) { return typeof a + 'in ' + b }",
+    );
+    test(
+        "function f(a, b) { return typeof a() + ('in ' + b()) }",
+        "function f(a, b) { return typeof a() + 'in ' + b() }",
+    );
+    test(
+        "function f(a, b) { return a + ' is ' + ('in ' + b) }",
+        "function f(a, b) { return a + ' is in ' + b }",
+    );
+
+    test_same("function f(a, b) { return a + ('in ' + b) }");
+    test_same("function f(b) { return { valueOf() { return sideEffect() } } + ('in ' + b()) }");
+    test_same("function f(a, b) { return typeof a + (1 + b) }");
+    test_same("function f(b) { return 1e20 + ('in ' + b) }");
+}
+
+#[test]
 fn test_rotate_associative_operators() {
     test(
         "function f(a, b, c) { return a || (b || c) }",
@@ -862,6 +883,15 @@ fn test_fold_number_constructor() {
     test("x = Number(true)", "x = 1");
     test("x = Number(false)", "x = 0");
     test("x = Number('foo')", "x = NaN");
+    test("x = Number(+'2.5')", "x = 2.5");
+    test("x = Number(-'2.5')", "x = -2.5");
+    test("x = Number(+-'2.5')", "x = -2.5");
+    test("x = Number(-'0')", "x = -0");
+    test("x = Number(-'foo')", "x = NaN");
+    test("x = Number(void 0)", "x = NaN");
+    test_same("x = Number(-y)");
+    test_same("x = Number(+1n)");
+    test_same("x = Number(-1n)");
     test_same("x = Number(void f())");
     test_same("x = Number([f(), 1])");
 }

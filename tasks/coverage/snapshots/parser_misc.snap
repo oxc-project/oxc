@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 148/148 (100.00%)
 Positive Passed: 148/148 (100.00%)
-Negative Passed: 288/288 (100.00%)
+Negative Passed: 289/289 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -574,6 +574,13 @@ Negative Passed: 288/288 (100.00%)
  2 │   @dec export class C {}
    ·        ──────
  3 │ }
+   ╰────
+
+  × Expected `class` but found `Identifier`
+   ╭─[misc/fail/decorated-export-without-class.mjs:1:11]
+ 1 │ export @d bogus C {}
+   ·           ──┬──
+   ·             ╰── `class` expected
    ╰────
 
   × Encountered diff marker

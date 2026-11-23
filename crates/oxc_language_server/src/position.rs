@@ -14,7 +14,18 @@ pub fn offset_to_position(source_text: &str, offset: u32) -> Position {
     let offset_usize = usize::try_from(offset).expect("offset must fit in usize");
     assert!(offset_usize <= source_text.len(), "offset out of bounds");
     assert!(source_text.is_char_boundary(offset_usize), "offset is not a char boundary");
+
+    let inside_crlf = is_inside_crlf(source_text.as_bytes(), offset_usize);
+    let offset = offset - u32::from(inside_crlf);
+    let offset_usize = offset_usize - usize::from(inside_crlf);
     LineIndex::new(&source_text[..offset_usize]).position(offset)
+}
+
+/// Whether `offset` is after the CR and before the LF of a CRLF, which LSP cannot express.
+/// Such an offset converts as the offset of its CR, as `vscode-languageserver-textdocument`
+/// and Oxc's diagnostic renderer do.
+fn is_inside_crlf(bytes: &[u8], offset: usize) -> bool {
+    offset > 0 && bytes.get(offset - 1) == Some(&b'\r') && bytes.get(offset) == Some(&b'\n')
 }
 
 /// The line starts of a text, to convert many of its UTF-8 byte offsets to LSP
@@ -61,8 +72,8 @@ impl<'a> LineIndex<'a> {
     /// LSP positions use zero-based line numbers and UTF-16 character offsets.
     /// The protocol only treats CR, LF, and CRLF as line breaks, so Unicode line
     /// and paragraph separators remain ordinary characters here. An offset
-    /// between the CR and LF of a CRLF is the start of the next line, as if the
-    /// text ended at `offset`.
+    /// between the CR and LF of a CRLF converts as if the offset of its CR had
+    /// been requested.
     ///
     /// # Panics
     ///
@@ -73,18 +84,9 @@ impl<'a> LineIndex<'a> {
         let offset_usize = usize::try_from(offset).expect("offset must fit in usize");
         assert!(offset_usize <= self.text.len(), "offset out of bounds");
         assert!(self.text.is_char_boundary(offset_usize), "offset is not a char boundary");
-        // TODO: This `\r\n` special check is just here to retain existing behavior.
-        //  Should be removed in a change separate from the perf change.
-        // An offset between the CR and LF of a CRLF starts a line: the text before it ends
-        // with a line break.
-        let bytes = self.text.as_bytes();
-        if offset_usize > 0
-            && bytes.get(offset_usize - 1) == Some(&b'\r')
-            && bytes.get(offset_usize) == Some(&b'\n')
-        {
-            let line = self.line_starts.partition_point(|&start| start < offset);
-            return Position::new(u32::try_from(line).expect("line must fit in u32"), 0);
-        }
+        let inside_crlf = is_inside_crlf(self.text.as_bytes(), offset_usize);
+        let offset = offset - u32::from(inside_crlf);
+        let offset_usize = offset_usize - usize::from(inside_crlf);
 
         let line = self.line_starts.partition_point(|&start| start <= offset) - 1;
         let line_start = self.line_starts[line] as usize;
@@ -129,19 +131,22 @@ mod tests {
     }
 
     #[test]
-    fn offset_between_cr_and_lf_starts_next_line() {
+    fn offset_between_cr_and_lf_is_end_of_line() {
         let source = "a\r\nb";
         assert_position(source, 1, (0, 1));
-        assert_position(source, 2, (1, 0));
+        assert_position(source, 2, (0, 1));
         assert_position(source, 3, (1, 0));
 
         // Followed by more lines, so a whole-text index has line starts after the offset.
         let source = "a\r\nb\r\nc";
-        assert_position(source, 5, (2, 0));
+        assert_position(source, 5, (1, 1));
         assert_position(source, 6, (2, 0));
 
         // A lone CR before the CRLF is its own line break.
-        assert_position("\r\r\n", 2, (2, 0));
+        assert_position("\r\r\n", 2, (1, 0));
+
+        // The column of the CR counts UTF-16 units, like any other column.
+        assert_position("😀\r\n", 5, (0, 2));
     }
 
     #[test]

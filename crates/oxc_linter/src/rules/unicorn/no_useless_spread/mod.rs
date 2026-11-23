@@ -236,6 +236,7 @@ fn check_useless_spread_in_list<'a>(
                     first,
                     rest,
                     array_expr,
+                    node.scope_id(),
                 );
                 true
             }
@@ -262,9 +263,12 @@ fn check_useless_spread_in_list<'a>(
     }
 }
 
-/// The elements of `array_expr` as arguments: `...[a, , b]` becomes `a, undefined, b`.
-/// A hole is not allowed in an argument list. Its span is the comma after it, which is
-/// kept, except after the last element: `...[a,,]` becomes `a,undefined`.
+/// The elements of `array_expr` as a comma-separated list, e.g. for an argument
+/// list or a new array literal: `...[a, , b]` becomes `a, undefined, b`.
+/// A hole is not allowed in an argument list, and turning it into an elision
+/// would change the behavior of an array literal, so holes become `undefined`.
+/// A hole's span is the comma after it, which is kept, except after the last
+/// element: `...[a,,]` becomes `a,undefined`.
 /// Uses `void 0` when `undefined` is shadowed.
 fn spread_arguments_text(
     array_expr: &ArrayExpression,
@@ -275,11 +279,7 @@ fn spread_arguments_text(
     else {
         return String::new();
     };
-    let undefined = if ctx.scoping().find_binding(scope_id, static_ident!("undefined")).is_some() {
-        "void 0"
-    } else {
-        "undefined"
-    };
+    let undefined = undefined_text(scope_id, ctx);
     let mut text = String::new();
     let mut pos = first.span().start;
     for element in &array_expr.elements {
@@ -295,7 +295,17 @@ fn spread_arguments_text(
     text
 }
 
-/// `...[ ...[] ]`. May contain multiple spread elements.
+/// Text for an `undefined` value, `void 0` if `undefined` is shadowed
+/// in the given scope.
+fn undefined_text(scope_id: ScopeId, ctx: &LintContext) -> &'static str {
+    if ctx.scoping().find_binding(scope_id, static_ident!("undefined")).is_some() {
+        "void 0"
+    } else {
+        "undefined"
+    }
+}
+
+/// `[ ...[ ] ]`. May contain multiple spread elements.
 fn diagnose_array_in_array_spread<'a>(
     ctx: &LintContext<'a>,
     diagnostic: OxcDiagnostic,
@@ -303,9 +313,20 @@ fn diagnose_array_in_array_spread<'a>(
     first: &'a ArrayExpressionElement<'a>,
     rest: &'a [ArrayExpressionElement<'a>],
     inner_array: &ArrayExpression<'a>,
+    scope_id: ScopeId,
 ) {
     if rest.is_empty() {
-        ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace_with(&outer_span, inner_array));
+        if inner_array.elements.iter().any(is_elision) {
+            let mut replacer = String::with_capacity(inner_array.span.size() as usize + 2);
+            replacer.push('[');
+            replacer.push_str(&spread_arguments_text(inner_array, scope_id, ctx));
+            replacer.push(']');
+            ctx.diagnostic_with_fix(diagnostic, move |fixer| fixer.replace(outer_span, replacer));
+        } else {
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                fixer.replace_with(&outer_span, inner_array)
+            });
+        }
         return;
     }
     // If all elements are array spreads, we can merge them all together
@@ -323,16 +344,16 @@ fn diagnose_array_in_array_spread<'a>(
     }
 
     // [ ...[a, b, c], ...[d, e, f] ] -> [a, b, c, d, e, f]
+    let undefined = undefined_text(scope_id, ctx);
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let mut codegen = fixer.codegen();
         codegen.print_ascii_byte(b'[');
         let n = spreads.iter().map(|arr| arr.elements.len()).sum::<usize>();
         for (i, el) in spreads.iter().flat_map(|arr| arr.elements.iter()).enumerate() {
             match el {
+                // spreading a hole yields a dense `undefined` element
                 ArrayExpressionElement::Elision(_) => {
-                    if i == n - 1 {
-                        codegen.print_ascii_byte(b',');
-                    }
+                    codegen.print_str(undefined);
                 }
                 ArrayExpressionElement::SpreadElement(spread) => {
                     codegen.print_str("...");
@@ -348,6 +369,10 @@ fn diagnose_array_in_array_spread<'a>(
         codegen.print_ascii_byte(b']');
         fixer.replace(outer_span, codegen.into_source_text())
     });
+}
+
+fn is_elision(element: &ArrayExpressionElement<'_>) -> bool {
+    matches!(element, ArrayExpressionElement::Elision(_))
 }
 
 fn check_useless_iterable_to_array<'a>(
@@ -811,7 +836,7 @@ fn test() {
         ("[...[1,2,3], ...[4,5,6]]", "[1, 2, 3, 4, 5, 6]"),
         ("[...[1,2,3], ...x]", "[...[1,2,3], ...x]"),
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
-        ("const array = [...[a, , b,]]", "const array = [a, , b,]"),
+        ("const array = [...[a, , b,]]", "const array = [a, undefined, b]"),
         ("foo(...[,])", "foo(undefined)"),
         ("new Foo(...[,])", "new Foo(undefined)"),
         ("foo(...[,,])", "foo(undefined,undefined)"),
@@ -855,7 +880,7 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/8115>
         ("setupServer(...[...importHandlers])", "setupServer(...importHandlers)"),
         ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
-        ("[...[1,2,,,],...[3,4,,,]]", "[1, 2, , , 3, 4, , ,]"),
+        ("[...[1,2,,,],...[3,4,,,]]", "[1, 2, undefined, undefined, 3, 4, undefined, undefined]"),
         ("[...[...foo], ...[...bar]]", "[...foo, ...bar]"),
         ("S={...{ }}", "S=({})"),
         (
@@ -865,6 +890,12 @@ fn test() {
       onClick: () => console.log('click'),
     });",
             "jsxEl(({\n\tclassName,\n\tonClick: () => console.log('click')\n}));",
+        ),
+        ("const arr = [...[,]]", "const arr = [undefined]"),
+        ("const array = [...[,,]]", "const array = [undefined,undefined]"),
+        (
+            "function f(undefined) { const a = [...[,]]; }",
+            "function f(undefined) { const a = [void 0]; }",
         ),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
