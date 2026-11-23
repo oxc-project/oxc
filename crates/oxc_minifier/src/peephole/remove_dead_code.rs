@@ -736,8 +736,6 @@ impl<'a> PeepholeOptimizations {
             Ancestor::DecoratorExpression(_) => match access_value {
                 // Example case: `@((0, foo.bar))` (decorator `this` is `undefined`)
                 // -> `@(foo.bar)` (decorator `this` is `foo`)
-                // A member expression decorator is invoked with the member's
-                // object as `this`, so the indirect access must be kept.
                 match_member_expression!(Expression) => true,
                 // Example case: `@((0, foo?.bar))` (decorator `this` is `undefined`)
                 // -> `@(foo?.bar)` (decorator `this` is `foo`)
