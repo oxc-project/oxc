@@ -1,6 +1,6 @@
 use std::str;
 
-use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use oxc_syntax::identifier::is_identifier_start;
 
 use crate::error::DiagCode;
@@ -120,6 +120,15 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
         }
     }
     if radix != 0 {
+        // Up to 16 hex, 21 octal or 64 binary bytes always fit in the u64 below.
+        let fast_len = match radix {
+            16 => 16,
+            8 => 21,
+            _ => 64,
+        };
+        if e - i > fast_len {
+            return parse_radix_slow(&src[i..e], radix.trailing_zeros());
+        }
         let mut v: u64 = 0;
         while i < e {
             let c = src[i];
@@ -167,6 +176,35 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
         bl += 1;
     }
     str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
+}
+
+/// Hex, octal or binary digits after the prefix, any length, rounded to nearest, ties to even.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn parse_radix_slow(digits: &[u8], bits: u32) -> f64 {
+    let cpu = BASELINE;
+    let mut significand = 0u64;
+    let mut exponent = 0u32;
+    let mut sticky = 0u32;
+    for &c in digits {
+        if c == b'_' {
+            continue;
+        }
+        let Some(d) = hex_digit(c, cpu) else { break };
+        if significand < 1 << 54 {
+            significand = (significand << bits) | u64::from(d);
+        } else {
+            exponent += bits;
+            if exponent > 1023 {
+                return f64::INFINITY;
+            }
+            sticky |= u32::from(d);
+        }
+    }
+    // Bit 0 records any dropped nonzero digit; with 55+ bits kept it sits below the rounding bit.
+    significand |= u64::from(sticky != 0);
+    (significand as f64) * f64::from_bits(u64::from(exponent + 1023) << 52)
 }
 
 /// First error in the number src[s..e], or Ok when unsure, so no valid number is ever flagged.
