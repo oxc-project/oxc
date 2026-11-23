@@ -406,7 +406,7 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
     }
 }
 
-const KNOWN_NON_ARRAY_TYPE_NAMES: &[&str] = &[
+const TYPED_ARRAY_NAMES: &[&str] = &[
     "Int8Array",
     "Uint8Array",
     "Uint8ClampedArray",
@@ -419,6 +419,9 @@ const KNOWN_NON_ARRAY_TYPE_NAMES: &[&str] = &[
     "Float64Array",
     "BigInt64Array",
     "BigUint64Array",
+];
+
+const NON_ARRAY_TYPE_NAMES: &[&str] = &[
     "Map",
     "ReadonlyMap",
     "WeakMap",
@@ -438,21 +441,6 @@ const KNOWN_NON_ARRAY_TYPE_NAMES: &[&str] = &[
     "Function",
 ];
 
-const TYPED_ARRAY_NAMES: &[&str] = &[
-    "Int8Array",
-    "Uint8Array",
-    "Uint8ClampedArray",
-    "Int16Array",
-    "Uint16Array",
-    "Int32Array",
-    "Uint32Array",
-    "Float16Array",
-    "Float32Array",
-    "Float64Array",
-    "BigInt64Array",
-    "BigUint64Array",
-];
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ArrayTypeKind {
     Array,
@@ -460,15 +448,8 @@ enum ArrayTypeKind {
     Unknown,
 }
 
-fn unwrap_ts_type_parens<'a>(mut ty: &'a TSType<'a>) -> &'a TSType<'a> {
-    while let TSType::TSParenthesizedType(paren) = ty {
-        ty = &paren.type_annotation;
-    }
-    ty
-}
-
 fn is_any_or_unknown_ts_type(ty: &TSType) -> bool {
-    matches!(unwrap_ts_type_parens(ty), TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
+    matches!(ty.without_parenthesized(), TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
 }
 
 fn classify_ts_type_for_array(ty: &TSType) -> ArrayTypeKind {
@@ -494,7 +475,7 @@ fn classify_ts_type_for_array(ty: &TSType) -> ArrayTypeKind {
                 if matches!(name, "Array" | "ReadonlyArray") {
                     return ArrayTypeKind::Array;
                 }
-                if KNOWN_NON_ARRAY_TYPE_NAMES.contains(&name) {
+                if TYPED_ARRAY_NAMES.contains(&name) || NON_ARRAY_TYPE_NAMES.contains(&name) {
                     return ArrayTypeKind::NonArray;
                 }
             }
@@ -563,25 +544,14 @@ fn classify_expr_for_array(expr: &Expression, ctx: &LintContext, depth: u8) -> A
             ArrayTypeKind::Unknown
         }
         Expression::TSAsExpression(ts_as) => {
-            let kind = classify_ts_type_for_array(&ts_as.type_annotation);
-            if kind != ArrayTypeKind::Unknown {
-                kind
-            } else if is_any_or_unknown_ts_type(&ts_as.type_annotation) {
-                classify_expr_for_array(&ts_as.expression, ctx, depth + 1)
-            } else {
-                ArrayTypeKind::Unknown
-            }
+            classify_asserted_expr_for_array(&ts_as.type_annotation, &ts_as.expression, ctx, depth)
         }
-        Expression::TSTypeAssertion(ts_assert) => {
-            let kind = classify_ts_type_for_array(&ts_assert.type_annotation);
-            if kind != ArrayTypeKind::Unknown {
-                kind
-            } else if is_any_or_unknown_ts_type(&ts_assert.type_annotation) {
-                classify_expr_for_array(&ts_assert.expression, ctx, depth + 1)
-            } else {
-                ArrayTypeKind::Unknown
-            }
-        }
+        Expression::TSTypeAssertion(ts_assert) => classify_asserted_expr_for_array(
+            &ts_assert.type_annotation,
+            &ts_assert.expression,
+            ctx,
+            depth,
+        ),
         Expression::TSNonNullExpression(non_null) => {
             classify_expr_for_array(&non_null.expression, ctx, depth + 1)
         }
@@ -605,11 +575,10 @@ fn classify_expr_for_array(expr: &Expression, ctx: &LintContext, depth: u8) -> A
                 }
                 AstKind::VariableDeclarator(decl) if decl.id.is_binding_identifier() => {
                     if let Some(ann) = decl.type_annotation.as_deref() {
-                        let kind = classify_ts_type_for_array(&ann.type_annotation);
-                        if kind != ArrayTypeKind::Unknown
-                            || !is_any_or_unknown_ts_type(&ann.type_annotation)
-                        {
-                            return kind;
+                        match classify_ts_type_for_array(&ann.type_annotation) {
+                            ArrayTypeKind::Unknown
+                                if is_any_or_unknown_ts_type(&ann.type_annotation) => {}
+                            kind => return kind,
                         }
                     }
                     if variable_declaration_kind(decl, ctx.nodes())
@@ -624,6 +593,20 @@ fn classify_expr_for_array(expr: &Expression, ctx: &LintContext, depth: u8) -> A
             }
         }
         _ => ArrayTypeKind::Unknown,
+    }
+}
+
+fn classify_asserted_expr_for_array(
+    ty: &TSType,
+    expr: &Expression,
+    ctx: &LintContext,
+    depth: u8,
+) -> ArrayTypeKind {
+    match classify_ts_type_for_array(ty) {
+        ArrayTypeKind::Unknown if is_any_or_unknown_ts_type(ty) => {
+            classify_expr_for_array(expr, ctx, depth + 1)
+        }
+        kind => kind,
     }
 }
 
