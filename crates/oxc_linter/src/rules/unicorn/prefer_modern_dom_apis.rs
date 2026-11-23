@@ -73,6 +73,268 @@ enum ReceiverTypeKind {
     Unknown,
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct PreferModernDomApis;
+
+fn get_replacement_for_disallowed_method(method: &str) -> Option<&'static str> {
+    match method {
+        "replaceChild" => Some("replaceWith"),
+        "insertBefore" => Some("before"),
+        _ => None,
+    }
+}
+
+fn get_replacement_for_position(position: &str) -> Option<&'static str> {
+    match position {
+        "beforebegin" => Some("before"),
+        "afterbegin" => Some("prepend"),
+        "beforeend" => Some("append"),
+        "afterend" => Some("after"),
+        _ => None,
+    }
+}
+
+fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
+    let parent_node = ctx.nodes().parent_node(node.id());
+    let grandparent_node = ctx.nodes().parent_node(parent_node.id());
+    matches!(
+        (parent_node.kind(), grandparent_node.kind()),
+        (AstKind::ExpressionStatement(_), _)
+            | (AstKind::ChainExpression(_), AstKind::ExpressionStatement(_))
+    )
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Enforces the use of:
+    /// - `childNode.replaceWith(newNode)` over `parentNode.replaceChild(newNode, oldNode)`
+    /// - `referenceNode.before(newNode)` over `parentNode.insertBefore(newNode, referenceNode)`
+    /// - `referenceNode.before('text')` over `referenceNode.insertAdjacentText('beforebegin', 'text')`
+    /// - `referenceNode.before(newNode)` over `referenceNode.insertAdjacentElement('beforebegin', newNode)`
+    /// - `parentNode.replaceChildren()` over `while (parentNode.firstChild) { parentNode.firstChild.remove(); }`
+    ///
+    /// ### Why is this bad?
+    ///
+    /// There are some advantages of using the newer DOM APIs, like:
+    /// - Traversing to the parent node is not necessary.
+    /// - Appending multiple nodes at once.
+    /// - Both `DOMString` and DOM node objects can be manipulated.
+    /// - Clearing all children with `replaceChildren()` is clearer and avoids removing nodes in a loop.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// parentNode.replaceChild(newChildNode, oldChildNode);
+    ///
+    /// while (node.firstChild) {
+    ///     node.firstChild.remove();
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// oldChildNode.replaceWith(newChildNode);
+    ///
+    /// node.replaceChildren();
+    /// ```
+    PreferModernDomApis,
+    unicorn,
+    style,
+    recommended,
+    conditional_suggestion,
+    version = "0.0.20",
+    short_description = "Prefer modern DOM APIs like `replaceWith`, `before`, and `replaceChildren` over older methods.",
+);
+
+impl Rule for PreferModernDomApis {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::CallExpression(call_expr) => Self::check_call_expression(node, call_expr, ctx),
+            AstKind::WhileStatement(while_stmt) => {
+                Self::check_while_statement(node, while_stmt, ctx);
+            }
+            _ => {}
+        }
+    }
+}
+
+impl PreferModernDomApis {
+    fn check_call_expression<'a>(
+        node: &AstNode<'a>,
+        call_expr: &CallExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let Expression::StaticMemberExpression(member_expr) = &call_expr.callee else {
+            return;
+        };
+        let method = member_expr.property.name.as_str();
+
+        if is_method_call(
+            call_expr,
+            None,
+            Some(&["replaceChild", "insertBefore"]),
+            Some(2),
+            Some(2),
+        ) && matches!(member_expr.object, Expression::Identifier(_))
+            && !call_expr.optional
+            && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
+        {
+            let diagnostic = prefer_modern_dom_apis_diagnostic(
+                preferred_method,
+                method,
+                member_expr.property.span,
+            );
+
+            // Reordering complex arguments can change evaluation semantics.
+            let has_safe_arguments = call_expr.arguments.iter().all(|argument| {
+                matches!(argument, Argument::Identifier(identifier) if identifier.name != "undefined")
+            });
+
+            if has_safe_arguments && is_value_not_usable(node, ctx) {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    let new_node = ctx.source_range(call_expr.arguments[0].span());
+                    let old_node = ctx.source_range(call_expr.arguments[1].span());
+
+                    let replacement = format!("{old_node}.{preferred_method}({new_node})");
+
+                    fixer.replace(call_expr.span, replacement)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
+
+            return;
+        }
+
+        if is_method_call(
+            call_expr,
+            None,
+            Some(&["insertAdjacentText", "insertAdjacentElement"]),
+            Some(2),
+            Some(2),
+        ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
+            && let Some(preferred_method) =
+                lit.value.as_str().and_then(get_replacement_for_position)
+        {
+            let diagnostic = prefer_modern_dom_apis_diagnostic(
+                preferred_method,
+                method,
+                member_expr.property.span,
+            );
+
+            let can_fix = method == "insertAdjacentText" || is_value_not_usable(node, ctx);
+
+            if can_fix {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    let content = ctx.source_range(call_expr.arguments[1].span());
+                    let reference = ctx.source_range(member_expr.object.span());
+
+                    let replacement = format!("{reference}.{preferred_method}({content})");
+
+                    fixer.replace(call_expr.span, replacement)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
+        }
+    }
+
+    fn check_while_statement<'a>(
+        node: &AstNode<'a>,
+        while_stmt: &WhileStatement<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let test_expr = while_stmt.test.without_parentheses();
+        let Expression::StaticMemberExpression(child_member) = test_expr else {
+            return;
+        };
+        if child_member.optional {
+            return;
+        }
+        let child_prop = child_member.property.name.as_str();
+        if !matches!(child_prop, "firstChild" | "lastChild") {
+            return;
+        }
+
+        let body_stmt = match &while_stmt.body {
+            Statement::BlockStatement(block) if block.body.len() == 1 => &block.body[0],
+            Statement::BlockStatement(_) => return,
+            stmt => stmt,
+        };
+        let Statement::ExpressionStatement(expr_stmt) = body_stmt else {
+            return;
+        };
+        let Expression::CallExpression(call_expr) = expr_stmt.expression.without_parentheses()
+        else {
+            return;
+        };
+        if call_expr.optional
+            || !call_expr.arguments.is_empty()
+            || call_expr.type_arguments.is_some()
+        {
+            return;
+        }
+        let Expression::StaticMemberExpression(remove_member) =
+            call_expr.callee.without_parentheses()
+        else {
+            return;
+        };
+        if remove_member.optional || remove_member.property.name != "remove" {
+            return;
+        }
+
+        let remove_object = remove_member.object.without_parentheses();
+        if !is_non_optional_reference(&child_member.object)
+            || !is_non_optional_reference(remove_object)
+            || !is_same_expression(test_expr, remove_object, ctx)
+        {
+            return;
+        }
+
+        let parent_expr = child_member.object.without_parentheses();
+        if is_known_non_replace_children_receiver(parent_expr, node, ctx) {
+            return;
+        }
+
+        let raw_parent = ctx.source_range(parent_expr.span());
+        let needs_parens = !matches!(parent_expr, Expression::Super(_))
+            && (get_precedence(parent_expr).is_some_and(|p| p < Precedence::Member)
+                || starts_with_unparenthesized_let_bracket(parent_expr));
+        let parent_node_text: Cow<'_, str> = if needs_parens {
+            Cow::Owned(format!("({raw_parent})"))
+        } else {
+            Cow::Borrowed(raw_parent)
+        };
+
+        let diagnostic =
+            prefer_replace_children_diagnostic(&parent_node_text, child_prop, while_stmt.span);
+
+        let has_comments = ctx
+            .has_comments_between(Span::new(while_stmt.span.start, parent_expr.span().start))
+            || ctx.has_comments_between(Span::new(parent_expr.span().end, while_stmt.span.end));
+
+        if has_comments {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        let leading_semicolon = if parent_node_text.starts_with('(')
+            && needs_leading_semicolon_before_while(node, while_stmt.span, ctx)
+        {
+            ";"
+        } else {
+            ""
+        };
+        let replacement = format!("{leading_semicolon}{parent_node_text}.replaceChildren();");
+
+        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+            fixer.replace(while_stmt.span, replacement)
+        });
+    }
+}
+
 fn classify_ts_type(ty: &TSType) -> ReceiverTypeKind {
     match ty {
         TSType::TSParenthesizedType(paren) => classify_ts_type(&paren.type_annotation),
@@ -434,268 +696,6 @@ fn needs_leading_semicolon_before_while(
     }
 
     statement_ends_without_semicolon_expression(&statements[idx - 1], ctx)
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct PreferModernDomApis;
-
-fn get_replacement_for_disallowed_method(method: &str) -> Option<&'static str> {
-    match method {
-        "replaceChild" => Some("replaceWith"),
-        "insertBefore" => Some("before"),
-        _ => None,
-    }
-}
-
-fn get_replacement_for_position(position: &str) -> Option<&'static str> {
-    match position {
-        "beforebegin" => Some("before"),
-        "afterbegin" => Some("prepend"),
-        "beforeend" => Some("append"),
-        "afterend" => Some("after"),
-        _ => None,
-    }
-}
-
-fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
-    let parent_node = ctx.nodes().parent_node(node.id());
-    let grandparent_node = ctx.nodes().parent_node(parent_node.id());
-    matches!(
-        (parent_node.kind(), grandparent_node.kind()),
-        (AstKind::ExpressionStatement(_), _)
-            | (AstKind::ChainExpression(_), AstKind::ExpressionStatement(_))
-    )
-}
-
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// Enforces the use of:
-    /// - `childNode.replaceWith(newNode)` over `parentNode.replaceChild(newNode, oldNode)`
-    /// - `referenceNode.before(newNode)` over `parentNode.insertBefore(newNode, referenceNode)`
-    /// - `referenceNode.before('text')` over `referenceNode.insertAdjacentText('beforebegin', 'text')`
-    /// - `referenceNode.before(newNode)` over `referenceNode.insertAdjacentElement('beforebegin', newNode)`
-    /// - `parentNode.replaceChildren()` over `while (parentNode.firstChild) { parentNode.firstChild.remove(); }`
-    ///
-    /// ### Why is this bad?
-    ///
-    /// There are some advantages of using the newer DOM APIs, like:
-    /// - Traversing to the parent node is not necessary.
-    /// - Appending multiple nodes at once.
-    /// - Both `DOMString` and DOM node objects can be manipulated.
-    /// - Clearing all children with `replaceChildren()` is clearer and avoids removing nodes in a loop.
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// parentNode.replaceChild(newChildNode, oldChildNode);
-    ///
-    /// while (node.firstChild) {
-    ///     node.firstChild.remove();
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```javascript
-    /// oldChildNode.replaceWith(newChildNode);
-    ///
-    /// node.replaceChildren();
-    /// ```
-    PreferModernDomApis,
-    unicorn,
-    style,
-    recommended,
-    conditional_suggestion,
-    version = "0.0.20",
-    short_description = "Prefer modern DOM APIs like `replaceWith`, `before`, and `replaceChildren` over older methods.",
-);
-
-impl Rule for PreferModernDomApis {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::CallExpression(call_expr) => Self::check_call_expression(node, call_expr, ctx),
-            AstKind::WhileStatement(while_stmt) => {
-                Self::check_while_statement(node, while_stmt, ctx);
-            }
-            _ => {}
-        }
-    }
-}
-
-impl PreferModernDomApis {
-    fn check_call_expression<'a>(
-        node: &AstNode<'a>,
-        call_expr: &CallExpression<'a>,
-        ctx: &LintContext<'a>,
-    ) {
-        let Expression::StaticMemberExpression(member_expr) = &call_expr.callee else {
-            return;
-        };
-        let method = member_expr.property.name.as_str();
-
-        if is_method_call(
-            call_expr,
-            None,
-            Some(&["replaceChild", "insertBefore"]),
-            Some(2),
-            Some(2),
-        ) && matches!(member_expr.object, Expression::Identifier(_))
-            && !call_expr.optional
-            && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
-        {
-            let diagnostic = prefer_modern_dom_apis_diagnostic(
-                preferred_method,
-                method,
-                member_expr.property.span,
-            );
-
-            // Reordering complex arguments can change evaluation semantics.
-            let has_safe_arguments = call_expr.arguments.iter().all(|argument| {
-                matches!(argument, Argument::Identifier(identifier) if identifier.name != "undefined")
-            });
-
-            if has_safe_arguments && is_value_not_usable(node, ctx) {
-                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                    let new_node = ctx.source_range(call_expr.arguments[0].span());
-                    let old_node = ctx.source_range(call_expr.arguments[1].span());
-
-                    let replacement = format!("{old_node}.{preferred_method}({new_node})");
-
-                    fixer.replace(call_expr.span, replacement)
-                });
-            } else {
-                ctx.diagnostic(diagnostic);
-            }
-
-            return;
-        }
-
-        if is_method_call(
-            call_expr,
-            None,
-            Some(&["insertAdjacentText", "insertAdjacentElement"]),
-            Some(2),
-            Some(2),
-        ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
-            && let Some(preferred_method) =
-                lit.value.as_str().and_then(get_replacement_for_position)
-        {
-            let diagnostic = prefer_modern_dom_apis_diagnostic(
-                preferred_method,
-                method,
-                member_expr.property.span,
-            );
-
-            let can_fix = method == "insertAdjacentText" || is_value_not_usable(node, ctx);
-
-            if can_fix {
-                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                    let content = ctx.source_range(call_expr.arguments[1].span());
-                    let reference = ctx.source_range(member_expr.object.span());
-
-                    let replacement = format!("{reference}.{preferred_method}({content})");
-
-                    fixer.replace(call_expr.span, replacement)
-                });
-            } else {
-                ctx.diagnostic(diagnostic);
-            }
-        }
-    }
-
-    fn check_while_statement<'a>(
-        node: &AstNode<'a>,
-        while_stmt: &WhileStatement<'a>,
-        ctx: &LintContext<'a>,
-    ) {
-        let test_expr = while_stmt.test.without_parentheses();
-        let Expression::StaticMemberExpression(child_member) = test_expr else {
-            return;
-        };
-        if child_member.optional {
-            return;
-        }
-        let child_prop = child_member.property.name.as_str();
-        if !matches!(child_prop, "firstChild" | "lastChild") {
-            return;
-        }
-
-        let body_stmt = match &while_stmt.body {
-            Statement::BlockStatement(block) if block.body.len() == 1 => &block.body[0],
-            Statement::BlockStatement(_) => return,
-            stmt => stmt,
-        };
-        let Statement::ExpressionStatement(expr_stmt) = body_stmt else {
-            return;
-        };
-        let Expression::CallExpression(call_expr) = expr_stmt.expression.without_parentheses()
-        else {
-            return;
-        };
-        if call_expr.optional
-            || !call_expr.arguments.is_empty()
-            || call_expr.type_arguments.is_some()
-        {
-            return;
-        }
-        let Expression::StaticMemberExpression(remove_member) =
-            call_expr.callee.without_parentheses()
-        else {
-            return;
-        };
-        if remove_member.optional || remove_member.property.name != "remove" {
-            return;
-        }
-
-        let remove_object = remove_member.object.without_parentheses();
-        if !is_non_optional_reference(&child_member.object)
-            || !is_non_optional_reference(remove_object)
-            || !is_same_expression(test_expr, remove_object, ctx)
-        {
-            return;
-        }
-
-        let parent_expr = child_member.object.without_parentheses();
-        if is_known_non_replace_children_receiver(parent_expr, node, ctx) {
-            return;
-        }
-
-        let raw_parent = ctx.source_range(parent_expr.span());
-        let needs_parens = !matches!(parent_expr, Expression::Super(_))
-            && (get_precedence(parent_expr).is_some_and(|p| p < Precedence::Member)
-                || starts_with_unparenthesized_let_bracket(parent_expr));
-        let parent_node_text: Cow<'_, str> = if needs_parens {
-            Cow::Owned(format!("({raw_parent})"))
-        } else {
-            Cow::Borrowed(raw_parent)
-        };
-
-        let diagnostic =
-            prefer_replace_children_diagnostic(&parent_node_text, child_prop, while_stmt.span);
-
-        let has_comments = ctx
-            .has_comments_between(Span::new(while_stmt.span.start, parent_expr.span().start))
-            || ctx.has_comments_between(Span::new(parent_expr.span().end, while_stmt.span.end));
-
-        if has_comments {
-            ctx.diagnostic(diagnostic);
-            return;
-        }
-
-        let leading_semicolon = if parent_node_text.starts_with('(')
-            && needs_leading_semicolon_before_while(node, while_stmt.span, ctx)
-        {
-            ";"
-        } else {
-            ""
-        };
-        let replacement = format!("{leading_semicolon}{parent_node_text}.replaceChildren();");
-
-        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-            fixer.replace(while_stmt.span, replacement)
-        });
-    }
 }
 
 #[test]
