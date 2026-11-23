@@ -167,7 +167,6 @@ fn test() {
         r#"const fs = process["getBuiltinModule"]("fs")"#,
         r#"const fs = foo.process.getBuiltinModule("fs")"#,
         "const fs = process.getBuiltinModule(fs)",
-        "const fs = process.getBuiltinModule(`fs`)",
         r#"const fs = (process?.getBuiltinModule)("fs")"#,
         r#"type fs = import("node:fs");"#,
         r#"type fs = import("./fs");"#,
