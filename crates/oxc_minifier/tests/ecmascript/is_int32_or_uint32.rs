@@ -1,8 +1,11 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Statement;
+use oxc_ast::{
+    ast::{Expression, Statement},
+    builder::AstBuilder,
+};
 use oxc_ecmascript::{WithoutGlobalReferenceInformation, constant_evaluation::IsInt32OrUint32};
 use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc_span::{SPAN, SourceType};
 
 fn test(source_text: &str, expected: bool) {
     let allocator = Allocator::default();
@@ -110,4 +113,14 @@ fn logical_tests() {
 #[test]
 fn undetermined_tests() {
     test("foo", false);
+}
+
+#[test]
+fn negative_zero_numeric_literal() {
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+    let pos_zero = Expression::new_numeric_literal(SPAN, 0.0, None, &ast);
+    let neg_zero = Expression::new_numeric_literal(SPAN, -0.0, None, &ast);
+    assert!(pos_zero.is_int32_or_uint32(&WithoutGlobalReferenceInformation {}));
+    assert!(!neg_zero.is_int32_or_uint32(&WithoutGlobalReferenceInformation {}));
 }

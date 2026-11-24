@@ -70,11 +70,15 @@ impl<'a> IsolatedDeclarations<'a> {
     fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
         match key {
             // ["string"] -> string
-            PropertyKey::StringLiteral(literal)
+            PropertyKey::StaticStringLiteral(literal) | PropertyKey::StringLiteral(literal)
                 if let Some(value) = literal.value.as_str()
                     && is_identifier_name(value) =>
             {
                 PropertyKey::new_static_identifier(literal.span, value, self)
+            }
+            // ["a-b"] -> "a-b"
+            PropertyKey::StringLiteral(literal) => {
+                PropertyKey::StaticStringLiteral(literal.clone_in(self.allocator()))
             }
             // [`string`] -> string
             PropertyKey::TemplateLiteral(literal)
@@ -83,7 +87,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 PropertyKey::new_static_identifier(literal.span, literal.quasis[0].value.raw, self)
             }
             // [100] -> 100
-            // number literal will be cloned as-is
+            PropertyKey::NumericLiteral(literal) if literal.value.is_finite() => {
+                PropertyKey::StaticNumericLiteral(literal.clone_in(self.allocator()))
+            }
             _ => key.clone_in(self.allocator()),
         }
     }
@@ -115,7 +121,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let members = ArenaVec::from_iter_in(
             expr.properties.iter().filter_map(|property| match property {
                 ObjectPropertyKind::ObjectProperty(object) => {
-                    if object.computed && self.report_property_key(&object.key) {
+                    if object.key.is_computed() && self.report_property_key(&object.key) {
                         return None;
                     }
 
@@ -138,14 +144,10 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         let params = self.transform_formal_parameters(&function.params, false);
                         let key = self.transform_property_key(key);
-                        let computed = key
-                            .as_expression()
-                            .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal());
 
                         return Some(TSSignature::new_ts_method_signature(
                             object.span,
                             key,
-                            computed,
                             false,
                             TSMethodSignatureKind::Method,
                             function.type_parameters.clone_in(self.allocator()),
@@ -226,8 +228,6 @@ impl<'a> IsolatedDeclarations<'a> {
                     let key = self.transform_property_key(key);
                     let property_signature = TSSignature::new_ts_property_signature(
                         object.span,
-                        key.as_expression()
-                            .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal()),
                         false,
                         readonly,
                         key,

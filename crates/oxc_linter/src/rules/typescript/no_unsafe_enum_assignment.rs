@@ -54,7 +54,7 @@ declare_oxc_lint!(
     NoUnsafeEnumAssignment(tsgolint),
     typescript,
     suspicious,
-    version = "next",
+    version = "1.90.0",
     short_description = "Disallow unsafe enum assignments.",
 );
 

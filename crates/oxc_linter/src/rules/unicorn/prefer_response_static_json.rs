@@ -50,7 +50,8 @@ declare_oxc_lint!(
     recommended,
     suggestion,
     version = "1.29.0",
-    short_description = "Enforces the use of `Response.json()` over `new Response(JSON.stringify())`.",
+    short_description =
+        "Enforces the use of `Response.json()` over `new Response(JSON.stringify())`.",
 );
 
 impl Rule for PreferResponseStaticJson {
@@ -95,12 +96,19 @@ impl Rule for PreferResponseStaticJson {
 
                 let new_keyword_end = new_expr.span.start + 3; // "new" is 3 chars
                 let callee_start = new_expr.callee.span().start;
+                let add_parens = ctx.has_comments_between(Span::new(new_keyword_end, callee_start));
 
-                if ctx.has_comments_between(Span::new(new_keyword_end, callee_start)) {
-                    fix.push(fixer.insert_text_before_range(new_expr.span, "( "));
-                    fix.push(
-                        fixer.delete_range(Span::new(new_expr.span.start, new_keyword_end + 1)),
-                    );
+                if add_parens {
+                    #[expect(clippy::cast_possible_truncation)]
+                    let whitespace_len = ctx.source_text()[new_keyword_end as usize..]
+                        .chars()
+                        .next()
+                        .filter(|c| c.is_whitespace())
+                        .map_or(0, |c| c.len_utf8() as u32);
+                    fix.push(fixer.replace(
+                        Span::new(new_expr.span.start, new_keyword_end + whitespace_len),
+                        "( ",
+                    ));
                     fix.push(fixer.insert_text_after_range(new_expr.span, ")"));
                 } else {
                     let new_keyword_span =
@@ -124,7 +132,7 @@ impl Rule for PreferResponseStaticJson {
                 let after_data_span = Span::new(data_span.end, stringify_call_span.end);
                 fix.push(fixer.delete_range(after_data_span));
 
-                if should_add_semicolon(node, new_expr, ctx) {
+                if should_add_semicolon(node, new_expr, add_parens, ctx) {
                     fix.push(fixer.insert_text_before_range(new_expr.span, ";"));
                 }
 
@@ -136,13 +144,21 @@ impl Rule for PreferResponseStaticJson {
     }
 }
 
-fn should_add_semicolon(node: &AstNode, new_expr: &NewExpression, ctx: &LintContext) -> bool {
+/// The fix starts with `(` if it adds parentheses or if the callee is parenthesized.
+fn should_add_semicolon(
+    node: &AstNode,
+    new_expr: &NewExpression,
+    add_parens: bool,
+    ctx: &LintContext,
+) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
     let new_expr_is_parenthesized = matches!(parent.kind(), AstKind::ParenthesizedExpression(_));
 
     let callee_is_parenthesized = !matches!(new_expr.callee, Expression::Identifier(_));
 
-    !new_expr_is_parenthesized && callee_is_parenthesized && could_be_asi_hazard(node, ctx)
+    !new_expr_is_parenthesized
+        && (add_parens || callee_is_parenthesized)
+        && could_be_asi_hazard(node, ctx)
 }
 
 fn stringify_has_spread_arguments(call_expr: &CallExpression) -> bool {
@@ -187,6 +203,12 @@ fn test() {
             (( new (( Response ))(JSON.stringify(data)) ))",
         "foo
             (( new (( Response ))(JSON.stringify(data)) ))",
+        "function foo() { return new\u{a0}// comment\n Response(JSON.stringify(data)) }",
+        "function foo() { return new\u{3000}// comment\n Response(JSON.stringify(data)) }",
+        "function foo() { return new\u{2028}// comment\n Response(JSON.stringify(data)) }",
+        "new/* comment */Response(JSON.stringify(data))",
+        "foo\nnew // comment\nResponse(JSON.stringify(data))",
+        "foo\nnew // comment\n(( Response ))(JSON.stringify(data))",
     ];
 
     let fix = vec![
@@ -230,6 +252,27 @@ fn test() {
             (( new (( Response ))(JSON.stringify(data)) ))",
             "foo
             (( (( Response.json ))(data) ))",
+        ),
+        (
+            "function foo() { return new\u{a0}// comment\n Response(JSON.stringify(data)) }",
+            "function foo() { return ( // comment\n Response.json(data)) }",
+        ),
+        (
+            "function foo() { return new\u{3000}// comment\n Response(JSON.stringify(data)) }",
+            "function foo() { return ( // comment\n Response.json(data)) }",
+        ),
+        (
+            "function foo() { return new\u{2028}// comment\n Response(JSON.stringify(data)) }",
+            "function foo() { return ( // comment\n Response.json(data)) }",
+        ),
+        ("new/* comment */Response(JSON.stringify(data))", "( /* comment */Response.json(data))"),
+        (
+            "foo\nnew // comment\nResponse(JSON.stringify(data))",
+            "foo\n;( // comment\nResponse.json(data))",
+        ),
+        (
+            "foo\nnew // comment\n(( Response ))(JSON.stringify(data))",
+            "foo\n;( // comment\n(( Response.json ))(data))",
         ),
     ];
 

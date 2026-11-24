@@ -1,0 +1,30 @@
+
+
+a = 1
+
+
+
+b = 2
+# comment
+
+
+# comment after blank lines
+[t]
+
+
+c = 3
+d = 4
+
+
+
+[u]
+e = 5
+
+[empty]
+
+[after_empty]
+
+# a comment after a blank line
+f = 6
+
+

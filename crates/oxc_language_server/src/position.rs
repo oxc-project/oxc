@@ -2,9 +2,8 @@ use tower_lsp_server::gen_lsp_types::Position;
 
 /// Convert a UTF-8 byte offset to an LSP position.
 ///
-/// LSP positions use zero-based line numbers and UTF-16 character offsets. The
-/// protocol only treats CR, LF, and CRLF as line breaks, so Unicode line and
-/// paragraph separators must remain ordinary characters here.
+/// Returns the same position as [`LineIndex::position`], but scans `source_text`
+/// only up to `offset`. Prefer using [`LineIndex`] to convert many offsets.
 ///
 /// # Panics
 ///
@@ -12,49 +11,110 @@ use tower_lsp_server::gen_lsp_types::Position;
 /// boundary in `source_text`, or the computed LSP character offset does not fit
 /// in `u32`.
 pub fn offset_to_position(source_text: &str, offset: u32) -> Position {
-    let offset = usize::try_from(offset).expect("offset must fit in usize");
-    assert!(offset <= source_text.len(), "offset out of bounds");
-    assert!(source_text.is_char_boundary(offset), "offset is not a char boundary");
+    let offset_usize = usize::try_from(offset).expect("offset must fit in usize");
+    assert!(offset_usize <= source_text.len(), "offset out of bounds");
+    assert!(source_text.is_char_boundary(offset_usize), "offset is not a char boundary");
 
-    let bytes = source_text.as_bytes();
-    let mut line = 0;
-    let mut line_start = 0;
-    let mut i = 0;
+    let inside_crlf = is_inside_crlf(source_text.as_bytes(), offset_usize);
+    let offset = offset - u32::from(inside_crlf);
+    let offset_usize = offset_usize - usize::from(inside_crlf);
+    LineIndex::new(&source_text[..offset_usize]).position(offset)
+}
 
-    while i < offset {
-        match bytes[i] {
-            b'\r' => {
-                i += if i + 1 < offset && bytes[i + 1] == b'\n' { 2 } else { 1 };
-                line += 1;
-                line_start = i;
+/// Whether `offset` is after the CR and before the LF of a CRLF, which LSP cannot express.
+/// Such an offset converts as the offset of its CR, as `vscode-languageserver-textdocument`
+/// and Oxc's diagnostic renderer do.
+fn is_inside_crlf(bytes: &[u8], offset: usize) -> bool {
+    offset > 0 && bytes.get(offset - 1) == Some(&b'\r') && bytes.get(offset) == Some(&b'\n')
+}
+
+/// The line starts of a text, to convert many of its UTF-8 byte offsets to LSP
+/// positions without rescanning the text for each (see [`LineIndex::position`]).
+///
+/// To convert a single offset, [`offset_to_position`] avoids indexing the entire text.
+pub struct LineIndex<'a> {
+    text: &'a str,
+    /// The byte offset of each line's start; the first is 0.
+    line_starts: Vec<u32>,
+}
+
+impl<'a> LineIndex<'a> {
+    /// Indexes the lines of `text`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `text` is longer than `u32::MAX` bytes.
+    pub fn new(text: &'a str) -> Self {
+        let bytes = text.as_bytes();
+        let mut line_starts = vec![0];
+        let mut i = 0;
+        while i < bytes.len() {
+            match bytes[i] {
+                b'\r' if bytes.get(i + 1) == Some(&b'\n') => i += 2,
+                b'\r' | b'\n' => i += 1,
+                _ => {
+                    i += 1;
+                    continue;
+                }
             }
-            b'\n' => {
-                i += 1;
-                line += 1;
-                line_start = i;
-            }
-            _ => {
-                let ch = source_text[i..].chars().next().expect("valid char boundary");
-                i += ch.len_utf8();
-            }
+            line_starts.push(u32::try_from(i).expect("text must fit in u32"));
         }
+        Self { text, line_starts }
     }
 
-    let character = u32::try_from(source_text[line_start..offset].encode_utf16().count())
-        .expect("LSP character offset must fit in u32");
-    Position::new(line, character)
+    /// The indexed text.
+    pub fn text(&self) -> &'a str {
+        self.text
+    }
+
+    /// Converts a UTF-8 byte offset of the text to an LSP position.
+    ///
+    /// LSP positions use zero-based line numbers and UTF-16 character offsets.
+    /// The protocol only treats CR, LF, and CRLF as line breaks, so Unicode line
+    /// and paragraph separators remain ordinary characters here. An offset
+    /// between the CR and LF of a CRLF converts as if the offset of its CR had
+    /// been requested.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `offset` is out of bounds, does not point to a UTF-8 character
+    /// boundary in the text, or the computed LSP character offset does not fit
+    /// in `u32`.
+    pub fn position(&self, offset: u32) -> Position {
+        let offset_usize = usize::try_from(offset).expect("offset must fit in usize");
+        assert!(offset_usize <= self.text.len(), "offset out of bounds");
+        assert!(self.text.is_char_boundary(offset_usize), "offset is not a char boundary");
+        let inside_crlf = is_inside_crlf(self.text.as_bytes(), offset_usize);
+        let offset = offset - u32::from(inside_crlf);
+        let offset_usize = offset_usize - usize::from(inside_crlf);
+
+        let line = self.line_starts.partition_point(|&start| start <= offset) - 1;
+        let line_start = self.line_starts[line] as usize;
+        let line_text = &self.text[line_start..offset_usize];
+        let character =
+            if line_text.is_ascii() { line_text.len() } else { line_text.encode_utf16().count() };
+
+        Position::new(
+            u32::try_from(line).expect("line must fit in u32"),
+            u32::try_from(character).expect("LSP character offset must fit in u32"),
+        )
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::offset_to_position;
+    use super::{LineIndex, offset_to_position};
 
+    /// Checks both `offset_to_position`, which indexes the text only up to `offset`, and a
+    /// `LineIndex` of the whole text, which must also look past lines after `offset`.
     fn assert_position(source_text: &str, offset: usize, expected: (u32, u32)) {
-        let position = offset_to_position(
-            source_text,
-            u32::try_from(offset).expect("test offset must fit in u32"),
-        );
-        assert_eq!((position.line, position.character), expected);
+        let offset = u32::try_from(offset).expect("test offset must fit in u32");
+
+        let position = offset_to_position(source_text, offset);
+        assert_eq!((position.line, position.character), expected, "offset_to_position");
+
+        let position = LineIndex::new(source_text).position(offset);
+        assert_eq!((position.line, position.character), expected, "LineIndex::position");
     }
 
     #[test]
@@ -68,6 +128,25 @@ mod tests {
             let source = format!("a{nl}b");
             assert_position(&source, source.find('b').unwrap(), (0, 2));
         }
+    }
+
+    #[test]
+    fn offset_between_cr_and_lf_is_end_of_line() {
+        let source = "a\r\nb";
+        assert_position(source, 1, (0, 1));
+        assert_position(source, 2, (0, 1));
+        assert_position(source, 3, (1, 0));
+
+        // Followed by more lines, so a whole-text index has line starts after the offset.
+        let source = "a\r\nb\r\nc";
+        assert_position(source, 5, (1, 1));
+        assert_position(source, 6, (2, 0));
+
+        // A lone CR before the CRLF is its own line break.
+        assert_position("\r\r\n", 2, (1, 0));
+
+        // The column of the CR counts UTF-16 units, like any other column.
+        assert_position("😀\r\n", 5, (0, 2));
     }
 
     #[test]
@@ -183,5 +262,24 @@ mod tests {
     #[cfg(test)]
     fn utf16_len(s: &str) -> usize {
         s.encode_utf16().count()
+    }
+
+    #[test]
+    fn line_index_line_starts() {
+        for (text, expected) in [
+            ("", &[0][..]),
+            ("a\nb", &[0, 2]),
+            ("a\rb", &[0, 2]),
+            ("a\r\nb", &[0, 3]),
+            ("\r\r\n", &[0, 1, 3]),
+            ("\n\n", &[0, 1, 2]),
+            ("a\u{2028}b\u{2029}c", &[0]),
+            ("line\n", &[0, 5]),
+            ("a\r", &[0, 2]),
+            ("a\r\n", &[0, 3]),
+            ("é\n😀\r\nx", &[0, 3, 9]),
+        ] {
+            assert_eq!(LineIndex::new(text).line_starts, expected, "{text:?}");
+        }
     }
 }

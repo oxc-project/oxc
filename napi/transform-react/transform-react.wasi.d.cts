@@ -270,7 +270,9 @@ export interface ReactCompilerOptions {
   /**
    * ESLint rule names whose suppressions opt a function out of compilation.
    * Defaults to `react-hooks/exhaustive-deps` and `react-hooks/rules-of-hooks`;
-   * pass an empty array to disable this behavior.
+   * pass an empty array to disable this behavior. Ignored unless
+   * `environment.validateHooksUsage` or
+   * `environment.validateExhaustiveMemoizationDependencies` is disabled.
    */
   eslintSuppressionRules?: Array<string>
   /**

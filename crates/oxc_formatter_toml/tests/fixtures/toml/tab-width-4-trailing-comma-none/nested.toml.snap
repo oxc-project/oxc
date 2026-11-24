@@ -1,0 +1,56 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+with_comments = [
+  1, # one
+  # own line
+  2,
+]
+nested = [["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb"], ["cccccccccccccccc", "dddddddddddddddd"], ["e"]]
+inline = { a = 1 # c
+, b = [1, 2] }
+single_commented = [
+  1 # only
+]
+
+==================== Output ====================
+------------------------------------------------------
+{ printWidth: 80, tabWidth: 4, trailingComma: "none" }
+------------------------------------------------------
+with_comments = [
+    1, # one
+    # own line
+    2
+]
+nested = [
+    ["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb"],
+    ["cccccccccccccccc", "dddddddddddddddd"],
+    ["e"]
+]
+inline = {
+    a = 1, # c
+    b = [1, 2]
+}
+single_commented = [
+    1 # only
+]
+
+-------------------------------------------------------
+{ printWidth: 100, tabWidth: 4, trailingComma: "none" }
+-------------------------------------------------------
+with_comments = [
+    1, # one
+    # own line
+    2
+]
+nested = [["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb"], ["cccccccccccccccc", "dddddddddddddddd"], ["e"]]
+inline = {
+    a = 1, # c
+    b = [1, 2]
+}
+single_commented = [
+    1 # only
+]
+
+===================== End =====================

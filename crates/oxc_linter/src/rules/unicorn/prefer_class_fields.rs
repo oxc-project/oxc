@@ -100,7 +100,7 @@ impl Rule for PreferClassFields {
             if let ClassElement::MethodDefinition(method) = element
                 && method.kind.is_constructor()
                 && !method.r#static
-                && !method.computed
+                && !method.key.is_computed()
             {
                 Some(method)
             } else {
@@ -142,7 +142,7 @@ impl Rule for PreferClassFields {
         // Check if there's an existing property definition with the same name
         let existing_property = class.body.body.iter().find(|element| {
             if let ClassElement::PropertyDefinition(prop) = element {
-                if prop.r#static || prop.computed {
+                if prop.r#static || prop.key.is_computed() {
                     return false;
                 }
 

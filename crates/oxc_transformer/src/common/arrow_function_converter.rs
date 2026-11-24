@@ -1109,10 +1109,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         // If no symbol ID, it means there is no variable named `arguments` in the scope.
         // The following code is just to sync semantics.
         if symbol_id.is_none() {
-            let reference = ctx.scoping_mut().get_reference_mut(reference_id);
-            reference.set_symbol_id(binding.symbol_id);
-            ctx.scoping_mut().delete_root_unresolved_reference(ident.name, reference_id);
-            ctx.scoping_mut().add_resolved_reference(binding.symbol_id, reference_id);
+            ctx.rebind_reference(reference_id, ident.name, binding.symbol_id);
         }
 
         ident.name = binding.name;
@@ -1314,19 +1311,19 @@ impl<'a> VisitJsMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
             match element {
                 // `class Inner { @(super()) [super()]() {} }`
                 //                  ^^^^^^^   ^^^^^^^
-                ClassElement::MethodDefinition(method) if method.computed => {
+                ClassElement::MethodDefinition(method) if method.key.is_computed() => {
                     self.visit_decorators(&mut method.decorators);
                     self.visit_property_key(&mut method.key);
                 }
                 // `class Inner { @(super()) [super()] = 123; }`
                 //                  ^^^^^^^   ^^^^^^^
-                ClassElement::PropertyDefinition(prop) if prop.computed => {
+                ClassElement::PropertyDefinition(prop) if prop.key.is_computed() => {
                     self.visit_decorators(&mut prop.decorators);
                     self.visit_property_key(&mut prop.key);
                 }
                 // `class Inner { @(super()) accessor [super()] = 123; }`
                 //                  ^^^^^^^            ^^^^^^^
-                ClassElement::AccessorProperty(prop) if prop.computed => {
+                ClassElement::AccessorProperty(prop) if prop.key.is_computed() => {
                     self.visit_decorators(&mut prop.decorators);
                     self.visit_property_key(&mut prop.key);
                 }

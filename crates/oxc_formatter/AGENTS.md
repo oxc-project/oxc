@@ -89,7 +89,7 @@ A host dispatches a part of its document (`format_to_ir`), its marker translated
 - `JsRoot`: what the code parses as, and how its kind prints
 - `JsEmbeddedIn`: what the host does with it, whatever the kind
 
-The formatter knows nothing about the host's vocabulary; it wraps the source to parse it as the root says.
+This formatter knows nothing about the host's vocabulary; it wraps the source to parse it as the root says.
 It drives the context-dependent decisions: the layout in the host's delimiters, the quote style, the handler's semicolons.
 The IR goes between the host's delimiters as is: the host names the layout (`ProgramLayout` / `ExpressionLayout`), and this builds it, hugging as the AST says.
 
@@ -98,15 +98,21 @@ The markers say how it reads (`JsEmbeddedIn`, `ExpressionRoot`'s flags, `Program
 
 - Where a print rule keeps the reading with what the formatter owns (a `;`, parens, a line break), it applies
 - Where none does, or the output would read otherwise for the host (code it does not accept would be accepted), `format_to_ir` returns `Err`: the host prints the code as written
-- Known gap: under `ExpressionRoot::ends_at_double_brace`, only an object is kept from printing `}}` (`print/embedded/expression.rs`);
+
+Known gaps, left as is for their cost (loud: the host fails to compile the output; silent: it reads otherwise unnoticed):
+
+- `ExpressionRoot::ends_at_double_brace` keeps only an object from printing `}}` (`print/embedded/expression.rs`);
   a function or class body right before another `}` can still print it (`${() => {}}`, `{a() {}}` without bracket spacing).
-  Left as is for the cost: which code prints a `}` last is every node kind ending in one (a body, a class, a TS type literal), or the printed text,
-  and whether a `}` follows it without bracket spacing is the printer's breaks; an object is the common case, and the one Prettier keeps (a property's value).
-  It is loud, not wrong: the host fails to compile the output, nothing reads otherwise unnoticed
-- Known gap: under `ProgramSemicolons::MarksStatements` with `semi: true`, code whose only `;` are empty statements can print none (`if (a) {};` prints `if (a) {}`),
-  which the host reads as an expression (Vue's `@click` fails to compile it).
-  Left as is for the cost: `semi: true` adds nested statements' `;` (`if (a) { b() };` prints `b();`), so telling it is a walk of every statement, function bodies included,
-  for code that runs next to nothing. Loud, not wrong, as above
+  Which code prints a `}` last is every node kind ending in one, and whether a `}` follows is the printer's breaks;
+  an object is the common case, and the one Prettier keeps. Loud
+- A `;` the formatter adds or drops below the top level can decide whether the code holds one, which the host reads it by (Vue's `exp.content.includes(';')`).
+  Telling it is a walk of every nested statement and TS type member:
+  - `ProgramSemicolons::MarksStatements` with `semi: true`: code whose only `;` are empty statements prints none (`if (a) {};` prints `if (a) {}`). Loud
+  - `ExpressionRoot::reads_as_statements`: a body's or a TS type literal's `;` becomes or stops being the only one
+    (`foo(() => { a() })` under `semi: true`, `(foo as { a: 1, b: 2 }).bar`).
+    Vue calls a reference or no longer does, or reports a rejected promise or no longer does. Silent, and rare (none in 2,350 real `.vue` files)
+- `JsEmbeddedIn::inlines_code` prints a TS `as` / `satisfies` the code is without its parens (`(foo as any)`),
+  which the host may put in code that reads it otherwise (Vue's cached handler `foo as any && foo as any(...args)` does not parse in a Vite build). Loud
 
 Each kind's wrapper, checks and printing live in `print/embedded/`, one module per kind;
 a host's new use is a new policy of a kind (Astro's frontmatter is a `Program`), or a new `JsRoot` variant and module there (Svelte's `{@const}`).
@@ -121,7 +127,7 @@ so no statement rule applies to it (no `;`, no ASI guard):
 - A root the host reads as statements (`ExpressionRoot::reads_as_statements`) starts one, as an expression statement does (`parentheses::expression::starts_statement`):
   a leading `{`, `function`, `class` or `let[` prints in parens
 
-The Svelte / Astro `<script>` Prettier formats goes through `prettier-plugin-oxfmt` (`format_with_session`). See `apps/oxfmt` in details.
+For now, Svelte and Astro are hosted (formatted) by Prettier, but `<script>` goes through `prettier-plugin-oxfmt` (`format_with_session`). See `apps/oxfmt` in details.
 
 ## Comments
 
@@ -133,6 +139,7 @@ Prettier's attachment artifacts that relocate a comment across tokens are diverg
 
 - Leading / trailing: the newline is the boundary, not the node's span.
   Trailing is the same-line run after content; a comment preceded by a newline is leading for what follows (`formatter/trivia.rs` module doc)
+  - Never `Comment::position` APIs (e.g. `is_trailing()`): the parser sets it for codegen, not for formatter's requirement
 - Deferred: left unprinted on purpose for a later pass (the next sibling's leading pass or the container's dangling pass)
 - Claim: a pass prints a comment and advances the cursor past it
 - Hide: a pass makes comments invisible to a sub-printer (`limit_comments_up_to`) so a later pass can print them
@@ -227,7 +234,7 @@ A suppression comment protects content; the token classes above still apply to w
   a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
   - A statement is decided before its own generated `fmt`, so leading and trailing comments take one path and a pre-`export` decorator is inside the ignored range (`statement_span`)
-  - A `for` head declaration has no terminator of its own and stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
+  - A `for` head declaration has no terminator of its own and stays verbatim
 - Expressions: `write_suppressed_expression` (`utils/suppressed.rs`) owns the whole sequence for expression-shaped nodes
   (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed),
   so a cast target keeps its source cast parens (`utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range
@@ -293,9 +300,12 @@ The second line of each item is the drift symptom.
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
 
-### Open debts
+## Open debts
 
-Behavior our own rules want otherwise, mostly where it follows Prettier. Not accepted, only not fixed yet; each fix is a DIVERGENCES entry plus a fixture pin.
+Behavior our own rules want otherwise, mostly where it follows Prettier.
+Not accepted, only not fixed yet (for compatibility).
+
+### Comments
 
 - TS-only statements (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`)
   and class index signatures keep a same-line comment before their `;` (`import A = B /* c */;`), instead of the glued `;` above.
@@ -316,10 +326,22 @@ Behavior our own rules want otherwise, mostly where it follows Prettier. Not acc
 - An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
   crossing the `(` onto the previous line (`outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
   The hug decision follows that placement (`first_member_comment`), so a fix changes both
-- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
-  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
+- An own-line comment right after a heritage keyword (`extends` / `implements`, a class's or an interface's) crosses it:
+  `class A extends` + break + `// c` + break + `B {}` prints `class A` + break + `// c` + break + `extends B {}` (Prettier too),
+  and in a class without a name the comment is flushed past the whole statement, not a fixpoint (`should_group` sees no span before the superclass).
+  The class head claims every comment before the superclass as the name's trailing ones; the fix bounds that at the keyword
+  and breaks + indents after it, as after `=` (Prettier prints that for an `implements` after an `extends`)
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
+
+### Layout
+
+- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
+  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
+- Only a member expression superclass without type arguments moves `extends` to the next line (`should_group`, prettier#18325);
+  any other breaks inside itself, so `class X extends a.B<T> {}` overflows when neither `a.B` nor `<T>` can break (Prettier too).
+  Moving it always is worse: a superclass breaking inside anyway only gets indented deeper (`extends Modal<` + break + ... + `>` + break + `{`).
+  The fix moves it only when it then fits, a fits check in the class head
 
 ## Verification
 

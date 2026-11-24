@@ -16,6 +16,7 @@ use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
 // Re-export flags and ID types
 pub use oxc_syntax::{
+    label::LabelId,
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},

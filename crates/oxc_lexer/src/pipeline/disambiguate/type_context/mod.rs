@@ -24,6 +24,7 @@ mod runs;
 mod tsx;
 mod type_list;
 
+pub(super) use bytes::arrow_type_params_at;
 pub use bytes::lt_run_split;
 pub use runs::gt_run_split;
 pub use tsx::jsx_over_generic;

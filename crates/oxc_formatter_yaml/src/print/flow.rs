@@ -1,7 +1,7 @@
 use oxc_formatter_core::{
     builders::{
-        align, group, hard_line_break, if_group_breaks, soft_line_break, soft_line_break_or_space,
-        text,
+        align, empty_line, group, hard_line_break, if_group_breaks, soft_line_break,
+        soft_line_break_or_space,
     },
     write,
 };
@@ -120,17 +120,14 @@ fn write_bracket_spacing(spaced: bool, f: &mut YamlFormatter<'_, '_>) {
 /// `line` between entries, plus an extra newline when the source had a blank line
 /// (Prettier's `printNextEmptyLine` inside flow children).
 ///
-/// The blank line must appear only when the collection breaks and must not force it to break,
-/// so it is a raw `\n` behind `if_group_breaks` with expand-propagation suppressed
-/// (the following `line` re-arms indentation: after the raw newline the printer sees an empty line and emits none itself).
+/// The blank line must appear only when the collection breaks and must not force it to break
+/// (see [`Line::without_expand_parent`](oxc_formatter_core::builders::Line::without_expand_parent)).
 fn write_entry_separator(prev_end: u32, next_start: u32, f: &mut YamlFormatter<'_, '_>) {
     let anchor = gap_upper_bound(next_start, f);
     if anchor > prev_end {
         let gap = f.context().source_text().bytes_range(prev_end, anchor);
         if classify_gap(gap) == Gap::Blank {
-            // The raw text supplies BOTH newlines;
-            // the following `line` then finds itself at a fresh line and only re-arms indentation.
-            write!(f, if_group_breaks(&text("\n\n").without_expand_parent()));
+            write!(f, if_group_breaks(&empty_line().without_expand_parent()));
         }
     }
     write!(f, soft_line_break_or_space());

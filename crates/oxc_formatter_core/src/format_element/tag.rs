@@ -73,7 +73,8 @@ pub enum Tag {
     /// Marks the current indention as the root that [LineMode::Literal](super::LineMode::Literal)
     /// line breaks and [DedentMode::Root] dedents return to.
     /// See [crate::builders::mark_as_root] for documentation.
-    StartMarkAsRoot,
+    /// `true` is an [crate::builders::embedded_root].
+    StartMarkAsRoot(bool),
     EndMarkAsRoot,
 }
 
@@ -100,7 +101,7 @@ impl Tag {
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
                 | Tag::StartLabelled(_)
-                | Tag::StartMarkAsRoot
+                | Tag::StartMarkAsRoot(_)
         )
     }
 
@@ -130,7 +131,7 @@ impl Tag {
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
-            StartMarkAsRoot | EndMarkAsRoot => TagKind::MarkAsRoot,
+            StartMarkAsRoot(_) | EndMarkAsRoot => TagKind::MarkAsRoot,
         }
     }
 }

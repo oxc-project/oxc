@@ -1,9 +1,21 @@
 use cow_utils::CowUtils;
 use oxc_ast::ast::NumericLiteral;
-use oxc_syntax::number::NumberBase;
 use std::borrow::Cow;
 
 const MAX_OBVIOUSLY_SAFE_SIGNIFICANT_DIGITS: usize = 15;
+
+/// Base of a numeric or BigInt literal, as written in source.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NumberBase {
+    /// Decimal literal, including with a fraction or exponent (`123`, `1.5`, `1e3`, `08`, `123n`)
+    Decimal,
+    /// Binary literal (`0b1`, `0b1n`)
+    Binary,
+    /// Octal literal (`0o7`, `0o7n`), including legacy octal (`017`)
+    Octal,
+    /// Hexadecimal literal (`0xF`, `0xFn`)
+    Hex,
+}
 
 struct RawNum<'a> {
     int: &'a str,
@@ -124,6 +136,16 @@ fn strip_numeric_separators(raw: &str) -> Cow<'_, str> {
         return Cow::Borrowed(raw);
     }
     raw.cow_replace('_', "")
+}
+
+/// Drops a `.` that no digit follows (`5.`, `1.e5`), as ESLint does: it
+/// doesn't make the literal a float, so its trailing zeros stay insignificant.
+fn without_empty_fraction(raw: &str) -> Cow<'_, str> {
+    let mantissa_end = raw.find(['e', 'E']).unwrap_or(raw.len());
+    if mantissa_end == 0 || raw.as_bytes()[mantissa_end - 1] != b'.' {
+        return Cow::Borrowed(raw);
+    }
+    Cow::Owned(format!("{}{}", &raw[..mantissa_end - 1], &raw[mantissa_end..]))
 }
 
 fn non_base_ten_literal_is_exact(raw: &str) -> bool {
@@ -247,18 +269,17 @@ fn base_ten_literal_is_safe(raw: &str, value: f64) -> bool {
     last_significant - first_non_zero < MAX_OBVIOUSLY_SAFE_SIGNIFICANT_DIGITS
 }
 
-fn not_base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
-    let raw = node.raw.as_ref().unwrap().as_str();
+fn not_base_ten_loses_precision(node: &'_ NumericLiteral, raw: &str) -> bool {
     !node.value.is_finite() || !non_base_ten_literal_is_exact(raw)
 }
 
-fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
-    let raw = node.raw.as_ref().unwrap().as_str();
+fn base_ten_loses_precision(node: &'_ NumericLiteral, raw: &str) -> bool {
     if base_ten_literal_is_safe(raw, node.value) {
         return false;
     }
 
     let raw = strip_numeric_separators(raw);
+    let raw = without_empty_fraction(&raw);
     let Some(raw) = normalize(&raw, false) else {
         return true;
     };
@@ -285,19 +306,50 @@ fn normalize(num: &str, parse_as_float: bool) -> Option<ScientificNotation<'_>> 
     Some(RawNum::new(num)?.normalize(parse_as_float))
 }
 
+/// Get the [`NumberBase`] of a numeric or BigInt literal from its raw source text.
+///
+/// Decimal literals with a fraction or exponent (`1.5`, `1e3`) are [`NumberBase::Decimal`].
+/// Callers which need to distinguish them must check for `.`, `e` or `E` themselves.
+pub fn number_base(raw: &str) -> NumberBase {
+    let bytes = raw.as_bytes();
+    if bytes.len() >= 2 && bytes[0] == b'0' {
+        // `| 32` converts ASCII letters to lower case
+        match bytes[1] | 32 {
+            b'b' => return NumberBase::Binary,
+            b'o' => return NumberBase::Octal,
+            b'x' => return NumberBase::Hex,
+            _ => {}
+        }
+
+        // Legacy octal literals contain only octal digits.
+        // A `0`-prefixed literal containing `8` or `9` is decimal (`08`, `08.5`).
+        if bytes[1..].iter().all(|&b| matches!(b, b'0'..=b'7')) {
+            return NumberBase::Octal;
+        }
+    }
+
+    NumberBase::Decimal
+}
+
 pub fn loses_precision(node: &'_ NumericLiteral) -> bool {
-    if node.base.is_base_10() {
-        base_ten_loses_precision(node)
+    let raw = node.raw.as_ref().unwrap().as_str();
+    if number_base(raw) == NumberBase::Decimal {
+        base_ten_loses_precision(node, raw)
     } else {
-        not_base_ten_loses_precision(node)
+        not_base_ten_loses_precision(node, raw)
     }
 }
 
 /// Unlike `loses_precision`, integer fixes must preserve every digit, including trailing zeros.
 pub fn integer_literal_loses_precision(node: &NumericLiteral) -> bool {
     let raw = node.raw.as_ref().unwrap().as_str();
-    if node.base != NumberBase::Decimal || raw.contains(['e', 'E']) {
-        return loses_precision(node);
+
+    if number_base(raw) != NumberBase::Decimal {
+        return not_base_ten_loses_precision(node, raw);
+    }
+
+    if has_fraction_or_exponent(raw) {
+        return base_ten_loses_precision(node, raw);
     }
 
     // Decimal integer literals in the safe integer range are always exact.
@@ -310,6 +362,13 @@ pub fn integer_literal_loses_precision(node: &NumericLiteral) -> bool {
         .filter(|&byte| byte != b'_')
         .skip_while(|&byte| byte == b'0')
         .eq(stored.bytes().skip_while(|&byte| byte == b'0'))
+}
+
+/// Check if a decimal numeric literal has a fraction or exponent (`1.5`, `1.`, `1e3`, `1E3`).
+///
+/// Only valid for decimal literals. Hex literals can contain `e` or `E` (`0xE`).
+pub fn has_fraction_or_exponent(raw: &str) -> bool {
+    raw.bytes().any(|b| matches!(b, b'.' | b'e' | b'E'))
 }
 
 /// `flt_str_to_exp` - used in `to_precision`

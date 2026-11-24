@@ -23,8 +23,9 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, ClientMessage, CodeActionParams, ConcurrentHashMap, DiagnosticMode,
-    DiagnosticResult, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
-    uri_utils::uri_to_file_path, utils::normalize_user_config_path_to_watch_pattern,
+    DiagnosticResult, LineIndex, TextDocument, Tool, ToolBuildResult, ToolBuilder,
+    ToolRestartChanges, uri_utils::uri_to_file_path,
+    utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::lsp::utils::{config_loader_error_to_message, oxc_diagnostic_to_client_message};
@@ -152,13 +153,14 @@ impl ServerLinterBuilder {
         // so the `root_path` fallback is an arbitrary placeholder.
         let base_ignore_root = oxlintrc.dir().unwrap_or(&root_path).to_path_buf();
 
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
+        let config_builder = match ConfigLoader::new(
             external_linter,
             &mut external_plugin_store,
+            &[],
             Some(root_uri.as_ref()),
-        ) {
+        )
+        .create_config_builder(oxlintrc)
+        {
             Ok(builder) => builder,
             Err(e) => {
                 client_messages.insert(ClientMessage {
@@ -856,6 +858,7 @@ impl ServerLinter {
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
+        let line_index = LineIndex::new(source_text);
         let mut messages: Vec<DiagnosticReport> =
             match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
                 Ok(results) => results
@@ -864,7 +867,7 @@ impl ServerLinter {
                         message_to_lsp_diagnostic(
                             message,
                             uri,
-                            source_text,
+                            &line_index,
                             self.rules_customization.as_ref(),
                         )
                     })
@@ -885,7 +888,7 @@ impl ServerLinter {
         if let Some(severity) = self.unused_directives_severity
             && let Some(directives) = directives
         {
-            messages.extend(create_unused_directives_report(&directives, severity, source_text));
+            messages.extend(create_unused_directives_report(&directives, severity, &line_index));
         }
         Ok(messages)
     }

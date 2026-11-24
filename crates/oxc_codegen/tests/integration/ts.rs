@@ -11,6 +11,30 @@ use crate::{
 };
 
 #[test]
+fn infinite_numeric_literals() {
+    use oxc_allocator::Allocator;
+    use oxc_ast::{ast::*, builder::AstBuilder};
+    use oxc_codegen::{Codegen, Context, Gen};
+    use oxc_span::SPAN;
+
+    test_ts("type T = { 2e308: 2e308 };", "type T = {\n\t2e308: 2e308;\n};\n");
+
+    let allocator = Allocator::new();
+    let ast = AstBuilder::new(&allocator);
+    let key = PropertyKey::new_static_numeric_literal(SPAN, f64::INFINITY, None, &ast);
+    let literal = TSLiteral::new_numeric_literal(SPAN, f64::INFINITY, None, &ast);
+    let ctx = Context::default().with_typescript();
+
+    for options in [CodegenOptions::default(), CodegenOptions::minify()] {
+        let mut codegen = Codegen::new().with_options(options);
+        key.print(&mut codegen, ctx);
+        codegen.print_str(":");
+        literal.print(&mut codegen, ctx);
+        assert_eq!(codegen.into_source_text(), "1e400:1e400");
+    }
+}
+
+#[test]
 fn abstract_accessor_modifiers() {
     test_ts(
         "abstract class C { public abstract accessor x: number; protected abstract accessor y: string; }",
@@ -84,6 +108,7 @@ fn cases() {
     test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
     test_same("type T = A & (B extends C ? D : E);\n");
     test_same("type T = (A | B) & C;\n");
+    test_same("type T = (keyof asserts) extends string ? 1 : 2;\n");
     test_same("declare interface A {}\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const T,>() {}\n");
@@ -388,6 +413,41 @@ fn minify_conditional_type_space() {
 }
 
 #[test]
+fn minify_conditional_type_compound_space() {
+    let options = CodegenOptions::minify();
+    for (source, expected) in [
+        (
+            "type T<X> = X extends infer I & {} ? I : never;",
+            "type T<X>=X extends(infer I)&{}?I:never;",
+        ),
+        (
+            "type T<X> = X extends infer I | {} ? I : never;",
+            "type T<X>=X extends(infer I)|{}?I:never;",
+        ),
+        (
+            "type T<X> = X extends infer I & {} | [] ? I : never;",
+            "type T<X>=X extends(infer I)&{}|[]?I:never;",
+        ),
+        (
+            "type T<X> = X extends {} & infer I ? I : never;",
+            "type T<X>=X extends{}&(infer I)?I:never;",
+        ),
+        (
+            "type T<X> = X extends A | infer I ? I : never;",
+            "type T<X>=X extends A|(infer I)?I:never;",
+        ),
+        (
+            "type T<X> = X extends A & infer I ? I : never;",
+            "type T<X>=X extends A&(infer I)?I:never;",
+        ),
+        ("type T<X> = X extends infer I ? I : never;", "type T<X>=X extends infer I?I:never;"),
+    ] {
+        test_options_with_source_type(source, expected, SourceType::ts(), options.clone());
+        test_options_with_source_type(expected, expected, SourceType::ts(), options.clone());
+    }
+}
+
+#[test]
 fn minify_export_type_star() {
     let min = |src: &str, expected: &str| {
         test_options_with_source_type(src, expected, SourceType::ts(), CodegenOptions::minify());
@@ -488,6 +548,27 @@ fn ts_instantiation_expression() {
 
 #[test]
 fn ts_instantiation_expression_precedence() {
+    for (source, expected, minified) in [
+        ("(f<T>) + x", "(f<T>) + x", "(f<T>)+x"),
+        ("(f<T>) - x", "(f<T>) - x", "(f<T>)-x"),
+        ("(f<T>) < x", "(f<T>) < x", "(f<T>)<x"),
+        ("(f<T>) > x", "(f<T>) > x", "(f<T>)>x"),
+        ("x + (f<T>) - y", "x + (f<T>) - y", "x+(f<T>)-y"),
+        ("(a++)<T>", "(a++)<T>", "(a++)<T> "),
+        ("(f<T>)<U>", "(f<T>)<U>", "(f<T>)<U> "),
+        ("(new C)<T>", "new C()<T>", "new C()<T> "),
+    ] {
+        let expected = format!("{expected};\n");
+        let minified = format!("{minified};");
+        test_ts(source, &expected);
+        test_options_with_source_type(
+            source,
+            &minified,
+            SourceType::ts(),
+            CodegenOptions::minify(),
+        );
+        test_ts(&minified, &expected);
+    }
     for source in
         ["(f<T>).x", "(f<T>)[x]", "(f<T>)()", "new (f<T>)()", "(f<T>)`text`", "((a ?? b)<T>).x"]
     {
@@ -506,6 +587,21 @@ fn ts_instantiation_expression_precedence() {
 }
 
 #[test]
+fn minify_new_expression_type_arguments() {
+    for (source, minified) in [
+        ("new C<T>() + x", "new C<T>()+x;"),
+        ("new C<T>() - x", "new C<T>()-x;"),
+        ("new C<T>() < x", "new C<T>()<x;"),
+        ("new C<T>() > x", "new C<T>()>x;"),
+        ("new C<T>()", "new C<T>();"),
+        ("new C()", "new C;"),
+    ] {
+        test_options_with_source_type(source, minified, SourceType::ts(), CodegenOptions::minify());
+        test_ts(minified, &format!("{source};\n"));
+    }
+}
+
+#[test]
 fn ts_satisfies_expression() {
     test_same("(foo satisfies null) | ~\"\";\n");
     test_same("(foo satisfies null) & ~\"\";\n");
@@ -518,6 +614,37 @@ fn ts_satisfies_expression() {
     test_idempotency("x satisfies Y || z");
     test_idempotency("x satisfies Y && z");
     test_idempotency("x satisfies Y === z");
+}
+
+#[test]
+fn enum_initializer_sequence_expression() {
+    let source = "enum E { A = (f(), x = 2), B }";
+    test_ts(source, "enum E {\n\tA = (f(), x = 2),\n\tB\n}\n");
+    test_options_with_source_type(
+        source,
+        "enum E{A=(f(),x=2),B}",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+}
+
+#[test]
+fn decorator_parens_with_preserve_parens_off() {
+    let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
+    for (source, expected) in [
+        ("@(factory().decorate) class C {}", "@(factory().decorate) class C {}\n"),
+        ("@(factory()()) class C {}", "@(factory()()) class C {}\n"),
+        ("@(a.b().c()) class C {}", "@(a.b().c()) class C {}\n"),
+        ("@(this.x) class C {}", "@(this.x) class C {}\n"),
+        ("@(factory.decorate()) class C {}", "@factory.decorate() class C {}\n"),
+        (
+            "class A { #x; @(a.#x.y) m() {} @(f().#x) n() {} }",
+            "class A {\n\t#x;\n\t@a.#x.y m() {}\n\t@(f().#x) n() {}\n}\n",
+        ),
+        ("@(a.b<T>()) class C {}", "@a.b<T>() class C {}\n"),
+    ] {
+        test_with_parse_options(source, expected, parse_options);
+    }
 }
 
 #[test]
@@ -582,6 +709,119 @@ fn type_codegen_with_preserve_parens_off() {
         "type t = string | intrinsic;\n",
         parse_options,
     );
+    // A bare `asserts` reference followed by a keyword re-parses as an `asserts x` predicate.
+    test_with_parse_options(
+        "type R = (asserts) extends string ? 1 : 2;",
+        "type R = (asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = keyof (asserts) extends string ? 1 : 2;",
+        "type R = (keyof asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = number | (asserts) extends string ? 1 : 2;",
+        "type R = (number | asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = number & (asserts) extends string ? 1 : 2;",
+        "type R = (number & asserts) extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in (asserts) as K]: 1 };",
+        "type R = { [K in (asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in () => (asserts) as K]: 1 };",
+        "type R = { [K in (() => asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in new () => (asserts) as K]: 1 };",
+        "type R = { [K in (new () => asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in string extends 1 ? 2 : (asserts) as K]: 1 };",
+        "type R = { [K in (string extends 1 ? 2 : asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in (asserts)]: 1 };",
+        "type R = { [K in asserts]: 1 };\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "let b = (x satisfies (asserts)) in x;",
+        "let b = x satisfies (asserts) in x;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "let c = (x as (asserts)) instanceof Object;",
+        "let c = x as (asserts) instanceof Object;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "let e = (x as (y: any) => y is (asserts)) in x;",
+        "let e = x as ((y: any) => y is asserts) in x;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = (asserts)[] extends string ? 1 : 2;",
+        "type R = asserts[] extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = asserts<string> extends string ? 1 : 2;",
+        "type R = asserts<string> extends string ? 1 : 2;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = X extends { [K in infer U extends (asserts) as K]: 1 } ? U : never;",
+        "type R = X extends { [K in (infer U extends asserts) as K]: 1 } ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = X extends [(infer U extends (asserts)) extends string ? 1 : 2] ? U : never;",
+        "type R = X extends [(infer U extends asserts) extends string ? 1 : 2] ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "let d = (x as !(asserts)) in x;",
+        "let d = x as (!asserts) in x;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type R = { [K in ?(asserts) as K]: 1 };",
+        "type R = { [K in (?asserts) as K]: 1 };\n",
+        parse_options,
+    );
+    // A conditional `infer` constraint keeps its parentheses,
+    // but one in a function's return type needs none.
+    test_with_parse_options(
+        "type F = X extends infer U extends (true extends true ? string : number) ? U : never;",
+        "type F = X extends infer U extends (true extends true ? string : number) ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type F = X extends [infer U extends (string extends X ? 1 : 2)] ? U : never;",
+        "type F = X extends [infer U extends (string extends X ? 1 : 2)] ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type F = X extends [infer U extends (string)] ? U : never;",
+        "type F = X extends [infer U extends string] ? U : never;\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type F = X extends [infer U extends () => (string extends X ? 1 : 2)] ? U : never;",
+        "type F = X extends [infer U extends () => string extends X ? 1 : 2] ? U : never;\n",
+        parse_options,
+    );
 }
 
 #[test]
@@ -598,4 +838,16 @@ fn ts_cast_assignment_target_is_parenthesized() {
     );
     test_idempotency("(foo as Bar) = baz");
     test_idempotency("(foo satisfies Bar) = baz");
+}
+
+#[test]
+fn export_assignment_sequence_expression() {
+    let source = "export = (f(), value);";
+    test_ts(source, "export = (f(), value);\n");
+    test_options_with_source_type(
+        source,
+        "export = (f(),value);",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
 }

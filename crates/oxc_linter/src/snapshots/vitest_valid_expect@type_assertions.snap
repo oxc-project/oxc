@@ -1,0 +1,108 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(valid-expect): Expect has an unknown modifier.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expectTypeOf(value).to.toMatchTypeOf();
+   · ──────────────────────────────────────
+   ╰────
+  help: Is it a spelling mistake?
+
+  ⚠ vitest(valid-expect): Expect must have a corresponding matcher call.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expectTypeOf<number>();
+   · ──────────────────────
+   ╰────
+  help: Did you forget to add a matcher, e.g. `toBe`, `toBeDefined`
+
+  ⚠ vitest(valid-expect): Expect must have a corresponding matcher call.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ (expectTypeOf)<number>();
+   · ────────────────────────
+   ╰────
+  help: Did you forget to add a matcher, e.g. `toBe`, `toBeDefined`
+
+  ⚠ vitest(valid-expect): Expect must have a corresponding matcher call.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ (expectTypeOf<number>)();
+   · ────────────────────────
+   ╰────
+  help: Did you forget to add a matcher, e.g. `toBe`, `toBeDefined`
+
+  ⚠ vitest(valid-expect): Matchers must be called to assert.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expectTypeOf<number>().toEqualTypeOf<number>;
+   · ────────────────────────────────────
+   ╰────
+  help: You need to call your matcher, e.g. `expect(true).toBe(true)`.
+
+  ⚠ vitest(valid-expect): Expect must have a corresponding matcher call.
+   ╭─[valid_expect.tsx:1:9]
+ 1 │ consume(expectTypeOf<number>() satisfies unknown);
+   ·         ──────────────────────
+   ╰────
+  help: Did you forget to add a matcher, e.g. `toBe`, `toBeDefined`
+
+  ⚠ vitest(valid-expect): Matchers must be called to assert.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ (expectTypeOf<number>()).toBeNumber;
+   · ───────────────────────────────────
+   ╰────
+  help: You need to call your matcher, e.g. `expect(true).toBe(true)`.
+
+  ⚠ vitest(valid-expect): Matchers must be called to assert.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expectTypeOf<number>()!.toBeNumber;
+   · ──────────────────────────────────
+   ╰────
+  help: You need to call your matcher, e.g. `expect(true).toBe(true)`.
+
+  ⚠ vitest(valid-expect): Matchers must be called to assert.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ (expectTypeOf<number>().returns as unknown).toBeNumber;
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: You need to call your matcher, e.g. `expect(true).toBe(true)`.
+
+  ⚠ vitest(valid-expect): Expect must have a corresponding matcher call.
+   ╭─[valid_expect.tsx:1:10]
+ 1 │ consume((expectTypeOf<number>()));
+   ·          ──────────────────────
+   ╰────
+  help: Did you forget to add a matcher, e.g. `toBe`, `toBeDefined`
+
+  ⚠ vitest(valid-expect): Expect must have a corresponding matcher call.
+   ╭─[valid_expect.tsx:1:9]
+ 1 │ consume(expectTypeOf<number>());
+   ·         ──────────────────────
+   ╰────
+  help: Did you forget to add a matcher, e.g. `toBe`, `toBeDefined`
+
+  ⚠ vitest(valid-expect): Matchers must be called to assert.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expectTypeOf(value).toEqualTypeOf;
+   · ─────────────────────────────────
+   ╰────
+  help: You need to call your matcher, e.g. `expect(true).toBe(true)`.
+
+  ⚠ vitest(valid-expect): Expect has an unknown modifier.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expectTypeOf(value).returns();
+   · ─────────────────────────────
+   ╰────
+  help: Is it a spelling mistake?
+
+  ⚠ vitest(valid-expect): Expect has an unknown modifier.
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expectTypeOf(value).not.returns.not.toBeNumber();
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Is it a spelling mistake?
+
+  ⚠ vitest(valid-expect): Expect must have a corresponding matcher call.
+   ╭─[valid_expect.tsx:1:54]
+ 1 │ import { expectTypeOf as assertType } from 'vitest'; assertType(value);
+   ·                                                      ─────────────────
+   ╰────
+  help: Did you forget to add a matcher, e.g. `toBe`, `toBeDefined`

@@ -10,34 +10,90 @@ use oxc_str::{JSStr, Str};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
-pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
-    let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
-        TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
-        TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
-        _ => {
-            return;
+pub fn check_jsdoc_nullable_type(ty: &JSDocNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    let mut union = SuggestedUnion::default();
+    union.add(&ty.type_annotation);
+    if !union.is_never_or_void() {
+        union.null |= !ty.postfix;
+        union.undefined = true;
+    }
+    let suggestion = union.to_source(ctx.source_text);
+    ctx.error(diagnostics::jsdoc_type_modifier('?', !ty.postfix, ty.span, &suggestion));
+}
+
+pub fn check_jsdoc_non_nullable_type(ty: &JSDocNonNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    let mut union = SuggestedUnion::default();
+    union.add(&ty.type_annotation);
+    let suggestion = union.to_source(ctx.source_text);
+    ctx.error(diagnostics::jsdoc_type_modifier('!', !ty.postfix, ty.span, &suggestion));
+}
+
+/// Approximates the type which TypeScript suggests for a JSDoc type modifier with
+/// `strictNullChecks`: `T?` is `T | undefined`, `?T` is `T | null | undefined`, and `T!` is `T`.
+#[derive(Default)]
+struct SuggestedUnion<'a, 'b> {
+    types: Vec<&'b TSType<'a>>,
+    null: bool,
+    undefined: bool,
+    any: bool,
+    unknown: bool,
+}
+
+impl<'a, 'b> SuggestedUnion<'a, 'b> {
+    fn add(&mut self, ty: &'b TSType<'a>) {
+        match ty {
+            TSType::TSParenthesizedType(ty) => self.add(&ty.type_annotation),
+            TSType::JSDocNonNullableType(ty) => self.add(&ty.type_annotation),
+            TSType::JSDocNullableType(ty) => {
+                self.add(&ty.type_annotation);
+                self.null = true;
+            }
+            TSType::TSUnionType(ty) => ty.types.iter().for_each(|ty| self.add(ty)),
+            TSType::TSNullKeyword(_) => self.null = true,
+            TSType::TSUndefinedKeyword(_) => self.undefined = true,
+            TSType::TSAnyKeyword(_) => self.any = true,
+            TSType::TSUnknownKeyword(_) => self.unknown = true,
+            TSType::TSNeverKeyword(_) => {}
+            _ => self.types.push(ty),
         }
-    };
+    }
 
-    let valid_type_span = if is_start {
-        span_with_illegal_modifier.shrink_left(1)
-    } else {
-        span_with_illegal_modifier.shrink_right(1)
-    };
+    fn is_never_or_void(&self) -> bool {
+        !(self.null || self.undefined || self.any || self.unknown)
+            && matches!(self.types.as_slice(), [] | [TSType::TSVoidKeyword(_)])
+    }
 
-    let suggestion = &ctx.source_text[valid_type_span];
-    let suggestion = if modifier == '?' {
-        Cow::Owned(format!("{suggestion} | null | undefined"))
-    } else {
-        Cow::Borrowed(suggestion)
-    };
+    fn to_source(&self, source_text: &str) -> String {
+        if self.any {
+            return "any".to_string();
+        }
+        if self.unknown {
+            return "unknown".to_string();
+        }
+        let is_union = self.types.len() + usize::from(self.null) + usize::from(self.undefined) > 1;
+        let types = self.types.iter().map(|ty| {
+            let text = &source_text[ty.span()];
+            let needs_parens = is_union
+                && matches!(
+                    ty,
+                    TSType::TSFunctionType(_)
+                        | TSType::TSConstructorType(_)
+                        | TSType::TSConditionalType(_)
+                        | TSType::TSIntersectionType(_)
+                );
+            if needs_parens { Cow::Owned(format!("({text})")) } else { Cow::Borrowed(text) }
+        });
+        let nullish = [self.null.then_some("null"), self.undefined.then_some("undefined")]
+            .into_iter()
+            .flatten()
+            .map(Cow::Borrowed);
+        let suggestion = types.chain(nullish).join(" | ");
+        if suggestion.is_empty() { "never".to_string() } else { suggestion }
+    }
+}
 
-    ctx.error(diagnostics::jsdoc_type_in_annotation(
-        modifier,
-        is_start,
-        span_with_illegal_modifier,
-        &suggestion,
-    ));
+pub fn check_jsdoc_unknown_type(ty: &JSDocUnknownType, ctx: &SemanticBuilder<'_>) {
+    ctx.error(diagnostics::jsdoc_type(ty.span));
 }
 
 pub fn check_ts_type_predicate(predicate: &TSTypePredicate<'_>, ctx: &SemanticBuilder<'_>) {
@@ -224,7 +280,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
                     // E = -1
                     | Expression::UnaryExpression(_)
             );
-        } else if need_initializer {
+        } else if need_initializer && (decl.r#const || !ctx.in_ambient_context()) {
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
     });

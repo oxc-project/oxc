@@ -144,7 +144,6 @@ fn load_babel(filter: Option<&str>) -> Vec<BabelFile> {
             "module-block",
             "typescript/arrow-function/arrow-like-in-conditional-2",
             "typescript/cast/satisfies-const-error",
-            "es2022/top-level-await-unambiguous",
             "explicit-resource-management/valid-for-await-using-binding-escaped-of-of",
             "explicit-resource-management/valid-for-using-binding-escaped-of-of",
         ]

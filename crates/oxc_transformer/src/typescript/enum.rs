@@ -9,7 +9,6 @@ use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
-    number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::{ReferenceFlags, ReferenceId},
     symbol::SymbolFlags,
@@ -538,7 +537,7 @@ impl<'a> TypeScriptEnum {
     }
 
     fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
-        Expression::new_numeric_literal(SPAN, value, None, NumberBase::Decimal, ctx)
+        Expression::new_numeric_literal(SPAN, value, None, ctx)
     }
 
     fn get_initializer_expr(value: f64, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {

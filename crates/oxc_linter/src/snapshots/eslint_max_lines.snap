@@ -10,6 +10,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Maximum allowed is 2.
 
+  ⚠ eslint(max-lines): File has too many lines (3).
+   ╭─[max_lines.tsx:3:9]
+ 2 │ var xyz;
+ 3 │ var xyz;
+   ·         ▲
+   ╰────
+  help: Maximum allowed is 2.
+
+  ⚠ eslint(max-lines): File has too many lines (3).
+   ╭─[max_lines.tsx:3:5]
+ 2 │ var xyz;
+ 3 │ var é
+   ·     ▲
+   ╰────
+  help: Maximum allowed is 2.
+
   ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:4:7]
  3 │ var xy;

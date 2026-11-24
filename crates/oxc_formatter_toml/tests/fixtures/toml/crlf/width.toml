@@ -1,0 +1,9 @@
+# The 2nd line is exactly 80 / 100 columns, the `\r` of CRLF takes none
+inner_80 = [
+  ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+  [1, 2],
+]
+inner_100 = [
+  ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+  [1, 2],
+]

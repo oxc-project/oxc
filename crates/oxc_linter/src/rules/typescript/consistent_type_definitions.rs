@@ -11,6 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 use crate::{
     AstNode,
@@ -89,7 +90,8 @@ declare_oxc_lint!(
     conditional_fix_dangerous,
     config = ConsistentTypeDefinitionsConfig,
     version = "0.2.17",
-    short_description = "Enforce type definitions to consistently use either `interface` or `type`.",
+    short_description =
+        "Enforce type definitions to consistently use either `interface` or `type`.",
 );
 
 impl Rule for ConsistentTypeDefinitions {
@@ -175,10 +177,13 @@ impl Rule for ConsistentTypeDefinitions {
                         Span::sized(decl.span.start, 9),
                     );
 
+                    let semicolon = if needs_semicolon_after(exp.span.end, ctx) { ";" } else { "" };
                     let fix = |fixer: RuleFixer<'_, 'a>| {
                         fixer.replace(
                             exp.span,
-                            format!("type {name} = {body}{extends}\nexport default {name}"),
+                            format!(
+                                "type {name} = {body}{extends}\nexport default {name}{semicolon}"
+                            ),
                         )
                     };
                     if is_within_declare_global_block(ctx, node.id()) {
@@ -225,10 +230,11 @@ impl Rule for ConsistentTypeDefinitions {
                     Span::sized(start, 9),
                 );
 
+                let semicolon = if needs_semicolon_after(decl.span.end, ctx) { ";" } else { "" };
                 let fix = |fixer: RuleFixer<'_, 'a>| {
                     fixer.replace(
                         Span::new(start, decl.span.end),
-                        format!("type {name} = {body}{extends}"),
+                        format!("type {name} = {body}{extends}{semicolon}"),
                     )
                 };
                 if is_within_declare_global_block(ctx, node.id()) {
@@ -250,6 +256,30 @@ fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
     ctx.nodes()
         .ancestors(node_id)
         .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
+}
+
+/// Whether the code after `end` is on the same line, so a type alias that ends at `end`
+/// needs a `;`: `interface A {} foo()` becomes `type A = {}; foo()`.
+fn needs_semicolon_after(end: u32, ctx: &LintContext) -> bool {
+    let mut pos = end;
+    loop {
+        let rest = &ctx.source_text()[pos as usize..];
+        let Some((offset, c)) = rest.char_indices().find(|&(_, c)| !is_white_space(c)) else {
+            return false;
+        };
+        #[expect(clippy::cast_possible_truncation)]
+        let start = pos + offset as u32;
+        match ctx.semantic().get_comment_at(start) {
+            Some(comment)
+                if comment.is_block()
+                    && !ctx.source_range(comment.span).contains(is_line_terminator) =>
+            {
+                pos = comment.span.end;
+            }
+            Some(_) => return false,
+            None => return !is_line_terminator(c) && !matches!(c, ';' | '}'),
+        }
+    }
 }
 
 #[test]
@@ -558,6 +588,43 @@ export declare type Test = {
             "type foo = ({ x: number });",
             "interface foo { x: number }",
             Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "interface A { x: number } export const y = 1",
+            "type A = { x: number }; export const y = 1",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "interface A extends B { x: number } let y = 1",
+            "type A = { x: number } & B; let y = 1",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "export interface A {} /* c */ export const y = 1",
+            "export type A = {}; /* c */ export const y = 1",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "export default interface A { x: number } foo()",
+            "type A = { x: number }\nexport default A; foo()",
+            Some(serde_json::json!(["type"])),
+        ),
+        ("interface A {}\nfoo()", "type A = {}\nfoo()", Some(serde_json::json!(["type"]))),
+        (
+            "interface A {} // c\nfoo()",
+            "type A = {} // c\nfoo()",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "interface A {} /* a\n */ foo()",
+            "type A = {} /* a\n */ foo()",
+            Some(serde_json::json!(["type"])),
+        ),
+        ("interface A {}; foo()", "type A = {}; foo()", Some(serde_json::json!(["type"]))),
+        (
+            "namespace N { interface A {} }",
+            "namespace N { type A = {} }",
+            Some(serde_json::json!(["type"])),
         ),
     ];
 

@@ -16,3 +16,12 @@ Code extracted from
 - Add the feature in `./es-features.js`
 - `pnpm install`
 - `cargo run -p oxc_compat_data`
+
+For a proposal without an ES edition, add it to `custom-compat-data.js` with
+`es: null` and only the engines that support it. An empty `targets` object requires
+lowering for concrete targets. An unspecified target and `esnext` preserve proposals,
+while `supports_es_feature` reports no known support.
+
+Use `cargo run -p oxc_compat_data -- --generate-only` to regenerate the Rust table
+from the checked-in `data.json` without refreshing upstream compatibility data.
+Run `cargo fmt` afterward to match the checked-in Rust formatting.

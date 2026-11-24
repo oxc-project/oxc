@@ -101,25 +101,6 @@ a {
 Prettier lands at +4 (comma-separated selectors, above) / +6 (wrapped selector parts, also pinned), an artifact of its generic at-rule params indent.
 Layout-only, deprecated syntax, triggers only on width overflow.
 
-## nth-anb-leading-sign
-
-- Why: semantics
-- Pin: `tests/fixtures/format/css/nth-an-plus-b.css`
-
-```css
-/* input */
-:nth-child(+3n - 2)
-
-/* ours */
-:nth-child(+3n - 2)
-
-/* prettier */
-:nth-child(+ 3n - 2)
-```
-
-The An+B grammar forbids whitespace between a leading sign and its term,
-so Prettier's output (`postcss-selector-parser` tokenizes every `+` as a combinator) no longer parses as a selector and breaks formatter idempotency: the second pass fails to parse.
-
 ## forward-members-with-config
 
 - Why: uniform-rule (same construct, same output: `@use ... with (...)` and config-less `@forward`)
@@ -178,20 +159,27 @@ Heads that still never break in Prettier's value-parse (`@for` bounds, `@namespa
 ```css
 /* input */
 @media (not ( screen and ( color ) )) { }
+@media (foo bar:baz , qux) { }
 
 /* ours */
 @media (not (screen and (color))) {
+}
+@media (foo bar:baz, qux) {
 }
 
 /* prettier */
 @media (not ( screen and ( color ) )) {
 }
+@media (foo bar: baz , qux) {
+}
 ```
 
 `<general-enclosed>` preludes (unparsable as `<media-condition>`) normalize whitespace fully: source gap → one space, paren inner edges tight.
+So does a `@supports` one, and a `selector()` whose argument is not a selector (`selector(A < B)`).
 Prettier only collapses space RUNS inside the unparsable paren;
 reproducing that half-normalization is pure tokenizer-artifact matching.
-Gap-based spacing never fuses tokens the source kept apart (`and (` can't become a function token `and(`).
+Gap-based spacing never splits or fuses tokens: `and (` can't become a function token `and(`,
+and no space is added where the source has none, so a pseudo-class keeps its `:` (`selector(:before)`), unlike Prettier's `: ` after any colon.
 
 ## value-glued-bracket
 
@@ -458,40 +446,30 @@ Prettier double-indents it (closing `)` floating between levels) when the neares
 ## comment-preceded-map-indent
 
 - Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/scss/map-comment-block-value-comma.scss`, `tests/fixtures/format/scss/variable-inline-comment.scss`
-- Conformance:
-  - `externals/prettier/scss/map/comment.scss` (the `key4` indent)
-  - `externals/prettier/scss/parens/2.scss`
+- Pin: `tests/fixtures/format/scss/variable-inline-comment.scss`
 
 ```scss
 /* input */
-$m: (
-  /* c */
-  b: (x: 2),
-);
+$m: // c
+  (k: v);
 
 /* ours */
-$m: (
-  /* c */
-  b: (
-    x: 2,
-  ),
-);
+$m: // c
+  (
+    k: v,
+  );
 
 /* prettier */
-$m: (
-  /* c */
-  b: (
-      x: 2,
-    ),
+$m: // c
+  (
+  k: v,
 );
 ```
 
-A comment-preceded block map value prints at the normal nested-map indent;
-Prettier double-indents it (+6 body / +4 `)`) because its dedent applies only when the pair doc is a plain `group(indent(fill))` and a leading comment changes the doc shape.
-Comment presence must not change layout: same dedent-skip artifact class as `nested-map-context-indent`
-(paren-block KEYS still keep the pair indent, matching Prettier: that trigger is content, not trivia).
-The other direction of the same artifact: a map value after `$v: // c` keeps its shape under the continuation indent (`(\n    k: v,\n  )`), Prettier dedents it to `(\n  k: v,\n)` with the body level with the `(`.
+A map value after a trailing comment on the `$var:` line keeps its shape under the continuation indent;
+Prettier dedents it, the body level with the `(` and the `)` at the declaration's column,
+because its dedent applies only when the pair doc is a plain `group(indent(fill))` and the comment changes the doc shape.
+Same dedent-skip artifact class as `nested-map-context-indent`.
 
 ## map-item-break-comma-lists-only
 
@@ -515,39 +493,30 @@ The other direction of the same artifact: a map value after `$v: // c` keeps its
 
 The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list:
 `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else.
-Prettier 3.9.6 changes `key: ($a + $b)` from a number to a list, restructures `key: (a b)` (2-element space list → nested 1-element list), and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`).
+Prettier changes `key: ($a + $b)` from a number to a list, restructures `key: (a b)` (2-element space list → nested 1-element list), and emits non-compiling output for `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`).
 Prettier's own prettier/prettier#18530 / prettier/prettier#19091 fixed subsets of this; we extend the same rule to every non-comma-list.
 
 ## single-item-list-trailing-comma
 
 - Why: semantics (prettier/prettier#19928)
 - Pin: `tests/fixtures/format/scss/single-item-list-trailing-comma.scss`
-- Drop when: upstream also keeps the paren-less form and `(fn(1),)` (dropped as a source-span artifact of its value parser)
+- Drop when: upstream also keeps the paren-less form
 
 ```scss
 /* input */
-$list: ("a",);
 $bare: "a",;
-$map: (k: ("a",));
 
 /* ours */
-$list: ("a",);
 $bare: "a",;
-$map: (
-  k: ("a",),
-);
 
 /* prettier */
-$list: ("a");
 $bare: "a";
-$map: (
-  k: ("a"),
-);
 ```
 
 `("a",)` and `$x: "a",` are one-element lists in Sass while `"a"` is a string (dart-sass `type-of`):
 dropping the comma changes the value for `nth()` / `@each` / `list.append()`.
-Prettier 3.9.6 drops it everywhere but `var()`; we keep it whenever the list has exactly one element
+Prettier keeps it in parens since #19928 and still drops it from the paren-less form (`$x: "a",`, `@return "a",`);
+we keep it whenever the list has exactly one element
 (multi-element lists and function arguments still drop theirs, the list is a list without it).
 
 ## bracket-list-layout
@@ -655,6 +624,8 @@ Its JS printer follows the option (`[1, 2\n // own]`), and so do all our formatt
 
 - Why: invariant
 - Pin: `tests/fixtures/format/scss/module-config-comments.scss`, `tests/fixtures/format/scss/paren-tail-own-line-comment.scss`
+- Conformance:
+  - `externals/prettier/scss/trailing-comma/issue-6356.scss`
 
 ```scss
 /* input */
@@ -688,31 +659,6 @@ An own-line trailing comment before a closing `)` keeps its own line
 
 Prettier's output changes line, own-line to the last item's line, a `lineSuffix` artifact of its comma-group printing.
 Same-line trailing comments still glue (matching Prettier); moving an own-line comment up would destroy the author's visual grouping.
-
-## map-leading-comment-layout
-
-- Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/scss/map-comment-only.scss`
-- Conformance:
-  - `externals/prettier/scss/map/comment.scss` (the map's trailing comma under `trailingComma: es5`)
-
-```scss
-/* input */
-$b: (/* c */ a: 1,);
-
-/* ours */
-$b: (
-  /* c */ a: 1,
-);
-
-/* prettier */
-$b: (/* c */ a: 1);
-```
-
-A map whose FIRST item is preceded by a block comment loses map-item-ness in Prettier:
-it inlines when it fits and drops the trailing comma.
-We print it as the same map without the comment (`$b: (a: 1,)`): one item per line, comma per `trailingComma`.
-A comment before a LATER item keeps both in Prettier too.
 
 ## comment-only-map-indent
 
@@ -794,6 +740,7 @@ the same `join(line)` + deferred `lineSuffix` artifact as "comment-only-map-inde
   - `externals/prettier/scss/comments/maps.scss`
   - `externals/prettier/scss/trailing-comma/issue-6920.scss`
   - `externals/prettier/scss/trailing-comma/comments.scss`
+  - `externals/prettier/scss/map/empty-line-after-function.scss`
   - `externals/prettier/less/comments/value-lists.less`
 
 ```scss
@@ -935,7 +882,7 @@ and its at-rule printer drops the block comments in there (a trailing one surviv
 
 Statement-position `&:extend(...)` breaks only on overflow, like the selector-position form
 (inline when it fits; parens on their own lines + one selector per line on overflow, the same shape as Prettier's break).
-Prettier (3.9.5+) ALWAYS breaks multiple selectors there and never breaks a single one:
+Prettier ALWAYS breaks multiple selectors there and never breaks a single one:
 postcss-less models the statement as a rule node, so the top-level selector-list printer (hardline commas) leaks into the parens.
 
 ## unary-plus-glue
@@ -1205,37 +1152,6 @@ Everywhere else BOTH implementations keep the glue, so there is nothing to diver
 where exactly ours keeps it is printer mechanism, documented at `write_less_binary_operation` / `write_sass_binary`
 (and pinned by the same fixtures plus `tests/fixtures/format/scss/calc-glued-minus.scss` for Scss calculation args).
 
-## map-paren-value-blank-lines
-
-- Why: uniform-rule (blank-line preservation; prettier/prettier#16824)
-- Pin: `tests/fixtures/format/scss/map-paren-value-blank-lines.scss`
-
-```scss
-/* input */
-$colors: (
-  a: rgba(#fff, 0.1),
-
-  b: #111,
-);
-
-/* ours */
-$colors: (
-  a: rgba(#fff, 0.1),
-
-  b: #111,
-);
-
-/* prettier */
-$colors: (
-  a: rgba(#fff, 0.1),
-  b: #111,
-);
-```
-
-A blank line after a map item is preserved per the blank-line preservation rule regardless of the value's shape,
-as after a map item with a non-paren value (Prettier itself keeps that one);
-Prettier drops it when the item's value is paren-ish (a call / paren group), an artifact of its comma-group splitting.
-
 ## paren-group-glued-word
 
 - Why: semantics
@@ -1267,6 +1183,37 @@ after substitution it is one word (`redcolor`), the way `margin-$(dir)` becomes 
 postcss-values-parser lexes it as a paren node followed by a word and Prettier prints a space between them,
 changing the substituted value (`red color`); Prettier keeps `$$(style)Color` in the same conformance file glued, so it is not even consistent.
 The value is the `<any-value>` raw fallback for us, and the value writer keeps source-glued tokens glued (`Separator::Tight`); it never inserts a space.
+
+## glued-number-head
+
+- Why: uniform-rule (same construct, same output: `sandstone.10`)
+- Pin: `tests/fixtures/format/css/glued-number-head.css`
+
+```css
+/* input */
+a {
+  version: 1.20.3;
+  b: f(1.20.3) 1.50em.5;
+}
+
+/* ours */
+a {
+  version: 1.20.3;
+  b: f(1.20.3) 1.50em.5;
+}
+
+/* prettier */
+a {
+  version: 1.2.3;
+  b: f(1.2.3) 1.5em.5;
+}
+```
+
+Glued number-ish values can never be valid CSS, so the run is one word (`is_word_glued_number`):
+Prettier prints a word-led glued run raw as a whole (`sandstone.10`) and every glued continuation raw (`.3`),
+but normalizes a number-led run's head (`1.20`).
+Ours prints that head raw as well, instead of normalizing a part of a word.
+The value writer is shared, so SCSS and Less print the same (Prettier normalizes the head in all three).
 
 ## escaped-custom-property-case
 
@@ -1419,6 +1366,44 @@ A backtick JavaScript evaluation (`` `...` `` / `` ~`...` ``) is a program, not 
 Prettier's value printer sees the backticks as plain words and the content as CSS tokens:
 it pads the backticks, re-quotes JavaScript strings and reflows a multi-line function onto one line.
 
+## less-verbatim-glued-numbers
+
+- Why: semantics
+- Pin: `tests/fixtures/format/less/mixin-verbatim-numbers.less`
+
+```less
+/* input */
+.m({ a: url(x.1.2.3.png) b.1.2.3; });
+.m(1.2.3);
+.h(#1e0; #0E00) when (@c = #1e0) {}
+.n(@a: .50 /* 0.50 */) when (@a > .50) {}
+
+/* ours */
+.m({ a: url(x.1.2.3.png) b.1.2.3; });
+.m(1.2.3);
+.h(#1e0; #0E00) when (@c = #1e0) {
+}
+.n(@a: 0.5 /* 0.50 */) when (@a > 0.5) {
+}
+
+/* prettier */
+.m({ a: url(x.10.20.3.png) b.10.20.3; });
+.m(1.20.3);
+.h(#1; #0) when (@c = #1) {
+}
+.n(@a: .50 /* 0.50 */) when (@a > .50) {
+}
+```
+
+Less mixin calls, definitions and guards print as a verbatim slice with standalone numbers normalized (`adjust_numbers_and_strings`).
+Prettier's word scan keeps only the FIRST number glued to a word and re-reads the rest as standalone:
+`b.1.2.3` becomes `b.1` + `0.2` + `0.3` (and `1.2.3` becomes `1.2` + `0.3`), changing the value (inside a `url()` path, the file) and growing every pass (`a.10.2` -> `a.100.2` -> `a.1000.2`).
+The same scan reads a hex color's digits as a number with an exponent: `#1e0` becomes `#1`, a different color.
+Ours keeps a whole glued number run raw (the `is_word_glued_number` rule), reads a hash (`#1e0`) as a word,
+and never adjusts comments or an unquoted `url()`.
+Prettier also skips normalization when the slice holds a comment (a `/\/[/*]/` match bails to `selector-unknown`, printed verbatim);
+ours normalizes it like the comment-free sibling (comment presence never changes the output), as mixin definitions and guards already do.
+
 ## less-escaped-string-gap
 
 - Why: invariant
@@ -1443,38 +1428,38 @@ Prettier's `~` handling for escaped strings (`~"..."`) fires on a string whose c
 
 ## less-lookup-glue
 
-- Why: semantics
+- Why: uniform-rule (same construct, same output: `#namespace[$@prop-name]`)
 - Pin: `tests/fixtures/format/less/lookup-glue.less`
 - Conformance:
   - `externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-functions.less`
   - `externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-media.less`
-  - `externals/prettier/less/less-test-suite/snippet: tests-unit/namespace-targeted/namespace-targeted.less`
 
 ```less
 /* input */
 .a {
-  value: #namespace[$@prop-name];
   width: .add(10px, 10px)[];
 }
+@media #ns.breakpoint(.valToGet[])[@max] {}
 
 /* ours */
 .a {
-  value: #namespace[$@prop-name];
   width: .add(10px, 10px)[];
+}
+@media #ns.breakpoint(.valToGet[])[@max] {
 }
 
 /* prettier */
 .a {
-  value: #namespace[$ @prop-name];
   width: .add(10px, 10px) [];
+}
+@media #ns.breakpoint(.valToGet[]) [@max] {
 }
 ```
 
-`$@var` inside a lookup is one token (a property name held in a variable): less.js rejects `[$ @prop-name]` ("Unrecognised input").
-The space before `[]` is harmless to less.js (`.add() []` still evaluates), so that half is the lossless side of the same rule:
-a lookup prints glued as written, like a selector's attribute bracket.
-Prettier's value printer treats `[` as a word boundary and `$` as a postcss-simple-vars prefix, spacing both.
-The `$@` half is fixed upstream after v3.9.6 (prettier/prettier#19782 keeps `[$@prop-name]` tight); the `[]` half remains.
+A lookup prints glued to what it reads from, as written, like a selector's attribute bracket.
+Prettier glues one after a name (`#namespace[$@prop-name]`, since prettier/prettier#19782 and prettier/prettier#20279 also after `$@`)
+and spaces one after a call's `)`, where its value printer treats `[` as a word boundary.
+less.js (4.9.1) evaluates both forms the same.
 
 ## less-guard-list-inline
 
@@ -1715,6 +1700,43 @@ Prettier glues it only between SCSS `if()` branches and keeps the source space e
 A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
 Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.
 
+## supports-declaration-long-value
+
+- Why: uniform-rule (same construct, same output: the declaration in a rule)
+- Pin: `tests/fixtures/format/css/supports-declaration-long-value.css`
+- Conformance:
+  - `externals/prettier/css/atrule/supports.css`
+
+```css
+/* input */
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+/* ours */
+@supports (
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+
+/* prettier */
+@supports (
+  text-decoration-skip-ink:
+    an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
+```
+
+An over-wide `@supports` declaration opens its parens and stays on one line, as the same declaration does in a rule;
+Prettier breaks after its `:` there too, its prelude value group allowing a break the declaration printer does not.
+
 ## grid-value-broken-in-function
 
 - Why: invariant
@@ -1748,3 +1770,37 @@ Prettier's output is not a fixpoint here.
 A grid value too long for one line breaks inside its function, as Prettier prints it from one line;
 Prettier then reads the line breaks it printed inside the function as the grid's line structure,
 so a second pass moves each top-level value to its own line.
+
+## value-multiline-comment-expands
+
+- Why: uniform-rule (same construct, same output: a multi-line block comment in JS)
+- Pin: `tests/fixtures/format/css/value-multiline-comment.css`
+
+```css
+/* input */
+a {
+  b: f(to top, x 1px /* c,
+    d */);
+}
+
+/* ours */
+a {
+  b: f(
+    to top,
+    x 1px
+      /* c,
+    d */
+  );
+}
+
+/* prettier */
+a {
+  b: f(to top, x 1px /* c,
+    d */);
+}
+```
+
+A block comment spanning lines inside a value expands its enclosing groups,
+like Prettier's JS, JSONC, HTML and Markdown comments (`literalline` / `hardline` carry a break-parent).
+Prettier's CSS prints the `value-comment` as a raw string with `\n`, so only its width decides:
+the group stays flat when the whole comment, measured as one line, fits.

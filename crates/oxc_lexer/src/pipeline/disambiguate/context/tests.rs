@@ -87,11 +87,12 @@ fn params_take_their_functions_kind(cpu: DynCpu) {
 }
 
 #[test_cpus]
-fn module_goal_keeps_yield_and_await_reserved(cpu: DynCpu) {
-    let ks = kinds_of("var r = await /re/.test(x);", ModuleJS, cpu);
-    assert!(ks.contains(&TokenKind::RegExp), "module keeps await reserved: {ks:?}");
-    let ks = kinds_of("var r = yield /re/;", ModuleJS, cpu);
-    assert!(ks.contains(&TokenKind::RegExp), "module keeps yield reserved: {ks:?}");
+fn module_goal_scopes_yield_and_await(cpu: DynCpu) {
+    regex("var r = await /re/.test(x);", ModuleJS, cpu);
+    regex("function* g() { yield /re/; }", ModuleJS, cpu);
+    division("var r = yield /2/g;", ModuleJS, cpu);
+    division("function f() { return await /2/g; }", ModuleJS, cpu);
+    division("namespace N { let x = await / 2 / 1; }", ModuleTS, cpu);
 }
 
 #[test_cpus]
@@ -240,6 +241,37 @@ fn mult_star_is_not_a_modifier(cpu: DynCpu) {
         ScriptJS,
         cpu,
     );
+}
+
+#[test_cpus]
+fn bodiless_member_signatures_end_the_member(cpu: DynCpu) {
+    regex("class A { m(): void; async n() { await /re/; } }", ScriptTS, cpu);
+    regex("class A { m(); *g() { yield /re/; } }", ScriptTS, cpu);
+    regex("class A { m(): void\n async n() { await /re/; } }", ScriptTS, cpu);
+}
+
+#[test_cpus]
+fn where_class_fields_end(cpu: DynCpu) {
+    regex("class A { x\n*g() { yield /re/; } }", ScriptJS, cpu);
+    regex("class A { x = () => {}\nasync m() { await /re/; } }", ScriptJS, cpu);
+    regex("class A { x?\n*g() { yield /re/; } }", ScriptTS, cpu);
+    regex("class A { x = c ? () => {} : async () => { await /re/; }; }", ScriptJS, cpu);
+}
+
+#[test_cpus]
+fn decorators_keep_member_modifiers(cpu: DynCpu) {
+    regex("class A { @dec async m() { await /re/; } }", ScriptJS, cpu);
+    regex("class A { @a.b() async m() { await /re/; } }", ScriptJS, cpu);
+    regex("class A { @dec *g() { yield /re/; } }", ScriptJS, cpu);
+    division("class A { @dec x; y = function () {} / 2; }", ScriptJS, cpu);
+}
+
+#[test_cpus]
+fn generic_async_arrows(cpu: DynCpu) {
+    regex("const f = async <T>(x: T) => { await /re/; };", ScriptTS, cpu);
+    regex("const f = async <T,>(x: T) => { await /re/; };", ScriptTSX, cpu);
+    regex("async function f() { x = async < b\nawait /re/; }", ScriptTS, cpu);
+    division("var x = async < b > /2/g;", ScriptTS, cpu);
 }
 
 #[test_cpus]

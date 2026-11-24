@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
 use napi_derive::napi;
 
-use oxc_diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic};
+use oxc_diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic, SourceCode};
 
 #[napi(object, use_nullable = true)]
 pub struct OxcError {
@@ -33,16 +31,16 @@ impl OxcError {
         if diagnostics.is_empty() {
             return vec![];
         }
-        let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
+        let source = NamedSource::new(filename, source_text);
         diagnostics.into_iter().map(|e| Self::from_diagnostic(&source, e)).collect()
     }
 
-    pub fn from_diagnostic(
-        named_source: &Arc<NamedSource<String>>,
+    pub fn from_diagnostic<S: SourceCode + ?Sized>(
+        named_source: &S,
         diagnostic: OxcDiagnostic,
     ) -> Self {
         let mut error = Self::from(&diagnostic);
-        error.codeframe = Some(diagnostic.render_with_source_code(Arc::clone(named_source)));
+        error.codeframe = Some(diagnostic.render_with_source_code(named_source));
         error
     }
 }

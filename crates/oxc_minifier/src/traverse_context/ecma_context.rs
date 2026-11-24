@@ -25,10 +25,6 @@ use oxc_ast_visit::Visit;
 
 use super::{TraverseCtx, dropped_subtree_collector::DroppedSubtreeCollector};
 
-pub fn is_exact_int64(num: f64) -> bool {
-    num.fract() == 0.0
-}
-
 impl<'a> GlobalContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
         ident.is_global_reference(self.scoping())
@@ -256,12 +252,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// constant must be materialized where its global name is shadowed.
     fn non_finite_to_division_expr(&self, span: Span, n: f64) -> Expression<'a> {
         let numerator = if n.is_nan() { 0.0 } else { 1.0 };
-        let mut left =
-            Expression::new_numeric_literal(span, numerator, None, NumberBase::Decimal, self);
+        let mut left = Expression::new_numeric_literal(span, numerator, None, self);
         if n == f64::NEG_INFINITY {
             left = Expression::new_unary_expression(span, UnaryOperator::UnaryNegation, left, self);
         }
-        let right = Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, self);
+        let right = Expression::new_numeric_literal(span, 0.0, None, self);
         Expression::new_binary_expression(span, left, BinaryOperator::Division, right, self)
     }
 
@@ -271,13 +266,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 if !n.is_finite() && self.non_finite_global_shadowed(n) {
                     return self.non_finite_to_division_expr(span, n);
                 }
-                let number_base =
-                    if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
-                Expression::new_numeric_literal(span, n, None, number_base, self)
+                Expression::new_numeric_literal(span, n, None, self)
             }
             ConstantValue::BigInt(bigint) => {
                 let value = format_str!(self.allocator(), "{bigint}");
-                Expression::new_big_int_literal(span, value, None, BigintBase::Decimal, self)
+                Expression::new_big_int_literal(span, value, None, self)
             }
             ConstantValue::String(s) => Expression::new_string_literal(span, s, None, self),
             ConstantValue::Boolean(b) => Expression::new_boolean_literal(span, b, self),
@@ -298,10 +291,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     #[inline]
     pub fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
-        if ident.name == "undefined" && ident.is_global_reference(self.scoping()) {
-            return true;
-        }
-        false
+        ident.name == "undefined" && ident.is_global_reference(self.scoping())
     }
 
     pub fn init_value(
@@ -436,7 +426,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
     fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
-        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes, self.scoping.scoping())
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.

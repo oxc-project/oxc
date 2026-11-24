@@ -45,33 +45,34 @@
 
 mod metadata;
 
-use std::borrow::Cow;
 use std::mem;
 
 use oxc_allocator::{
     Address, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn, UnstableAddress,
 };
-use oxc_ast::{StaticPropertyName, ast::*};
+use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJs, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::get_var_name_from_node};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
 use crate::{
     Helper,
-    common::{
-        duplicate::duplicate_expression, helper_loader::helper_call_expr,
-        var_declarations::VarDeclarationsStore,
-    },
+    common::{helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore},
     context::TraverseCtx,
     decorator::DecoratorOptions,
     state::TransformState,
-    utils::ast_builder::{
-        create_accessor_method, create_assignment, create_export_default_class_reference,
-        create_export_named_class_reference, create_prototype_member,
+    utils::{
+        ast_builder::{
+            create_assignment, create_export_default_class_reference,
+            create_export_named_class_reference, create_prototype_member,
+        },
+        decorated_class::{
+            class_body_has_auto_accessors, legacy_decorators_reassign_class_binding,
+        },
     },
 };
 use metadata::LegacyDecoratorMetadata;
@@ -92,6 +93,10 @@ struct ClassDecorations<'a> {
     /// Decoration statements accumulated for the current class.
     /// These will be applied when the class processing is complete.
     decoration_stmts: Vec<Statement<'a>>,
+    /// Decoration statements of static members, kept apart from `decoration_stmts`
+    /// because TypeScript applies every instance member decorator first, then
+    /// every static member decorator. See [`ClassDecorations::append_static_decorations`].
+    static_decoration_stmts: Vec<Statement<'a>>,
     /// Binding for the current class being processed.
     /// Generated on-demand when the first decorator needs it.
     class_binding: Option<BoundIdentifier<'a>>,
@@ -104,6 +109,12 @@ impl ClassDecorations<'_> {
     fn with_should_transform(mut self, should_transform: bool) -> Self {
         self.should_transform = should_transform;
         self
+    }
+
+    /// Move the static member decorations after the instance member ones,
+    /// the order TypeScript applies them in.
+    fn append_static_decorations(&mut self) {
+        self.decoration_stmts.append(&mut self.static_decoration_stmts);
     }
 }
 
@@ -153,9 +164,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
     }
 
     #[inline]
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.emit_decorator_metadata {
-            self.metadata.enter_statement(stmt, ctx);
+            self.metadata.enter_statements(stmts, ctx);
         }
     }
 
@@ -166,10 +181,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         // transform the newly created private backing fields.
         Self::lower_accessor_properties(class, ctx);
 
-        self.class_decorations_stack.push(
-            ClassDecorations::default()
-                .with_should_transform(!(class.is_expression() || class.declare)),
-        );
+        let should_transform = !(class.is_expression() || class.declare);
+        // Class-properties must see the same binding that decorators will use after the class.
+        if class.id.is_none() && legacy_decorators_reassign_class_binding(class) {
+            let outer_scope_id = ctx.scoping().scope_parent_id(class.scope_id()).unwrap();
+            let binding = ctx.generate_uid("default", outer_scope_id, SymbolFlags::Class);
+            class.id = Some(binding.create_binding_identifier(ctx));
+        }
+
+        self.class_decorations_stack
+            .push(ClassDecorations::default().with_should_transform(should_transform));
 
         if self.emit_decorator_metadata {
             self.metadata.enter_class(class, ctx);
@@ -246,6 +267,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
             self.handle_decorated_class_element(
                 method.r#static,
                 &mut method.key,
+                true,
                 descriptor,
                 decorations,
                 ctx,
@@ -268,9 +290,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 
         // We emit `void 0` here to indicate to `_decorate` that it can invoke `Object.defineProperty` directly.
         let descriptor = Expression::new_void_0(SPAN, ctx);
+        // TypeScript turns a decorated field that it removes into a `declare` field keyed by a value
+        // reference or a literal, which the class doesn't evaluate. Other keys of user-written
+        // `declare` fields hold type references, so they keep the temp var.
+        let key_is_evaluated = !(prop.declare
+            && prop.key.as_expression().is_some_and(|key| match key {
+                Expression::Identifier(ident) => {
+                    ctx.scoping().get_reference(ident.reference_id()).flags().is_read()
+                }
+                key => key.is_literal(),
+            }));
         self.handle_decorated_class_element(
             prop.r#static,
             &mut prop.key,
+            key_is_evaluated,
             descriptor,
             decorations,
             ctx,
@@ -294,6 +327,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         self.handle_decorated_class_element(
             accessor.r#static,
             &mut accessor.key,
+            true,
             descriptor,
             decorations,
             ctx,
@@ -312,160 +346,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 }
 
 impl<'a> LegacyDecorator<'a> {
-    /// Lower `accessor` properties to private backing fields + get/set pairs.
-    ///
-    /// `accessor prop: T = val` becomes:
-    /// ```js
-    /// #prop_accessor_storage = val;
-    /// get prop() { return this.#prop_accessor_storage; }
-    /// set prop(value) { this.#prop_accessor_storage = value; }
-    /// ```
     fn lower_accessor_properties(class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !class
-            .body
-            .body
-            .iter()
-            .any(|e| matches!(e, ClassElement::AccessorProperty(p) if !p.r#type.is_abstract()))
-        {
+        if class.declare || !class_body_has_auto_accessors(&class.body) {
             return;
         }
-
-        // For static accessors, use the class name instead of `this` to ensure
-        // correct behavior when accessed via subclasses.
-        // Named class: `C.#storage`, Anonymous class expression: `_a.#storage`
-        let has_static_accessor = class.body.body.iter().any(|e| {
-            matches!(e, ClassElement::AccessorProperty(p) if p.r#static && !p.r#type.is_abstract())
+        let has_static_accessor = class.body.body.iter().any(|element| {
+            matches!(element, ClassElement::AccessorProperty(prop) if prop.r#static && !prop.r#type.is_abstract())
         });
-        let static_class_binding = if has_static_accessor {
-            Some(if let Some(ident) = class.id.as_ref() {
-                BoundIdentifier::from_binding_ident(ident)
-            } else {
-                ctx.generate_uid("class", class.scope_id(), SymbolFlags::Class)
-            })
-        } else {
-            None
-        };
-
-        let class_scope_id = class.scope_id();
-        let mut new_body = ArenaVec::with_capacity_in(class.body.body.len() * 3, ctx);
-
-        for element in class.body.body.drain(..) {
-            let ClassElement::AccessorProperty(accessor) = element else {
-                new_body.push(element);
-                continue;
-            };
-            if accessor.r#type.is_abstract() {
-                new_body.push(ClassElement::AccessorProperty(accessor));
-                continue;
-            }
-
-            let mut accessor = accessor.unbox();
-            let is_static = accessor.r#static;
-            let computed = accessor.computed;
-
-            // Transfer decorators to the getter so legacy decorator transform can process them.
-            let decorators = std::mem::replace(&mut accessor.decorators, ArenaVec::new_in(ctx));
-            // Transfer the type annotation to the getter's return type so that
-            // `emitDecoratorMetadata` can derive `design:type` from it. Without this,
-            // the lowered getter is untyped and `design:type` falls through to `Object`.
-            let type_annotation = accessor.type_annotation.take();
-
-            // For computed keys, duplicate the key expression so getter and setter
-            // each get their own reference:
-            //   `accessor [expr] = val` →
-            //   `get [_expr = expr]() { ... } set [expr](value) { ... }`
-            // Note: Legacy decorators do not support private identifiers,
-            // so we only handle static identifiers and computed keys.
-            let (storage_name, getter_key, setter_key) = if accessor.computed {
-                let key_expr = accessor.key.into_expression();
-                let (assignment, reference) = duplicate_expression(key_expr, true, ctx);
-
-                // Use raw identifier name when possible to avoid collisions from
-                // `get_var_name_from_node` stripping leading underscores.
-                let key_name: Cow<'_, str> = match &reference {
-                    Expression::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
-                    _ => Cow::Owned(get_var_name_from_node(&reference)),
-                };
-                let getter_key = PropertyKey::from(assignment);
-                let setter_key = PropertyKey::from(reference);
-                let storage_name =
-                    Str::from_strs_array_in(["_", &key_name, "_computed_accessor_storage"], ctx);
-                (storage_name, getter_key, setter_key)
-            } else {
-                // Use `name()` to get the raw property name, avoiding `get_var_name_from_node`
-                // which strips leading underscores (e.g. `prop` and `_prop` both become "prop").
-                let key_name = accessor
-                    .key
-                    .name()
-                    .and_then(StaticPropertyName::into_cow_str)
-                    .unwrap_or_else(|| Cow::Owned(get_var_name_from_node(&accessor.key)));
-                let storage_name =
-                    Str::from_strs_array_in(["_", &key_name, "_accessor_storage"], ctx);
-                let getter_key = accessor.key.clone_in(ctx.ast.allocator());
-                let setter_key = accessor.key.clone_in(ctx.ast.allocator());
-                (storage_name, getter_key, setter_key)
-            };
-
-            // For static accessors, use class name reference; for instance accessors, use `this`.
-            let object_binding = if is_static { static_class_binding.as_ref() } else { None };
-
-            // 1. Private backing field: `#<name>_accessor_storage = <value>`
-            new_body.push(ClassElement::new_property_definition(
-                SPAN,
-                PropertyDefinitionType::PropertyDefinition,
-                [],
-                PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
-                None,
-                accessor.value.take(),
-                false,
-                is_static,
-                false,
-                false,
-                false,
-                false,
-                false,
-                None,
-                ctx,
-            ));
-
-            // 2. Getter: `get <name>() { return <object>.#<name>_accessor_storage; }`
-            new_body.push(create_accessor_method(
-                decorators,
-                getter_key,
-                MethodDefinitionKind::Get,
-                computed,
-                is_static,
-                storage_name,
-                object_binding,
-                class_scope_id,
-                type_annotation,
-                ctx,
-            ));
-
-            // 3. Setter: `set <name>(value) { <object>.#<name>_accessor_storage = value; }`
-            new_body.push(create_accessor_method(
-                ArenaVec::new_in(ctx),
-                setter_key,
-                MethodDefinitionKind::Set,
-                computed,
-                is_static,
-                storage_name,
-                object_binding,
-                class_scope_id,
-                None,
-                ctx,
-            ));
-        }
-
-        // For anonymous class expressions with static accessors, assign the class
-        // to the generated binding: `var _class; const c = _class = class { ... }`
-        if let Some(binding) = &static_class_binding
-            && class.id.is_none()
-        {
+        if has_static_accessor && class.id.is_none() {
+            let binding = ctx.generate_uid("class", class.scope_id(), SymbolFlags::Class);
             class.id = Some(binding.create_binding_identifier(ctx));
         }
-
-        class.body.body = new_body;
+        let binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
+        super::accessor::lower_auto_accessors(
+            &mut class.body,
+            class.scope_id.get().unwrap(),
+            binding.as_ref(),
+            false,
+            ctx,
+        );
     }
 
     /// Helper method to handle a decorated class element (method, property, or accessor).
@@ -474,6 +373,7 @@ impl<'a> LegacyDecorator<'a> {
         &mut self,
         is_static: bool,
         key: &mut PropertyKey<'a>,
+        key_is_evaluated: bool,
         descriptor: Expression<'a>,
         decorations: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -499,11 +399,16 @@ impl<'a> LegacyDecorator<'a> {
         });
 
         let prefix = Self::get_class_member_prefix(class_binding, is_static, ctx);
-        let name = self.get_name_of_property_key(key, ctx);
+        let name = self.get_name_of_property_key(key, key_is_evaluated, ctx);
         let decorator_stmt = self.create_decorator(decorations, prefix, name, descriptor, ctx);
 
         // Push to current decoration stack
-        self.class_decorations_stack.last_mut().decoration_stmts.push(decorator_stmt);
+        let current_class = self.class_decorations_stack.last_mut();
+        if is_static {
+            current_class.static_decoration_stmts.push(decorator_stmt);
+        } else {
+            current_class.decoration_stmts.push(decorator_stmt);
+        }
     }
     /// Transforms a statement that is a class declaration
     ///
@@ -651,14 +556,12 @@ impl<'a> LegacyDecorator<'a> {
     }
 
     fn transform_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        let current_class_decorations = self.class_decorations_stack.pop();
+        let mut current_class_decorations = self.class_decorations_stack.pop();
+        current_class_decorations.append_static_decorations();
 
         // Legacy decorator does not allow in class expression.
         if current_class_decorations.should_transform {
-            let class_or_constructor_parameter_is_decorated =
-                Self::check_class_has_decorated(class);
-
-            if class_or_constructor_parameter_is_decorated {
+            if legacy_decorators_reassign_class_binding(class) {
                 self.transform_class_declaration_with_class_decorators(
                     class,
                     current_class_decorations,
@@ -785,7 +688,11 @@ impl<'a> LegacyDecorator<'a> {
         // TODO(improve-on-typescript): we can take the class id without keeping it as-is.
         // Now: `class C {}` -> `let C = class C {}`
         // After: `class C {}` -> `let C = class {}`
-        let class_binding = class.id.as_ref().map(|ident| {
+        // `enter_class` names anonymous classes that have class or constructor-parameter
+        // decorators, so the class always has an id here.
+        let class_binding = {
+            let ident =
+                class.id.as_ref().expect("decorated class should have been named in `enter_class`");
             let binding_span = ident.span;
             let new_class_binding = ctx.generate_spanned_binding(
                 ident.name,
@@ -800,23 +707,17 @@ impl<'a> LegacyDecorator<'a> {
             *ctx.scoping_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
-        });
-        let class_alias_binding = class_binding.as_ref().and_then(|id| {
-            ClassReferenceChanger::new(id.clone(), ctx).get_class_alias_if_needed(&mut class.body)
-        });
+        };
+        let class_alias_binding = ClassReferenceChanger::new(class_binding.clone(), ctx)
+            .get_class_alias_if_needed(&mut class.body);
 
         let ClassDecorations {
-            class_binding: class_binding_tmp,
+            class_binding: _,
             mut decoration_stmts,
+            static_decoration_stmts: _,
             class_has_private_in_expression_in_decorator,
             should_transform: _,
         } = current_class_decorations;
-
-        let class_binding = class_binding.unwrap_or_else(|| {
-            // `class_binding_tmp` maybe already generated a default class binding for unnamed classes, so use it.
-            class_binding_tmp
-                .unwrap_or_else(|| ctx.generate_uid_in_current_scope("default", SymbolFlags::Class))
-        });
 
         let constructor_decoration = self.transform_decorators_of_class_and_constructor(
             class,
@@ -825,42 +726,46 @@ impl<'a> LegacyDecorator<'a> {
             ctx,
         );
 
-        let class_alias_with_this_assignment = if ctx.state.class_transform.transforms_fields() {
-            None
-        } else {
-            // If we're emitting to ES2022 or later then we need to reassign the class alias before
-            // static initializers are evaluated.
-            // <https://github.com/microsoft/TypeScript/blob/b86ab7dbe0eb2f1c9a624486d72590d638495c97/src/compiler/transformers/legacyDecorators.ts#L345-L366>
-            class_alias_binding.as_ref().and_then(|class_alias_binding| {
-                let has_static_field_or_block = class.body.body.iter().any(|element| {
-                    matches!(element, ClassElement::StaticBlock(_))
-                        || matches!(element, ClassElement::PropertyDefinition(prop)
-                                if prop.r#static
-                        )
-                });
+        let class_alias_with_this_assignment =
+            if ctx.state.class_lowering_of(class.scope_id()).lowers_fields() {
+                None
+            } else {
+                // If we're emitting to ES2022 or later then we need to reassign the class alias before
+                // static initializers are evaluated.
+                // <https://github.com/microsoft/TypeScript/blob/b86ab7dbe0eb2f1c9a624486d72590d638495c97/src/compiler/transformers/legacyDecorators.ts#L345-L366>
+                class_alias_binding.as_ref().and_then(|class_alias_binding| {
+                    let has_static_field_or_block = class.body.body.iter().any(|element| {
+                        matches!(element, ClassElement::StaticBlock(_))
+                            || matches!(element, ClassElement::PropertyDefinition(prop)
+                                    if prop.r#static
+                            )
+                    });
 
-                if has_static_field_or_block {
-                    // `_Class = this`;
-                    let class_alias_with_this_assignment = Statement::new_expression_statement(
-                        SPAN,
-                        create_assignment(
-                            class_alias_binding,
-                            Expression::new_this_expression(SPAN, ctx),
+                    if has_static_field_or_block {
+                        // `_Class = this`;
+                        let class_alias_with_this_assignment = Statement::new_expression_statement(
                             SPAN,
+                            create_assignment(
+                                class_alias_binding,
+                                Expression::new_this_expression(SPAN, ctx),
+                                SPAN,
+                                ctx,
+                            ),
                             ctx,
-                        ),
-                        ctx,
-                    );
-                    let body = [class_alias_with_this_assignment];
-                    let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
-                    let element =
-                        ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
-                    Some(element)
-                } else {
-                    None
-                }
-            })
-        };
+                        );
+                        let body = [class_alias_with_this_assignment];
+                        let scope_id = ctx.create_child_scope(
+                            class.scope_id(),
+                            ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
+                        );
+                        let element =
+                            ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx);
+                        Some(element)
+                    } else {
+                        None
+                    }
+                })
+            };
 
         if class_has_private_in_expression_in_decorator {
             let decorations = mem::take(&mut decoration_stmts);
@@ -943,6 +848,7 @@ impl<'a> LegacyDecorator<'a> {
         let ClassDecorations {
             class_binding,
             mut decoration_stmts,
+            static_decoration_stmts: _,
             class_has_private_in_expression_in_decorator,
             should_transform: _,
         } = current_class_decorations;
@@ -1086,13 +992,7 @@ impl<'a> LegacyDecorator<'a> {
             }
             decorations.extend(param.decorators.drain(..).map(|decorator| {
                 // (index, decorator)
-                let index = Expression::new_numeric_literal(
-                    SPAN,
-                    index as f64,
-                    None,
-                    NumberBase::Decimal,
-                    ctx,
-                );
+                let index = Expression::new_numeric_literal(SPAN, index as f64, None, ctx);
                 let arguments = ArenaVec::from_array_in(
                     [Argument::from(index), Argument::from(decorator.expression)],
                     ctx,
@@ -1219,25 +1119,6 @@ impl<'a> LegacyDecorator<'a> {
         }
     }
 
-    /// Check if a class or its constructor parameters have decorators.
-    fn check_class_has_decorated(class: &Class<'a>) -> bool {
-        if !class.decorators.is_empty() {
-            return true;
-        }
-
-        class.body.body.iter().any(|element| {
-            matches!(element,
-                ClassElement::MethodDefinition(method) if method.kind.is_constructor() &&
-                    Self::class_method_parameter_is_decorated(&method.value)
-            )
-        })
-    }
-
-    /// Check if a class method parameter is decorated.
-    fn class_method_parameter_is_decorated(func: &Function<'a>) -> bool {
-        func.params.items.iter().any(|param| !param.decorators.is_empty())
-    }
-
     /// * is_static is `true`: `Class`
     /// * is_static is `false`: `Class.prototype`
     fn get_class_member_prefix(
@@ -1253,6 +1134,10 @@ impl<'a> LegacyDecorator<'a> {
     ///
     /// * StaticIdentifier: `a = 0;` -> `a`
     /// * PrivateIdentifier: `#a = 0;` -> `""`
+    /// * Literal key:
+    ///    * StaticStringLiteral: `"a" = 0;` -> `"a"`
+    ///    * StaticNumericLiteral: `1 = 0;` -> `1`
+    ///    * StaticBigIntLiteral: `1n = 0;` -> `1n`
     /// * Computed property key:
     ///  * Copiable key:
     ///    * NumericLiteral: `[1] = 0;` -> `1`
@@ -1261,10 +1146,14 @@ impl<'a> LegacyDecorator<'a> {
     ///    * NullLiteral: `[null] = 0;` -> `null`
     ///  * Non-copiable key:
     ///    * `[a()] = 0;` mutates the key to `[_a = a()] = 0;` and returns `_a`
+    ///
+    /// When the class doesn't evaluate `key`, it's moved into the decoration instead:
+    /// `@dec declare [_x];` -> `_decorate([dec], C.prototype, _x, void 0)`.
     #[expect(clippy::unused_self)]
     fn get_name_of_property_key(
         &self,
         key: &mut PropertyKey<'a>,
+        key_is_evaluated: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         match key {
@@ -1276,17 +1165,23 @@ impl<'a> LegacyDecorator<'a> {
                 Expression::new_string_literal(SPAN, "", None, ctx)
             }
             // Copiable literals
-            PropertyKey::NumericLiteral(literal) => {
+            PropertyKey::StaticNumericLiteral(literal) | PropertyKey::NumericLiteral(literal) => {
                 Expression::NumericLiteral(literal.clone_in(ctx.allocator()))
             }
-            PropertyKey::StringLiteral(literal) => {
+            PropertyKey::StaticStringLiteral(literal) | PropertyKey::StringLiteral(literal) => {
                 Expression::StringLiteral(literal.clone_in(ctx.allocator()))
+            }
+            PropertyKey::StaticBigIntLiteral(literal) => {
+                Expression::BigIntLiteral(literal.clone_in(ctx.allocator()))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
                 let quasis = literal.quasis.clone_in(ctx.allocator());
                 Expression::new_template_literal(SPAN, quasis, [], ctx)
             }
             PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),
+            key @ match_expression!(PropertyKey) if !key_is_evaluated => {
+                key.to_expression_mut().take_in(ctx)
+            }
             match_expression!(PropertyKey) => {
                 // ```ts
                 // Input:
@@ -1395,27 +1290,15 @@ impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
 impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        if self.is_class_reference(ident) {
-            *ident = self.get_alias_ident_reference();
+        let symbol_id = self.ctx.scoping().get_reference(ident.reference_id()).symbol_id();
+        if symbol_id != Some(self.class_binding.symbol_id) {
+            return;
         }
-    }
-}
 
-impl<'a> ClassReferenceChanger<'a, '_> {
-    // Check if the identifier reference is a reference to the class
-    fn is_class_reference(&self, ident: &IdentifierReference<'a>) -> bool {
-        self.ctx
-            .scoping()
-            .get_reference(ident.reference_id())
-            .symbol_id()
-            .is_some_and(|symbol_id| self.class_binding.symbol_id == symbol_id)
-    }
-
-    fn get_alias_ident_reference(&mut self) -> IdentifierReference<'a> {
-        let binding = self.class_alias_binding.get_or_insert_with(|| {
+        // Rebind the reference to the class alias, keeping its `ReferenceId` and flags
+        let alias_binding = self.class_alias_binding.get_or_insert_with(|| {
             VarDeclarationsStore::create_uid_var(&self.class_binding.name, self.ctx)
         });
-
-        binding.create_read_reference(self.ctx)
+        self.ctx.rebind_identifier_reference(ident, alias_binding);
     }
 }

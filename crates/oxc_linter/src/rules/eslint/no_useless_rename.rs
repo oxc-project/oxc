@@ -78,7 +78,8 @@ declare_oxc_lint!(
     fix,
     config = NoUselessRenameConfig,
     version = "0.2.14",
-    short_description = "Disallow renaming import, export, and destructured assignments to the same name.",
+    short_description =
+        "Disallow renaming import, export, and destructured assignments to the same name.",
 );
 
 impl Rule for NoUselessRename {
@@ -94,7 +95,7 @@ impl Rule for NoUselessRename {
                 }
 
                 for property in &object_pattern.properties {
-                    if property.shorthand || property.computed {
+                    if property.shorthand || property.key.is_computed() {
                         continue;
                     }
 
@@ -277,6 +278,13 @@ fn fix_object_assignment_target_property<'c, 'a: 'c>(
             if with_default.binding.get_identifier_name().is_some() {
                 // For assignment targets, we need to get the span from the binding itself
                 let ident_span = with_default.binding.span();
+                // `({foo: (foo) = a} = obj)`: a shorthand property can't have parentheses.
+                if ctx
+                    .find_next_token_within(ident_span.end, with_default.init.span().start, ")")
+                    .is_some()
+                {
+                    return fixer.noop();
+                }
                 let default_start = ident_span.end;
                 let default_end = with_default.span.end;
                 (ident_span, Some(Span::new(default_start, default_end)))
@@ -690,6 +698,12 @@ fn test() {
             "let foo, bar; export {foo//comment
             ,bar};",
         ),
+        ("({foo: (foo) = a} = obj);", "({foo: (foo) = a} = obj);"),
+        ("({foo: foo /* ) */ = 1} = obj);", "({foo /* ) */ = 1} = obj);"),
+        ("({foo: foo = /* ) */ 1} = obj);", "({foo = /* ) */ 1} = obj);"),
+        ("({foo: foo // )\n = 1} = obj);", "({foo // )\n = 1} = obj);"),
+        ("({foo: ((foo)) = (a)} = obj);", "({foo: ((foo)) = (a)} = obj);"),
+        ("({foo: foo = (a)} = obj);", "({foo = (a)} = obj);"),
     ];
 
     Tester::new(NoUselessRename::NAME, NoUselessRename::PLUGIN, pass, fail)

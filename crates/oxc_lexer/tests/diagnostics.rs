@@ -368,7 +368,6 @@ fn invalid_unicode_character(cpu: DynCpu) {
 fn valid_unicode_never_flagged(cpu: DynCpu) {
     // identifier chars, whitespace, and anything inside literal content
     for src in [
-        // spellchecker:disable-next-line
         "var caf\u{E9} = 1;",                   // é: ID_Continue
         "var \u{4F60}\u{597D} = 1;",            // CJK idents
         "let \u{3C0} = 3.14;",                  // π
@@ -416,11 +415,29 @@ fn invalid_utf8(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn invalid_utf8_in_tsx_type_arguments(cpu: DynCpu) {
+    let opts = LexOptions { jsx: true, ts: true, validate_utf8: true, ..Default::default() };
+
+    // The content-blind TSX type-arg skip drops diagnostics inside the type-argument list,
+    // but must not drop UTF-8 validation's diagnostic
+    let res = lex_with_cpu(b"const el = <Foo<'\xFF'> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (17, 1, DiagCode::InvalidUtf8));
+
+    // A raw U+FFFD at code level is a binary-file error, not a UTF-8 validation error,
+    // but it's also retained in type arguments
+    let res = lex_with_cpu("const el = <Foo<\u{FFFD}> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (16, 3, DiagCode::InvalidUtf8));
+}
+
+#[test_cpus]
 fn valid_utf8_never_flagged(cpu: DynCpu) {
     let codes_v =
         |s: &str| diags_bytes(s.as_bytes(), cpu).iter().map(|d| d.code).collect::<Vec<_>>();
     for src in [
-        // spellchecker:disable-next-line
         "let caf\u{e9} = 1;",        // 2-byte
         "x = '\u{1F600}';",          // 4-byte emoji in string
         "a\u{a0}b",                  // NBSP (ws-reclass path preserved)
@@ -656,8 +673,9 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
 
 #[test_cpus]
 fn unterminated_jsx_element(cpu: DynCpu) {
-    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), [DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), [DiagCode::UnterminatedJsxElement]);
+    let want = [DiagCode::JsxTextInvalidCharacter, DiagCode::UnterminatedJsxElement];
+    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), want);
+    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), want);
 }
 
 #[test_cpus]
@@ -667,6 +685,7 @@ fn generic_function_types_never_flagged(cpu: DynCpu) {
         "const r = f<{ m: <T>(x: T) => T }>(0);",
         "let h = <T,>(x: T) => x;",
         "const e = <T>(x)</T>;",
+        "const e = <T>(it's {'a) => b'}</T>;",
     ] {
         assert!(codes_tsx(code, cpu).is_empty(), "{code:?}");
     }
@@ -793,6 +812,71 @@ fn legacy_octal_adjacency_diagnostics(cpu: DynCpu) {
     assert_eq!(codes("x = 08n;", cpu), [DiagCode::InvalidBigint]);
     for code in ["x = 010.5;", "x = 010.toString();", "x = 08.5;", "x = 09e1;"] {
         assert!(codes(code, cpu).is_empty(), "{code:?}: {:?}", codes(code, cpu));
+    }
+}
+
+#[test_cpus]
+fn legacy_octal_values(cpu: DynCpu) {
+    for (code, want) in [
+        ("x = 070;", &[56.0][..]),
+        ("x = 0777;", &[511.0]),
+        ("x = 00;", &[0.0]),
+        ("x = 010.5;", &[8.0, 0.5]),
+        ("x = 010.toString();", &[8.0]),
+        ("x = 08;", &[8.0]),
+        ("x = 0779;", &[779.0]),
+        ("x = 08.5;", &[8.5]),
+        ("x = 09e1;", &[90.0]),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), want, "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn radix_values_above_u64_max(cpu: DynCpu) {
+    let two_64 = 18_446_744_073_709_551_616.0;
+    let bin = format!("x = 0b1{};", "0".repeat(64));
+    let max = format!("x = 0x{}8{};", "f".repeat(13), "0".repeat(242));
+    let inf = format!("x = 0x1{};", "0".repeat(300));
+    for (code, want) in [
+        ("x = 0x10000000000000000;", two_64),
+        ("x = 0x1_0000_0000_0000_0000;", two_64),
+        ("x = 0x10000000000000000n;", two_64),
+        ("x = 0o2000000000000000000000;", two_64),
+        ("x = 02000000000000000000000;", two_64),
+        (bin.as_str(), two_64),
+        // Halfway between doubles rounds to even, anything above it rounds up.
+        ("x = 0x20000000000001000;", 36_893_488_147_419_103_232.0),
+        ("x = 0x20000000000001001;", 36_893_488_147_419_111_424.0),
+        ("x = 0x0000000000000000000001;", 1.0),
+        (max.as_str(), f64::MAX),
+        (inf.as_str(), f64::INFINITY),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), [want], "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn long_decimal_values(cpu: DynCpu) {
+    let long = format!("x = 1{}e-500;", "0".repeat(519));
+    let long_separated = format!("x = 1{}e-500;", "_000".repeat(173));
+    // 1 + 2^-53 is halfway between two doubles: zeros after it keep the tie, a 1 rounds it up.
+    let tie = format!("1.00000000000000011102230246251565404236316680908203125{}", "0".repeat(800));
+    let tie_kept = format!("x = {tie}0;");
+    let tie_broken = format!("x = {tie}1;");
+    for (code, want) in [
+        ("x = 98765432109876543210n;", 98_765_432_109_876_543_210.0),
+        ("x = 1_000.5e-1_0;", 1000.5e-10),
+        // The exponent is past byte 511.
+        (long.as_str(), 1e19),
+        (long_separated.as_str(), 1e19),
+        (tie_kept.as_str(), 1.0),
+        (tie_broken.as_str(), 1.0 + f64::EPSILON),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), [want], "{code:?}");
     }
 }
 

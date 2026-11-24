@@ -1,0 +1,117 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[general]
+import = ["~/.config/alacritty/themes/themes/tokyo-night.toml"]
+live_config_reload = true
+
+[window]
+padding = { x = 8, y = 8 }
+dynamic_padding = true
+decorations = "Buttonless"
+opacity = 0.95
+
+[font]
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+size = 13.0
+
+[colors.primary]
+background = '#1a1b26'
+foreground = '#c0caf5'
+
+[keyboard]
+bindings = [
+  { key = "N", mods = "Control|Shift", action = "CreateNewWindow" },
+  { key = "Return", mods = "Command", action = "ToggleFullscreen" },
+  { key = "Left", mods = "Alt", chars = "\u001bb" }, # word back
+  { key = "Right", mods = "Alt", chars = "\u001bf" }, # word forward
+]
+
+[[hints.enabled]]
+command = "open"
+hyperlinks = true
+post_processing = true
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`]+"
+mouse = { enabled = true, mods = "None" }
+binding = { key = "U", mods = "Control|Shift" }
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+[general]
+import = ["~/.config/alacritty/themes/themes/tokyo-night.toml"]
+live_config_reload = true
+
+[window]
+padding = { x = 8, y = 8 }
+dynamic_padding = true
+decorations = "Buttonless"
+opacity = 0.95
+
+[font]
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+size = 13.0
+
+[colors.primary]
+background = '#1a1b26'
+foreground = '#c0caf5'
+
+[keyboard]
+bindings = [
+  { key = "N", mods = "Control|Shift", action = "CreateNewWindow" },
+  { key = "Return", mods = "Command", action = "ToggleFullscreen" },
+  { key = "Left", mods = "Alt", chars = "\u001bb" }, # word back
+  { key = "Right", mods = "Alt", chars = "\u001bf" }, # word forward
+]
+
+[[hints.enabled]]
+command = "open"
+hyperlinks = true
+post_processing = true
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`]+"
+mouse = { enabled = true, mods = "None" }
+binding = { key = "U", mods = "Control|Shift" }
+
+-------------------
+{ printWidth: 100 }
+-------------------
+[general]
+import = ["~/.config/alacritty/themes/themes/tokyo-night.toml"]
+live_config_reload = true
+
+[window]
+padding = { x = 8, y = 8 }
+dynamic_padding = true
+decorations = "Buttonless"
+opacity = 0.95
+
+[font]
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+size = 13.0
+
+[colors.primary]
+background = '#1a1b26'
+foreground = '#c0caf5'
+
+[keyboard]
+bindings = [
+  { key = "N", mods = "Control|Shift", action = "CreateNewWindow" },
+  { key = "Return", mods = "Command", action = "ToggleFullscreen" },
+  { key = "Left", mods = "Alt", chars = "\u001bb" }, # word back
+  { key = "Right", mods = "Alt", chars = "\u001bf" }, # word forward
+]
+
+[[hints.enabled]]
+command = "open"
+hyperlinks = true
+post_processing = true
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`]+"
+mouse = { enabled = true, mods = "None" }
+binding = { key = "U", mods = "Control|Shift" }
+
+===================== End =====================

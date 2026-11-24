@@ -660,6 +660,33 @@ impl<'a, State> TraverseCtx<'a, State> {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.scoping.delete_reference_for_identifier(ident);
     }
+
+    /// Rebind an existing reference to `symbol_id`, keeping its `ReferenceId` and flags.
+    ///
+    /// Provided `name` must be the current name of `reference_id`.
+    ///
+    /// This is a shortcut for `ctx.scoping.rebind_reference`.
+    #[inline]
+    pub fn rebind_reference(
+        &mut self,
+        reference_id: ReferenceId,
+        name: Ident<'_>,
+        symbol_id: SymbolId,
+    ) {
+        self.scoping.rebind_reference(reference_id, name, symbol_id);
+    }
+
+    /// Rebind an `IdentifierReference` to `binding`, renaming it to `binding`'s name.
+    ///
+    /// The reference keeps its `ReferenceId` and flags. See [`TraverseScoping::rebind_reference`].
+    pub fn rebind_identifier_reference(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        binding: &BoundIdentifier<'a>,
+    ) {
+        self.scoping.rebind_reference(ident.reference_id(), ident.name, binding.symbol_id);
+        ident.name = binding.name;
+    }
 }
 
 // Methods used internally within crate

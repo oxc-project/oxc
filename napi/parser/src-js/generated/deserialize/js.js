@@ -353,7 +353,7 @@ function deserializeObjectProperty(pos) {
     value: null,
     method: deserializeBool(pos + 13),
     shorthand: deserializeBool(pos + 14),
-    computed: deserializeBool(pos + 15),
+    computed: uint8[pos + 16] < 64,
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
@@ -455,6 +455,12 @@ function deserializePropertyKey(pos) {
     case 64:
       return deserializeBoxIdentifierName(pos + 8);
     case 65:
+      return deserializeBoxStringLiteral(pos + 8);
+    case 66:
+      return deserializeBoxNumericLiteral(pos + 8);
+    case 67:
+      return deserializeBoxBigIntLiteral(pos + 8);
+    case 68:
       return deserializeBoxPrivateIdentifier(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKey`);
@@ -1036,7 +1042,7 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
     value: null,
     method: false,
     shorthand: false,
-    computed: deserializeBool(pos + 12),
+    computed: uint8[pos + 16] < 64,
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
@@ -1715,7 +1721,7 @@ function deserializeBindingProperty(pos) {
     value: null,
     method: false,
     shorthand: deserializeBool(pos + 12),
-    computed: deserializeBool(pos + 13),
+    computed: uint8[pos + 16] < 64,
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
@@ -2020,8 +2026,8 @@ function deserializeMethodDefinition(pos) {
     key: null,
     value: null,
     kind: deserializeMethodDefinitionKind(pos + 13),
-    computed: deserializeBool(pos + 14),
-    static: deserializeBool(pos + 15),
+    computed: uint8[pos + 40] < 64,
+    static: deserializeBool(pos + 14),
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
@@ -2048,8 +2054,8 @@ function deserializePropertyDefinition(pos) {
     decorators: null,
     key: null,
     value: null,
-    computed: deserializeBool(pos + 13),
-    static: deserializeBool(pos + 14),
+    computed: uint8[pos + 40] < 64,
+    static: deserializeBool(pos + 13),
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
@@ -2122,8 +2128,8 @@ function deserializeAccessorProperty(pos) {
     decorators: null,
     key: null,
     value: null,
-    computed: deserializeBool(pos + 13),
-    static: deserializeBool(pos + 14),
+    computed: uint8[pos + 40] < 64,
+    static: deserializeBool(pos + 13),
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
@@ -3029,7 +3035,6 @@ function deserializeTSEnumMemberName(pos) {
     case 0:
       return deserializeBoxIdentifierName(pos + 8);
     case 1:
-      return deserializeBoxStringLiteral(pos + 8);
     case 2:
       return deserializeBoxStringLiteral(pos + 8);
     case 3:
@@ -3632,9 +3637,9 @@ function deserializeTSInterfaceBody(pos) {
 function deserializeTSPropertySignature(pos) {
   let node = {
     type: "TSPropertySignature",
-    computed: deserializeBool(pos + 12),
-    optional: deserializeBool(pos + 13),
-    readonly: deserializeBool(pos + 14),
+    computed: uint8[pos + 16] < 64,
+    optional: deserializeBool(pos + 12),
+    readonly: deserializeBool(pos + 13),
     key: null,
     typeAnnotation: null,
     accessibility: null,
@@ -3715,9 +3720,9 @@ function deserializeTSMethodSignature(pos) {
   let node = {
       type: "TSMethodSignature",
       key: null,
-      computed: deserializeBool(pos + 64),
-      optional: deserializeBool(pos + 65),
-      kind: deserializeTSMethodSignatureKind(pos + 66),
+      computed: uint8[pos + 16] < 64,
+      optional: deserializeBool(pos + 64),
+      kind: deserializeTSMethodSignatureKind(pos + 65),
       typeParameters: null,
       params: null,
       returnType: null,
@@ -4314,11 +4319,9 @@ function deserializeCommentKind(pos) {
     case 0:
       return "Line";
     case 1:
-      return "Block";
     case 2:
       return "Block";
     case 3:
-      return "Line";
     case 4:
       return "Line";
     default:

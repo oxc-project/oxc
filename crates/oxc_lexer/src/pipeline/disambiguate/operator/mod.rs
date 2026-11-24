@@ -16,8 +16,8 @@
 //! walking forward to the position:
 //!
 //! - After `}`, whether the braces closed a block or a value.
-//! - Outside modules, whether `yield` and `await` are keywords, which depends on the enclosing
-//!   functions, and whether `of` is the keyword of a `for ... of` head.
+//! - Whether `yield` and `await` are keywords, which depends on the enclosing functions (a
+//!   module's top level is async), and whether `of` is the keyword of a `for ... of` head.
 //! - In TypeScript, a `>` which may close type arguments, a `void` which is a type rather than
 //!   the operator, and the line breaks after which a declaration ends without a semicolon.
 
@@ -28,7 +28,7 @@ use crate::token::{OP_KIND_BASE, is_trivia_byte, matches_tk, tk};
 use crate::pipeline::keywords::is_regex_keyword;
 
 use super::{
-    common::{TokensView, bits},
+    common::TokensView,
     context::{self, After, Walks},
 };
 
@@ -61,14 +61,13 @@ pub fn not_operator_position(
     p: usize,
     cpu: impl Cpu,
 ) -> bool {
-    let ts = tokens.ts;
-    let module = tokens.module;
+    let is_ts = tokens.is_ts;
     let src = tokens.src;
-    let mut q = bits::prev1(tokens.st, p, cpu);
+    let mut q = tokens.token_start.prev1(p, cpu);
     while let Some(qi) = q {
-        let k = tokens.kind[qi];
+        let k = tokens.kinds.get(qi);
         if is_trivia_byte(k, cpu) {
-            q = bits::prev1(tokens.st, qi, cpu);
+            q = tokens.token_start.prev1(qi, cpu);
             continue;
         }
         if k == tk!(String) {
@@ -76,7 +75,7 @@ pub fn not_operator_position(
         }
         if matches_tk!(k, Number | TemplateNoSub | TemplateTail) {
             // A literal ends a value: division, unless TS ASI applies.
-            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
+            return is_ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
         }
         if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
             return false;
@@ -88,15 +87,16 @@ pub fn not_operator_position(
             let e = tokens.next_start(qi + 1, cpu);
             let newline = tokens.line_break_between(e, p, cpu);
             if tokens.property_name(qi, cpu) {
-                return ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
+                return is_ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
             }
             let kw = tokens.word_kw(qi, e - qi, cpu);
             if is_regex_keyword(kw, cpu) {
-                if ts && kw == tk!(KwVoid) {
+                if is_ts && kw == tk!(KwVoid) {
                     // `x as void / 2` is division; `void /re/` is not.
                     return context::after(tokens, walks, qi) != After::Value;
                 }
-                if !module && matches_tk!(kw, KwYield | KwAwait) {
+                // `yield /re/` in a generator is a regex; `yield / 2` outside one is division.
+                if matches_tk!(kw, KwYield | KwAwait) {
                     return context::after(tokens, walks, qi) != After::Value;
                 }
                 return true;
@@ -113,7 +113,7 @@ pub fn not_operator_position(
             let ch = src[qi];
             // TS postfix non-null `!`: `x! / 2` is division, so look through the `!` unless a line
             // terminator precedes it (ASI makes it a prefix `!/re/`).
-            if ts && ch == b'!' {
+            if is_ts && ch == b'!' {
                 let Some(q2) = tokens.prev_sig(qi, cpu) else {
                     return true;
                 };
@@ -142,9 +142,9 @@ pub fn not_operator_position(
                 return true;
             }
             if ch == b')' || ch == b']' {
-                return ts && ends_decl(tokens, walks, qi, qi + 1, p, cpu);
+                return is_ts && ends_decl(tokens, walks, qi, qi + 1, p, cpu);
             }
-            if ts && ch == b'>' && !(qi > 0 && src[qi - 1] == b'=') {
+            if is_ts && ch == b'>' && !(qi > 0 && src[qi - 1] == b'=') {
                 return context::after(tokens, walks, qi) != After::Value;
             }
             return true;
@@ -170,7 +170,7 @@ fn ends_decl(
 #[cpu_multiversion]
 fn paren_close_is_regex(tokens: &TokensView, qi: usize, cpu: impl Cpu) -> bool {
     let word = |p: Option<usize>| {
-        p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w, cpu))
+        p.filter(|&w| tokens.kinds.get(w) == tk!(Ident) && !tokens.property_name(w, cpu))
     };
     let Some(w) = tokens.match_delim_back(qi, cpu).and_then(|lp| word(tokens.prev_sig(lp, cpu)))
     else {

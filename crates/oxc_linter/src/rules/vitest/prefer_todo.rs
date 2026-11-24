@@ -40,6 +40,17 @@ fn tests() {
         ("test('foo', 1)", None),
         ("test('stub', () => expect(1).toBe(1));", None),
         ("test.concurrent('stub', () => expect(1).toBe(1));", None),
+        ("test.only('focused test', () => {});", None),
+        ("test.only('focused test', function () {});", None),
+        ("test.fails('is expected to fail', () => {});", None),
+        ("test.fails('is expected to fail', function () {});", None),
+        ("test.concurrent('unimplemented');", None),
+        ("test.each([1, 2])('case %i', () => {});", None),
+        ("test.runIf(true)('runs on this platform', () => {});", None),
+        ("test.concurrent.skip('skipped concurrent test', () => {});", None),
+        ("test.concurrent['skip']('skipped concurrent test', function () {});", None),
+        ("test.only.skip('skipped focused test', () => {});", None),
+        ("test.fails.skip('skipped failing test', () => {});", None),
         (
             "
                 supportsDone && params.length < test.length
@@ -63,41 +74,38 @@ fn tests() {
     ];
 
     let fix = vec![
+        ("test('title', () => {});", "test('title', () => {});"),
         (
-            "test.skip('i need to write this test');",
-            "test.todo('i need to write this test');",
-            None,
+            "test.skip('title', () => {}, registerTimeout());",
+            "test.skip('title', () => {}, registerTimeout());",
         ),
-        ("test('i need to write this test',);", "test.todo('i need to write this test',);", None),
-        ("test(`i need to write this test`);", "test.todo(`i need to write this test`);", None),
-        ("it.skip('foo', function () {})", "it.todo('foo')", None),
-        ("it(`i need to write this test`, () => {})", "it.todo(`i need to write this test`)", None),
-        ("it('foo', function () {})", "it.todo('foo')", None),
-        ("it('foo', () => {})", "it.todo('foo')", None),
+        (
+            "test['skip']('title', function () {}, ...timeouts);",
+            "test['skip']('title', function () {}, ...timeouts);",
+        ),
+        ("test('i need to write this test');", "test.todo('i need to write this test');"),
+        ("test('i need to write this test',);", "test.todo('i need to write this test',);"),
+        ("test(`i need to write this test`);", "test.todo(`i need to write this test`);"),
+        ("it.skip('foo', function () {})", "it.todo('foo')"),
         (
             "test.skip('i need to write this test', () => {});",
             "test.todo('i need to write this test');",
-            None,
         ),
         (
             "test.skip('i need to write this test', function() {});",
             "test.todo('i need to write this test');",
-            None,
         ),
         (
             "test['skip']('i need to write this test', function() {});",
             "test['todo']('i need to write this test');",
-            None,
         ),
         (
             "test['skip']('i need to write this test', () => {});",
             "test['todo']('i need to write this test');",
-            None,
         ),
         (
             "test['skip']('i need to write this test');",
             "test['todo']('i need to write this test');",
-            None,
         ),
     ];
 

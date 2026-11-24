@@ -43,9 +43,50 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_object_expression_property(&mut self) -> ObjectPropertyKind<'a> {
         match self.cur_kind() {
+            Kind::Ident => ObjectPropertyKind::ObjectProperty(
+                self.parse_object_literal_element_with_identifier_key(),
+            ),
             Kind::Dot3 => ObjectPropertyKind::SpreadProperty(self.parse_spread_element()),
             _ => ObjectPropertyKind::ObjectProperty(self.parse_object_literal_element()),
         }
+    }
+
+    /// Parse a property whose key is an identifier that is not a keyword in any context,
+    /// so it is not a modifier, `get` or `set`: `a`, `a: b`, `a = b` or `a() {}`.
+    fn parse_object_literal_element_with_identifier_key(
+        &mut self,
+    ) -> ArenaBox<'a, ObjectProperty<'a>> {
+        let start = self.cur_start();
+        let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        let key = PropertyKey::StaticIdentifier(IdentifierName::boxed(span, name, self));
+
+        let kind = self.cur_kind();
+        let (value, method, shorthand) = if kind == Kind::Colon {
+            self.bump_any(); // `:`
+            (self.parse_assignment_expression_or_higher(), false, false)
+        } else if matches!(kind, Kind::LParen | Kind::LAngle) {
+            let method =
+                self.parse_method(/* async */ false, None, FunctionKind::ObjectMethod);
+            (Expression::FunctionExpression(method), true, false)
+        } else {
+            // CoverInitializedName ({ foo = bar })
+            if kind == Kind::Eq {
+                self.bump_any(); // `=`
+                let initializer = self.parse_assignment_expression_or_higher();
+                let cover = CoverInitializedName { span: self.end_span(start), initializer };
+                self.state.cover_initialized_name.insert(start, cover);
+            }
+            (Expression::new_identifier(span, name, self), false, true)
+        };
+        ObjectProperty::boxed(
+            self.end_span(start),
+            PropertyKind::Init,
+            key,
+            value,
+            method,
+            shorthand,
+            self,
+        )
     }
 
     /// `PropertyDefinition`[Yield, Await]
@@ -66,9 +107,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let asterisk_token = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
-        let token_is_identifier =
-            self.cur_kind().is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await());
-        let (key, computed) = self.parse_property_name();
+        let key_kind = self.cur_kind();
+        let token_is_identifier = key_kind
+            .is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await())
+            // In a list that may be the parameters of an arrow function, `({ await }) => {}`,
+            // a reserved `await` or `yield` is reported as the binding it would be.
+            || (matches!(key_kind, Kind::Await | Kind::Yield) && self.state.cover_depth > 0);
+        let key = self.parse_property_name();
 
         if asterisk_token.is_some() || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
@@ -89,7 +134,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Expression::FunctionExpression(method),
                 /* method */ true,
                 /* shorthand */ false,
-                computed,
                 self,
             );
         }
@@ -106,6 +150,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let PropertyKey::StaticIdentifier(identifier_name) = &key else {
                 return self.unexpected();
             };
+            if matches!(key_kind, Kind::Await | Kind::Yield) {
+                self.check_identifier_with_span(key_kind, self.ctx, identifier_name.span);
+            }
             // CoverInitializedName ({ foo = bar })
             if self.eat(Kind::Eq) {
                 let initializer = self.parse_assignment_expression_or_higher();
@@ -124,7 +171,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             value,
             /* method */ false,
             shorthand,
-            computed,
             self,
         )
     }
@@ -141,23 +187,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `PropertyName`[Yield, Await] :
     ///    `LiteralPropertyName`
     ///    `ComputedPropertyName`[?Yield, ?Await]
-    pub(crate) fn parse_property_name(&mut self) -> (PropertyKey<'a>, bool) {
-        let mut computed = false;
-        let key = match self.cur_kind() {
+    pub(crate) fn parse_property_name(&mut self) -> PropertyKey<'a> {
+        match self.cur_kind() {
             Kind::Ident => {
                 let ident = self.parse_known_identifier_name();
                 PropertyKey::StaticIdentifier(self.alloc(ident))
             }
             Kind::Str => {
                 let literal = self.parse_known_literal_string();
-                PropertyKey::StringLiteral(self.alloc(literal))
+                PropertyKey::StaticStringLiteral(self.alloc(literal))
             }
-            kind if kind.is_number() => PropertyKey::from(self.parse_literal_expression()),
+            Kind::DecimalBigInt | Kind::BinaryBigInt | Kind::OctalBigInt | Kind::HexBigInt => {
+                PropertyKey::StaticBigIntLiteral(self.parse_literal_bigint())
+            }
+            kind if kind.is_number() => {
+                PropertyKey::StaticNumericLiteral(self.parse_literal_number())
+            }
             // { [foo]() {} }
-            Kind::LBrack => {
-                computed = true;
-                PropertyKey::from(self.parse_computed_property_name())
-            }
+            Kind::LBrack => PropertyKey::from(self.parse_computed_property_name()),
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
                 self.error(diagnostics::private_identifier_in_property_name(
@@ -170,8 +217,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let ident = self.parse_identifier_name();
                 PropertyKey::StaticIdentifier(self.alloc(ident))
             }
-        };
-        (key, computed)
+        }
     }
 
     /// `ComputedPropertyName`[Yield, Await] : [ `AssignmentExpression`[+In, ?Yield, ?Await] ]
@@ -193,7 +239,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         kind: PropertyKind,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, ObjectProperty<'a>> {
-        let (key, computed) = self.parse_property_name();
+        let key = self.parse_property_name();
         let function = self.parse_method(false, None, FunctionKind::ObjectMethod);
         match kind {
             PropertyKind::Get => self.check_getter(&function),
@@ -213,7 +259,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::FunctionExpression(function),
             /* method */ false,
             /* shorthand */ false,
-            /* computed */ computed,
             self,
         )
     }

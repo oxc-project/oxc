@@ -1,0 +1,83 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+
+
+a = 1
+
+
+
+b = 2
+# comment
+
+
+# comment after blank lines
+[t]
+
+
+c = 3
+d = 4
+
+
+
+[u]
+e = 5
+
+[empty]
+
+[after_empty]
+
+# a comment after a blank line
+f = 6
+
+
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a = 1
+
+b = 2
+# comment
+
+# comment after blank lines
+[t]
+c = 3
+d = 4
+
+[u]
+e = 5
+
+[empty]
+
+[after_empty]
+
+# a comment after a blank line
+f = 6
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a = 1
+
+b = 2
+# comment
+
+# comment after blank lines
+[t]
+c = 3
+d = 4
+
+[u]
+e = 5
+
+[empty]
+
+[after_empty]
+
+# a comment after a blank line
+f = 6
+
+===================== End =====================

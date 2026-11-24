@@ -1,10 +1,10 @@
 # Oxc Mangler
 
-Variable name mangling for JavaScript minification.
+Variable and label name mangling for JavaScript minification.
 
 ## Overview
 
-This crate provides variable name mangling capabilities for JavaScript minification. It shortens variable names to reduce bundle size while preserving program semantics and ensuring gzip-friendly output.
+This crate provides variable name mangling capabilities for JavaScript minification. It shortens variable and label names to reduce bundle size while preserving program semantics and ensuring gzip-friendly output.
 
 ## Key Features
 
@@ -23,6 +23,7 @@ This crate provides variable name mangling capabilities for JavaScript minificat
 3. **Name Generation**: Generate short names using base54 encoding
 4. **Conflict Resolution**: Ensure no naming conflicts across scopes
 5. **Integration**: Update symbol table with new names
+6. **Labels**: Name labels by nesting depth, reusing names for sibling labels
 
 ### Base54 Encoding
 
@@ -47,7 +48,7 @@ The mangler works as part of the broader minification pipeline:
 1. **Parse**: Build AST from source code
 2. **Analyze**: Perform semantic analysis
 3. **Transform**: Apply compression transforms
-4. **Mangle**: Shorten the remaining variable names
+4. **Mangle**: Shorten the remaining variable and label names
 5. **Generate**: Output minified code
 
 This approach ensures maximum size reduction while maintaining correctness.

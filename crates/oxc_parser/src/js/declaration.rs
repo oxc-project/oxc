@@ -8,19 +8,19 @@ use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, l
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
-
-        let next = self.lexer.peek_token();
-        let peeked = next.kind();
+        let is_single_statement = stmt_ctx.is_single_statement();
 
         // `let [` cannot start an expression statement, even in a single-statement
         // position. Otherwise, a declaration needs a binding after `let`.
-        if peeked == Kind::LBrack
-            || (!stmt_ctx.is_single_statement()
-                && (peeked == Kind::LCurly
-                    || peeked.is_binding_identifier()
-                    || (!next.is_on_new_line() && peeked.is_after_let())))
-        {
-            self.bump_any(); // bump `let`
+        let is_declaration = self.eat_if_next(|next| {
+            let kind = next.kind();
+            kind == Kind::LBrack
+                || (!is_single_statement
+                    && (kind == Kind::LCurly
+                        || kind.is_binding_identifier()
+                        || (!next.is_on_new_line() && kind.is_after_let())))
+        });
+        if is_declaration {
             return self.parse_variable_statement(start, VariableDeclarationKind::Let, stmt_ctx);
         }
 

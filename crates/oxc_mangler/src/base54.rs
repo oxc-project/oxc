@@ -30,11 +30,14 @@ struct Aligned64([u8; 64]);
 const BASE54_CHARS: Aligned64 =
     Aligned64(*b"etnriaoscludfpmhg_vybxSCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ$1024368579");
 
+const BASE64_CHARS: Aligned64 =
+    Aligned64(*b"etnriaoscludfpmhg_10vy2436b8x579SCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ$");
+
 /// Get the shortest mangled name for a given n.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
 //
-// The maximum output length is 6 bytes (`xKrTKr` for `u32::MAX`). After the first
-// character, `num` is at most `u32::MAX / 54 == 79_536_431`; applying
+// The maximum output length is 6 bytes. After the first character, `num` is at most
+// `u32::MAX / 54 == 79_536_431`; applying
 // `(num - 1) / 64` five times reduces it to zero. Set the capacity to 7 so the total
 // size of `InlineString` is 8 bytes, including the `u8` length field.
 // Then initializing the `InlineString` is a single instruction, and with luck it'll sit in a register
@@ -58,8 +61,8 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
     const REST_BASE: usize = 64;
     while num > 0 {
         num -= 1;
-        let byte = BASE54_CHARS.0[num % REST_BASE];
-        // SAFETY: All `BASE54_CHARS` are ASCII. This loop pushes at most five trailing bytes,
+        let byte = BASE64_CHARS.0[num % REST_BASE];
+        // SAFETY: All `BASE64_CHARS` are ASCII. This loop pushes at most five trailing bytes,
         // so `str` has fewer than 6 bytes before every push, within its capacity of 7.
         unsafe { str.push_unchecked(byte) };
         num /= REST_BASE;
@@ -70,6 +73,8 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
 
 #[cfg(test)]
 mod test {
+    use rustc_hash::FxHashSet;
+
     use super::base54;
 
     #[test]
@@ -79,6 +84,31 @@ mod test {
         assert_eq!(&*base54(53), "$");
         assert_eq!(&*base54(54), "ee");
         assert_eq!(&*base54(55), "te");
-        assert_eq!(&*base54(u32::MAX), "xKrTKr");
+        assert_eq!(&*base54(1025), "$_");
+        assert_eq!(&*base54(1026), "e1");
+        assert_eq!(&*base54(1079), "$1");
+        assert_eq!(&*base54(1080), "e0");
+        assert_eq!(&*base54(3509), "$$");
+        assert_eq!(&*base54(3510), "eee");
+        assert_eq!(&*base54(u32::MAX), "xIr6Ir");
+    }
+
+    #[test]
+    fn test_base54_identifier_characters() {
+        let mut names = FxHashSet::default();
+        let mut digits = FxHashSet::default();
+        for n in 0..3510 {
+            let name = base54(n);
+            let bytes = name.as_bytes();
+            assert!(bytes[0].is_ascii_alphabetic() || matches!(bytes[0], b'_' | b'$'));
+            for &byte in &bytes[1..] {
+                assert!(byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'$'));
+                if byte.is_ascii_digit() {
+                    digits.insert(byte);
+                }
+            }
+            assert!(names.insert(name.to_string()));
+        }
+        assert_eq!(digits.len(), 10);
     }
 }

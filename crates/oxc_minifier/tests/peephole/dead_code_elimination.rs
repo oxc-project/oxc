@@ -1065,10 +1065,11 @@ fn dce_keeps_inferred_class_name_for_executing_class() {
     // DCE must not turn this into a bare anonymous class expression.
     test_same("var MyStore = class { static { console.log(this.name) } };");
     test_same("var MyStore = (class { static { console.log(this.name) } });");
+    // `(0, class {})` stops NamedEvaluation, so the static block logs `""` and the
+    // unused binding can be removed without changing the name.
     test(
         "var MyStore = (0, class { static { console.log(this.name) } });",
-        // this can be compressed to `class { static { console.log(this.name) } }`
-        "var MyStore = class { static { console.log(this.name) } };",
+        "(class { static { console.log(this.name) } });",
     );
     test_same("var MyStore = class { static foo = console.log(this.name) };");
 }
@@ -1193,4 +1194,10 @@ fn dce_inline_template_literal_does_not_create_octal_escape() {
 
     // Expressions with side effects must still remain interpolation expressions.
     test_same(r"export function makeKey(messageId) { return `${messageId}\0${sideEffect()}`; }");
+}
+
+#[test]
+fn keeps_numeric_identities() {
+    // Rewriting `a * 1` to `+a` only shrinks code, so tree-shake-only mode leaves it.
+    test_same("foo(a * 1), foo(b - 0), foo(1 * c / 1)");
 }

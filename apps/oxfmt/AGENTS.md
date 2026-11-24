@@ -68,9 +68,8 @@ The stable distinction is:
 Oxfmt utilizes different implementations depending on the file extension and filename:
 
 - Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json`, etc found in this repository
-- Tier 2: Rust implementations wrapping external libraries like `oxc_formatter_toml` (`oxc-toml`)
-- Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Angular or MDX)
-- Tier 4: Delegations to Prettier that require additional Prettier plugins (e.g., for Svelte, Astro)
+- Tier 2: Delegations to Prettier via NAPI-JS calls (e.g., for Angular or MDX)
+- Tier 3: Delegations to Prettier that require additional Prettier plugins (e.g., for Svelte, Astro)
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
@@ -138,7 +137,7 @@ Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 
 - Rust collects classes into `FormatElement::TailwindClass`
   - `className` etc. in JS/TS, `@apply` in CSS — incl. css-in-js and JSDoc fenced blocks
-  - `class` and the listed attributes in HTML / Vue, and Vue's `:class` / bound listed attributes as JS
+  - `class` and the listed attributes in HTML / Vue / Angular, and as JS their bindings (Vue's `:a`, Angular's `[a]` and `[ngClass]`), read per dialect as prettier-plugin-tailwindcss reads `tailwindAttributes` (`oxc_formatter_htmlish`'s `TailwindAttributes`)
 - and the JS side sorts them in one batch
   - `sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config
 

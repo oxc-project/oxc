@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* a glued number run is one word: its head stays raw too */
+a {
+  version: 1.20.3;
+  b: f(1.20.3) 1.50em.5;
+  /* real numbers still normalize */
+  c: .50 1.0px;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* a glued number run is one word: its head stays raw too */
+a {
+  version: 1.20.3;
+  b: f(1.20.3) 1.50em.5;
+  /* real numbers still normalize */
+  c: 0.5 1px;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* a glued number run is one word: its head stays raw too */
+a {
+  version: 1.20.3;
+  b: f(1.20.3) 1.50em.5;
+  /* real numbers still normalize */
+  c: 0.5 1px;
+}
+
+===================== End =====================

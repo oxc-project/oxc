@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BinaryExpression, BinaryOperator, Expression, LogicalExpression, LogicalOperator,
-        UnaryOperator,
+        ArrowFunctionBody, BinaryExpression, BinaryOperator, Expression, LogicalExpression,
+        LogicalOperator, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -15,6 +15,7 @@ use serde::Deserialize;
 
 use crate::{
     AstNode,
+    ast_util::could_be_asi_hazard,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
     utils::is_same_expression,
@@ -255,12 +256,12 @@ impl Rule for Yoda {
 
         // never
         if allow_yoda == &AllowYoda::Never && is_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, true);
+            do_diagnostic_with_fix(expr, node, ctx, true);
         }
 
         // always
         if allow_yoda == &AllowYoda::Always && is_not_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx, false);
+            do_diagnostic_with_fix(expr, node, ctx, false);
         }
     }
 }
@@ -276,8 +277,23 @@ fn is_not_yoda(expr: &BinaryExpression) -> bool {
 }
 
 #[expect(clippy::cast_possible_truncation)]
-fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: bool) {
+fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintContext, never: bool) {
     ctx.diagnostic_with_fix(yoda_diagnostic(expr.span, never, expr.operator.as_str()), |fix| {
+        // The operands of a relational comparison are converted to primitives
+        // in a left-first order that is reversed when the operands are swapped.
+        // A regex literal is an object, so its conversion is observable and the
+        // swap is not behavior-preserving; skip the safe fix in that case.
+        if expr.operator.is_compare() {
+            let literal_expr = if never {
+                expr.left.get_inner_expression()
+            } else {
+                expr.right.get_inner_expression()
+            };
+            if matches!(literal_expr, Expression::RegExpLiteral(_)) {
+                return fix.noop();
+            }
+        }
+
         let left_span = expr.left.span();
         let right_span = expr.right.span();
 
@@ -313,14 +329,92 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
         let left_str = ctx.source_range(left_span);
         let right_str = ctx.source_range(right_span);
         let flipped_operator_str = flip_operator(expr.operator).as_str();
+        let needs_parens = match flip_position(node, ctx) {
+            Some(FlipPosition::StatementStart) => {
+                right_str.starts_with('{') || starts_with_function_or_class(right_str)
+            }
+            Some(FlipPosition::ArrowBody) => right_str.starts_with('{'),
+            Some(FlipPosition::ExportDefault) => starts_with_function_or_class(right_str),
+            None => false,
+        };
+        let needs_semicolon = (needs_parens
+            || right_str.starts_with(['[', '(', '/', '+', '-', '`']))
+            && could_be_asi_hazard(node, ctx);
+        let prefix = if needs_semicolon {
+            ";"
+        } else if left_prev_token {
+            " "
+        } else {
+            ""
+        };
+        let (open, close) = if needs_parens { ("(", ")") } else { ("", "") };
+        let suffix = if right_next_token { " " } else { "" };
         let replacement = format!(
-            "{}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
-            if left_prev_token { " " } else { "" },
-            if right_next_token { " " } else { "" }
+            "{prefix}{open}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{close}{suffix}"
         );
 
         fix.replace(expr.span, replacement)
     });
+}
+
+/// Grammar positions of the flipped expression where its first token
+/// determines how the surrounding statement is parsed.
+#[derive(Debug, Clone, Copy)]
+enum FlipPosition {
+    /// The expression begins an expression statement.
+    StatementStart,
+    /// The expression is the concise body of an arrow function.
+    ArrowBody,
+    /// The expression follows `export default`.
+    ExportDefault,
+}
+
+/// Walks up the ancestors that begin at the same offset as `node` (the same
+/// walk as ESLint's `isStartOfExpressionStatement`) to find the grammar
+/// position that the flipped expression will occupy.
+fn flip_position(node: &AstNode, ctx: &LintContext) -> Option<FlipPosition> {
+    let start = node.span().start;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        if ancestor.span().start != start {
+            return match ancestor.kind() {
+                AstKind::ArrowFunctionExpression(arrow)
+                    if !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_))
+                        && arrow.body.span().start == start =>
+                {
+                    Some(FlipPosition::ArrowBody)
+                }
+                AstKind::ExportDefaultDeclaration(decl)
+                    if decl.declaration.span().start == start =>
+                {
+                    Some(FlipPosition::ExportDefault)
+                }
+                _ => None,
+            };
+        }
+        if matches!(ancestor.kind(), AstKind::ExpressionStatement(_)) {
+            return Some(FlipPosition::StatementStart);
+        }
+    }
+    None
+}
+
+/// Mirrors ESLint's `startsFunctionOrClass` from the yoda rule: whether the
+/// operand's source starts with a `function` or `class` expression, including
+/// an `async function` expression.
+fn starts_with_function_or_class(source: &str) -> bool {
+    let is_word_char = |c: char| c.is_alphanumeric() || c == '_' || c == '$';
+    let word_len = |text: &str| {
+        text.chars().take_while(|&c| is_word_char(c)).map(char::len_utf8).sum::<usize>()
+    };
+    let first_len = word_len(source);
+    match &source[..first_len] {
+        "function" | "class" => true,
+        "async" => {
+            let rest = source[first_len..].trim_start();
+            &rest[..word_len(rest)] == "function"
+        }
+        _ => false,
+    }
 }
 
 fn match_token(token: Option<char>) -> bool {
@@ -878,6 +972,10 @@ fn test() {
         ("if (0 < a && b < max) {}", Some(serde_json::json!(["never", { "exceptRange": true }]))),
         // Issue: <https://github.com/oxc-project/oxc/issues/7714>
         ("{( t=='' )}", Some(serde_json::json!(["always", { "onlyEquality": true }]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        ("if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        ("if (/x/ === value) {}", Some(serde_json::json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1235,6 +1333,47 @@ fn test() {
         (
             "function a(){return\"x\"===new Foo()}",
             "function a(){return new Foo()===\"x\"}",
+            Some(serde_json::json!(["never"])),
+        ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/29471>
+        ("if (/x/ < value) {}", "if (/x/ < value) {}", Some(serde_json::json!(["never"]))),
+        ("if (value > /x/) {}", "if (value > /x/) {}", Some(serde_json::json!(["always"]))),
+        ("if (/x/ === value) {}", "if (value === /x/) {}", Some(serde_json::json!(["never"]))),
+        ("foo()\n0 === [a, b].indexOf(x) && go()", "foo()\n;[a, b].indexOf(x) === 0 && go()", None),
+        ("foo()\n0 === (a || b) && go()", "foo()\n;(a || b) === 0 && go()", None),
+        ("foo()\n0 === -x && go()", "foo()\n;-x === 0 && go()", None),
+        ("a++\n0 === +x && go()", "a++\n;+x === 0 && go()", None),
+        (
+            "foo();\n0 === [a, b].indexOf(x) && go();",
+            "foo();\n[a, b].indexOf(x) === 0 && go();",
+            None,
+        ),
+        (
+            "0 === { a: 0 }[k] && go();",
+            "({ a: 0 }[k] === 0) && go();",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const f = () => 0 === { a: 0 }[k];",
+            "const f = () => ({ a: 0 }[k] === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "export default 0 === function () {}.length;",
+            "export default (function () {}.length === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("1 < {}.x;", "({}.x > 1);", Some(serde_json::json!(["never"]))),
+        (
+            "const a = [b]\n0 === { a: 0 }[k];",
+            "const a = [b]\n;({ a: 0 }[k] === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("0 === classy;", "classy === 0;", Some(serde_json::json!(["never"]))),
+        ("1<{}[x]in y;", "({}[x]>1) in y;", Some(serde_json::json!(["never"]))),
+        (
+            "export default 1<function(){}[x]in y;",
+            "export default (function(){}[x]>1) in y;",
             Some(serde_json::json!(["never"])),
         ),
     ];

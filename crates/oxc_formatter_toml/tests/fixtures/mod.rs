@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use oxc_allocator::Allocator;
 use oxc_formatter_tests::{FixtureFormatter, InputVariant, OptionValue, build_fixture_snapshot};
 use oxc_formatter_toml::{TomlFormatOptions, TrailingCommas, format};
 
@@ -7,10 +8,9 @@ struct TomlHarness;
 
 impl FixtureFormatter for TomlHarness {
     type Options = TomlFormatOptions;
-    /// `oxc_toml` exposes no syntax tree, so this is every character but whitespace and commas:
+    /// Every character but whitespace and commas:
     /// formatting only moves those, so a dropped comment, key or value changes it.
-    /// Commas and whitespace inside strings and comments are not covered;
-    /// switch to a token / comment count once `oxc_toml` exposes its tree.
+    /// Commas and whitespace inside strings and comments are not covered.
     type Fingerprint = String;
 
     fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
@@ -31,7 +31,8 @@ impl FixtureFormatter for TomlHarness {
         _path: &Path,
         options: &Self::Options,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        Ok(format(source, *options)?)
+        let allocator = Allocator::default();
+        Ok(format(&allocator, source, *options)?.print()?.into_code())
     }
 
     fn fingerprint(source: &str, _path: &Path, _options: &Self::Options) -> String {
@@ -63,12 +64,12 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 
 // ---
 
-/// `oxc_toml::format()` keeps an invalid range as-is, so any parse error must surface as `Err`.
+/// `oxc_toml::parse()` is fault-tolerant, so any parse error must surface as `Err`.
 #[test]
 fn parse_error_is_err() {
     for source in ["a = ", "b = = 1", "[t"] {
         assert!(
-            format(source, TomlFormatOptions::default()).is_err(),
+            format(&Allocator::default(), source, TomlFormatOptions::default()).is_err(),
             "{source:?} should fail to format"
         );
     }
@@ -80,7 +81,21 @@ fn whitespace_only_is_empty() {
     for (source, expected) in
         [("", ""), (" \n", ""), ("\u{feff}", "\u{feff}"), ("\u{feff} \n", "\u{feff}")]
     {
-        let formatted = format(source, TomlFormatOptions::default()).expect("should format");
+        let formatted = TomlHarness::format(source, Path::new(""), &TomlFormatOptions::default())
+            .expect("should format");
         assert_eq!(formatted, expected, "{source:?}");
     }
+}
+
+/// A lone CR is not a TOML line break, so `endOfLine: "cr"` prints LF.
+/// (Not a fixture: the harness asserts that `cr` output holds no LF.)
+#[test]
+fn cr_line_ending_prints_lf() {
+    let options = TomlFormatOptions {
+        line_ending: oxc_formatter_core::LineEnding::Cr,
+        ..TomlFormatOptions::default()
+    };
+    let formatted =
+        TomlHarness::format("a=1\n[t]\nb=[1,2]\n", Path::new(""), &options).expect("should format");
+    assert_eq!(formatted, "a = 1\n[t]\nb = [1, 2]\n");
 }

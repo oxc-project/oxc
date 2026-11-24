@@ -439,7 +439,7 @@ function deserializeObjectProperty(pos) {
       (node$0.value = null),
       (node$0.method = deserializeBool(pos + 13)),
       (node$0.shorthand = deserializeBool(pos + 14)),
-      (node$0.computed = deserializeBool(pos + 15)),
+      (node$0.computed = uint8[pos + 16] < 64),
       (node$0.optional = false),
       (node$0.start = start = deserializeI32(pos)),
       (node$0.end = end = deserializeI32(pos + 4)),
@@ -545,6 +545,12 @@ function deserializePropertyKey(pos) {
     case 64:
       return deserializeBoxIdentifierName(pos + 8);
     case 65:
+      return deserializeBoxStringLiteral(pos + 8);
+    case 66:
+      return deserializeBoxNumericLiteral(pos + 8);
+    case 67:
+      return deserializeBoxBigIntLiteral(pos + 8);
+    case 68:
       return deserializeBoxPrivateIdentifier(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKey`);
@@ -1377,7 +1383,7 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
       (node$0.value = null),
       (node$0.method = false),
       (node$0.shorthand = false),
-      (node$0.computed = deserializeBool(pos + 12)),
+      (node$0.computed = uint8[pos + 16] < 64),
       (node$0.optional = false),
       (node$0.start = start = deserializeI32(pos)),
       (node$0.end = end = deserializeI32(pos + 4)),
@@ -2305,7 +2311,7 @@ function deserializeBindingProperty(pos) {
       (node$0.value = null),
       (node$0.method = false),
       (node$0.shorthand = deserializeBool(pos + 12)),
-      (node$0.computed = deserializeBool(pos + 13)),
+      (node$0.computed = uint8[pos + 16] < 64),
       (node$0.optional = false),
       (node$0.start = start = deserializeI32(pos)),
       (node$0.end = end = deserializeI32(pos + 4)),
@@ -2847,11 +2853,11 @@ function deserializeMethodDefinition(pos) {
       (node$0.key = null),
       (node$0.value = null),
       (node$0.kind = deserializeMethodDefinitionKind(pos + 13)),
-      (node$0.computed = deserializeBool(pos + 14)),
-      (node$0.static = deserializeBool(pos + 15)),
-      (node$0.override = deserializeBool(pos + 64)),
-      (node$0.optional = deserializeBool(pos + 65)),
-      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 66)),
+      (node$0.computed = uint8[pos + 40] < 64),
+      (node$0.static = deserializeBool(pos + 14)),
+      (node$0.override = deserializeBool(pos + 15)),
+      (node$0.optional = deserializeBool(pos + 64)),
+      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 65)),
       (node$0.start = start = deserializeI32(pos)),
       (node$0.end = end = deserializeI32(pos + 4)),
       (node$0.range = [start, end]),
@@ -2887,14 +2893,14 @@ function deserializePropertyDefinition(pos) {
       (node$0.key = null),
       (node$0.typeAnnotation = null),
       (node$0.value = null),
-      (node$0.computed = deserializeBool(pos + 13)),
-      (node$0.static = deserializeBool(pos + 14)),
-      (node$0.declare = deserializeBool(pos + 15)),
-      (node$0.override = deserializeBool(pos + 80)),
-      (node$0.optional = deserializeBool(pos + 81)),
-      (node$0.definite = deserializeBool(pos + 82)),
-      (node$0.readonly = deserializeBool(pos + 83)),
-      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 84)),
+      (node$0.computed = uint8[pos + 40] < 64),
+      (node$0.static = deserializeBool(pos + 13)),
+      (node$0.declare = deserializeBool(pos + 14)),
+      (node$0.override = deserializeBool(pos + 15)),
+      (node$0.optional = deserializeBool(pos + 80)),
+      (node$0.definite = deserializeBool(pos + 81)),
+      (node$0.readonly = deserializeBool(pos + 82)),
+      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 83)),
       (node$0.start = start = deserializeI32(pos)),
       (node$0.end = end = deserializeI32(pos + 4)),
       (node$0.range = [start, end]),
@@ -2990,11 +2996,11 @@ function deserializeAccessorProperty(pos) {
       (node$0.key = null),
       (node$0.typeAnnotation = null),
       (node$0.value = null),
-      (node$0.computed = deserializeBool(pos + 13)),
-      (node$0.static = deserializeBool(pos + 14)),
-      (node$0.override = deserializeBool(pos + 15)),
-      (node$0.definite = deserializeBool(pos + 80)),
-      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 81)),
+      (node$0.computed = uint8[pos + 40] < 64),
+      (node$0.static = deserializeBool(pos + 13)),
+      (node$0.override = deserializeBool(pos + 14)),
+      (node$0.definite = deserializeBool(pos + 15)),
+      (node$0.accessibility = deserializeOptionTSAccessibility(pos + 80)),
       (node$0.declare = false),
       (node$0.optional = false),
       (node$0.readonly = false),
@@ -4213,7 +4219,6 @@ function deserializeTSEnumMemberName(pos) {
     case 0:
       return deserializeBoxIdentifierName(pos + 8);
     case 1:
-      return deserializeBoxStringLiteral(pos + 8);
     case 2:
       return deserializeBoxStringLiteral(pos + 8);
     case 3:
@@ -5120,9 +5125,9 @@ function deserializeTSPropertySignature(pos) {
     node = (parent =
       ((node$0 = Object.create(NodeProto)),
       (node$0.type = "TSPropertySignature"),
-      (node$0.computed = deserializeBool(pos + 12)),
-      (node$0.optional = deserializeBool(pos + 13)),
-      (node$0.readonly = deserializeBool(pos + 14)),
+      (node$0.computed = uint8[pos + 16] < 64),
+      (node$0.optional = deserializeBool(pos + 12)),
+      (node$0.readonly = deserializeBool(pos + 13)),
       (node$0.key = null),
       (node$0.typeAnnotation = null),
       (node$0.accessibility = null),
@@ -5227,9 +5232,9 @@ function deserializeTSMethodSignature(pos) {
       ((node$0 = Object.create(NodeProto)),
       (node$0.type = "TSMethodSignature"),
       (node$0.key = null),
-      (node$0.computed = deserializeBool(pos + 64)),
-      (node$0.optional = deserializeBool(pos + 65)),
-      (node$0.kind = deserializeTSMethodSignatureKind(pos + 66)),
+      (node$0.computed = uint8[pos + 16] < 64),
+      (node$0.optional = deserializeBool(pos + 64)),
+      (node$0.kind = deserializeTSMethodSignatureKind(pos + 65)),
       (node$0.typeParameters = null),
       (node$0.params = null),
       (node$0.returnType = null),

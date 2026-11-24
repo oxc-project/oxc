@@ -141,7 +141,8 @@ declare_oxc_lint!(
     restriction,
     config = NoCycle,
     version = "0.0.13",
-    short_description = "Disallow cyclic dependencies that import the current module in its own dependency graph.",
+    short_description =
+        "Disallow cyclic dependencies that import the current module in its own dependency graph.",
 );
 
 impl Rule for NoCycle {
