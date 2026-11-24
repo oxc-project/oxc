@@ -11,15 +11,16 @@ use std::{
 use oxc::{
     allocator::Allocator,
     ast::ast::Program,
-    ast_visit::Visit,
     diagnostics::{Diagnostics, LabeledSpan, OxcDiagnostic},
     parser::{Parser, ParserReturn, config::TokensParserConfig},
-    span::{ContentEq, SourceType, Span},
+    span::SourceType,
     syntax::module_record::ModuleRecord,
 };
 use rayon::prelude::*;
 
-use crate::{BabelFile, CoverageResult, MiscFile, Test262File, TestResult, TypeScriptFile};
+use crate::{
+    BabelFile, CoverageResult, MiscFile, Test262File, TestResult, TypeScriptFile, full_eq::FullEq,
+};
 
 pub fn run_unambiguous_test262(files: &[Test262File]) -> Vec<CoverageResult> {
     files
@@ -127,27 +128,19 @@ fn sorted_diagnostics(diagnostics: &Diagnostics) -> Vec<&OxcDiagnostic> {
     diagnostics
 }
 
-/// [`ContentEq`] ignores spans, so compare every node's span separately.
+/// Compare every field of 2 [`Program`]s with [`FullEq`], except:
+/// - `source_text`, which is the same for both.
+/// - `comments`, which are compared separately, so they get their own mismatch.
+///
+/// `Program` is `#[non_exhaustive]`, so can't be destructured here to check that every field
+/// is listed. Update this function if `Program` gains a field.
 fn program_eq(actual: &Program, expected: &Program) -> bool {
-    actual.content_eq(expected)
-        && SpanCollector::collect(actual) == SpanCollector::collect(expected)
-}
-
-#[derive(Default)]
-struct SpanCollector(Vec<Span>);
-
-impl SpanCollector {
-    fn collect(program: &Program) -> Vec<Span> {
-        let mut collector = Self::default();
-        collector.visit_program(program);
-        collector.0
-    }
-}
-
-impl Visit<'_> for SpanCollector {
-    fn visit_span(&mut self, span: &Span) {
-        self.0.push(*span);
-    }
+    actual.span.full_eq(&expected.span)
+        && actual.source_type.full_eq(&expected.source_type)
+        && actual.hashbang.full_eq(&expected.hashbang)
+        && actual.directives.full_eq(&expected.directives)
+        && actual.body.full_eq(&expected.body)
+        && actual.scope_id.full_eq(&expected.scope_id)
 }
 
 /// Skip `has_module_syntax`. Unambiguous mode also sets it for top-level `await`,
