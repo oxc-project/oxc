@@ -49,12 +49,18 @@ pub struct TsGoLintState {
     timings: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// If `true`, partial-loader files (`.vue`, `.astro`, `.svelte`) are linted type-aware by
+    /// sending their script block to the backend as a source override.
+    /// See [`backend_supports_partial_loader_files`].
+    supports_partial_loader_files: bool,
 }
 
 impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore, fix_kind: FixKind) -> Self {
         let executable_path =
             try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint"));
+
+        let supports_partial_loader_files = backend_supports_partial_loader_files(&executable_path);
 
         TsGoLintState {
             config_store,
@@ -67,6 +73,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            supports_partial_loader_files,
         }
     }
 
@@ -81,6 +88,8 @@ impl TsGoLintState {
     ) -> Result<Self, String> {
         let executable_path = try_find_tsgolint_executable(cwd)?;
 
+        let supports_partial_loader_files = backend_supports_partial_loader_files(&executable_path);
+
         Ok(TsGoLintState {
             config_store,
             executable_path,
@@ -92,6 +101,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            supports_partial_loader_files,
         })
     }
 
@@ -182,8 +192,23 @@ impl TsGoLintState {
         }
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+        let mut partial_scripts: FxHashMap<PathBuf, u32> = FxHashMap::default();
+        let mut source_overrides: FxHashMap<String, String> = FxHashMap::default();
 
-        let json_input = self.json_input(paths, None, &mut resolved_configs);
+        for path in paths {
+            let path_ref = Path::new(path);
+            if let Some((start, script)) = self.extract_partial_script_from_disk(path_ref) {
+                partial_scripts.insert(path_ref.to_path_buf(), start);
+                source_overrides.insert(path_ref.to_string_lossy().to_string(), script);
+            }
+        }
+
+        let json_input = self.json_input(
+            paths,
+            (!source_overrides.is_empty()).then_some(source_overrides),
+            &mut resolved_configs,
+            &partial_scripts,
+        );
         if json_input.configs.is_empty() {
             return TsGoLintRun { started: None };
         }
@@ -191,7 +216,9 @@ impl TsGoLintState {
         let all_paths = {
             let mut paths_buff = vec![];
             for path in paths {
-                if SourceType::from_path(Path::new(path)).is_ok() {
+                let path_ref = Path::new(path);
+                if SourceType::from_path(path_ref).is_ok() || partial_scripts.contains_key(path_ref)
+                {
                     let path_buf = PathBuf::from(path);
                     paths_buff.push(path_buf);
                 }
@@ -219,7 +246,13 @@ impl TsGoLintState {
         });
 
         TsGoLintRun {
-            started: Some(StartedRun { state: self, resolved_configs, all_paths, process }),
+            started: Some(StartedRun {
+                state: self,
+                resolved_configs,
+                all_paths,
+                partial_scripts,
+                process,
+            }),
         }
     }
 }
@@ -234,6 +267,10 @@ struct StartedRun {
     state: TsGoLintState,
     resolved_configs: FxHashMap<PathBuf, ResolvedLinterState>,
     all_paths: Vec<PathBuf>,
+    /// For every partial-loader file (`.vue`, `.astro`, `.svelte`) sent to the backend with a
+    /// source override, the byte offset of its script block in the file. Diagnostics of these
+    /// files arrive relative to the script block and are shifted by this offset.
+    partial_scripts: FxHashMap<PathBuf, u32>,
     /// The spawned process, or the error from spawning it.
     process: Result<TsGoLintProcess, String>,
 }
@@ -262,7 +299,8 @@ impl TsGoLintRun {
         diff_manager: &Arc<DiffManager>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> Result<(), String> {
-        let Some(StartedRun { state, resolved_configs, all_paths, process }) = self.started.take()
+        let Some(StartedRun { state, resolved_configs, all_paths, partial_scripts, process }) =
+            self.started.take()
         else {
             return Ok(());
         };
@@ -294,7 +332,13 @@ impl TsGoLintRun {
                         Ok(TsGoLintMessage::Error(err)) => {
                             return Err(err.error);
                         }
-                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
+                        Ok(TsGoLintMessage::Diagnostic(mut tsgolint_diagnostic)) => {
+                            if let Some(offset) = tsgolint_diagnostic
+                                .file_path()
+                                .and_then(|path| partial_scripts.get(path))
+                            {
+                                tsgolint_diagnostic.shift_spans(*offset);
+                            }
                             match tsgolint_diagnostic {
                                 TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
                                     let path = &tsgolint_diagnostic.file_path;
@@ -544,6 +588,7 @@ impl TsGoLintState {
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
         let mut source_overrides: FxHashMap<String, String> = FxHashMap::default();
+        let mut partial_scripts: FxHashMap<PathBuf, u32> = FxHashMap::default();
         let allocator = Allocator::default();
 
         // Read all sources into overrides
@@ -555,11 +600,23 @@ impl TsGoLintState {
                     path.to_string_lossy()
                 ));
             };
-            source_overrides.insert(path.to_string_lossy().to_string(), source_text.to_string());
+            // The backend lints partial-loader files through their script block, so it needs the
+            // block as the source override.
+            if let Some((start, script)) = self.extract_partial_script(path_ref, source_text) {
+                partial_scripts.insert(path_ref.to_path_buf(), start);
+                source_overrides.insert(path_ref.to_string_lossy().to_string(), script.to_string());
+            } else {
+                source_overrides
+                    .insert(path_ref.to_string_lossy().to_string(), source_text.to_string());
+            }
         }
 
-        let json_input =
-            self.json_input(paths, Some(source_overrides.clone()), &mut resolved_configs);
+        let json_input = self.json_input(
+            paths,
+            Some(source_overrides.clone()),
+            &mut resolved_configs,
+            &partial_scripts,
+        );
 
         //  Get the file name of the first path for internal diagnostic filtering
         let path_file_name =
@@ -601,12 +658,24 @@ impl TsGoLintState {
                                     continue;
                                 };
 
+                                // For partial-loader files the source override holds only the
+                                // script block, so spans are block-relative while disable
+                                // directives are file-relative: check them against a shifted
+                                // diagnostic. Mirrors `CtxHost::push_diagnostic`, which moves
+                                // regular-pass diagnostics the same way.
+                                let section_offset =
+                                    partial_scripts.get(&path).copied().unwrap_or_default();
+                                let mut shifted =
+                                    (section_offset != 0).then(|| tsgolint_diagnostic.clone());
+                                if let Some(shifted) = &mut shifted {
+                                    shifted.shift_spans(section_offset);
+                                }
                                 if should_skip_diagnostic(
                                     &disable_directives_map
                                         .lock()
                                         .expect("disable_directives_map mutex poisoned"),
                                     &path,
-                                    &tsgolint_diagnostic,
+                                    shifted.as_ref().unwrap_or(&tsgolint_diagnostic),
                                 ) {
                                     continue;
                                 }
@@ -626,7 +695,11 @@ impl TsGoLintState {
                                 );
 
                                 if self.with_ignore_fixes {
-                                    message.add_ignore_fix(0, &source_text_owned);
+                                    message.add_ignore_fix(section_offset, &source_text_owned);
+                                }
+
+                                if section_offset != 0 {
+                                    message.move_offset(section_offset);
                                 }
 
                                 message.error.severity = if severity == AllowWarnDeny::Deny {
@@ -638,7 +711,7 @@ impl TsGoLintState {
                                 result.push(message);
                             }
                             TsGoLintDiagnostic::Internal(e) => {
-                                let span = e
+                                let mut span = e
                                     .file_path
                                     .as_ref()
                                     .is_some_and(|f| {
@@ -647,6 +720,11 @@ impl TsGoLintState {
                                     .then_some(e.span)
                                     .flatten()
                                     .unwrap_or_default();
+                                if let Some(offset) =
+                                    e.file_path.as_ref().and_then(|path| partial_scripts.get(path))
+                                {
+                                    span = span.move_right(*offset);
+                                }
                                 let mut diagnostic: OxcDiagnostic = e.into();
                                 diagnostic = diagnostic.with_label(span);
                                 result.push(Message::new(diagnostic, PossibleFixes::None));
@@ -669,6 +747,38 @@ impl TsGoLintState {
         diagnostics
     }
 
+    /// Read a partial-loader file (`.vue`, `.astro`, `.svelte`) from disk and extract its script
+    /// block for the backend.
+    ///
+    /// Returns the byte offset of the block in the file and the block's text, or `None` when the
+    /// file should not be sent to the backend (see [`Self::extract_partial_script`]).
+    fn extract_partial_script_from_disk(&self, path: &Path) -> Option<(u32, String)> {
+        if !self.supports_partial_loader_files || !is_partial_loader_file(path) {
+            return None;
+        }
+        let source_text = read_to_string(path).ok()?;
+        let (start, script) = self.extract_partial_script(path, &source_text)?;
+        Some((start, script.to_string()))
+    }
+
+    /// Extract the script block of a partial-loader file (`.vue`, `.astro`, `.svelte`) for the
+    /// backend, which lints it through a source override holding only that block.
+    ///
+    /// Returns the byte offset of the block in `source_text` and the block's text, or `None`
+    /// when the backend does not support partial-loader files, the extension is not a
+    /// partial-loader extension, or the file does not have exactly one script block (the backend
+    /// protocol has a single source override per file, so multiple blocks cannot be mapped).
+    fn extract_partial_script<'a>(
+        &self,
+        path: &Path,
+        source_text: &'a str,
+    ) -> Option<(u32, &'a str)> {
+        if !self.supports_partial_loader_files {
+            return None;
+        }
+        partial_loader_script(path, source_text)
+    }
+
     /// Create a JSON input for STDIN of tsgolint in this format:
     ///
     /// ```json
@@ -687,11 +797,16 @@ impl TsGoLintState {
         paths: &[Arc<OsStr>],
         source_overrides: Option<FxHashMap<String, String>>,
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
+        partial_scripts: &FxHashMap<PathBuf, u32>,
     ) -> Payload {
         if self.type_check_only {
             let file_paths: Vec<String> = paths
                 .iter()
-                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
+                .filter(|path| {
+                    let path_ref = Path::new(path.as_ref());
+                    SourceType::from_path(path_ref).is_ok()
+                        || partial_scripts.contains_key(path_ref)
+                })
                 .map(|path| path.to_string_lossy().into_owned())
                 .collect();
             return Payload {
@@ -710,7 +825,8 @@ impl TsGoLintState {
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
 
         for path in paths {
-            if SourceType::from_path(Path::new(path)).is_ok() {
+            let path_ref = Path::new(path.as_ref());
+            if SourceType::from_path(path_ref).is_ok() || partial_scripts.contains_key(path_ref) {
                 let file_path = path.to_string_lossy().to_string();
                 let path_buf = PathBuf::from(path);
                 let resolved_config = resolved_configs
@@ -897,6 +1013,33 @@ pub enum TsGoLintDiagnostic {
     Internal(TsGoLintInternalDiagnostic),
 }
 
+impl TsGoLintDiagnostic {
+    /// The file the diagnostic belongs to, if known.
+    fn file_path(&self) -> Option<&Path> {
+        match self {
+            Self::Rule(diagnostic) => Some(&diagnostic.file_path),
+            Self::Internal(diagnostic) => diagnostic.file_path.as_deref(),
+        }
+    }
+
+    /// Shift every span of the diagnostic right by `offset`, the byte offset of the script block
+    /// of a partial-loader file (`.vue`, `.astro`, `.svelte`).
+    ///
+    /// The backend lints these files through a source override holding only the script block,
+    /// so its spans are relative to that block, while diagnostics are reported against the
+    /// whole file.
+    fn shift_spans(&mut self, offset: u32) {
+        match self {
+            Self::Rule(diagnostic) => diagnostic.shift_spans(offset),
+            Self::Internal(diagnostic) => {
+                if let Some(span) = &mut diagnostic.span {
+                    *span = span.move_right(offset);
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct TsGoLintRuleDiagnostic {
     pub span: Span,
@@ -906,6 +1049,29 @@ pub struct TsGoLintRuleDiagnostic {
     pub suggestions: Vec<Suggestion>,
     pub labeled_ranges: Vec<LabeledRange>,
     pub file_path: PathBuf,
+}
+
+impl TsGoLintRuleDiagnostic {
+    /// Shift every span of the diagnostic right by `offset`, the byte offset of the script block
+    /// of a partial-loader file (`.vue`, `.astro`, `.svelte`).
+    ///
+    /// The backend lints these files through a source override holding only the script block,
+    /// so its spans are relative to that block, while diagnostics are reported against the
+    /// whole file.
+    fn shift_spans(&mut self, offset: u32) {
+        self.span = self.span.move_right(offset);
+        for fix in &mut self.fixes {
+            fix.range.shift(offset);
+        }
+        for suggestion in &mut self.suggestions {
+            for fix in &mut suggestion.fixes {
+                fix.range.shift(offset);
+            }
+        }
+        for labeled_range in &mut self.labeled_ranges {
+            labeled_range.range.shift(offset);
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -1012,10 +1178,18 @@ impl Message {
 }
 
 // TODO: Should this be removed and replaced with a `Span`?
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct Range {
     pub pos: u32,
     pub end: u32,
+}
+
+impl Range {
+    /// Shift the range right by `offset` (see [`TsGoLintDiagnostic::shift_spans`]).
+    fn shift(&mut self, offset: u32) {
+        self.pos = self.pos.saturating_add(offset);
+        self.end = self.end.saturating_add(offset);
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1376,6 +1550,10 @@ fn should_skip_diagnostic(
             || directives.contains(&format!("typescript-eslint/{}", tsgolint_diagnostic.rule), span)
             || directives
                 .contains(&format!("@typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+    } else if is_partial_loader_file(path) {
+        // Partial-loader files (`.vue`, `.astro`, `.svelte`) do not contribute entries to the
+        // directives map; the regular pass applies their directives per script block.
+        false
     } else {
         debug_assert!(
             false,
@@ -1462,6 +1640,48 @@ fn parse_single_message(
             Ok(TsGoLintMessage::Timing(timing_payload))
         }
     }
+}
+
+/// Returns `true` when `path` has a partial-loader extension (`.vue`, `.astro`, `.svelte`).
+fn is_partial_loader_file(path: &Path) -> bool {
+    path.extension()
+        .and_then(std::ffi::OsStr::to_str)
+        .is_some_and(|ext| crate::loader::LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
+}
+
+/// Extract the single script block of a partial-loader file (`.vue`, `.astro`, `.svelte`).
+///
+/// Returns the byte offset of the block in `source_text` and the block's text, or `None` when
+/// the extension is not a partial-loader extension or the file does not have exactly one script
+/// block.
+///
+/// The backend lints these files through a source override holding only the block, so its spans
+/// are relative to the block and need shifting by the returned offset
+/// (see [`TsGoLintDiagnostic::shift_spans`]).
+fn partial_loader_script<'a>(path: &Path, source_text: &'a str) -> Option<(u32, &'a str)> {
+    if !is_partial_loader_file(path) {
+        return None;
+    }
+    let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
+    let sources = crate::loader::PartialLoader::parse(ext, source_text)?;
+    if sources.len() != 1 {
+        // Several script blocks would need several source overrides; the backend protocol
+        // supports only one per file.
+        return None;
+    }
+    let source = &sources[0];
+    // `JavaScriptSource::source_text` is the script block, `start` its offset in the file.
+    Some((source.start, source.source_text))
+}
+
+/// Returns `true` when the type-aware backend accepts partial-loader file paths (`.vue`,
+/// `.astro`, `.svelte`) sent with a source override for their script block.
+///
+/// Only the `tsrs` backend does: the Go `tsgolint` backend panics on file paths with a script
+/// kind it does not know (`Unknown script kind for file`), which would take down the whole
+/// type-aware run. Sending is gated on the executable name so such backends keep working.
+fn backend_supports_partial_loader_files(executable_path: &Path) -> bool {
+    executable_path.file_stem().is_some_and(|name| name.eq_ignore_ascii_case("tsrs-lint"))
 }
 
 /// Tries to find a type-aware linter executable. In priority order, this will check:
@@ -1566,8 +1786,94 @@ mod test {
 
     use crate::{
         fixer::{FixKind, Message, PossibleFixes},
-        tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
+        tsgolint::{
+            Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic,
+            backend_supports_partial_loader_files, partial_loader_script,
+        },
     };
+
+    #[test]
+    fn test_partial_loader_script_single_block() {
+        let source_text = "<template>\n  <p>{{ foo }}</p>\n</template>\n<script setup lang=\"ts\">\nfoo();\n</script>\n";
+        let (start, script) = partial_loader_script("Foo.vue".as_ref(), source_text).unwrap();
+        assert_eq!(start, 66);
+        assert_eq!(script, "\nfoo();\n");
+    }
+
+    #[test]
+    fn test_partial_loader_script_svelte_and_astro() {
+        let (start, script) =
+            partial_loader_script("Foo.svelte".as_ref(), "<script lang=\"ts\">foo();</script>")
+                .unwrap();
+        assert_eq!(start, 18);
+        assert_eq!(script, "foo();");
+        // Astro has no leading `<script>` tag: the frontmatter is the block.
+        let (start, script) =
+            partial_loader_script("Foo.astro".as_ref(), "---\nfoo();\n---\n<p>hi</p>").unwrap();
+        assert_eq!(start, 3);
+        assert_eq!(script, "\nfoo();\n");
+    }
+
+    #[test]
+    fn test_partial_loader_script_not_supported() {
+        // No script block.
+        assert_eq!(partial_loader_script("Foo.vue".as_ref(), "<template></template>"), None);
+        // Several script blocks cannot be mapped to a single source override.
+        assert_eq!(
+            partial_loader_script(
+                "Foo.vue".as_ref(),
+                "<script lang=\"ts\">foo();</script><script setup lang=\"ts\">bar();</script>"
+            ),
+            None
+        );
+        // Only partial-loader extensions are extracted.
+        assert_eq!(partial_loader_script("foo.ts".as_ref(), "foo();"), None);
+        assert_eq!(partial_loader_script("foo".as_ref(), "foo();"), None);
+    }
+
+    #[test]
+    fn test_backend_supports_partial_loader_files() {
+        assert!(backend_supports_partial_loader_files("node_modules/.bin/tsrs-lint".as_ref()));
+        assert!(backend_supports_partial_loader_files("bin/tsrs-lint.exe".as_ref()));
+        assert!(backend_supports_partial_loader_files("bin/tsrs-lint.CMD".as_ref()));
+        assert!(!backend_supports_partial_loader_files("node_modules/.bin/tsgolint".as_ref()));
+        assert!(!backend_supports_partial_loader_files("tsgolint.exe".as_ref()));
+    }
+
+    #[test]
+    fn test_shift_rule_diagnostic_spans() {
+        let mut diagnostic = TsGoLintRuleDiagnostic {
+            span: Span::new(5, 9),
+            rule: "no-floating-promises".into(),
+            message: RuleMessage {
+                id: "floatingVoid".into(),
+                description: "Promises must be awaited".into(),
+                help: None,
+            },
+            fixes: vec![Fix { text: "void ".into(), range: Range { pos: 5, end: 5 } }],
+            suggestions: vec![Suggestion {
+                message: RuleMessage {
+                    id: "floatingVoid".into(),
+                    description: "Add await".into(),
+                    help: None,
+                },
+                fixes: vec![Fix { text: "await ".into(), range: Range { pos: 5, end: 5 } }],
+            }],
+            labeled_ranges: vec![LabeledRange {
+                label: "This unhandled promise-like value".into(),
+                range: Range { pos: 5, end: 9 },
+            }],
+            file_path: "Foo.vue".into(),
+        };
+
+        // `<script setup lang="ts">` plus a newline: the script block starts at 25.
+        diagnostic.shift_spans(25);
+
+        assert_eq!(diagnostic.span, Span::new(30, 34));
+        assert_eq!(diagnostic.fixes[0].range, Range { pos: 30, end: 30 });
+        assert_eq!(diagnostic.suggestions[0].fixes[0].range, Range { pos: 30, end: 30 });
+        assert_eq!(diagnostic.labeled_ranges[0].range, Range { pos: 30, end: 34 });
+    }
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {
