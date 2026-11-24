@@ -11,7 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{IsGlobalReference, ScopeFlags};
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, static_ident};
+use oxc_str::static_ident;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -222,31 +222,18 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
     fn visit_catch_clause(&mut self, _catch_clause: &CatchClause<'a>) {}
 }
 
-const BUILT_IN_ERROR_CONSTRUCTORS: [Ident; 7] = [
-    static_ident!("Error"),
-    static_ident!("EvalError"),
-    static_ident!("RangeError"),
-    static_ident!("ReferenceError"),
-    static_ident!("SyntaxError"),
-    static_ident!("TypeError"),
-    static_ident!("URIError"),
-];
-
 fn error_options_argument_index(expr: &Expression, ctx: &LintContext) -> Option<usize> {
     let Expression::Identifier(ident) = expr else {
         return None;
     };
 
-    if BUILT_IN_ERROR_CONSTRUCTORS
-        .into_iter()
-        .any(|name| ident.is_global_reference_name(name, ctx.scoping()))
-    {
-        Some(1)
-    } else if is_aggregate_error(ident, ctx) {
-        Some(2)
-    } else {
-        None
-    }
+    let index = match ident.name.as_str() {
+        "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError" | "TypeError"
+        | "URIError" => 1,
+        "AggregateError" => 2,
+        _ => return None,
+    };
+    ident.is_global_reference(ctx.scoping()).then_some(index)
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
