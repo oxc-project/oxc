@@ -859,6 +859,28 @@ fn radix_values_above_u64_max(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn long_decimal_values(cpu: DynCpu) {
+    let long = format!("x = 1{}e-500;", "0".repeat(519));
+    let long_separated = format!("x = 1{}e-500;", "_000".repeat(173));
+    // 1 + 2^-53 is halfway between two doubles: zeros after it keep the tie, a 1 rounds it up.
+    let tie = format!("1.00000000000000011102230246251565404236316680908203125{}", "0".repeat(800));
+    let tie_kept = format!("x = {tie}0;");
+    let tie_broken = format!("x = {tie}1;");
+    for (code, want) in [
+        ("x = 98765432109876543210n;", 98_765_432_109_876_543_210.0),
+        ("x = 1_000.5e-1_0;", 1000.5e-10),
+        // The exponent is past byte 511.
+        (long.as_str(), 1e19),
+        (long_separated.as_str(), 1e19),
+        (tie_kept.as_str(), 1.0),
+        (tie_broken.as_str(), 1.0 + f64::EPSILON),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), [want], "{code:?}");
+    }
+}
+
+#[test_cpus]
 fn nested_jsx_shapes_never_flagged(cpu: DynCpu) {
     for code in [
         "const a = <Foo prop=<Bar><Baz /></Bar> />;",
