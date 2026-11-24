@@ -3308,6 +3308,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'_> {
     }
 }
 
+impl<'new_alloc> CloneIn<'new_alloc> for RegExpFlags {
+    type Cloned = RegExpFlags;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for JSXElement<'_> {
     type Cloned = JSXElement<'new_alloc>;
 
@@ -5766,6 +5779,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for CommentPosition {
 
 impl<'new_alloc> CloneIn<'new_alloc> for CommentContent {
     type Cloned = CommentContent;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for CommentNewlines {
+    type Cloned = CommentNewlines;
 
     #[inline(always)]
     fn clone_in_impl(
