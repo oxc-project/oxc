@@ -11,7 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{IsGlobalReference, ScopeFlags};
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
+use oxc_str::{Ident, static_ident};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -222,13 +222,26 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
     fn visit_catch_clause(&mut self, _catch_clause: &CatchClause<'a>) {}
 }
 
+// All built-in error constructors accept the error options object as
+// their second argument, except `AggregateError`, which takes it as the third.
+const BUILT_IN_ERROR_CONSTRUCTORS: [Ident; 7] = [
+    static_ident!("Error"),
+    static_ident!("EvalError"),
+    static_ident!("RangeError"),
+    static_ident!("ReferenceError"),
+    static_ident!("SyntaxError"),
+    static_ident!("TypeError"),
+    static_ident!("URIError"),
+];
+
 fn error_options_argument_index(expr: &Expression, ctx: &LintContext) -> Option<usize> {
     let Expression::Identifier(ident) = expr else {
         return None;
     };
 
-    if ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
-        || ident.is_global_reference_name(static_ident!("TypeError"), ctx.scoping())
+    if BUILT_IN_ERROR_CONSTRUCTORS
+        .into_iter()
+        .any(|name| ident.is_global_reference_name(name, ctx.scoping()))
     {
         Some(1)
     } else if is_aggregate_error(ident, ctx) {
@@ -448,6 +461,26 @@ fn test() {
         ),
         (
             r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new EvalError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new RangeError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new ReferenceError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new URIError("e", { cause: error }); }"#,
             None,
         ),
         (
@@ -752,6 +785,18 @@ fn test() {
             r#"try { doSomething(); } catch { if (shouldThrow) { throw new Error("Something went wrong"); } }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
         ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON"); }"#,
+            None,
+        ),
+        (r#"try { doSomething(); } catch (error) { throw new EvalError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new RangeError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new ReferenceError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new URIError("e"); }"#, None),
+        (
+            r#"try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }"#,
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -759,6 +804,12 @@ fn test() {
         (
             "try { doSomething(); } catch (err) { throw new Error/* ( */(); }",
             "try { doSomething(); } catch (err) { throw new Error/* ( */(\"\", { cause: err }); }",
+            None,
+        ),
+        // newly covered built-in error constructors get the same fix as `Error`
+        (
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\"); }",
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\", { cause: err }); }",
             None,
         ),
         // the `(` inside the type arguments is not the start of the arguments
