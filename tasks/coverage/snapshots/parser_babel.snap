@@ -1,8 +1,8 @@
 commit: 51225612
 
 parser_babel Summary:
-AST Parsed     : 2359/2360 (99.96%)
-Positive Passed: 2338/2360 (99.07%)
+AST Parsed     : 2363/2364 (99.96%)
+Positive Passed: 2342/2364 (99.07%)
 Negative Passed: 1931/1947 (99.18%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
