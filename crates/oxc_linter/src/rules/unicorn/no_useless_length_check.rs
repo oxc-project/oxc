@@ -3,9 +3,8 @@ use std::fmt::Debug;
 use oxc_ast::{
     AstKind,
     ast::{
-        ChainElement, Expression, ForOfStatement, ForStatementLeft, IdentifierReference,
-        IfStatement, JSXText, LogicalExpression, MemberExpression, Statement, StringLiteral,
-        TemplateElement, VariableDeclarationKind,
+        Expression, ForOfStatement, ForStatementLeft, IdentifierReference, IfStatement, JSXText,
+        LogicalExpression, Statement, StringLiteral, TemplateElement, VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -258,8 +257,7 @@ fn check_for_of_statement<'a>(
         length_member.object.get_inner_expression(),
         for_of_stmt.right.get_inner_expression(),
         ctx,
-    ) || !optional_chains_match(&length_member.object, &for_of_stmt.right)
-        || has_loop_binding_reference_in_right(for_of_stmt, ctx)
+    ) || has_loop_binding_reference_in_right(for_of_stmt, ctx)
         || is_known_non_indexed_collection(&for_of_stmt.right, ctx)
     {
         return;
@@ -331,55 +329,6 @@ fn get_enclosing_guard_if_statement<'a, 'b>(
     }
 }
 
-fn optional_chains_match<'a>(left: &Expression<'a>, right: &Expression<'a>) -> bool {
-    let left = left.get_inner_expression();
-    let right = right.get_inner_expression();
-    if let (Some(lm), Some(rm)) = (left.as_member_expression(), right.as_member_expression()) {
-        return members_optional_match(lm, rm);
-    }
-    match (left, right) {
-        (Expression::ChainExpression(lc), Expression::ChainExpression(rc)) => {
-            chain_elements_optional_match(&lc.expression, &rc.expression)
-        }
-        (Expression::ChainExpression(_), _) | (_, Expression::ChainExpression(_)) => false,
-        (Expression::CallExpression(lc), Expression::CallExpression(rc)) => {
-            lc.optional == rc.optional && optional_chains_match(&lc.callee, &rc.callee)
-        }
-        (Expression::BinaryExpression(lb), Expression::BinaryExpression(rb)) => {
-            optional_chains_match(&lb.left, &rb.left) && optional_chains_match(&lb.right, &rb.right)
-        }
-        (Expression::LogicalExpression(ll), Expression::LogicalExpression(rl)) => {
-            optional_chains_match(&ll.left, &rl.left) && optional_chains_match(&ll.right, &rl.right)
-        }
-        (Expression::UnaryExpression(lu), Expression::UnaryExpression(ru)) => {
-            optional_chains_match(&lu.argument, &ru.argument)
-        }
-        (Expression::TemplateLiteral(lt), Expression::TemplateLiteral(rt)) => {
-            lt.expressions.len() == rt.expressions.len()
-                && lt
-                    .expressions
-                    .iter()
-                    .zip(&rt.expressions)
-                    .all(|(l, r)| optional_chains_match(l, r))
-        }
-        _ => true,
-    }
-}
-
-fn members_optional_match<'a>(left: &MemberExpression<'a>, right: &MemberExpression<'a>) -> bool {
-    if left.optional() != right.optional() || !optional_chains_match(left.object(), right.object())
-    {
-        return false;
-    }
-    match (left, right) {
-        (
-            MemberExpression::ComputedMemberExpression(lc),
-            MemberExpression::ComputedMemberExpression(rc),
-        ) => optional_chains_match(&lc.expression, &rc.expression),
-        _ => true,
-    }
-}
-
 fn statement_ends_without_semicolon(stmt: &Statement, ctx: &LintContext) -> bool {
     if ctx.source_range(stmt.span()).trim_end().ends_with(';') {
         return false;
@@ -404,17 +353,6 @@ fn statement_ends_without_semicolon(stmt: &Statement, ctx: &LintContext) -> bool
         Statement::WithStatement(s) => statement_ends_without_semicolon(&s.body, ctx),
         _ => false,
     }
-}
-
-fn chain_elements_optional_match<'a>(left: &ChainElement<'a>, right: &ChainElement<'a>) -> bool {
-    if let (Some(lm), Some(rm)) = (left.as_member_expression(), right.as_member_expression()) {
-        return members_optional_match(lm, rm);
-    }
-    matches!(
-        (left, right),
-        (ChainElement::CallExpression(lc), ChainElement::CallExpression(rc))
-            if lc.optional == rc.optional && optional_chains_match(&lc.callee, &rc.callee)
-    )
 }
 
 fn has_loop_binding_reference_in_right<'a>(
@@ -710,17 +648,12 @@ fn test() {
         "if (array.length > 0.) { for (const element of array) {} }",
         "if (array.length > 0x0) { for (const element of array) {} }",
         "if (getArray().length > 0) { for (const element of getArray()) {} }",
-        "if ((a?.b).length > 0) { for (const element of a.b) {} }",
-        "if (a.b.length > 0) { for (const element of a?.b) {} }",
         "const array = []; if (array.length > 0) { for (const array of array) {} }",
         "const array = []; if (array.length > 0) { for (const {value: array} of array) {} }",
         "const object = {array: []}; if (object.array.length > 0) { for (const object of object.array) {} }",
         "const items = new Set(); if (items.length > 0) { for (const item of items) {} }",
         "const items = new Set(); if ((items as any).length > 0) { for (const item of (items as any)) {} }",
-        "if ((a?.b.c).length > 0) { for (const element of a.b?.c) {} }",
-        "if (a[!b?.c].length > 0) { for (const element of a[!b.c]) {} }",
         "if (array?.length! > 0) { for (const element of array) {} }",
-        r#"if ((a.b ?? fallback)["c"].length > 0) { for (const x of (a?.b ?? fallback).c) { use(x); } }"#,
         "if (array.length > 0) { 'use strict'; for (const element of array) {} }",
     ];
 
@@ -931,6 +864,18 @@ fn test() {
         (
             "before(); if (array.length > 0) {\n\tfor (const element of array) {\n\t\tuse(element);\n\t}\n}",
             "before(); if (array.length > 0) {\n\tfor (const element of array) {\n\t\tuse(element);\n\t}\n}",
+        ),
+        (
+            "if ((a?.b).length > 0) { for (const element of a.b) {} }",
+            "for (const element of a.b) {}",
+        ),
+        (
+            "if (a.b.length > 0) { for (const element of a?.b) {} }",
+            "for (const element of a?.b) {}",
+        ),
+        (
+            "if ((a?.b.c).length > 0) { for (const element of a.b?.c) {} }",
+            "for (const element of a.b?.c) {}",
         ),
     ];
 
