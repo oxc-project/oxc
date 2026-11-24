@@ -79,13 +79,13 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         };
 
         match args.get(options_argument_index) {
-            Some(arg) if !matches!(arg, Argument::ObjectExpression(_)) => return,
-            Some(Argument::ObjectExpression(obj_expr))
-                if has_cause_property(obj_expr, catch_param, self.ctx) =>
-            {
-                return;
+            Some(Argument::ObjectExpression(obj_expr)) => {
+                if has_cause_property(obj_expr, catch_param, self.ctx) {
+                    return;
+                }
             }
-            _ => {}
+            Some(_) => return,
+            None => {}
         }
 
         // Allow spread arguments - they may contain cause property
