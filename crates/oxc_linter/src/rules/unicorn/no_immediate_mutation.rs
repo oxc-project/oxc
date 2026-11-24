@@ -502,10 +502,9 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
         Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
             ObjectPropertyKind::ObjectProperty(p) => {
                 expression_references_variable(&p.value, var_name)
-                    || (p.computed
-                        && p.key
-                            .as_expression()
-                            .is_some_and(|e| expression_references_variable(e, var_name)))
+                    || p.key
+                        .as_expression()
+                        .is_some_and(|e| expression_references_variable(e, var_name))
             }
             ObjectPropertyKind::SpreadProperty(s) => {
                 expression_references_variable(&s.argument, var_name)

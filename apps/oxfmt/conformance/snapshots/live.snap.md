@@ -225,7 +225,7 @@
 
 ## markdown-mdn
 
-### Option 1: 359/362 (99.17%)
+### Option 1: 358/362 (98.90%)
 
 ```json
 {"printWidth":80,"bracketSameLine":true}
@@ -233,12 +233,14 @@
 
 - [externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md](diffs/markdown-mdn/externals__mdn-css-guides__custom_functions_and_mixins__using_custom_functions__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
+- [externals/mdn-css-guides/scroll-driven_animations/timeline_insets/index.md](diffs/markdown-mdn/externals__mdn-css-guides__scroll-driven_animations__timeline_insets__index.md.md)
+  - apps/oxfmt/DIVERGENCES.md#multiline-text-in-code-block-fits
 - [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
 - [externals/mdn-learn/structuring_content/basic_html_syntax/index.md](diffs/markdown-mdn/externals__mdn-learn__structuring_content__basic_html_syntax__index.md.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 2: 359/362 (99.17%)
+### Option 2: 358/362 (98.90%)
 
 ```json
 {"printWidth":100}
@@ -246,6 +248,8 @@
 
 - [externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md](diffs/markdown-mdn/externals__mdn-css-guides__custom_functions_and_mixins__using_custom_functions__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
+- [externals/mdn-css-guides/scroll-driven_animations/timeline_insets/index.md](diffs/markdown-mdn/externals__mdn-css-guides__scroll-driven_animations__timeline_insets__index.md.md)
+  - apps/oxfmt/DIVERGENCES.md#multiline-text-in-code-block-fits
 - [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
 - [externals/mdn-learn/structuring_content/basic_html_syntax/index.md](diffs/markdown-mdn/externals__mdn-learn__structuring_content__basic_html_syntax__index.md.md)

@@ -165,6 +165,13 @@ fn mangler() {
         "function _() { class Foo { foo() { var x } } }",
         "function _() { var Foo = class { foo() { var x } } }",
         "function _() { var foo; try {} catch (foo) { var foo = function() {} } }",
+        // A redeclaration, not the first declaration, sets the name.
+        "function _() { var foo; var foo = function() { var x } }",
+        "function _() { var foo = 1; var foo = () => { var x } }",
+        "function _() { var Foo; var Foo = class { foo() { var x } } }",
+        "function _(foo) { var foo = function() { var x } }",
+        "function _() { var foo; function foo() { var x } }",
+        "function _(foo) { function foo() { var x } }",
     ];
 
     let mut snapshot = String::new();
@@ -230,6 +237,15 @@ fn private_member_mangling() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("private_member_mangling", snapshot);
     });
+}
+
+#[test]
+fn private_member_mangling_debug() {
+    test(
+        "class C { #field = 1; get() { return this.#field; } }",
+        "class C { #slot_0 = 1; get() { return this.#slot_0; } }",
+        &MangleOptions { debug: true, ..MangleOptions::default() },
+    );
 }
 
 /// A named function expression whose name is shadowed by a same-named declaration in its

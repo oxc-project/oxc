@@ -3797,6 +3797,9 @@ impl PropertyKey<'_> {
     pub fn node_id(&self) -> NodeId {
         match self {
             Self::StaticIdentifier(it) => it.node_id(),
+            Self::StaticStringLiteral(it) => it.node_id(),
+            Self::StaticNumericLiteral(it) => it.node_id(),
+            Self::StaticBigIntLiteral(it) => it.node_id(),
             Self::PrivateIdentifier(it) => it.node_id(),
             Self::BooleanLiteral(it) => it.node_id(),
             Self::NullLiteral(it) => it.node_id(),
@@ -3850,6 +3853,9 @@ impl PropertyKey<'_> {
     pub fn set_node_id(&self, node_id: NodeId) {
         match self {
             Self::StaticIdentifier(it) => it.set_node_id(node_id),
+            Self::StaticStringLiteral(it) => it.set_node_id(node_id),
+            Self::StaticNumericLiteral(it) => it.set_node_id(node_id),
+            Self::StaticBigIntLiteral(it) => it.set_node_id(node_id),
             Self::PrivateIdentifier(it) => it.set_node_id(node_id),
             Self::BooleanLiteral(it) => it.set_node_id(node_id),
             Self::NullLiteral(it) => it.set_node_id(node_id),

@@ -1648,14 +1648,14 @@ fn lower_binding_assignment<'a>(
                 // Computed string literals can be normalized to static property keys. Other
                 // computed keys need to remain expressions, which destructuring does not support
                 // yet.
-                if prop.computed && !is_static_property_key(&prop.key) {
+                if prop.key.is_computed() && !is_static_property_key(&prop.key) {
                     builder.record_error(
                         diagnostics::todo_build_hir_lower_assignment_handle_computed_properties_object_pattern(prop.span),
                     )?;
                     continue;
                 }
 
-                let key = match lower_object_property_key(builder, &prop.key, prop.computed)? {
+                let key = match lower_object_property_key(builder, &prop.key)? {
                     Some(k) => k,
                     None => continue,
                 };
@@ -2434,13 +2434,13 @@ fn lower_assignment_target<'a>(
                         }
                     }
                     oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                        if p.computed && !is_static_property_key(&p.name) {
+                        if p.name.is_computed() && !is_static_property_key(&p.name) {
                             builder.record_error(
                                 diagnostics::todo_build_hir_lower_assignment_handle_computed_properties_object_pattern_2(p.span),
                             )?;
                             continue;
                         }
-                        let key = match lower_object_property_key(builder, &p.name, p.computed)? {
+                        let key = match lower_object_property_key(builder, &p.name)? {
                             Some(k) => k,
                             None => continue,
                         };
@@ -3753,7 +3753,7 @@ fn lower_expression<'a>(
             span: Some(lit.span),
         }),
         oxc::Expression::BigIntLiteral(lit) => Ok(InstructionValue::Primitive {
-            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw, base: lit.base },
+            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw },
             span: Some(lit.span),
         }),
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
@@ -4391,7 +4391,7 @@ fn lower_expression<'a>(
                             }
                             continue;
                         }
-                        let key = lower_object_property_key(builder, &p.key, p.computed)?;
+                        let key = lower_object_property_key(builder, &p.key)?;
                         let key = match key {
                             Some(k) => k,
                             None => continue,
@@ -5858,7 +5858,7 @@ fn lower_object_method<'a>(
         return Ok(None);
     }
 
-    let key = lower_object_property_key(builder, &method.key, method.computed)?
+    let key = lower_object_property_key(builder, &method.key)?
         .unwrap_or(ObjectPropertyKey::String { name: Ident::empty(), span: None });
 
     let func = match &method.value {
@@ -5887,12 +5887,13 @@ fn lower_object_method<'a>(
 fn lower_object_property_key<'a>(
     builder: &mut HirBuilder<'a, '_>,
     key: &oxc::PropertyKey<'a>,
-    computed: bool,
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
         // `{ ["__proto__"]: v }` defines an own property, while the non-computed
         // `"__proto__": v` sets the prototype, so the key must stay computed.
-        oxc::PropertyKey::StringLiteral(lit) if !(computed && lit.value == "__proto__") => {
+        oxc::PropertyKey::StaticStringLiteral(lit) | oxc::PropertyKey::StringLiteral(lit)
+            if !(key.is_computed() && lit.value == "__proto__") =>
+        {
             let Some(name) = lit.value.as_str() else {
                 // Record the diagnostic so the compiler discards this function's partial HIR.
                 let error =
@@ -5902,37 +5903,29 @@ fn lower_object_property_key<'a>(
             };
             Ok(Some(ObjectPropertyKey::String { name: Ident::from(name), span: Some(lit.span) }))
         }
-        oxc::PropertyKey::StaticIdentifier(ident) if !computed => {
+        oxc::PropertyKey::StaticIdentifier(ident) => {
             Ok(Some(ObjectPropertyKey::Identifier { name: ident.name, span: Some(ident.span) }))
         }
-        oxc::PropertyKey::Identifier(ident) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name, span: Some(ident.span) }))
-        }
-        oxc::PropertyKey::NumericLiteral(lit) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier {
-                name: format_ident!(builder.environment().allocator, "{}", lit.value),
-                span: Some(lit.span),
-            }))
-        }
+        oxc::PropertyKey::StaticNumericLiteral(lit) => Ok(Some(ObjectPropertyKey::Identifier {
+            name: format_ident!(builder.environment().allocator, "{}", lit.value),
+            span: Some(lit.span),
+        })),
         // BigInt property keys are coerced to their canonical decimal string at
         // runtime. Preserve that value rather than the source spelling so keys
         // such as `0x10n` and `16n` remain equivalent.
-        oxc::PropertyKey::BigIntLiteral(lit) if !computed => Ok(Some(ObjectPropertyKey::String {
+        oxc::PropertyKey::StaticBigIntLiteral(lit) => Ok(Some(ObjectPropertyKey::String {
             name: Ident::from(lit.value.as_str()),
             span: Some(lit.span),
         })),
-        _ if computed => {
-            let place = lower_expression_to_temporary(builder, key.to_expression())?;
-            Ok(Some(ObjectPropertyKey::Computed { name: place, span: Some(key.span()) }))
+        oxc::PropertyKey::PrivateIdentifier(_) => {
+            builder.record_error(diagnostics::todo_unsupported_key_type_object_expression(
+                None::<Span>,
+            ))?;
+            Ok(None)
         }
         _ => {
-            let span = match key {
-                oxc::PropertyKey::StaticIdentifier(i) => Some(i.span),
-                oxc::PropertyKey::Identifier(i) => Some(i.span),
-                _ => None,
-            };
-            builder.record_error(diagnostics::todo_unsupported_key_type_object_expression(span))?;
-            Ok(None)
+            let place = lower_expression_to_temporary(builder, key.to_expression())?;
+            Ok(Some(ObjectPropertyKey::Computed { name: place, span: Some(key.span()) }))
         }
     }
 }
@@ -6028,7 +6021,7 @@ fn is_reorderable_expression(
         }),
         oxc::Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
             oxc::ObjectPropertyKind::ObjectProperty(p) => {
-                !p.computed
+                !p.key.is_computed()
                     && !p.method
                     && matches!(p.kind, oxc::PropertyKind::Init)
                     && is_reorderable_expression(builder, &p.value, allow_local_identifiers)

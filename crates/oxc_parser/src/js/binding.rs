@@ -159,7 +159,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut shorthand = false;
         let is_binding_identifier = self.cur_kind().is_binding_identifier();
         let key_cur_kind = self.cur_kind();
-        let (key, computed) = self.parse_property_name();
+        let key = self.parse_property_name();
 
         let value = if is_binding_identifier && !self.at(Kind::Colon) {
             // let { a = b } = c
@@ -181,7 +181,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_binding_pattern_with_initializer()
         };
 
-        BindingProperty::new(self.end_span(start), key, value, shorthand, computed, self)
+        BindingProperty::new(self.end_span(start), key, value, shorthand, self)
     }
 
     /// Initializer[In, Yield, Await] :

@@ -673,8 +673,9 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
 
 #[test_cpus]
 fn unterminated_jsx_element(cpu: DynCpu) {
-    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), [DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), [DiagCode::UnterminatedJsxElement]);
+    let want = [DiagCode::JsxTextInvalidCharacter, DiagCode::UnterminatedJsxElement];
+    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), want);
+    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), want);
 }
 
 #[test_cpus]
@@ -684,6 +685,7 @@ fn generic_function_types_never_flagged(cpu: DynCpu) {
         "const r = f<{ m: <T>(x: T) => T }>(0);",
         "let h = <T,>(x: T) => x;",
         "const e = <T>(x)</T>;",
+        "const e = <T>(it's {'a) => b'}</T>;",
     ] {
         assert!(codes_tsx(code, cpu).is_empty(), "{code:?}");
     }
@@ -810,6 +812,49 @@ fn legacy_octal_adjacency_diagnostics(cpu: DynCpu) {
     assert_eq!(codes("x = 08n;", cpu), [DiagCode::InvalidBigint]);
     for code in ["x = 010.5;", "x = 010.toString();", "x = 08.5;", "x = 09e1;"] {
         assert!(codes(code, cpu).is_empty(), "{code:?}: {:?}", codes(code, cpu));
+    }
+}
+
+#[test_cpus]
+fn legacy_octal_values(cpu: DynCpu) {
+    for (code, want) in [
+        ("x = 070;", &[56.0][..]),
+        ("x = 0777;", &[511.0]),
+        ("x = 00;", &[0.0]),
+        ("x = 010.5;", &[8.0, 0.5]),
+        ("x = 010.toString();", &[8.0]),
+        ("x = 08;", &[8.0]),
+        ("x = 0779;", &[779.0]),
+        ("x = 08.5;", &[8.5]),
+        ("x = 09e1;", &[90.0]),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), want, "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn radix_values_above_u64_max(cpu: DynCpu) {
+    let two_64 = 18_446_744_073_709_551_616.0;
+    let bin = format!("x = 0b1{};", "0".repeat(64));
+    let max = format!("x = 0x{}8{};", "f".repeat(13), "0".repeat(242));
+    let inf = format!("x = 0x1{};", "0".repeat(300));
+    for (code, want) in [
+        ("x = 0x10000000000000000;", two_64),
+        ("x = 0x1_0000_0000_0000_0000;", two_64),
+        ("x = 0x10000000000000000n;", two_64),
+        ("x = 0o2000000000000000000000;", two_64),
+        ("x = 02000000000000000000000;", two_64),
+        (bin.as_str(), two_64),
+        // Halfway between doubles rounds to even, anything above it rounds up.
+        ("x = 0x20000000000001000;", 36_893_488_147_419_103_232.0),
+        ("x = 0x20000000000001001;", 36_893_488_147_419_111_424.0),
+        ("x = 0x0000000000000000000001;", 1.0),
+        (max.as_str(), f64::MAX),
+        (inf.as_str(), f64::INFINITY),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), [want], "{code:?}");
     }
 }
 

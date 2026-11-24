@@ -1,0 +1,25 @@
+name = "my-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = [ "nodejs_compat" ]
+
+  [vars]
+  ENVIRONMENT = "production"
+  API_HOST = "api.example.com"
+
+  [[kv_namespaces]]
+  binding = "CACHE"
+  id = "0123456789abcdef0123456789abcdef"
+
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "prod-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+[env.staging]
+name = "my-worker-staging"
+vars = { ENVIRONMENT = "staging", API_HOST = "staging.api.example.com", DEBUG = "true" }
+routes = [{ pattern = "staging.example.com/*", zone_name = "example.com" }, { pattern = "staging.example.org/*", zone_name = "example.org" }]
+
+[triggers]
+crons = ["0 * * * *", "*/30 * * * *"]

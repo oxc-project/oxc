@@ -1973,11 +1973,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, ObjectProperty<'a>> {
         self.inner.shorthand
     }
 
-    #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
-    }
-
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
@@ -1996,6 +1991,21 @@ impl<'parent, 'a> AstNode<'parent, 'a, PropertyKey<'a>> {
         let following_span_start = self.following_span_start;
         match self.inner {
             PropertyKey::StaticIdentifier(s) => AstNodeKind::IdentifierName(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            PropertyKey::StaticStringLiteral(s) => AstNodeKind::StringLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            PropertyKey::StaticNumericLiteral(s) => AstNodeKind::NumericLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            PropertyKey::StaticBigIntLiteral(s) => AstNodeKind::BigIntLiteral(AstNode {
                 inner: s.as_ref(),
                 parent,
                 following_span_start,
@@ -3106,11 +3116,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, AssignmentTargetPropertyProperty<'a>> {
             parent: AstNodes::AssignmentTargetPropertyProperty(self),
             following_span_start,
         }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4518,11 +4523,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, BindingProperty<'a>> {
         self.inner.shorthand
     }
 
-    #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
-    }
-
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
@@ -5337,11 +5337,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, MethodDefinition<'a>> {
     }
 
     #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
-    }
-
-    #[inline]
     pub fn r#static(&self) -> bool {
         self.inner.r#static
     }
@@ -5433,11 +5428,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, PropertyDefinition<'a>> {
             parent: AstNodes::PropertyDefinition(self),
             following_span_start,
         })
-    }
-
-    #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
     }
 
     #[inline]
@@ -5655,11 +5645,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, AccessorProperty<'a>> {
             parent: AstNodes::AccessorProperty(self),
             following_span_start,
         })
-    }
-
-    #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
     }
 
     #[inline]
@@ -6374,11 +6359,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, NumericLiteral<'a>> {
         self.inner.raw
     }
 
-    #[inline]
-    pub fn base(&self) -> NumberBase {
-        self.inner.base
-    }
-
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
@@ -6429,11 +6409,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, BigIntLiteral<'a>> {
     #[inline]
     pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
-    }
-
-    #[inline]
-    pub fn base(&self) -> BigintBase {
-        self.inner.base
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8636,11 +8611,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, TSPropertySignature<'a>> {
     }
 
     #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
-    }
-
-    #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
@@ -8861,11 +8831,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, TSMethodSignature<'a>> {
             parent: AstNodes::TSMethodSignature(self),
             following_span_start,
         }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> bool {
-        self.inner.computed
     }
 
     #[inline]

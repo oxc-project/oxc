@@ -1,0 +1,61 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a {
+  b: f(
+    to top,
+    x 1px /* c,
+    d */
+  );
+}
+
+a {
+  transition: opacity 1s /* aaa
+     bbb */ ease, color 2s;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a {
+  b: f(
+    to top,
+    x 1px
+      /* c,
+    d */
+  );
+}
+
+a {
+  transition:
+    opacity 1s
+      /* aaa
+     bbb */
+      ease,
+    color 2s;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a {
+  b: f(
+    to top,
+    x 1px
+      /* c,
+    d */
+  );
+}
+
+a {
+  transition:
+    opacity 1s
+      /* aaa
+     bbb */
+      ease,
+    color 2s;
+}
+
+===================== End =====================

@@ -797,6 +797,43 @@ Prettier falls back to the source shape when the content fails to format, while 
 The verbatim content cannot be re-indented, so its source indentation stays and may look misaligned once hugged (as with any verbatim template Prettier hugs).
 Under `embeddedLanguageFormatting: off`, the source shape still decides, like Prettier.
 
+## md-in-js-text-newline-column
+
+- Why: invariant
+- Pin: `conformance/fixtures/md-in-js/ignored-block-in-list.js`, `conformance/fixtures/xxx-in-md/multiline-text-in-nested-root.md`
+
+```js
+/* input */
+const doc = markdown`
+  - inner
+
+    <!-- prettier-ignore -->
+    | a | b |
+    |--|--|
+`;
+
+/* ours */
+const doc = markdown`
+  - inner
+
+    <!-- prettier-ignore -->
+    | a | b |
+    |--|--|
+`;
+
+/* prettier */
+const doc = markdown`
+  - inner
+
+    <!-- prettier-ignore -->
+    | a | b |
+  |--|--|
+`;
+```
+
+A newline inside a text of the embedded markdown (a `prettier-ignore`d block) resumes at the markdown's column 0, as in a Markdown code block.
+Prettier resumes it at the JS column 0 while the text keeps its own indentation, so every pass moves the line left by the template's indentation: it is not a fixpoint.
+
 ## line-ranged-code-block
 
 - Why: uniform-rule (same construct, same output: `` ```js{1,3} ``)
@@ -887,6 +924,61 @@ Prettier looks it up in linguist, where `lwc` is an alias of its Lightning Web C
 
 A blank `.json` file formats to an empty one, and so does a code block of blank lines, an empty block like `jsonc` / `css` / `js` in Prettier too.
 Prettier keeps `json` / `json5` blocks as written: their parser rejects a blank document inside Markdown.
+
+## multiline-text-in-code-block-fits
+
+- Why: uniform-rule (embedded code formats like its standalone file)
+- Pin: `conformance/fixtures/xxx-in-md/multiline-comment-in-css-value.md`
+- Conformance:
+  - `externals/mdn-css-guides/scroll-driven_animations/timeline_insets/index.md`
+
+`````markdown
+<!-- input -->
+```css
+article {
+  background-image: linear-gradient(
+    to top,
+    transparent 59.5px,
+    red 74.5px 75.5px,
+    transparent 75.5px /* 174.5px,
+    green 174.5px 154.5px,
+    transparent 175.5px*/
+  );
+}
+```
+
+<!-- ours -->
+```css
+article {
+  background-image: linear-gradient(
+    to top,
+    transparent 59.5px,
+    red 74.5px 75.5px,
+    transparent 75.5px
+      /* 174.5px,
+    green 174.5px 154.5px,
+    transparent 175.5px*/
+  );
+}
+```
+
+<!-- prettier -->
+```css
+article {
+  background-image: linear-gradient(
+    to top,
+    transparent 59.5px,
+    red 74.5px 75.5px,
+    transparent 75.5px /* 174.5px,
+    green 174.5px 154.5px,
+    transparent 175.5px*/
+  );
+}
+```
+`````
+
+A multi-line text in a code block measures as in its standalone file, which Prettier also prints as ours.
+Prettier's `replaceEndOfLine()` turns the child's strings into literal lines, and a line fits where a multi-line string does not.
 
 ## astro-style-lang-sass
 

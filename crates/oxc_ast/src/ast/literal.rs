@@ -13,11 +13,7 @@ use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_str::{JSStr, Str};
-use oxc_syntax::{
-    GetNodeId,
-    node::NodeId,
-    number::{BigintBase, NumberBase},
-};
+use oxc_syntax::{GetNodeId, node::NodeId};
 
 /// Boolean literal
 ///
@@ -72,10 +68,6 @@ pub struct NumericLiteral<'a> {
     #[content_eq(skip)]
     #[estree(json_safe, from_span)]
     pub raw: Option<Str<'a>>,
-    /// The base representation used by the literal in source code
-    #[content_eq(skip)]
-    #[estree(skip)]
-    pub base: NumberBase,
 }
 
 /// String literal
@@ -122,10 +114,6 @@ pub struct BigIntLiteral<'a> {
     #[content_eq(skip)]
     #[estree(json_safe, from_span)]
     pub raw: Option<Str<'a>>,
-    /// The base representation used by the literal in source code
-    #[content_eq(skip)]
-    #[estree(skip)]
-    pub base: BigintBase,
 }
 
 /// Regular expression literal

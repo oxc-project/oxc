@@ -1,0 +1,25 @@
+/* the verbatim slice adjusts only standalone numbers */
+.on-mobile({
+  .a {
+    background: url(img/a.10.2.png);
+    /* block 1.20.3 */
+    // line 0.50
+    width: .50px;
+  }
+});
+.m({ a: url(x.1.2.3.png) b.1.2.3 1.20.3 .50; });
+.n(@a: .50 /* 0.50 */; @b: url( 1.50.png )) when (@a > .50) {
+  c: d;
+}
+/* hash tokens are words, glued number runs stay whole */
+.h(#1e0; #0E00; 1.20.3; 1.0px) when (@c = #1e0) {
+  c: d;
+}
+/* a detached ruleset after another argument, a number-led glued run in a plain call */
+.on-pc(@width; {
+  .b {
+    background: url(img/b.1.2.png);
+    // line 4.5.6
+  }
+});
+.adjusted(1.2.3, "x");

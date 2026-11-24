@@ -162,3 +162,125 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ globalThis.toString.call(bar)
+   · ───────────────────
+   ╰────
+  help: Replace `globalThis.toString` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.hasOwnProperty`.
+   ╭─[prefer_prototype_methods.tsx:1:23]
+ 1 │ const _ = globalThis; _.hasOwnProperty.call(bar)
+   ·                       ────────────────
+   ╰────
+  help: Replace `_.hasOwnProperty` with `Object.prototype.hasOwnProperty`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.hasOwnProperty`.
+   ╭─[prefer_prototype_methods.tsx:1:23]
+ 1 │ const _ = globalThis; _["hasOwnProperty"].call(bar)
+   ·                       ───────────────────
+   ╰────
+  help: Replace `_["hasOwnProperty"]` with `Object.prototype.hasOwnProperty`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.hasOwnProperty`.
+   ╭─[prefer_prototype_methods.tsx:1:23]
+ 1 │ const _ = globalThis; _["hasOwn" + "Property"].call(bar)
+   ·                       ────────────────────────
+   ╰────
+  help: Replace `_["hasOwn" + "Property"]` with `Object.prototype.hasOwnProperty`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:15]
+ 1 │ Reflect.apply(globalThis.toString, baz, [])
+   ·               ───────────────────
+   ╰────
+  help: Replace `globalThis.toString` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:15]
+ 1 │ Reflect.apply(window.toString, baz, [])
+   ·               ───────────────
+   ╰────
+  help: Replace `window.toString` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:15]
+ 1 │ Reflect.apply(global.toString, baz, [])
+   ·               ───────────────
+   ╰────
+  help: Replace `global.toString` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:15]
+ 1 │ Reflect.apply(globalThis["toString"], baz, [])
+   ·               ──────────────────────
+   ╰────
+  help: Replace `globalThis["toString"]` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ globalThis /* comment */ .toString.call(bar)
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:15]
+ 1 │ Reflect.apply(globalThis[/* comment */ "toString"], baz, [])
+   ·               ────────────────────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ [] /* comment */ .slice.call(bar)
+   · ───────────────────────
+   ╰────
+  help: Replace `[]` with `Array.prototype`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ [/* comment */].slice.call(bar)
+   · ─────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ ({/* keep */}).toString.call(o);
+   · ───────────────────────
+   ╰────
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:22]
+ 1 │ function foo(){return(globalThis).toString.call(bar)}
+   ·                      ─────────────────────
+   ╰────
+  help: Replace `(globalThis).toString` with ` Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.isPrototypeOf`.
+   ╭─[prefer_prototype_methods.tsx:1:36]
+ 1 │ const a = globalThis; const b = a; b.isPrototypeOf.call(bar)
+   ·                                    ───────────────
+   ╰────
+  help: Replace `b.isPrototypeOf` with `Object.prototype.isPrototypeOf`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:15]
+ 1 │ Reflect.apply(self.toString, baz, [])
+   ·               ─────────────
+   ╰────
+  help: Replace `self.toString` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ globalThis[`toString`].call(bar)
+   · ──────────────────────
+   ╰────
+  help: Replace `globalThis[`toString`]` with `Object.prototype.toString`.
+
+  ⚠ unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
+   ╭─[prefer_prototype_methods.tsx:1:1]
+ 1 │ globalThis?.toString.call(bar)
+   · ────────────────────
+   ╰────
+  help: Replace `globalThis?.toString` with `Object.prototype.toString`.

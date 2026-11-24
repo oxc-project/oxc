@@ -86,7 +86,7 @@ pub(super) fn is_template_expression(expression: &Expression<'_>) -> bool {
                 ObjectPropertyKind::ObjectProperty(property) => {
                     property.kind == PropertyKind::Init
                         && !property.method
-                        && !property.computed
+                        && !property.key.is_computed()
                         && is_template_expression(&property.value)
                 }
             })

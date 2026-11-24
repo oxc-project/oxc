@@ -726,6 +726,15 @@ function walkPropertyKey(pos, ast, visitors) {
       walkBoxIdentifierName(pos + 8, ast, visitors);
       return;
     case 65:
+      walkBoxStringLiteral(pos + 8, ast, visitors);
+      return;
+    case 66:
+      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      return;
+    case 67:
+      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      return;
+    case 68:
       walkBoxPrivateIdentifier(pos + 8, ast, visitors);
       return;
     default:

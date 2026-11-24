@@ -3198,6 +3198,42 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = (useState(0));
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState(1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = useState(0) as [number, (value: number) => void];
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState(1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = (useState(0)) as [number, (value: number) => void];
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState(1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = useState(0);
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState.call(null, 1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
   ⚠ react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
  5 │             const someNumber: typeof state = 2;

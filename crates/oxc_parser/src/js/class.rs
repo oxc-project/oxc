@@ -64,7 +64,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ArenaBox<'a, Class<'a>> {
-        self.bump_any(); // advance `class`
+        self.expect(Kind::Class);
 
         // Move span start to decorator position if this is a class expression.
         let mut start = start;
@@ -362,7 +362,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.unexpected()
     }
 
-    fn parse_class_element_name(&mut self, modifiers: &Modifiers) -> (PropertyKey<'a>, bool) {
+    fn parse_class_element_name(&mut self, modifiers: &Modifiers) -> PropertyKey<'a> {
         self.verify_modifiers(
             modifiers,
             ModifierKinds::all_except([ModifierKind::Const, ModifierKind::In, ModifierKind::Out]),
@@ -397,7 +397,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if private_ident.name == "constructor" {
                     self.error(diagnostics::private_name_constructor(private_ident.span));
                 }
-                (PropertyKey::PrivateIdentifier(self.alloc(private_ident)), false)
+                PropertyKey::PrivateIdentifier(self.alloc(private_ident))
             }
             _ => self.parse_property_name(),
         }
@@ -420,7 +420,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
         key: PropertyKey<'a>,
-        computed: bool,
         definite: Option<u32>,
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
@@ -429,7 +428,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let value = self.eat(Kind::Eq).then(|| {
             self.context(
                 Context::In | Context::NewTarget,
-                Context::Yield | Context::Await,
+                Context::Yield | Context::Await | Context::TopLevel,
                 Self::parse_assignment_expression_or_higher,
             )
         });
@@ -475,7 +474,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             key,
             type_annotation,
             value,
-            computed,
             modifiers.contains(ModifierKind::Static),
             modifiers.contains(ModifierKind::Override),
             definite.is_some(),
@@ -492,7 +490,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        let (name, computed) = self.parse_class_element_name(modifiers);
+        let name = self.parse_class_element_name(modifiers);
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
             None,
@@ -505,7 +503,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             name,
             value,
             kind,
-            computed,
             modifiers.contains(ModifierKind::Static),
             modifiers.contains(ModifierKind::Override),
             false,
@@ -574,7 +571,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             name,
             value,
             MethodDefinitionKind::Constructor,
-            false,
             modifiers.contains(ModifierKind::Static),
             modifiers.contains(ModifierKind::Override),
             false,
@@ -595,7 +591,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && self.lexer.peek_token().kind() == Kind::LParen
         {
             let string_literal = self.parse_known_literal_string();
-            return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));
+            return Some(PropertyKey::StaticStringLiteral(self.alloc(string_literal)));
         }
         None
     }
@@ -608,7 +604,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
-        let (name, computed) = self.parse_class_element_name(modifiers);
+        let name = self.parse_class_element_name(modifiers);
 
         let cur_token = self.cur_token();
         let optional_span = (cur_token.kind() == Kind::Question).then(|| {
@@ -663,7 +659,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 },
             );
             return self.parse_method_declaration(
-                start, r#type, generator, name, computed, optional, modifiers, decorators,
+                start, r#type, generator, name, optional, modifiers, decorators,
             );
         }
 
@@ -678,23 +674,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if let Some(optional_span) = optional_span {
                 self.error(diagnostics::optional_accessor_property(optional_span));
             }
-            if name.is_specific_string_literal("constructor") && !computed {
+            if matches!(&name, PropertyKey::StaticStringLiteral(lit) if lit.value == "constructor")
+            {
                 self.error(diagnostics::constructor_accessor(name.span()));
             }
-            return self.parse_class_accessor_property(
-                start, name, computed, definite, modifiers, decorators,
-            );
+            return self
+                .parse_class_accessor_property(start, name, definite, modifiers, decorators);
         }
 
-        self.parse_property_declaration(
-            start,
-            name,
-            computed,
-            optional_span,
-            definite,
-            modifiers,
-            decorators,
-        )
+        self.parse_property_declaration(start, name, optional_span, definite, modifiers, decorators)
     }
 
     fn parse_method_declaration(
@@ -703,7 +691,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#type: MethodDefinitionType,
         generator: Option<u32>,
         name: PropertyKey<'a>,
-        computed: bool,
         optional: bool,
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
@@ -720,7 +707,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             name,
             value,
             MethodDefinitionKind::Method,
-            computed,
             modifiers.contains(ModifierKind::Static),
             modifiers.contains(ModifierKind::Override),
             optional,
@@ -735,7 +721,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
         name: PropertyKey<'a>,
-        computed: bool,
         optional_span: Option<Span>,
         definite: Option<u32>,
         modifiers: &Modifiers,
@@ -743,11 +728,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
-        // `new.target` is allowed in a class field initializer.
+        // `new.target` is allowed in a class field initializer, and `await` in it is not
+        // top-level `await`.
         let initializer = self.eat(Kind::Eq).then(|| {
             self.context(
                 Context::In | Context::NewTarget,
-                Context::Yield | Context::Await,
+                Context::Yield | Context::Await | Context::TopLevel,
                 Self::parse_assignment_expression_or_higher,
             )
         });
@@ -776,7 +762,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             PropertyDefinitionType::PropertyDefinition
         };
         let r#static = modifiers.contains(ModifierKind::Static);
-        if !computed && let Some((name, span)) = name.prop_name() {
+        if !name.is_computed()
+            && let Some((name, span)) = name.prop_name()
+        {
             if name == "constructor" {
                 self.error(diagnostics::field_constructor(span));
             }
@@ -817,7 +805,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             name,
             type_annotation,
             initializer,
-            computed,
             r#static,
             modifiers.contains(ModifierKind::Declare),
             modifiers.contains(ModifierKind::Override),
@@ -879,7 +866,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::abstract_with_private_identifier(method.key.span()));
         }
 
-        if !method.computed
+        if !method.key.is_computed()
             && let Some((name, span)) = method.key.prop_name()
         {
             if method.r#static {

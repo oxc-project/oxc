@@ -196,7 +196,10 @@ impl<'a> IsLiteralValue<'a, '_> for ObjectProperty<'a> {
 impl<'a> IsLiteralValue<'a, '_> for PropertyKey<'a> {
     fn is_literal_value(&self, include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
         match self {
-            Self::StaticIdentifier(_) => true,
+            Self::StaticIdentifier(_)
+            | Self::StaticStringLiteral(_)
+            | Self::StaticNumericLiteral(_)
+            | Self::StaticBigIntLiteral(_) => true,
             Self::PrivateIdentifier(_) => false,
             match_expression!(Self) => {
                 can_convert_to_string_transparently(self.to_expression(), include_functions, ctx)

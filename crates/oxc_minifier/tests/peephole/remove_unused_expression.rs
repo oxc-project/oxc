@@ -27,6 +27,16 @@ fn test_remove_unused_expression() {
 }
 
 #[test]
+fn preserve_throwing_from_code_point_calls() {
+    test_same("String.fromCodePoint('3.14')");
+    test("String.fromCodePoint(undefined)", "String.fromCodePoint(void 0)");
+    test_same("String.fromCodePoint(65, '0x110000')");
+    test_same("String.fromCodePoint('abc')");
+    test("String.fromCodePoint('65', '-0', null)", "");
+    test("String.fromCharCode('3.14', undefined)", "");
+}
+
+#[test]
 fn test_remove_unused_optional_chain_keeps_base_side_effects() {
     test("let log = []; (log.push('base'), null)?.x;", "[].push('base')");
 }
@@ -716,6 +726,43 @@ fn no_side_effects() {
     check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+}
+
+/// The `/* @__NO_SIDE_EFFECTS__ */` annotation applies to the function value
+/// declared at the annotated binding. Reassigning the binding invalidates the
+/// annotation, so calls must not be treated as pure afterwards.
+/// <https://github.com/oxc-project/oxc/issues/29972>
+#[test]
+fn no_side_effects_reassigned() {
+    // `function` declaration (function bindings are mutable, like `var`)
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => console.log('x'); f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>console.log('x'),f()",
+    );
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => {}; f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>{},f()",
+    );
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => {}; new f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>{},new f()",
+    );
+    // `var` initialized with an annotated arrow function
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ var f = () => {}; f = () => console.log('x'); f()",
+        "/* @__NO_SIDE_EFFECTS__ */ var f=()=>{};f=()=>console.log('x'),f()",
+    );
+    // `let` initialized with an annotated function expression
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ let f = function() {}; f = () => console.log('x'); new f()",
+        "/* @__NO_SIDE_EFFECTS__ */ let f=function(){};f=()=>console.log('x'),new f()",
+    );
+    // Reassignment after the call: the conservative guard keeps the earlier
+    // call too, since the annotation no longer proves the binding's value.
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ var f = () => {}; f(); f = () => console.log('x')",
+        "/* @__NO_SIDE_EFFECTS__ */ var f=()=>{};f(),f=()=>console.log('x')",
+    );
 }
 
 #[test]

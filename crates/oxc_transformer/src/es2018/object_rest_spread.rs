@@ -1058,7 +1058,7 @@ impl<'a> ObjectRestSpread<'a> {
             }
             // `let { 'a', ... rest }`
             // `let { ['a'], ... rest }`
-            PropertyKey::StringLiteral(lit) => {
+            PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
                 let name = lit.value;
                 let expr = Expression::new_string_literal(lit.span, name, None, ctx);
                 Some(ArrayExpressionElement::from(expr))
@@ -1067,6 +1067,20 @@ impl<'a> ObjectRestSpread<'a> {
             PropertyKey::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
                 let quasis = ArenaVec::from_value_in(lit.quasis[0].clone(), ctx);
                 let expr = Expression::new_template_literal(lit.span, quasis, [], ctx);
+                Some(ArrayExpressionElement::from(expr))
+            }
+            // `let { 1: a, ... rest }`
+            PropertyKey::StaticNumericLiteral(lit) => {
+                let s = lit.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
+                let s = Str::from_cow_in(&s, ctx);
+                let expr = Expression::new_string_literal(lit.span, s, None, ctx);
+                Some(ArrayExpressionElement::from(expr))
+            }
+            // `let { 1n: a, ... rest }`
+            PropertyKey::StaticBigIntLiteral(lit) => {
+                let s = lit.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
+                let s = Str::from_cow_in(&s, ctx);
+                let expr = Expression::new_string_literal(lit.span, s, None, ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             PropertyKey::PrivateIdentifier(_) => {

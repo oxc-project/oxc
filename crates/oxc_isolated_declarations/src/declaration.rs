@@ -242,13 +242,13 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    fn report_signature_property_key(&self, key: &PropertyKey<'a>, computed: bool) {
-        if !computed {
+    fn report_signature_property_key(&self, key: &PropertyKey<'a>) {
+        if !key.is_computed() {
             return;
         }
 
         let is_not_allowed = match key {
-            PropertyKey::StaticIdentifier(_) | PropertyKey::Identifier(_) => false,
+            PropertyKey::Identifier(_) => false,
             PropertyKey::StaticMemberExpression(expr) => {
                 !expr.get_first_object().is_identifier_reference()
             }
@@ -268,7 +268,7 @@ impl<'a> VisitMut<'a> for IsolatedDeclarations<'a> {
     }
 
     fn visit_ts_method_signature(&mut self, signature: &mut TSMethodSignature<'a>) {
-        self.report_signature_property_key(&signature.key, signature.computed);
+        self.report_signature_property_key(&signature.key);
         if signature.return_type.is_none() {
             match signature.kind {
                 TSMethodSignatureKind::Method => {
@@ -285,6 +285,6 @@ impl<'a> VisitMut<'a> for IsolatedDeclarations<'a> {
     }
 
     fn visit_ts_property_signature(&mut self, signature: &mut TSPropertySignature<'a>) {
-        self.report_signature_property_key(&signature.key, signature.computed);
+        self.report_signature_property_key(&signature.key);
     }
 }

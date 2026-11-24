@@ -89,10 +89,9 @@ pub fn run_lexer_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
 }
 
 pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
-    // The first two need unambiguous mode, which `oxc_lexer` doesn't support. The parser switches
+    // Both need unambiguous mode, which `oxc_lexer` doesn't support. The parser switches
     // to module mode when it finds `export`, and that turns `await /x/` into a regex.
-    // `oxc-29836.tsx` needs JSX mode, which `oxc_lexer` doesn't support either.
-    const SKIP: &[&str] = &["babel-16776-m.js", "unambiguous-await-regex.js", "oxc-29836.tsx"];
+    const SKIP: &[&str] = &["babel-16776-m.js", "unambiguous-await-regex.js"];
 
     files
         .par_iter()

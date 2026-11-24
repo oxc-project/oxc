@@ -27,7 +27,6 @@ fn test() {
             Expression::new_string_literal(SPAN, "foo", None, ast),
             false,
             false,
-            false,
             ast,
         )],
         ast,
@@ -36,13 +35,8 @@ fn test() {
     let object_with_to_string_string =
         object_with_to_string.to_js_string(&WithoutGlobalReferenceInformation {});
 
-    let bigint_with_separators = Expression::new_big_int_literal(
-        SPAN,
-        "10",
-        Some(Str::from("1_0n")),
-        BigintBase::Decimal,
-        ast,
-    );
+    let bigint_with_separators =
+        Expression::new_big_int_literal(SPAN, "10", Some(Str::from("1_0n")), ast);
     let bigint_with_separators_string =
         bigint_with_separators.to_js_string(&WithoutGlobalReferenceInformation {});
 
@@ -63,7 +57,7 @@ fn test() {
         (f64::NEG_INFINITY, "-Infinity"),
     ];
     for (num, expected) in num_cases {
-        let num_lit = Expression::new_numeric_literal(SPAN, num, None, NumberBase::Decimal, ast);
+        let num_lit = Expression::new_numeric_literal(SPAN, num, None, ast);
         assert_eq!(
             num_lit.to_js_string(&WithoutGlobalReferenceInformation {}),
             Some(expected.into())

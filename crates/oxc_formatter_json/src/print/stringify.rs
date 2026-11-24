@@ -144,11 +144,11 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
 ///   (unlike value position's `JSON.stringify()`) has no `null` fallback, so non-finite quotes as `"Infinity"`
 fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
     match key {
-        PropertyKey::StringLiteral(lit) => write_string(lit, f),
+        PropertyKey::StaticStringLiteral(lit) => write_string(lit, f),
         PropertyKey::StaticIdentifier(ident) => {
             write_quoted_str(f, b'"', ident.name.as_str());
         }
-        PropertyKey::NumericLiteral(lit) => {
+        PropertyKey::StaticNumericLiteral(lit) => {
             let raw = lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
             let raw = raw.as_str();
             if number_string_round_trips(raw) {

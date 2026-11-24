@@ -123,12 +123,7 @@ impl<'a> ClassProperties<'a> {
 
         // Identifier is reference to class name. Rename it.
         let temp_binding = class_details.bindings.get_or_init_static_binding(ctx);
-        ident.name = temp_binding.name;
-
-        let symbols = ctx.scoping_mut();
-        symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
-        symbols.delete_resolved_reference(symbol_id, reference_id);
-        symbols.add_resolved_reference(temp_binding.symbol_id, reference_id);
+        ctx.rebind_identifier_reference(ident, temp_binding);
     }
 }
 
@@ -428,7 +423,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
 
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
 
@@ -450,7 +445,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
         // Treat `key` and `value` in same way as `visit_property_definition` above.
         // TODO: Are decorators in scope?
         self.visit_decorators(&mut prop.decorators);
-        if prop.computed {
+        if prop.key.is_computed() {
             self.visit_property_key(&mut prop.key);
         }
 

@@ -252,7 +252,6 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTarget
                 property.span,
                 property.key,
                 binding,
-                property.computed,
                 p,
             )
         }
@@ -472,7 +471,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 for property in properties {
                     match property {
                         ObjectPropertyKind::ObjectProperty(property) => {
-                            let ObjectProperty { span, key, value, shorthand, computed, .. } =
+                            let ObjectProperty { span, key, value, shorthand, .. } =
                                 property.unbox();
                             let value = if shorthand {
                                 // `{ a }`, or the `CoverInitializedName` `{ a = b }`.
@@ -495,9 +494,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             } else {
                                 self.cover_expression_to_binding_element(value)
                             };
-                            list.push(BindingProperty::new(
-                                span, key, value, shorthand, computed, self,
-                            ));
+                            list.push(BindingProperty::new(span, key, value, shorthand, self));
                         }
                         ObjectPropertyKind::SpreadProperty(spread) => {
                             rest = Some(self.cover_spread_to_binding_rest(spread, span.start));
@@ -586,19 +583,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 }
                                 None => value,
                             };
-                            BindingProperty::new(span, key, value, true, false, self)
+                            BindingProperty::new(span, key, value, true, self)
                         }
                         AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
-                            let AssignmentTargetPropertyProperty {
-                                span,
-                                name,
-                                binding,
-                                computed,
-                                ..
-                            } = property.unbox();
+                            let AssignmentTargetPropertyProperty { span, name, binding, .. } =
+                                property.unbox();
                             let value = self
                                 .cover_assignment_target_maybe_default_to_binding_element(binding);
-                            BindingProperty::new(span, name, value, false, computed, self)
+                            BindingProperty::new(span, name, value, false, self)
                         }
                     });
                 }

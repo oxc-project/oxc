@@ -1184,6 +1184,37 @@ postcss-values-parser lexes it as a paren node followed by a word and Prettier p
 changing the substituted value (`red color`); Prettier keeps `$$(style)Color` in the same conformance file glued, so it is not even consistent.
 The value is the `<any-value>` raw fallback for us, and the value writer keeps source-glued tokens glued (`Separator::Tight`); it never inserts a space.
 
+## glued-number-head
+
+- Why: uniform-rule (same construct, same output: `sandstone.10`)
+- Pin: `tests/fixtures/format/css/glued-number-head.css`
+
+```css
+/* input */
+a {
+  version: 1.20.3;
+  b: f(1.20.3) 1.50em.5;
+}
+
+/* ours */
+a {
+  version: 1.20.3;
+  b: f(1.20.3) 1.50em.5;
+}
+
+/* prettier */
+a {
+  version: 1.2.3;
+  b: f(1.2.3) 1.5em.5;
+}
+```
+
+Glued number-ish values can never be valid CSS, so the run is one word (`is_word_glued_number`):
+Prettier prints a word-led glued run raw as a whole (`sandstone.10`) and every glued continuation raw (`.3`),
+but normalizes a number-led run's head (`1.20`).
+Ours prints that head raw as well, instead of normalizing a part of a word.
+The value writer is shared, so SCSS and Less print the same (Prettier normalizes the head in all three).
+
 ## escaped-custom-property-case
 
 - Why: semantics
@@ -1334,6 +1365,44 @@ A backtick JavaScript evaluation (`` `...` `` / `` ~`...` ``) is a program, not 
 `oxc-css-parser` keeps it as one `LessJavaScriptSnippet` and ours prints it verbatim.
 Prettier's value printer sees the backticks as plain words and the content as CSS tokens:
 it pads the backticks, re-quotes JavaScript strings and reflows a multi-line function onto one line.
+
+## less-verbatim-glued-numbers
+
+- Why: semantics
+- Pin: `tests/fixtures/format/less/mixin-verbatim-numbers.less`
+
+```less
+/* input */
+.m({ a: url(x.1.2.3.png) b.1.2.3; });
+.m(1.2.3);
+.h(#1e0; #0E00) when (@c = #1e0) {}
+.n(@a: .50 /* 0.50 */) when (@a > .50) {}
+
+/* ours */
+.m({ a: url(x.1.2.3.png) b.1.2.3; });
+.m(1.2.3);
+.h(#1e0; #0E00) when (@c = #1e0) {
+}
+.n(@a: 0.5 /* 0.50 */) when (@a > 0.5) {
+}
+
+/* prettier */
+.m({ a: url(x.10.20.3.png) b.10.20.3; });
+.m(1.20.3);
+.h(#1; #0) when (@c = #1) {
+}
+.n(@a: .50 /* 0.50 */) when (@a > .50) {
+}
+```
+
+Less mixin calls, definitions and guards print as a verbatim slice with standalone numbers normalized (`adjust_numbers_and_strings`).
+Prettier's word scan keeps only the FIRST number glued to a word and re-reads the rest as standalone:
+`b.1.2.3` becomes `b.1` + `0.2` + `0.3` (and `1.2.3` becomes `1.2` + `0.3`), changing the value (inside a `url()` path, the file) and growing every pass (`a.10.2` -> `a.100.2` -> `a.1000.2`).
+The same scan reads a hex color's digits as a number with an exponent: `#1e0` becomes `#1`, a different color.
+Ours keeps a whole glued number run raw (the `is_word_glued_number` rule), reads a hash (`#1e0`) as a word,
+and never adjusts comments or an unquoted `url()`.
+Prettier also skips normalization when the slice holds a comment (a `/\/[/*]/` match bails to `selector-unknown`, printed verbatim);
+ours normalizes it like the comment-free sibling (comment presence never changes the output), as mixin definitions and guards already do.
 
 ## less-escaped-string-gap
 
@@ -1701,3 +1770,37 @@ Prettier's output is not a fixpoint here.
 A grid value too long for one line breaks inside its function, as Prettier prints it from one line;
 Prettier then reads the line breaks it printed inside the function as the grid's line structure,
 so a second pass moves each top-level value to its own line.
+
+## value-multiline-comment-expands
+
+- Why: uniform-rule (same construct, same output: a multi-line block comment in JS)
+- Pin: `tests/fixtures/format/css/value-multiline-comment.css`
+
+```css
+/* input */
+a {
+  b: f(to top, x 1px /* c,
+    d */);
+}
+
+/* ours */
+a {
+  b: f(
+    to top,
+    x 1px
+      /* c,
+    d */
+  );
+}
+
+/* prettier */
+a {
+  b: f(to top, x 1px /* c,
+    d */);
+}
+```
+
+A block comment spanning lines inside a value expands its enclosing groups,
+like Prettier's JS, JSONC, HTML and Markdown comments (`literalline` / `hardline` carry a break-parent).
+Prettier's CSS prints the `value-comment` as a raw string with `\n`, so only its width decides:
+the group stays flat when the whole comment, measured as one line, fits.

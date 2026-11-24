@@ -2861,7 +2861,6 @@ pub(crate) const OFFSET_OBJECT_PROPERTY_KEY: usize = offset_of!(ObjectProperty, 
 pub(crate) const OFFSET_OBJECT_PROPERTY_VALUE: usize = offset_of!(ObjectProperty, value);
 pub(crate) const OFFSET_OBJECT_PROPERTY_METHOD: usize = offset_of!(ObjectProperty, method);
 pub(crate) const OFFSET_OBJECT_PROPERTY_SHORTHAND: usize = offset_of!(ObjectProperty, shorthand);
-pub(crate) const OFFSET_OBJECT_PROPERTY_COMPUTED: usize = offset_of!(ObjectProperty, computed);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -2903,11 +2902,6 @@ impl<'a, 't> ObjectPropertyWithoutKey<'a, 't> {
     #[inline]
     pub fn shorthand(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SHORTHAND) as *const bool) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_COMPUTED) as *const bool) }
     }
 }
 
@@ -2958,11 +2952,6 @@ impl<'a, 't> ObjectPropertyWithoutValue<'a, 't> {
     #[inline]
     pub fn shorthand(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SHORTHAND) as *const bool) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_COMPUTED) as *const bool) }
     }
 }
 
@@ -4852,8 +4841,6 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME: usize =
     offset_of!(AssignmentTargetPropertyProperty, name);
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING: usize =
     offset_of!(AssignmentTargetPropertyProperty, binding);
-pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED: usize =
-    offset_of!(AssignmentTargetPropertyProperty, computed);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -4884,14 +4871,6 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING)
                 as *const AssignmentTargetMaybeDefault<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
-                as *const bool)
         }
     }
 }
@@ -4932,14 +4911,6 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME)
                 as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
-                as *const bool)
         }
     }
 }
@@ -7180,7 +7151,6 @@ pub(crate) const OFFSET_BINDING_PROPERTY_SPAN: usize = offset_of!(BindingPropert
 pub(crate) const OFFSET_BINDING_PROPERTY_KEY: usize = offset_of!(BindingProperty, key);
 pub(crate) const OFFSET_BINDING_PROPERTY_VALUE: usize = offset_of!(BindingProperty, value);
 pub(crate) const OFFSET_BINDING_PROPERTY_SHORTHAND: usize = offset_of!(BindingProperty, shorthand);
-pub(crate) const OFFSET_BINDING_PROPERTY_COMPUTED: usize = offset_of!(BindingProperty, computed);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -7213,11 +7183,6 @@ impl<'a, 't> BindingPropertyWithoutKey<'a, 't> {
     #[inline]
     pub fn shorthand(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SHORTHAND) as *const bool) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_COMPUTED) as *const bool) }
     }
 }
 
@@ -7258,11 +7223,6 @@ impl<'a, 't> BindingPropertyWithoutValue<'a, 't> {
     #[inline]
     pub fn shorthand(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SHORTHAND) as *const bool) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_COMPUTED) as *const bool) }
     }
 }
 
@@ -9653,7 +9613,6 @@ pub(crate) const OFFSET_METHOD_DEFINITION_DECORATORS: usize =
 pub(crate) const OFFSET_METHOD_DEFINITION_KEY: usize = offset_of!(MethodDefinition, key);
 pub(crate) const OFFSET_METHOD_DEFINITION_VALUE: usize = offset_of!(MethodDefinition, value);
 pub(crate) const OFFSET_METHOD_DEFINITION_KIND: usize = offset_of!(MethodDefinition, kind);
-pub(crate) const OFFSET_METHOD_DEFINITION_COMPUTED: usize = offset_of!(MethodDefinition, computed);
 pub(crate) const OFFSET_METHOD_DEFINITION_STATIC: usize = offset_of!(MethodDefinition, r#static);
 pub(crate) const OFFSET_METHOD_DEFINITION_OVERRIDE: usize =
     offset_of!(MethodDefinition, r#override);
@@ -9710,11 +9669,6 @@ impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
                 as *const MethodDefinitionKind)
         }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -9801,11 +9755,6 @@ impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
     }
@@ -9888,11 +9837,6 @@ impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
     }
@@ -9933,8 +9877,6 @@ pub(crate) const OFFSET_PROPERTY_DEFINITION_KEY: usize = offset_of!(PropertyDefi
 pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION: usize =
     offset_of!(PropertyDefinition, type_annotation);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_VALUE: usize = offset_of!(PropertyDefinition, value);
-pub(crate) const OFFSET_PROPERTY_DEFINITION_COMPUTED: usize =
-    offset_of!(PropertyDefinition, computed);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_STATIC: usize =
     offset_of!(PropertyDefinition, r#static);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_DECLARE: usize =
@@ -9999,11 +9941,6 @@ impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
                 as *const Option<Expression<'a>>)
         }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -10105,11 +10042,6 @@ impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
     }
@@ -10204,11 +10136,6 @@ impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
                 as *const Option<Expression<'a>>)
         }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -10309,11 +10236,6 @@ impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
     }
@@ -10407,7 +10329,6 @@ pub(crate) const OFFSET_ACCESSOR_PROPERTY_KEY: usize = offset_of!(AccessorProper
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION: usize =
     offset_of!(AccessorProperty, type_annotation);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_VALUE: usize = offset_of!(AccessorProperty, value);
-pub(crate) const OFFSET_ACCESSOR_PROPERTY_COMPUTED: usize = offset_of!(AccessorProperty, computed);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_STATIC: usize = offset_of!(AccessorProperty, r#static);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_OVERRIDE: usize =
     offset_of!(AccessorProperty, r#override);
@@ -10464,11 +10385,6 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
                 as *const Option<Expression<'a>>)
         }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -10555,11 +10471,6 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
     }
@@ -10642,11 +10553,6 @@ impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn r#static(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
     }
@@ -10726,11 +10632,6 @@ impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
                 as *const Option<ArenaBox<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -14800,8 +14701,6 @@ impl<'a, 't> GetAddress for TSInterfaceBodyWithoutBody<'a, 't> {
 pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_NODE_ID: usize =
     offset_of!(TSPropertySignature, node_id);
 pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_SPAN: usize = offset_of!(TSPropertySignature, span);
-pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_COMPUTED: usize =
-    offset_of!(TSPropertySignature, computed);
 pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_OPTIONAL: usize =
     offset_of!(TSPropertySignature, optional);
 pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_READONLY: usize =
@@ -14829,13 +14728,6 @@ impl<'a, 't> TSPropertySignatureWithoutKey<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_COMPUTED) as *const bool)
-        }
     }
 
     #[inline]
@@ -14887,13 +14779,6 @@ impl<'a, 't> TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_COMPUTED) as *const bool)
-        }
     }
 
     #[inline]
@@ -15297,8 +15182,6 @@ impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutReturnType<'a, 't> 
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_NODE_ID: usize = offset_of!(TSMethodSignature, node_id);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SPAN: usize = offset_of!(TSMethodSignature, span);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KEY: usize = offset_of!(TSMethodSignature, key);
-pub(crate) const OFFSET_TS_METHOD_SIGNATURE_COMPUTED: usize =
-    offset_of!(TSMethodSignature, computed);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_OPTIONAL: usize =
     offset_of!(TSMethodSignature, optional);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KIND: usize = offset_of!(TSMethodSignature, kind);
@@ -15330,11 +15213,6 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -15426,11 +15304,6 @@ impl<'a, 't> TSMethodSignatureWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
     }
@@ -15508,11 +15381,6 @@ impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
         }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
     }
 
     #[inline]
@@ -15596,11 +15464,6 @@ impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
     }
 
     #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
     }
@@ -15678,11 +15541,6 @@ impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
         }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
     }
 
     #[inline]

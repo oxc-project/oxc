@@ -94,7 +94,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "BigIntLiteral",
             StructDetails {
-                field_order: Some(&[1, 0, 3, 4, 2]),
+                field_order: Some(&[1, 0, 2, 3]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -246,7 +246,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "NumericLiteral",
             StructDetails {
-                field_order: Some(&[1, 0, 4, 3, 2]),
+                field_order: Some(&[1, 0, 3, 2]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -413,7 +413,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "PropertyDefinition",
             StructDetails {
-                field_order: Some(&[1, 0, 2, 6, 7, 8, 9, 3, 4, 5, 10, 11, 12, 13, 14]),
+                field_order: Some(&[1, 0, 2, 6, 7, 8, 9, 3, 4, 5, 10, 11, 12, 13]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -609,7 +609,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "ObjectProperty",
             StructDetails {
-                field_order: Some(&[1, 0, 2, 6, 7, 3, 4, 5]),
+                field_order: Some(&[1, 0, 2, 5, 6, 3, 4]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -731,7 +731,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "TSMethodSignature",
             StructDetails {
-                field_order: Some(&[1, 0, 3, 8, 9, 10, 4, 5, 6, 7, 2]),
+                field_order: Some(&[1, 0, 3, 8, 9, 4, 5, 6, 7, 2]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -906,7 +906,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "BindingProperty",
             StructDetails {
-                field_order: Some(&[1, 0, 4, 5, 2, 3]),
+                field_order: Some(&[1, 0, 3, 4, 2]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -971,7 +971,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "MethodDefinition",
             StructDetails {
-                field_order: Some(&[1, 0, 2, 6, 7, 8, 3, 4, 5, 9, 10, 11]),
+                field_order: Some(&[1, 0, 2, 6, 7, 8, 3, 4, 5, 9, 10]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -1216,7 +1216,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "TSPropertySignature",
             StructDetails {
-                field_order: Some(&[1, 0, 2, 3, 4, 5, 6]),
+                field_order: Some(&[1, 0, 2, 3, 4, 5]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -1366,7 +1366,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "AccessorProperty",
             StructDetails {
-                field_order: Some(&[1, 0, 2, 6, 7, 8, 9, 3, 4, 5, 10, 11]),
+                field_order: Some(&[1, 0, 2, 6, 7, 8, 9, 3, 4, 5, 10]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -1455,7 +1455,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "AssignmentTargetPropertyProperty",
             StructDetails {
-                field_order: Some(&[1, 0, 3, 4, 2]),
+                field_order: Some(&[1, 0, 2, 3]),
                 is_node: true,
                 is_transparent: false,
             },

@@ -648,7 +648,7 @@ impl<'a> JsxImpl<'a> {
                         let key = Self::get_attribute_name(name, ctx);
                         let value = self.transform_jsx_attribute_value(value, ctx);
                         let object_property = ObjectPropertyKind::new_object_property(
-                            span, kind, key, value, false, false, false, ctx,
+                            span, kind, key, value, false, false, ctx,
                         );
                         properties.push(object_property);
                     }
@@ -712,7 +712,7 @@ impl<'a> JsxImpl<'a> {
                 let children = PropertyKey::new_static_identifier(SPAN, "children", ctx);
                 let kind = PropertyKind::Init;
                 let property = ObjectPropertyKind::new_object_property(
-                    SPAN, kind, children, value, false, false, false, ctx,
+                    SPAN, kind, children, value, false, false, ctx,
                 );
                 properties.push(property);
             }
@@ -993,14 +993,14 @@ impl<'a> JsxImpl<'a> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name;
                 if ident.name.contains('-') {
-                    PropertyKey::new_string_literal(ident.span, name, None, ctx)
+                    PropertyKey::new_static_string_literal(ident.span, name, None, ctx)
                 } else {
                     PropertyKey::new_static_identifier(ident.span, name, ctx)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = Str::from_str_in(&namespaced.to_string(), ctx);
-                PropertyKey::new_string_literal(namespaced.span, name, None, ctx)
+                PropertyKey::new_static_string_literal(namespaced.span, name, None, ctx)
             }
         }
     }

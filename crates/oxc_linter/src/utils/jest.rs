@@ -17,12 +17,12 @@ use oxc_str::CompactStr;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
-    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
+    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call, validate_expect_type_of_call,
 };
 use crate::{LintContext, ast_util::get_symbol_id_of_variable};
-pub use padding_around_block::report_missing_padding_before_jest_block;
+pub use padding::{PaddingConfig, PaddingStatement, check_padding};
 
-mod padding_around_block;
+mod padding;
 mod parse_jest_fn;
 
 const JEST_METHOD_NAMES: [&str; 19] = [
@@ -240,6 +240,14 @@ pub fn collect_possible_jest_call_node<'a, 'c>(
 pub fn iter_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    iter_possible_jest_call_node_with_wrappers(ctx, false)
+}
+
+/// Optionally walk through parentheses and transparent TypeScript wrappers around Vitest type assertions.
+pub fn iter_possible_jest_call_node_with_wrappers<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+    follow_type_assertion_wrappers: bool,
+) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
     let semantic = ctx.semantic();
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
@@ -259,6 +267,10 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
         let mut id = semantic.scoping().get_reference(reference_id).node_id();
+        let follow_wrappers = follow_type_assertion_wrappers
+            && original.or_else(|| {
+                semantic.nodes().kind(id).as_identifier_reference().map(|ident| ident.name.as_str())
+            }) == Some("expectTypeOf");
         std::iter::from_fn(move || {
             loop {
                 let parent = semantic.nodes().parent_node(id);
@@ -273,13 +285,30 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
                     AstKind::StaticMemberExpression(_)
                         | AstKind::TaggedTemplateExpression(_)
                         | AstKind::ComputedMemberExpression(_)
-                ) {
+                ) || (follow_wrappers
+                    && type_assertion_wrapper_expression(parent_kind).is_some_and(|inner| {
+                        inner.address() == semantic.nodes().get_node(id).address()
+                    }))
+                {
                     id = parent.id();
                 } else {
                     return None;
                 }
             }
         })
+    })
+}
+
+/// The parent-node counterpart to `Expression::get_inner_expression` for type assertions.
+pub fn type_assertion_wrapper_expression(kind: AstKind<'_>) -> Option<&Expression<'_>> {
+    Some(match kind {
+        AstKind::ParenthesizedExpression(wrapper) => &wrapper.expression,
+        AstKind::TSAsExpression(wrapper) => &wrapper.expression,
+        AstKind::TSSatisfiesExpression(wrapper) => &wrapper.expression,
+        AstKind::TSInstantiationExpression(wrapper) => &wrapper.expression,
+        AstKind::TSNonNullExpression(wrapper) => &wrapper.expression,
+        AstKind::TSTypeAssertion(wrapper) => &wrapper.expression,
+        _ => return None,
     })
 }
 

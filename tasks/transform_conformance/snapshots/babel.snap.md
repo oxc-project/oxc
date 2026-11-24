@@ -1,10 +1,9 @@
-commit: 16a2d671
+commit: 51225612
 
-Passed: 754/1182
+Passed: 753/1208
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
-* babel-plugin-transform-export-namespace-from
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 
@@ -158,8 +157,23 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (26/29)
+# babel-plugin-transform-explicit-resource-management (26/34)
 * integration/commonjs-transform/input.js
+x Output mismatch
+
+* integration/for-statement-block-scoping/input.js
+x Output mismatch
+
+* integration/for-statement-nested-loop-block-scoping/input.js
+x Output mismatch
+
+* transform-await/for-statement-head/input.js
+x Output mismatch
+
+* transform-sync/for-statement-head/input.js
+x Output mismatch
+
+* transform-sync/for-statement-head-labeled/input.js
 x Output mismatch
 
 * transform-sync/named-evaluation/input.js
@@ -186,7 +200,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (208/269)
+# babel-plugin-transform-class-properties (213/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -203,9 +217,6 @@ x Output mismatch
 x Output mismatch
 
 * assumption-setPublicClassFields/computed/input.js
-x Output mismatch
-
-* assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
 
 * assumption-setPublicClassFields/static-super-loose/input.js
@@ -257,9 +268,6 @@ x Output mismatch
 x Output mismatch
 
 * private/parenthesized-optional-member-call-with-transform/input.js
-x Output mismatch
-
-* private/static-infer-name/input.js
 x Output mismatch
 
 * private/static-shadow/input.js
@@ -316,9 +324,6 @@ x Output mismatch
 * private-loose/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
-* private-loose/static-infer-name/input.js
-x Output mismatch
-
 * public/arrow-this-without-transform/input.js
 x Expected transform error, but transformation succeeded: Unable to transform arrow inside class property
 
@@ -329,9 +334,6 @@ x Output mismatch
 x Output mismatch
 
 * public/delete-super-property/input.js
-x Output mismatch
-
-* public/static-infer-name/input.js
 x Output mismatch
 
 * public/super-destructuring-array-pattern/input.js
@@ -355,9 +357,6 @@ x Output mismatch
 * public-loose/computed/input.js
 x Output mismatch
 
-* public-loose/static-infer-name/input.js
-x Output mismatch
-
 * public-loose/static-super/input.js
 x Output mismatch
 
@@ -375,33 +374,33 @@ x Output mismatch
 * integration/in-class-heritage/input.js
 x Output mismatch
 
-* integration-loose/in-class-heritage/input.js
+* integration-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/in-class-heritage/input.js
 x Output mismatch
 
-* integration-loose/super-static-block/input.js
+* integration-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/super-static-block/input.js
 x Output mismatch
 
 
 # babel-plugin-transform-private-methods (41/148)
-* accessors-loose/basic/input.js
+* accessors-assumption-privateFieldsAsProperties/basic/input.js
 x Output mismatch
 
-* accessors-loose/class-binding/input.js
+* accessors-assumption-privateFieldsAsProperties/class-binding/input.js
 x Output mismatch
 
-* accessors-loose/get-only-setter/input.js
+* accessors-assumption-privateFieldsAsProperties/get-only-setter/input.js
 x Output mismatch
 
-* accessors-loose/preserve-comments/input.js
+* accessors-assumption-privateFieldsAsProperties/preserve-comments/input.js
 x Output mismatch
 
-* accessors-loose/reassignment/input.js
+* accessors-assumption-privateFieldsAsProperties/reassignment/input.js
 x Output mismatch
 
-* accessors-loose/set-only-getter/input.js
+* accessors-assumption-privateFieldsAsProperties/set-only-getter/input.js
 x Output mismatch
 
-* accessors-loose/updates/input.js
+* accessors-assumption-privateFieldsAsProperties/updates/input.js
 x Output mismatch
 
 * accessors-privateFieldsAsProperties/basic/input.js
@@ -467,37 +466,37 @@ x Expected transform error, but transformation succeeded: Duplicate private name
 * private-method/super/input.js
 x Output mismatch
 
-* private-method-loose/assignment/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/assignment/input.js
 x Output mismatch
 
-* private-method-loose/async/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/async/input.js
 x Output mismatch
 
-* private-method-loose/before-fields/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/before-fields/input.js
 x Output mismatch
 
-* private-method-loose/class-binding/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/class-binding/input.js
 x Output mismatch
 
-* private-method-loose/class-expression/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/class-expression/input.js
 x Output mismatch
 
-* private-method-loose/context/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/context/input.js
 x Output mismatch
 
-* private-method-loose/exfiltrated/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/exfiltrated/input.js
 x Output mismatch
 
-* private-method-loose/generator/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/generator/input.js
 x Output mismatch
 
-* private-method-loose/preserve-comments/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/preserve-comments/input.js
 x Output mismatch
 
-* private-method-loose/reassignment/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/reassignment/input.js
 x Output mismatch
 
-* private-method-loose/super/input.js
+* private-method-assumption-privateFieldsAsProperties-setPublicClassFields-constantSuper/super/input.js
 x Output mismatch
 
 * private-method-privateFieldsAsProperties/assignment/input.js
@@ -568,10 +567,10 @@ x Output mismatch
 * private-static-method/read-only/input.js
 x Output mismatch
 
-* private-static-method-loose/async/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/async/input.js
 
   x TS(1108): A 'return' statement can only be used within a function body.
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-private-methods/test/fixtures/private-static-method-loose/async/input.js:11:1]
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-private-methods/test/fixtures/private-static-method-assumption-privateFieldsAsProperties-constantSuper/async/input.js:11:1]
  10 | 
  11 | return new Cl().test().then(val => {
     : ^^^^^^
@@ -579,31 +578,31 @@ x Output mismatch
     `----
 
 
-* private-static-method-loose/basic/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/basic/input.js
 x Output mismatch
 
-* private-static-method-loose/class-check/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/class-check/input.js
 x Output mismatch
 
-* private-static-method-loose/class-expression/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/class-expression/input.js
 x Output mismatch
 
-* private-static-method-loose/exfiltrated/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/exfiltrated/input.js
 x Output mismatch
 
-* private-static-method-loose/generator/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/generator/input.js
 x Output mismatch
 
-* private-static-method-loose/preserve-comments/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/preserve-comments/input.js
 x Output mismatch
 
-* private-static-method-loose/reassignment/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/reassignment/input.js
 x Output mismatch
 
-* private-static-method-loose/super/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/super/input.js
 x Output mismatch
 
-* private-static-method-loose/this/input.js
+* private-static-method-assumption-privateFieldsAsProperties-constantSuper/this/input.js
 x Output mismatch
 
 * private-static-method-privateFieldsAsProperties/async/input.js
@@ -682,22 +681,22 @@ x Output mismatch
 * static-accessors/set-only-getter/input.js
 x Output mismatch
 
-* static-accessors-loose/basic/input.js
+* static-accessors-assumption-privateFieldsAsProperties-setPublicClassFields/basic/input.js
 x Output mismatch
 
-* static-accessors-loose/destructure-set/input.js
+* static-accessors-assumption-privateFieldsAsProperties-setPublicClassFields/destructure-set/input.js
 x Output mismatch
 
-* static-accessors-loose/get-only-setter/input.js
+* static-accessors-assumption-privateFieldsAsProperties-setPublicClassFields/get-only-setter/input.js
 x Output mismatch
 
-* static-accessors-loose/preserve-comments/input.js
+* static-accessors-assumption-privateFieldsAsProperties-setPublicClassFields/preserve-comments/input.js
 x Output mismatch
 
-* static-accessors-loose/set-only-getter/input.js
+* static-accessors-assumption-privateFieldsAsProperties-setPublicClassFields/set-only-getter/input.js
 x Output mismatch
 
-* static-accessors-loose/updates/input.js
+* static-accessors-assumption-privateFieldsAsProperties-setPublicClassFields/updates/input.js
 x Output mismatch
 
 * static-accessors-privateFieldsAsProperties/basic/input.js
@@ -737,7 +736,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (24/60)
+# babel-plugin-transform-private-property-in-object (25/60)
 * assumption-noUninitializedPrivateFieldAccess/static-field/input.js
 x Output mismatch
 
@@ -804,37 +803,34 @@ x Output mismatch
 * private/static-shadow/input.js
 x Output mismatch
 
-* private-loose/accessor/input.js
+* private-assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 
-* private-loose/field/input.js
+* private-assumption-privateFieldsAsProperties/field/input.js
 x Output mismatch
 
-* private-loose/method/input.js
+* private-assumption-privateFieldsAsProperties/method/input.js
 x Output mismatch
 
-* private-loose/native-classes/input.js
+* private-assumption-privateFieldsAsProperties/nested-class/input.js
 x Output mismatch
 
-* private-loose/nested-class/input.js
+* private-assumption-privateFieldsAsProperties/nested-class-other-redeclared/input.js
 x Output mismatch
 
-* private-loose/nested-class-other-redeclared/input.js
+* private-assumption-privateFieldsAsProperties/nested-class-redeclared/input.js
 x Output mismatch
 
-* private-loose/nested-class-redeclared/input.js
+* private-assumption-privateFieldsAsProperties/static-accessor/input.js
 x Output mismatch
 
-* private-loose/static-accessor/input.js
+* private-assumption-privateFieldsAsProperties/static-field/input.js
 x Output mismatch
 
-* private-loose/static-field/input.js
+* private-assumption-privateFieldsAsProperties/static-method/input.js
 x Output mismatch
 
-* private-loose/static-method/input.js
-x Output mismatch
-
-* private-loose/static-shadow/input.js
+* private-assumption-privateFieldsAsProperties/static-shadow/input.js
 x Output mismatch
 
 * to-native-fields/class-expression-in-default-param/input.js
@@ -844,6 +840,20 @@ x Output mismatch
 x Output mismatch
 
 * to-native-fields/static-shadowed-binding/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-export-namespace-from (4/6)
+* export-namespace/default-and-namespace-attributes/input.mjs
+
+  x Unexpected token
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-export-namespace-from/test/fixtures/export-namespace/default-and-namespace-attributes/input.mjs:1:8]
+ 1 | export v, * as ns from "mod" with { type: "json" };
+   :        ^
+   `----
+
+
+* export-namespace/namespace-attributes/input.mjs
 x Output mismatch
 
 
@@ -884,7 +894,7 @@ x Output mismatch
 * nullish-coalescing/logical-assignment-undeclared/input.js
 x Output mismatch
 
-* nullish-coalescing/transform-loose/input.js
+* nullish-coalescing/transform-assumption-noDocumentAll/input.js
 x Output mismatch
 
 * nullish-coalescing/transform-static-refs-in-function/input.js
@@ -894,8 +904,29 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-optional-chaining (45/47)
+# babel-plugin-transform-optional-chaining (37/46)
+* general/function-call-assumption-noDocumentAll-pureGetters/input.js
+x Output mismatch
+
 * general/iife-rest-param/input.js
+x Output mismatch
+
+* general/in-function-params-assumption-noDocumentAll/input.js
+x Output mismatch
+
+* general/memoize-assumption-noDocumentAll-pureGetters/input.js
+x Output mismatch
+
+* general/optional-eval-call-assumption-noDocumentAll-pureGetters/input.js
+x Output mismatch
+
+* general/parenthesized-member-call-assumption-noDocumentAll-pureGetters/input.js
+x Output mismatch
+
+* general/super-method-call-assumption-noDocumentAll-pureGetters/input.js
+x Output mismatch
+
+* transparent-expr-wrappers/ts-as-function-call-assumption-noDocumentAll-pureGetters/input.ts
 x Output mismatch
 
 * transparent-expr-wrappers/ts-instantiation-call-context/input.ts
@@ -907,7 +938,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (28/39)
+# babel-plugin-transform-object-rest-spread (28/50)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -970,15 +1001,135 @@ Unresolved references mismatch:
 after transform: ["b", "babelHelpers", "f", "q"]
 rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
 
+* object-rest/remove-unused-excluded-keys-assumption-objectRestNoSymbols-pureGetters/input.js
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
 * object-rest/symbol/input.js
 x Output mismatch
+
+* object-spread-assumption-ignoreFunctionLength-pureGetters-setSpreadProperties/assignment/input.js
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-ignoreFunctionLength-pureGetters-setSpreadProperties/expression/input.js
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-ignoreFunctionLength-pureGetters-setSpreadProperties/parameters-object-rest-used-in-default/input.js
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-ignoreFunctionLength-pureGetters-setSpreadProperties/side-effect/input.js
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-ignoreFunctionLength-pureGetters-setSpreadProperties/targets-support-object-assign/input.js
+x Output mismatch
+
+* object-spread-assumption-ignoreFunctionLength-pureGetters-setSpreadProperties/variable-declaration/input.js
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-pureGetters-setSpreadProperties-builtins/assignment/input.js
+
+  x Option `useBuiltIns` is not implemented for object-rest-spread.
+
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-pureGetters-setSpreadProperties-builtins/expression/input.js
+
+  x Option `useBuiltIns` is not implemented for object-rest-spread.
+
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-pureGetters-setSpreadProperties-builtins/side-effect/input.js
+
+  x Option `useBuiltIns` is not implemented for object-rest-spread.
+
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* object-spread-assumption-pureGetters-setSpreadProperties-builtins/variable-declaration/input.js
+
+  x Option `useBuiltIns` is not implemented for object-rest-spread.
+
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
 
 * regression/gh-17274/input.js
 x Output mismatch
 
 * regression/gh-8323/input.js
 
-  x Option `loose` is not implemented for object-rest-spread.
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
 
 
 
@@ -993,7 +1144,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (9/31)
+# babel-plugin-transform-async-to-generator (10/32)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
@@ -1606,15 +1757,25 @@ x Expected transform error, but transformation succeeded: transform-react-jsx: S
 
 * spread-transform/transform-to-babel-extend/input.js
 
-  x Option `loose` is not implemented for object-rest-spread.
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
 
 
 * spread-transform/transform-to-object-assign/input.js
 
-  x Option `loose` is not implemented for object-rest-spread.
-
-
   x Option `useBuiltIns` is not implemented for object-rest-spread.
+
+
+  x Compiler assumption `objectRestNoSymbols` is not implemented for object-
+  | rest-spread.
+
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
 
 
 
@@ -1645,5 +1806,31 @@ transform-react-jsx-development: unknown field `sourceSelf`, expected one of `ru
 
 * cross-platform/within-ts-module-block/input.ts
 transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+
+# babel-plugin-proposal-decorators (0/8)
+* 2023-11-misc/setting-private-method/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-in-body/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-array-pattern/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-for-of/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-object-pattern/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-rest/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-update/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* legacy-regression/7030/input.js
+x Output mismatch
 
 

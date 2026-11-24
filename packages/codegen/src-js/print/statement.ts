@@ -32,6 +32,7 @@ import {
   printImportDeclaration,
 } from "./module.ts";
 import { CTX_FORBID_IN, CTX_NONE } from "./operators.ts";
+import { isLetIdentifier } from "./parens.ts";
 import { PREC_COMMA, PREC_LOWEST } from "./precedence.ts";
 import { printString } from "./string.ts";
 import {
@@ -322,7 +323,7 @@ export function printStatement(node: ESTree.Statement, state: State): void {
     case "TSExportAssignment":
       printIndent(state);
       write(state, "export = ", CAT_OTHER);
-      printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
+      printExpression(node.expression, state, PREC_COMMA, CTX_NONE);
       write(state, ";\n", CAT_OTHER);
       break;
     case "TSNamespaceExportDeclaration":
@@ -839,7 +840,7 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
  * `leftType` must be the `type` of `left`.
  *
  * The restriction for `let` is on the first token of the head rather than on the target as a whole,
- * so this walks down the leftmost spine - through member objects and parens - to whatever prints first.
+ * so this follows the expression that prints first through members, calls, tags, and transparent wrappers.
  *
  * @param left - Left side of the `for of` head
  * @param leftType - `left.type`
@@ -852,37 +853,41 @@ function forOfHeadNeedsWrapping(
 ): boolean {
   debugAssert(leftType === left.type, "`leftType` must equal `left.type`");
 
-  let computed = false;
-
   for (;;) {
     switch (leftType) {
       case "Identifier": {
-        // Computed member: `let[...]` is emitted as `(let)[...]`, so no longer starts with `let`.
-        //   Any other identifier isn't `let` either, so return `false` for all of them.
-        // Non-computed member: If identifier name is `let` (`let.x`), it needs to be wrapped.
-        // Not part of a member expression: `let` needs to be wrapped. `async` does too if `wrapAsync` is set.
-        if (computed) return false;
-
         const leftName = (left as ESTree.IdentifierReference).name;
-        if (leftName === "let") return true;
-        return wrapAsync && leftName === "async";
+        return leftName === "let" || (wrapAsync && leftName === "async");
       }
-      case "MemberExpression":
+      case "MemberExpression": {
         typeAssertIs<ESTree.MemberExpression>(left);
-        computed = left.computed;
+        const computed = left.computed === true;
         left = left.object;
         leftType = left.type;
-        // `async` only needs wrapping when it's a plain identifier e.g. `for ((async) of arr)`,
-        // but not when part of a `MemberExpression` e.g. `for (async.x of arr)`
+        if (computed && isLetIdentifier(left, leftType)) return false;
         wrapAsync = false;
+        continue;
+      }
+      case "CallExpression":
+        left = (left as ESTree.CallExpression).callee;
         break;
+      case "TaggedTemplateExpression":
+        left = (left as ESTree.TaggedTemplateExpression).tag;
+        break;
+      /* IF TS */
+      case "TSNonNullExpression":
+        left = (left as ESTree.TSNonNullExpression).expression;
+        break;
+      /* END_IF */
       case "ParenthesizedExpression":
         left = (left as ESTree.ParenthesizedExpression).expression;
         leftType = left.type;
-        break;
+        continue;
       default:
         return false;
     }
+    leftType = left.type;
+    wrapAsync = false;
   }
 }
 

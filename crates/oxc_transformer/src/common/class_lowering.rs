@@ -3,21 +3,24 @@
 //! Transforms look up the lowering decision by class scope. Decisions that depend on decorators
 //! or auto-accessors are recorded at class entry, before any transform can change the class.
 
-use oxc_ast::ast::Class;
+use oxc_ast::ast::{Class, ClassElement};
 use oxc_syntax::scope::ScopeId;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::{
     decorator::DecoratorMode,
-    utils::decorated_class::{class_body_has_auto_accessors, class_has_decorators},
+    utils::decorated_class::{
+        class_body_has_auto_accessors, class_has_decorators, is_auto_accessor,
+        legacy_decorators_reassign_class_binding,
+    },
 };
 
 use super::class_transform::ClassTransform;
 
 /// Which transform owns a class.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ClassLoweringMode {
+enum ClassLoweringMode {
     /// Class fields stay native; auto-accessors and static blocks may still be lowered.
     Native,
     /// Class-properties lowers this class because the target requires class field lowering.
@@ -32,6 +35,8 @@ pub struct ClassLowering {
     mode: ClassLoweringMode,
     has_decorators: bool,
     has_auto_accessor: bool,
+    /// Legacy decorators reassign the class binding after the class is defined.
+    class_binding_is_reassigned: bool,
 }
 
 impl ClassLowering {
@@ -47,11 +52,51 @@ impl ClassLowering {
                 ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
             }
         };
-        Self { mode, has_decorators, has_auto_accessor }
+        Self { mode, has_decorators, has_auto_accessor, class_binding_is_reassigned: false }
     }
 
-    pub fn mode(self) -> ClassLoweringMode {
-        self.mode
+    /// Whether class-properties lowers the fields of this class.
+    pub fn lowers_fields(self) -> bool {
+        self.mode == ClassLoweringMode::LowerAll
+    }
+
+    /// Whether a field or auto-accessor stays as written for the downstream transform.
+    ///
+    /// A preserved class keeps its decorated fields and its auto-accessors. Transforms that
+    /// rewrite the other fields must leave these in place, and must not move other initializers
+    /// after theirs (see [`Self::first_movable_instance_field`]).
+    pub fn keeps_field(self, element: &ClassElement<'_>) -> bool {
+        self.mode == ClassLoweringMode::Preserve
+            && (is_auto_accessor(element)
+                || matches!(element, ClassElement::PropertyDefinition(_))
+                    && element.has_decorator())
+    }
+
+    /// Index of the first instance field whose initializer can move after the field
+    /// initializers that stay in the class, such as into the constructor.
+    ///
+    /// Instance fields before the last kept instance field that runs code on initialization (a
+    /// decorated field, or an auto-accessor with an initializer or decorators) must stay in
+    /// place, or their initializers would run after it.
+    pub fn first_movable_instance_field(self, class: &Class<'_>) -> usize {
+        if self.mode != ClassLoweringMode::Preserve {
+            return 0;
+        }
+        class
+            .body
+            .body
+            .iter()
+            .rposition(|element| {
+                !element.r#static()
+                    && self.keeps_field(element)
+                    && match element {
+                        ClassElement::AccessorProperty(accessor) => {
+                            accessor.value.is_some() || element.has_decorator()
+                        }
+                        _ => true,
+                    }
+            })
+            .map_or(0, |index| index + 1)
     }
 
     /// Whether the class or one of its elements is decorated.
@@ -61,6 +106,13 @@ impl ClassLowering {
 
     pub fn has_auto_accessor(self) -> bool {
         self.has_auto_accessor
+    }
+
+    /// Whether legacy decorators reassign the class binding to the decorated class.
+    ///
+    /// e.g. `Foo` in `let Foo = class Foo {}; Foo = _decorate([dec], Foo);`
+    pub fn class_binding_is_reassigned(self) -> bool {
+        self.class_binding_is_reassigned
     }
 
     fn depends_on_class_syntax(self) -> bool {
@@ -94,6 +146,14 @@ impl ClassLoweringDecisions {
     pub fn record(&mut self, class: &Class<'_>) {
         // Legacy decorators run their own lowering, so options alone determine class ownership.
         if self.decorator_mode.is_legacy() {
+            // Only class-properties reads `class_binding_is_reassigned`.
+            if matches!(self.class_transform, ClassTransform::ClassProperties { .. })
+                && legacy_decorators_reassign_class_binding(class)
+            {
+                let lowering =
+                    ClassLowering { class_binding_is_reassigned: true, ..self.default_decision() };
+                self.insert(class.scope_id(), lowering);
+            }
             return;
         }
         let lowering = ClassLowering::compute(self.class_transform, class);
@@ -133,7 +193,12 @@ impl ClassLoweringDecisions {
             ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
             ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
         };
-        ClassLowering { mode, has_decorators: false, has_auto_accessor: false }
+        ClassLowering {
+            mode,
+            has_decorators: false,
+            has_auto_accessor: false,
+            class_binding_is_reassigned: false,
+        }
     }
 }
 

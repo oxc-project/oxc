@@ -466,9 +466,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Boolean
             | Kind::Undefined
             | Kind::Never
-            | Kind::Object
+            | Kind::Object => self.parse_keyword_type(),
             // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
-            | Kind::Null => self.parse_keyword_type(),
+            // Unlike the keywords above, it cannot begin a qualified name: `null.x`.
+            Kind::Null => {
+                let span = self.cur_token().span();
+                self.bump_any();
+                TSType::new_ts_null_keyword(span, self)
+            }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
             // Kind::StarEq => {
             // scanner.reScanAsteriskEqualsToken();
@@ -491,7 +496,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let start = self.cur_start();
                 let literal = self.parse_template_literal(false);
                 let span = self.end_span(start);
-                TSType::new_ts_literal_type(span, TSLiteral::TemplateLiteral(self.alloc(literal)), self)
+                TSType::new_ts_literal_type(
+                    span,
+                    TSLiteral::TemplateLiteral(self.alloc(literal)),
+                    self,
+                )
             }
             Kind::Minus => {
                 if self.lexer.peek_token().kind().is_number() {
@@ -517,9 +526,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     TSType::TSThisType(this_type)
                 }
             }
-            Kind::Typeof => {
-                self.parse_type_query()
-            }
+            Kind::Typeof => self.parse_type_query(),
             Kind::LCurly => {
                 let opening_span = self.cur_token().span();
                 self.bump_any();
@@ -576,7 +583,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Symbol => TSType::new_ts_symbol_keyword(span, self),
             Kind::Undefined => TSType::new_ts_undefined_keyword(span, self),
             Kind::Unknown => TSType::new_ts_unknown_keyword(span, self),
-            Kind::Null => TSType::new_ts_null_keyword(span, self),
             _ => unreachable!(),
         }
     }
@@ -913,10 +919,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         // The tokens which `re_lex_ts_l_angle` accepts.
-        if matches!(
-            self.cur_kind(),
-            Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
-        ) {
+        if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft | Kind::ShiftLeftEq) {
             self.try_parse_type_arguments_at_l_angle()
         } else {
             None
@@ -935,7 +938,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
-                Self::parse_ts_type,
+                Self::parse_type_argument,
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
@@ -957,10 +960,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Type references attach `<...>` only when `<` is on the same line as the name.
         // The contents of the list may span lines. The expression rule below is separate.
         if self.cur_token().is_on_new_line()
-            || !matches!(
-                self.cur_kind(),
-                Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
-            )
+            || !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft | Kind::ShiftLeftEq)
         {
             return None;
         }
@@ -1013,7 +1013,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
-                Self::parse_ts_type,
+                Self::parse_type_argument,
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(start);
@@ -1025,6 +1025,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         None
     }
 
+    /// Parse one type in a `TypeArguments` list.
+    ///
+    /// TypeScript parses a type argument only from a token which can start a type. A type
+    /// reference otherwise accepts any identifier name, as in `let a: class`, but `A<class>`
+    /// is not a type-argument list.
+    fn parse_type_argument(&mut self) -> TSType<'a> {
+        if is_reserved_non_type_start(self.cur_kind()) {
+            return self.unexpected();
+        }
+        self.parse_ts_type()
+    }
+
     /// Speculatively parse a `<T, U>` type-argument list in an expression
     /// position (e.g. `foo<T>(arg)` vs `foo < T`). Returns `None` if a cached failure
     /// rules it out, or rewinds to the checkpoint when a fresh attempt fails.
@@ -1033,11 +1045,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
         // A type-argument list can only open with `<`, or `<<` for nested generics like
         // `f<<T>() => U>()`. This mirrors TypeScript's `reScanLessThanToken`, which re-scans only
-        // `<`/`<<`. `<=`/`<<=` can never open one: splitting their leading angles eventually
-        // leaves `=` where a type or type parameter must start. `re_lex_ts_l_angle` also serves
-        // type-context callers and accepts them, but expression speculation can only fail. Bail
-        // before the checkpoint for any non-`<`-opening token (the common `a?.(`, `a?.b` paths),
-        // avoiding a checkpoint/rewind round-trip that returns `None` anyway.
+        // `<`/`<<`.
         if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
             return None;
         }
@@ -1089,8 +1097,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         debug_assert!(self.at(Kind::LAngle));
         self.advance(Kind::LAngle);
-        let (params, _) =
-            self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
+        let (params, _) = self.parse_delimited_list(
+            Kind::RAngle,
+            Kind::Comma,
+            opening_span,
+            Self::parse_type_argument,
+        );
         // A contiguous `>=` remains a relational operator: `a < b >= c`. A separated
         // `> =` can end an instantiation before `=`; assignment validity is checked later.
         // Re-lex before consuming `>` so whitespace between these spellings matters.
@@ -1151,9 +1163,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///
     /// plus the JSDoc postfix `!` and `?`, which the type parser accepts in order to report them.
     /// Any other token ends the list early: `a < b;`, `a < b.c)`, `a < 0 &&`, `a < this.b`.
+    /// A reserved word which cannot start a type rules out the list at once: `a < class {}`.
     ///
     /// The lexer is positioned after `first`. The checks mirror `parse_non_array_type`,
-    /// `parse_postfix_type_rest` and their callers, and must be kept in step with them.
+    /// `parse_postfix_type_rest`, `parse_type_argument` and their callers, and must be kept in
+    /// step with them.
     fn can_start_type_argument_after(&mut self, first: Kind) -> bool {
         let is_name = matches!(
             first,
@@ -1168,13 +1182,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 | Kind::Undefined
                 | Kind::Never
                 | Kind::Object
-                | Kind::Null
         );
         if !is_name
-            && !matches!(first, Kind::This | Kind::Str | Kind::True | Kind::False)
+            && !matches!(first, Kind::Null | Kind::This | Kind::Str | Kind::True | Kind::False)
             && !first.is_number()
         {
-            return true;
+            return !is_reserved_non_type_start(first);
         }
         let mut next = self.lexer.next_token().kind();
         while is_name && next == Kind::Dot {
@@ -1188,7 +1201,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Comma
             | Kind::LAngle
             | Kind::ShiftLeft
-            | Kind::LtEq
             | Kind::ShiftLeftEq
             | Kind::LBrack
             | Kind::Bang
@@ -1533,7 +1545,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             value,
             false,
             false,
-            false,
             self,
         );
 
@@ -1575,7 +1586,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let prop_start = self.cur_start();
 
-            let (key, value, computed) = if self.at(Kind::LBrack) {
+            let (key, value) = if self.at(Kind::LBrack) {
                 let bracket_span = self.cur_token().span();
                 self.error(diagnostics::ts_import_type_options_invalid_key(bracket_span));
                 // Parse as computed to recover
@@ -1585,18 +1596,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
-                (key, value, true)
+                (key, value)
             } else {
                 let key = if self.at(Kind::Str) {
                     let string_literal = self.parse_known_literal_string();
-                    PropertyKey::StringLiteral(self.alloc(string_literal))
+                    PropertyKey::StaticStringLiteral(self.alloc(string_literal))
                 } else {
                     let ident = self.parse_identifier_name();
                     PropertyKey::StaticIdentifier(self.alloc(ident))
                 };
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
-                (key, value, false)
+                (key, value)
             };
 
             let property = ObjectPropertyKind::new_object_property(
@@ -1606,7 +1617,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 value,
                 false,
                 false,
-                computed,
                 self,
             );
             properties.push(property);
@@ -1728,7 +1738,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         kind: TSMethodSignatureKind,
     ) -> TSSignature<'a> {
-        let (key, computed) = self.parse_property_name();
+        let key = self.parse_property_name();
         let (this_param, params) =
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
         let return_type = self.parse_ts_return_type_annotation();
@@ -1770,7 +1780,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSSignature::new_ts_method_signature(
             self.end_span(start),
             key,
-            computed,
             /* optional */ false,
             kind,
             None,
@@ -1786,7 +1795,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> TSSignature<'a> {
-        let (key, computed) = self.parse_property_name();
+        let key = self.parse_property_name();
         let optional = self.eat(Kind::Question);
 
         let kind = self.cur_kind();
@@ -1806,7 +1815,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             TSSignature::new_ts_method_signature(
                 self.end_span(start),
                 key,
-                computed,
                 optional,
                 TSMethodSignatureKind::Method,
                 type_parameters,
@@ -1820,7 +1828,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_type_member_semicolon();
             TSSignature::new_ts_property_signature(
                 self.end_span(start),
-                computed,
                 optional,
                 modifiers.contains_readonly(),
                 key,
@@ -2002,4 +2009,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             kind => kind.is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }
+}
+
+/// Whether `kind` is a reserved word which cannot start a type.
+///
+/// `await` and `yield` are excluded because outside their own contexts they are identifiers.
+const fn is_reserved_non_type_start(kind: Kind) -> bool {
+    kind.is_reserved_keyword()
+        && !matches!(
+            kind,
+            Kind::Await
+                | Kind::False
+                | Kind::Function
+                | Kind::Import
+                | Kind::New
+                | Kind::Null
+                | Kind::This
+                | Kind::True
+                | Kind::Typeof
+                | Kind::Void
+                | Kind::Yield
+        )
 }

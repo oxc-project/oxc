@@ -793,6 +793,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::LParen);
             let expression = self.parse_literal_string();
             self.expect(Kind::RParen);
+            // `import x = require("x")` makes a TypeScript source a module, like `export =`.
+            if self.ctx.has_top_level() {
+                self.module_record_builder.set_module_syntax();
+            }
             TSModuleReference::new_external_module_reference(
                 self.end_span(reference_start),
                 expression,

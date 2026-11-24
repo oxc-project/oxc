@@ -4,7 +4,7 @@ use crate::token::tk;
 
 use super::{
     Planes,
-    luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK},
+    luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, WORD_LUTS, WORD_MASK},
     punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
 };
 
@@ -52,15 +52,21 @@ pub(super) fn classify_avx2(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, c
         let tb1 = v_wblo.shuffle_u8s(v1) & v_wbhi.shuffle_u8s(hn1);
         // Non-ASCII bytes count as identifier chars in `word` and are folded
         // into `misc` so `misc_pre` can re-classify Unicode whitespace.
-        // Blend and movemask read only the top bit, which adding 0x7f sets for ASCII word bytes.
-        let w0 = (tb0 & WORD_MASK).add_u8(0x7f) | v0;
-        let w1 = (tb1 & WORD_MASK).add_u8(0x7f) | v1;
-        let nws0 = (tb0 & WS_MASK).eq_u8(0);
-        let nws1 = (tb1 & WS_MASK).eq_u8(0);
+        // Blend and movemask read only the top bit, which `| v0` sets for non-ASCII bytes.
+        // `.opaque()` prevents LLVM from turning `v0` into a `0x00` / `0xFF` mask before the OR,
+        // which costs a compare and raises register pressure.
+        let w0 = (tb0 & WORD_MASK).gt_i8(0).opaque() | v0;
+        let w1 = (tb1 & WORD_MASK).gt_i8(0).opaque() | v1;
+        // Whitespace bits are all above the identifier-char bits. The signed compare misses
+        // VT and FF, whose bit is the top bit, so `| tb0` adds it back. Blend and movemask
+        // read only the top bit. `.opaque()` prevents LLVM from rewriting this as an unsigned
+        // compare, which needs a splat of 0x20 that the loop doesn't otherwise have.
+        let ws0 = tb0.gt_i8(WORD_MASK as i8).opaque() | tb0;
+        let ws1 = tb1.gt_i8(WORD_MASK as i8).opaque() | tb1;
         let d0 = (tb0 & DIGIT_MASK).gt_i8(0);
         let d1 = (tb1 & DIGIT_MASK).gt_i8(0);
         let wordm = (w0.movemask() as u64) | ((w1.movemask() as u64) << 32);
-        let wsm = ((!nws0.movemask()) as u64) | (((!nws1.movemask()) as u64) << 32);
+        let wsm = (ws0.movemask() as u64) | ((ws1.movemask() as u64) << 32);
         word[b] = wordm;
         digit[b] = (d0.movemask() as u64) | ((d1.movemask() as u64) << 32);
         let misc0 = (v0.eq_u8(b'#') | v0.eq_u8(b'\\') | v0).movemask() as u64;
@@ -70,13 +76,16 @@ pub(super) fn classify_avx2(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, c
         misc[b] = misc0 | (misc1 << 32) | vt_ff;
         let t0 = v_mlo.shuffle_u8s(v0) & v_mhi.shuffle_u8s(hn0);
         let t1 = v_mlo.shuffle_u8s(v1) & v_mhi.shuffle_u8s(hn1);
-        dot[b] = (t0.movemask() as u64) | ((t1.movemask() as u64) << 32);
+        let dotm = (t0.movemask() as u64) | ((t1.movemask() as u64) << 32);
+        dot[b] = dotm;
         let kw0 = (t0 & KWINIT_MASK).gt_i8(0).movemask() as u64;
         let kw1 = (t1 & KWINIT_MASK).gt_i8(0).movemask() as u64;
         kwinit[b] = kw0 | (kw1 << 32);
-        let op0 = (t0 & OPCH_MASK).gt_i8(0).movemask() as u64;
-        let op1 = (t1 & OPCH_MASK).gt_i8(0).movemask() as u64;
-        opch[b] = op0 | (op1 << 32);
+        // Operator chars have some bit above the keyword-start bits set.
+        // The signed compare misses `.`, which has the top bit, so add it back from the dot mask.
+        let op0 = t0.gt_i8(KWINIT_MASK as i8).movemask() as u64;
+        let op1 = t1.gt_i8(KWINIT_MASK as i8).movemask() as u64;
+        opch[b] = op0 | (op1 << 32) | dotm;
         let wprev = (wordm << 1) | cw;
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;
@@ -84,11 +93,11 @@ pub(super) fn classify_avx2(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, c
         // A byte starts a token unless it continues a whitespace or word run
         st[b] = !((wsm & sprev) | (wordm & wprev));
         let k0 = punct_kinds(v0, hn0, v_punct_lo, v_punct_hi, v_punct_kinds0, v_punct_kinds1)
-            .blend(tk!(Whitespace), !nws0)
+            .blend(tk!(Whitespace), ws0)
             .blend(tk!(Ident), w0)
             .blend(tk!(Number), d0);
         let k1 = punct_kinds(v1, hn1, v_punct_lo, v_punct_hi, v_punct_kinds0, v_punct_kinds1)
-            .blend(tk!(Whitespace), !nws1)
+            .blend(tk!(Whitespace), ws1)
             .blend(tk!(Ident), w1)
             .blend(tk!(Number), d1);
         let (k, _) = kind[b].as_chunks_mut::<32>();
@@ -131,6 +140,8 @@ fn punct_kinds(
     let o0 = v_punct_kinds0.shuffle_u8s(h);
     let o1 = v_punct_kinds1.shuffle_u8s(h);
     let ord = o0.blend(o1, h.shl_u16::<3>());
-    let ctl = v.lt_i8(0x20);
+    // 0x1F, not 0x20, so LLVM can reuse the splat of `WORD_MASK` (also 0x1F).
+    // Control char 0x1F hashes to a slot holding `Invalid`, so it gets the right kind anyway.
+    let ctl = v.lt_i8(0x1F);
     ord.blend(tk!(Invalid), ctl)
 }

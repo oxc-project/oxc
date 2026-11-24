@@ -12,10 +12,7 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
-    common::{
-        class_lowering::ClassLoweringMode,
-        helper_loader::{Helper, helper_call_expr},
-    },
+    common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
@@ -70,6 +67,10 @@ impl<'a> ClassProperties<'a> {
 
         // Get basic details about class
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
+        // `export default class {}` converted to a class expression
+        let is_anonymous_default_export = !is_declaration
+            && class.id().is_none()
+            && matches!(ctx.ancestor(1), Ancestor::ExportDefaultDeclarationDeclaration(_));
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.heritage().is_some();
@@ -77,7 +78,7 @@ impl<'a> ClassProperties<'a> {
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
-        if matches!(lowering.mode(), ClassLoweringMode::Native | ClassLoweringMode::Preserve) {
+        if !lowering.lowers_fields() {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
             let mut private_names = IdentIndexMap::default();
@@ -217,7 +218,11 @@ impl<'a> ClassProperties<'a> {
         // Initialize class binding vars.
         // Static prop in class expression or anonymous `export default class {}` always require
         // temp var for class. Static prop in class declaration doesn't.
-        let need_temp_var = has_static_prop && (!is_declaration || class_name_binding.is_none());
+        // Anonymous `export default class {}` with static elements always has a temp var,
+        // so that static blocks are evaluated after the class is defined.
+        let need_temp_var = (is_anonymous_default_export
+            && (has_static_prop || has_static_private_method_or_static_block))
+            || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
 
         let outer_hoist_scope_id = ctx.current_hoist_scope_id();
         let class_temp_binding = if need_temp_var {
@@ -250,7 +255,7 @@ impl<'a> ClassProperties<'a> {
         });
 
         let static_private_fields_use_temp = !is_declaration;
-        let class_bindings = ClassBindings::new(
+        let mut class_bindings = ClassBindings::new(
             class_name_binding,
             class_temp_binding,
             class_brand_binding,
@@ -258,6 +263,7 @@ impl<'a> ClassProperties<'a> {
             static_private_fields_use_temp,
             need_temp_var,
         );
+        class_bindings.name_is_reassigned = lowering.class_binding_is_reassigned();
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
@@ -753,7 +759,7 @@ impl<'a> ClassProperties<'a> {
             }
 
             // `_Class = class {}`
-            let class_expr = expr.take_in(ctx);
+            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), true, ctx);
             let assignment = create_assignment(binding, class_expr, SPAN, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -782,7 +788,7 @@ impl<'a> ClassProperties<'a> {
                 return;
             }
 
-            let class_expr = expr.take_in(ctx);
+            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), false, ctx);
             exprs.push(class_expr);
         }
 
@@ -820,7 +826,7 @@ impl<'a> ClassProperties<'a> {
                     );
                     if prop.r#static {
                         self.convert_static_property(prop, ctx);
-                    } else if prop.computed {
+                    } else if prop.key.is_computed() {
                         self.extract_instance_prop_computed_key(prop, ctx);
                     }
                     return false;

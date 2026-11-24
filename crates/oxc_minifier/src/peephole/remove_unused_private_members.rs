@@ -27,6 +27,10 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
 
+            if element.has_decorator() {
+                return true;
+            }
+
             let keep = match element {
                 ClassElement::PropertyDefinition(prop) => {
                     prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))

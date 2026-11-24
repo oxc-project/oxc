@@ -19,10 +19,9 @@ use crate::{
 
 pub fn format_property_key<'a>(
     key: &AstNode<'_, 'a, PropertyKey<'a>>,
-    computed: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) {
-    if computed {
+    if key.is_computed() {
         write!(f, ["[", key, "]"]);
         return;
     }
@@ -102,9 +101,8 @@ fn string_key_text<'a>(
 /// but Prettier keeps the quotes for every method-signature form; only the property form is unquoted.
 pub fn is_quoted_new_method_signature(method: &TSMethodSignature<'_>) -> bool {
     // Trimmed, since Tailwind sorting can print `" new "` as `"new"`
-    !method.computed
-        && matches!(&method.key, PropertyKey::StringLiteral(string)
-            if string.value.as_str().is_some_and(|value| value.trim() == "new"))
+    matches!(&method.key, PropertyKey::StaticStringLiteral(string)
+        if string.value.as_str().is_some_and(|value| value.trim() == "new"))
 }
 
 /// Determine if the string literal key should preserve its quotes,
@@ -117,16 +115,11 @@ pub fn should_preserve_string_quote(string: &StringLiteral<'_>, f: &JsFormatter<
 /// Determine if the property key string literal should preserve its quotes,
 /// checked on the text it's printed from (see [`string_key_text`]).
 /// Computed keys are ignored.
-pub fn should_preserve_quote(
-    key: &PropertyKey<'_>,
-    computed: bool,
-    f: &JsFormatter<'_, '_>,
-) -> bool {
+pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &JsFormatter<'_, '_>) -> bool {
     // Sorted as Tailwind classes (`Err`) keeps the quotes
-    !computed
-        && matches!(&key, PropertyKey::StringLiteral(string)
-            if !string_key_text(string, f)
-                .is_ok_and(|text| is_identifier_name_patched(&text[1..text.len() - 1])))
+    matches!(&key, PropertyKey::StaticStringLiteral(string)
+        if !string_key_text(string, f)
+            .is_ok_and(|text| is_identifier_name_patched(&text[1..text.len() - 1])))
 }
 
 /// Determine if the enum member name string literal should preserve its quotes.

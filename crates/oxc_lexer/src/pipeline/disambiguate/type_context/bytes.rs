@@ -12,7 +12,7 @@
 //!
 //! [`match_delim_back`]: crate::pipeline::disambiguate::TokensView::match_delim_back
 
-use oxc_simd::{Cpu, cpu_multiversion};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
@@ -43,8 +43,8 @@ static GT_SCAN_DELIM: [bool; 256] = {
     t
 };
 
-/// True when the `<<` at `lt` is two type-argument/type-parameter openers
-/// rather than shift-left.
+/// True when what follows the `<<` at `lt` has the shape of two type-argument/type-parameter
+/// openers rather than shift-left. The context walk decides whether lists can open there.
 ///
 /// Only one TypeScript production puts two `<` next to each other: a
 /// type-argument list whose first argument is a function type. The second
@@ -90,13 +90,25 @@ pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
 }
 
 #[cpu_multiversion]
-pub(super) fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> bool {
+fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> bool {
     let TokensView { src, n, .. } = *tokens;
     let Some(rp) = group_closer(tokens, lp, cpu) else {
         return false;
     };
     let ar = skip_trivia_fwd(src, n, rp + 1, cpu);
     ar < n && src[ar] == b'=' && src[ar + 1] == b'>'
+}
+
+/// Is the < at lt a list followed by a parameter list, as the type parameters of an arrow are?
+#[cpu_version(Generic)]
+pub fn arrow_type_params_at(tokens: &TokensView, lt: usize) -> bool {
+    let cpu = BASELINE;
+
+    let TokensView { src, n, .. } = *tokens;
+    list_closer(tokens, lt, cpu).is_some_and(|gt| {
+        let lp = skip_trivia_fwd(src, n, gt + 1, cpu);
+        lp < n && src[lp] == b'('
+    })
 }
 
 #[cpu_multiversion]

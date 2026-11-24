@@ -3,7 +3,9 @@ use std::fmt::{self, Display};
 use oxc_allocator::Box as ArenaBox;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr, format_compact_str};
-use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
+use oxc_syntax::{
+    number::ToJsString, operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId,
+};
 
 use crate::{StaticPropertyName, ast::*};
 
@@ -474,29 +476,76 @@ impl<'a> ObjectPropertyKind<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
-    /// Returns the static name of this property, if it has one, or `None` otherwise.
+    /// Returns `true` if this property key is computed.
+    ///
+    /// ## Example
+    ///
+    /// - `[a]: 1` and `["a"]: 1` in `{ [a]: 1, ["a"]: 1 }` are computed
+    /// - `a: 1` and `"a": 1` in `{ a: 1, "a": 1 }` are not computed
+    #[inline]
+    pub fn is_computed(&self) -> bool {
+        self.is_expression()
+    }
+
+    /// Returns the name of this property key if it is a non-computed identifier or literal,
+    /// or `None` otherwise.
+    ///
+    /// Use this method where syntax matters, e.g. `{ "__proto__": a }` sets the prototype,
+    /// but `{ ["__proto__"]: a }` does not.
     ///
     /// ## Example
     ///
     /// - `a: 1` in `{ a: 1 }` would return `a`
-    /// - `#a: 1` in `class C { #a: 1 }` would return `None`
     /// - `'a': 1` in `{ 'a': 1 }` would return `a`
-    /// - `[a]: 1` in `{ [a]: 1 }` would return `None`
-    pub fn static_name(&self) -> Option<StaticPropertyName<'a>> {
+    /// - `1: 1` in `{ 1: 1 }` would return `1`
+    /// - `['a']: 1` in `{ ['a']: 1 }` would return `None`
+    /// - `#a = 1` in `class C { #a = 1 }` would return `None`
+    pub fn literal_name(&self) -> Option<StaticPropertyName<'a>> {
         match self {
             Self::StaticIdentifier(ident) => Some(StaticPropertyName::from(ident.name)),
+            Self::StaticStringLiteral(lit) => Some(StaticPropertyName::from(lit.value)),
+            Self::StaticNumericLiteral(lit) => {
+                Some(StaticPropertyName::Owned(lit.value.to_js_compact_str()))
+            }
+            Self::StaticBigIntLiteral(lit) => Some(StaticPropertyName::from(lit.value.as_str())),
+            _ => None,
+        }
+    }
+
+    /// Returns the name of a key supported by [`Self::literal_name`] or a computed string,
+    /// number, bigint, regular expression, `null`, or template literal without substitutions.
+    /// Returns `None` for other keys.
+    ///
+    /// ## Example
+    ///
+    /// - `a: 1` in `{ a: 1 }` would return `a`
+    /// - `'a': 1` in `{ 'a': 1 }` would return `a`
+    /// - `['a']: 1` in `{ ['a']: 1 }` would return `a`
+    /// - `[a]: 1` in `{ [a]: 1 }` would return `None`
+    /// - `[true]` and `[-1]` in `{ [true]: 1, [-1]: 1 }` would return `None`
+    /// - `#a = 1` in `class C { #a = 1 }` would return `None`
+    pub fn static_name(&self) -> Option<StaticPropertyName<'a>> {
+        match self {
             Self::StringLiteral(lit) => Some(StaticPropertyName::from(lit.value)),
             Self::RegExpLiteral(lit) => {
                 Some(StaticPropertyName::Owned(format_compact_str!("{}", lit.regex)))
             }
             Self::NumericLiteral(lit) => {
-                Some(StaticPropertyName::Owned(format_compact_str!("{}", lit.value)))
+                Some(StaticPropertyName::Owned(lit.value.to_js_compact_str()))
             }
             Self::BigIntLiteral(lit) => Some(StaticPropertyName::from(lit.value.as_str())),
             Self::NullLiteral(_) => Some(StaticPropertyName::from("null")),
             Self::TemplateLiteral(lit) => lit.single_quasi().map(StaticPropertyName::from),
-            _ => None,
+            _ => self.literal_name(),
         }
+    }
+
+    /// Returns `true` if the non-computed name of this property key is exactly equal to the
+    /// given name.
+    ///
+    /// See [`PropertyKey::literal_name`].
+    pub fn is_specific_literal_name(&self, name: &str) -> bool {
+        self.literal_name().is_some_and(|n| n == name)
     }
 
     /// Returns `true` if the static name of this property key is exactly equal to the given name.
@@ -557,9 +606,10 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    /// Returns `true` if this property key is a string literal with the given value.
+    /// Returns `true` if this property key is a string literal with the given value,
+    /// whether or not it is computed.
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
-        matches!(self, Self::StringLiteral(s) if s.value == string)
+        matches!(self, Self::StaticStringLiteral(s) | Self::StringLiteral(s) if s.value == string)
     }
 }
 
@@ -1784,12 +1834,7 @@ impl<'a> ClassElement<'a> {
     /// }
     /// ```
     pub fn computed(&self) -> bool {
-        match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
-            Self::MethodDefinition(def) => def.computed,
-            Self::PropertyDefinition(def) => def.computed,
-            Self::AccessorProperty(def) => def.computed,
-        }
+        self.property_key().is_some_and(PropertyKey::is_computed)
     }
 
     /// Returns the [accessibility][`TSAccessibility`] of this [`ClassElement`], if any is indicated.

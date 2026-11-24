@@ -382,7 +382,7 @@ fn ox_number<'a>(
     value: f64,
     span: Span,
 ) -> oxc::Expression<'a> {
-    oxc_ast::ast::Expression::new_numeric_literal(span, value, None, oxc::NumberBase::Decimal, ast)
+    oxc_ast::ast::Expression::new_numeric_literal(span, value, None, ast)
 }
 
 /// Allocate a `&'a str` in the arena (satisfies the builders' `IntoIn` slots for
@@ -2580,28 +2580,25 @@ fn ox_codegen_object_pattern<'a>(
                     .or(obj_prop.place.span)
                     .or(pattern.span)
                     .unwrap_or_default();
-                let (key, computed) =
-                    ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
+                let key = ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
                 let span = ox_lvalue_identifier_span(cx, &obj_prop.place, pattern.span, context);
                 let value = ox_binding_for_identifier_at_span(
                     cx,
                     obj_prop.place.identifier,
                     span.unwrap_or_default(),
                 )?;
-                let shorthand = !computed
-                    && matches!(
-                        (&key, &value),
-                        (
-                            oxc::PropertyKey::StaticIdentifier(k),
-                            oxc::BindingPattern::BindingIdentifier(v),
-                        ) if k.name == v.name
-                    );
+                let shorthand = matches!(
+                    (&key, &value),
+                    (
+                        oxc::PropertyKey::StaticIdentifier(k),
+                        oxc::BindingPattern::BindingIdentifier(v),
+                    ) if k.name == v.name
+                );
                 properties.push(oxc_ast::ast::BindingProperty::new(
                     obj_prop.place.span.unwrap_or_default(),
                     key,
                     value,
                     shorthand,
-                    computed,
                     &cx.ast,
                 ));
             }
@@ -2628,30 +2625,26 @@ fn ox_codegen_object_pattern<'a>(
     ))
 }
 
-/// Build an object pattern key, returning `(key, computed)`.
+/// Build an object pattern key.
 fn ox_codegen_object_property_key<'a>(
     cx: &mut OxcContext<'a, '_>,
     key: &ObjectPropertyKey,
     span: Span,
-) -> Result<(oxc::PropertyKey<'a>, bool), OxcDiagnostic> {
+) -> Result<oxc::PropertyKey<'a>, OxcDiagnostic> {
     let span = key.span().unwrap_or(span);
     match key {
-        ObjectPropertyKey::String { name, .. } => Ok((
-            oxc::PropertyKey::from(oxc_ast::ast::Expression::new_string_literal(
-                span,
-                ox_str(&cx.ast, name),
-                None,
-                &cx.ast,
-            )),
-            false,
+        ObjectPropertyKey::String { name, .. } => Ok(oxc::PropertyKey::new_static_string_literal(
+            span,
+            ox_str(&cx.ast, name),
+            None,
+            &cx.ast,
         )),
-        ObjectPropertyKey::Identifier { name, .. } => Ok((
+        ObjectPropertyKey::Identifier { name, .. } => Ok(
             oxc_ast::ast::PropertyKey::new_static_identifier(span, ox_str(&cx.ast, name), &cx.ast),
-            false,
-        )),
+        ),
         ObjectPropertyKey::Computed { name, .. } => {
             let expr = ox_codegen_place_to_expression(cx, name)?;
-            Ok((oxc::PropertyKey::from(expr), true))
+            Ok(oxc::PropertyKey::from(expr))
         }
     }
 }
@@ -2843,11 +2836,7 @@ fn ox_binding_property_to_assignment_property<'a>(
     }
     let binding = ox_binding_pattern_to_maybe_default(cx, prop.value)?;
     Ok(oxc::AssignmentTargetProperty::new_assignment_target_property_property(
-        span,
-        prop.key,
-        binding,
-        prop.computed,
-        &cx.ast,
+        span, prop.key, binding, &cx.ast,
     ))
 }
 
@@ -2976,18 +2965,17 @@ fn ox_codegen_function_expression<'a>(
     // enableNameAnonymousFunctions: `({ "<hint>": <fn> })["<hint>"]`
     if cx.env.config.enable_name_anonymous_functions && name.is_none() && name_hint.is_some() {
         let hint = *name_hint.as_ref().unwrap();
-        let key = oxc::PropertyKey::from(oxc_ast::ast::Expression::new_string_literal(
+        let key = oxc::PropertyKey::new_static_string_literal(
             SPAN,
             ox_str(&cx.ast, &hint),
             None,
             &cx.ast,
-        ));
+        );
         let prop = oxc_ast::ast::ObjectPropertyKind::new_object_property(
             SPAN,
             oxc::PropertyKind::Init,
             key,
             value,
-            false,
             false,
             false,
             &cx.ast,
@@ -3050,19 +3038,15 @@ fn ox_codegen_object_expression<'a>(
         match prop {
             ObjectPropertyOrSpread::Property(obj_prop) => {
                 let property_span = obj_prop.key.span().or(obj_prop.place.span).unwrap_or(span);
-                let (key, key_computed) =
-                    ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
+                let key = ox_codegen_object_property_key(cx, &obj_prop.key, property_span)?;
                 match obj_prop.property_type {
                     ObjectPropertyType::Property => {
                         let value = ox_codegen_place_to_expression(cx, &obj_prop.place)?;
-                        let shorthand = !key_computed
-                            && matches!(
-                                (&key, &value),
-                                (
-                                    oxc::PropertyKey::StaticIdentifier(k),
-                                    oxc::Expression::Identifier(v),
-                                ) if k.name == v.name
-                            );
+                        let shorthand = matches!(
+                            (&key, &value),
+                            (oxc::PropertyKey::StaticIdentifier(k), oxc::Expression::Identifier(v))
+                                if k.name == v.name
+                        );
                         let p = oxc_ast::ast::ObjectProperty::new(
                             obj_prop.place.span.unwrap_or_default(),
                             oxc::PropertyKind::Init,
@@ -3070,7 +3054,6 @@ fn ox_codegen_object_expression<'a>(
                             value,
                             false,
                             shorthand,
-                            key_computed,
                             &cx.ast,
                         );
                         props.push(oxc::ObjectPropertyKind::ObjectProperty(
@@ -3120,7 +3103,6 @@ fn ox_codegen_object_expression<'a>(
                             func_expr,
                             true,
                             false,
-                            key_computed,
                             &cx.ast,
                         );
                         props.push(oxc::ObjectPropertyKind::ObjectProperty(
@@ -3670,15 +3652,12 @@ fn ox_codegen_primitive_value<'a>(
             None,
             ast,
         ),
-        PrimitiveValue::BigInt { value, raw, base } => {
-            oxc_ast::ast::Expression::new_big_int_literal(
-                span,
-                ox_str(ast, value.as_str()),
-                raw.as_ref().map(|r| oxc_str::Str::from(ox_str(ast, r.as_str()))),
-                *base,
-                ast,
-            )
-        }
+        PrimitiveValue::BigInt { value, raw } => oxc_ast::ast::Expression::new_big_int_literal(
+            span,
+            ox_str(ast, value.as_str()),
+            raw.as_ref().map(|r| oxc_str::Str::from(ox_str(ast, r.as_str()))),
+            ast,
+        ),
         PrimitiveValue::Null => oxc_ast::ast::Expression::new_null_literal(span, ast),
         PrimitiveValue::Undefined => {
             oxc_ast::ast::Expression::new_identifier(span, "undefined", ast)

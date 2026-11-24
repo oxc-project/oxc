@@ -359,25 +359,19 @@ impl ExplicitFunctionReturnType {
                 let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
                     return false;
                 };
-                def.key.is_identifier()
-                    && !def.computed
-                    && self.allowed_names.contains(name.as_ref())
+                def.key.is_identifier() && self.allowed_names.contains(name.as_ref())
             }
             AstKind::PropertyDefinition(def) => {
                 let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
                     return false;
                 };
-                def.key.is_identifier()
-                    && !def.computed
-                    && self.allowed_names.contains(name.as_ref())
+                def.key.is_identifier() && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
                 let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
                     return false;
                 };
-                prop.key.is_identifier()
-                    && !prop.computed
-                    && self.allowed_names.contains(name.as_ref())
+                prop.key.is_identifier() && self.allowed_names.contains(name.as_ref())
             }
             _ => false,
         }

@@ -116,6 +116,21 @@ pub fn angles_before(tokens: &TokensView, walks: &mut Walks, pos: usize) -> usiz
     walks.full_to(tokens, pos).open_angles()
 }
 
+/// Can the `<<` at `pos` be two list openers ([`Walk::lt_run_may_open`])?
+///
+/// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,
+/// is compiled only once, not separately for each CPU feature set.
+/// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
+/// Level 3 code uses [`BASELINE`] for functions it calls.
+#[cpu_version(Generic)]
+#[inline(never)]
+pub fn lt_run_opens(tokens: &TokensView, walks: &mut Walks, pos: usize) -> bool {
+    if let Some(yes) = local_walk(tokens, walks, pos, pos, |w| w.lt_run_may_open(tokens, pos)) {
+        return yes;
+    }
+    walks.full_to(tokens, pos).lt_run_may_open(tokens, pos)
+}
+
 /// What the significant token at `pos` leaves behind.
 ///
 /// Level 3 runs rarely, so this entry point to it, and the Level 3 code it calls,

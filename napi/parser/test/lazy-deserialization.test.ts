@@ -821,6 +821,47 @@ describe("Visitor", () => {
     expect(directives).toStrictEqual(["use strict", "use asm", "use foo"]);
   });
 
+  it("exposes whether property keys are computed", () => {
+    const computed = {};
+    visitLazy(
+      "x.ts",
+      `
+        ({ "a": 1, ["a"]: 2 });
+        ({ "a": x, ["a"]: x } = y);
+        const { "a": z, ["a"]: w } = y;
+        class C {
+          "a"() {}
+          ["a"]() {}
+          "b" = 1;
+          ["b"] = 1;
+          accessor "c" = 1;
+          accessor ["c"] = 1;
+        }
+        interface I {
+          "a": number;
+          ["a"]: number;
+          "b"(): void;
+          ["b"](): void;
+        }
+      `,
+      (typeName, node) => {
+        if (!("computed" in node)) return;
+        expect(node.toJSON().computed).toBe(node.computed);
+        (computed[typeName] ??= []).push(node.computed);
+      },
+    );
+    expect(computed).toStrictEqual({
+      ObjectProperty: [false, true],
+      AssignmentTargetPropertyProperty: [false, true],
+      BindingProperty: [false, true],
+      MethodDefinition: [false, true],
+      PropertyDefinition: [false, true],
+      AccessorProperty: [false, true],
+      TSPropertySignature: [false, true],
+      TSMethodSignature: [false, true],
+    });
+  });
+
   it("visits fields in source order", () => {
     const names = [];
     visitLazy(

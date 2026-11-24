@@ -474,7 +474,11 @@ impl<'a> PeepholeOptimizations {
                     // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
                     // But we can ignore that by using the assumption.
                     match key {
-                        PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
+                        PropertyKey::StaticIdentifier(_)
+                        | PropertyKey::StaticStringLiteral(_)
+                        | PropertyKey::StaticNumericLiteral(_)
+                        | PropertyKey::StaticBigIntLiteral(_)
+                        | PropertyKey::PrivateIdentifier(_) => {}
                         match_expression!(PropertyKey) => {
                             let mut prop_key = key.into_expression();
                             if Self::remove_unused_expression(&mut prop_key, ctx) {

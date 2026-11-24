@@ -3366,6 +3366,24 @@
         "jest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-all": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-before-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-before-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-describe-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-expect-groups": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jest/padding-around-test-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -8439,6 +8457,9 @@
         "typescript/no-unsafe-call": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-unsafe-class-instance-assignment": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-unsafe-declaration-merging": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -10148,6 +10169,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-after-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-all": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-before-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-before-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-describe-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-expect-groups": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-test-blocks": {
@@ -18314,10 +18353,10 @@
       "type": "object",
       "properties": {
         "requireCatchParameter": {
-          "description": "When set to `true`, requires that catch clauses always have a parameter.",
+          "description": "When set to `true`, requires catch clauses that throw a new error to have a\ncaught error parameter, so the caught error is not discarded when re-throwing.",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "When set to `true`, requires that catch clauses always have a parameter."
+          "markdownDescription": "When set to `true`, requires catch clauses that throw a new error to have a\ncaught error parameter, so the caught error is not discarded when re-throwing."
         }
       },
       "additionalProperties": false

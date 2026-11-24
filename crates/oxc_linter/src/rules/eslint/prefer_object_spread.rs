@@ -11,7 +11,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::is_method_call,
+    ast_util::{could_be_asi_hazard, is_method_call},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
@@ -192,7 +192,11 @@ fn fix_object_assign<'c, 'a: 'c>(
     };
     let callee_left_paren_span = Span::sized(call_expr.callee.span().end + paren_offset, 1);
 
-    let (left, right) = if needs_paren { ("({", "})") } else { ("{", "}") };
+    let (left, right) = if needs_paren {
+        if could_be_asi_hazard(node, ctx) { (";({", "})") } else { ("({", "})") }
+    } else {
+        ("{", "}")
+    };
 
     rule_fixes
         .push(fixer.replace(Span::new(call_expr.span.start, callee_left_paren_span.end), left));
@@ -270,10 +274,10 @@ fn has_proto_property(obj_expr: &ObjectExpression) -> bool {
 fn is_plain_data_object(obj_expr: &ObjectExpression) -> bool {
     obj_expr.properties.iter().all(|p| {
         matches!(p, ObjectPropertyKind::ObjectProperty(p)
-            if !p.computed
+            if !p.key.is_computed()
                 && !p.method
                 && p.kind == PropertyKind::Init
-                && !p.key.is_specific_static_name("__proto__"))
+                && !p.key.is_specific_literal_name("__proto__"))
     })
 }
 
@@ -1030,7 +1034,7 @@ fn test() {
             ",
             "
             function foo () { var globalThis = bar; }
-            ({});
+            ;({});
             ",
             None,
             FixKind::All,
@@ -1111,6 +1115,46 @@ fn test() {
             FixKind::Suggestion,
         ),
         ("Object.assign(({ get x() {} }))", "Object.assign(({ get x() {} }))", None, FixKind::Fix),
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, { a: 1 });
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, foo);
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ ...foo});
+            ",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "
+            const f = (x) => x
+            if (f) Object.assign({ a: 1 });
+            ",
+            "
+            const f = (x) => x
+            if (f) ({a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
     ];
     Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

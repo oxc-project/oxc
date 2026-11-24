@@ -176,7 +176,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                     push_member_key(
                         &mut replacement,
                         fixer.source_range(method.key.span()),
-                        method.computed,
+                        method.key.is_computed(),
                     );
                     if let Some(return_type) = &method.value.return_type {
                         replacement.push_str(fixer.source_range(return_type.span));
@@ -230,7 +230,7 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                     push_member_key(
                         &mut replacement,
                         fixer.source_range(property.key.span()),
-                        property.computed,
+                        property.key.is_computed(),
                     );
                     replacement.push_str("()");
                     if let Some(type_annotation) = &property.type_annotation {

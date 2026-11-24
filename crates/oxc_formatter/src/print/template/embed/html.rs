@@ -1,8 +1,6 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{
-    FormatElement, dispatch_fragment_ir, map_text_in_ir, push_text_with_literal_lines,
-};
+use oxc_formatter_core::{FormatElement, dispatch_fragment_ir, map_text_in_ir};
 
 use crate::{
     ast_nodes::AstNode,
@@ -129,7 +127,9 @@ pub(super) fn format_html_doc<'a>(
             if parts.len() > 1 {
                 for (index, part) in parts.iter().enumerate() {
                     if index.is_multiple_of(2) {
-                        push_text_with_literal_lines(out, part, indent_width);
+                        if !part.is_empty() {
+                            out.push(FormatElement::text(part, indent_width));
+                        }
                     } else {
                         let expression = part
                             .parse::<usize>()
