@@ -2,7 +2,7 @@ commit: ebf6ae62
 
 runtime Summary:
 AST Parsed     : 18403/18403 (100.00%)
-Positive Passed: 17430/18403 (94.71%)
+Positive Passed: 17432/18403 (94.72%)
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: f descriptor should be enumerable; f descriptor should be writable
 
@@ -1022,9 +1022,6 @@ Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-method-name.js
 Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-anonymous-function-name.js
-Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
@@ -2276,9 +2273,6 @@ Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
 minify Error: tasks/coverage/test262/test/language/statements/class/elements/privatefieldadd-typeerror.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-anonymous-function-name.js
-Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
