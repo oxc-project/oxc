@@ -395,7 +395,7 @@ impl<'a> ExportLocalName<'a> {
 }
 
 /// RequestedModule
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RequestedModule {
     /// Span of the import statement.
     pub statement_span: Span,
