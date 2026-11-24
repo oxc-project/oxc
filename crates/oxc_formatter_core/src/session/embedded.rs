@@ -214,8 +214,14 @@ where
 /// - the printer prints it as is (column 0), as Prettier prints a string
 /// - the IR to Prettier Doc conversion (oxfmt's `to_prettier_doc`) always makes it a `literalline`
 ///
+/// The rewrite also drops a `Text`'s non-expanding flag (`text(..).without_expand_parent()`):
+/// a literal line always expands its groups, so a group the child kept flat expands
+/// (`apps/oxfmt`'s DIVERGENCES.md `multiline-text-in-code-block-group`).
+///
 /// A boundary scope tag (a `mark_as_root` variant whose `Text` newlines resume at the root) would replace the rewrite.
-/// Revisit once the Vue and HTML ports remove the Doc conversion path, which leaves the printer as the only reader.
+/// Vue and HTML no longer go through the Doc conversion, but Svelte's and Astro's `<script>` still do
+/// (at any depth, indented by the host's printer, so it must stay a Doc, not a string):
+/// the tag needs a `to_prettier_doc` counterpart until that path is gone.
 pub fn push_text_with_literal_lines<'a>(
     out: &mut ArenaVec<'a, FormatElement<'a>>,
     text: &'a str,
