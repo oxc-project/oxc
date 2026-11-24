@@ -222,8 +222,6 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
     fn visit_catch_clause(&mut self, _catch_clause: &CatchClause<'a>) {}
 }
 
-// All built-in error constructors accept the error options object as
-// their second argument, except `AggregateError`, which takes it as the third.
 const BUILT_IN_ERROR_CONSTRUCTORS: [Ident; 7] = [
     static_ident!("Error"),
     static_ident!("EvalError"),
@@ -806,7 +804,7 @@ fn test() {
             "try { doSomething(); } catch (err) { throw new Error/* ( */(\"\", { cause: err }); }",
             None,
         ),
-        // newly covered built-in error constructors get the same fix as `Error`
+        // Fixes built-in error constructors other than `Error`
         (
             "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\"); }",
             "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\", { cause: err }); }",
