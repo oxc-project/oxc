@@ -329,11 +329,14 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintCon
         let left_str = ctx.source_range(left_span);
         let right_str = ctx.source_range(right_span);
         let flipped_operator_str = flip_operator(expr.operator).as_str();
-        let position = flip_position(node, ctx);
-        let needs_parens = (right_str.starts_with('{')
-            && (position.statement_start || position.arrow_body))
-            || (starts_with_function_or_class(right_str)
-                && (position.statement_start || position.export_default));
+        let needs_parens = match flip_position(node, ctx) {
+            Some(FlipPosition::StatementStart) => {
+                right_str.starts_with('{') || starts_with_function_or_class(right_str)
+            }
+            Some(FlipPosition::ArrowBody) => right_str.starts_with('{'),
+            Some(FlipPosition::ExportDefault) => starts_with_function_or_class(right_str),
+            None => false,
+        };
         let needs_semicolon = (needs_parens
             || right_str.starts_with(['[', '(', '/', '+', '-', '`']))
             && could_be_asi_hazard(node, ctx);
@@ -359,45 +362,43 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintCon
 
 /// Grammar positions of the flipped expression where its first token
 /// determines how the surrounding statement is parsed.
-#[derive(Debug, Default)]
-struct FlipPosition {
+#[derive(Debug, Clone, Copy)]
+enum FlipPosition {
     /// The expression begins an expression statement.
-    statement_start: bool,
+    StatementStart,
     /// The expression is the concise body of an arrow function.
-    arrow_body: bool,
+    ArrowBody,
     /// The expression follows `export default`.
-    export_default: bool,
+    ExportDefault,
 }
 
 /// Walks up the ancestors that begin at the same offset as `node` (the same
 /// walk as ESLint's `isStartOfExpressionStatement`) to find the grammar
 /// position that the flipped expression will occupy.
-fn flip_position(node: &AstNode, ctx: &LintContext) -> FlipPosition {
+fn flip_position(node: &AstNode, ctx: &LintContext) -> Option<FlipPosition> {
     let start = node.span().start;
-    let mut position = FlipPosition::default();
     for ancestor in ctx.nodes().ancestors(node.id()) {
-        if ancestor.span().start == start {
-            if matches!(ancestor.kind(), AstKind::ExpressionStatement(_)) {
-                position.statement_start = true;
-                break;
-            }
-            continue;
+        if ancestor.span().start != start {
+            return match ancestor.kind() {
+                AstKind::ArrowFunctionExpression(arrow)
+                    if !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_))
+                        && arrow.body.span().start == start =>
+                {
+                    Some(FlipPosition::ArrowBody)
+                }
+                AstKind::ExportDefaultDeclaration(decl)
+                    if decl.declaration.span().start == start =>
+                {
+                    Some(FlipPosition::ExportDefault)
+                }
+                _ => None,
+            };
         }
-        match ancestor.kind() {
-            AstKind::ArrowFunctionExpression(arrow)
-                if !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_))
-                    && arrow.body.span().start == start =>
-            {
-                position.arrow_body = true;
-            }
-            AstKind::ExportDefaultDeclaration(decl) if decl.declaration.span().start == start => {
-                position.export_default = true;
-            }
-            _ => {}
+        if matches!(ancestor.kind(), AstKind::ExpressionStatement(_)) {
+            return Some(FlipPosition::StatementStart);
         }
-        break;
     }
-    position
+    None
 }
 
 /// Mirrors ESLint's `startsFunctionOrClass` from the yoda rule: whether the
