@@ -78,10 +78,19 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             return;
         };
 
-        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(options_argument_index)
-            && has_cause_property(obj_expr, catch_param, self.ctx)
-        {
+        let BindingPattern::BindingIdentifier(catch_ident) = catch_param else {
+            self.ctx.diagnostic(preserve_caught_error_diagnostic(throw_stmt.span));
             return;
+        };
+
+        match args.get(options_argument_index) {
+            Some(Argument::ObjectExpression(obj_expr)) => {
+                if has_cause_property(obj_expr, catch_param, self.ctx) {
+                    return;
+                }
+            }
+            Some(_) => return,
+            None => {}
         }
 
         // Allow spread arguments - they may contain cause property
@@ -90,9 +99,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         }
 
         self.ctx.diagnostic_with_fix(preserve_caught_error_diagnostic(throw_stmt.span), |fixer| {
-            let Some(ident) = catch_param.get_identifier_name() else {
-                return fixer.noop();
-            };
+            let ident = catch_ident.name;
             // Keep the catch binding unchanged as part of each fix, so removing or renaming it
             // conflicts with inserting a reference to it (e.g. `prefer-optional-catch-binding`).
             let preserve_catch_param = || fixer.replace_with(catch_param, catch_param);
@@ -508,6 +515,32 @@ fn test() {
             r#"try { doSomething(); } catch (error) { throw new URIError("e", { cause: error }); }"#,
             None,
         ),
+        (
+            r#"try {
+					return JSON.parse(text);
+				} catch (error) {
+					const options = { cause: error };
+					throw new Error("Invalid JSON", options);
+				}"#,
+            None,
+        ),
+        (
+            r#"try {
+					doSomething();
+				} catch (err) {
+					const options = { cause: other };
+					throw new Error("Something failed", options);
+				}"#,
+            None,
+        ),
+        (
+            r#"try {
+					doSomething();
+				} catch (err) {
+					throw new Error("Something failed", obj.options);
+				}"#,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -780,6 +813,12 @@ fn test() {
         (r#"try { doSomething(); } catch (error) { throw new URIError("e"); }"#, None),
         (
             r#"try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }"#,
+            None,
+        ),
+        ("try { doSomething(); } catch ({ message }) { throw new Error(message, options); }", None),
+        ("try { doSomething(); } catch ({ message }) { throw new Error(...args); }", None),
+        (
+            r#"try { doSomething(); } catch ([error]) { throw new Error("Something failed", { ...options }); }"#,
             None,
         ),
     ];
