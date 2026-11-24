@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::Span;
 use oxc_str::Ident;
 use oxc_syntax::scope::ScopeId;
-use oxc_traverse::Traverse;
+use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{common::class_lowering::ClassLowering, context::TraverseCtx, state::TransformState};
 
@@ -59,6 +59,8 @@ pub struct TypeScript<'a> {
     /// Entered classes with parameter properties, and where theirs start in
     /// `parameter_properties`. Classes without any push nothing, so most files never allocate.
     parameter_properties_starts: Vec<(ScopeId, usize)>,
+    /// See [`Self::computed_key_marker`].
+    computed_key_marker: Option<BoundIdentifier<'a>>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -75,6 +77,7 @@ impl<'a> TypeScript<'a> {
                 || options.remove_class_fields_without_initializer,
             parameter_properties: Vec::new(),
             parameter_properties_starts: Vec::new(),
+            computed_key_marker: None,
         }
     }
 

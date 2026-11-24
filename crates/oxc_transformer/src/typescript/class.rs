@@ -2,10 +2,11 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
-use oxc_semantic::{ScopeFlags, ScopeId};
+use oxc_ast_visit::{Visit, walk};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
-use oxc_str::Ident;
-use oxc_syntax::operator::AssignmentOperator;
+use oxc_str::{Ident, static_ident};
+use oxc_syntax::operator::{AssignmentOperator, UnaryOperator};
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
@@ -16,8 +17,8 @@ use crate::{
     },
     context::TraverseCtx,
     utils::ast_builder::{
-        create_class_constructor, create_this_property_access, create_this_property_assignment,
-        take_literal_property_key,
+        create_class_constructor, create_class_method, create_this_property_access,
+        create_this_property_assignment, create_variable_declaration, take_literal_property_key,
     },
 };
 
@@ -83,6 +84,36 @@ impl<'a> TypeScript<'a> {
     /// differently, which is quite troublesome to implement.
     /// Anyway, `TypeScript` is the source of truth for the typescript transformation.
     ///
+    /// A static block has its own `this`, `super`, `arguments` and `new.target`, and can't contain
+    /// `yield` or `await`. When a key uses them, the keys stay in a key of a temporary static method,
+    /// which the static block deletes instead:
+    ///
+    /// Input:
+    /// ```ts
+    /// function* f() {
+    ///   return class {
+    ///     static [yield "a"] = 1;
+    ///   };
+    /// }
+    /// ```
+    ///
+    /// Output:
+    /// ```js
+    /// var _computedKey = Symbol();
+    /// function* f() {
+    ///   let _yield$a;
+    ///   return class {
+    ///     static {
+    ///       delete this[_computedKey];
+    ///     }
+    ///     static {
+    ///       this[_yield$a] = 1;
+    ///     }
+    ///     static [(_yield$a = yield "a", _computedKey)]() {}
+    ///   };
+    /// }
+    /// ```
+    ///
     /// For static properties, we convert them to static blocks.
     ///
     /// Input:
@@ -116,7 +147,7 @@ impl<'a> TypeScript<'a> {
     /// Fields that `lowering` keeps for a downstream transform stay as written, and so do instance
     /// fields before [`ClassLowering::first_movable_instance_field`].
     pub(super) fn transform_class_fields(
-        &self,
+        &mut self,
         class: &mut Class<'a>,
         lowering: ClassLowering,
         ctx: &mut TraverseCtx<'a>,
@@ -271,28 +302,42 @@ impl<'a> TypeScript<'a> {
             }
             position += 1;
         }
-        // Blocks are only inserted after the visited element, so `constructor_index` is still valid.
-        let constructor = constructor_index.map(|position| {
-            let ClassElement::MethodDefinition(method) = &mut class.body.body[position] else {
-                unreachable!()
-            };
-            &mut method.value
-        });
 
         let computed_key_assignment_static_block =
             (!computed_key_assignments.is_empty()).then(|| {
-                let sequence_expression = Expression::new_sequence_expression(
-                    SPAN,
-                    ArenaVec::from_iter_in(computed_key_assignments, ctx),
-                    ctx,
-                );
-                let statement = Statement::new_expression_statement(SPAN, sequence_expression, ctx);
+                let statement = if computed_key_assignments.iter().any(depends_on_outer_context) {
+                    let marker = self.computed_key_marker(ctx);
+                    let (carrier, delete) = Self::create_computed_key_carrier(
+                        computed_key_assignments,
+                        &marker,
+                        class_scope_id,
+                        ctx,
+                    );
+                    class.body.body.push(carrier);
+                    delete
+                } else {
+                    let sequence_expression = Expression::new_sequence_expression(
+                        SPAN,
+                        ArenaVec::from_iter_in(computed_key_assignments, ctx),
+                        ctx,
+                    );
+                    Statement::new_expression_statement(SPAN, sequence_expression, ctx)
+                };
                 Self::create_class_static_block(
                     ArenaVec::from_value_in(statement, ctx),
                     class_scope_id,
                     ctx,
                 )
             });
+
+        // Blocks are only inserted after the visited element, and the carrier is appended,
+        // so `constructor_index` is still valid.
+        let constructor = constructor_index.map(|position| {
+            let ClassElement::MethodDefinition(method) = &mut class.body.body[position] else {
+                unreachable!()
+            };
+            &mut method.value
+        });
 
         if let Some(constructor) = constructor {
             let params = &constructor.params.items;
@@ -735,6 +780,66 @@ impl<'a> TypeScript<'a> {
         });
     }
 
+    /// Return the temporary method `static [(assignments, _computedKey)]() {}`, which evaluates
+    /// `assignments` where the class evaluates its keys, and `delete this[_computedKey];`, which
+    /// removes it.
+    fn create_computed_key_carrier(
+        assignments: Vec<Expression<'a>>,
+        marker: &BoundIdentifier<'a>,
+        class_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> (ClassElement<'a>, Statement<'a>) {
+        let marker_key = marker.create_read_expression(ctx);
+        let key = Expression::new_sequence_expression(
+            SPAN,
+            ArenaVec::from_iter_in(assignments.into_iter().chain(std::iter::once(marker_key)), ctx),
+            ctx,
+        );
+        let scope_id =
+            ctx.create_child_scope(class_scope_id, ScopeFlags::StrictMode | ScopeFlags::Function);
+        let params =
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
+        let carrier = create_class_method(
+            ArenaVec::new_in(ctx),
+            PropertyKey::from(key),
+            MethodDefinitionKind::Method,
+            params,
+            None,
+            ArenaVec::new_in(ctx),
+            true,
+            scope_id,
+            ctx,
+        );
+
+        let member = Expression::new_computed_member_expression(
+            SPAN,
+            Expression::new_this_expression(SPAN, ctx),
+            marker.create_read_expression(ctx),
+            false,
+            ctx,
+        );
+        let delete = Expression::new_unary_expression(SPAN, UnaryOperator::Delete, member, ctx);
+        (carrier, Statement::new_expression_statement(SPAN, delete, ctx))
+    }
+
+    /// `_computedKey`, a symbol that keys the methods from [`Self::create_computed_key_carrier`].
+    /// It is created once at the top of the file, where a local `Symbol` binding can't shadow it.
+    fn computed_key_marker(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+        self.computed_key_marker
+            .get_or_insert_with(|| {
+                let binding = ctx
+                    .generate_uid_in_root_scope("computedKey", SymbolFlags::FunctionScopedVariable);
+                let symbol = static_ident!("Symbol");
+                let symbol_id = ctx.scoping().find_binding(ctx.scoping().root_scope_id(), symbol);
+                let callee = ctx.create_ident_expr(SPAN, symbol, symbol_id, ReferenceFlags::Read);
+                let init = Expression::new_call_expression(SPAN, callee, None, [], false, ctx);
+                let declaration = create_variable_declaration(&binding, init, ctx);
+                ctx.state.top_level_statements.insert_statement(declaration);
+                binding
+            })
+            .clone()
+    }
+
     /// Convert constructor parameters that include modifier to `this` assignments
     pub(super) fn convert_constructor_params(
         params: &ArenaVec<'a, FormalParameter<'a>>,
@@ -790,5 +895,65 @@ impl<'a> TypeScript<'a> {
         );
 
         ClassElement::new_static_block_with_scope_id(SPAN, body, scope_id, ctx)
+    }
+}
+
+/// Whether `expr`, from a computed key, means something else or is invalid in a static block.
+fn depends_on_outer_context(expr: &Expression<'_>) -> bool {
+    let mut finder = OuterContextFinder::default();
+    finder.visit_expression(expr);
+    finder.found
+}
+
+#[derive(Default)]
+struct OuterContextFinder {
+    found: bool,
+}
+
+impl<'a> Visit<'a> for OuterContextFinder {
+    fn visit_expression(&mut self, expr: &Expression<'a>) {
+        if !self.found {
+            walk::walk_expression(self, expr);
+        }
+    }
+
+    fn visit_this_expression(&mut self, _it: &ThisExpression) {
+        self.found = true;
+    }
+
+    fn visit_super(&mut self, _it: &Super) {
+        self.found = true;
+    }
+
+    fn visit_yield_expression(&mut self, _it: &YieldExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_await_expression(&mut self, _it: &AwaitExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_new_target(&mut self, _it: &NewTarget) {
+        self.found = true;
+    }
+
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        if it.name == "arguments" {
+            self.found = true;
+        }
+    }
+
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        // Direct `eval` sees the variables and `this` of where it's called
+        if !it.optional && it.callee.is_specific_id("eval") {
+            self.found = true;
+            return;
+        }
+        walk::walk_call_expression(self, it);
+    }
+
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
+        // Functions have their own `this`, `arguments`, `new.target` and `super`,
+        // and `yield` and `await` in them belong to them.
     }
 }
