@@ -1,7 +1,7 @@
 var _C;
 class C {}
 _C = C;
-babelHelpers.defineProperty(C, "prop", () => {
+babelHelpers.defineProperty(C, "prop", { prop: () => {
   // Transform
   babelHelpers.superPropGet(_C, "prop", _C);
   babelHelpers.superPropGet(_C, prop, _C);
@@ -35,4 +35,4 @@ babelHelpers.defineProperty(C, "prop", () => {
       super[prop]();
     }
   }
-});
+} }.prop);

@@ -60,6 +60,15 @@ impl<'a> ClassProperties<'a> {
         is_static: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        // Key was moved to a temp var already, when naming the property's initializer.
+        // Instance property keys are moved to before class in exit phase.
+        if let Some(temp_var) = self.take_computed_key_temp_var(key, ctx) {
+            if is_static {
+                self.insert_before.push(key.take_in(ctx));
+            }
+            return temp_var;
+        }
+
         let original_key = key.take_in(ctx);
         if key_needs_temp_var(&original_key, ctx) {
             let (assignment, ident) = create_computed_key_temp_var(original_key, ctx);

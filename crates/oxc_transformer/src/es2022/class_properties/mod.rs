@@ -198,10 +198,11 @@
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use indexmap::IndexMap;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use serde::Deserialize;
 
+use oxc_allocator::Address;
 use oxc_ast::ast::*;
 use oxc_str::{Ident, IdentBuildHasher};
 use oxc_syntax::symbol::SymbolId;
@@ -226,6 +227,7 @@ use class_bindings::ClassBindings;
 use class_details::{
     ClassDetails, ClassesStack, PrivateProp, PrivateProps, ResolvedPrivateName, ResolvedPrivateProp,
 };
+pub use class_name::FunctionName;
 
 type IdentIndexMap<'a, V> = IndexMap<Ident<'a>, V, IdentBuildHasher>;
 
@@ -271,6 +273,12 @@ pub struct ClassProperties<'a> {
     classes_stack: ClassesStack<'a>,
     /// Count of private fields in current class and parent classes.
     private_field_count: usize,
+    /// Names for anonymous classes which are initializers of lowered class fields.
+    /// Keys are `Address`es of the `Class`es. See [`ClassProperties::name_field_initializer`].
+    inferred_class_names: FxHashMap<Address, FunctionName<'a>>,
+    /// `Address`es of `_k = _toPropertyKey(k())` computed key assignments created when naming
+    /// field initializers. See [`ClassProperties::name_field_initializer`].
+    computed_key_assignments: FxHashSet<Address>,
 
     // ----- State used only during enter phase -----
     //
@@ -303,6 +311,8 @@ impl ClassProperties<'_> {
             remove_class_fields_without_initializer,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,
+            inferred_class_names: FxHashMap::default(),
+            computed_key_assignments: FxHashSet::default(),
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             clashing_constructor_symbols: FxHashMap::default(),
             insert_before: vec![],

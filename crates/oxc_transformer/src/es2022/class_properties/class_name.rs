@@ -19,26 +19,65 @@
 //!   If that would shadow a binding referenced inside the class, perform NamedEvaluation in
 //!   an object literal instead: `_Class = { C: class {} }.C`.
 //! * Otherwise, prevent NamedEvaluation in the temp var assignment: `_Class = (0, class {})`.
+//!
+//! Lowering class fields moves their initializers out of the field, which would also lose the
+//! name NamedEvaluation gives an anonymous class or function initializer:
+//!
+//! ```js
+//! class C { x = () => {}; [k] = class {} }
+//! // ->
+//! class C {
+//!   constructor() {
+//!     _defineProperty(this, "x", { x: () => {} }.x);
+//!     _defineProperty(this, k, _setFunctionName(class {}, k));
+//!   }
+//! }
+//! ```
+//!
+//! [`ClassProperties::name_field_initializer`] names such initializers (see [`FunctionName`]
+//! for the forms used). Anonymous classes are named when the class itself is exited, so a class
+//! which is lowered too is named before its static initializers run.
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaBox, ArenaVec, GetAddress, TakeIn};
 use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_span::SPAN;
 use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{
     identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object,
-    reference::ReferenceId, symbol::SymbolFlags,
+    reference::ReferenceId, scope::ScopeId, symbol::SymbolFlags,
 };
-use oxc_traverse::Ancestor;
+use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
+    common::{
+        computed_key::key_needs_temp_var,
+        duplicate::duplicate_expression,
+        helper_loader::{Helper, helper_call_expr},
+    },
     context::TraverseCtx,
     utils::{
+        ast_builder::create_assignment,
         class_name::contextual_class_name,
         decorated_class::{class_body_has_auto_accessors, class_has_decorators},
     },
 };
 
 use super::ClassProperties;
+
+/// The name NamedEvaluation gives an anonymous class or function.
+pub enum FunctionName<'a> {
+    /// Statically known name, e.g. `x` for `x = class {}`, or `#x` for `#x = class {}`.
+    ///
+    /// Given as a binding (`class x {}`, `function x() {}`) where that is safe,
+    /// otherwise by NamedEvaluation in an object literal (`{ x: () => {} }.x`).
+    Static(JSStr<'a>),
+    /// Property key known only at runtime,
+    /// e.g. `_k` for `[k()] = class {}` after `_k = _toPropertyKey(k())`.
+    ///
+    /// Given with `_setFunctionName(class {}, _k)`, which also names symbol keys `[description]`.
+    /// The expression must be free of side effects.
+    Dynamic(Expression<'a>),
+}
 
 impl<'a> ClassProperties<'a> {
     /// Convert anonymous `export default class {}` to a class expression, if transforming it
@@ -110,18 +149,23 @@ impl<'a> ClassProperties<'a> {
     /// Preserve the `name` of a class expression which is being moved out of its naming context
     /// (see module docs). `assigned_to_temp` is whether it'll be assigned to the class temp var.
     ///
+    /// `inferred_name` is the name recorded by [`Self::name_field_initializer`], if any.
+    ///
     /// Must be called before the class is moved, while `ctx` still points at its original position.
     pub(super) fn preserve_anonymous_class_name(
-        mut class_expr: Expression<'a>,
+        class_expr: Expression<'a>,
         assigned_to_temp: bool,
+        inferred_name: Option<FunctionName<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Expression::ClassExpression(class) = &mut class_expr else { unreachable!() };
+        let Expression::ClassExpression(class) = &class_expr else { unreachable!() };
         if class.id.is_some() {
             return class_expr;
         }
 
-        let Some(name) = Self::contextual_name(ctx) else {
+        let Some(name) =
+            inferred_name.or_else(|| Self::contextual_name(ctx).map(FunctionName::Static))
+        else {
             if !assigned_to_temp {
                 // Last in a sequence expression, so already doesn't receive a name
                 return class_expr;
@@ -130,17 +174,183 @@ impl<'a> ClassProperties<'a> {
             let zero = Expression::new_number_0(SPAN, ctx);
             return Expression::new_sequence_expression(SPAN, [zero, class_expr], ctx);
         };
+        Self::name_anonymous_function(class_expr, name, ctx)
+    }
 
-        if let Some(ident_name) = name.as_str()
-            && Self::can_name_class(class, ident_name, ctx)
-        {
-            // `class C {}`
-            let binding =
-                ctx.generate_binding(Ident::from(ident_name), class.scope_id(), SymbolFlags::Class);
-            class.id = Some(binding.create_binding_identifier(ctx));
-            return class_expr;
+    /// Name an anonymous class or function initializer of a class field, which is about to be
+    /// moved out of the field, with the name NamedEvaluation would give it.
+    ///
+    /// Functions are named in place. Anonymous classes are recorded, and named when the class
+    /// itself is exited (see [`Self::take_inferred_class_name`]).
+    ///
+    /// If the name comes from a computed key which isn't statically known, the key is moved to
+    /// a temp var now: `[k()] = class {}` -> `[_k = _toPropertyKey(k())] = ...`.
+    /// Lowering the property then reuses that temp var
+    /// (see [`Self::create_computed_key_temp_var_if_required`]).
+    ///
+    /// Must be called before the initializer is traversed.
+    pub(super) fn name_field_initializer(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Some(value) = &prop.value else { return };
+        if !value.get_inner_expression().is_anonymous_function_definition() {
+            return;
         }
-        Self::create_named_evaluation(class_expr, name, ctx)
+
+        let name = if let Some(name) = Self::property_key_name(&prop.key, ctx) {
+            FunctionName::Static(name)
+        } else {
+            let key = prop.key.to_expression_mut();
+            FunctionName::Dynamic(self.duplicate_computed_key(key, ctx))
+        };
+
+        let value = prop.value.as_mut().unwrap();
+        if let Expression::ClassExpression(class) = value.get_inner_expression() {
+            self.inferred_class_names.insert(class.address(), name);
+        } else {
+            *value = Self::name_anonymous_function(value.take_in(ctx), name, ctx);
+        }
+    }
+
+    /// Get a side-effect-free copy of computed property key `key`, converted to a property key.
+    ///
+    /// Unless the key is a literal, replace it with an assignment to a temp var
+    /// (`k()` -> `_k = _toPropertyKey(k())`), and return the temp var.
+    /// The key is converted once, at class definition, as `ToPropertyKey` may have side effects.
+    fn duplicate_computed_key(
+        &mut self,
+        key: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if !matches!(key, Expression::Identifier(_)) && !key_needs_temp_var(key, ctx) {
+            // Literal e.g. `[true]`
+            let (original, copy) = duplicate_expression(key.take_in(ctx), false, ctx);
+            *key = original;
+            return copy;
+        }
+
+        // `_k = _toPropertyKey(k())`
+        let original_key = key.take_in(ctx);
+        let binding = ctx.generate_uid_based_on_node(
+            &original_key,
+            ctx.current_block_scope_id(),
+            SymbolFlags::BlockScopedVariable,
+        );
+        ctx.state.var_declarations.insert_let(&binding, None, &ctx.ast);
+        let arguments = ArenaVec::from_array_in([Argument::from(original_key)], ctx);
+        let property_key = helper_call_expr(Helper::ToPropertyKey, arguments, ctx);
+        let assignment = create_assignment(&binding, property_key, SPAN, ctx);
+        let Expression::AssignmentExpression(assign_expr) = &assignment else { unreachable!() };
+        self.computed_key_assignments.insert(assign_expr.address());
+        *key = assignment;
+        binding.create_read_expression(ctx)
+    }
+
+    /// If computed key `key` was moved to a temp var by [`Self::duplicate_computed_key`],
+    /// return a reference to the temp var.
+    pub(super) fn take_computed_key_temp_var(
+        &mut self,
+        key: &Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::AssignmentExpression(assign_expr) = key else { return None };
+        if !self.computed_key_assignments.remove(&assign_expr.address()) {
+            return None;
+        }
+        let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign_expr.left else {
+            unreachable!()
+        };
+        let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id().unwrap();
+        Some(BoundIdentifier::new(ident.name, symbol_id).create_read_expression(ctx))
+    }
+
+    /// Take the name recorded for anonymous class `class` by [`Self::name_field_initializer`].
+    pub(super) fn take_inferred_class_name(
+        &mut self,
+        class: &ArenaBox<'a, Class<'a>>,
+    ) -> Option<FunctionName<'a>> {
+        if self.inferred_class_names.is_empty() {
+            return None;
+        }
+        self.inferred_class_names.remove(&class.address())
+    }
+
+    /// Give anonymous class or function `value` the name `name`, as NamedEvaluation would.
+    ///
+    /// `value` may be wrapped in parentheses or TypeScript syntax.
+    pub(crate) fn name_anonymous_function(
+        mut value: Expression<'a>,
+        name: FunctionName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let ident_name = match &name {
+            FunctionName::Static(name) => name.as_str(),
+            FunctionName::Dynamic(_) => None,
+        };
+        match value.get_inner_expression_mut() {
+            Expression::ClassExpression(class) => {
+                debug_assert!(class.id.is_none());
+                // A static `name` member overrides the name anyway, and `_setFunctionName`
+                // would overwrite it.
+                // Note: A static computed key which evaluates to `"name"` is not detected.
+                if Self::class_defines_static_name(class) {
+                    return value;
+                }
+                if let Some(ident_name) = ident_name
+                    && Self::can_bind_name(class.scope_id(), ident_name, ctx)
+                {
+                    // `class x {}`
+                    let binding = ctx.generate_binding(
+                        Ident::from(ident_name),
+                        class.scope_id(),
+                        SymbolFlags::Class,
+                    );
+                    class.id = Some(binding.create_binding_identifier(ctx));
+                    return value;
+                }
+            }
+            Expression::FunctionExpression(func) => {
+                debug_assert!(func.id.is_none());
+                // A function expression's name is bound in its own scope,
+                // alongside its parameters and `var`s
+                if let Some(ident_name) = ident_name
+                    && ctx.scoping().get_binding(func.scope_id(), Ident::from(ident_name)).is_none()
+                    && Self::can_bind_name(func.scope_id(), ident_name, ctx)
+                {
+                    // `function x() {}`
+                    let binding = ctx.generate_binding(
+                        Ident::from(ident_name),
+                        func.scope_id(),
+                        SymbolFlags::Function | SymbolFlags::FunctionExpression,
+                    );
+                    func.id = Some(binding.create_binding_identifier(ctx));
+                    return value;
+                }
+            }
+            _ => {}
+        }
+
+        match name {
+            // `{ x: () => {} }.x`
+            FunctionName::Static(name) => Self::create_named_evaluation(value, name, ctx),
+            // `_setFunctionName(() => {}, _k)`
+            FunctionName::Dynamic(key) => {
+                let arguments =
+                    ArenaVec::from_array_in([Argument::from(value), Argument::from(key)], ctx);
+                helper_call_expr(Helper::SetFunctionName, arguments, ctx)
+            }
+        }
+    }
+
+    /// Whether class has a static method, accessor or field with key `name`.
+    fn class_defines_static_name(class: &Class<'a>) -> bool {
+        class.body.body.iter().any(|element| {
+            element.r#static()
+                && !element.property_key().is_some_and(PropertyKey::is_private_identifier)
+                && element.static_name().is_some_and(|name| name == "name")
+        })
     }
 
     /// Get the name NamedEvaluation would give an anonymous class at the current position.
@@ -186,12 +396,12 @@ impl<'a> ClassProperties<'a> {
         })
     }
 
-    /// Whether giving the class a binding `name` produces the same `name` without changing the
-    /// meaning of any code in the class.
+    /// Whether giving the class or function with scope `scope_id` a binding `name` produces the
+    /// same `name` without changing the meaning of any code in it.
     ///
-    /// The binding would shadow any outer binding `name` referenced inside the class,
-    /// or referenced by a direct `eval` inside the class.
-    fn can_name_class(class: &Class<'a>, name: &str, ctx: &TraverseCtx<'a>) -> bool {
+    /// The binding would shadow any outer binding `name` referenced inside it,
+    /// or referenced by a direct `eval` inside it.
+    fn can_bind_name(scope_id: ScopeId, name: &str, ctx: &TraverseCtx<'a>) -> bool {
         if !is_identifier_name(name)
             || is_reserved_keyword_or_global_object(name)
             || matches!(name, "arguments" | "eval")
@@ -200,31 +410,30 @@ impl<'a> ClassProperties<'a> {
         }
 
         let scoping = ctx.scoping();
-        let class_scope_id = class.scope_id();
-        if scoping.scope_flags(class_scope_id).contains_direct_eval() {
+        if scoping.scope_flags(scope_id).contains_direct_eval() {
             return false;
         }
-        let is_in_class = |&reference_id: &ReferenceId| {
-            let scope_id = scoping.get_reference(reference_id).scope_id();
-            scoping.scope_ancestors(scope_id).any(|scope_id| scope_id == class_scope_id)
+        let is_inside = |&reference_id: &ReferenceId| {
+            let reference_scope_id = scoping.get_reference(reference_id).scope_id();
+            scoping.scope_ancestors(reference_scope_id).any(|id| id == scope_id)
         };
 
-        // References in the class which resolve to an outer `name`, or a global `name`
+        // References inside which resolve to an outer `name`, or a global `name`
         let name = Ident::from(name);
-        let outer_scope_id = scoping.scope_parent_id(class_scope_id).unwrap();
+        let outer_scope_id = scoping.scope_parent_id(scope_id).unwrap();
         if let Some(symbol_id) = scoping.find_binding(outer_scope_id, name) {
-            !scoping.get_resolved_reference_ids(symbol_id).iter().any(is_in_class)
+            !scoping.get_resolved_reference_ids(symbol_id).iter().any(is_inside)
         } else {
             !scoping
                 .root_unresolved_references()
                 .get(&name)
-                .is_some_and(|reference_ids| reference_ids.iter().any(is_in_class))
+                .is_some_and(|reference_ids| reference_ids.iter().any(is_inside))
         }
     }
 
     /// `{ name: class {} }.name`, or `{ "na-me": class {} }["na-me"]`.
     fn create_named_evaluation(
-        class_expr: Expression<'a>,
+        value: Expression<'a>,
         name: JSStr<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -233,7 +442,7 @@ impl<'a> ClassProperties<'a> {
                 SPAN,
                 PropertyKind::Init,
                 key,
-                class_expr,
+                value,
                 false,
                 false,
                 ctx,

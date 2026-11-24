@@ -2,7 +2,7 @@ commit: 51225612
 
 node: v26.12.1
 
-Passed: 81 of 377 (21.49%)
+Passed: 83 of 379 (21.90%)
 
 Failures:
 
@@ -294,7 +294,7 @@ SyntaxError: Unexpected identifier 'Foo'
 
 ./fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-instance-field-initializer-exec.test.js
 ./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-instance-field-initializer-exec.test.js:65
-      (0,__vite_ssr_import_1__.default)(this, "Foo", @dec("Foo") class {});
+      (0,__vite_ssr_import_1__.default)(this, "Foo", @dec("Foo") class Foo {});
                                                      ^
 
 SyntaxError: Invalid or unexpected token
@@ -346,7 +346,7 @@ SyntaxError: Unexpected identifier 'Foo'
 
 ./fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-static-field-initializer-exec.test.js
 ./tasks/transform_conformance/fixtures/oxc/babel-plugin-proposal-decorators-test-fixtures-esbuild-class-decorators-basic-expression-static-field-initializer-exec.test.js:64
-  (0,__vite_ssr_import_1__.default)(Class, "Foo", @dec("Foo") class {});
+  (0,__vite_ssr_import_1__.default)(Class, "Foo", @dec("Foo") class Foo {});
                                                   ^
 
 SyntaxError: Invalid or unexpected token

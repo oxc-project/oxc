@@ -4,9 +4,9 @@ class Foo {
   constructor() {
     Object.defineProperty(this, _tag, {
       writable: true,
-      value: function() {
+      value: { "#tag": function() {
         return this;
-      }
+      } }["#tag"]
     });
   }
 

@@ -5,7 +5,7 @@ let bound = "A";
 class Outer {}
 
 _Outer = Outer;
-babelHelpers.defineProperty(Outer, "B", () => {
+babelHelpers.defineProperty(Outer, "B", { B: () => {
   // Transform
   babelHelpers.superPropSet(_Outer, "A", (_super$A = babelHelpers.superPropGet(_Outer, "A", _Outer), _super$A2 = _super$A++, _super$A), _Outer, 1), _super$A2;
   babelHelpers.superPropSet(_Outer, "A", (_super$A3 = babelHelpers.superPropGet(_Outer, "A", _Outer), _super$A4 = _super$A3--, _super$A3), _Outer, 1), _super$A4;
@@ -59,4 +59,4 @@ babelHelpers.defineProperty(Outer, "B", () => {
       --super[unbound];
     }
   }
-});
+} }.B);

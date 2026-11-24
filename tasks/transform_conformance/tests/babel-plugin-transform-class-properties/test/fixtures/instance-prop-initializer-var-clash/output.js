@@ -8,11 +8,11 @@ class C {
     babelHelpers.defineProperty(this, "noClash2", unbound2);
     babelHelpers.defineProperty(this, "noClash3", bound3);
     babelHelpers.defineProperty(this, "noClash4", unbound3);
-    babelHelpers.defineProperty(this, "noClash5", (x) => x);
-    babelHelpers.defineProperty(this, "noClash6", () => {
+    babelHelpers.defineProperty(this, "noClash5", { noClash5: (x) => x }.noClash5);
+    babelHelpers.defineProperty(this, "noClash6", { noClash6: () => {
       let y;
       return y;
-    });
+    } }.noClash6);
     {
       var _unbound;
       let bound3, unbound3;

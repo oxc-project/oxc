@@ -3,7 +3,18 @@ delete x;
 
 class C {}
 
-babelHelpers.defineProperty(C, "arrow", () => {
+babelHelpers.defineProperty(C, "arrow", { arrow: () => {
+  if (true) {
+    if (true) {
+      {
+        let f = function foo() {}
+      }
+    }
+  }
+  return () => {};
+} }.arrow);
+
+babelHelpers.defineProperty(C, "fn", function fn() {
   if (true) {
     if (true) {
       {
@@ -14,30 +25,19 @@ babelHelpers.defineProperty(C, "arrow", () => {
   return () => {};
 });
 
-babelHelpers.defineProperty(C, "fn", function() {
-  if (true) {
-    if (true) {
-      {
-        let f = function foo() {}
-      }
-    }
-  }
+babelHelpers.defineProperty(C, "arrowStrict", { arrowStrict: () => {
+  "use strict";
+  if (true) {}
   return () => {};
-});
+} }.arrowStrict);
 
-babelHelpers.defineProperty(C, "arrowStrict", () => {
+babelHelpers.defineProperty(C, "fnStrict", function fnStrict() {
   "use strict";
   if (true) {}
   return () => {};
 });
 
-babelHelpers.defineProperty(C, "fnStrict", function() {
-  "use strict";
-  if (true) {}
-  return () => {};
-});
-
-babelHelpers.defineProperty(C, "klass", class extends function() {} {
+babelHelpers.defineProperty(C, "klass", class klass extends function() {} {
   constructor() {}
   method() {
     if (true) {}

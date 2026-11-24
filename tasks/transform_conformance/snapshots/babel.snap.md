@@ -1,6 +1,6 @@
 commit: 51225612
 
-Passed: 753/1208
+Passed: 718/1208
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -200,7 +200,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (213/269)
+# babel-plugin-transform-class-properties (178/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -219,7 +219,22 @@ x Output mismatch
 * assumption-setPublicClassFields/computed/input.js
 x Output mismatch
 
+* assumption-setPublicClassFields/foobar/input.js
+x Output mismatch
+
+* assumption-setPublicClassFields/regression-T7364/input.mjs
+x Output mismatch
+
+* assumption-setPublicClassFields/static-class-binding/input.js
+x Output mismatch
+
+* assumption-setPublicClassFields/static-super/input.js
+x Output mismatch
+
 * assumption-setPublicClassFields/static-super-loose/input.js
+x Output mismatch
+
+* assumption-setPublicClassFields/static-this/input.js
 x Output mismatch
 
 * class-name-tdz/general/input.js
@@ -246,7 +261,19 @@ x Output mismatch
 * nested-class/super-property-in-decorator/input.js
 x Output mismatch
 
+* private/call/input.js
+x Output mismatch
+
 * private/class-shadow-builtins/input.mjs
+x Output mismatch
+
+* private/foobar/input.js
+x Output mismatch
+
+* private/optional-chain-before-member-call/input.js
+x Output mismatch
+
+* private/optional-chain-before-member-call-with-transform/input.js
 x Output mismatch
 
 * private/optional-chain-cast-to-boolean/input.js
@@ -261,22 +288,55 @@ x Output mismatch
 * private/optional-chain-in-function-param-with-transform/input.js
 x Output mismatch
 
+* private/optional-chain-member-optional-call/input.js
+x Output mismatch
+
 * private/optional-chain-member-optional-call-spread-arguments/input.js
 x Output mismatch
 
 * private/optional-chain-member-optional-call-with-transform/input.js
 x Output mismatch
 
+* private/optional-chain-optional-member-call/input.js
+x Output mismatch
+
+* private/optional-chain-optional-member-call-with-transform/input.js
+x Output mismatch
+
+* private/parenthesized-optional-member-call/input.js
+x Output mismatch
+
 * private/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
+* private/regression-T7364/input.mjs
+x Output mismatch
+
+* private/static-call/input.js
+x Output mismatch
+
+* private/static-class-binding/input.js
+x Output mismatch
+
 * private/static-shadow/input.js
+x Output mismatch
+
+* private/static-this/input.js
+x Output mismatch
+
+* private/tagged-template-static/input.js
+x Output mismatch
+
+* private-loose/call/input.js
 x Output mismatch
 
 * private-loose/canonical/input.js
 x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
+x Output mismatch
+
+* private-loose/foobar/input.js
 x Output mismatch
 
 * private-loose/optional-chain-before-member-call/input.js
@@ -324,8 +384,20 @@ x Output mismatch
 * private-loose/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
+* private-loose/static-call/input.js
+x Output mismatch
+
+* private-loose/static-class-binding/input.js
+x Output mismatch
+
+* private-loose/static-this/input.js
+x Output mismatch
+
 * public/arrow-this-without-transform/input.js
 x Expected transform error, but transformation succeeded: Unable to transform arrow inside class property
+
+* public/call/input.js
+x Output mismatch
 
 * public/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -334,6 +406,21 @@ x Output mismatch
 x Output mismatch
 
 * public/delete-super-property/input.js
+x Output mismatch
+
+* public/foobar/input.js
+x Output mismatch
+
+* public/regression-T7364/input.mjs
+x Output mismatch
+
+* public/static-class-binding/input.js
+x Output mismatch
+
+* public/static-super/input.js
+x Output mismatch
+
+* public/static-this/input.js
 x Output mismatch
 
 * public/super-destructuring-array-pattern/input.js
@@ -357,10 +444,28 @@ x Output mismatch
 * public-loose/computed/input.js
 x Output mismatch
 
+* public-loose/foobar/input.js
+x Output mismatch
+
+* public-loose/regression-T7364/input.mjs
+x Output mismatch
+
+* public-loose/static-class-binding/input.js
+x Output mismatch
+
 * public-loose/static-super/input.js
 x Output mismatch
 
+* public-loose/static-this/input.js
+x Output mismatch
+
 * regression/6153/input.js
+x Output mismatch
+
+* regression/6154/input.js
+x Output mismatch
+
+* regression/T7364/input.mjs
 x Output mismatch
 
 * source-maps/private-get/input.js

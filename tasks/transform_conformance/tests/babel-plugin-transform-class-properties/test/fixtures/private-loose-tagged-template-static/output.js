@@ -8,7 +8,7 @@ class Foo {
 
 Object.defineProperty(Foo, _tag, {
   writable: true,
-  value: function() {
+  value: { "#tag": function() {
     return this;
-  }
+  } }["#tag"]
 });

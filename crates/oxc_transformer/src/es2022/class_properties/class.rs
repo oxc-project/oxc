@@ -18,8 +18,8 @@ use crate::{
 };
 
 use super::{
-    ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp, PrivateProps,
-    utils::exprs_into_stmts,
+    ClassBindings, ClassDetails, ClassProperties, FunctionName, IdentIndexMap, PrivateProp,
+    PrivateProps, utils::exprs_into_stmts,
 };
 
 // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
@@ -135,6 +135,10 @@ impl<'a> ClassProperties<'a> {
                     } else {
                         instance_prop_count += 1;
                     }
+
+                    // Initializer is moved out of the property, so give it the name it would
+                    // have received from the property
+                    self.name_field_initializer(prop, ctx);
                 }
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
@@ -592,12 +596,20 @@ impl<'a> ClassProperties<'a> {
             return;
         }
 
+        // Name recorded if class is the initializer of a lowered class field
+        let mut inferred_name = self.take_inferred_class_name(class);
+
         // Finish transform
         let class_details = self.current_class();
         if class_details.is_transform_required {
-            self.transform_class_expression_on_exit_impl(expr, ctx);
+            self.transform_class_expression_on_exit_impl(expr, &mut inferred_name, ctx);
         } else {
             debug_assert!(class_details.bindings.temp.is_none());
+        }
+
+        // Class was not moved. Name it in place.
+        if let Some(name) = inferred_name {
+            *expr = Self::name_anonymous_function(expr.take_in(ctx), name, ctx);
         }
 
         // Pop off stack. We're done!
@@ -609,9 +621,11 @@ impl<'a> ClassProperties<'a> {
         }
     }
 
+    /// `inferred_name` is taken if the class is moved.
     fn transform_class_expression_on_exit_impl(
         &mut self,
         expr: &mut Expression<'a>,
+        inferred_name: &mut Option<FunctionName<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expr else { unreachable!() };
@@ -759,7 +773,12 @@ impl<'a> ClassProperties<'a> {
             }
 
             // `_Class = class {}`
-            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), true, ctx);
+            let class_expr = Self::preserve_anonymous_class_name(
+                expr.take_in(ctx),
+                true,
+                inferred_name.take(),
+                ctx,
+            );
             let assignment = create_assignment(binding, class_expr, SPAN, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -788,7 +807,12 @@ impl<'a> ClassProperties<'a> {
                 return;
             }
 
-            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), false, ctx);
+            let class_expr = Self::preserve_anonymous_class_name(
+                expr.take_in(ctx),
+                false,
+                inferred_name.take(),
+                ctx,
+            );
             exprs.push(class_expr);
         }
 
