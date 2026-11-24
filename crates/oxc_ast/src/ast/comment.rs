@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use bitflags::bitflags;
 
-use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
+use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, GetSpan, Span};
@@ -124,8 +124,10 @@ pub enum CommentContent {
 }
 
 bitflags! {
-    #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
     /// State of newlines around a comment.
+    #[ast]
+    #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
+    #[generate_derive(CloneIn, ContentEq)]
     pub struct CommentNewlines: u8 {
         /// Preceded by a newline
         const Leading = 1 << 0;
@@ -133,29 +135,6 @@ bitflags! {
         const Trailing = 1 << 1;
         /// No newlines before or after
         const None = 0;
-    }
-}
-
-/// Dummy type to communicate the content of `CommentFlags` to `oxc_ast_tools`.
-#[ast(foreign = CommentNewlines)]
-#[expect(dead_code)]
-struct CommentNewlinesAlias(u8);
-
-impl ContentEq for CommentNewlines {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for CommentNewlines {
-    type Cloned = Self;
-
-    fn clone_in_impl(
-        &self,
-        _with_semantic_ids: CloneInSemanticIds,
-        _: &'alloc Allocator,
-    ) -> Self::Cloned {
-        *self
     }
 }
 

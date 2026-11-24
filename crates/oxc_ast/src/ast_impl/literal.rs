@@ -5,9 +5,8 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
+use oxc_allocator::Allocator;
 use oxc_data_structures::inline_string::InlineString;
-use oxc_span::ContentEq;
 
 use crate::ast::*;
 
@@ -135,35 +134,6 @@ impl<'a> RegExpLiteral<'a> {
 impl Display for RegExp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern.text, self.flags)
-    }
-}
-
-impl ContentEq for RegExpFlags {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for RegExpFlags {
-    type Cloned = Self;
-
-    fn clone_in_impl(
-        &self,
-        _with_semantic_ids: CloneInSemanticIds,
-        _: &'alloc Allocator,
-    ) -> Self::Cloned {
-        *self
-    }
-}
-
-impl<'a> Dummy<'a> for RegExpFlags {
-    /// Create a dummy [`RegExpFlags`].
-    ///
-    /// Does not allocate any data into arena.
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn dummy(_: &'a Allocator) -> Self {
-        RegExpFlags::empty()
     }
 }
 

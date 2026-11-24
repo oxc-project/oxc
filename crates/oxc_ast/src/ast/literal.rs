@@ -188,7 +188,10 @@ bitflags! {
     /// Regular expression flags.
     ///
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
+    #[ast]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[generate_derive(CloneIn, ContentEq, Dummy, ESTree)]
+    #[estree(no_type, via = RegExpFlagsConverter)]
     pub struct RegExpFlags: u8 {
         /// Global flag
         ///
@@ -226,10 +229,3 @@ bitflags! {
         const V = 1 << 7;
     }
 }
-
-/// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
-#[ast(foreign = RegExpFlags)]
-#[generate_derive(ESTree)]
-#[estree(no_type, via = RegExpFlagsConverter)]
-#[expect(dead_code)]
-struct RegExpFlagsAlias(#[estree(skip)] u8);

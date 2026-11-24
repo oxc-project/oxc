@@ -662,8 +662,12 @@ fn generate_struct(
     let mut to_json = String::new();
     let mut extra_props = String::new();
 
+    // `oxc_ast_tools` sees a `bitflags!` type as a tuple struct e.g. `struct RegExpFlags(u8)`.
+    // That field isn't in ESTree AST, so don't generate a getter for it.
+    let fields: &[FieldDef] = if struct_def.is_bitflags { &[] } else { &struct_def.fields };
+
     let mut has_type_field = false;
-    for field in &struct_def.fields {
+    for field in fields {
         if should_skip_field(field, schema) {
             continue;
         }
