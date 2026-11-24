@@ -330,17 +330,10 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintCon
         let right_str = ctx.source_range(right_span);
         let flipped_operator_str = flip_operator(expr.operator).as_str();
         let position = flip_position(node, ctx);
-        // `{` cannot start an expression statement or the concise body of an
-        // arrow function, and `function`/`class` cannot start an expression
-        // statement or follow `export default`. Parenthesize the flipped
-        // expression when the moved operand would be re-parsed as a block or
-        // a declaration in the new position.
         let needs_parens = (right_str.starts_with('{')
             && (position.statement_start || position.arrow_body))
             || (starts_with_function_or_class(right_str)
                 && (position.statement_start || position.export_default));
-        // A parenthesized replacement effectively starts with `(`, which can
-        // still continue a preceding expression due to ASI.
         let needs_semicolon = (needs_parens
             || right_str.starts_with(['[', '(', '/', '+', '-', '`']))
             && could_be_asi_hazard(node, ctx);
@@ -390,8 +383,6 @@ fn flip_position(node: &AstNode, ctx: &LintContext) -> FlipPosition {
             }
             continue;
         }
-        // The first ancestor that starts before `node` is the grammar
-        // construct that the flipped expression will begin.
         match ancestor.kind() {
             AstKind::ArrowFunctionExpression(arrow)
                 if !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_))
@@ -990,10 +981,6 @@ fn test() {
     ];
 
     let fix = vec![
-        // Issue: <https://github.com/oxc-project/oxc/issues/29778>
-        // `{` cannot start an expression statement or an arrow function's
-        // concise body; `function`/`class` cannot start an expression statement
-        // or follow `export default`.
         (
             "0 === { a: 0 }[k] && go();",
             "({ a: 0 }[k] === 0) && go();",
@@ -1010,14 +997,11 @@ fn test() {
             Some(serde_json::json!(["never"])),
         ),
         ("1 < {}.x;", "({}.x > 1);", Some(serde_json::json!(["never"]))),
-        // A parenthesized replacement still needs a leading semicolon when it
-        // could continue the previous expression.
         (
             "const a = [b]\n0 === { a: 0 }[k];",
             "const a = [b]\n;({ a: 0 }[k] === 0);",
             Some(serde_json::json!(["never"])),
         ),
-        // Identifiers that merely start with a keyword are not hazards.
         ("0 === classy;", "classy === 0;", Some(serde_json::json!(["never"]))),
         (
             "if (x <= 'foo' || 'bar' < x) {}",
