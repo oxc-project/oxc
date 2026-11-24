@@ -227,7 +227,6 @@ fn test() {
         "async function foo() { while (baz) if (baz) await bar; }",
         "async function foo() { for (var bar in baz) if (bar) await bar; }",
         "async function foo() { for (;;) if (baz) await bar; }",
-        // `await` in a loop condition wrapped in a TypeScript cast
         "async function foo() { while (await bar as boolean) {} }",
     ];
 
