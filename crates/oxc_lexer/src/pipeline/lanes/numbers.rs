@@ -148,6 +148,7 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
     }
 
     let mut flt = false;
+    let mut sep = false;
     let mut dl = 0usize;
     let mut v: u64 = 0;
     for k in s..e {
@@ -157,25 +158,47 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
         } else if c.is_ascii_digit() {
             dl += 1;
             v = v.wrapping_mul(10).wrapping_add((c - b'0') as u64);
+        } else if c == b'_' {
+            sep = true;
         }
     }
     if !flt && dl <= 19 {
         return v as f64;
     }
 
-    let mut buf = [0u8; 512];
-    let mut bl = 0usize;
-    let mut k = s;
-    while k < e && bl < buf.len() - 1 {
-        let c = src[k];
-        k += 1;
-        if c == b'_' || c == b'n' {
-            continue;
+    // A BigInt above 19 digits lands here too, and is parsed without its `n`.
+    let text = &src[s..e];
+    let text = text.strip_suffix(b"n").unwrap_or(text);
+    if sep { parse_decimal_separated(text) } else { parse_decimal(text) }
+}
+
+/// Decimal text without separators, rounded to nearest, ties to even.
+#[cpu_version(Generic)]
+fn parse_decimal(text: &[u8]) -> f64 {
+    str::from_utf8(text).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
+}
+
+/// Decimal text with separators, copied without them: on the stack, or the heap past 64 bytes.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn parse_decimal_separated(text: &[u8]) -> f64 {
+    let mut stack = [0u8; 64];
+    let mut heap = Vec::new();
+    let buf: &mut [u8] = if text.len() <= stack.len() {
+        &mut stack
+    } else {
+        heap.resize(text.len(), 0);
+        &mut heap
+    };
+    let mut len = 0;
+    for &c in text {
+        if c != b'_' {
+            buf[len] = c;
+            len += 1;
         }
-        buf[bl] = c;
-        bl += 1;
     }
-    str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
+    parse_decimal(&buf[..len])
 }
 
 /// Hex, octal or binary digits after the prefix, any length, rounded to nearest, ties to even.
