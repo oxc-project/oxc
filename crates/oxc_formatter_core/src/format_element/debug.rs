@@ -167,6 +167,9 @@ where
                     LineMode::Empty => {
                         w!(f, [token("empty_line")]);
                     }
+                    LineMode::EmptyWithoutExpand => {
+                        w!(f, [token("empty_line_without_expand_parent")]);
+                    }
                     LineMode::ExactLineBreaks(count) => {
                         w!(
                             f,

@@ -164,6 +164,7 @@ impl<'a> Printer<'a> {
                         LineMode::Hard
                         | LineMode::HardWithoutExpand
                         | LineMode::Empty
+                        | LineMode::EmptyWithoutExpand
                         | LineMode::ExactLineBreaks(_)
                         | LineMode::Literal => {
                             self.state.measured_group_fits = false;
@@ -210,7 +211,7 @@ impl<'a> Printer<'a> {
                 }
 
                 // Print a second line break if this is an empty line
-                if line_mode == &LineMode::Empty && !self.state.has_empty_line {
+                if line_mode.is_empty_line() && !self.state.has_empty_line {
                     self.print_line_break(indention);
                     self.state.has_empty_line = true;
                 }
@@ -1304,6 +1305,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                         LineMode::Hard
                         | LineMode::HardWithoutExpand
                         | LineMode::Empty
+                        | LineMode::EmptyWithoutExpand
                         | LineMode::ExactLineBreaks(_)
                         | LineMode::Literal => {
                             // Even in flat mode, content that _directly_ contains a hard or empty
@@ -2072,6 +2074,34 @@ mod tests {
     }
 
     #[test]
+    fn empty_line_without_expand_parent_keeps_the_group_flat() {
+        let allocator = Allocator::default();
+        let print = |second: &str| {
+            format_simple(
+                &allocator,
+                &group(&format_args!(
+                    token("["),
+                    soft_block_indent(&format_args!(
+                        token("a,"),
+                        if_group_breaks(&empty_line().without_expand_parent()),
+                        soft_line_break_or_space(),
+                        text(second)
+                    )),
+                    token("]")
+                )),
+            )
+            .as_code()
+            .to_string()
+        };
+
+        // Fits: the blank line is dropped and does not expand the group
+        assert_eq!("[a, b]", print("b"));
+        // Does not fit: the blank line is kept and carries no indention
+        let long = "b".repeat(100);
+        assert_eq!(format!("[\n  a,\n\n  {long}\n]"), print(&long));
+    }
+
+    #[test]
     fn it_prints_a_group_on_a_single_line_if_it_fits() {
         let allocator = Allocator::default();
         let result = format_simple(
@@ -2261,6 +2291,25 @@ a",
 
         // `dedent_to_root` returns to the `mark_as_root` indention (column 2), not column 0.
         assert_eq!("k:\n  a\n    deep\n  back", result.as_code());
+    }
+
+    #[test]
+    fn a_group_after_a_flat_multiline_text_is_measured_again() {
+        let allocator = Allocator::default();
+        let long = "b".repeat(100);
+        let result = format_simple(
+            &allocator,
+            &group(&format_args!(
+                token("["),
+                text("x\ny").without_expand_parent(),
+                token(", "),
+                group(&format_args!(token("["), soft_block_indent(&text(&long)), token("]"))),
+                token("]")
+            )),
+        );
+
+        // The outer group fits up to the newline, the inner one does not after it
+        assert_eq!(format!("[x\ny, [\n  {long}\n]]"), result.as_code());
     }
 
     #[test]

@@ -131,12 +131,20 @@ impl Line {
     /// (see the [if_group_breaks] docs) and for layouts like markdown tables
     /// that break lines without expanding the surrounding structure.
     ///
-    /// Must only be called on [hard_line_break] (debug-asserted).
+    /// On [empty_line], the blank line a broken group keeps without expanding it
+    /// (Prettier's `softline` after a `line`):
+    /// `if_group_breaks(&empty_line().without_expand_parent())`.
+    ///
+    /// Must only be called on [hard_line_break] or [empty_line] (debug-asserted).
     #[must_use]
     pub const fn without_expand_parent(mut self) -> Self {
         match self.mode {
             LineMode::Hard => self.mode = LineMode::HardWithoutExpand,
-            _ => debug_assert!(false, "without_expand_parent is only valid on hard_line_break()"),
+            LineMode::Empty => self.mode = LineMode::EmptyWithoutExpand,
+            _ => debug_assert!(
+                false,
+                "without_expand_parent is only valid on hard_line_break() or empty_line()"
+            ),
         }
         self
     }
