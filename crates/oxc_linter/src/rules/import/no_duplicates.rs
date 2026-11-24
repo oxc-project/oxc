@@ -468,8 +468,7 @@ fn merge_imports_fix<'a>(
         });
 
     let mut existing: FxHashSet<&str> = FxHashSet::default();
-    if !first_is_empty {
-        let (open, close) = braces.unwrap_or_default();
+    if !first_is_empty && let Some((open, close)) = braces {
         for id in split_specifiers(ctx, open, close) {
             existing.insert(id.trim());
         }
