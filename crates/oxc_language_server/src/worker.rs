@@ -38,7 +38,7 @@ pub struct WorkerToolChangeResult {
 /// The [`WorkerManager`](crate::worker_manager::WorkerManager) is responsible to target the correct worker for a given file URI.
 pub struct WorkspaceWorker {
     root_uri: Uri,
-    tool: RwLock<Option<Box<dyn Tool>>>,
+    tool: RwLock<Option<Arc<dyn Tool>>>,
     builder: Arc<dyn ToolBuilder>,
     // Initialized options from the client
     // If None, the worker has not been initialized yet
@@ -80,7 +80,7 @@ impl WorkspaceWorker {
     /// Returns messages to be sent to the client.
     pub async fn start_worker(&self, options: serde_json::Value) -> Vec<ClientMessage> {
         let result = self.builder.build(&self.root_uri, options.clone());
-        *self.tool.write().await = Some(result.tool);
+        *self.tool.write().await = Some(Arc::from(result.tool));
 
         *self.options.lock().await = Some(options);
 
@@ -121,7 +121,7 @@ impl WorkspaceWorker {
         run: F,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
     where
-        F: Fn(&Box<dyn Tool>, TextDocument) -> DiagnosticResult,
+        F: Fn(&dyn Tool, TextDocument) -> DiagnosticResult,
     {
         let tool_diagnostics = {
             let tool_guard = self.tool.read().await;
@@ -129,7 +129,7 @@ impl WorkspaceWorker {
                 return Ok(Vec::new());
             };
 
-            run(tool, document)
+            run(tool.as_ref(), document)
         };
 
         let diagnostics = match tool_diagnostics {
@@ -311,7 +311,7 @@ impl WorkspaceWorker {
         change_handler: F,
     ) -> WorkerToolChangeResult
     where
-        F: FnOnce(&mut Box<dyn Tool>, &dyn ToolBuilder) -> ToolRestartChanges,
+        F: FnOnce(&dyn Tool, &dyn ToolBuilder) -> ToolRestartChanges,
     {
         let mut registrations = vec![];
         let mut unregistrations = vec![];
@@ -327,7 +327,7 @@ impl WorkspaceWorker {
                 client_messages: Vec::new(), // TODO: Should we return a message to the client if the tool is not initialized?
             };
         };
-        let change = change_handler(tool, self.builder.as_ref());
+        let change = change_handler(tool.as_ref(), self.builder.as_ref());
 
         if let Some(patterns) = change.watch_patterns {
             unregistrations.push(unregistration_watcher_id(&self.root_uri));
@@ -336,7 +336,7 @@ impl WorkspaceWorker {
             }
         }
         if let Some(replaced_tool) = change.tool {
-            *tool = replaced_tool;
+            *tool = Arc::from(replaced_tool);
             *needs_diagnostic_refresh = true;
 
             let Some(file_system) = file_system else {
