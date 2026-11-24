@@ -227,15 +227,13 @@ fn error_options_argument_index(expr: &Expression, ctx: &LintContext) -> Option<
         return None;
     };
 
-    if ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
-        || ident.is_global_reference_name(static_ident!("TypeError"), ctx.scoping())
-    {
-        Some(1)
-    } else if is_aggregate_error(ident, ctx) {
-        Some(2)
-    } else {
-        None
-    }
+    let index = match ident.name.as_str() {
+        "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError" | "TypeError"
+        | "URIError" => 1,
+        "AggregateError" => 2,
+        _ => return None,
+    };
+    ident.is_global_reference(ctx.scoping()).then_some(index)
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
@@ -489,6 +487,26 @@ fn test() {
         (
             r#"try { doSomething(); } catch { class Foo { static { throw new Error("Something went wrong"); } } }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new EvalError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new RangeError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new ReferenceError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new URIError("e", { cause: error }); }"#,
+            None,
         ),
     ];
 
@@ -751,6 +769,18 @@ fn test() {
         (
             r#"try { doSomething(); } catch { if (shouldThrow) { throw new Error("Something went wrong"); } }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON"); }"#,
+            None,
+        ),
+        (r#"try { doSomething(); } catch (error) { throw new EvalError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new RangeError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new ReferenceError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new URIError("e"); }"#, None),
+        (
+            r#"try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }"#,
+            None,
         ),
     ];
 
@@ -1176,6 +1206,12 @@ fn test() {
         (
             r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error"); }"#,
             r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error", { cause: err }); }"#,
+            None,
+        ),
+        // Fixes built-in error constructors other than `Error`
+        (
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\"); }",
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\", { cause: err }); }",
             None,
         ),
     ];
