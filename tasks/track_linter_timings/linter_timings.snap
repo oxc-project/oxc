@@ -576,7 +576,7 @@ unicorn/no-useless-collection-argument                  |   1421
 unicorn/no-useless-error-capture-stack-trace            |  62606
 unicorn/no-useless-fallback-in-spread                   |    454
 unicorn/no-useless-iterator-to-array                    |  65257
-unicorn/no-useless-length-check                         |  12119
+unicorn/no-useless-length-check                         |  12839
 unicorn/no-useless-promise-resolve-reject               |  62606
 unicorn/no-useless-spread                               |  18240
 unicorn/no-useless-switch-case                          |    284
