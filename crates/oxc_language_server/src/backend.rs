@@ -25,7 +25,6 @@ use crate::{
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
-    worker::WorkspaceWorker,
     worker_manager::WorkerManager,
 };
 
@@ -362,7 +361,7 @@ impl LanguageServer for Backend {
         } else if self.capabilities().workspace_configuration {
             let configs = self
                 .request_workspace_configuration(
-                    workers.iter().map(WorkspaceWorker::get_root_uri).collect(),
+                    workers.iter().map(|worker| worker.get_root_uri()).collect(),
                 )
                 .await;
 
