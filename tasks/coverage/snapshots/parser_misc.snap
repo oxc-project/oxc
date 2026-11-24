@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 148/148 (100.00%)
-Positive Passed: 148/148 (100.00%)
-Negative Passed: 289/289 (100.00%)
+AST Parsed     : 149/149 (100.00%)
+Positive Passed: 149/149 (100.00%)
+Negative Passed: 290/290 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -176,6 +176,15 @@ Negative Passed: 289/289 (100.00%)
  16 │ }
     ╰────
   note: Classes are always strict mode code
+
+  × 'arguments' is not allowed in static initialization block
+   ╭─[misc/fail/arguments-in-static-block.ts:4:12]
+ 3 │     static {
+ 4 │       void arguments;
+   ·            ─────────
+ 5 │     }
+   ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
 
   × Only a single declaration is allowed in a `for...in` statement
    ╭─[misc/fail/arrow-block-body-in-context.js:1:6]
