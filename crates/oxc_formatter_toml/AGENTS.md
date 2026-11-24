@@ -5,7 +5,7 @@
 TOML formatter (`oxfmt`'s Tier 2 backend), a thin wrapper around [`oxc-toml`](https://github.com/oxc-project/oxc-toml).
 
 - `oxc-toml` is a formatter-only fork of Taplo, maintained in its own repository
-  - Formatting logic and its tests live there; `tests/fixtures/` here pins only this crate's side (the option mapping, TOML 1.1 acceptance, line endings)
+  - Formatting logic lives there; `tests/fixtures/` here are golden snapshots of its output, the reference for the IR rewrite (see "Known bugs")
   - It prints a string, it does NOT build the `oxc_formatter_core` IR
 - Prettier has no TOML support; `prettier-plugin-toml` runs Taplo, so `oxc-toml`'s output is the reference as-is
 - Entry points:
@@ -37,6 +37,40 @@ Known limits of the string embedding (text with literal lines, the same as Prett
 - Every line resumes at the parent's root, so lines would not follow an enclosing `indent()`
   - Once a host does that (e.g. an indented Vue custom block), structural lines must follow the indent but multi-line string contents must not
   - A string cannot tell them apart (the same reason js-in-vue moved off string embedding)
+
+### Known bugs
+
+The IR rewrite must keep every fixture snapshot byte-identical, except these `oxc-toml` bugs it may fix
+(marked `# Known bug` in the fixture inputs):
+
+- Width is counted in Unicode scalars, not display width (CJK, emoji, combining marks, ZWJ sequences): `width.toml`
+- A tab counts as 1 column, in an indent (`use-tabs/width.toml`) or a string (`width.toml`)
+- With `endOfLine: crlf`, the `\r` counts toward the width: `crlf/width.toml`
+- Line breaks inside multi-line strings are not normalized: the `Input variants differ: CRLF` lines (`strings.toml`, `real-world/`)
+
+Kept as-is by the IR rewrite, to fix afterwards as a breaking `fix(formatter_toml)!`:
+
+- Blank lines: up to 2 are kept (Taplo's `allowed_blank_lines`), other languages keep 1;
+  they are also kept at the file start and end, after a table header, and after `[` / before `]` of a commented array
+  (`blank-lines.toml`, `arrays.toml`, `crlf/eol.toml`)
+- Ignore comments (`# prettier-ignore`, `# oxfmt-ignore`) are not supported, every other language supports them
+- Once an entry expands, every nested array expands too, even one that fits (`width.toml`);
+  other languages expand only the group that does not fit
+- A whitespace-only line is not counted as a blank line and is dropped (`whitespace-only-lines.toml`)
+- Trailing whitespace after a comment is kept (`whitespace-only-lines.toml`)
+- An empty array inside a forced expansion prints as `[` + newline + `]` (`width.toml`)
+
+Not decided yet:
+
+- A commented inline table printed one entry per line gets no trailing comma, unlike arrays (`inline-tables.toml`)
+- `singleQuote` is ignored, strings and keys keep their quotes (`strings.toml`, `keys.toml`);
+  a basic and a literal string are only interchangeable when no escape (or `\`) and no quote of the other kind is inside
+
+Not aligned on purpose:
+
+- `bracketSpacing` is ignored (`prettier-plugin-toml` does not pass it)
+- An inline table without comments is always printed on one line, even when written multi-line or too long,
+  since TOML 1.0 has no multi-line inline tables
 
 ## Verification
 

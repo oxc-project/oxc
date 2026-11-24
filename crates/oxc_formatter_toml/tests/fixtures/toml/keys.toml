@@ -1,0 +1,12 @@
+A = ""
+1_B = ""
+1B = ""
+1-B = ""
+34-11 = 23
+10e3 = "false float"
+"quoted key" = 1
+'literal key' = 2
+dotted.key.name = 3
+dotted . spaced . key = 4
+site."google.com" = true
+"" = "empty key"

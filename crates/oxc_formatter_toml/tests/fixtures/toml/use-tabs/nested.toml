@@ -1,0 +1,7 @@
+nested_long = [["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb"], ["cccccccccccccccc", "dddddddddddddddd"], ["eeeeeeeeeeeeeeee"]]
+inline_with_comment = {
+  # leading
+  a = 1, # trailing
+  b = [ 1, # c
+  2 ],
+}
