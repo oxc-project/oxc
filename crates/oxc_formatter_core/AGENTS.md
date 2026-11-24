@@ -30,6 +30,7 @@ A newline inside a `Text` has two readings, and the IR keeps the `Text` one elem
 Every Prettier doc primitive its own language printers emit has a counterpart here; composite ones translate rather than port 1:1:
 
 - `hardlineWithoutBreakParent` is `hard_line_break().without_expand_parent()`
+- A `softline` after a `line` (a blank line only when the group breaks, the printer here merges line breaks) is `if_group_breaks(&empty_line().without_expand_parent())`
 - `conditionalGroup` is `best_fitting!`: same expansion boundary, same flat-first variant trial.
   Prettier's own doesn't switch variants on inner breaks either ("the user is expected to manually handle what breaks");
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
@@ -65,6 +66,12 @@ Pick by what you're building:
 - Known-length sequences: build exact-sized directly (e.g. `ArenaVec::from_iter_in`)
 
 `Formatter::intern` and `BestFitting` already stage this way; consumer crates get this for free.
+
+Interning does not make content shared for every IR walk:
+`Formatter::intern` / `intern_exact` return a single element as-is, not wrapped in `Interned`,
+and `Document::propagate_expand` caches per `Interned` only.
+So a single `BestFitting` placed in both variants of an outer `best_fitting!` is walked once per variant (2^depth when nested);
+prefer one group with conditional content over duplicating children into variants.
 
 ### Generic context design
 
