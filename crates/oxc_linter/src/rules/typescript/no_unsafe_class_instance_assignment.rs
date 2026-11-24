@@ -40,7 +40,7 @@ declare_oxc_lint!(
     NoUnsafeClassInstanceAssignment(tsgolint),
     typescript,
     suspicious,
-    version = "next",
+    version = "1.95.0",
     short_description = "Disallow using non-instance values where a class instance is expected.",
 );
 
