@@ -1,6 +1,33 @@
 //! Detect decorators and auto-accessors in class syntax.
 
-use oxc_ast::ast::{Class, ClassBody, ClassElement};
+use oxc_ast::ast::{Class, ClassBody, ClassElement, PrivateIdentifier};
+use oxc_ast_visit::VisitJs;
+use oxc_str::Str;
+use rustc_hash::FxHashSet;
+
+use crate::context::TraverseCtx;
+
+/// Reserve declarations and references, including uses of enclosing private names in nested classes.
+#[derive(Clone, Default)]
+pub struct PrivateNames<'a>(FxHashSet<&'a str>);
+
+impl<'a> VisitJs<'a> for PrivateNames<'a> {
+    fn visit_private_identifier(&mut self, ident: &PrivateIdentifier<'a>) {
+        self.0.insert(ident.name.as_str());
+    }
+}
+
+impl<'a> PrivateNames<'a> {
+    pub fn generate(&mut self, base: Str<'a>, ctx: &TraverseCtx<'a>) -> Str<'a> {
+        let mut name = base;
+        let mut n = 2u32;
+        while !self.0.insert(name.as_str()) {
+            name = Str::from_strs_array_in([&base, itoa::Buffer::new().format(n)], ctx);
+            n += 1;
+        }
+        name
+    }
+}
 
 /// Whether a runtime class has decorators on the class itself or any of its elements.
 pub fn class_has_decorators(class: &Class<'_>) -> bool {

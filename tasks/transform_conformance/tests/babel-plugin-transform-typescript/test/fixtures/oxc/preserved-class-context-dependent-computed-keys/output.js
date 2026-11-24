@@ -1,4 +1,3 @@
-var _computedKey = Symbol();
 function* autoAccessor() {
   let _yield$a, _arguments$;
   return class {
@@ -16,24 +15,18 @@ function* decorated() {
   let _yield$a2;
   return @dec class {
     static {
-      delete this[_computedKey];
-    }
-    static {
       this[_yield$a2] = 1;
     }
-    static [(_yield$a2 = yield "a", _computedKey)]() {}
+    @(_yield$a2 = yield "a", () => {}) static #_computedKey() {}
   };
 }
 function* decoratedStaticMethod() {
   let _yield$a3;
   return class {
-    static {
-      delete this[_computedKey];
-    }
     @dec static m() {}
     static {
       this[_yield$a3] = 1;
     }
-    static [(_yield$a3 = yield "a", _computedKey)]() {}
+    @(_yield$a3 = yield "a", () => {}) static #_computedKey() {}
   };
 }

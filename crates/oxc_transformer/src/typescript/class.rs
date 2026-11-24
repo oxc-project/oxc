@@ -2,10 +2,10 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{Visit, VisitJs, walk};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
-use oxc_str::{Ident, static_ident};
+use oxc_str::{Ident, Str, static_ident};
 use oxc_syntax::operator::{AssignmentOperator, UnaryOperator};
 use oxc_traverse::BoundIdentifier;
 
@@ -303,32 +303,30 @@ impl<'a> TypeScript<'a> {
             position += 1;
         }
 
-        let computed_key_assignment_static_block =
-            (!computed_key_assignments.is_empty()).then(|| {
-                let statement = if computed_key_assignments.iter().any(depends_on_outer_context) {
-                    let marker = self.computed_key_marker(ctx);
-                    let (carrier, delete) = Self::create_computed_key_carrier(
-                        computed_key_assignments,
-                        &marker,
-                        class_scope_id,
-                        ctx,
-                    );
-                    class.body.body.push(carrier);
-                    delete
-                } else {
-                    let sequence_expression = Expression::new_sequence_expression(
-                        SPAN,
-                        ArenaVec::from_iter_in(computed_key_assignments, ctx),
-                        ctx,
-                    );
-                    Statement::new_expression_statement(SPAN, sequence_expression, ctx)
-                };
+        let computed_key_assignment_static_block = if computed_key_assignments.is_empty() {
+            None
+        } else {
+            let assignments = ArenaVec::from_iter_in(computed_key_assignments, ctx);
+            let expr = if assignments.iter().any(depends_on_outer_context) {
+                self.append_computed_key_carrier(
+                    class,
+                    assignments,
+                    &property_assignments,
+                    lowering,
+                    ctx,
+                )
+            } else {
+                Some(Expression::new_sequence_expression(SPAN, assignments, ctx))
+            };
+            expr.map(|expr| {
+                let statement = Statement::new_expression_statement(SPAN, expr, ctx);
                 Self::create_class_static_block(
                     ArenaVec::from_value_in(statement, ctx),
                     class_scope_id,
                     ctx,
                 )
-            });
+            })
+        };
 
         // Blocks are only inserted after the visited element, and the carrier is appended,
         // so `constructor_index` is still valid.
@@ -780,28 +778,74 @@ impl<'a> TypeScript<'a> {
         });
     }
 
-    /// Return the temporary method `static [(assignments, _computedKey)]() {}`, which evaluates
-    /// `assignments` where the class evaluates its keys, and `delete this[_computedKey];`, which
-    /// removes it.
-    fn create_computed_key_carrier(
-        assignments: Vec<Expression<'a>>,
-        marker: &BoundIdentifier<'a>,
-        class_scope_id: ScopeId,
+    /// Evaluate trailing keys after the other class keys and before static initialization.
+    fn append_computed_key_carrier(
+        &mut self,
+        class: &mut Class<'a>,
+        mut assignments: ArenaVec<'a, Expression<'a>>,
+        property_assignments: &[Statement<'a>],
+        lowering: ClassLowering,
         ctx: &mut TraverseCtx<'a>,
-    ) -> (ClassElement<'a>, Statement<'a>) {
-        let marker_key = marker.create_read_expression(ctx);
-        let key = Expression::new_sequence_expression(
-            SPAN,
-            ArenaVec::from_iter_in(assignments.into_iter().chain(std::iter::once(marker_key)), ctx),
-            ctx,
-        );
+    ) -> Option<Expression<'a>> {
+        let class_scope_id = class.scope_id();
+        let mut decorators = ArenaVec::new_in(ctx);
+        let (key, cleanup) = if lowering.has_decorators() {
+            // Element decorators can inspect the class before its first static block. Evaluate
+            // the keys in an inert decorator on a private method, which has no reflective key.
+            let mut names = self.eval_private_names.clone();
+            names.visit_class_body(&class.body);
+            names.visit_expressions(&assignments);
+            for statement in property_assignments {
+                names.visit_statement(statement);
+            }
+            let name = names.generate(Str::from_str_in("_computedKey", ctx), ctx);
+            let decorator_scope = ctx.create_child_scope(
+                class_scope_id,
+                ScopeFlags::StrictMode | ScopeFlags::Function | ScopeFlags::Arrow,
+            );
+            let noop = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+                SPAN,
+                false,
+                None,
+                FormalParameters::boxed(
+                    SPAN,
+                    FormalParameterKind::ArrowFormalParameters,
+                    [],
+                    None,
+                    ctx,
+                ),
+                None,
+                ArrowFunctionBody::FunctionBody(FunctionBody::boxed(SPAN, [], [], ctx)),
+                decorator_scope,
+                false,
+                false,
+                ctx,
+            );
+            assignments.push(noop);
+            let expr = Expression::new_sequence_expression(SPAN, assignments, ctx);
+            decorators.push(Decorator::new(SPAN, expr, ctx));
+            (PropertyKey::new_private_identifier(SPAN, name, ctx), None)
+        } else {
+            let marker = self.computed_key_marker(ctx);
+            assignments.push(marker.create_read_expression(ctx));
+            let key = Expression::new_sequence_expression(SPAN, assignments, ctx);
+            let member = Expression::new_computed_member_expression(
+                SPAN,
+                Expression::new_this_expression(SPAN, ctx),
+                marker.create_read_expression(ctx),
+                false,
+                ctx,
+            );
+            let delete = Expression::new_unary_expression(SPAN, UnaryOperator::Delete, member, ctx);
+            (PropertyKey::from(key), Some(delete))
+        };
         let scope_id =
             ctx.create_child_scope(class_scope_id, ScopeFlags::StrictMode | ScopeFlags::Function);
         let params =
             FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
-        let carrier = create_class_method(
-            ArenaVec::new_in(ctx),
-            PropertyKey::from(key),
+        class.body.body.push(create_class_method(
+            decorators,
+            key,
             MethodDefinitionKind::Method,
             params,
             None,
@@ -809,20 +853,11 @@ impl<'a> TypeScript<'a> {
             true,
             scope_id,
             ctx,
-        );
-
-        let member = Expression::new_computed_member_expression(
-            SPAN,
-            Expression::new_this_expression(SPAN, ctx),
-            marker.create_read_expression(ctx),
-            false,
-            ctx,
-        );
-        let delete = Expression::new_unary_expression(SPAN, UnaryOperator::Delete, member, ctx);
-        (carrier, Statement::new_expression_statement(SPAN, delete, ctx))
+        ));
+        cleanup
     }
 
-    /// `_computedKey`, a symbol that keys the methods from [`Self::create_computed_key_carrier`].
+    /// `_computedKey`, a symbol that keys the methods from [`Self::append_computed_key_carrier`].
     /// It is created once at the top of the file, where a local `Symbol` binding can't shadow it.
     fn computed_key_marker(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
         self.computed_key_marker
