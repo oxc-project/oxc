@@ -2,6 +2,10 @@
 //!
 //! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
 
+// `#[ast]` macro and generated code refer to this crate's items as `::oxc_span::...`,
+// so they work in other crates. This makes those paths work in this crate too.
+extern crate self as oxc_span;
+
 mod cmp;
 mod edit_distance;
 mod labeled_span;
@@ -26,6 +30,8 @@ use span::I32Dummy;
 mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
+    mod derive_clone_in;
+    mod derive_content_eq;
     mod derive_dummy;
     #[cfg(feature = "serialize")]
     mod derive_estree;
