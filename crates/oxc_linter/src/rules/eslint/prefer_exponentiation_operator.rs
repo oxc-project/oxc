@@ -118,10 +118,6 @@ impl Rule for PreferExponentiationOperator {
 
                 // Check if we need to wrap the entire expression in parentheses based on parent context
                 let mut needs_parens = needs_parens_for_parent(node, ctx);
-                // A `{`, `function`, `class`, or `async function` token at the start of an
-                // expression statement or a concise arrow body is parsed as a block or a
-                // declaration, so the whole replacement must be parenthesized.
-                // <https://github.com/eslint/eslint/issues/20987>
                 if !needs_parens
                     && !base_needs_parens
                     && starts_with_block_or_declaration_token(&base_text)
@@ -297,9 +293,6 @@ fn test() {
         "(Math.pow(a, b)).toFixed(2)",
         "Math.pow(a, b)<T>()",
         "Math.pow(a, b)<T>",
-        // Statement-start and concise-arrow-body contexts require the whole
-        // replacement to be parenthesized when the base starts with `{`,
-        // `function`, `class`, or `async function`.
         "Math.pow({ a: 2 }[k], 2) > 3 && go()",
         "const f = () => Math.pow({ a: 2 }[k], 2)",
         "Math.pow(function (x) {}.length, 2) > 0 && f()",
@@ -366,9 +359,6 @@ fn test() {
         ("foo\nMath.pow(a.b, c)", "foo\na.b ** c"),
         ("Math.pow((a).b, c)", "(a).b ** c"),
         ("foo;\nMath.pow((a).b, c)", "foo;\n(a).b ** c"),
-        // A replacement starting with `{`, `function`, `class`, or `async function`
-        // must be parenthesized at the start of an expression statement or a
-        // concise arrow body, where those tokens parse as a block or a declaration.
         ("Math.pow({ a: 2 }[k], 2) > 3 && go()", "({ a: 2 }[k] ** 2) > 3 && go()"),
         ("const f = () => Math.pow({ a: 2 }[k], 2)", "const f = () => ({ a: 2 }[k] ** 2)"),
         (
@@ -378,7 +368,6 @@ fn test() {
         ("Math.pow({ a: 1 }.a, 2)", "({ a: 1 }.a ** 2)"),
         ("Math.pow(async function () {}, 2)", "(async function () {} ** 2)"),
         ("Math.pow(class {}, 2)", "(class {} ** 2)"),
-        // In other expression contexts no extra parentheses are needed.
         ("const x = Math.pow({ a: 1 }.a, 2)", "const x = { a: 1 }.a ** 2"),
         ("foo(Math.pow({ a: 1 }.a, 2))", "foo({ a: 1 }.a ** 2)"),
     ];
