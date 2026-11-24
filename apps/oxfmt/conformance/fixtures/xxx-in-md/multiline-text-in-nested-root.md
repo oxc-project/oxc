@@ -1,4 +1,4 @@
-A newline inside a text resumes at the code block, not at a container the child opens
+A newline inside a text resumes at the embedded markdown's column 0: the code block, or a `markdown` template inside it, not a container it opens
 
 ````md
 - inner
