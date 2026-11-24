@@ -982,28 +982,6 @@ fn test() {
 
     let fix = vec![
         (
-            "0 === { a: 0 }[k] && go();",
-            "({ a: 0 }[k] === 0) && go();",
-            Some(serde_json::json!(["never"])),
-        ),
-        (
-            "const f = () => 0 === { a: 0 }[k];",
-            "const f = () => ({ a: 0 }[k] === 0);",
-            Some(serde_json::json!(["never"])),
-        ),
-        (
-            "export default 0 === function () {}.length;",
-            "export default (function () {}.length === 0);",
-            Some(serde_json::json!(["never"])),
-        ),
-        ("1 < {}.x;", "({}.x > 1);", Some(serde_json::json!(["never"]))),
-        (
-            "const a = [b]\n0 === { a: 0 }[k];",
-            "const a = [b]\n;({ a: 0 }[k] === 0);",
-            Some(serde_json::json!(["never"])),
-        ),
-        ("0 === classy;", "classy === 0;", Some(serde_json::json!(["never"]))),
-        (
             "if (x <= 'foo' || 'bar' < x) {}",
             "if ('foo' >= x || 'bar' < x) {}",
             Some(serde_json::json!(["always", { "exceptRange": true }])),
@@ -1372,6 +1350,28 @@ fn test() {
             "foo();\n[a, b].indexOf(x) === 0 && go();",
             None,
         ),
+        (
+            "0 === { a: 0 }[k] && go();",
+            "({ a: 0 }[k] === 0) && go();",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const f = () => 0 === { a: 0 }[k];",
+            "const f = () => ({ a: 0 }[k] === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "export default 0 === function () {}.length;",
+            "export default (function () {}.length === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("1 < {}.x;", "({}.x > 1);", Some(serde_json::json!(["never"]))),
+        (
+            "const a = [b]\n0 === { a: 0 }[k];",
+            "const a = [b]\n;({ a: 0 }[k] === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("0 === classy;", "classy === 0;", Some(serde_json::json!(["never"]))),
     ];
 
     Tester::new(Yoda::NAME, Yoda::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
