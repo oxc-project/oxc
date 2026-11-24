@@ -574,9 +574,9 @@ impl TextWidth {
     }
 
     /// Returns true if the text forces enclosing groups to expand:
-    /// it contains newlines and is not marked [`Self::without_expand_parent`].
+    /// it contains newlines and is not marked `without_expand_parent`.
     #[inline]
-    pub(crate) const fn propagates_expand(self) -> bool {
+    pub const fn propagates_expand(self) -> bool {
         (self.flags & (Self::MULTILINE_MASK | Self::NO_EXPAND_MASK)) == Self::MULTILINE_MASK
     }
 }

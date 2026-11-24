@@ -549,17 +549,36 @@ pub fn mark_as_root<'ast, C, Content>(content: &Content) -> MarkAsRoot<'_, 'ast,
 where
     Content: Format<'ast, C>,
 {
-    MarkAsRoot { content: Argument::new(content) }
+    MarkAsRoot { content: Argument::new(content), embedded: false }
+}
+
+/// A [mark_as_root] for another language's IR embedded in `content` (a Markdown code block's).
+///
+/// The child's column 0 is this indention, so a newline inside a `Text` resumes here
+/// (Prettier's `markAsRoot` around `replaceEndOfLine(doc)`).
+///
+/// - Outside one, a newline inside a `Text` prints as is (column 0)
+/// - The `Text` stays one element, so a `text(..).without_expand_parent()` still expands nothing
+/// - A `mark_as_root` the child opens moves only where its [literal_line_break] and [dedent_to_root] return,
+///   its `Text` newlines still resume here (Prettier's markdown roots only the embedding)
+/// - A nested `embedded_root` takes over
+#[inline]
+pub fn embedded_root<'ast, C, Content>(content: &Content) -> MarkAsRoot<'_, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    MarkAsRoot { content: Argument::new(content), embedded: true }
 }
 
 #[derive(Copy, Clone)]
 pub struct MarkAsRoot<'a, 'ast, C> {
     content: Argument<'a, 'ast, C>,
+    embedded: bool,
 }
 
 impl<'ast, C> Format<'ast, C> for MarkAsRoot<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        f.write_element(FormatElement::Tag(Tag::StartMarkAsRoot));
+        f.write_element(FormatElement::Tag(Tag::StartMarkAsRoot(self.embedded)));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(Tag::EndMarkAsRoot));
     }

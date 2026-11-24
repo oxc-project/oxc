@@ -371,7 +371,7 @@ fn convert_align<'a>(
             // records the current indent position so that literal lines and
             // a later `dedentToRoot` return to it.
             if obj_val.get("type").and_then(Value::as_str) == Some("root") {
-                out.push(FormatElement::Tag(Tag::StartMarkAsRoot));
+                out.push(FormatElement::Tag(Tag::StartMarkAsRoot(false)));
                 if let Some(contents) = obj.get("contents") {
                     convert_doc(contents, out, ctx)?;
                 }

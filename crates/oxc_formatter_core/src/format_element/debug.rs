@@ -421,8 +421,11 @@ where
                             w!(f, [token("fill(")]);
                         }
 
-                        StartMarkAsRoot => {
-                            w!(f, [token("mark_as_root(")]);
+                        StartMarkAsRoot(embedded) => {
+                            w!(
+                                f,
+                                [token(if *embedded { "embedded_root(" } else { "mark_as_root(" })]
+                            );
                         }
 
                         StartEntry => {
