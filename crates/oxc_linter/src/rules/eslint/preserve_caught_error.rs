@@ -462,26 +462,6 @@ fn test() {
             None,
         ),
         (
-            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON", { cause: error }); }"#,
-            None,
-        ),
-        (
-            r#"try { doSomething(); } catch (error) { throw new EvalError("e", { cause: error }); }"#,
-            None,
-        ),
-        (
-            r#"try { doSomething(); } catch (error) { throw new RangeError("e", { cause: error }); }"#,
-            None,
-        ),
-        (
-            r#"try { doSomething(); } catch (error) { throw new ReferenceError("e", { cause: error }); }"#,
-            None,
-        ),
-        (
-            r#"try { doSomething(); } catch (error) { throw new URIError("e", { cause: error }); }"#,
-            None,
-        ),
-        (
             "try {
 					return JSON.parse(text);
 				} catch {
@@ -520,6 +500,26 @@ fn test() {
         (
             r#"try { doSomething(); } catch { class Foo { static { throw new Error("Something went wrong"); } } }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new EvalError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new RangeError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new ReferenceError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new URIError("e", { cause: error }); }"#,
+            None,
         ),
     ];
 
@@ -802,12 +802,6 @@ fn test() {
         (
             "try { doSomething(); } catch (err) { throw new Error/* ( */(); }",
             "try { doSomething(); } catch (err) { throw new Error/* ( */(\"\", { cause: err }); }",
-            None,
-        ),
-        // Fixes built-in error constructors other than `Error`
-        (
-            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\"); }",
-            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\", { cause: err }); }",
             None,
         ),
         // the `(` inside the type arguments is not the start of the arguments
@@ -1225,6 +1219,12 @@ fn test() {
         (
             r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error"); }"#,
             r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error", { cause: err }); }"#,
+            None,
+        ),
+        // Fixes built-in error constructors other than `Error`
+        (
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\"); }",
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\", { cause: err }); }",
             None,
         ),
     ];
