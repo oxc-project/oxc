@@ -1,7 +1,7 @@
 //! Builds the IR from `oxc-toml`'s CST, see AGENTS.md "Layout".
 
 use oxc_formatter_core::{
-    Formatter, SourceText, arena_cow_str, best_fitting,
+    Formatter, SourceText, arena_cow_str,
     builders::{
         FormatWith, empty_line, group, hard_line_break, if_group_breaks, indent, soft_line_break,
         soft_line_break_or_space, space, text, token,
@@ -322,21 +322,21 @@ fn write_array(node: &SyntaxNode, f: &mut TomlFormatter<'_, '_>) {
     }
 
     // `[a, b]` when it fits, one value per line otherwise
-    let values = &lines.rows;
-    let items = |blank_lines: bool| {
-        format_with(move |f| {
+    write!(
+        f,
+        group(&format_with(|f| {
             write!(f, token("["));
             write!(
                 f,
                 indent(&format_with(|f| {
                     write!(f, soft_line_break());
-                    for (index, line) in values.iter().enumerate() {
+                    for (index, line) in lines.rows.iter().enumerate() {
                         if index != 0 {
-                            if blank_lines && line.blank_before {
-                                write!(f, empty_line());
-                            } else {
-                                write!(f, soft_line_break_or_space());
+                            // A blank line only when it expands, without making it expand
+                            if line.blank_before {
+                                write!(f, if_group_breaks(&empty_line().without_expand_parent()));
                             }
+                            write!(f, soft_line_break_or_space());
                         }
                         if let Item::Value { node, last, .. } = line.item {
                             write_value(node, f);
@@ -350,17 +350,8 @@ fn write_array(node: &SyntaxNode, f: &mut TomlFormatter<'_, '_>) {
                 }))
             );
             write!(f, [soft_line_break(), token("]")]);
-        })
-    };
-    if values.iter().any(|line| line.blank_before) {
-        // An `empty_line` would expand every group around it even when not printed,
-        // so the 2 forms are `best_fitting!` variants, its boundary stops that.
-        // NOTE: The values are formatted for each variant (2^depth for nested arrays with blank lines),
-        // and `has_comment` walks each array's subtree (depth x size); both are rare or shallow in TOML
-        write!(f, best_fitting![items(false), items(true)]);
-    } else {
-        write!(f, group(&items(false)));
-    }
+        }))
+    );
 }
 
 // ---
@@ -387,6 +378,8 @@ fn write_inline_table(node: &SyntaxNode, f: &mut TomlFormatter<'_, '_>) {
 }
 
 /// Whether `node` has a comment anywhere inside.
+///
+/// NOTE: Each nested array walks its subtree again (depth x size), shallow in TOML.
 fn has_comment(node: &SyntaxNode) -> bool {
     node.children().iter().any(|e| match e {
         SyntaxElement::Node(n) => has_comment(n),

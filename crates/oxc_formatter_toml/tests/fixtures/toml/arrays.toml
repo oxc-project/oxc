@@ -67,3 +67,8 @@ comment_after_commented_value = [
   , # b
   2,
 ]
+blank_lines_expanded = ["aaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbb",
+
+  "cccccccccccccccccccccccccccccccc", [1,
+
+  2]]
