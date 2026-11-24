@@ -19,6 +19,13 @@ fn has_default_export(module_record: &ModuleRecord) -> bool {
         || module_record.exported_bindings.contains_key("default")
 }
 
+fn is_exported_from_star_export(module_record: &ModuleRecord, name: &str) -> bool {
+    module_record
+        .exported_bindings_from_star_export()
+        .iter()
+        .any(|(_, names)| names.iter().any(|exported| exported.as_str() == name))
+}
+
 fn is_synthesized_indirect_export_entry(export_entry: &ExportEntry) -> bool {
     !export_entry.statement_span.contains_inclusive(export_entry.span)
 }
@@ -145,12 +152,7 @@ impl Rule for Named {
             if remote_module_record.exported_bindings.contains_key(name) {
                 continue;
             }
-            // check re-export
-            if remote_module_record
-                .exported_bindings_from_star_export()
-                .iter()
-                .any(|(_, value)| value.contains(&import_name.name))
-            {
+            if is_exported_from_star_export(&remote_module_record, name) {
                 continue;
             }
 
@@ -187,6 +189,9 @@ impl Rule for Named {
             if remote_module_record.exported_bindings.contains_key(name) {
                 continue;
             }
+            if is_exported_from_star_export(&remote_module_record, name) {
+                continue;
+            }
             ctx.diagnostic(named_diagnostic(name, specifier, import_name.span));
         }
     }
@@ -221,6 +226,8 @@ fn test() {
         "import { someThing } from './test-module'",
         "export { foo } from './bar'",
         "export { foo as bar } from './bar'",
+        "export { foo } from './export-all'",
+        "export { foo as bar } from './export-all'",
         "export { foo } from './does-not-exist'",
         // No longer valid syntax
         // "export bar, { foo } from './bar'",
@@ -283,6 +290,7 @@ fn test() {
         "import {a, b, c, d, e} from './re-export'",
         "import { a } from './re-export-names'",
         "export { bar } from './bar'",
+        "export { bar } from './export-all'",
         "export bar2, { bar } from './bar'",
         // old babel parser
         // "import { foo, bar, baz } from './named-trampoline'",
