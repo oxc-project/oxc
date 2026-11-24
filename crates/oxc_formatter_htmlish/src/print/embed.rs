@@ -320,7 +320,8 @@ pub fn write_interpolation<'a>(
         if borrowed {
             write!(f, [soft_line_indent_or_space(&formatted), space()]);
         } else {
-            write!(f, soft_space_or_block_indent(&formatted));
+            // A group of its own: the separator after it breaking does not break it (apps/oxfmt/DIVERGENCES.md#interpolation-own-group)
+            write!(f, group(&soft_space_or_block_indent(&formatted)));
         }
         return;
     }
