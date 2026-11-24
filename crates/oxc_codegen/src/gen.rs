@@ -1625,6 +1625,10 @@ impl GenExpr for CallExpression<'_> {
             if pure {
                 p.add_source_mapping(self.span);
                 p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
+            } else if self.callee.span().is_empty() {
+                // A generated callee has no position of its own. A stack trace reports a call at
+                // its callee, so map it to the call's span instead.
+                p.add_source_mapping(self.span);
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();

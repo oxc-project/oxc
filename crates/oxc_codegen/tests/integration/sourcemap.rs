@@ -274,6 +274,41 @@ fn synthesized_block_closing_braces_are_mapped() {
     );
 }
 
+// A call to a generated callee, such as a transformer's helper, maps at the callee to the
+// call's own span, so a stack trace through the call points at the source of the call.
+#[test]
+fn call_with_generated_callee_maps_to_call_span() {
+    let source_text = "foo();\nbar(1);";
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+
+    let mut program = ret.program;
+    let Statement::ExpressionStatement(stmt) = &mut program.body[1] else {
+        panic!("expected expression statement");
+    };
+    let Expression::CallExpression(call) = &mut stmt.expression else {
+        panic!("expected call expression");
+    };
+    let Expression::Identifier(callee) = &mut call.callee else {
+        panic!("expected identifier callee");
+    };
+    callee.span = Span::default();
+
+    let ret = Codegen::new().with_options(default_options()).build(&program);
+    assert_eq!(ret.code, "foo();\nbar(1);\n");
+    let tokens: Vec<Mapping> = ret
+        .map
+        .expect("sourcemap should be generated")
+        .get_tokens()
+        .map(|token| Mapping {
+            dst: pos(token.get_dst_line(), token.get_dst_col()),
+            src: pos(token.get_src_line(), token.get_src_col()),
+        })
+        .collect();
+    assert!(has_mapping(&tokens, pos(1, 0), pos(1, 0)), "generated callee maps to the call");
+}
+
 // Both `)` of `factory()()` should map to their own source position
 // at the gen position of the `)`, not one past it.
 #[test]
