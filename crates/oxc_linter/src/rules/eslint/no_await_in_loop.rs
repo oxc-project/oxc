@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, Statement},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -106,69 +103,46 @@ impl Rule for NoAwaitInLoop {
 }
 
 impl NoAwaitInLoop {
-    fn node_matches_stmt_span(span: Span, stmt: &Statement) -> bool {
-        stmt.span().contains_inclusive(span)
-    }
-
-    fn node_matches_expr_span(span: Span, expr: &Expression) -> bool {
-        expr.span().contains_inclusive(span)
-    }
-
     fn is_looped(node: &AstNode, parent: &AstNode) -> bool {
         let span = node.kind().span();
+        let contains = |outer: Span| outer.contains_inclusive(span);
         match parent.kind() {
             AstKind::ForStatement(stmt) => {
-                let mut result = Self::node_matches_stmt_span(span, &stmt.body);
-                if result {
-                    return result;
-                }
-
-                if let Some(test) = &stmt.test {
-                    result = Self::node_matches_expr_span(span, test);
-                    if result {
-                        return result;
-                    }
-                }
-
-                if let Some(update) = &stmt.update {
-                    result = Self::node_matches_expr_span(span, update);
-                }
-
-                result
+                contains(stmt.body.span())
+                    || stmt.test.as_ref().is_some_and(|test| contains(test.span()))
+                    || stmt.update.as_ref().is_some_and(|update| contains(update.span()))
             }
             AstKind::ForInStatement(stmt) => {
-                if Self::node_matches_stmt_span(span, &stmt.body) {
+                if contains(stmt.body.span()) {
                     return true;
                 }
                 // Check if this is `await using` in the left position
                 if let AstKind::VariableDeclaration(decl) = node.kind()
                     && decl.kind.is_await_using()
-                    && stmt.left.span().contains_inclusive(span)
+                    && contains(stmt.left.span())
                 {
                     return true;
                 }
                 false
             }
             AstKind::ForOfStatement(stmt) => {
-                if Self::node_matches_stmt_span(span, &stmt.body) {
+                if contains(stmt.body.span()) {
                     return true;
                 }
                 // Check if this is `await using` in the left position
                 if let AstKind::VariableDeclaration(decl) = node.kind()
                     && decl.kind.is_await_using()
-                    && stmt.left.span().contains_inclusive(span)
+                    && contains(stmt.left.span())
                 {
                     return true;
                 }
                 false
             }
             AstKind::WhileStatement(stmt) => {
-                Self::node_matches_stmt_span(span, &stmt.body)
-                    || Self::node_matches_expr_span(span, &stmt.test)
+                contains(stmt.body.span()) || contains(stmt.test.span())
             }
             AstKind::DoWhileStatement(stmt) => {
-                Self::node_matches_stmt_span(span, &stmt.body)
-                    || Self::node_matches_expr_span(span, &stmt.test)
+                contains(stmt.body.span()) || contains(stmt.test.span())
             }
             _ => false,
         }
