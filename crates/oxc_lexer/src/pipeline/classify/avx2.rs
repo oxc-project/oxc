@@ -134,6 +134,8 @@ fn punct_kinds(
     let o0 = v_punct_kinds0.shuffle_u8s(h);
     let o1 = v_punct_kinds1.shuffle_u8s(h);
     let ord = o0.blend(o1, h.shl_u16::<3>());
-    let ctl = v.lt_i8(0x20);
+    // 0x1F, not 0x20, so LLVM can reuse the splat of `WORD_MASK` (also 0x1F).
+    // Control char 0x1F hashes to a slot holding `Invalid`, so it gets the right kind anyway.
+    let ctl = v.lt_i8(0x1F);
     ord.blend(tk!(Invalid), ctl)
 }
