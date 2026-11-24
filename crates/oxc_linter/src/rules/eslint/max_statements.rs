@@ -263,9 +263,7 @@ struct StatementCounter<'a> {
     ignore_top_level_functions: bool,
     /// Stack of statement counts for each function we're currently inside
     function_stack: Vec<u32>,
-    /// Top-level functions (collected only when `ignore_top_level_functions` is
-    /// enabled; exempted when exactly one exists, otherwise those over the limit
-    /// are reported)
+    /// Top-level functions (all exempt if exactly one exists)
     top_level_functions: Vec<(Option<&'a str>, u32, Span)>,
     /// Diagnostics for non-top-level functions
     diagnostics: Vec<(Option<&'a str>, u32, Span)>,
@@ -283,11 +281,6 @@ impl<'a> StatementCounter<'a> {
             return;
         }
 
-        // Every function that ends while the function stack is empty is top-level. This
-        // matches ESLint, which pushes frames only for functions and static blocks, so
-        // a top-level class's constructor and methods count as top-level functions.
-        // They are exempted at the end of the program only if exactly one exists,
-        // regardless of their statement counts.
         if self.ignore_top_level_functions && self.function_stack.is_empty() {
             self.top_level_functions.push((name, count, span));
         } else if count > self.max {
@@ -416,8 +409,6 @@ fn test() {
             "function foo() { let one; let two = class { static { let three; let four; let five; if (six) { let seven; let eight; let nine; } } }; }",
             Some(serde_json::json!([2])),
         ), // { "ecmaVersion": 2022 }
-        // A top-level class's constructor and methods count as top-level functions in ESLint,
-        // so a single over-limit one is exempt when `ignoreTopLevelFunctions` is enabled.
         (
             "class Stack { constructor() { let a = 1; a++; a++; a++; } }",
             Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
@@ -520,8 +511,6 @@ fn test() {
             "class C { static { { one; two; three; four; } function not_top_level() { 1; 2; 3; } { five; six; seven; eight; } } }",
             Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
         ), // { "ecmaVersion": 2022 }
-        // Top-level functions are exempt only when exactly one exists; under-limit
-        // top-level functions still count toward that total.
         (
             "class Stack { constructor() { let a = 1; a++; a++; a++; } } var helper = () => { let b = 1; b++; b++; b++; };",
             Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
