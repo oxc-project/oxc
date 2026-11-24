@@ -319,7 +319,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
         let mut previous_node_address = ctx.ancestry().current_address();
         for node_kind in ctx.ancestry().ancestor_kinds() {
             match node_kind {
-                AstKind::Function(_) => break,
+                AstKind::Function(_) | AstKind::TSTypeQuery(_) => break,
                 AstKind::PropertyDefinition(prop)
                     if prop
                         .value
