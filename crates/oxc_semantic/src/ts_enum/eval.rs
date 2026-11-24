@@ -31,6 +31,8 @@ enum SiblingLookup {
 /// Runs during semantic analysis so the transformer can look up pre-computed values
 /// to emit constant literals and decide whether const enum declarations can be removed.
 ///
+/// Members without initializers in ambient non-const enums have unknown values.
+///
 /// ```ts
 /// enum Color { Red, Green, Blue }
 /// // Red → 0, Green → 1, Blue → 2 (auto-increment)
@@ -41,7 +43,11 @@ enum SiblingLookup {
 /// enum Mixed { X = "hello", Y }
 /// // X → "hello", Y → None (can't auto-increment after string)
 /// ```
-pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping) {
+pub fn evaluate_enum_members(
+    decl: &TSEnumDeclaration<'_>,
+    is_ambient: bool,
+    scoping: &mut Scoping,
+) {
     let Some(scope_id) = decl.body.scope_id.get() else { return };
 
     let enum_symbol_id = decl.id.symbol_id.get();
@@ -52,20 +58,21 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
         }
     }
 
-    // Sentinel: the first member with no initializer evaluates to `-1.0 + 1.0 = 0.0`.
-    // Once a member fails to resolve, `prev_value` becomes `None` and stays there, so
-    // subsequent auto-increment members correctly propagate "unknown" instead of restarting at 0.
+    let auto_increment = !is_ambient || decl.r#const;
+    // Start at -1 so an uninitialized first member auto-increments to 0.
     let mut prev_value: Option<ConstantValue> = Some(ConstantValue::Number(-1.0));
 
     for member in &decl.body.members {
         let value = if let Some(init) = &member.initializer {
             let ctx = EnumEvalCtx { scope_id, enum_symbol_id, scoping };
             evaluate_expression(init, &ctx)
-        } else {
+        } else if auto_increment {
             match &prev_value {
                 Some(ConstantValue::Number(n)) => Some(ConstantValue::Number(n + 1.0)),
                 None | Some(ConstantValue::String(_)) => None,
             }
+        } else {
+            None
         };
 
         let member_name = member.id.static_name();
