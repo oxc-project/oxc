@@ -78,10 +78,17 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             return;
         };
 
-        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(options_argument_index)
-            && has_cause_property(obj_expr, catch_param, self.ctx)
-        {
-            return;
+        match args.get(options_argument_index) {
+            // Error options exist, but are too complicated to be analyzed/fixed, e.g. when the
+            // options object is stored in a variable. Treat the cause as unknown, like ESLint.
+            Some(arg) if !matches!(arg, Argument::ObjectExpression(_)) => return,
+            // The caught error is already preserved as the cause of the thrown error.
+            Some(Argument::ObjectExpression(obj_expr))
+                if has_cause_property(obj_expr, catch_param, self.ctx) =>
+            {
+                return;
+            }
+            _ => {}
         }
 
         // Allow spread arguments - they may contain cause property
@@ -474,6 +481,36 @@ fn test() {
         ),
         (
             r#"try { doSomething(); } catch (err) { const fail = () => { throw new Error("Something went wrong"); }; }"#,
+            None,
+        ),
+        (
+            // error options object stored in a variable preserves the caught error
+            r#"try {
+					return JSON.parse(text);
+				} catch (error) {
+					const options = { cause: error };
+					throw new Error("Invalid JSON", options);
+				}"#,
+            None,
+        ),
+        (
+            // error options are too complicated to be analyzed when stored in a variable,
+            // so the cause is treated as unknown, like ESLint
+            r#"try {
+					doSomething();
+				} catch (err) {
+					const options = { cause: other };
+					throw new Error("Something failed", options);
+				}"#,
+            None,
+        ),
+        (
+            // error options argument is a member expression, so the cause is unknown
+            r#"try {
+					doSomething();
+				} catch (err) {
+					throw new Error("Something failed", obj.options);
+				}"#,
             None,
         ),
         (
