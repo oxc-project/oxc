@@ -1,0 +1,82 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# prettier-ignore
+a   =   [1,2,   3]   # kept as written
+b   =   [1,2,   3]
+# oxfmt-ignore
+[  t . u  ]   # header
+c = {x=1}
+arr = [
+  # prettier-ignore
+  [1,2,   3],
+  [1,2,   3],
+  # oxfmt-ignore
+  { x   =   1 } # trailing
+  ,
+  #   prettier-ignore
+  [
+      1,
+    2,
+  ],
+]
+# prettier-ignore
+d   =   """
+  multi
+  line"""
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# prettier-ignore
+a   =   [1,2,   3]   # kept as written
+b = [1, 2, 3]
+# oxfmt-ignore
+[  t . u  ]   # header
+c = { x = 1 }
+arr = [
+  # prettier-ignore
+  [1,2,   3],
+  [1, 2, 3],
+  # oxfmt-ignore
+  { x   =   1 }, # trailing
+  #   prettier-ignore
+  [
+      1,
+    2,
+  ],
+]
+# prettier-ignore
+d   =   """
+  multi
+  line"""
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# prettier-ignore
+a   =   [1,2,   3]   # kept as written
+b = [1, 2, 3]
+# oxfmt-ignore
+[  t . u  ]   # header
+c = { x = 1 }
+arr = [
+  # prettier-ignore
+  [1,2,   3],
+  [1, 2, 3],
+  # oxfmt-ignore
+  { x   =   1 }, # trailing
+  #   prettier-ignore
+  [
+      1,
+    2,
+  ],
+]
+# prettier-ignore
+d   =   """
+  multi
+  line"""
+
+===================== End =====================

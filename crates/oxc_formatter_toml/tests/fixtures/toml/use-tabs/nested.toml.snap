@@ -15,17 +15,9 @@ inline_with_comment = {
 { printWidth: 80, useTabs: true }
 ---------------------------------
 nested_long = [
-	[
-		"aaaaaaaaaaaaaaaa",
-		"bbbbbbbbbbbbbbbb",
-	],
-	[
-		"cccccccccccccccc",
-		"dddddddddddddddd",
-	],
-	[
-		"eeeeeeeeeeeeeeee",
-	],
+	["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb"],
+	["cccccccccccccccc", "dddddddddddddddd"],
+	["eeeeeeeeeeeeeeee"],
 ]
 inline_with_comment = {
 	# leading
@@ -40,17 +32,9 @@ inline_with_comment = {
 { printWidth: 100, useTabs: true }
 ----------------------------------
 nested_long = [
-	[
-		"aaaaaaaaaaaaaaaa",
-		"bbbbbbbbbbbbbbbb",
-	],
-	[
-		"cccccccccccccccc",
-		"dddddddddddddddd",
-	],
-	[
-		"eeeeeeeeeeeeeeee",
-	],
+	["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb"],
+	["cccccccccccccccc", "dddddddddddddddd"],
+	["eeeeeeeeeeeeeeee"],
 ]
 inline_with_comment = {
 	# leading

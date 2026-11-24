@@ -66,6 +66,11 @@ array_of_inline_tables = [
   { name = "a", value = 1 },
   { name = "b", value = 2 },
 ]
+comment_after_commented_value = [
+  1 # a
+  , # b
+  2,
+]
 
 ==================== Output ====================
 ------------------
@@ -86,7 +91,6 @@ with_comments = [
   3, # three without comma
 ]
 comment_after_bracket = [ # after bracket
-
   1,
   2,
 ]
@@ -101,15 +105,10 @@ blank_lines_with_comment = [
 
   2,
 
-
   3,
 ]
 blank_lines_around_brackets = [
-
-
   1, # c
-
-
 ]
 comment_before_comma = [
   1,
@@ -121,6 +120,11 @@ two_values_one_line = [
   2, # c
 ]
 array_of_inline_tables = [{ name = "a", value = 1 }, { name = "b", value = 2 }]
+comment_after_commented_value = [
+  1, # a
+  # b
+  2,
+]
 
 -------------------
 { printWidth: 100 }
@@ -140,7 +144,6 @@ with_comments = [
   3, # three without comma
 ]
 comment_after_bracket = [ # after bracket
-
   1,
   2,
 ]
@@ -155,15 +158,10 @@ blank_lines_with_comment = [
 
   2,
 
-
   3,
 ]
 blank_lines_around_brackets = [
-
-
   1, # c
-
-
 ]
 comment_before_comma = [
   1,
@@ -175,5 +173,10 @@ two_values_one_line = [
   2, # c
 ]
 array_of_inline_tables = [{ name = "a", value = 1 }, { name = "b", value = 2 }]
+comment_after_commented_value = [
+  1, # a
+  # b
+  2,
+]
 
 ===================== End =====================

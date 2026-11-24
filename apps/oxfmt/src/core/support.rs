@@ -105,7 +105,7 @@ pub enum FormatStrategy {
     /// Files like `.prettierrc`: mirroring Prettier's yaml embed,
     /// formatted as JSON first, then as YAML if that fails.
     YamlRc,
-    /// Files formatted by delegating to Prettier (Tier 3/4).
+    /// Files formatted by delegating to Prettier.
     #[cfg(feature = "napi")]
     Prettier(PrettierLanguage),
 }

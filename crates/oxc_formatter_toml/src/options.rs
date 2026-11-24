@@ -38,8 +38,12 @@ impl FormatOptions for TomlFormatOptions {
         self.line_width
     }
 
+    /// A lone CR is not a TOML line break, so `endOfLine: "cr"` prints LF.
     fn line_ending(&self) -> LineEnding {
-        self.line_ending
+        match self.line_ending {
+            LineEnding::Cr => LineEnding::Lf,
+            line_ending => line_ending,
+        }
     }
 
     fn apply_core(&mut self, core: CoreFormatOptions) {
@@ -47,23 +51,5 @@ impl FormatOptions for TomlFormatOptions {
         self.indent_width = core.indent_width;
         self.line_width = core.line_width;
         self.line_ending = core.line_ending;
-    }
-}
-
-impl TomlFormatOptions {
-    pub(crate) fn to_oxc_toml(self) -> oxc_toml::Options {
-        oxc_toml::Options {
-            column_width: self.line_width.value() as usize,
-            indent_string: if self.indent_style.is_tab() {
-                "\t".to_string()
-            } else {
-                " ".repeat(self.indent_width.value() as usize)
-            },
-            crlf: self.line_ending.is_carriage_return_line_feed(),
-            array_trailing_comma: matches!(self.trailing_commas, TrailingCommas::Always),
-            // Callers trim it for `insertFinalNewline: false`
-            trailing_newline: true,
-            ..Default::default()
-        }
     }
 }
