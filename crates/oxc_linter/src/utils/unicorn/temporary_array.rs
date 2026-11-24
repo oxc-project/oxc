@@ -7,6 +7,7 @@ use crate::context::LintContext;
 /// mutated in-place without side effects:
 /// - [a, b]
 /// - arr.map(fn)
+/// - Array(4)
 /// - Array.from(iter, fn)
 /// - Object.keys(obj)
 ///
@@ -32,6 +33,10 @@ pub fn is_temporary_array(mut expr: &Expression<'_>, ctx: &LintContext<'_>) -> b
             },
             _ => return false,
         };
+
+        if let Some(ident) = call.callee.get_identifier_reference() {
+            return ident.name == "Array" && ident.is_global_reference(ctx.scoping());
+        }
 
         let Some(member) = call.callee.get_member_expr() else {
             return false;
@@ -126,6 +131,9 @@ mod test {
             "[1, ...items]",
             "new Array",
             "new Array(3)",
+            "Array()",
+            "Array(4)",
+            "Array(1, 2)",
             "Array.from(items)",
             "Array.from(iter, mapFn)",
             "Array.from(iter, mapFn, thisArg)",
@@ -155,6 +163,7 @@ mod test {
     fn test_wrappers_and_chains() {
         for source in [
             "((items.map(fn)))",
+            "(Array)(4)",
             "items.map(fn) as number[]",
             "items.map(fn) satisfies number[]",
             "<number[]>items.map(fn)",
@@ -219,6 +228,7 @@ mod test {
     fn test_shadowed_globals() {
         for source in [
             "const Array = custom; new Array(3)",
+            "const Array = custom; Array(4)",
             "const Array = custom; Array.from(items)",
             "const Array = custom; Array.from(iter, mapFn)",
             "const Array = custom; Array.of(1, 2)",
@@ -229,6 +239,7 @@ mod test {
             "const Object = custom; Object.getOwnPropertySymbols(object)",
             "const Reflect = custom; Reflect.ownKeys(object)",
             "import { Array } from 'custom'; Array.from(items)",
+            "import { Array } from 'custom'; Array(4)",
             "import { Object } from 'custom'; Object.values(object)",
             "import { Reflect } from 'custom'; Reflect.ownKeys(object)",
         ] {
