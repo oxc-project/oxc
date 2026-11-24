@@ -347,14 +347,11 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintCon
         } else {
             ""
         };
-        let mut replacement = format!(
-            "{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
-            if right_next_token { " " } else { "" }
+        let (open, close) = if needs_parens { ("(", ")") } else { ("", "") };
+        let suffix = if right_next_token { " " } else { "" };
+        let replacement = format!(
+            "{prefix}{open}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{close}{suffix}"
         );
-        if needs_parens {
-            replacement = format!("({replacement})");
-        }
-        let replacement = format!("{prefix}{replacement}");
 
         fix.replace(expr.span, replacement)
     });
@@ -1373,6 +1370,12 @@ fn test() {
             Some(serde_json::json!(["never"])),
         ),
         ("0 === classy;", "classy === 0;", Some(serde_json::json!(["never"]))),
+        ("1<{}[x]in y;", "({}[x]>1) in y;", Some(serde_json::json!(["never"]))),
+        (
+            "export default 1<function(){}[x]in y;",
+            "export default (function(){}[x]>1) in y;",
+            Some(serde_json::json!(["never"])),
+        ),
     ];
 
     Tester::new(Yoda::NAME, Yoda::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
