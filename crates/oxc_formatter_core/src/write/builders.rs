@@ -560,10 +560,15 @@ where
     MarkAsRoot { content: Argument::new(content), embedded: false }
 }
 
-/// A [mark_as_root] for another language's IR embedded in `content` (a Markdown code block's).
+/// A [mark_as_root] for another language's IR embedded in `content` (a Markdown code block's, a `markdown` template's).
 ///
 /// The child's column 0 is this indention, so a newline inside a `Text` resumes here
 /// (Prettier's `markAsRoot` around `replaceEndOfLine(doc)`).
+///
+/// Only for a child whose source text is relative to this column,
+/// i.e. the host strips the embedding's indentation before dispatching (a code block's fence, a `markdown` template's common indentation).
+/// A child given its text with the absolute indentation (`css` / `html` templates) must not be wrapped:
+/// its `Text` already carries those columns, and resuming here would add the indention on every pass.
 ///
 /// - Outside one, a newline inside a `Text` prints as is (column 0)
 /// - The `Text` stays one element, so a `text(..).without_expand_parent()` still expands nothing

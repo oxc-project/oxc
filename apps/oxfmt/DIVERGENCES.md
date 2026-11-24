@@ -797,6 +797,43 @@ Prettier falls back to the source shape when the content fails to format, while 
 The verbatim content cannot be re-indented, so its source indentation stays and may look misaligned once hugged (as with any verbatim template Prettier hugs).
 Under `embeddedLanguageFormatting: off`, the source shape still decides, like Prettier.
 
+## md-in-js-text-newline-column
+
+- Why: invariant
+- Pin: `conformance/fixtures/md-in-js/ignored-block-in-list.js`, `conformance/fixtures/xxx-in-md/multiline-text-in-nested-root.md`
+
+```js
+/* input */
+const doc = markdown`
+  - inner
+
+    <!-- prettier-ignore -->
+    | a | b |
+    |--|--|
+`;
+
+/* ours */
+const doc = markdown`
+  - inner
+
+    <!-- prettier-ignore -->
+    | a | b |
+    |--|--|
+`;
+
+/* prettier */
+const doc = markdown`
+  - inner
+
+    <!-- prettier-ignore -->
+    | a | b |
+  |--|--|
+`;
+```
+
+A newline inside a text of the embedded markdown (a `prettier-ignore`d block) resumes at the markdown's column 0, as in a Markdown code block.
+Prettier resumes it at the JS column 0 while the text keeps its own indentation, so every pass moves the line left by the template's indentation: it is not a fixpoint.
+
 ## line-ranged-code-block
 
 - Why: uniform-rule (same construct, same output: `` ```js{1,3} ``)
