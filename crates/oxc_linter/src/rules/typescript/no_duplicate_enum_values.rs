@@ -104,7 +104,7 @@ impl Rule for NoDuplicateEnumValues {
             let Some(initializer) = &enum_member.initializer else {
                 continue;
             };
-            match initializer {
+            let value = match initializer {
                 Expression::NumericLiteral(num) => {
                     if let Some((_, old_span)) =
                         seen_number_values.iter().find(|(v, _)| *v == num.value)
@@ -117,21 +117,24 @@ impl Rule for NoDuplicateEnumValues {
                     } else {
                         seen_number_values.push((num.value, num.span));
                     }
+                    continue;
                 }
-                Expression::StringLiteral(s) => {
-                    if let Some(old_span) = seen_string_values.insert(s.value, s.span) {
-                        let v = s
-                            .value
-                            .as_str()
-                            .map_or_else(|| format!("{:?}", s.value), |value| format!("'{value}'"));
-                        ctx.diagnostic(no_duplicate_enum_values_diagnostic(
-                            old_span,
-                            enum_member,
-                            &v,
-                        ));
-                    }
+                Expression::StringLiteral(string) => string.value,
+                Expression::TemplateLiteral(template) => {
+                    let Some(value) = template.single_quasi() else { continue };
+                    value
                 }
-                _ => {}
+                _ => continue,
+            };
+            if let Some(old_span) = seen_string_values.insert(value, initializer.span()) {
+                let display_value = value
+                    .as_str()
+                    .map_or_else(|| format!("{value:?}"), |value| format!("'{value}'"));
+                ctx.diagnostic(no_duplicate_enum_values_diagnostic(
+                    old_span,
+                    enum_member,
+                    &display_value,
+                ));
             }
         }
     }
@@ -387,19 +390,24 @@ fn test() {
               D = 1,
             }
         ",
-        // TODO: Fix the following cases where there is a raw template literal.
-        // "
-        //     enum E {
-        //       A = 'A',
-        //       B = `A`,
-        //     }
-        // ",
-        // "
-        //     enum E {
-        //       A = `A`,
-        //       B = `A`,
-        //     }
-        // ",
+        "
+            enum E {
+              A = 'A',
+              B = `A`,
+            }
+        ",
+        "
+            enum E {
+              A = `A`,
+              B = `A`,
+            }
+        ",
+        r"
+            enum E {
+              A = `\u0041`,
+              B = 'A',
+            }
+        ",
     ];
 
     Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::PLUGIN, pass, fail)
