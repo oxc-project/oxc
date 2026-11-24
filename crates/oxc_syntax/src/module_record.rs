@@ -419,7 +419,7 @@ pub struct RequestedModule {
 
 /// Dynamic import expression.
 #[ast]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(ESTree)]
 #[estree(no_type, no_ts_def)]
 pub struct DynamicImport {
