@@ -14,6 +14,7 @@ mod strings;
 #[derive(Debug, Default)]
 pub(crate) struct Lanes {
     pub numbers: Vec<f64>,
+    pub bigints: Vec<StringSpan>,
     pub strings: Vec<StringSpan>,
     pub templates: Vec<StringSpan>,
     pub atoms: Vec<StringSpan>,
@@ -30,6 +31,7 @@ impl Lanes {
     #[cpu_multiversion]
     pub(crate) fn clear(&mut self, _cpu: impl Cpu) {
         self.numbers.clear();
+        self.bigints.clear();
         self.strings.clear();
         self.templates.clear();
         self.atoms.clear();
