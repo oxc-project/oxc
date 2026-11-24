@@ -39,6 +39,7 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
     match task {
         "parser" => app_args.run_parser(&load()),
+        "unambiguous" => app_args.run_unambiguous(&load()),
         "lexer" => app_args.run_lexer(&load()),
         "semantic" => app_args.run_semantic(&load()),
         "codegen" => app_args.run_codegen(&load()),
