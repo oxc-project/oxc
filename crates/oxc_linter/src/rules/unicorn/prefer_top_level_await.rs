@@ -90,9 +90,6 @@ impl Rule for PreferTopLevelAwait {
             return;
         }
 
-        let parent = ctx.nodes().parent_node(node.id());
-        let grand_parent = ctx.nodes().parent_node(parent.id());
-
         if matches!(
             iter_outer_expressions(ctx.nodes(), node.id())
                 .find(|kind| !matches!(kind, AstKind::ChainExpression(_))),
@@ -100,6 +97,9 @@ impl Rule for PreferTopLevelAwait {
         ) {
             return;
         }
+
+        let parent = ctx.nodes().parent_node(node.id());
+        let grand_parent = ctx.nodes().parent_node(parent.id());
 
         if let AstKind::StaticMemberExpression(member_expr) = parent.kind()
             && member_expr.object.span() == call_expr.span
