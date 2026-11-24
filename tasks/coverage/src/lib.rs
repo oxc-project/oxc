@@ -8,8 +8,13 @@ mod babel;
 mod test262;
 mod typescript;
 
+mod full_eq;
 mod tools;
 mod unambiguous_diff;
+
+mod generated {
+    mod derive_full_eq;
+}
 
 // `oxc_lexer` only supports little endian at present
 #[cfg(target_endian = "little")]
