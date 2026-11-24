@@ -17,6 +17,10 @@ use crate::pipeline::keywords::{is_kw_init, is_kw_init_ts};
 ///
 /// Dot is the top bit, so a movemask extracts it without a compare.
 ///
+/// AVX2 detects operator chars with a signed `> KWINIT_MASK`, then adds `.` from the dot bit.
+/// Neon detects them with an unsigned `> KWINIT_MASK`, which includes `.`.
+/// Both rely on bit 6 staying unused.
+///
 /// Each bit covers only one row of 16 bytes which share a high nibble.
 /// `hi[h]` sets the bits whose row is `h`, and `lo[l]` sets a bit if byte `(h << 4) | l`
 /// is in its class, so the AND is exact. A class spanning several rows needs a bit per row
@@ -37,6 +41,9 @@ pub(super) struct MergedLuts {
 /// Bits of a [`MERGED_LUTS`] lookup which are set if a byte can start a keyword.
 pub(super) const KWINIT_MASK: u8 = 0b_0000_0011;
 /// Bits of a [`MERGED_LUTS`] lookup which are set if a byte is an operator char.
+///
+/// Only used in tests. AVX2 and Neon both compare against [`KWINIT_MASK`] instead.
+#[cfg(test)]
 pub(super) const OPCH_MASK: u8 = 0b_0011_1100;
 /// Bit of a [`MERGED_LUTS`] lookup which is set if a byte is `.`.
 pub(super) const DOT_MASK: u8 = 0b_1000_0000;

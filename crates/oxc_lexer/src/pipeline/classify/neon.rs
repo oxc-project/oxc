@@ -5,8 +5,7 @@ use crate::{pipeline::chunk::mm64, token::tk};
 use super::{
     Planes,
     luts::{
-        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, VT_FF_MASK, WORD_LUTS,
-        WORD_MASK, WS_MASK,
+        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, VT_FF_MASK, WORD_LUTS, WORD_MASK, WS_MASK,
     },
     mask_tail,
     punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
@@ -122,7 +121,8 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
         digit,
         dot: t.test_u8(DOT_MASK),
         kwinit: t.test_u8(KWINIT_MASK),
-        opch: t.test_u8(OPCH_MASK),
+        // Any set bit above the keyword-start bits implies an operator char
+        opch: t.gt_u8(KWINIT_MASK),
         misc,
         kind,
     }
