@@ -237,6 +237,14 @@ fn test() {
         "async function foo() { do { } while (await bar); }",
         // Deep in a loop body
         "async function foo() { while (true) { if (bar) { foo(await bar); } } }",
+        // Deep in a loop condition
+        "async function foo() { while (xyz || 5 > await x) {  } }",
+        // In a nested loop of for-await-of
+        "async function foo() { for await (var x of xs) { while (1) await f(x) } }",
+        // `await using` declarations
+        "while (true) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "for (;;) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "for (await using resource of resources) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
         // Unbraced `if`/`switch`/`try` loop bodies are still loop bodies
         "async function foo() { for (var bar of baz) if (bar) await bar; }",
         "async function foo() { for (var bar of baz) if (bar) { await bar; } }",
@@ -246,16 +254,8 @@ fn test() {
         "async function foo() { while (baz) if (baz) await bar; }",
         "async function foo() { for (var bar in baz) if (bar) await bar; }",
         "async function foo() { for (;;) if (baz) await bar; }",
-        // Deep in a loop condition
-        "async function foo() { while (xyz || 5 > await x) {  } }",
-        // In a nested loop of for-await-of
-        "async function foo() { for await (var x of xs) { while (1) await f(x) } }",
         // `await` in a loop condition wrapped in a TypeScript cast
         "async function foo() { while (await bar as boolean) {} }",
-        // `await using` declarations
-        "while (true) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
-        "for (;;) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
-        "for (await using resource of resources) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
     ];
 
     Tester::new(NoAwaitInLoop::NAME, NoAwaitInLoop::PLUGIN, pass, fail).test_and_snapshot();

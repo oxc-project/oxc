@@ -87,6 +87,41 @@ source: crates/oxc_linter/src/tester.rs
   help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:42]
+ 1 │ async function foo() { while (xyz || 5 > await x) {  } }
+   ·                                          ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:60]
+ 1 │ async function foo() { for await (var x of xs) { while (1) await f(x) } }
+   ·                                                            ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:16]
+ 1 │ while (true) { await using resource = getResource(); }
+   ·                ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:12]
+ 1 │ for (;;) { await using resource = getResource(); }
+   ·            ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:6]
+ 1 │ for (await using resource of resources) {}
+   ·      ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:54]
  1 │ async function foo() { for (var bar of baz) if (bar) await bar; }
    ·                                                      ─────
@@ -143,43 +178,8 @@ source: crates/oxc_linter/src/tester.rs
   help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
-   ╭─[no_await_in_loop.tsx:1:42]
- 1 │ async function foo() { while (xyz || 5 > await x) {  } }
-   ·                                          ─────
-   ╰────
-  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
-
-  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
-   ╭─[no_await_in_loop.tsx:1:60]
- 1 │ async function foo() { for await (var x of xs) { while (1) await f(x) } }
-   ·                                                            ─────
-   ╰────
-  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
-
-  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:31]
  1 │ async function foo() { while (await bar as boolean) {} }
    ·                               ─────
-   ╰────
-  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
-
-  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
-   ╭─[no_await_in_loop.tsx:1:16]
- 1 │ while (true) { await using resource = getResource(); }
-   ·                ─────
-   ╰────
-  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
-
-  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
-   ╭─[no_await_in_loop.tsx:1:12]
- 1 │ for (;;) { await using resource = getResource(); }
-   ·            ─────
-   ╰────
-  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
-
-  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
-   ╭─[no_await_in_loop.tsx:1:6]
- 1 │ for (await using resource of resources) {}
-   ·      ─────
    ╰────
   help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
