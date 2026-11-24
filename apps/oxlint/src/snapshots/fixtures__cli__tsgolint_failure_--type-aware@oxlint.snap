@@ -5,7 +5,7 @@ source: apps/oxlint/src/tester.rs
 arguments: --type-aware
 working directory: fixtures/cli/tsgolint_failure
 ----------
-Error running tsgolint: "exit status: exit status: 1"
+Error running type-aware linter: "exit status: exit status: 1"
 ----------
 CLI result: TsGoLintError
 ----------
