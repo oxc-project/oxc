@@ -25,8 +25,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
         let decl = self.parse_class_declaration(start, modifiers, decorators);
+        // A class declaration is never allowed as the body of `if`/`for`/`while`/`with`/a label.
+        // Recovering would leave a class in a position that later passes (e.g. class lowering,
+        // which inserts statements next to the class) cannot handle, so this is a fatal error.
         if stmt_ctx.is_single_statement() {
-            self.error(diagnostics::class_declaration(Span::new(
+            self.set_fatal_error(diagnostics::class_declaration(Span::new(
                 decl.span.start,
                 decl.body.span.start,
             )));

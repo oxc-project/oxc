@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 148/148 (100.00%)
 Positive Passed: 148/148 (100.00%)
-Negative Passed: 289/289 (100.00%)
+Negative Passed: 296/296 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -404,6 +404,55 @@ Negative Passed: 289/289 (100.00%)
    ·               │        ╰── It can not be redeclared here
    ·               ╰── `e` has already been declared here
    ╰────
+
+  × Invalid class declaration
+   ╭─[misc/fail/class-declaration-if-alternate.js:1:16]
+ 1 │ if (x) {} else class U { static x = 1 }
+   ·                ────────
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[misc/fail/class-declaration-if-consequent.js:1:11]
+ 1 │ if (true) class U { static x = 1 }
+   ·           ────────
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[misc/fail/class-declaration-if-decorated.js:1:8]
+ 1 │ if (x) @d class U { static x = 1 }
+   ·        ───────────
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[misc/fail/class-declaration-labelled-decorated.js:1:8]
+ 1 │ label: @d class U { static x = 1 }
+   ·        ───────────
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[misc/fail/class-declaration-labelled.js:1:8]
+ 1 │ label: class U { static x = 1 }
+   ·        ────────
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[misc/fail/class-declaration-nested-labelled.js:1:7]
+ 1 │ a: b: class U { static x = 1 }
+   ·       ────────
+   ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Invalid class declaration
+   ╭─[misc/fail/class-declaration-while.js:1:11]
+ 1 │ while (0) class U { static x = 1 }
+   ·           ────────
+   ╰────
+  help: Classes can only be declared at top level or inside a block
 
   × Expected `;` but found `,`
    ╭─[misc/fail/class-field-comma-expression.js:1:16]
