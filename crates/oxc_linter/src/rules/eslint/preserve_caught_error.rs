@@ -815,11 +815,8 @@ fn test() {
             r#"try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }"#,
             None,
         ),
-        (
-            r#"try { doSomething(); } catch ({ message }) { throw new Error(message, options); }"#,
-            None,
-        ),
-        (r#"try { doSomething(); } catch ({ message }) { throw new Error(...args); }"#, None),
+        ("try { doSomething(); } catch ({ message }) { throw new Error(message, options); }", None),
+        ("try { doSomething(); } catch ({ message }) { throw new Error(...args); }", None),
         (
             r#"try { doSomething(); } catch ([error]) { throw new Error("Something failed", { ...options }); }"#,
             None,
