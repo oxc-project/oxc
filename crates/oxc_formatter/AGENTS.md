@@ -23,6 +23,8 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, …) are `pub(crate)` and n
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
   - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
+- `format_source_with_session`: like `format_with_session`, but takes an `oxc_parser::Source` (`Source`-in) and parses it in place, without copying the source text
+  - returns the source text along with the result, because parsing consumes the `Source`
 - `format_to_ir`: Format a part of a document in another language as a dispatched child (a `<script>`'s or a Markdown code block's program, an `on*` attribute's value, Vue's `{{ }}` and directive values), returning IR for the parent's document
   - Parameterized by `JsRoot` and `JsEmbeddedIn`, see "js-in-xxx" below
 

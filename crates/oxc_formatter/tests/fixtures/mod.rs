@@ -6,6 +6,7 @@ use oxc_formatter::{
     Semicolons, TrailingCommas,
 };
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 struct JsHarness;
@@ -85,7 +86,8 @@ impl FixtureFormatter for JsHarness {
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
         let source_type = SourceType::from_path(path).unwrap();
         let allocator = Allocator::default();
-        let ret = oxc_formatter::parse_for_format(&allocator, source, source_type);
+        let source = Source::from_str(source, source_type, &allocator);
+        let ret = oxc_formatter::parse_for_format(source);
         // The `jsdoc` option owns JSDoc blocks: it rewrites them and drops empty ones,
         // so only the other comments are under the lossless contract there.
         let jsdoc_rewritten = options.jsdoc.is_some();

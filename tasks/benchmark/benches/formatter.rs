@@ -3,6 +3,7 @@ use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_formatter::{
     JsFormatOptions, JsdocOptions, SortImportsOptions, format_program, parse_for_format,
 };
+use oxc_parser::Source;
 use oxc_tasks_common::TestFiles;
 
 fn bench_formatter(criterion: &mut Criterion) {
@@ -18,7 +19,8 @@ fn bench_formatter(criterion: &mut Criterion) {
                 allocator.reset();
                 // Parse in setup so the benchmark isolates formatting from parsing.
                 // `parse_for_format` + `format_program` is the AST-in path for exactly this.
-                let program = parse_for_format(&allocator, source_text, source_type).program;
+                let source = Source::from_str(source_text, source_type, &allocator);
+                let program = parse_for_format(source).program;
                 let format_options = JsFormatOptions {
                     sort_imports: Some(SortImportsOptions::default()),
                     jsdoc: Some(JsdocOptions::default()),

@@ -348,7 +348,8 @@ pub fn run() -> Result<(), io::Error> {
         // Formatter runs on a freshly-parsed AST (not after transformer/minifier),
         // so re-parse with the formatter's parse options before formatting
         allocator.reset();
-        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
+        let source = Source::from_str(&file.source_text, file.source_type, &allocator);
+        let parsed = parse_for_format(source);
         assert!(parsed.diagnostics.is_empty());
         let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default())
             .print()
@@ -410,7 +411,8 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         HEAP.reset();
 
-        let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
+        let source = Source::from_str(&file.source_text, file.source_type, &allocator);
+        let parsed = parse_for_format(source);
         assert!(parsed.diagnostics.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {

@@ -24,6 +24,7 @@ use oxc_formatter::{
     format_program, parse_for_format,
 };
 use oxc_formatter_core::LineWidth;
+use oxc_parser::Source;
 use oxc_span::SourceType;
 use oxc_tasks_common::print_text_diff;
 
@@ -229,7 +230,8 @@ fn run_formatter(
     // Only a hard parser panic aborts.
     // This deliberately DIVERGES from production oxfmt,
     // whose fail-loud `format()` would report a diagnostic for these fixtures instead of formatting.
-    let ret = parse_for_format(&allocator, source_text, source_type);
+    let source = Source::from_str(source_text, source_type, &allocator);
+    let ret = parse_for_format(source);
     if ret.fatal_error {
         return None;
     }

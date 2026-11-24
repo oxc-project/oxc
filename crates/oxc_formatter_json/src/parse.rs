@@ -48,7 +48,7 @@ pub fn parse_json<'a>(
     // `preserve_parens: false` keeps the wrapping `ParenthesizedExpression` out of the AST.
     // The trailing `\n` before `)` prevents a closing paren
     // from being swallowed by a trailing line comment in `source`.
-    let wrapped_source: &'a str = allocator.alloc_concat_strs_array(["(", source, "\n)"]);
+    let wrapped = Source::from_strs(["(", source, "\n)"], SourceType::default(), allocator);
 
     // NOTE: We use `oxc_parser` which parses according to JavaScript rules, not JSON.
     // So the JS lexer rules apply uniformly regardless of `variant`.
@@ -59,7 +59,6 @@ pub fn parse_json<'a>(
         enable_ident_hashes: false, // the JSON formatter does not use `Ident` hashes
         ..ParseOptions::default()
     };
-    let wrapped = Source::from_str(wrapped_source, SourceType::default(), allocator);
     let ret = wrapped.parse_with_options(options);
 
     // If the wrapped parse fails,
@@ -108,7 +107,7 @@ pub fn parse_json<'a>(
     Ok(ParsedExpression {
         expression: Some(&expr_stmt.expression),
         comments,
-        wrapped_source,
+        wrapped_source: program.source_text,
         source_offset: 1,
     })
 }

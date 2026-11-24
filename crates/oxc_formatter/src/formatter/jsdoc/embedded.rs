@@ -1,11 +1,12 @@
 use oxc_formatter_core::{FormatSession, LineEnding, LineWidth};
+use oxc_parser::Source;
 use oxc_span::SourceType;
 
 use crate::options::TrailingCommas;
-use crate::{JsFormatOptions, format_with_session};
+use crate::{JsFormatOptions, format_source_with_session};
 
 /// Helper for:
-/// - Parse a snippet ([`format_with_session`]'s gate: any parse diagnostic rejects)
+/// - Parse a snippet ([`format_source_with_session`]'s gate: any parse diagnostic rejects)
 /// - and format it to a string with trailing whitespace trimmed
 ///
 /// Formats on the parent session (same arena; embeds inside the snippet
@@ -15,11 +16,10 @@ use crate::{JsFormatOptions, format_with_session};
 /// Panics if the formatted IR is invalid or unbalanced, indicating a formatter bug.
 fn parse_and_build<'a>(
     session: &FormatSession<'a>,
-    source_text: &'a str,
-    source_type: SourceType,
+    source: Source<'a>,
     options: JsFormatOptions,
 ) -> Option<String> {
-    let formatted = format_with_session(session, source_text, source_type, options).ok()?;
+    let formatted = format_source_with_session(session, source, options).result.ok()?;
     let mut code = formatted.print().unwrap().into_code();
     code.truncate(code.trim_end().len());
     Some(code)
@@ -131,7 +131,8 @@ pub(super) fn format_jsdoc_js_snippet(
 
     // Try to parse and format with the given source type
     let try_format = |code: &str, source_type: SourceType| {
-        parse_and_build(session, code, source_type, base_options.clone())
+        let source = Source::from_str(code, source_type, session.allocator());
+        parse_and_build(session, source, base_options.clone())
     };
 
     // If code starts with `{`, try expression wrapping FIRST to handle object
@@ -139,14 +140,14 @@ pub(super) fn format_jsdoc_js_snippet(
     // with labels. The upstream plugin uses `parser: "json"` for this case.
     let trimmed = code.trim();
     if trimmed.starts_with('{') {
-        let wrapped = session.allocator().alloc_concat_strs_array(["(", trimmed, ")"]);
         // Use TrailingCommas::None for object literals since JSON-like code
         // shouldn't have trailing commas
         let obj_options =
             JsFormatOptions { trailing_commas: TrailingCommas::None, ..base_options.clone() };
 
-        let try_format_obj = |code: &str, source_type: SourceType| -> Option<String> {
-            let formatted = parse_and_build(session, code, source_type, obj_options.clone())?;
+        let try_format_obj = |source_type: SourceType| -> Option<String> {
+            let wrapped = Source::from_strs(["(", trimmed, ")"], source_type, session.allocator());
+            let formatted = parse_and_build(session, wrapped, obj_options.clone())?;
             // Remove the wrapping parens and trailing semicolon
             if let Some(inner) = formatted.strip_prefix('(')
                 && let Some(inner) = inner.strip_suffix(");")
@@ -170,10 +171,10 @@ pub(super) fn format_jsdoc_js_snippet(
         // which preserves quoted keys; we don't have a JSON formatter.
         let has_quoted_keys = trimmed.contains('"') && trimmed.find('"') < trimmed.find('}');
         if !has_quoted_keys {
-            if let Some(result) = try_format_obj(wrapped, SourceType::jsx()) {
+            if let Some(result) = try_format_obj(SourceType::jsx()) {
                 return Some(result);
             }
-            if let Some(result) = try_format_obj(wrapped, SourceType::tsx()) {
+            if let Some(result) = try_format_obj(SourceType::tsx()) {
                 return Some(result);
             }
         }
@@ -246,9 +247,10 @@ pub(super) fn format_type_via_formatter(
     // Let the TS formatter handle quote conversion naturally, matching Prettier's
     // TS parser which uses the configured quote style (double by default).
     // No string literal protection needed — the formatter should convert quotes.
-    let input = session.allocator().alloc_concat_strs_array(["type __t = ", type_str, ";"]);
+    let allocator = session.allocator();
+    let input = Source::from_strs(["type __t = ", type_str, ";"], SourceType::tsx(), allocator);
 
-    let formatted = parse_and_build(session, input, SourceType::tsx(), type_options.clone())?;
+    let formatted = parse_and_build(session, input, type_options.clone())?;
 
     // Strip the `type __t = ` prefix (11 chars) using slice, matching upstream's
     // `pretty.slice(TYPE_START.length)` approach. This handles both same-line and

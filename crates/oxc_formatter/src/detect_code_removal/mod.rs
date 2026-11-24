@@ -2,7 +2,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, ast};
-use oxc_parser::ParserReturn;
+use oxc_parser::{ParserReturn, Source};
 use oxc_semantic::{AstNode, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
@@ -23,7 +23,8 @@ pub fn detect_code_removal(
 fn collect(code: &str, source_type: SourceType) -> StatsCollector {
     // Parse the way the formatter does (so the before/after comparison matches the formatter's view).
     let allocator = Allocator::default();
-    let ParserReturn { program, diagnostics, .. } = parse_for_format(&allocator, code, source_type);
+    let source = Source::from_str(code, source_type, &allocator);
+    let ParserReturn { program, diagnostics, .. } = parse_for_format(source);
 
     let mut collector = StatsCollector::default();
 
