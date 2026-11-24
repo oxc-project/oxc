@@ -62,8 +62,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
             // `left ** right`
             Expression::BinaryExpression(binary_expr) => {
                 if binary_expr.operator != BinaryOperator::Exponential
-                    || binary_expr.left.is_big_int_literal()
-                    || binary_expr.right.is_big_int_literal()
+                    || Self::is_bigint(&binary_expr.left, ctx)
+                    || Self::is_bigint(&binary_expr.right, ctx)
                 {
                     return;
                 }
@@ -73,7 +73,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
             // `left **= right`
             Expression::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator != AssignmentOperator::Exponential
-                    || assign_expr.right.is_big_int_literal()
+                    || Self::is_bigint(&assign_expr.right, ctx)
                 {
                     return;
                 }
@@ -108,6 +108,29 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
 }
 
 impl<'a> ExponentiationOperator<'a> {
+    /// Whether `expr` always evaluates to a BigInt (or throws).
+    ///
+    /// Recognizes BigInt literals and calls to the global `BigInt`. Other operands, such as
+    /// variables holding a BigInt, are only typed at runtime and are still lowered.
+    fn is_bigint(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match expr {
+            Expression::BigIntLiteral(_) => true,
+            Expression::CallExpression(call) => {
+                let Expression::Identifier(callee) = &call.callee else { return false };
+                let scoping = ctx.scoping();
+                // `BigInt` must not be a local binding or a reassigned global
+                callee.name == "BigInt"
+                    && scoping.get_reference(callee.reference_id()).symbol_id().is_none()
+                    && !scoping.root_unresolved_references().get(&callee.name).is_some_and(
+                        |reference_ids| {
+                            reference_ids.iter().any(|&id| scoping.get_reference(id).is_write())
+                        },
+                    )
+            }
+            _ => false,
+        }
+    }
+
     fn needs_parameter_scope(assignment: &AssignmentExpression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let in_parameters = ctx.ancestors().find_map(|ancestor| match ancestor {
             Ancestor::FormalParametersItems(_) | Ancestor::FormalParametersRest(_) => Some(true),
