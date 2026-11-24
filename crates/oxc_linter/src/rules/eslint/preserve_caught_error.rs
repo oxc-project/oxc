@@ -481,32 +481,6 @@ fn test() {
             None,
         ),
         (
-            r#"try {
-					return JSON.parse(text);
-				} catch (error) {
-					const options = { cause: error };
-					throw new Error("Invalid JSON", options);
-				}"#,
-            None,
-        ),
-        (
-            r#"try {
-					doSomething();
-				} catch (err) {
-					const options = { cause: other };
-					throw new Error("Something failed", options);
-				}"#,
-            None,
-        ),
-        (
-            r#"try {
-					doSomething();
-				} catch (err) {
-					throw new Error("Something failed", obj.options);
-				}"#,
-            None,
-        ),
-        (
             r#"try { doSomething(); } catch (err) { class Foo { static { throw new Error("Something went wrong"); } } }"#,
             None,
         ),
@@ -536,6 +510,32 @@ fn test() {
         ),
         (
             r#"try { doSomething(); } catch (error) { throw new URIError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try {
+					return JSON.parse(text);
+				} catch (error) {
+					const options = { cause: error };
+					throw new Error("Invalid JSON", options);
+				}"#,
+            None,
+        ),
+        (
+            r#"try {
+					doSomething();
+				} catch (err) {
+					const options = { cause: other };
+					throw new Error("Something failed", options);
+				}"#,
+            None,
+        ),
+        (
+            r#"try {
+					doSomething();
+				} catch (err) {
+					throw new Error("Something failed", obj.options);
+				}"#,
             None,
         ),
     ];
