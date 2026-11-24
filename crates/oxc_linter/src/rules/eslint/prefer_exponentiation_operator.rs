@@ -105,8 +105,7 @@ impl Rule for PreferExponentiationOperator {
                 && let Some(base) = call_expr.arguments[0].as_expression()
                 && let Some(exponent) = call_expr.arguments[1].as_expression()
             {
-                let base_needs_parens = does_base_need_parens(base);
-                let base_text = if base_needs_parens {
+                let base_text = if does_base_need_parens(base) {
                     format!("({})", base.span().source_text(ctx.source_text()))
                 } else {
                     base.span().source_text(ctx.source_text()).to_string()
@@ -117,14 +116,17 @@ impl Rule for PreferExponentiationOperator {
                 let replacement = format!("{base_text} ** {exponent_text}");
 
                 // Check if we need to wrap the entire expression in parentheses based on parent context
-                let mut needs_parens = needs_parens_for_parent(node, ctx);
-                if !needs_parens
-                    && !base_needs_parens
-                    && starts_with_block_or_declaration_token(&base_text)
-                    && is_at_start_of_statement_expression(node, ctx)
-                {
-                    needs_parens = true;
-                }
+                let needs_parens = needs_parens_for_parent(node, ctx)
+                    || match replacement_position(node, ctx) {
+                        Some(ReplacementPosition::StatementStart) => {
+                            base_text.starts_with('{') || starts_with_function_or_class(&base_text)
+                        }
+                        Some(ReplacementPosition::ArrowBody) => base_text.starts_with('{'),
+                        Some(ReplacementPosition::ExportDefault) => {
+                            starts_with_function_or_class(&base_text)
+                        }
+                        None => false,
+                    };
 
                 let mut replacement =
                     if needs_parens { format!("({replacement})") } else { replacement };
@@ -177,36 +179,57 @@ fn get_exponent_text(source_text: &str, expr: &Expression) -> String {
     }
 }
 
-/// Returns `true` if the source text starts with a token that cannot begin an
-/// expression statement or a concise arrow body: `{` would be parsed as a block,
-/// and `function`, `class`, and `async function` as declarations.
-/// <https://github.com/eslint/eslint/issues/20987>
-fn starts_with_block_or_declaration_token(text: &str) -> bool {
+/// Grammar positions where the replacement's leading token determines how the
+/// surrounding code is parsed.
+#[derive(Debug, Clone, Copy)]
+enum ReplacementPosition {
+    /// The replacement begins an expression statement.
+    StatementStart,
+    /// The replacement begins the concise body of an arrow function.
+    ArrowBody,
+    /// The replacement begins the expression after `export default`.
+    ExportDefault,
+}
+
+/// Walks up the ancestors that begin at the same offset as `node` (the same
+/// walk as ESLint's `isStartOfExpressionStatement`) to find the grammar
+/// position that the replacement will begin.
+fn replacement_position(node: &AstNode, ctx: &LintContext) -> Option<ReplacementPosition> {
+    let start = node.span().start;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        if ancestor.span().start != start {
+            return match ancestor.kind() {
+                AstKind::ArrowFunctionExpression(arrow)
+                    if arrow.is_expression() && arrow.body.span().start == start =>
+                {
+                    Some(ReplacementPosition::ArrowBody)
+                }
+                AstKind::ExportDefaultDeclaration(decl)
+                    if decl.declaration.span().start == start =>
+                {
+                    Some(ReplacementPosition::ExportDefault)
+                }
+                _ => None,
+            };
+        }
+        if matches!(ancestor.kind(), AstKind::ExpressionStatement(_)) {
+            return Some(ReplacementPosition::StatementStart);
+        }
+    }
+    None
+}
+
+/// Returns `true` if `text` starts with a `function`, `class`, or
+/// `async function` expression.
+fn starts_with_function_or_class(text: &str) -> bool {
     fn keyword(text: &str, keyword: &str) -> bool {
         text.starts_with(keyword)
             && !text[keyword.len()..]
                 .starts_with(|c: char| c.is_alphanumeric() || matches!(c, '_' | '$'))
     }
-    text.starts_with('{')
-        || keyword(text, "function")
+    keyword(text, "function")
         || keyword(text, "class")
         || (keyword(text, "async") && keyword(text["async".len()..].trim_start(), "function"))
-}
-
-/// Returns `true` if the node sits at the start of an enclosing expression statement
-/// or of a concise arrow function body.
-fn is_at_start_of_statement_expression(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let start = node.span().start;
-    for ancestor in ctx.nodes().ancestors(node.id()) {
-        match ancestor.kind() {
-            AstKind::ExpressionStatement(stmt) => return stmt.span.start == start,
-            AstKind::ArrowFunctionExpression(arrow) if arrow.is_expression() => {
-                return arrow.body.span().start == start;
-            }
-            _ => {}
-        }
-    }
-    false
 }
 
 fn needs_parens_for_parent(node: &AstNode, ctx: &LintContext) -> bool {
@@ -370,6 +393,21 @@ fn test() {
         ("Math.pow(class {}, 2)", "(class {} ** 2)"),
         ("const x = Math.pow({ a: 1 }.a, 2)", "const x = { a: 1 }.a ** 2"),
         ("foo(Math.pow({ a: 1 }.a, 2))", "foo({ a: 1 }.a ** 2)"),
+        ("const i = () => Math.pow({}.a, 2) + 1", "const i = () => ({}.a ** 2) + 1"),
+        (
+            "const g = () => Math.pow(function () {}.length, 2)",
+            "const g = () => function () {}.length ** 2",
+        ),
+        (
+            "export default Math.pow(function () {}.length, 2)",
+            "export default (function () {}.length ** 2)",
+        ),
+        ("export default Math.pow(class {}.x, 2)", "export default (class {}.x ** 2)"),
+        (
+            "export default Math.pow(async function () {}.length, 2)",
+            "export default (async function () {}.length ** 2)",
+        ),
+        ("export default Math.pow({}.a, 2)", "export default {}.a ** 2"),
     ];
 
     Tester::new(
