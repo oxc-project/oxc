@@ -219,7 +219,6 @@ fn test() {
         "while (true) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
         "for (;;) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
         "for (await using resource of resources) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
-        // Unbraced `if`/`switch`/`try` loop bodies are still loop bodies
         "async function foo() { for (var bar of baz) if (bar) await bar; }",
         "async function foo() { for (var bar of baz) if (bar) { await bar; } }",
         "async function foo() { for (var bar of baz) if (bar) foo(); else await bar; }",
