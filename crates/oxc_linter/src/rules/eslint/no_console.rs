@@ -149,16 +149,26 @@ fn remove_console<'c, 'a: 'c>(
 ) -> RuleFix {
     let mut node_to_delete = node;
     for parent in ctx.nodes().ancestors(node.id()) {
+        let is_statement = matches!(node_to_delete.kind(), AstKind::ExpressionStatement(_));
         match parent.kind() {
             AstKind::ParenthesizedExpression(_)
             | AstKind::ExpressionStatement(_)
             => node_to_delete = parent,
+            // A statement that is the body of another statement can't be deleted,
+            // e.g. `if (foo) console.log(foo)`. Only applies to a body, not to a test such as
+            // `if (console.log(foo))`, where `{}` would turn a falsy value into a truthy one.
             AstKind::IfStatement(_)
             | AstKind::WhileStatement(_)
+            | AstKind::DoWhileStatement(_)
             | AstKind::ForStatement(_)
             | AstKind::ForInStatement(_)
             | AstKind::ForOfStatement(_)
-            | AstKind::ArrowFunctionExpression(_) => {
+            | AstKind::LabeledStatement(_)
+            | AstKind::WithStatement(_) if is_statement => {
+                return fixer.replace(node_to_delete.span(), "{}")
+            }
+            // An arrow function's expression body: `() => console.log(foo)`
+            AstKind::ArrowFunctionExpression(_) => {
                 return fixer.replace(node_to_delete.span(), "{}")
             }
             // Arrow function AST nodes do not say whether they have brackets or
@@ -180,7 +190,12 @@ fn remove_console<'c, 'a: 'c>(
             _ => break,
         }
     }
-    fixer.delete(node_to_delete)
+    if matches!(node_to_delete.kind(), AstKind::ExpressionStatement(_)) {
+        return fixer.delete(node_to_delete);
+    }
+    // The call's value is used, e.g. `foo && console.log(foo)` or `if (console.log(foo))`:
+    // deleting it would leave invalid code, and `undefined` keeps the value it evaluates to.
+    fixer.replace(node_to_delete.span(), "undefined").dangerously()
 }
 
 #[test]
@@ -277,6 +292,17 @@ fn test() {
         ("(console.log(foo), 5)", "(undefined, 5)", None),
         ("(5, console.log(foo))", "(5, undefined)", None),
         ("const x = { foo: console.log(bar) }", "const x = { foo: undefined }", None),
+        // the call is a condition: `{}` would make it truthy
+        ("if (console.log(foo)) { bar() }", "if (undefined) { bar() }", None),
+        ("while (console.log(foo)) { bar() }", "while (undefined) { bar() }", None),
+        // the call's value is used inside a larger expression
+        ("foo && console.log(foo);", "foo && undefined;", None),
+        ("const x = foo || console.log(foo);", "const x = foo || undefined;", None),
+        ("const f = (x = console.log(foo)) => x;", "const f = (x = undefined) => x;", None),
+        ("bar(console.log(foo));", "bar(undefined);", None),
+        // the statement is the body of another statement
+        ("do console.log(foo); while (bar)", "do {} while (bar)", None),
+        ("label: console.log(foo);", "label: {}", None),
     ];
 
     Tester::new(NoConsole::NAME, NoConsole::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
