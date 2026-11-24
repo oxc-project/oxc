@@ -499,6 +499,9 @@ fn test() {
         ),
         // https://github.com/oxc-project/oxc/issues/29844
         (r#"import { Thing } from "./issue-29844/index.js"; Thing.hello();"#, None),
+        // Local `import * as X` plus `export * from` that re-exports the same name
+        // must not treat the exported name as a namespace (removed import_entries fallback).
+        (r#"import { Thing } from "./issue-29844-export-star/index.js"; Thing.hello();"#, None),
     ];
 
     let fail = vec![
