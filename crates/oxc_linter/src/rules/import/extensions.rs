@@ -505,7 +505,7 @@ declare_oxc_lint!(
     Extensions,
     import,
     restriction,
-    fix_conditional,
+    conditional_suggestion,
     config = MixedTupleRuleConfig<ExtensionRule, ImportExtensionsObject>,
     version = "1.2.0",
     short_description = "Enforce consistent use of file extensions in import paths.",
@@ -547,10 +547,7 @@ impl Rule for Extensions {
                 && let Some(source) = s.value.as_str()
             {
                 self.process_import(
-                    ctx,
-                    source,
-                    s.span,
-                    false, // require() is never a type import
+                    ctx, source, s.span, false, // require() is never a type import
                     true,  // treat require as import for diagnostics
                 );
             }
@@ -578,6 +575,7 @@ impl Extensions {
     fn validate_extension(
         &self,
         ctx: &LintContext,
+        module_name: &str,
         resolved_extension: Option<&str>,
         written_extension: Option<&str>,
         span: Span,
@@ -652,7 +650,11 @@ impl Extensions {
                     if extension_is_confirmed
                         && let Some(ext_span) = written_extension_span(ctx, span)
                     {
-                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        // A suggestion, not a fix: dropping the extension can change which file
+                        // is resolved (`./bar.json` -> `./bar` picks up `bar.js`), and
+                        // extensionless specifiers don't resolve at all under Node ESM or
+                        // against an exact `exports` key.
+                        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                             fixer.delete_range(ext_span).with_message("Remove the file extension.")
                         });
                     } else {
@@ -660,15 +662,14 @@ impl Extensions {
                     }
                 } else {
                     let diagnostic = extension_missing_diagnostic(span, is_import);
-                    // The extension we add is taken from the module's resolved on-disk path, so
-                    // the rewritten specifier points at the exact file the import already
-                    // resolves to — a safe fix. When the module isn't resolved we don't know
-                    // which extension to add, so we emit a plain diagnostic.
-                    if let Some(resolved) = resolved_extension
-                        && let Some(insert_pos) = closing_quote_index(ctx, span)
+                    // Only offered when appending the resolved file's extension yields exactly
+                    // that file's path (see `extension_to_append`). Still a suggestion, since the
+                    // resolver's view of the filesystem may differ from the runtime's.
+                    if let Some(insert_pos) = closing_quote_index(ctx, span)
+                        && let Some(ext) = extension_to_append(ctx, module_name)
                     {
-                        let insertion = format!(".{resolved}");
-                        ctx.diagnostic_with_fix(diagnostic, move |fixer| {
+                        let insertion = format!(".{ext}");
+                        ctx.diagnostic_with_suggestion(diagnostic, move |fixer| {
                             fixer
                                 .insert_text_before_range(Span::empty(insert_pos), insertion)
                                 .with_message("Add the file extension.")
@@ -753,6 +754,7 @@ impl Extensions {
 
         self.validate_extension(
             ctx,
+            module_name,
             resolved_extension.as_deref(),
             written_extension.as_deref(),
             span,
@@ -886,6 +888,11 @@ fn written_extension_span(ctx: &LintContext, specifier_span: Span) -> Option<Spa
     // Strip the surrounding quotes (single, double, or backtick). Bail if it isn't quoted as
     // expected (defensive; specifier literals always are).
     let inner = raw.get(1..raw.len().checked_sub(1)?)?;
+    // Escape sequences make raw offsets diverge from the decoded value the rule reasoned about
+    // (`"./a.b\x2ejs"` decodes to `./a.b.js`), so don't guess.
+    if inner.contains('\\') {
+        return None;
+    }
     let inner_start = specifier_span.start + 1;
 
     // The extension lives before any query/hash suffix.
@@ -920,6 +927,31 @@ fn closing_quote_index(ctx: &LintContext, specifier_span: Span) -> Option<u32> {
         return None;
     }
     Some(specifier_span.end - 1)
+}
+
+/// The extension to append to `module_name` for the "add extension" fix, in the casing it has
+/// on disk.
+///
+/// Returns `Some` only for relative or absolute specifiers whose last segment, plus the resolved
+/// file's extension, is exactly the resolved file name. Anything else resolved through some
+/// indirection, and appending the extension would point at a file that doesn't exist:
+/// - directory imports (`./constants` -> `constants/index.js`, `.`)
+/// - package imports (`pkg`, `@org/pkg`, `pkg/sub`) resolved via `main` / `exports`
+/// - path aliases (`@/foo`, `~/foo`, tsconfig `paths`)
+fn extension_to_append(ctx: &LintContext, module_name: &str) -> Option<String> {
+    if !module_name.starts_with(['.', '/']) {
+        return None;
+    }
+    let written_name = module_name.rsplit('/').next()?;
+    if matches!(written_name, "" | "." | "..") {
+        return None;
+    }
+    let loaded_module = ctx.module_record().get_loaded_module(module_name)?;
+    let path = &loaded_module.resolved_absolute_path;
+    let ext = path.extension()?.to_str()?;
+    let resolved_name = path.file_name()?.to_str()?;
+    let resolved_stem = resolved_name.strip_suffix(ext)?.strip_suffix('.')?;
+    (resolved_stem == written_name).then(|| ext.to_string())
 }
 
 /// Get the actual file extension from the resolved module path.
@@ -2013,6 +2045,13 @@ fn test() {
             Some(json!(["never"])),
         ),
         (r"import i from './icon.svg';", r"import i from './icon.svg';", Some(json!(["never"]))),
+        // Escape sequences: raw offsets don't match the decoded `./a.b.js`, so no fix is offered
+        // rather than cutting the wrong span.
+        (
+            r#"import x from "./a.b\x2ejs";"#,
+            r#"import x from "./a.b\x2ejs";"#,
+            Some(json!(["never"])),
+        ),
         (
             r"import s from './styles.css';",
             r"import s from './styles';",
@@ -2035,8 +2074,8 @@ fn test_add_extension_fix() {
     use crate::tester::Tester;
     use serde_json::json;
 
-    // "always" / add-extension fixes. These are suggestions built from the resolved on-disk
-    // extension, so they require cross-module resolution — enabled via `with_import_plugin(true)`.
+    // "always" / add-extension suggestions. They are built from the resolved on-disk path, so
+    // they require cross-module resolution — enabled via `with_import_plugin(true)`.
     // The bare specifiers below resolve against real fixtures in `fixtures/import/`.
     let fix = vec![
         // `./typescript` resolves to `typescript.ts` → add `.ts`.
@@ -2060,6 +2099,54 @@ fn test_add_extension_fix() {
             r#"import a from "./foo";"#,
             r#"import a from "./foo.js";"#,
             Some(json!(["ignorePackages"])),
+        ),
+        // require() targets aren't in the module graph, so nothing is resolved to take the
+        // extension from: report only.
+        (
+            r#"const a = require("./foo");"#,
+            r#"const a = require("./foo");"#,
+            Some(json!(["always"])),
+        ),
+        // Dots in the file name are kept; only the resolved extension is appended.
+        (
+            r#"import a from "./file.with.dot";"#,
+            r#"import a from "./file.with.dot.js";"#,
+            Some(json!(["always"])),
+        ),
+        // The file name's casing is matched exactly.
+        (
+            r#"import a from "./CaseyKasem";"#,
+            r#"import a from "./CaseyKasem.js";"#,
+            Some(json!(["always"])),
+        ),
+        // Directory imports resolve to `<dir>/index.*`; appending the extension would point at
+        // a non-existent file, so no fix is offered.
+        (
+            r#"import a from "./constants";"#,
+            r#"import a from "./constants";"#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"import a from "./typescript-export-default";"#,
+            r#"import a from "./typescript-export-default";"#,
+            Some(json!(["always"])),
+        ),
+        (r#"import a from ".";"#, r#"import a from ".";"#, Some(json!(["always"]))),
+        // Packages resolve via `main` / `exports`; no fix is offered.
+        (
+            r#"import a from "esm-package";"#,
+            r#"import a from "esm-package";"#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"import a from "@org/package";"#,
+            r#"import a from "@org/package";"#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"import a from "esm-package/esm-module";"#,
+            r#"import a from "esm-package/esm-module";"#,
+            Some(json!(["always"])),
         ),
     ];
 
