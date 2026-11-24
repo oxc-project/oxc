@@ -162,6 +162,12 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub(super) fn checkpoint(&self) -> TriviaCheckpoint {
+        // Checkpoint does not store `processed`, as it's always the same as `comments.len()`.
+        // Checkpoints are only created between tokens.
+        // Once a token is finished, all comments before it have been attached,
+        // and attaching comments sets `processed` to `comments.len()`.
+        debug_assert_eq!(self.processed, self.comments.len());
+
         TriviaCheckpoint {
             comments_len: self.comments.len(),
             irregular_whitespaces_len: self.irregular_whitespaces.len(),
