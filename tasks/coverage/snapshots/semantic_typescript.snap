@@ -28543,11 +28543,11 @@ rebuilt        : ["dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.10.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_defineProperty", "dec", "f"]
-rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_defineProperty"]
+after transform: ScopeId(0): ["_decorate", "_decorateMetadata", "_defineProperty", "_setFunctionName", "_toPropertyKey", "dec", "f"]
+rebuilt        : ScopeId(0): ["_decorate", "_decorateMetadata", "_defineProperty", "_setFunctionName", "_toPropertyKey"]
 Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(21): [ReferenceId(40), ReferenceId(45), ReferenceId(50), ReferenceId(55), ReferenceId(60), ReferenceId(69), ReferenceId(74), ReferenceId(78)]
-rebuilt        : SymbolId(1): [ReferenceId(62)]
+after transform: SymbolId(28): [ReferenceId(43), ReferenceId(48), ReferenceId(53), ReferenceId(58), ReferenceId(63), ReferenceId(75), ReferenceId(80), ReferenceId(84)]
+rebuilt        : SymbolId(3): [ReferenceId(70)]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -28591,8 +28591,8 @@ Unresolved references mismatch:
 after transform: ["Object", "require"]
 rebuilt        : ["Object", "dec", "f", "require"]
 Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(39), ReferenceId(44), ReferenceId(49), ReferenceId(54), ReferenceId(59), ReferenceId(68), ReferenceId(73), ReferenceId(77)]
-rebuilt        : [ReferenceId(63)]
+after transform: [ReferenceId(42), ReferenceId(47), ReferenceId(52), ReferenceId(57), ReferenceId(62), ReferenceId(74), ReferenceId(79), ReferenceId(83)]
+rebuilt        : [ReferenceId(71)]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.11.ts
 Bindings mismatch:

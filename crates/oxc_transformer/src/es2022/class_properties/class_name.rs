@@ -307,12 +307,13 @@ impl<'a> ClassProperties<'a> {
                     && ctx.scoping().get_binding(func.scope_id(), Ident::from(ident_name)).is_none()
                     && Self::can_bind_name(func.scope_id(), ident_name, ctx)
                 {
-                    // `function x() {}`
-                    let binding = ctx.generate_binding(
-                        Ident::from(ident_name),
-                        func.scope_id(),
-                        SymbolFlags::Function | SymbolFlags::FunctionExpression,
-                    );
+                    // `function x() {}`. Flags match what semantic gives a function expression name.
+                    let mut flags = SymbolFlags::Function | SymbolFlags::FunctionExpression;
+                    if func.r#async || func.generator {
+                        flags |= SymbolFlags::AsyncOrGeneratorFunction;
+                    }
+                    let binding =
+                        ctx.generate_binding(Ident::from(ident_name), func.scope_id(), flags);
                     func.id = Some(binding.create_binding_identifier(ctx));
                     return value;
                 }
