@@ -1662,7 +1662,7 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 }
 
-/// `{x}` in `const {x} = 1;`.
+/// `{x}` in `const {x} = obj;`.
 ///
 /// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
@@ -1698,7 +1698,7 @@ pub struct BindingProperty<'a> {
     pub shorthand: bool,
 }
 
-/// `[x]` in `const [x] = 1;`
+/// `[x]` in `const [x] = arr;`.
 ///
 /// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
