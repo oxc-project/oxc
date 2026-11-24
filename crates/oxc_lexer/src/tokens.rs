@@ -37,8 +37,14 @@ impl Tokens {
         &self.lanes.diags
     }
 
+    /// Values of the Number tokens, in token order.
     pub fn numbers(&self) -> &[f64] {
         &self.lanes.numbers
+    }
+
+    /// BigInt values in token order, as decimal digits in the cooked bytes without `_` or `n`.
+    pub fn bigints(&self) -> &[StringSpan] {
+        &self.lanes.bigints
     }
 
     pub fn strings(&self) -> &[StringSpan] {
