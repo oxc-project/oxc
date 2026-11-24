@@ -23,6 +23,17 @@ use crate::{
 
 use super::TypeScript;
 
+/// What happens to a property declaration when its initializer moves out of the class body.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Declaration {
+    /// The declaration is removed, along with its key.
+    Remove,
+    /// The declaration stays, and the class still evaluates its key.
+    Keep,
+    /// The declaration stays as a `declare` field with a copy of its key, for legacy decorators.
+    Placeholder,
+}
+
 impl<'a> TypeScript<'a> {
     /// Transform class fields, and constructor parameters that includes modifiers into `this` assignments.
     ///
@@ -99,6 +110,9 @@ impl<'a> TypeScript<'a> {
     /// we don't need extra transformation for static properties, the output is the same as instance properties
     /// transformation, and the greatest advantage is we don't need to care about `this` usage in static block.
     ///
+    /// A decorated field whose declaration is removed stays as a `declare` field with a side-effect
+    /// free key until legacy decorators lower it: `@dec static [x()] = 1;` -> `@dec declare static [_x];`
+    ///
     /// Fields that `lowering` keeps for a downstream transform stay as written, and so do instance
     /// fields before [`ClassLowering::first_movable_instance_field`].
     pub(super) fn transform_class_fields(
@@ -123,10 +137,16 @@ impl<'a> TypeScript<'a> {
         // not the current traversal scope (which is the scope enclosing the class).
         let class_scope_id = class.scope_id();
 
-        let mut constructor = None;
+        let mut constructor_index = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
-        for (index, element) in class.body.body.iter_mut().enumerate() {
+        // A decorated static field gets its static block inserted after it, so `position` indexes
+        // the growing class body, and `index` is the element's index before any insertion.
+        let mut position = 0;
+        let mut inserted_blocks = 0;
+        while let Some(element) = class.body.body.get_mut(position) {
+            let index = position - inserted_blocks;
+            let mut block_after = None;
             let kept = lowering.keeps_field(element);
             match element {
                 // Skip static private properties — converting them to static blocks
@@ -137,30 +157,60 @@ impl<'a> TypeScript<'a> {
                         && (!prop.key.is_private_identifier()
                             || (!prop.r#static && will_hoist_initializers_to_constructor)) =>
                 {
+                    // Legacy decorators lower decorated fields on class exit. A decorated field
+                    // whose declaration is removed here stays until then as a `declare` field,
+                    // which `TypeScriptAnnotations::exit_class` removes after them.
+                    let decorated =
+                        !prop.decorators.is_empty() && !prop.key.is_private_identifier();
                     if let Some(value) = prop.value.take() {
                         // A static property is replaced by a static block below, and an instance
                         // property is removed later when `remove_class_fields_without_initializer`
                         // is `true`. Otherwise, the instance property declaration stays in the
                         // class body (without its initializer), so its key is still evaluated
                         // during class definition.
-                        let keep_declaration =
-                            !prop.r#static && !self.remove_class_fields_without_initializer;
+                        let declaration =
+                            if !prop.r#static && !self.remove_class_fields_without_initializer {
+                                Declaration::Keep
+                            } else if decorated {
+                                Declaration::Placeholder
+                            } else {
+                                Declaration::Remove
+                            };
                         let assignment = self.convert_property_definition(
                             &mut prop.key,
                             value,
-                            keep_declaration,
+                            declaration,
                             &mut computed_key_assignments,
                             ctx,
                         );
+                        prop.declare |= declaration == Declaration::Placeholder;
                         if prop.r#static {
                             // Convert static property to static block
                             // `class C { static x = 1; }` -> `class C { static { this.x = 1; } }`
                             // `class C { static [x] = 1; }` -> `let _x; class C { static { this[_x] = 1; } }`
                             let body = ArenaVec::from_value_in(assignment, ctx);
-                            *element = Self::create_class_static_block(body, class_scope_id, ctx);
+                            let block = Self::create_class_static_block(body, class_scope_id, ctx);
+                            if prop.declare {
+                                block_after = Some(block);
+                            } else {
+                                *element = block;
+                            }
                         } else {
                             property_assignments.push(assignment);
                         }
+                    } else if self.remove_class_fields_without_initializer && decorated {
+                        // `@dec [x()];` -> `@dec declare [_x];`, and `_x = x()` is evaluated in
+                        // order with the other moved keys.
+                        if !prop.declare
+                            && let Some(key) = prop.key.as_expression_mut()
+                            && key_needs_temp_var(key, ctx)
+                        {
+                            let (assignment, ident) =
+                                create_computed_key_temp_var(key.take_in(ctx), ctx);
+                            computed_key_assignments.push(assignment);
+                            *key = ident;
+                        }
+                        prop.declare = true;
                     } else if self.remove_class_fields_without_initializer
                         && let Some(key) = prop.key.as_expression_mut()
                     {
@@ -187,7 +237,7 @@ impl<'a> TypeScript<'a> {
                 }
                 ClassElement::MethodDefinition(method) => {
                     if method.kind == MethodDefinitionKind::Constructor {
-                        constructor = Some(&mut method.value);
+                        constructor_index = Some(position);
                     } else if method.key.is_computed() {
                         // A non-computed key (e.g. `"m"() {}`) has no side effects, and can't hold
                         // a sequence expression. Pending assignments go to the next computed key
@@ -214,7 +264,20 @@ impl<'a> TypeScript<'a> {
                 }
                 _ => (),
             }
+            if let Some(block) = block_after {
+                class.body.body.insert(position + 1, block);
+                position += 1;
+                inserted_blocks += 1;
+            }
+            position += 1;
         }
+        // Blocks are only inserted after the visited element, so `constructor_index` is still valid.
+        let constructor = constructor_index.map(|position| {
+            let ClassElement::MethodDefinition(method) = &mut class.body.body[position] else {
+                unreachable!()
+            };
+            &mut method.value
+        });
 
         let computed_key_assignment_static_block =
             (!computed_key_assignments.is_empty()).then(|| {
@@ -494,10 +557,13 @@ impl<'a> TypeScript<'a> {
     /// * Static key:
     ///   `class C { x = 1; }` -> `class C { constructor() { this.x = 1; } }`
     ///
-    /// When `keep_declaration` is `true`, the property declaration stays in the class body, so
-    /// its key is still evaluated during class definition. In that case the temp var is assigned
-    /// inside the key itself, so the key expression is evaluated exactly once and in source order:
+    /// With [`Declaration::Keep`], the property declaration stays in the class body, so its key is
+    /// still evaluated during class definition. In that case the temp var is assigned inside the
+    /// key itself, so the key expression is evaluated exactly once and in source order:
     ///   `class C { [x()] = 1; }` -> `let _x; class C { constructor() { this[_x] = 1; } [_x = x()]; }`
+    ///
+    /// With [`Declaration::Placeholder`], the key is evaluated like a removed one, and the
+    /// declaration keeps a copy: `[x()] = 1` -> `declare [_x];`
     ///
     /// Returns an assignment statement which would be inserted in the constructor body.
     #[expect(clippy::unused_self)]
@@ -505,10 +571,11 @@ impl<'a> TypeScript<'a> {
         &self,
         key: &mut PropertyKey<'a>,
         value: Expression<'a>,
-        keep_declaration: bool,
+        declaration: Declaration,
         computed_key_assignments: &mut Vec<Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
+        let keep_key = declaration != Declaration::Remove;
         let member = match key {
             PropertyKey::StaticIdentifier(ident) => {
                 create_this_property_access(SPAN, ident.name, ctx)
@@ -528,7 +595,7 @@ impl<'a> TypeScript<'a> {
             | PropertyKey::StaticNumericLiteral(_)
             | PropertyKey::StaticBigIntLiteral(_) => {
                 // `class C { 'x' = true; 123 = false; }`
-                let new_key = if keep_declaration {
+                let new_key = if keep_key {
                     // Keep the original key in the kept declaration, rather than leaving
                     // the `NullLiteral` dummy from `take_in`, which would create a `null` property.
                     // A literal key is side-effect free, so the copy can be used in the assignment.
@@ -550,18 +617,25 @@ impl<'a> TypeScript<'a> {
                 let new_key = if key_needs_temp_var(key, ctx) {
                     let taken_key = key.take_in(ctx);
                     let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);
-                    if keep_declaration {
+                    if declaration == Declaration::Keep {
                         // All computed keys are evaluated during class definition, before any
                         // static block runs, so assigning the temp var in a static block would
                         // leave it `undefined` when the kept declaration's key is evaluated.
                         // Assign it in the key instead: `[x()] = 1` -> `[_x = x()];`.
                         *key = assignment;
                         Self::prepend_computed_key_assignments(key, computed_key_assignments, ctx);
+                        ident
                     } else {
                         computed_key_assignments.push(assignment);
+                        if keep_key {
+                            let (key_copy, ident) = duplicate_expression(ident, false, ctx);
+                            *key = key_copy;
+                            ident
+                        } else {
+                            ident
+                        }
                     }
-                    ident
-                } else if keep_declaration {
+                } else if keep_key {
                     // Keep the original key in the kept declaration, rather than leaving
                     // the `NullLiteral` dummy from `take_in`, which would create a `null` property.
                     // The key is side-effect free here, so it can be duplicated without a temp var.

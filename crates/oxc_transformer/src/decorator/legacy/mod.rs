@@ -267,6 +267,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
             self.handle_decorated_class_element(
                 method.r#static,
                 &mut method.key,
+                true,
                 descriptor,
                 decorations,
                 ctx,
@@ -289,9 +290,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 
         // We emit `void 0` here to indicate to `_decorate` that it can invoke `Object.defineProperty` directly.
         let descriptor = Expression::new_void_0(SPAN, ctx);
+        // TypeScript turns a decorated field that it removes into a `declare` field keyed by a value
+        // reference or a literal, which the class doesn't evaluate. Other keys of user-written
+        // `declare` fields hold type references, so they keep the temp var.
+        let key_is_evaluated = !(prop.declare
+            && prop.key.as_expression().is_some_and(|key| match key {
+                Expression::Identifier(ident) => {
+                    ctx.scoping().get_reference(ident.reference_id()).flags().is_read()
+                }
+                key => key.is_literal(),
+            }));
         self.handle_decorated_class_element(
             prop.r#static,
             &mut prop.key,
+            key_is_evaluated,
             descriptor,
             decorations,
             ctx,
@@ -315,6 +327,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
         self.handle_decorated_class_element(
             accessor.r#static,
             &mut accessor.key,
+            true,
             descriptor,
             decorations,
             ctx,
@@ -360,6 +373,7 @@ impl<'a> LegacyDecorator<'a> {
         &mut self,
         is_static: bool,
         key: &mut PropertyKey<'a>,
+        key_is_evaluated: bool,
         descriptor: Expression<'a>,
         decorations: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -385,7 +399,7 @@ impl<'a> LegacyDecorator<'a> {
         });
 
         let prefix = Self::get_class_member_prefix(class_binding, is_static, ctx);
-        let name = self.get_name_of_property_key(key, ctx);
+        let name = self.get_name_of_property_key(key, key_is_evaluated, ctx);
         let decorator_stmt = self.create_decorator(decorations, prefix, name, descriptor, ctx);
 
         // Push to current decoration stack
@@ -1132,10 +1146,14 @@ impl<'a> LegacyDecorator<'a> {
     ///    * NullLiteral: `[null] = 0;` -> `null`
     ///  * Non-copiable key:
     ///    * `[a()] = 0;` mutates the key to `[_a = a()] = 0;` and returns `_a`
+    ///
+    /// When the class doesn't evaluate `key`, it's moved into the decoration instead:
+    /// `@dec declare [_x];` -> `_decorate([dec], C.prototype, _x, void 0)`.
     #[expect(clippy::unused_self)]
     fn get_name_of_property_key(
         &self,
         key: &mut PropertyKey<'a>,
+        key_is_evaluated: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         match key {
@@ -1161,6 +1179,9 @@ impl<'a> LegacyDecorator<'a> {
                 Expression::new_template_literal(SPAN, quasis, [], ctx)
             }
             PropertyKey::NullLiteral(_) => Expression::new_null_literal(SPAN, ctx),
+            key @ match_expression!(PropertyKey) if !key_is_evaluated => {
+                key.to_expression_mut().take_in(ctx)
+            }
             match_expression!(PropertyKey) => {
                 // ```ts
                 // Input:
