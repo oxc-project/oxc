@@ -2921,7 +2921,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_ts_enum_body(&decl.body);
         // Evaluate enum member values after all members are bound
         if self.enum_eval {
-            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+            let is_ambient = self.in_ambient_context();
+            crate::ts_enum::eval::evaluate_enum_members(decl, is_ambient, &mut self.scoping);
         }
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);
