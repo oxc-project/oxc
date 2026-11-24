@@ -2,7 +2,7 @@ use std::{
     borrow::Cow,
     collections::BTreeSet,
     ffi::OsStr,
-    io::{ErrorKind, Read, Write, stderr},
+    io::{BufReader, ErrorKind, Read, Write, stderr},
     iter, mem,
     path::{Path, PathBuf},
     process::Child,
@@ -471,11 +471,7 @@ impl Drop for TsGoLintRun {
 impl TsGoLintState {
     /// Spawn the tsgolint process with the given input.
     fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
-        let mut cmd = std::process::Command::new(&self.executable_path);
-        cmd.arg("headless")
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
-            .stderr(stderr());
+        let mut cmd = type_aware_command(&self.executable_path, "headless");
 
         if self.timings {
             cmd.args(["-debug", "timings"]);
@@ -579,77 +575,29 @@ impl TsGoLintState {
                     Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
                         match tsgolint_diagnostic {
                             TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
-                                let path = tsgolint_diagnostic.file_path.clone();
-                                let Some(resolved_config) = resolved_configs.get(&path) else {
-                                    // If we don't have a resolved config for this path, skip it. We should always
-                                    // have a resolved config though, since we processed them already above.
-                                    continue;
-                                };
-
-                                let severity =
-                                    resolved_config.rules.iter().find_map(|(rule, config)| {
-                                        if rule.is_tsgolint_rule()
-                                            && rule.name() == tsgolint_diagnostic.rule
-                                        {
-                                            Some(config.severity)
-                                        } else {
-                                            None
-                                        }
-                                    });
-                                let Some(severity) = severity else {
-                                    // If the severity is not found, we should not report the diagnostic
-                                    continue;
-                                };
-
-                                if should_skip_diagnostic(
-                                    &disable_directives_map
-                                        .lock()
-                                        .expect("disable_directives_map mutex poisoned"),
-                                    &path,
-                                    &tsgolint_diagnostic,
-                                ) {
-                                    continue;
-                                }
-
                                 // Use the corresponding source override text
-                                let Some(source_text_owned) = source_overrides
-                                    .get(&path.to_string_lossy().to_string())
-                                    .cloned()
-                                else {
+                                let Some(source_text) = source_overrides.get(
+                                    &tsgolint_diagnostic.file_path.to_string_lossy().to_string(),
+                                ) else {
                                     // should never happen, because we populated source_overrides above
                                     continue;
                                 };
-
-                                let mut message = Message::from_tsgo_lint_diagnostic(
-                                    tsgolint_diagnostic,
-                                    &source_text_owned,
+                                result.extend(
+                                    self.rule_diagnostic_to_message(
+                                        tsgolint_diagnostic,
+                                        &resolved_configs,
+                                        &disable_directives_map
+                                            .lock()
+                                            .expect("disable_directives_map mutex poisoned"),
+                                        source_text,
+                                    ),
                                 );
-
-                                if self.with_ignore_fixes {
-                                    message.add_ignore_fix(0, &source_text_owned);
-                                }
-
-                                message.error.severity = if severity == AllowWarnDeny::Deny {
-                                    Severity::Error
-                                } else {
-                                    Severity::Warning
-                                };
-
-                                result.push(message);
                             }
                             TsGoLintDiagnostic::Internal(e) => {
-                                let span = e
-                                    .file_path
-                                    .as_ref()
-                                    .is_some_and(|f| {
-                                        f.file_name().unwrap_or_default() == path_file_name
-                                    })
-                                    .then_some(e.span)
-                                    .flatten()
-                                    .unwrap_or_default();
-                                let mut diagnostic: OxcDiagnostic = e.into();
-                                diagnostic = diagnostic.with_label(span);
-                                result.push(Message::new(diagnostic, PossibleFixes::None));
+                                let attach_span = e.file_path.as_ref().is_some_and(|f| {
+                                    f.file_name().unwrap_or_default() == path_file_name
+                                });
+                                result.push(internal_diagnostic_to_message(e, attach_span));
                             }
                         }
                     }
@@ -667,6 +615,40 @@ impl TsGoLintState {
         let _ = child.wait();
 
         diagnostics
+    }
+
+    /// Converts a rule diagnostic into a [`Message`] with the severity configured for the rule.
+    ///
+    /// Returns `None` when the rule is not configured for the file, or a disable directive turns
+    /// the diagnostic off.
+    fn rule_diagnostic_to_message(
+        &self,
+        diagnostic: TsGoLintRuleDiagnostic,
+        resolved_configs: &FxHashMap<PathBuf, ResolvedLinterState>,
+        disable_directives_map: &FxHashMap<PathBuf, DisableDirectives>,
+        source_text: &str,
+    ) -> Option<Message> {
+        // We should always have a resolved config, since the request was built from them.
+        let resolved_config = resolved_configs.get(&diagnostic.file_path)?;
+        // If the severity is not found, we should not report the diagnostic
+        let severity = resolved_config.rules.iter().find_map(|(rule, config)| {
+            (rule.is_tsgolint_rule() && rule.name() == diagnostic.rule).then_some(config.severity)
+        })?;
+
+        if should_skip_diagnostic(disable_directives_map, &diagnostic.file_path, &diagnostic) {
+            return None;
+        }
+
+        let mut message = Message::from_tsgo_lint_diagnostic(diagnostic, source_text);
+
+        if self.with_ignore_fixes {
+            message.add_ignore_fix(0, source_text);
+        }
+
+        message.error.severity =
+            if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
+
+        Some(message)
     }
 
     /// Create a JSON input for STDIN of tsgolint in this format:
@@ -752,6 +734,26 @@ impl TsGoLintState {
             report_semantic: self.type_check,
         }
     }
+}
+
+/// Converts an internal diagnostic into a [`Message`]. Its span is kept only with `attach_span`,
+/// when it belongs to the file the message is reported for.
+fn internal_diagnostic_to_message(e: TsGoLintInternalDiagnostic, attach_span: bool) -> Message {
+    let span = if attach_span { e.span.unwrap_or_default() } else { Span::default() };
+    let mut diagnostic: OxcDiagnostic = e.into();
+    diagnostic = diagnostic.with_label(span);
+    Message::new(diagnostic, PossibleFixes::None)
+}
+
+/// The command that runs the type-aware linter executable in `mode`, talking
+/// over piped stdin and stdout, with its stderr shown as oxlint's.
+fn type_aware_command(executable_path: &Path, mode: &str) -> std::process::Command {
+    let mut cmd = std::process::Command::new(executable_path);
+    cmd.arg(mode)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(stderr());
+    cmd
 }
 
 /// Represents the input JSON to `tsgolint`, like:
@@ -1077,13 +1079,12 @@ impl TryFrom<u8> for MessageType {
 
 /// Iterator that streams messages from tsgolint stdout.
 struct TsGoLintMessageStream {
-    stdout: std::process::ChildStdout,
-    buffer: Vec<u8>,
+    reader: BufReader<std::process::ChildStdout>,
 }
 
 impl TsGoLintMessageStream {
     fn new(stdout: std::process::ChildStdout) -> TsGoLintMessageStream {
-        TsGoLintMessageStream { stdout, buffer: Vec::with_capacity(8192) }
+        TsGoLintMessageStream { reader: BufReader::with_capacity(8192, stdout) }
     }
 }
 
@@ -1091,45 +1092,20 @@ impl Iterator for TsGoLintMessageStream {
     type Item = Result<TsGoLintMessage, String>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut read_buf = [0u8; 8192];
-
-        loop {
-            // Try to parse a complete message from the existing buffer
-            let mut cursor = std::io::Cursor::new(self.buffer.as_slice());
-
-            if cursor.position() < self.buffer.len() as u64 {
-                match parse_single_message(&mut cursor) {
-                    Ok(message) => {
-                        // Successfully parsed a message, remove it from buffer
-                        #[expect(clippy::cast_possible_truncation)]
-                        self.buffer.drain(..cursor.position() as usize);
-                        return Some(Ok(message));
-                    }
-                    Err(TsGoLintMessageParseError::IncompleteData) => {}
-                    Err(e) => {
-                        return Some(Err(e.to_string()));
-                    }
-                }
+        match read_frame(&mut self.reader) {
+            Ok(Some((message_type, payload))) => {
+                Some(decode_message(message_type, &payload).map_err(|e| e.to_string()))
             }
-
-            // Read more data from stdout
-            match self.stdout.read(&mut read_buf) {
-                Ok(0) => {
-                    return None;
-                }
-                Ok(n) => {
-                    self.buffer.extend_from_slice(&read_buf[..n]);
-                }
-                Err(e) => {
-                    return Some(Err(format!("Failed to read from tsgolint stdout: {e}")));
-                }
-            }
+            // The output ends, between frames or in the middle of a truncated one.
+            Ok(None) => None,
+            Err(e) if e.kind() == ErrorKind::UnexpectedEof => None,
+            Err(e) => Some(Err(format!("Failed to read from tsgolint stdout: {e}"))),
         }
     }
 }
 
+#[expect(clippy::enum_variant_names, reason = "each variant is a kind of invalid frame")]
 enum TsGoLintMessageParseError {
-    IncompleteData,
     InvalidMessageType(InvalidMessageType),
     InvalidErrorPayload(serde_json::Error),
     InvalidDiagnosticPayload(serde_json::Error),
@@ -1139,7 +1115,6 @@ enum TsGoLintMessageParseError {
 impl std::fmt::Display for TsGoLintMessageParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TsGoLintMessageParseError::IncompleteData => write!(f, "Incomplete data"),
             TsGoLintMessageParseError::InvalidMessageType(e) => write!(f, "{e}"),
             TsGoLintMessageParseError::InvalidErrorPayload(e) => {
                 write!(f, "Failed to parse tsgolint error payload: {e}")
@@ -1386,31 +1361,38 @@ fn should_skip_diagnostic(
     }
 }
 
-/// Parses a single message from the binary tsgolint output.
-// Messages are encoded as follows:
-// | Payload Size (uint32 LE) - 4 bytes | Message Type (uint8) - 1 byte | Payload |
-fn parse_single_message(
-    cursor: &mut std::io::Cursor<&[u8]>,
+/// Reads one frame of the type-aware linter's binary protocol:
+///
+/// `| Payload Size (uint32 LE) - 4 bytes | Message Type (uint8) - 1 byte | Payload |`
+///
+/// Returns `None` when the input ends between frames, and an [`ErrorKind::UnexpectedEof`] error
+/// when it ends inside one.
+fn read_frame(reader: &mut impl Read) -> std::io::Result<Option<(u8, Vec<u8>)>> {
+    let mut header = [0u8; 5];
+    let mut filled = 0;
+    while filled < header.len() {
+        match reader.read(&mut header[filled..]) {
+            Ok(0) if filled == 0 => return Ok(None),
+            Ok(0) => return Err(ErrorKind::UnexpectedEof.into()),
+            Ok(n) => filled += n,
+            Err(e) if e.kind() == ErrorKind::Interrupted => {}
+            Err(e) => return Err(e),
+        }
+    }
+    let size = u32::from_le_bytes([header[0], header[1], header[2], header[3]]) as usize;
+    let mut payload = vec![0u8; size];
+    reader.read_exact(&mut payload)?;
+    Ok(Some((header[4], payload)))
+}
+
+/// Decodes the payload of an error, diagnostic or timing frame.
+fn decode_message(
+    message_type: u8,
+    payload: &[u8],
 ) -> Result<TsGoLintMessage, TsGoLintMessageParseError> {
-    let mut size_bytes = [0u8; 4];
-    if cursor.read_exact(&mut size_bytes).is_err() {
-        return Err(TsGoLintMessageParseError::IncompleteData);
-    }
-    let size = u32::from_le_bytes(size_bytes) as usize;
-
-    let mut message_type_byte = [0u8; 1];
-    if cursor.read_exact(&mut message_type_byte).is_err() {
-        return Err(TsGoLintMessageParseError::IncompleteData);
-    }
-
-    let message_type = MessageType::try_from(message_type_byte[0])
+    let message_type = MessageType::try_from(message_type)
         .map_err(TsGoLintMessageParseError::InvalidMessageType)?;
-
-    let mut payload_bytes = vec![0u8; size];
-    if cursor.read_exact(&mut payload_bytes).is_err() {
-        return Err(TsGoLintMessageParseError::IncompleteData);
-    }
-    let payload_str = String::from_utf8_lossy(&payload_bytes);
+    let payload_str = String::from_utf8_lossy(payload);
 
     match message_type {
         MessageType::Error => {
@@ -1424,36 +1406,7 @@ fn parse_single_message(
                 serde_json::from_str::<TsGoLintDiagnosticPayload>(&payload_str)
                     .map_err(TsGoLintMessageParseError::InvalidDiagnosticPayload)?;
 
-            Ok(TsGoLintMessage::Diagnostic(match diagnostic_payload.kind {
-                DiagnosticKind::Rule => TsGoLintDiagnostic::Rule(TsGoLintRuleDiagnostic {
-                    rule: diagnostic_payload
-                        .rule
-                        .expect("Rule name must be present for rule diagnostics"),
-                    span: diagnostic_payload.range.map_or_else(
-                        || {
-                            debug_assert!(false, "Range must be present for rule diagnostics");
-                            Span::default()
-                        },
-                        |range| Span::new(range.pos, range.end),
-                    ),
-                    message: diagnostic_payload.message,
-                    fixes: diagnostic_payload.fixes,
-                    suggestions: diagnostic_payload.suggestions,
-                    labeled_ranges: diagnostic_payload.labeled_ranges,
-                    file_path: PathBuf::from(
-                        diagnostic_payload
-                            .file_path
-                            .expect("File path must be present for rule diagnostics"),
-                    ),
-                }),
-                DiagnosticKind::Internal => {
-                    TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
-                        message: diagnostic_payload.message,
-                        span: diagnostic_payload.range.map(|range| Span::new(range.pos, range.end)),
-                        file_path: diagnostic_payload.file_path.map(PathBuf::from),
-                    })
-                }
-            }))
+            Ok(TsGoLintMessage::Diagnostic(diagnostic_from_payload(diagnostic_payload)))
         }
         MessageType::Timing => {
             let timing_payload = serde_json::from_str::<TsGoLintTimingPayload>(&payload_str)
@@ -1462,6 +1415,48 @@ fn parse_single_message(
             Ok(TsGoLintMessage::Timing(timing_payload))
         }
     }
+}
+
+/// Converts a decoded diagnostic payload into a [`TsGoLintDiagnostic`].
+fn diagnostic_from_payload(diagnostic_payload: TsGoLintDiagnosticPayload) -> TsGoLintDiagnostic {
+    match diagnostic_payload.kind {
+        DiagnosticKind::Rule => TsGoLintDiagnostic::Rule(TsGoLintRuleDiagnostic {
+            rule: diagnostic_payload.rule.expect("Rule name must be present for rule diagnostics"),
+            span: diagnostic_payload.range.map_or_else(
+                || {
+                    debug_assert!(false, "Range must be present for rule diagnostics");
+                    Span::default()
+                },
+                |range| Span::new(range.pos, range.end),
+            ),
+            message: diagnostic_payload.message,
+            fixes: diagnostic_payload.fixes,
+            suggestions: diagnostic_payload.suggestions,
+            labeled_ranges: diagnostic_payload.labeled_ranges,
+            file_path: PathBuf::from(
+                diagnostic_payload
+                    .file_path
+                    .expect("File path must be present for rule diagnostics"),
+            ),
+        }),
+        DiagnosticKind::Internal => TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
+            message: diagnostic_payload.message,
+            span: diagnostic_payload.range.map(|range| Span::new(range.pos, range.end)),
+            file_path: diagnostic_payload.file_path.map(PathBuf::from),
+        }),
+    }
+}
+
+/// Whether Go profiling of `tsgolint` is requested.
+fn go_profiling_requested() -> bool {
+    [
+        "OXLINT_TSGOLINT_TRACE",
+        "OXLINT_TSGOLINT_CPU",
+        "OXLINT_TSGOLINT_HEAP",
+        "OXLINT_TSGOLINT_ALLOCS",
+    ]
+    .iter()
+    .any(|name| std::env::var(name).is_ok())
 }
 
 /// Tries to find a type-aware linter executable. In priority order, this will check:
@@ -1478,14 +1473,7 @@ fn parse_single_message(
 /// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
 /// Returns an error if no supported executable could be found.
 pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
-    let go_profiling = [
-        "OXLINT_TSGOLINT_TRACE",
-        "OXLINT_TSGOLINT_CPU",
-        "OXLINT_TSGOLINT_HEAP",
-        "OXLINT_TSGOLINT_ALLOCS",
-    ]
-    .iter()
-    .any(|name| std::env::var(name).is_ok());
+    let go_profiling = go_profiling_requested();
 
     // Package managers on Windows provide CMD shims or, in Bun's case, EXE shims.
     // npm writes `.cmd`, while pnpm and Yarn Berry copy the `.CMD` casing from `PATHEXT`.
@@ -1876,7 +1864,7 @@ mod test {
 
     #[test]
     fn test_timing_message_deserialize() {
-        use super::{TsGoLintMessage, parse_single_message};
+        use super::{TsGoLintMessage, decode_message, read_frame};
 
         let payload = serde_json::json!({
             "rules": [
@@ -1893,7 +1881,9 @@ mod test {
         bytes.extend_from_slice(payload);
 
         let mut cursor = std::io::Cursor::new(bytes.as_slice());
-        let message = parse_single_message(&mut cursor).unwrap_or_else(|err| panic!("{err}"));
+        let (message_type, payload) =
+            read_frame(&mut cursor).expect("frame should be readable").expect("frame expected");
+        let message = decode_message(message_type, &payload).unwrap_or_else(|err| panic!("{err}"));
 
         let TsGoLintMessage::Timing(payload) = message else {
             panic!("expected timing message");
