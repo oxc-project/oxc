@@ -47,4 +47,6 @@ cargo c -p oxc_formatter_toml
 cargo test -p oxc_formatter_toml  # fixture snapshots, review with `cargo insta review`
 ```
 
+Fixtures print at `printWidth` 80 and 100; `oxfmt` itself defaults to 100, so check the width before reading a manual run's output.
+
 Embedded behavior is covered by `apps/oxfmt`'s fixtures (`apps/oxfmt/conformance/fixtures/front-matter/`, `apps/oxfmt/conformance/fixtures/xxx-in-md/`).

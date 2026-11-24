@@ -1,13 +1,7 @@
 # Input
 
 `````md
-A multi-line text lays out as in its standalone file: a non-expanding one keeps its group flat (yaml), an expanding one expands it (toml)
-
-```yaml
-k: [aaaaaaaa, bbbbbbbbb,
-
-  c]
-```
+A multi-line text expands its group as in its standalone file, its next lines resuming at the code block
 
 > ```toml
 > a = ["""x
@@ -21,11 +15,7 @@ k: [aaaaaaaa, bbbbbbbbb,
 ## `{"printWidth":80}`
 
 `````md
-A multi-line text lays out as in its standalone file: a non-expanding one keeps its group flat (yaml), an expanding one expands it (toml)
-
-```yaml
-k: [aaaaaaaa, bbbbbbbbb, c]
-```
+A multi-line text expands its group as in its standalone file, its next lines resuming at the code block
 
 > ```toml
 > a = [
