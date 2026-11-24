@@ -1,13 +1,14 @@
 use oxc_ast::{AstKind, ast::BlockStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
+    fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -88,20 +89,76 @@ impl Rule for NoEmpty {
                             fixer.noop()
                         };
                     }
-                    if matches!(parent, AstKind::CatchClause(_)) {
-                        return fixer.noop();
+                    match parent {
+                        AstKind::CatchClause(_) => fixer.noop(),
+                        // `if (a) b(); else {}`: remove only `else {}`.
+                        // `if (a) {} else b();`: removing the `if` would drop the `else` branch.
+                        AstKind::IfStatement(if_stmt) if if_stmt.alternate.is_some() => {
+                            let else_start = if_stmt.consequent.span().end;
+                            let is_else_block = if_stmt
+                                .alternate
+                                .as_ref()
+                                .is_some_and(|alternate| alternate.span() == block.span);
+                            if is_else_block
+                                && !ctx
+                                    .has_comments_between(Span::new(else_start, block.span.start))
+                            {
+                                fixer.delete_range(Span::new(else_start, block.span.end))
+                            } else {
+                                fixer.noop()
+                            }
+                        }
+                        // A standalone `{}` in a statement list: remove only the block itself,
+                        // not the enclosing block, function body or program.
+                        AstKind::Program(_)
+                        | AstKind::BlockStatement(_)
+                        | AstKind::FunctionBody(_)
+                        | AstKind::StaticBlock(_)
+                        | AstKind::SwitchCase(_) => fixer.delete(block),
+                        _ => {
+                            let parent_node = ctx.nodes().parent_node(node.id());
+                            delete_statement(fixer, ctx, parent_node)
+                        }
                     }
-                    fixer.delete(&parent)
                 });
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
                 ctx.diagnostic_with_suggestion(
                     no_empty_diagnostic("switch", switch.span),
-                    |fixer| fixer.delete(switch),
+                    |fixer| delete_statement(fixer, ctx, node),
                 );
             }
             _ => {}
         }
+    }
+}
+
+/// Deletes a statement whose body is empty, e.g. `if (foo) {}` or `switch (foo) {}`.
+/// Only a statement in a statement list can simply be deleted: deleting the body of another
+/// statement would leave invalid code such as `else` or `while (foo)` with nothing after it.
+fn delete_statement<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    ctx: &LintContext<'a>,
+    stmt: &AstNode<'a>,
+) -> RuleFix {
+    match ctx.nodes().parent_kind(stmt.id()) {
+        AstKind::Program(_)
+        | AstKind::BlockStatement(_)
+        | AstKind::FunctionBody(_)
+        | AstKind::StaticBlock(_)
+        | AstKind::SwitchCase(_) => fixer.delete(stmt),
+        // `if (a) b(); else if (c) {}`: remove ` else if (c) {}`
+        AstKind::IfStatement(outer)
+            if outer.alternate.as_ref().is_some_and(|alt| alt.span() == stmt.span()) =>
+        {
+            let else_start = outer.consequent.span().end;
+            if ctx.has_comments_between(Span::new(else_start, stmt.span().start)) {
+                fixer.noop()
+            } else {
+                fixer.delete_range(Span::new(else_start, stmt.span().end))
+            }
+        }
+        _ => fixer.noop(),
     }
 }
 
@@ -220,6 +277,27 @@ fn test() {
             None,
         ),
         ("try{a()}catch(e){b()}//finally\nfinally{}", "try{a()}catch(e){b()}//finally\n", None),
+        // an empty `else` only removes `else {}`, not the whole `if`
+        ("if (foo) { bar(); } else {}", "if (foo) { bar(); }", None),
+        ("if (foo) bar(); else {}", "if (foo) bar();", None),
+        ("if (foo) { bar(); } /* keep */ else {}", "if (foo) { bar(); } /* keep */ else {}", None),
+        // an empty consequent with an `else` can't be removed without changing the `else`
+        ("if (foo) {} else { bar(); }", "if (foo) {} else { bar(); }", None),
+        // a standalone empty block only removes itself, not the enclosing block, function or program
+        ("foo();\n{}\nbar();", "foo();\n\nbar();", None),
+        ("if (foo) { bar(); {} }", "if (foo) { bar();  }", None),
+        ("function f() { foo(); {} }", "function f() { foo();  }", None),
+        ("class A { static { foo(); {} } }", "class A { static { foo();  } }", None),
+        // the empty statement is the body of another statement
+        ("if (a) { b(); } else if (c) {}", "if (a) { b(); }", None),
+        ("while (a) if (b) {}", "while (a) if (b) {}", None),
+        ("if (a) switch (b) {}", "if (a) switch (b) {}", None),
+        // a `{}` in a `case` only removes itself, not the `case` and its `break`
+        (
+            "switch (a) { case 1: {} break; default: b(); }",
+            "switch (a) { case 1:  break; default: b(); }",
+            None,
+        ),
     ];
 
     Tester::new(NoEmpty::NAME, NoEmpty::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
