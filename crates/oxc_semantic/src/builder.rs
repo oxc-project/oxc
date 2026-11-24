@@ -59,6 +59,13 @@ macro_rules! control_flow {
     }};
 }
 
+#[derive(Clone, Copy)]
+enum ExcludedScopeResolution {
+    NotDescendant,
+    Resolved,
+    ReachedExcluded,
+}
+
 /// Semantic Builder
 ///
 /// Traverses a parsed AST and builds a [`Semantic`] representation of the
@@ -79,6 +86,8 @@ pub struct SemanticBuilder<'a> {
 
     // states
     pub(crate) current_scope_id: ScopeId,
+    class_type_param_scope: Option<ScopeId>,
+    interface_type_param_scope: Option<ScopeId>,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     /// Duplicate-binding exclusions for the parameter list currently being visited.
@@ -159,6 +168,8 @@ impl<'a> SemanticBuilder<'a> {
             formal_parameter_excludes: SymbolFlags::FunctionScopedVariableExcludes,
             ambient_depth: 0,
             current_scope_id,
+            class_type_param_scope: None,
+            interface_type_param_scope: None,
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
@@ -709,6 +720,101 @@ impl<'a> SemanticBuilder<'a> {
         reference_id
     }
 
+    #[cold]
+    #[inline(never)]
+    fn exclude_type_param_references(
+        &mut self,
+        unresolved_start: usize,
+        excluded_scope_id: ScopeId,
+    ) {
+        let mut unresolved_references = mem::take(&mut self.unresolved_references);
+        unresolved_references.retain_from(unresolved_start, |unresolved| {
+            let flags = self.scoping.get_reference(unresolved.reference_id).flags();
+            if !flags.is_type() || (flags.is_namespace() && !flags.is_value_as_type()) {
+                return true;
+            }
+            let Some(excluded_symbol_id) =
+                self.scoping.get_binding(excluded_scope_id, unresolved.name)
+            else {
+                return true;
+            };
+            if !self.scoping.symbol_flags(excluded_symbol_id).is_type_parameter() {
+                return true;
+            }
+            match self.resolve_before_excluded_scope(*unresolved, excluded_scope_id) {
+                ExcludedScopeResolution::NotDescendant => true,
+                ExcludedScopeResolution::Resolved => false,
+                ExcludedScopeResolution::ReachedExcluded => {
+                    self.scoping
+                        .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
+                    false
+                }
+            }
+        });
+        self.unresolved_references = unresolved_references;
+    }
+
+    fn resolve_before_excluded_scope(
+        &mut self,
+        unresolved: UnresolvedReference<'a>,
+        excluded_scope_id: ScopeId,
+    ) -> ExcludedScopeResolution {
+        let mut current_scope_id = Some(unresolved.lookup_scope_id);
+        while let Some(scope_id) = current_scope_id {
+            if scope_id == excluded_scope_id {
+                return ExcludedScopeResolution::ReachedExcluded;
+            }
+            if let Some(symbol_id) = self.scoping.get_binding(scope_id, unresolved.name)
+                && self.try_resolve_reference(unresolved.reference_id, symbol_id)
+            {
+                return ExcludedScopeResolution::Resolved;
+            }
+            current_scope_id = self.scoping.scope_parent_id(scope_id);
+        }
+        ExcludedScopeResolution::NotDescendant
+    }
+
+    #[inline]
+    fn with_excluded_type_param_scope(
+        &mut self,
+        scope_id: Option<ScopeId>,
+        visit: impl FnOnce(&mut Self),
+    ) {
+        let unresolved_start = self.unresolved_references.len();
+        visit(self);
+        if let Some(excluded_scope_id) = scope_id
+            && self.unresolved_references.len() > unresolved_start
+        {
+            self.exclude_type_param_references(unresolved_start, excluded_scope_id);
+        }
+    }
+
+    #[inline]
+    fn with_static_member_scope(&mut self, is_static: bool, visit: impl FnOnce(&mut Self)) {
+        let excluded_scope = if is_static { self.class_type_param_scope } else { None };
+        self.with_excluded_type_param_scope(excluded_scope, visit);
+    }
+
+    #[inline]
+    fn visit_class_member_property_key(&mut self, key: &PropertyKey<'a>, is_static: bool) {
+        let excluded_scope =
+            if !is_static && key.is_computed() { self.class_type_param_scope } else { None };
+        self.with_excluded_type_param_scope(excluded_scope, |builder| {
+            builder.visit_property_key(key);
+        });
+    }
+
+    #[inline]
+    fn visit_interface_member_property_key(&mut self, key: &PropertyKey<'a>) {
+        let excluded_scope = self.interface_type_param_scope.filter(|_| {
+            key.is_computed()
+                && matches!(self.ancestry().parent_kind(), AstKind::TSInterfaceBody(_))
+        });
+        self.with_excluded_type_param_scope(excluded_scope, |builder| {
+            builder.visit_property_key(key);
+        });
+    }
+
     /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
     pub(crate) fn declare_shadow_symbol(
         &mut self,
@@ -1150,11 +1256,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(type_parameters) = &class.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
+        let prev_class_type_param_scope = self.class_type_param_scope;
+        self.class_type_param_scope =
+            class.type_parameters.is_some().then_some(self.current_scope_id);
         if let Some(heritage) = &class.heritage {
             if self.in_ambient_context() {
                 self.current_reference_flags = ReferenceFlags::ValueAsType;
             }
-            self.visit_expression(&heritage.expression);
+            self.with_excluded_type_param_scope(self.class_type_param_scope, |builder| {
+                builder.visit_expression(&heritage.expression);
+            });
             self.current_reference_flags = ReferenceFlags::empty();
             if let Some(super_type_parameters) = &heritage.type_arguments {
                 self.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -1162,6 +1273,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_ts_class_implements_list(&class.implements);
         self.visit_class_body(&class.body);
+        self.class_type_param_scope = prev_class_type_param_scope;
 
         self.leave_scope();
         self.leave_node(kind);
@@ -2284,9 +2396,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
-        let jump_boundary = self.unused_labels.enter_jump_boundary();
-        oxc_ast_visit::walk::walk_static_block(self, block);
-        self.unused_labels.leave_jump_boundary(jump_boundary);
+        self.with_excluded_type_param_scope(self.class_type_param_scope, |builder| {
+            let jump_boundary = builder.unused_labels.enter_jump_boundary();
+            oxc_ast_visit::walk::walk_static_block(builder, block);
+            builder.unused_labels.leave_jump_boundary(jump_boundary);
+        });
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
@@ -2607,7 +2721,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.current_reference_flags = ReferenceFlags::ValueAsType;
         }
         self.visit_span(&sig.span);
-        self.visit_property_key(&sig.key);
+        self.visit_interface_member_property_key(&sig.key);
         if let Some(type_annotation) = &sig.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
         }
@@ -2624,7 +2738,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             //                ^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
             self.current_reference_flags = ReferenceFlags::ValueAsType;
         }
-        self.visit_property_key(&sig.key);
+        self.visit_interface_member_property_key(&sig.key);
         self.current_reference_flags = ReferenceFlags::empty();
         self.enter_scope(ScopeFlags::empty(), &sig.scope_id);
         if let Some(type_parameters) = &sig.type_parameters {
@@ -2644,40 +2758,77 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_method_definition(&mut self, method: &MethodDefinition<'a>) {
         let kind = AstKind::MethodDefinition(self.alloc(method));
         self.enter_node(kind);
-        self.visit_span(&method.span);
-        self.visit_decorators(&method.decorators);
-        if method.key.is_computed() && (method.r#type.is_abstract() || self.in_ambient_context()) {
-            // declare class A { [prop](): string }
-            //                    ^^^^  The property can reference value or [`SymbolFlags::TypeImport`] symbol
-            self.current_reference_flags = ReferenceFlags::ValueAsType;
-        }
-        self.visit_property_key(&method.key);
-        self.current_reference_flags = ReferenceFlags::empty();
-        self.visit_function(&method.value, method.kind.scope_flags());
+        self.with_static_member_scope(method.r#static, |builder| {
+            builder.visit_span(&method.span);
+            builder.visit_decorators(&method.decorators);
+            if method.key.is_computed()
+                && (method.r#type.is_abstract() || builder.in_ambient_context())
+            {
+                // declare class A { [prop](): string }
+                //                    ^^^^  The property can reference value or [`SymbolFlags::TypeImport`] symbol
+                builder.current_reference_flags = ReferenceFlags::ValueAsType;
+            }
+            builder.visit_class_member_property_key(&method.key, method.r#static);
+            builder.current_reference_flags = ReferenceFlags::empty();
+            builder.visit_function(&method.value, method.kind.scope_flags());
+        });
         self.leave_node(kind);
     }
 
     fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
         let kind = AstKind::PropertyDefinition(self.alloc(prop));
         self.enter_node(kind);
-        self.visit_span(&prop.span);
-        self.visit_decorators(&prop.decorators);
-        self.enter_ambient_context(prop.declare);
-        if prop.key.is_computed() && (prop.r#type.is_abstract() || self.in_ambient_context()) {
-            // class A { declare [prop]: string }
-            //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
-            self.current_reference_flags = ReferenceFlags::ValueAsType;
-        }
-        self.visit_property_key(&prop.key);
-        self.current_reference_flags = ReferenceFlags::empty();
-        if let Some(type_annotation) = &prop.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-        if let Some(value) = &prop.value {
-            self.visit_expression(value);
-        }
+        self.with_static_member_scope(prop.r#static, |builder| {
+            builder.visit_span(&prop.span);
+            builder.visit_decorators(&prop.decorators);
+            builder.enter_ambient_context(prop.declare);
+            if prop.key.is_computed() && (prop.r#type.is_abstract() || builder.in_ambient_context())
+            {
+                // class A { declare [prop]: string }
+                //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+                builder.current_reference_flags = ReferenceFlags::ValueAsType;
+            }
+            builder.visit_class_member_property_key(&prop.key, prop.r#static);
+            builder.current_reference_flags = ReferenceFlags::empty();
+            if let Some(type_annotation) = &prop.type_annotation {
+                builder.visit_ts_type_annotation(type_annotation);
+            }
+            if let Some(value) = &prop.value {
+                builder.visit_expression(value);
+            }
+        });
         self.leave_node(kind);
         self.leave_ambient_context(prop.declare);
+    }
+
+    fn visit_accessor_property(&mut self, prop: &AccessorProperty<'a>) {
+        let kind = AstKind::AccessorProperty(self.alloc(prop));
+        self.enter_node(kind);
+        self.with_static_member_scope(prop.r#static, |builder| {
+            builder.visit_span(&prop.span);
+            builder.visit_decorators(&prop.decorators);
+            builder.visit_class_member_property_key(&prop.key, prop.r#static);
+            if let Some(type_annotation) = &prop.type_annotation {
+                builder.visit_ts_type_annotation(type_annotation);
+            }
+            if let Some(value) = &prop.value {
+                builder.visit_expression(value);
+            }
+        });
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_index_signature(&mut self, sig: &TSIndexSignature<'a>) {
+        let kind = AstKind::TSIndexSignature(self.alloc(sig));
+        self.enter_node(kind);
+        let is_static =
+            sig.r#static && matches!(self.ancestry().parent_kind(), AstKind::ClassBody(_));
+        self.with_static_member_scope(is_static, |builder| {
+            builder.visit_span(&sig.span);
+            builder.visit_ts_index_signature_name(&sig.parameter);
+            builder.visit_ts_type_annotation(&sig.type_annotation);
+        });
+        self.leave_node(kind);
     }
 
     fn visit_import_specifier(&mut self, specifier: &ImportSpecifier<'a>) {
@@ -2904,8 +3055,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(type_parameters) = &decl.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
+        let prev_interface_type_param_scope = self.interface_type_param_scope;
+        self.interface_type_param_scope =
+            decl.type_parameters.is_some().then_some(self.current_scope_id);
         self.visit_ts_interface_heritages(&decl.extends);
         self.visit_ts_interface_body(&decl.body);
+        self.interface_type_param_scope = prev_interface_type_param_scope;
         self.leave_scope();
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);
