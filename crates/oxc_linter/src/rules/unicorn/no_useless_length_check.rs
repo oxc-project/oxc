@@ -3,23 +3,22 @@ use std::fmt::Debug;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, ChainElement, Expression, ForOfStatement, ForStatementLeft, IfStatement,
-        JSXText, LogicalExpression, MemberExpression, Statement, StringLiteral, TSType, TSTypeName,
-        TSTypeOperatorOperator, TemplateElement, VariableDeclarationKind,
+        ChainElement, Expression, ForOfStatement, ForStatementLeft, IdentifierReference,
+        IfStatement, JSXText, LogicalExpression, MemberExpression, Statement, StringLiteral,
+        TemplateElement, VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{IsGlobalReference, SymbolId};
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     identifier::is_white_space,
     line_terminator::is_line_terminator,
     operator::{BinaryOperator, LogicalOperator},
 };
-use smallvec::SmallVec;
 
 use crate::{
     AstNode,
@@ -225,39 +224,6 @@ const TYPED_ARRAY_NAMES: &[&str] = &[
     "BigUint64Array",
 ];
 
-const KNOWN_NON_INDEXED_COLLECTION_TYPE_NAMES: &[&str] = &[
-    "Map",
-    "ReadonlyMap",
-    "WeakMap",
-    "Set",
-    "ReadonlySet",
-    "WeakSet",
-    "URLSearchParams",
-    "Headers",
-    "FormData",
-    "CanvasRenderingContext2D",
-    "OffscreenCanvasRenderingContext2D",
-];
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum CollectionType {
-    Target,
-    NonTarget,
-    Nullish,
-    Any,
-    Unknown,
-}
-
-impl CollectionType {
-    fn normalize(self) -> Self {
-        match self {
-            Self::Nullish => Self::NonTarget,
-            Self::Any => Self::Unknown,
-            other => other,
-        }
-    }
-}
-
 fn check_for_of_statement<'a>(
     node: &AstNode<'a>,
     for_of_stmt: &ForOfStatement<'a>,
@@ -295,7 +261,6 @@ fn check_for_of_statement<'a>(
     ) || !optional_chains_match(&length_member.object, &for_of_stmt.right)
         || has_loop_binding_reference_in_right(for_of_stmt, ctx)
         || is_known_non_indexed_collection(&for_of_stmt.right, ctx)
-        || is_known_non_indexed_collection(&length_member.object, ctx)
     {
         return;
     }
@@ -481,38 +446,16 @@ fn has_loop_binding_reference_in_right<'a>(
 }
 
 fn is_known_non_indexed_collection<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
-    let mut visited = SmallVec::new();
-    classify_expr(expr, ctx, &mut visited).normalize() == CollectionType::NonTarget
-}
-
-fn combine_union_types(left: CollectionType, right: CollectionType) -> CollectionType {
-    if left == CollectionType::Any || right == CollectionType::Any {
-        return CollectionType::Any;
-    }
-    match (left.normalize(), right.normalize()) {
-        (CollectionType::Target, CollectionType::Target) => CollectionType::Target,
-        (CollectionType::NonTarget, CollectionType::NonTarget) => CollectionType::NonTarget,
-        _ => CollectionType::Unknown,
-    }
-}
-
-fn classify_expr<'a>(
-    expr: &Expression<'a>,
-    ctx: &LintContext<'a>,
-    visited: &mut SmallVec<[SymbolId; 4]>,
-) -> CollectionType {
+    let expr = match expr.get_inner_expression() {
+        Expression::Identifier(ident) => {
+            let Some(init) = const_initializer(ident, ctx) else {
+                return false;
+            };
+            init.get_inner_expression()
+        }
+        expr => expr,
+    };
     match expr {
-        Expression::ParenthesizedExpression(e) => classify_expr(&e.expression, ctx, visited),
-        Expression::TSNonNullExpression(e) => classify_expr(&e.expression, ctx, visited),
-        Expression::TSInstantiationExpression(e) => classify_expr(&e.expression, ctx, visited),
-        Expression::TSSatisfiesExpression(e) => classify_expr(&e.expression, ctx, visited),
-        Expression::TSAsExpression(e) => {
-            classify_ts_cast(&e.type_annotation, &e.expression, ctx, visited)
-        }
-        Expression::TSTypeAssertion(e) => {
-            classify_ts_cast(&e.type_annotation, &e.expression, ctx, visited)
-        }
-        Expression::ArrayExpression(_) => CollectionType::Target,
         Expression::ObjectExpression(_)
         | Expression::FunctionExpression(_)
         | Expression::ArrowFunctionExpression(_)
@@ -523,178 +466,33 @@ fn classify_expr<'a>(
         | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
         | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_) => CollectionType::NonTarget,
-        Expression::NewExpression(new_expr) => {
-            if let Expression::Identifier(ident) = new_expr.callee.get_inner_expression()
-                && ident.is_global_reference(ctx.scoping())
-                && (ident.name == "Array" || TYPED_ARRAY_NAMES.contains(&ident.name.as_str()))
-            {
-                CollectionType::Target
-            } else {
-                CollectionType::NonTarget
-            }
-        }
-        Expression::Identifier(ident) => classify_identifier(ident, ctx, visited),
-        _ => CollectionType::Unknown,
+        | Expression::RegExpLiteral(_) => true,
+        Expression::NewExpression(new_expr) => !matches!(
+            new_expr.callee.get_inner_expression(),
+            Expression::Identifier(ident)
+                if (ident.name == "Array" || TYPED_ARRAY_NAMES.contains(&ident.name.as_str()))
+                    && ident.is_global_reference(ctx.scoping())
+        ),
+        _ => false,
     }
 }
 
-fn classify_ts_cast<'a>(
-    mut type_annotation: &TSType<'a>,
-    inner: &Expression<'a>,
+fn const_initializer<'a>(
+    ident: &IdentifierReference<'a>,
     ctx: &LintContext<'a>,
-    visited: &mut SmallVec<[SymbolId; 4]>,
-) -> CollectionType {
-    while let TSType::TSParenthesizedType(paren) = type_annotation {
-        type_annotation = &paren.type_annotation;
-    }
-    if matches!(type_annotation, TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_)) {
-        classify_expr(inner, ctx, visited)
-    } else {
-        classify_ts_type(type_annotation, ctx)
-    }
-}
-
-fn classify_identifier<'a>(
-    ident: &oxc_ast::ast::IdentifierReference<'a>,
-    ctx: &LintContext<'a>,
-    visited: &mut SmallVec<[SymbolId; 4]>,
-) -> CollectionType {
-    let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
-        return CollectionType::Unknown;
+) -> Option<&'a Expression<'a>> {
+    let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
+    let AstKind::VariableDeclarator(decl) =
+        ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind()
+    else {
+        return None;
     };
-    if visited.contains(&symbol_id) || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
-        return CollectionType::Unknown;
+    if !decl.id.is_binding_identifier()
+        || variable_declaration_kind(decl, ctx.nodes()) != Some(VariableDeclarationKind::Const)
+    {
+        return None;
     }
-
-    visited.push(symbol_id);
-    let result = match ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind() {
-        AstKind::VariableDeclarator(decl)
-            if matches!(decl.id, BindingPattern::BindingIdentifier(_)) =>
-        {
-            let ann_ty = decl
-                .type_annotation
-                .as_ref()
-                .map_or(CollectionType::Unknown, |ann| classify_ts_type(&ann.type_annotation, ctx));
-            if !matches!(ann_ty, CollectionType::Any | CollectionType::Unknown) {
-                ann_ty
-            } else if variable_declaration_kind(decl, ctx.nodes())
-                == Some(VariableDeclarationKind::Const)
-                && let Some(init) = &decl.init
-            {
-                classify_expr(init, ctx, visited)
-            } else {
-                CollectionType::Unknown
-            }
-        }
-        AstKind::FormalParameter(param)
-            if matches!(param.pattern, BindingPattern::BindingIdentifier(_)) =>
-        {
-            if let Some(ann) = &param.type_annotation {
-                let ty = classify_ts_type(&ann.type_annotation, ctx);
-                if ty != CollectionType::Unknown && param.optional {
-                    combine_union_types(ty, CollectionType::Nullish)
-                } else {
-                    ty
-                }
-            } else {
-                CollectionType::Unknown
-            }
-        }
-        _ => CollectionType::Unknown,
-    };
-    visited.pop();
-    result
-}
-
-fn classify_ts_type<'a>(ts_type: &TSType<'a>, ctx: &LintContext<'a>) -> CollectionType {
-    match ts_type {
-        TSType::TSParenthesizedType(t) => classify_ts_type(&t.type_annotation, ctx),
-        TSType::TSTypeOperatorType(t) if t.operator == TSTypeOperatorOperator::Readonly => {
-            classify_ts_type(&t.type_annotation, ctx)
-        }
-        TSType::TSAnyKeyword(_) => CollectionType::Any,
-        TSType::TSArrayType(_) | TSType::TSTupleType(_) => CollectionType::Target,
-        TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_) => CollectionType::Nullish,
-        TSType::TSBigIntKeyword(_)
-        | TSType::TSBooleanKeyword(_)
-        | TSType::TSNeverKeyword(_)
-        | TSType::TSNumberKeyword(_)
-        | TSType::TSStringKeyword(_)
-        | TSType::TSSymbolKeyword(_)
-        | TSType::TSVoidKeyword(_)
-        | TSType::TSLiteralType(_)
-        | TSType::TSFunctionType(_)
-        | TSType::TSConstructorType(_) => CollectionType::NonTarget,
-        TSType::TSUnionType(u) => {
-            let mut acc: Option<CollectionType> = None;
-            for t in &u.types {
-                let ty = classify_ts_type(t, ctx);
-                acc = Some(match acc {
-                    None => ty,
-                    Some(prev) => combine_union_types(prev, ty),
-                });
-                if acc == Some(CollectionType::Any) {
-                    return CollectionType::Any;
-                }
-            }
-            acc.unwrap_or(CollectionType::NonTarget)
-        }
-        TSType::TSIntersectionType(i) => {
-            let mut has_target = false;
-            let mut has_non_target = false;
-            for t in &i.types {
-                match classify_ts_type(t, ctx) {
-                    CollectionType::Any => return CollectionType::Any,
-                    CollectionType::Target => has_target = true,
-                    CollectionType::NonTarget | CollectionType::Nullish => has_non_target = true,
-                    CollectionType::Unknown => {}
-                }
-            }
-            if has_target {
-                CollectionType::Target
-            } else if has_non_target {
-                CollectionType::NonTarget
-            } else {
-                CollectionType::Unknown
-            }
-        }
-        TSType::TSTypeReference(tr) => match &tr.type_name {
-            TSTypeName::IdentifierReference(ident)
-                if ctx.scoping().get_reference(ident.reference_id()).symbol_id().is_none() =>
-            {
-                if ident.name == "Readonly"
-                    && let Some(args) = &tr.type_arguments
-                    && args.params.len() == 1
-                {
-                    classify_ts_type(&args.params[0], ctx)
-                } else {
-                    classify_builtin_collection_name(&ident.name)
-                }
-            }
-            TSTypeName::QualifiedName(qn)
-                if matches!(
-                    &qn.left,
-                    TSTypeName::IdentifierReference(ns)
-                        if ns.name == "globalThis" && ns.is_global_reference(ctx.scoping())
-                ) =>
-            {
-                classify_builtin_collection_name(&qn.right.name)
-            }
-            _ => CollectionType::Unknown,
-        },
-        _ => CollectionType::Unknown,
-    }
-}
-
-fn classify_builtin_collection_name(name: &str) -> CollectionType {
-    if name == "Array" || name == "ReadonlyArray" || TYPED_ARRAY_NAMES.contains(&name) {
-        CollectionType::Target
-    } else if KNOWN_NON_INDEXED_COLLECTION_TYPE_NAMES.contains(&name) {
-        CollectionType::NonTarget
-    } else {
-        CollectionType::Unknown
-    }
+    decl.init.as_ref()
 }
 
 fn indent_at_line_start(source: &str, offset: u32) -> Option<&str> {
@@ -917,16 +715,11 @@ fn test() {
         "const array = []; if (array.length > 0) { for (const array of array) {} }",
         "const array = []; if (array.length > 0) { for (const {value: array} of array) {} }",
         "const object = {array: []}; if (object.array.length > 0) { for (const object of object.array) {} }",
-        "function iterate(array: Set<number> & {length: number}) { if (array.length > 0) { for (const element of array) {} } }",
-        "function iterate(array: Map<string, number>) { if (array.length > 0) { for (const element of array) {} } }",
-        "function iterate(array: globalThis.Set<number>) { if (array.length > 0) { for (const element of array) {} } }",
         "const items = new Set(); if (items.length > 0) { for (const item of items) {} }",
         "const items = new Set(); if ((items as any).length > 0) { for (const item of (items as any)) {} }",
         "if ((a?.b.c).length > 0) { for (const element of a.b?.c) {} }",
         "if (a[!b?.c].length > 0) { for (const element of a[!b.c]) {} }",
         "if (array?.length! > 0) { for (const element of array) {} }",
-        "function iterate(value: string) { if (value.length > 0) { for (const c of value) { use(c); } } }",
-        "function iterate(array: Set<number> & unknown) { if (array.length > 0) { for (const element of array) { use(element); } } }",
         r#"if ((a.b ?? fallback)["c"].length > 0) { for (const x of (a?.b ?? fallback).c) { use(x); } }"#,
         "if (array.length > 0) { 'use strict'; for (const element of array) {} }",
     ];
@@ -1003,9 +796,6 @@ fn test() {
             }",
         "if (((array.length > 0))) { for (const element of array) { use(element); } }",
         "if (object.array.length !== 0) { for (const element of object.array) { use(element); } }",
-        "function iterate(array: Object) { if (array.length > 0) { for (const element of array) { use(element); } } }",
-        "function iterate(array: number[] | Set<number>) { if (array.length > 0) { for (const element of array) { use(element); } } }",
-        "const a = b; const b = a; if (a.length > 0) { for (const x of a) { use(x); } }",
         "if (arrays.length > 0) {\n\tfor (const array of arrays) {\n\t\tif (array.length > 0) {\n\t\t\tfor (const element of array) {\n\t\t\t\tuse(element);\n\t\t\t}\n\t\t}\n\t}\n}",
     ];
 
@@ -1045,10 +835,6 @@ fn test() {
         (
             r#"if (a["c"].length > 0) { for (const x of a.c) { use(x); } }"#,
             "for (const x of a.c) { use(x); }",
-        ),
-        (
-            "function iterate(array: Set<number> & (string | any)) { if (array.length > 0) { for (const element of array) { use(element); } } }",
-            "function iterate(array: Set<number> & (string | any)) { for (const element of array) { use(element); } }",
         ),
         (
             "if (array.length > 0) { for (const [key, value] of array) { use(key, value); } }",

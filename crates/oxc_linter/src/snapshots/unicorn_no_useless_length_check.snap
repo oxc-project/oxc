@@ -269,27 +269,6 @@ source: crates/oxc_linter/src/tester.rs
   help: The non-empty check is useless as `for...of` does not iterate over an empty array.
 
   ⚠ unicorn(no-useless-length-check): Found a useless array length check
-   ╭─[no_useless_length_check.tsx:1:39]
- 1 │ function iterate(array: Object) { if (array.length > 0) { for (const element of array) { use(element); } } }
-   ·                                       ────────────────
-   ╰────
-  help: The non-empty check is useless as `for...of` does not iterate over an empty array.
-
-  ⚠ unicorn(no-useless-length-check): Found a useless array length check
-   ╭─[no_useless_length_check.tsx:1:55]
- 1 │ function iterate(array: number[] | Set<number>) { if (array.length > 0) { for (const element of array) { use(element); } } }
-   ·                                                       ────────────────
-   ╰────
-  help: The non-empty check is useless as `for...of` does not iterate over an empty array.
-
-  ⚠ unicorn(no-useless-length-check): Found a useless array length check
-   ╭─[no_useless_length_check.tsx:1:31]
- 1 │ const a = b; const b = a; if (a.length > 0) { for (const x of a) { use(x); } }
-   ·                               ────────────
-   ╰────
-  help: The non-empty check is useless as `for...of` does not iterate over an empty array.
-
-  ⚠ unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:5]
  1 │ if (arrays.length > 0) {
    ·     ─────────────────
