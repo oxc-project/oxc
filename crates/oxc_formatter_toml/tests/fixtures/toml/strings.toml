@@ -14,11 +14,6 @@ array_of_multiline = ["""
 a
 b""", 'c']
 
-# Only the last line of a multi-line value is long
-last_line_long = ["""
-short""", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
-first_line_long = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", """
-short"""]
-# A group after the newline is measured again
+# A nested array after it is measured on its own line
 nested_after = ["""x
 y""", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]

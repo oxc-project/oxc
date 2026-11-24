@@ -19,8 +19,7 @@ Based on Taplo's default style, aligned with the other languages where they agre
 - Every array is its own group, so only the array that does not fit expands (`width.toml`)
   - A trailing comment counts toward the width (`] # c` when it does not fit)
   - Blank lines between its values are kept only when it expands
-  - Like every group, the fit is measured up to the first line break:
-    a value already broken by a comment or a multi-line string does not expand because of a later long line (`strings.toml`)
+  - A multi-line string expands it, as in JS and YAML (`strings.toml`)
   - An array with a comment anywhere inside keeps one value or comment per line
 - An inline table is always printed on one line, even when written multi-line or too long, since TOML 1.0 has no multi-line inline tables
   - Except with a comment of its own, then one entry or comment per line (TOML 1.1), blank lines dropped
