@@ -19,7 +19,6 @@ use oxc::allocator::{ArenaBox, ArenaVec};
 /// Node IDs are not compared.
 ///
 /// [`ContentEq`]: oxc::span::ContentEq
-#[expect(dead_code)]
 pub trait FullEq {
     /// Get if `self` and `other` are equal in every field except `node_id`.
     fn full_eq(&self, other: &Self) -> bool;
