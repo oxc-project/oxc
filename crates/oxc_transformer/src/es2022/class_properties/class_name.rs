@@ -49,11 +49,7 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
-    common::{
-        computed_key::key_needs_temp_var,
-        duplicate::duplicate_expression,
-        helper_loader::{Helper, helper_call_expr},
-    },
+    common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     utils::{
         ast_builder::create_assignment,
@@ -214,24 +210,16 @@ impl<'a> ClassProperties<'a> {
         }
     }
 
-    /// Get a side-effect-free copy of computed property key `key`, converted to a property key.
-    ///
-    /// Unless the key is a literal, replace it with an assignment to a temp var
+    /// Replace computed property key `key` with an assignment to a temp var
     /// (`k()` -> `_k = _toPropertyKey(k())`), and return the temp var.
     /// The key is converted once, at class definition, as `ToPropertyKey` may have side effects.
+    ///
+    /// Literal keys have a static name (see [`Self::property_key_name`]), so don't reach here.
     fn duplicate_computed_key(
         &mut self,
         key: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        if !matches!(key, Expression::Identifier(_)) && !key_needs_temp_var(key, ctx) {
-            // Literal e.g. `[true]`
-            let (original, copy) = duplicate_expression(key.take_in(ctx), false, ctx);
-            *key = original;
-            return copy;
-        }
-
-        // `_k = _toPropertyKey(k())`
         let original_key = key.take_in(ctx);
         let binding = ctx.generate_uid_based_on_node(
             &original_key,
@@ -387,8 +375,15 @@ impl<'a> ClassProperties<'a> {
 
     /// Get the name NamedEvaluation gives a value of property `key`, if it's statically known.
     fn property_key_name(key: &PropertyKey<'a>, ctx: &TraverseCtx<'a>) -> Option<JSStr<'a>> {
-        if let PropertyKey::PrivateIdentifier(ident) = key {
-            return Some(JSStr::from(Str::from_strs_array_in(["#", ident.name.as_str()], ctx)));
+        match key {
+            PropertyKey::PrivateIdentifier(ident) => {
+                return Some(JSStr::from(Str::from_strs_array_in(["#", ident.name.as_str()], ctx)));
+            }
+            // `[true]`, which `static_name` doesn't cover
+            PropertyKey::BooleanLiteral(lit) => {
+                return Some(JSStr::from(if lit.value { "true" } else { "false" }));
+            }
+            _ => {}
         }
         Some(match key.static_name()? {
             StaticPropertyName::Borrowed(name) => name,

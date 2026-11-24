@@ -6,6 +6,7 @@ const key = () => (keyCalls++, "computed");
 const k = "kk";
 const sym = Symbol("desc");
 const anonSym = Symbol();
+const emptySym = Symbol("");
 const objKey = { toString: () => "fromToString" };
 
 class F {
@@ -32,6 +33,9 @@ class F {
   [key()] = class {};
   ["lit"] = function () {};
   [`tpl`] = () => {};
+  [true] = class {};
+  static [false] = () => {};
+  [emptySym] = function () {};
   [objKey] = class {};
   static privates(f) {
     return [f.#w.name, F.#sw.name];
@@ -60,6 +64,9 @@ expect(F[sym].name).toBe("[desc]");
 expect(f.computed.name).toBe("computed");
 expect(f.lit.name).toBe("lit");
 expect(f.tpl.name).toBe("tpl");
+expect(f.true.name).toBe("true");
+expect(F.false.name).toBe("false");
+expect(f[emptySym].name).toBe("[]");
 expect(f.fromToString.name).toBe("fromToString");
 
 // Computed key is evaluated once, at class definition
