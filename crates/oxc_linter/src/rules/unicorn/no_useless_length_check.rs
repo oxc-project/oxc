@@ -43,6 +43,14 @@ fn every(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn for_of(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Found a useless array length check")
+        .with_help(
+            "The non-empty check is useless as `for...of` does not iterate over an empty array.",
+        )
+        .with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessLengthCheck;
 
@@ -198,14 +206,6 @@ impl Rule for NoUselessLengthCheck {
             _ => {}
         }
     }
-}
-
-fn for_of(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Found a useless array length check")
-        .with_help(
-            "The non-empty check is useless as `for...of` does not iterate over an empty array.",
-        )
-        .with_label(span)
 }
 
 const TYPED_ARRAY_NAMES: &[&str] = &[
@@ -480,6 +480,12 @@ struct MultilineTokenVisitor<'a, 'b> {
     found: bool,
 }
 
+impl MultilineTokenVisitor<'_, '_> {
+    fn check(&mut self, span: Span) {
+        self.found |= self.ctx.source_range(span).contains(is_line_terminator);
+    }
+}
+
 impl<'a> Visit<'a> for MultilineTokenVisitor<'a, '_> {
     fn visit_statement(&mut self, it: &Statement<'a>) {
         if self.found {
@@ -496,30 +502,15 @@ impl<'a> Visit<'a> for MultilineTokenVisitor<'a, '_> {
     }
 
     fn visit_string_literal(&mut self, it: &StringLiteral<'a>) {
-        if self.found {
-            return;
-        }
-        if self.ctx.source_range(it.span).contains(is_line_terminator) {
-            self.found = true;
-        }
+        self.check(it.span);
     }
 
     fn visit_template_element(&mut self, it: &TemplateElement<'a>) {
-        if self.found {
-            return;
-        }
-        if self.ctx.source_range(it.span).contains(is_line_terminator) {
-            self.found = true;
-        }
+        self.check(it.span);
     }
 
     fn visit_jsx_text(&mut self, it: &JSXText<'a>) {
-        if self.found {
-            return;
-        }
-        if self.ctx.source_range(it.span).contains(is_line_terminator) {
-            self.found = true;
-        }
+        self.check(it.span);
     }
 }
 
@@ -879,20 +870,20 @@ fn test() {
         ),
     ];
 
-    let pass: Vec<crate::tester::TestCase> = pass.into_iter().map(Into::into).collect();
-    let fail: Vec<crate::tester::TestCase> = fail.into_iter().map(Into::into).collect();
-    let mut fix: Vec<crate::tester::ExpectFixTestCase> = fix.into_iter().map(Into::into).collect();
-    fix.push(
-        (
-            "if ((<any[]>array).length > 0) { for (const element of (<any[]>array)) { use(element); } }",
-            "for (const element of (<any[]>array)) { use(element); }",
-            None,
-            Some(std::path::PathBuf::from("file.ts")),
-        )
-            .into(),
-    );
-
     Tester::new(NoUselessLengthCheck::NAME, NoUselessLengthCheck::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+
+    Tester::new(
+        NoUselessLengthCheck::NAME,
+        NoUselessLengthCheck::PLUGIN,
+        Vec::<&str>::new(),
+        Vec::<&str>::new(),
+    )
+    .change_rule_path_extension("ts")
+    .expect_fix(vec![(
+        "if ((<any[]>array).length > 0) { for (const element of (<any[]>array)) { use(element); } }",
+        "for (const element of (<any[]>array)) { use(element); }",
+    )])
+    .test();
 }
