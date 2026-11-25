@@ -1611,6 +1611,20 @@ impl GenExpr for PrivateFieldExpression<'_> {
     }
 }
 
+/// The span of the node a callee prints first, which is the node that maps the start of a call.
+///
+/// Member expressions and calls do not map their own span; their first token comes from their
+/// object or callee.
+fn callee_start_span(callee: &Expression<'_>) -> Span {
+    match callee {
+        Expression::StaticMemberExpression(e) => callee_start_span(&e.object),
+        Expression::ComputedMemberExpression(e) => callee_start_span(&e.object),
+        Expression::PrivateFieldExpression(e) => callee_start_span(&e.object),
+        Expression::CallExpression(e) => callee_start_span(&e.callee),
+        _ => callee.span(),
+    }
+}
+
 impl GenExpr for CallExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let is_statement = p.start_of_stmt == p.code_len();
@@ -1625,6 +1639,11 @@ impl GenExpr for CallExpression<'_> {
             if pure {
                 p.add_source_mapping(self.span);
                 p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
+            } else if callee_start_span(&self.callee).is_empty() {
+                // A callee that starts with a generated node, such as a helper reference or
+                // `Math` in `Math.pow(a, b)`, prints no mapping at the start of the call. A stack
+                // trace reports a call at its callee, so map the call's own span there instead.
+                p.add_source_mapping(self.span);
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();

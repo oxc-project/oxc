@@ -274,6 +274,70 @@ fn synthesized_block_closing_braces_are_mapped() {
     );
 }
 
+/// Print `source_text`, whose second statement is `x = <call>`, after `generate` clears the spans
+/// of the call's callee, as a transform does for the callee it generates.
+fn tokens_with_generated_callee(
+    source_text: &str,
+    generate: impl FnOnce(&mut Expression<'_>),
+) -> Vec<Mapping> {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+
+    let mut program = ret.program;
+    let Statement::ExpressionStatement(stmt) = &mut program.body[1] else {
+        panic!("expected expression statement");
+    };
+    let Expression::AssignmentExpression(assign) = &mut stmt.expression else {
+        panic!("expected assignment expression");
+    };
+    let Expression::CallExpression(call) = &mut assign.right else {
+        panic!("expected call expression");
+    };
+    generate(&mut call.callee);
+
+    let ret = Codegen::new().with_options(default_options()).build(&program);
+    assert_eq!(ret.code, format!("{source_text}\n"));
+    ret.map
+        .expect("sourcemap should be generated")
+        .get_tokens()
+        .map(|token| Mapping {
+            dst: pos(token.get_dst_line(), token.get_dst_col()),
+            src: pos(token.get_src_line(), token.get_src_col()),
+        })
+        .collect()
+}
+
+// A call to a generated callee, such as a transformer's helper, maps at the callee to the
+// call's own span, so a stack trace through the call points at the source of the call.
+#[test]
+fn call_with_generated_callee_maps_to_call_span() {
+    let tokens = tokens_with_generated_callee("foo();\nx = bar(1);", |callee| {
+        let Expression::Identifier(callee) = callee else {
+            panic!("expected identifier callee");
+        };
+        callee.span = Span::default();
+    });
+    assert!(has_mapping(&tokens, pos(1, 4), pos(1, 4)), "generated callee maps to the call");
+}
+
+// A member callee can keep a span while the object it prints first is generated, as in
+// `Math.pow(a, b)` lowered from `a ** b`. The call maps at its start all the same.
+#[test]
+fn call_with_generated_member_callee_object_maps_to_call_span() {
+    let tokens = tokens_with_generated_callee("foo();\nx = Math.pow(a, b);", |callee| {
+        let Expression::StaticMemberExpression(member) = callee else {
+            panic!("expected static member callee");
+        };
+        let Expression::Identifier(object) = &mut member.object else {
+            panic!("expected identifier object");
+        };
+        object.span = Span::default();
+        member.property.span = Span::default();
+    });
+    assert!(has_mapping(&tokens, pos(1, 4), pos(1, 4)), "generated object maps to the call");
+}
+
 // Both `)` of `factory()()` should map to their own source position
 // at the gen position of the `)`, not one past it.
 #[test]
