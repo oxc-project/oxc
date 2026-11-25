@@ -1336,10 +1336,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_postfix_update_expression(start, lhs)
     }
 
-    /// Parse a JSX element or fragment and, in JavaScript, its suffixes. The JSX grammar adds
-    /// elements and fragments to `PrimaryExpression`, so `<C />.props` is a member expression.
-    /// TypeScript instead parses a JSX element as a complete `UpdateExpression` and reports a
-    /// suffix as an error.
+    /// Parse a JSX element or fragment operand. The JSX grammar makes it a `PrimaryExpression`,
+    /// so in JavaScript its suffixes are parsed too (`<C />.props`). In TSX it ends at the
+    /// closing tag, as in TypeScript.
     fn parse_jsx_operand(&mut self) -> Expression<'a> {
         if self.is_ts {
             return self.parse_jsx_expression();
@@ -1815,7 +1814,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             (self.parse_jsx_operand(), false)
                         };
                         if !is_arrow {
-                            // The JSX operand is a complete `UpdateExpression`.
                             break 'parse_lhs if kind_to_precedence(self.cur_kind()).is_none() {
                                 expression
                             } else {
