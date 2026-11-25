@@ -56,11 +56,11 @@ pub(super) fn write_selector_list<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     // css-in-js `${}` placeholders: `postcss-selector-parser` degrades on at-words,
-    // everything from the selector containing the first placeholder onwards
+    // everything from the selector containing the first placeholder outside a string onwards
     // becomes one garbage token soup whose commas no longer split selectors.
     // Prettier then prints it near-verbatim:
     // - source newlines are preserved (a `,\n` selector-list boundary stays a hardline)
-    // - and only intra-line whitespace runs collapse to a single space
+    // - and only intra-line whitespace runs collapse to a single space, a string stays as is
     // Selectors BEFORE the first placeholder still split normally.
     // Only the embedded entry point can contain placeholders;
     // the gate also keeps a literal marker inside
@@ -74,7 +74,10 @@ pub(super) fn write_selector_list<'a>(
     let placeholder_idx = if f.context().template_placeholders() {
         let source = f.context().source_text();
         list.selectors.iter().position(|complex| {
-            TEMPLATE_PLACEHOLDER.is_in(source.text_for(&to_span(complex.span())))
+            let raw = source.text_for(&to_span(complex.span()));
+            TEMPLATE_PLACEHOLDER.is_in(raw)
+                && split_strings(raw)
+                    .any(|(run, quoted)| !quoted && TEMPLATE_PLACEHOLDER.is_in(run))
         })
     } else {
         None
@@ -123,18 +126,13 @@ pub(super) fn write_selector_list<'a>(
                 let _ = f.context().comments().take_before(end);
                 // Emit each source line as a collapsed run of placeholders + text,
                 // joined by `hard_line_break()`.
-                // Source newlines are normalized to `\n` by `parse_stylesheet`,
-                // so splitting on `\n` is enough.
                 // The degraded chunk is printed verbatim,
                 // but the embedded placeholders must stay typed so the host can splice `${expr}` back.
-                for (line_idx, line) in raw.split('\n').enumerate() {
+                for (line_idx, line) in collapsed_lines(raw).iter().enumerate() {
                     if line_idx > 0 {
                         write!(f, hard_line_break());
                     }
-                    let joined = normalize_whitespace(line);
-                    if !joined.is_empty() {
-                        write_text_with_placeholders(f.allocator().alloc_str(&joined), f);
-                    }
+                    write_text_with_placeholders(f.allocator().alloc_str(line), f);
                 }
                 return;
             }
@@ -311,10 +309,11 @@ pub(super) fn write_interpolable_ident<'a>(
 ///
 /// Unlike the structurally-parsed positions, garbage mode prints degraded source verbatim,
 /// so the markers are recovered from the text here.
+/// A line break left in it is a string's, which breaks no group as in [`value::write_attribute_str`].
 fn write_text_with_placeholders<'a>(source: &'a str, f: &mut CssFormatter<'_, 'a>) {
     for piece in TEMPLATE_PLACEHOLDER.pieces(source) {
         match piece {
-            PlaceholderPiece::Text(run) => write!(f, text(run)),
+            PlaceholderPiece::Text(run) => write!(f, text(run).without_expand_parent()),
             PlaceholderPiece::Index(index) => {
                 if let Ok(index) = u32::try_from(index) {
                     f.write_element(FormatElement::EmbedPlaceholder(index));
@@ -327,6 +326,65 @@ fn write_text_with_placeholders<'a>(source: &'a str, f: &mut CssFormatter<'_, 'a
             }
         }
     }
+}
+
+/// `raw` split into runs outside a quoted string and the strings themselves (`true`, quotes included).
+///
+/// NOTE: A quote in a comment opens a string here, a known ceiling:
+/// only an at-rule's selector list (`@extend`) brings a comment, a rule's prints as written then;
+/// skipping comments (`block_comment_end`) lifts it.
+fn split_strings(raw: &str) -> impl Iterator<Item = (&str, bool)> {
+    let bytes = raw.as_bytes();
+    let mut pos = 0;
+    std::iter::from_fn(move || {
+        let start = pos;
+        let quote = *bytes.get(pos)?;
+        let quoted = matches!(quote, b'"' | b'\'');
+        pos += usize::from(quoted);
+        // The run ends at an ASCII quote or the end, a char boundary
+        while let Some(&b) = bytes.get(pos) {
+            if !quoted && matches!(b, b'"' | b'\'') {
+                break;
+            }
+            // An escape is skipped in and out of a string (`\"` outside one opens none)
+            pos += 1 + usize::from(b == b'\\');
+            if quoted && b == quote {
+                break;
+            }
+        }
+        pos = pos.min(bytes.len());
+        Some((&raw[start..pos], quoted))
+    })
+}
+
+/// `raw` split at its line breaks outside a string (one in a string stays in its line),
+/// each whitespace run outside a string as one space, none at a line's ends.
+/// Source newlines are normalized to `\n` by `parse_stylesheet`, so splitting on `\n` is enough.
+fn collapsed_lines(raw: &str) -> Vec<String> {
+    fn push(lines: &mut [String], space: &mut bool, word: &str) {
+        let line = lines.last_mut().unwrap();
+        if std::mem::take(space) && !line.is_empty() {
+            line.push(' ');
+        }
+        line.push_str(word);
+    }
+
+    let mut lines = vec![String::new()];
+    let mut space = false;
+    for (run, quoted) in split_strings(raw) {
+        if quoted {
+            push(&mut lines, &mut space, run);
+            continue;
+        }
+        for (i, c) in run.char_indices() {
+            match c {
+                '\n' => lines.push(String::new()),
+                c if c.is_whitespace() => space = true,
+                c => push(&mut lines, &mut space, &run[i..i + c.len_utf8()]),
+            }
+        }
+    }
+    lines
 }
 
 fn write_wq_name<'a>(name: &WqName<'a>, f: &mut CssFormatter<'_, 'a>) {

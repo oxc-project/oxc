@@ -1,0 +1,67 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A placeholder only inside a string leaves the selector parsed: the next selector splits */
+a  b, div  span[foo="a  `oxfmt_css_0`"], c  d {
+  color: red;
+}
+div  span[foo='a  b\
+    c `oxfmt_css_1`  d'] {
+  color: red;
+}
+/* One outside a string prints what follows near-verbatim, a string's content as is */
+p  `oxfmt_css_2`, div  span[foo="a  b"] {
+  color: red;
+}
+p  `oxfmt_css_3`, div  span[foo="a  b\
+    c"] {
+  color: red;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A placeholder only inside a string leaves the selector parsed: the next selector splits */
+a b,
+div span[foo="a  `oxfmt_css_0`"],
+c d {
+  color: red;
+}
+div span[foo="a  b\
+    c `oxfmt_css_1`  d"] {
+  color: red;
+}
+/* One outside a string prints what follows near-verbatim, a string's content as is */
+p `oxfmt_css_2`, div span[foo="a  b"] {
+  color: red;
+}
+p `oxfmt_css_3`, div span[foo="a  b\
+    c"] {
+  color: red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A placeholder only inside a string leaves the selector parsed: the next selector splits */
+a b,
+div span[foo="a  `oxfmt_css_0`"],
+c d {
+  color: red;
+}
+div span[foo="a  b\
+    c `oxfmt_css_1`  d"] {
+  color: red;
+}
+/* One outside a string prints what follows near-verbatim, a string's content as is */
+p `oxfmt_css_2`, div span[foo="a  b"] {
+  color: red;
+}
+p `oxfmt_css_3`, div span[foo="a  b\
+    c"] {
+  color: red;
+}
+
+===================== End =====================
