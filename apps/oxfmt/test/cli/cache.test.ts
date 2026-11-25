@@ -79,25 +79,36 @@ describe("--cache", () => {
     await check({ hits: 1, added: 0 });
   });
 
-  it("doesn't read a file whose `stat` is known, and sees a change to it", async () => {
+  // Whole seconds, so it can be put back exactly.
+  const old = Math.floor(Date.now() / 1000) - 3600;
+  // A formatted file whose `stat` is known after two runs.
+  const cacheByStat = async () => {
     const file = join(dir, "formatted.ts");
     await fs.writeFile(file, "export const a = 1;\n");
-    // Whole seconds, so it can be put back exactly.
-    const old = Math.floor(Date.now() / 1000) - 3600;
     await fs.utimes(file, old, old);
     // Wait until the inode change time `utimes` set is old enough to trust too.
     await sleep(RACY_WINDOW_MS + 100);
-
     // Its content and its `stat` are added, then the `stat` alone answers.
     await check({ hits: 0, added: 2 });
     await check({ hits: 1, added: 0 });
+    return file;
+  };
 
-    // NOTE: Without an inode change time, Windows can't see this one.
-    if (process.platform !== "win32") {
-      // The same size, unformatted, the modification time put back: only the inode change time tells.
+  it("doesn't read a file whose `stat` is known", async () => {
+    const file = await cacheByStat();
+    await fs.writeFile(file, "export const   a = 1\n");
+    expect((await check({ hits: 0, added: 0 })).stdout).toContain("formatted.ts");
+  });
+
+  // NOTE: Without an inode change time, Windows can't see this one.
+  it.skipIf(process.platform === "win32")(
+    "sees a same-size write with `mtime` put back",
+    async () => {
+      const file = await cacheByStat();
+      // Unformatted, the same size, the modification time put back: only the inode change time tells.
       await fs.writeFile(file, "export const a =1 ;\n");
       await fs.utimes(file, old, old);
       expect((await check({ hits: 0, added: 0 })).stdout).toContain("formatted.ts");
-    }
-  });
+    },
+  );
 });
