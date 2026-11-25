@@ -916,11 +916,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// An instantiation expression (`MemberExpression TypeArguments`) directly followed by a
-    /// member access is TS1477; a parenthesized one is allowed:
+    /// property access is TS1477. As in TypeScript, element access and a parenthesized
+    /// instantiation are allowed:
     ///
     /// ```text
     /// a<b>.c      // error
-    /// a<b>?.[c]   // error
+    /// a<b>?.c     // error
+    /// a<b>?.[c]   // ok
     /// (a<b>).c    // ok
     /// ```
     fn error_if_unparenthesized_instantiation_expression(
