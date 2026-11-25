@@ -17,6 +17,10 @@ pub enum JSDocMode {
 }
 
 impl JSDocMode {
+    const fn is_default(&self) -> bool {
+        matches!(self, Self::TypeScript)
+    }
+
     const fn uses_closure_tags(self) -> bool {
         matches!(self, Self::Closure | Self::Permissive)
     }
@@ -26,7 +30,7 @@ impl JSDocMode {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, PartialEq)]
 pub struct JSDocPluginSettings {
     /// Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `"typescript"`.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "JSDocMode::is_default")]
     pub mode: JSDocMode,
 
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
