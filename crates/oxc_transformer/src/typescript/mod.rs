@@ -7,8 +7,8 @@ use oxc_syntax::scope::ScopeId;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    common::class_lowering::ClassLowering, context::TraverseCtx, state::TransformState,
-    utils::decorated_class::PrivateNames,
+    common::class_lowering::ClassLowering, context::TraverseCtx, decorator::DecoratorMode,
+    state::TransformState, utils::decorated_class::PrivateNames,
 };
 
 mod annotations;
@@ -58,6 +58,8 @@ pub struct TypeScript<'a> {
     source_type_is_typescript_definition: bool,
     set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
+    /// Whether legacy decorators (`experimentalDecorators`) lower decorated members.
+    legacy_decorators: bool,
     /// Parameter properties of the entered classes, for [`Self::add_parameter_property_fields`].
     parameter_properties: Vec<(Span, Ident<'a>)>,
     /// Entered classes with parameter properties, and where theirs start in
@@ -70,7 +72,11 @@ pub struct TypeScript<'a> {
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
+    pub fn new(
+        options: &TypeScriptOptions,
+        decorator_mode: DecoratorMode,
+        state: &TransformState<'a>,
+    ) -> Self {
         Self {
             annotations: TypeScriptAnnotations::new(options),
             r#enum: TypeScriptEnum::new(options.optimize_const_enums, options.optimize_enums),
@@ -81,6 +87,7 @@ impl<'a> TypeScript<'a> {
             set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
+            legacy_decorators: decorator_mode.is_legacy(),
             parameter_properties: Vec::new(),
             parameter_properties_starts: Vec::new(),
             computed_key_marker: None,
@@ -155,9 +162,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         if lowering.lowers_fields() {
             // Erase type-only fields before class-properties lowers the rest.
             self.remove_uninitialized_class_fields(class, ctx);
+            self.convert_decorated_declare_field_keys(class, lowering, ctx);
         } else if self.assigns_fields(lowering) {
             self.transform_class_fields(class, lowering, ctx);
         } else {
+            self.convert_decorated_declare_field_keys(class, lowering, ctx);
             // Define semantics: parameter properties also get field declarations.
             let start = self.parameter_properties.len();
             Self::collect_parameter_properties(class, &mut self.parameter_properties);
