@@ -100,12 +100,12 @@ const categories: Category[] = [
         resolveFilePath: asComponentTemplate,
       },
       {
-        dir: join(EXTERNALS_DIR, "bitwarden-web", "auth"),
+        dir: join(EXTERNALS_DIR, "bitwarden-web"),
         ext: ".html",
         resolveFilePath: asComponentTemplate,
       },
       {
-        dir: join(EXTERNALS_DIR, "bitwarden-web", "vault"),
+        dir: join(EXTERNALS_DIR, "bitwarden-license-web"),
         ext: ".html",
         resolveFilePath: asComponentTemplate,
       },

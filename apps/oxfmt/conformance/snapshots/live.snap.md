@@ -183,12 +183,14 @@
 
 ## angular
 
-### Option 1: 472/477 (98.95%)
+### Option 1: 790/804 (98.26%)
 
 ```json
 {"printWidth":80}
 ```
 
+- [externals/bitwarden-web/billing/organizations/organization-subscription-cloud.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-subscription-cloud.component.html.md)
+  - ❓unclassified
 - [externals/angular-adev/content/examples/i18n/src/app/app.component.html](diffs/angular/externals__angular-adev__content__examples__i18n__src__app__app.component.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
 - [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
@@ -199,8 +201,24 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
 - [externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html](diffs/angular/externals__angular-devtools__src__app__demo-app__todo__home__todos.component.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/auth/sso/sso-manage.component.html](diffs/angular/externals__bitwarden-license-web__auth__sso__sso-manage.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/pam/approvals/withdraw-approval-dialog/withdraw-approval-dialog.component.html](diffs/angular/externals__bitwarden-license-web__pam__approvals__withdraw-approval-dialog__withdraw-approval-dialog.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-history.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-history.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent
+- [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-job-drawer/rotation-job-drawer.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-job-drawer__rotation-job-drawer.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent
+- [externals/bitwarden-web/admin-console/organizations/shared/components/collection-dialog/collection-dialog.component.html](diffs/angular/externals__bitwarden-web__admin-console__organizations__shared__components__collection-dialog__collection-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+- [externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__change-plan-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
+- [externals/bitwarden-web/billing/organizations/churn-mitigation-offer-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__churn-mitigation-offer-dialog.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-web/billing/organizations/organization-plans.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-plans.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
 
-### Option 2: 476/477 (99.79%)
+### Option 2: 802/804 (99.75%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -208,6 +226,8 @@
 
 - [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- [externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__change-plan-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
 
 ## svelte
 

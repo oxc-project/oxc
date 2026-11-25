@@ -83,6 +83,11 @@ export const sources = [
     repo: "bitwarden/clients/apps/web/src/app",
     version: "web-v2026.11.0",
   },
+  {
+    name: "bitwarden-license-web",
+    repo: "bitwarden/clients/bitwarden_license/bit-web/src/app",
+    version: "web-v2026.11.0",
+  },
   // less
   {
     name: "ng-zorro-antd",
