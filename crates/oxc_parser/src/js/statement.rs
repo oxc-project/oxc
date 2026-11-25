@@ -942,7 +942,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse statements that start with `@`.
     fn parse_decorated_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
-        let decorators = self.parse_decorators();
+        let checkpoint = (self.source_type.is_unambiguous()
+            && self.ctx.has_top_level()
+            && !self.ctx.has_await())
+        .then(|| self.checkpoint());
+        let mut decorators = self.parse_decorators();
+        // `export` commits to the Module goal, which also covers the decorators before it.
+        // Parse them again if they read `await` as an identifier, because the statement-level
+        // reparse skips exports. e.g. `@dec(await (x)) export class C {}`
+        if self.at(Kind::Export)
+            && let Some(checkpoint) = checkpoint
+            && self.state.encountered_await_identifier
+        {
+            self.rewind(checkpoint);
+            let checkpoint = self.checkpoint();
+            let ctx = self.ctx;
+            self.ctx = ctx.and_await(true);
+            decorators = self.parse_decorators();
+            // Module code can read that `export` as part of a decorator, as in
+            // `@dec(await /"(")export /) class C {}`. Keep the Script parse then. Keep a module
+            // parse that fails, as in `@dec(await) export class C {}`: the file is still a module.
+            if !self.at(Kind::Export) && !self.has_fatal_error() {
+                self.rewind(checkpoint);
+                self.ctx = ctx;
+                decorators = self.parse_decorators();
+            }
+        }
         let kind = self.cur_kind();
         if kind == Kind::Export {
             // Export span.start starts after decorators.
