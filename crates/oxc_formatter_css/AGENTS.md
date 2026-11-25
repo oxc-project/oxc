@@ -96,7 +96,7 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
 
 Unlike other formatters that normalize locally where needed, CSS has too many verbatim slices to handle case by case.
 And without this, raw `\r` reaching the core `text()` builder would panic.
-Parse and print both use the normalized arena copy, so spans stay consistent.
+Parse and print both use the normalized source, so spans stay consistent.
 
 The configured `end_of_line` option still applies, the printer emits the chosen line ending when materializing multiline `Text` IR.
 

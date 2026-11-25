@@ -10,17 +10,19 @@ use crate::{context::TomlFormatContext, options::TomlFormatOptions, print::write
 
 /// Parse `source_text` as TOML and build its formatter IR.
 ///
+/// `source_text` is parsed in place, not copied into the arena.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
+///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: TomlFormatOptions,
 ) -> Result<Formatted<'a, TomlFormatContext<'a>>, OxcDiagnostic> {
-    let (has_bom, stripped) = split_bom(source_text);
-    let source = allocator.alloc_str(stripped);
+    let (has_bom, source) = split_bom(source_text);
     let parse = parse_for_format(source).map_err(|mut err| {
-        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, source);
         err
     })?;
 
@@ -48,6 +50,8 @@ pub fn format_to_ir<'a>(
     source_text: &str,
     options: TomlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
+    // The text can be a temporary, and the IR joins the parent's document,
+    // so it is copied into the session's arena
     let source = session.allocator().alloc_str(source_text);
     let parse = parse_for_format(source)?;
 

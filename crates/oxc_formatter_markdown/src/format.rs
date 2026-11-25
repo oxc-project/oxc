@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
@@ -16,13 +18,15 @@ use crate::{
 
 /// Parse `source_text` as a Markdown document and build its formatter IR.
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parser reports a diagnostic.
 /// CommonMark has no syntax errors, so markdown mode only fails on input-level limits;
 /// MDX mode (not wired yet) will add real syntax errors.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: MarkdownFormatOptions,
 ) -> Result<Formatted<'a, MarkdownFormatContext<'a>>, OxcDiagnostic> {
     // A service-less session: front matter and fenced code stay as-is.
@@ -38,11 +42,13 @@ pub fn format<'a>(
 /// the root whose session carries the host's `SessionServices`
 /// (front matter and fenced code dispatch, Tailwind sorting).
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn format_with_session<'a>(
     session: &FormatSession<'a>,
-    source_text: &str,
+    source_text: &'a str,
     options: MarkdownFormatOptions,
 ) -> Result<Formatted<'a, MarkdownFormatContext<'a>>, OxcDiagnostic> {
     // The envelope matrix has one decision input, the session's `InputKind`:
@@ -78,7 +84,7 @@ pub struct ParsedMarkdown<'a> {
     pub root: &'a Root<'a>,
     /// Every logical blank line, in source order.
     pub blanks: &'a [Span],
-    /// Normalized arena source every span indexes into, the front matter blanked
+    /// Normalized source every span indexes into, the front matter blanked
     /// (what the parser saw; a verbatim slice overlapping it prints the blanks, as Prettier's does).
     pub source: &'a str,
     /// The leading `---` / `+++` block (it is not markdown), sliced from the unblanked source.
@@ -92,14 +98,23 @@ pub struct ParsedMarkdown<'a> {
 /// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
 /// Owns the BOM split and `\r` normalization.
 ///
+/// `source_text` is copied into the arena only when it has a `\r` to normalize,
+/// or front matter to blank.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
 ) -> Result<ParsedMarkdown<'a>, OxcDiagnostic> {
     let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
-    parse_root(allocator, stripped, has_bom).map_err(|mut err| {
+    // A text with no `\r` is already normalized, so it is not copied
+    let unblanked = match oxc_formatter_core::normalize_newlines(stripped, ['\r']) {
+        Cow::Borrowed(unblanked) => unblanked,
+        Cow::Owned(unblanked) => allocator.alloc_str(&unblanked),
+    };
+    parse_root(allocator, unblanked, has_bom).map_err(|mut err| {
         oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
         err
     })
@@ -123,8 +138,12 @@ pub fn format_to_ir<'a>(
     in_js_template: bool,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
+    // The text can be a temporary, and the IR joins the parent's document,
+    // so it is copied into the session's arena (normalized first when it has a `\r`)
+    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
+    let unblanked = allocator.alloc_str(&normalized);
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part
-    let parsed = parse_root(allocator, source_text, false)?;
+    let parsed = parse_root(allocator, unblanked, false)?;
     if parsed.front_matter.is_some() && !session.input_kind().owns_front_matter() {
         // A fragment (a JSDoc fence) never acquires file envelope semantics:
         // refuse the whole child instead of partially treating its head as front matter.
@@ -144,19 +163,18 @@ pub fn format_to_ir<'a>(
 
 /// Parse the source into the AST, bailing out on any diagnostic.
 ///
-/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Takes `unblanked` as `&'a str`, so every slice taken from it carries `'a`.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
 /// Entries own the BOM strip; this layer assumes BOM-free input (see [`oxc_formatter_core::spec::split_bom`]).
+///
+/// Entries normalize line endings BEFORE parsing:
+/// the printer slices verbatim text from the source in many places (html, code, liquid, math),
+/// and the IR forbids `\r`.
 fn parse_root<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    unblanked: &'a str,
     has_bom: bool,
 ) -> Result<ParsedMarkdown<'a>, OxcDiagnostic> {
-    // Normalize line endings BEFORE parsing:
-    // the printer slices verbatim text from the source in many places (html, code, liquid, math),
-    // and the IR forbids `\r`.
-    let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
-    let unblanked: &'a str = allocator.alloc_str(&source_text);
-
     // Front matter is not markdown (`---` would be a thematic break, its body a setext heading):
     // blanked, byte for byte, for the parser and the printer alike, and printed from `fm.raw` by `write_document`.
     // Blanked rather than cut off because the body may start on the closing line (`---<div>`),

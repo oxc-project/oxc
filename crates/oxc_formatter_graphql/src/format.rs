@@ -16,13 +16,15 @@ use crate::{
 
 /// Parse `source_text` as a GraphQL document and build its formatter IR.
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error.
 /// `oxc-graphql-parser` is error-tolerant (it still returns an AST for invalid input),
 /// but an AST with errors cannot be formatted faithfully, so a single error is enough to bail out.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: GraphqlFormatOptions,
 ) -> Result<Formatted<'a, GraphqlFormatContext<'a>>, OxcDiagnostic> {
     let parsed = parse_for_format(allocator, source_text)?;
@@ -49,7 +51,7 @@ pub struct ParsedGraphql<'a> {
     pub document: &'a GraphQLDocument<'a>,
     /// Sorted comment spans; oxc-graphql-parser keeps them out of the AST.
     pub comments: &'a [Span],
-    /// Arena source every span indexes into.
+    /// Source every span indexes into.
     source: &'a str,
     has_bom: bool,
 }
@@ -60,11 +62,14 @@ pub struct ParsedGraphql<'a> {
 /// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
 /// Owns the BOM split.
 ///
+/// `source_text` is parsed in place, not copied into the arena.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
 ) -> Result<ParsedGraphql<'a>, OxcDiagnostic> {
     let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
     // The GraphQL spec does not allow an empty document,
@@ -76,11 +81,11 @@ pub fn parse_for_format<'a>(
         });
         return Ok(ParsedGraphql { document, comments: &[], source: "", has_bom });
     }
-    let (document, source, comments) = parse_document(allocator, stripped).map_err(|mut err| {
+    let (document, comments) = parse_document(allocator, stripped).map_err(|mut err| {
         oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
         err
     })?;
-    Ok(ParsedGraphql { document, comments, source, has_bom })
+    Ok(ParsedGraphql { document, comments, source: stripped, has_bom })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
@@ -100,7 +105,10 @@ pub fn format_to_ir<'a>(
     options: GraphqlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
-    let (document, source, comments) = parse_document(allocator, source_text)?;
+    // The text can be a temporary, and the IR joins the parent's document,
+    // so it is copied into the session's arena
+    let source = allocator.alloc_str(source_text);
+    let (document, comments) = parse_document(allocator, source)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
     let mut state = FormatState::new_with_session(context, session.clone());
@@ -114,14 +122,13 @@ pub fn format_to_ir<'a>(
 /// Parse the source into a direct AST and collect comment trivia,
 /// bailing out on any parse error.
 ///
-/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Takes `source` as `&'a str`, so every slice taken from it carries `'a`.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
 /// Entries own the BOM strip; this layer assumes BOM-free (see [`oxc_formatter_core::spec::split_bom`]).
 fn parse_document<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
-) -> Result<(&'a GraphQLDocument<'a>, &'a str, &'a [Span]), OxcDiagnostic> {
-    let source: &'a str = allocator.alloc_str(source_text);
-
+    source: &'a str,
+) -> Result<(&'a GraphQLDocument<'a>, &'a [Span]), OxcDiagnostic> {
     // Opt-in graphql-js 17 syntax
     let ast = Parser::new(allocator, source).experimental_fragment_arguments(true).parse();
     if let Some(error) = ast.errors().next() {
@@ -137,7 +144,7 @@ fn parse_document<'a>(
 
     let document = allocator.alloc(ast.into_root());
 
-    Ok((document, source, comments))
+    Ok((document, comments))
 }
 
 /// Emits the document's definitions followed by any trailing comments,

@@ -13,7 +13,7 @@ use crate::{
     print::{YamlFormatter, format_with},
 };
 
-/// A comment bridged from the parser: its span in the arena source,
+/// A comment bridged from the parser: its span in the normalized source,
 /// plus the parser-recorded layout fact print sites branch on.
 #[derive(Clone, Copy, Debug)]
 pub struct SourceComment {

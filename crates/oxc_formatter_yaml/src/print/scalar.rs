@@ -113,7 +113,7 @@ pub fn write_flow_scalar_content<'a>(
         return;
     }
     // Words fold to the arena lifetime:
-    // borrowed words already slice the arena-backed source, only owned (merged) words need an arena copy.
+    // borrowed words already slice the `'a` source, only owned (merged) words need an arena copy.
     let line_groups: Vec<Vec<&'a str>> = flow_scalar_line_contents(kind, content, prose_wrap)
         .into_iter()
         .map(|words| {

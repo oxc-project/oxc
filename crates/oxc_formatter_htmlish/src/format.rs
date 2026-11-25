@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
@@ -20,11 +22,13 @@ use crate::{
 
 /// Parse `source_text` as `options.variant` and build its formatter IR.
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parser reports broken structure.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: HtmlishFormatOptions,
 ) -> Result<Formatted<'a, HtmlishFormatContext<'a>>, OxcDiagnostic> {
     // A service-less session: front matter stays as-is.
@@ -39,11 +43,13 @@ pub fn format<'a>(
 /// Like [`format()`], but on a caller-supplied [`FormatSession`]:
 /// the root whose session carries the host's `SessionServices` (front matter dispatch, Tailwind sorting).
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn format_with_session<'a>(
     session: &FormatSession<'a>,
-    source_text: &str,
+    source_text: &'a str,
     options: HtmlishFormatOptions,
 ) -> Result<Formatted<'a, HtmlishFormatContext<'a>>, OxcDiagnostic> {
     debug_assert!(
@@ -74,7 +80,7 @@ pub fn format_with_session<'a>(
 /// [`parse_for_format`] output: the AST, plus the envelope [`format()`] prints around it.
 pub struct ParsedHtmlish<'a> {
     pub root: &'a Root<'a>,
-    /// The arena source every span indexes into, `\r` normalized away and the front matter blanked.
+    /// The source every span indexes into, `\r` normalized away and the front matter blanked.
     pub source: &'a str,
     /// The leading `---` / `+++` block (it is not markup), sliced from the unblanked source.
     pub front_matter: Option<FrontMatter<'a>>,
@@ -87,19 +93,30 @@ pub struct ParsedHtmlish<'a> {
 /// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
 /// Owns the BOM split and `\r` normalization.
 ///
+/// `source_text` is copied into the arena only when it has a `\r` to normalize,
+/// or front matter to blank.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: &HtmlishFormatOptions,
 ) -> Result<ParsedHtmlish<'a>, OxcDiagnostic> {
     let (has_bom, stripped) = split_bom(source_text);
-    parse_root(allocator, stripped, has_bom, options.variant.to_dialect(), ParserOptions::default())
-        .map_err(|mut err| {
-            oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
-            err
-        })
+    // A text with no `\r` is already normalized, so it is not copied
+    let unblanked = match oxc_formatter_core::normalize_newlines(stripped, ['\r']) {
+        Cow::Borrowed(unblanked) => unblanked,
+        Cow::Owned(unblanked) => allocator.alloc_str(&unblanked),
+    };
+    let dialect = options.variant.to_dialect();
+    let result = parse_root(allocator, unblanked, has_bom, dialect, ParserOptions::default());
+    result.map_err(|mut err| {
+        oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
@@ -120,9 +137,17 @@ pub fn format_to_ir<'a>(
     let allocator = session.allocator();
     let template_placeholder = embedded_in.and_then(|e| e.placeholder).map(|(_, is)| is);
     let parser_options = ParserOptions { template_placeholder };
+    let dialect = options.variant.to_dialect();
+    // The text can be a temporary, and the IR joins the parent's document,
+    // so it is copied into the session's arena (normalized first when it has a `\r`)
+    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
+    let unblanked = allocator.alloc_str(&normalized);
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part
-    let parsed =
-        parse_root(allocator, source_text, false, options.variant.to_dialect(), parser_options)?;
+    let result = parse_root(allocator, unblanked, false, dialect, parser_options);
+    let parsed = result.map_err(|mut err| {
+        oxc_formatter_core::restore_crlf_labels(&mut err.labels, source_text);
+        err
+    })?;
     if parsed.front_matter.is_some() && !session.input_kind().owns_front_matter() {
         // A fragment never acquires file envelope semantics
         return Err(OxcDiagnostic::error(
@@ -173,18 +198,20 @@ impl HtmlishEmbeddedIn {
 
 /// Parse the source into the AST, bailing out on any diagnostic.
 ///
-/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Takes `unblanked` as `&'a str`, so every slice taken from it carries `'a`.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
 /// Entries own the BOM strip; this layer assumes BOM-free input (see [`split_bom`]).
+///
+/// Entries normalize `\r` away, as the printer slices verbatim text from the source,
+/// and the IR forbids `\r`.
+/// Entries move error labels back onto the text before normalization.
 fn parse_root<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    unblanked: &'a str,
     has_bom: bool,
     dialect: Dialect,
     options: ParserOptions,
 ) -> Result<ParsedHtmlish<'a>, OxcDiagnostic> {
-    // The printer slices verbatim text from the source, and the IR forbids `\r`.
-    let unblanked: &'a str =
-        allocator.alloc_str(&oxc_formatter_core::normalize_newlines(source_text, ['\r']));
     // Blanked byte for byte, so every span still indexes the same source.
     let front_matter = parse_front_matter(unblanked);
     let source: &'a str = match &front_matter {
@@ -193,10 +220,8 @@ fn parse_root<'a>(
     };
     let root = Parser::new(allocator, source, dialect).with_options(options).parse();
     let root = root.map_err(|diagnostic| {
-        let mut err = OxcDiagnostic::error(format!("Syntax error: {diagnostic}"))
-            .with_label(oxc_span::Span::new(diagnostic.span.start, diagnostic.span.end));
-        oxc_formatter_core::restore_crlf_labels(&mut err.labels, source_text);
-        err
+        OxcDiagnostic::error(format!("Syntax error: {diagnostic}"))
+            .with_label(oxc_span::Span::new(diagnostic.span.start, diagnostic.span.end))
     })?;
     Ok(ParsedHtmlish { root: allocator.alloc(root), source, front_matter, has_bom })
 }

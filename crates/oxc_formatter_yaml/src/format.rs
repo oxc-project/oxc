@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
@@ -16,12 +18,14 @@ use crate::{
 
 /// Parse `source_text` as a YAML stream and build its formatter IR.
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse fails.
 /// `oxc-yaml-parser` is fail-fast (no partial AST), so any syntax error bails out.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: YamlFormatOptions,
 ) -> Result<Formatted<'a, YamlFormatContext<'a>>, OxcDiagnostic> {
     let parsed = parse_for_format(allocator, source_text)?;
@@ -53,7 +57,7 @@ pub struct ParsedYaml<'a> {
     pub root: &'a Root<'a>,
     /// Sorted comments bridged from the parser's trivia.
     pub comments: &'a [SourceComment],
-    /// Normalized arena source every span indexes into.
+    /// Normalized source every span indexes into.
     source: &'a str,
     has_bom: bool,
 }
@@ -64,14 +68,23 @@ pub struct ParsedYaml<'a> {
 /// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
 /// Owns the BOM split and `\r` normalization.
 ///
+/// `source_text` is copied into the arena only when it has a `\r` to normalize.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
 ) -> Result<ParsedYaml<'a>, OxcDiagnostic> {
     let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
-    let (root, source, comments) = parse_root(allocator, stripped).map_err(|mut err| {
+    // A text with no `\r` is already normalized, so it is not copied
+    let source = match oxc_formatter_core::normalize_newlines(stripped, ['\r']) {
+        Cow::Borrowed(source) => source,
+        Cow::Owned(source) => allocator.alloc_str(&source),
+    };
+    let (root, comments) = parse_root(allocator, source).map_err(|mut err| {
+        oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
         oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
         err
     })?;
@@ -93,7 +106,14 @@ pub fn format_to_ir<'a>(
     options: YamlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
-    let (root, source, comments) = parse_root(allocator, source_text)?;
+    // The text can be a temporary, and the IR joins the parent's document,
+    // so it is copied into the session's arena (normalized first when it has a `\r`)
+    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
+    let source = allocator.alloc_str(&normalized);
+    let (root, comments) = parse_root(allocator, source).map_err(|mut err| {
+        oxc_formatter_core::restore_crlf_labels(&mut err.labels, source_text);
+        err
+    })?;
 
     let context =
         YamlFormatContext::new(options, source, comments, print::last_descendant_end(root));
@@ -108,23 +128,21 @@ pub fn format_to_ir<'a>(
 /// Parse the source into the yaml-unist-shaped AST and bridge comment trivia,
 /// bailing out on any parse error.
 ///
-/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Takes `source` as `&'a str`, so every slice taken from it carries `'a`.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
 /// Entries own the BOM strip; this layer assumes BOM-free input (see [`oxc_formatter_core::spec::split_bom`]).
+///
+/// NOTE: Entries normalize line endings BEFORE parsing, unlike other `oxc_formatter_xxx`.
+/// For YAML formatter, the printer slices verbatim text from the source in many places.
+/// YAML is also unusual in that line breaks and whitespace have meaning.
+/// Entries move error labels back onto the text before normalization.
 fn parse_root<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
-) -> Result<(&'a Root<'a>, &'a str, &'a [SourceComment]), OxcDiagnostic> {
-    // NOTE: Normalize line endings BEFORE parsing, unlike other `oxc_formatter_xxx`.
-    // For YAML formatter, the printer slices verbatim text from the source in many places.
-    // YAML is also unusual in that line breaks and whitespace have meaning.
-    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
-    let source: &'a str = allocator.alloc_str(&normalized);
-
+    source: &'a str,
+) -> Result<(&'a Root<'a>, &'a [SourceComment]), OxcDiagnostic> {
     let root = Parser::new(allocator, source).parse().map_err(|error| {
-        let mut err = OxcDiagnostic::error(format!("Syntax error: {}", error.kind))
-            .with_label(to_span(error.span));
-        oxc_formatter_core::restore_crlf_labels(&mut err.labels, source_text);
-        err
+        OxcDiagnostic::error(format!("Syntax error: {}", error.kind))
+            .with_label(to_span(error.span))
     })?;
 
     let root = allocator.alloc(root);
@@ -137,7 +155,7 @@ fn parse_root<'a>(
     )
     .into_arena_slice();
 
-    Ok((root, source, comments))
+    Ok((root, comments))
 }
 
 /// Emits the stream's documents followed by any trailing comments, and the final newline.

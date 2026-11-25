@@ -186,7 +186,7 @@ fn block_value_line_contents<'s>(
             .map(|l| if l.is_empty() { vec![] } else { vec![l] })
             .collect()
     } else {
-        // Borrowed words already slice the arena-backed source;
+        // Borrowed words already slice the `'s` source;
         // only the words fold_lines merged into owned strings need an arena copy.
         let stripped: Vec<&'s str> = content.split('\n').map(strip).collect();
         fold_lines(&stripped, prose_wrap)

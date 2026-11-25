@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Stylesheet};
 
 use oxc_allocator::{Allocator, ArenaVec};
@@ -20,13 +22,15 @@ use crate::{
 
 /// Parse `source_text` as a stylesheet and build its formatter IR.
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error, including recoverable ones.
 /// `oxc-css-parser` can recover from some syntax errors, but a tree with errors cannot be formatted faithfully,
 /// so a single error is enough to bail out.
 pub fn format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: CssFormatOptions,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     // NOTE: this wrapper labels the run `PhysicalFile` with NO services:
@@ -47,11 +51,13 @@ pub fn format<'a>(
 /// see `write_front_matter` for the routing and every verbatim degradation),
 /// and its Tailwind sorter orders the collected `@apply` classes at finalize.
 ///
+/// `source_text` does not have to be in the arena, see [`parse_for_format`].
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn format_with_session<'a>(
     session: &FormatSession<'a>,
-    source_text: &str,
+    source_text: &'a str,
     options: CssFormatOptions,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     // The envelope matrix has one decision input, the session's `InputKind`:
@@ -88,7 +94,7 @@ pub struct ParsedCss<'a> {
     pub stylesheet: Stylesheet<'a>,
     /// Sorted comments; oxc-css-parser keeps them out of the AST.
     pub comments: &'a [CssComment],
-    /// Normalized arena source every span indexes into.
+    /// Normalized source every span indexes into.
     source: &'a str,
     has_bom: bool,
     front_matter: Option<FrontMatter<'a>>,
@@ -101,27 +107,26 @@ pub struct ParsedCss<'a> {
 /// Owns the envelope (BOM split, `\r` normalization, front matter blanking).
 /// `root` is what the source is: [`format()`] parses a stylesheet, [`format_to_ir`] a fragment.
 ///
+/// `source_text` is copied into the arena only when it has a `\r` to normalize,
+/// or front matter to blank.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
+///
 /// # Errors
 /// Same as [`format()`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
-    source_text: &str,
+    source_text: &'a str,
     options: CssFormatOptions,
     root: CssRoot,
 ) -> Result<ParsedCss<'a>, OxcDiagnostic> {
     let (has_bom, stripped) = split_bom(source_text);
-
-    // A document root owns front matter;
-    // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
-    let PreparedSource { source, parse_source, front_matter } = prepare_source(allocator, stripped);
-    let (stylesheet, comments) =
-        parse_stylesheet(allocator, parse_source, options, root).map_err(|mut err| {
-            oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
-            oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
-            err
-        })?;
-
-    Ok(ParsedCss { stylesheet, comments, source, has_bom, front_matter })
+    // A text with no `\r` is already normalized, so it is not copied
+    let source = match oxc_formatter_core::normalize_newlines(stripped, ['\r']) {
+        Cow::Borrowed(source) => source,
+        Cow::Owned(source) => allocator.alloc_str(&source),
+    };
+    parse_normalized(allocator, source, has_bom, options, root)
+        .map_err(|err| restore_labels(err, source_text, stripped))
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
@@ -145,15 +150,22 @@ pub fn format_to_ir<'a>(
     options: CssFormatOptions,
     embedded_in: Option<CssEmbeddedIn>,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
-    // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part,
-    // so the BOM split inside `parse_for_format` is a no-op here.
     let root = if embedded_in == Some(CssEmbeddedIn::CssInJsTemplate) {
         CssRoot::CssInJsTemplate
     } else {
         CssRoot::Fragment
     };
-    let ParsedCss { stylesheet, comments, source, front_matter, .. } =
-        parse_for_format(session.allocator(), source_text, options, root)?;
+    // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part,
+    // so the BOM split is a no-op here
+    let (_, stripped) = split_bom(source_text);
+    let allocator = session.allocator();
+    // The text can be a temporary, and the IR joins the parent's document,
+    // so it is copied into the session's arena (normalized first when it has a `\r`)
+    let normalized = oxc_formatter_core::normalize_newlines(stripped, ['\r']);
+    let source = allocator.alloc_str(&normalized);
+    let parsed = parse_normalized(allocator, source, false, options, root)
+        .map_err(|err| restore_labels(err, source_text, stripped))?;
+    let ParsedCss { stylesheet, comments, source, front_matter, .. } = parsed;
     if front_matter.is_some() && !session.input_kind().owns_front_matter() {
         // A fragment (css-in-js, JSDoc fence) never acquires file envelope semantics:
         // refuse the whole child instead of partially treating its head as front matter.
@@ -193,7 +205,45 @@ pub enum CssRoot {
     CssInJsTemplate,
 }
 
-/// Normalized arena source, its front matter (when present),
+/// Parse `source`, normalized and BOM-free, as `root` and collect comments,
+/// bailing out on any error.
+///
+/// Takes `source` as `&'a str`, so every slice taken from it carries `'a`.
+/// `'a` only means that it outlives the arena borrow. It does not have to be in the arena.
+///
+/// NOTE: Entries normalize line endings BEFORE parsing like Prettier,
+/// unlike other `oxc_formatter_xxx`.
+/// For CSS formatter, the printer slices verbatim text from the source in many places.
+/// (comments, progid, custom properties, ...etc)
+/// And a raw `\r` reaching the core `text()` builder panics.
+/// Spans stay consistent because parse and print both use the normalized source.
+/// Entries move error labels back onto the text before normalization.
+fn parse_normalized<'a>(
+    allocator: &'a Allocator,
+    source: &'a str,
+    has_bom: bool,
+    options: CssFormatOptions,
+    root: CssRoot,
+) -> Result<ParsedCss<'a>, OxcDiagnostic> {
+    // A document root owns front matter;
+    // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
+    let PreparedSource { source, parse_source, front_matter } = prepare_source(allocator, source);
+    let (stylesheet, comments) = parse_stylesheet(allocator, parse_source, options, root)?;
+
+    Ok(ParsedCss { stylesheet, comments, source, has_bom, front_matter })
+}
+
+/// Move the labels of `err` from the normalized source which was parsed,
+/// back onto `source_text`, the text which the entry was given.
+///
+/// `stripped` is `source_text` without its BOM, before normalization.
+fn restore_labels(mut err: OxcDiagnostic, source_text: &str, stripped: &str) -> OxcDiagnostic {
+    oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
+    oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+    err
+}
+
+/// Normalized source, its front matter (when present),
 /// and the copy the CSS parser actually sees
 /// (front matter blanked byte-preservingly so every span, comment, and source-gap scan aligns with `source`).
 struct PreparedSource<'a> {
@@ -202,15 +252,9 @@ struct PreparedSource<'a> {
     front_matter: Option<FrontMatter<'a>>,
 }
 
-fn prepare_source<'a>(allocator: &'a Allocator, source_text: &str) -> PreparedSource<'a> {
-    // NOTE: Normalize line endings BEFORE parsing like Prettier, unlike other `oxc_formatter_xxx`.
-    // For CSS formatter, the printer slices verbatim text from the source in many places.
-    // (comments, progid, custom properties, ...etc)
-    // And a raw `\r` reaching the core `text()` builder panics.
-    // Spans stay consistent because parse and print both use the normalized copy.
-    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
-    let source: &'a str = allocator.alloc_str(&normalized);
-
+/// Detect the front matter of `source`, already normalized,
+/// and blank it in the copy the parser sees.
+fn prepare_source<'a>(allocator: &'a Allocator, source: &'a str) -> PreparedSource<'a> {
     // Front matter is not CSS:
     // blank it out for the parser and keep the detection for the print side
     // (verbatim or dispatched, `write_front_matter`).
@@ -230,7 +274,7 @@ fn prepare_source<'a>(allocator: &'a Allocator, source_text: &str) -> PreparedSo
 /// arrive here (physical entries split the whole BOM run, `FormatSession::dispatch`
 /// preserves BOM-headed embedded inputs), and this parser needs that guarantee:
 /// `oxc-css-parser` strips a leading `\u{feff}` from the source itself, which
-/// would desync every span from the arena copy the printer slices.
+/// would desync every span from the source the printer slices.
 fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
     parse_source: &'a str,
