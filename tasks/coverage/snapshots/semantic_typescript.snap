@@ -2,7 +2,7 @@ commit: 01f1a759
 
 semantic_typescript Summary:
 AST Parsed     : 5856/5856 (100.00%)
-Positive Passed: 4212/5856 (71.93%)
+Positive Passed: 4214/5856 (71.96%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -32310,16 +32310,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/s
 Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.ts
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(2))
-rebuilt        : ScopeId(8): Some(ScopeId(5))
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForAwaitOf.ts
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsNamedEvaluationDecoratorsAndClassFields.ts
 Bindings mismatch:
