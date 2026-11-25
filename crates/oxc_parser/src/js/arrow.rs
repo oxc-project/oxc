@@ -681,19 +681,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // `<T>` may start an arrow function, which is then tried first. The exception is
-        // a type assertion that the next tokens give away, because trying to parse them as
-        // type parameters and parameters is certain to fail: the name of a type parameter is
-        // followed by `,`, `=`, `extends` or `>`, not by the rest of a type as in `<A.B>a`,
-        // `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of type parameters is followed by
-        // `(`, not by an operand as in `<T>a` and `<any>{}`.
+        // a type assertion, or type arguments after `async`, that the next tokens give away,
+        // because trying to parse them as type parameters and parameters is certain to fail:
+        // the name of a type parameter is followed by `,`, `=`, `extends` or `>`, not by the
+        // rest of a type as in `<A.B>a`, `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of
+        // type parameters is followed by `(`, not by an operand as in `<T>a` and `<any>{}`.
         // JS only gets here for invalid code. `Maybe` gives it a better error for `<T,>`.
         if !self.is_ts || second == Kind::Const {
             return Tristate::Maybe;
         }
         self.bump_any(); // the name
         match self.cur_kind() {
-            // `<T,` is not a type, so it can only start type parameters, or the type arguments
-            // of a call to a function named `async`: `async<A, B>()`.
+            // `<T,` cannot start a type assertion, but after `async` it can start type
+            // arguments, as in `async<A, B>()` and `async<A, B>;`.
             Kind::Comma => {
                 if is_async {
                     Tristate::Maybe
