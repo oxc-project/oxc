@@ -11,7 +11,7 @@ use crate::{
 };
 
 fn require_template_description_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing JSDoc `@template` description.")
+    OxcDiagnostic::warn("@template should have a description")
         .with_help("Describe what the template type parameter represents.")
         .with_label(span)
 }
@@ -69,15 +69,11 @@ impl Rule for RequireTemplateDescription {
                 continue;
             }
 
-            let missing_description = jsdoc.tags().iter().find(|tag| {
-                if tag.kind.parsed() != "template" {
-                    return false;
-                }
-
-                !has_template_description(&tag.parsed_type_comment_preserving_lines())
-            });
-            if let Some(tag) = missing_description {
-                ctx.diagnostic(require_template_description_diagnostic(tag.kind.span));
+            if jsdoc.tags().iter().any(|tag| {
+                tag.kind.parsed() == "template"
+                    && !has_template_description(&tag.parsed_type_comment_preserving_lines())
+            }) {
+                ctx.diagnostic(require_template_description_diagnostic(comment.span));
             }
         }
     }
@@ -117,16 +113,8 @@ fn test() {
         "/**\n * @template T\n * Generic type on a separate line.\n */",
         "/**\n * @template\n * Description on the following line.\n */",
         "function example() {} /* @template T */",
-        "
-                    /**
-                     * @template {SomeType} Has a description
-                     */
-                  ",
-        "
-                    /**
-                     * @template Has a description
-                     */
-                  ",
+        "\n        /**\n         * @template {SomeType} Has a description\n         */\n      ",
+        "\n        /**\n         * @template Has a description\n         */\n      ",
     ];
 
     let fail = vec![
@@ -138,11 +126,7 @@ fn test() {
         "/**\n * @template\n * {object}\n */",
         "/**\n * @template T\n * @template U\n */",
         "function example() {} /** @template T */",
-        "
-                    /**
-                     * @template {SomeType}
-                     */
-                  ",
+        "\n        /**\n         * @template {SomeType}\n         */\n      ",
     ];
 
     Tester::new(RequireTemplateDescription::NAME, RequireTemplateDescription::PLUGIN, pass, fail)

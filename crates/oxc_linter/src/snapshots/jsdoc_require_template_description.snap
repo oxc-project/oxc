@@ -2,71 +2,72 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:1:5]
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:1]
  1 │ /** @template */
-   ·     ─────────
+   · ────────────────
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:1:5]
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:1]
  1 │ /** @template T */
-   ·     ─────────
+   · ──────────────────
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:1:5]
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:1]
  1 │ /** @template T, U */
-   ·     ─────────
+   · ─────────────────────
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:1:5]
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:1]
  1 │ /** @template [T = string[]] */
-   ·     ─────────
+   · ───────────────────────────────
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:1:5]
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:1]
  1 │ /** @template {object} T */
-   ·     ─────────
+   · ───────────────────────────
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:2:4]
- 1 │ /**
- 2 │  * @template
-   ·    ─────────
- 3 │  * {object}
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ │    * @template
+ 3 │ │    * {object}
+ 4 │ ╰─▶  */
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:2:4]
- 1 │ /**
- 2 │  * @template T
-   ·    ─────────
- 3 │  * @template U
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ │    * @template T
+ 3 │ │    * @template U
+ 4 │ ╰─▶  */
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:1:27]
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:1:23]
  1 │ function example() {} /** @template T */
-   ·                           ─────────
+   ·                       ──────────────────
    ╰────
   help: Describe what the template type parameter represents.
 
-  ⚠ jsdoc(require-template-description): Missing JSDoc `@template` description.
-   ╭─[require_template_description.tsx:3:24]
- 2 │                     /**
- 3 │                      * @template {SomeType}
-   ·                        ─────────
- 4 │                      */
+  ⚠ jsdoc(require-template-description): @template should have a description
+   ╭─[require_template_description.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         /**
+ 3 │ │            * @template {SomeType}
+ 4 │ ╰─▶          */
+ 5 │           
    ╰────
   help: Describe what the template type parameter represents.
