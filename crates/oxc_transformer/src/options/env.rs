@@ -113,6 +113,84 @@ impl EnvOptions {
         }
     }
 
+    /// Whether these options make the transformer lower, or reject, any JavaScript syntax.
+    ///
+    /// When this is `false`, the transformer leaves a program's syntax unchanged, so a caller can
+    /// skip it. This does not answer for transforms that do not depend on the target:
+    ///
+    /// * decorators: `decorator.legacy` lowers them at any target;
+    /// * TypeScript, which runs for TypeScript source types;
+    /// * JSX options: besides JSX syntax, `display_name` (on by default) names
+    ///   `React.createClass` and `createReactClass` calls, and `refresh` registers components,
+    ///   in any source type;
+    /// * plugins: `styled-components` and the tagged template transform for `</script`;
+    /// * module format: [`EnvOptions::module`] is only read by the TypeScript transform.
+    ///
+    /// Counted flags include ones that make the transformer report an error rather than lower
+    /// syntax: [`ES2022Options::top_level_await`], [`ES2020Options::big_int`] and
+    /// [`ES2020Options::arbitrary_module_namespace_names`]. RegExp features the transformer
+    /// cannot lower, such as ES2025 duplicate named capture groups, have no flag and are not
+    /// counted.
+    ///
+    /// Every flag is listed below by destructuring, so adding a flag to these options does not
+    /// compile until this method accounts for it.
+    pub fn lowers_syntax(&self) -> bool {
+        let Self {
+            module: _,
+            es2026: ES2026Options { explicit_resource_management },
+            es2022: ES2022Options { class_static_block, class_properties, top_level_await },
+            es2021: ES2021Options { logical_assignment_operators },
+            es2020:
+                ES2020Options {
+                    export_namespace_from,
+                    nullish_coalescing_operator,
+                    optional_chaining,
+                    big_int,
+                    arbitrary_module_namespace_names,
+                },
+            es2019: ES2019Options { optional_catch_binding },
+            es2018: ES2018Options { object_rest_spread, async_generator_functions },
+            es2017: ES2017Options { async_to_generator },
+            es2016: ES2016Options { exponentiation_operator },
+            es2015: ES2015Options { arrow_function },
+            regexp:
+                RegExpOptions {
+                    sticky_flag,
+                    unicode_flag,
+                    unicode_property_escapes,
+                    dot_all_flag,
+                    named_capture_groups,
+                    look_behind_assertions,
+                    match_indices,
+                    set_notation,
+                },
+        } = *self;
+        explicit_resource_management
+            || class_static_block
+            || class_properties.is_some()
+            || top_level_await
+            || logical_assignment_operators
+            || export_namespace_from
+            || nullish_coalescing_operator
+            || optional_chaining
+            || big_int
+            || arbitrary_module_namespace_names
+            || optional_catch_binding
+            || object_rest_spread.is_some()
+            || async_generator_functions
+            || async_to_generator
+            || exponentiation_operator
+            || arrow_function.is_some()
+            || sticky_flag
+            || unicode_flag
+            || unicode_property_escapes
+            || dot_all_flag
+            || named_capture_groups
+            || look_behind_assertions
+            || match_indices
+            || set_notation
+    }
+
     /// Initialize from a [browserslist] query.
     ///
     /// # Errors
