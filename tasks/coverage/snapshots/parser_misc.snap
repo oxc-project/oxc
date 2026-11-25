@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 161/161 (100.00%)
-Positive Passed: 161/161 (100.00%)
+AST Parsed     : 162/162 (100.00%)
+Positive Passed: 162/162 (100.00%)
 Negative Passed: 297/297 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
@@ -4985,6 +4985,15 @@ Negative Passed: 297/297 (100.00%)
  2 │ new import('x').prop as Foo;
  3 │ new import('x').prop satisfies Foo;
    ·     ────────────────
+ 4 │ new import('x')<T>
+   ╰────
+  help: Wrap this with parenthesis
+
+  × Cannot use new with dynamic import
+   ╭─[misc/fail/oxc-23458.ts:4:5]
+ 3 │     new import('x').prop satisfies Foo;
+ 4 │ ╭─▶ new import('x')<T>
+ 5 │ ╰─▶ ['prop'];
    ╰────
   help: Wrap this with parenthesis
 

@@ -1,7 +1,7 @@
 use std::num::NonZeroU32;
 
 use cow_utils::CowUtils;
-use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_data_structures::buffered_vec::BufferedVec;
 #[cfg(feature = "regular_expression")]
@@ -33,6 +33,7 @@ fn is_import_expression_or_member_access_on_import_expression(callee: &Expressio
             expr = match expr {
                 Expression::TaggedTemplateExpression(tagged_template) => &tagged_template.tag,
                 Expression::TSNonNullExpression(non_null) => &non_null.expression,
+                Expression::TSInstantiationExpression(instantiation) => &instantiation.expression,
                 _ => return false,
             };
             continue;
@@ -861,14 +862,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.ctx.has_decorator() {
             self.error(diagnostics::decorator_expression_not_parenthesized(lhs.span()));
         }
-        // Add `ChainExpression` to `a?.c?.b<c>`;
-        if let Expression::TSInstantiationExpression(mut expr) = lhs {
-            expr.expression.replace_with(|expr| self.map_to_chain_expression(expr.span(), expr));
-            Expression::TSInstantiationExpression(expr)
-        } else {
-            let span = self.end_span(start);
-            self.map_to_chain_expression(span, lhs)
-        }
+        let span = self.end_span(start);
+        self.map_to_chain_expression(span, lhs)
     }
 
     #[expect(clippy::inline_always)]
@@ -921,11 +916,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// An instantiation expression (`MemberExpression TypeArguments`) directly followed by a
-    /// member access is TS1477; a parenthesized one is allowed:
+    /// property access is TS1477. As in TypeScript, element access and a parenthesized
+    /// instantiation are allowed:
     ///
     /// ```text
     /// a<b>.c      // error
-    /// a<b>?.[c]   // error
+    /// a<b>?.c     // error
+    /// a<b>?.[c]   // ok
     /// (a<b>).c    // ok
     /// ```
     fn error_if_unparenthesized_instantiation_expression(
@@ -982,7 +979,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             lhs = self.parse_static_member_expression(lhs_start, lhs, true);
                         } else if self.at(Kind::LBrack) {
                             // ?.[
-                            self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_start);
                             lhs = self.parse_computed_member_expression(lhs_start, lhs, true);
                         } else {
                             // ?.template`...`
@@ -1001,7 +997,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_start);
                     lhs = self.parse_computed_member_expression(lhs_start, lhs, false);
                 }
                 kind if kind.is_template_start_of_tagged_template() => {
@@ -1014,7 +1009,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 Kind::LAngle | Kind::ShiftLeft if self.is_ts => {
                     if let Some(arguments) = self.parse_type_arguments_in_expression() {
-                        let instantiation = TSInstantiationExpression::new(
+                        let mut instantiation = TSInstantiationExpression::new(
                             self.end_span(lhs_start),
                             lhs,
                             arguments,
@@ -1036,6 +1031,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 );
                                 continue;
                             }
+                        }
+                        // As in TypeScript, `a?.b<c>` ends the optional chain, so a later
+                        // suffix applies to the instantiation: `a?.b<c>\n[d]` is `(a?.b)[d]`
+                        // after type erasure.
+                        if *in_optional_chain {
+                            *in_optional_chain = false;
+                            if self.ctx.has_decorator() {
+                                self.error(diagnostics::decorator_expression_not_parenthesized(
+                                    instantiation.span,
+                                ));
+                            }
+                            let span = instantiation.expression.span();
+                            instantiation.expression =
+                                self.map_to_chain_expression(span, instantiation.expression);
                         }
                         lhs = Expression::TSInstantiationExpression(self.alloc(instantiation));
                     } else {
