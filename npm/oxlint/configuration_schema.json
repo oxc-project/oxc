@@ -971,6 +971,62 @@
         }
       ]
     },
+    "AsteriskPrefixOptions": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "description": "Override the default for a tag (without `@`) or the block's `*description`.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AsteriskPrefixTags"
+            }
+          ],
+          "markdownDescription": "Override the default for a tag (without `@`) or the block's `*description`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AsteriskPrefixStyle": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "any"
+      ]
+    },
+    "AsteriskPrefixTags": {
+      "type": "object",
+      "properties": {
+        "always": {
+          "description": "Require an asterisk on the lines of these tags.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Require an asterisk on the lines of these tags."
+        },
+        "any": {
+          "description": "Allow either style on the lines of these tags.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Allow either style on the lines of these tags."
+        },
+        "never": {
+          "description": "Forbid an asterisk on the lines of these tags.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Forbid an asterisk on the lines of these tags."
+        }
+      },
+      "additionalProperties": false
+    },
     "AutocompleteValidConfig": {
       "type": "object",
       "properties": {
@@ -3698,6 +3754,29 @@
                 }
               ],
               "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "jsdoc/require-asterisk-prefix": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AsteriskPrefixStyle"
+                },
+                {
+                  "$ref": "#/definitions/AsteriskPrefixOptions"
+                }
+              ],
+              "maxItems": 3,
               "minItems": 2
             }
           ]
@@ -18628,6 +18707,21 @@
         }
       },
       "additionalProperties": false
+    },
+    "RequireAsteriskPrefixConfig": {
+      "description": "The default prefix style and optional overrides for individual tags.",
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/AsteriskPrefixStyle"
+        },
+        {
+          "$ref": "#/definitions/AsteriskPrefixOptions"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "markdownDescription": "The default prefix style and optional overrides for individual tags."
     },
     "RequireDescription": {
       "type": "string",

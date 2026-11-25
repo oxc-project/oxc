@@ -1,0 +1,191 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          @param {Number} foo
+   ·         ▲
+ 5 │          */
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          @param {Number} foo
+   ·         ▲
+ 5 │          */
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:5:1]
+ 4 │          * Desc
+ 5 │ 
+   · ▲
+ 6 │          */
+   ╰────
+  help: Insert `         *`
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:5:9]
+ 4 │          *
+ 5 │          Desc
+   ·         ▲
+ 6 │          */
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have no prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          * Desc
+   ·         ▲
+ 5 │          *
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          @param {Number} foo
+   ·         ▲
+ 5 │          */
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have no prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          * @param {Number} foo
+   ·         ▲
+ 5 │          */
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have no prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          * @param {Number} foo
+   ·         ▲
+ 5 │          */
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          @param {Number} foo
+   ·         ▲
+ 5 │          */
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:3:9]
+ 2 │         /**
+ 3 │           @param {Number} foo
+   ·         ▲
+ 4 │          */function quux (foo) {
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have no prefix.
+   ╭─[require_asterisk_prefix.tsx:4:9]
+ 3 │         /**
+ 4 │          * @param {Number} foo
+   ·         ▲
+ 5 │          */
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have no prefix.
+   ╭─[require_asterisk_prefix.tsx:3:9]
+ 2 │         /**
+ 3 │           *@param {Number} foo
+   ·         ▲
+ 4 │          */function quux (foo) {
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:2:1]
+ 1 │ /**
+ 2 │     text
+   · ▲
+ 3 │  */
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:2:14]
+ 1 │ const x = 1; /**
+ 2 │  @param name Description.
+   ·              ▲
+ 3 │  */
+   ╰────
+  help: Insert `* `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:2:1]
+ 1 │ /**
+ 2 │ @param */
+   · ▲
+   ╰────
+  help: Insert ` * `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:2:1]
+ 1 │ /**
+ 2 │ first
+   · ▲
+ 3 │ second
+   ╰────
+  help: Insert ` * `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:3:1]
+ 2 │  * @param {{
+ 3 │ }} name Description
+   · ▲
+ 4 │  */
+   ╰────
+  help: Insert ` * `
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:3:1]
+ 2 │  * @param {{
+ 3 │      x: string,
+   · ▲
+ 4 │  * }} foo
+   ╰────
+  help: Insert `*`
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have no prefix.
+   ╭─[require_asterisk_prefix.tsx:3:1]
+ 2 │  @param {{
+ 3 │  *    x: number,
+   · ▲
+ 4 │  }} foo
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have the prefix.
+   ╭─[require_asterisk_prefix.tsx:4:1]
+ 3 │  * {{
+ 4 │ bar: Baz
+   · ▲
+ 5 │  * }} foo
+   ╰────
+  help: Insert ` *`
+
+  ⚠ jsdoc(require-asterisk-prefix): Expected JSDoc line to have no prefix.
+   ╭─[require_asterisk_prefix.tsx:2:1]
+ 1 │ /** @param {{
+ 2 │  *　x: number,
+   · ▲
+ 3 │  }} options
+   ╰────
+  help: Delete this code.
