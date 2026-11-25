@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 163/163 (100.00%)
 Positive Passed: 163/163 (100.00%)
-Negative Passed: 297/297 (100.00%)
+Negative Passed: 298/298 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -1667,6 +1667,13 @@ Negative Passed: 297/297 (100.00%)
    ·                    ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/jsx-member-suffixes.tsx:1:24]
+ 1 │ const props = a + <C />.props;
+   ·                        ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × TS(18007): JSX expressions may not use the comma operator
    ╭─[misc/fail/jsx-unparenthesized-comma.jsx:1:5]
