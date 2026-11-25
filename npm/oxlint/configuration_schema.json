@@ -128,7 +128,6 @@
           "componentWrapperFunctions": []
         },
         "jsdoc": {
-          "mode": "typescript",
           "ignorePrivate": false,
           "ignoreInternal": false,
           "ignoreReplacesDocs": true,
@@ -1328,6 +1327,30 @@
             "type": "string"
           },
           "markdownDescription": "Additional tag names to allow."
+        },
+        "enableFixer": {
+          "description": "Automatically remove tags that are redundant with the type system.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Automatically remove tags that are redundant with the type system."
+        },
+        "inlineTags": {
+          "description": "Allowed inline tag names, such as `link` in `{@link MyType}`.",
+          "default": [
+            "link",
+            "linkcode",
+            "linkplain",
+            "tutorial",
+            "inheritDoc",
+            "label",
+            "include",
+            "includeCode"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Allowed inline tag names, such as `link` in `{@link MyType}`."
         },
         "jsxTags": {
           "description": "Whether to allow JSX-related tags:\n- `jsx`\n- `jsxFrag`\n- `jsxImportSource`\n- `jsxRuntime`",
@@ -12295,7 +12318,6 @@
         },
         "mode": {
           "description": "Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `\"typescript\"`.",
-          "default": "typescript",
           "allOf": [
             {
               "$ref": "#/definitions/JSDocMode"
@@ -12308,6 +12330,15 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Only for `require-(yields|returns|description|example|param|throws)` rule"
+        },
+        "structuredTags": {
+          "description": "Custom tag definitions. `jsdoc/check-tag-names` recognizes each tag name.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "markdownDescription": "Custom tag definitions. `jsdoc/check-tag-names` recognizes each tag name."
         },
         "tagNamePreference": {
           "default": {},
@@ -17432,7 +17463,6 @@
         },
         "jsdoc": {
           "default": {
-            "mode": "typescript",
             "ignorePrivate": false,
             "ignoreInternal": false,
             "ignoreReplacesDocs": true,
@@ -19543,10 +19573,6 @@
         },
         {
           "type": "object",
-          "required": [
-            "message",
-            "replacement"
-          ],
           "properties": {
             "message": {
               "type": "string"
@@ -19557,18 +19583,10 @@
           }
         },
         {
-          "type": "object",
-          "required": [
-            "message"
-          ],
-          "properties": {
-            "message": {
-              "type": "string"
-            }
-          }
+          "type": "boolean"
         },
         {
-          "type": "boolean"
+          "type": "null"
         }
       ]
     },

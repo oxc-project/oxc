@@ -1,18 +1,30 @@
+mod inline;
+mod property_fixer;
+mod typed;
+#[cfg(test)]
+mod upstream_tests;
+
+use std::borrow::Cow;
+
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::JSDoc;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
     config::JSDocMode,
     context::LintContext,
+    fixer::{Fix, RuleFix},
     rule::{DefaultRuleConfig, Rule},
     utils::{should_ignore_as_internal, should_ignore_as_private},
 };
 
-fn check_tag_names_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Invalid tag name found.").with_help(x1.to_string()).with_label(span)
+fn check_tag_names_diagnostic(span: Span, message: impl Into<Cow<'static, str>>) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message).with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -21,7 +33,7 @@ pub struct CheckTagNames(Box<CheckTagNamesConfig>);
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Reports invalid block tag names.
+    /// Reports invalid block and inline tag names and replaces non-preferred aliases.
     /// Additionally checks for tag names that are redundant when using a type checker such as TypeScript.
     ///
     /// ### Why is this bad?
@@ -52,7 +64,10 @@ declare_oxc_lint!(
     /// `@remarks` and `@inline`. Set `settings.jsdoc.mode` to `jsdoc` for the standard
     /// JSDoc vocabulary or to `closure` or `permissive` for Closure Compiler tags.
     ///
-    /// Configuration for allowed tags is done via [`settings.jsdoc.tagNamePreference`](/docs/guide/usage/linter/config-file-reference.html#settings-jsdoc-tagnamepreference).
+    /// The `definedTags` option and the keys of `settings.jsdoc.structuredTags` also allow custom
+    /// block tags. Use `inlineTags` to replace the list of allowed inline tags.
+    ///
+    /// Configuration for preferred names is done via [`settings.jsdoc.tagNamePreference`](/docs/guide/usage/linter/config-file-reference.html#settings-jsdoc-tagnamepreference).
     /// There is no CLI-only parameter for this rule.
     ///
     /// You can add custom tags by adding a key-value pair where both match the name of the tag you want to add, like so:
@@ -87,17 +102,21 @@ declare_oxc_lint!(
     jsdoc,
     correctness,
     recommended,
-    pending,
+    conditional_fix,
     config = CheckTagNamesConfig,
     version = "0.3.2",
-    short_description = "Reports invalid block tag names.",
+    short_description = "Reports invalid block and inline tag names.",
 );
 
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct CheckTagNamesConfig {
     /// Additional tag names to allow.
     defined_tags: Vec<String>,
+    /// Automatically remove tags that are redundant with the type system.
+    enable_fixer: bool,
+    /// Allowed inline tag names, such as `link` in `{@link MyType}`.
+    inline_tags: Vec<String>,
     /// Whether to allow JSX-related tags:
     /// - `jsx`
     /// - `jsxFrag`
@@ -106,6 +125,45 @@ struct CheckTagNamesConfig {
     jsx_tags: bool,
     /// If typed is `true`, disallow tags that are unnecessary/duplicative of TypeScript functionality.
     typed: bool,
+}
+
+impl Default for CheckTagNamesConfig {
+    fn default() -> Self {
+        Self {
+            defined_tags: vec![],
+            enable_fixer: true,
+            inline_tags: [
+                "link",
+                "linkcode",
+                "linkplain",
+                "tutorial",
+                "inheritDoc",
+                "label",
+                "include",
+                "includeCode",
+            ]
+            .into_iter()
+            .map(String::from)
+            .collect(),
+            jsx_tags: false,
+            typed: false,
+        }
+    }
+}
+
+fn check_settings(ctx: &LintContext) {
+    let settings = &ctx.settings().jsdoc;
+    if let JSDocMode::Unrecognized(mode) = &settings.mode {
+        ctx.diagnostic(
+            OxcDiagnostic::warn(format!("Unrecognized value `{mode}` for `settings.jsdoc.mode`."))
+                .with_label(Span::empty(0)),
+        );
+    }
+    for _ in 0..settings.invalid_tag_preferences() {
+        ctx.diagnostic(OxcDiagnostic::warn(
+            "Invalid `settings.jsdoc.tagNamePreference`. Values must be falsy, a string, or an object."
+        ).with_label(Span::empty(0)));
+    }
 }
 
 // https://github.com/gajus/eslint-plugin-jsdoc/blob/7e9acbf2143fd98b61ea406b7ea8d723b55002ef/src/tagNames.js
@@ -256,10 +314,10 @@ const CLOSURE_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
     "wizaction",
 ];
 
-fn is_valid_block_tag(name: &str, mode: JSDocMode) -> bool {
+fn is_valid_block_tag(name: &str, mode: &JSDocMode) -> bool {
     COMMON_BLOCK_TAGS.contains(name)
         || match mode {
-            JSDocMode::JSDoc => name == "inheritdoc",
+            JSDocMode::JSDoc | JSDocMode::Unrecognized(_) => name == "inheritdoc",
             JSDocMode::TypeScript => {
                 matches!(name, "inheritdoc" | "internal" | "overload" | "satisfies")
                     || TYPED_BLOCK_TAGS.contains(name)
@@ -328,80 +386,155 @@ impl Rule for CheckTagNames {
 
     fn run_once(&self, ctx: &LintContext) {
         let settings = &ctx.settings().jsdoc;
-        let config = &self.0;
-        let user_defined_tags = settings.list_user_defined_tag_names();
-
-        let is_dts = ctx.file_path().to_str().is_some_and(|p| p.ends_with(".d.ts"));
-        // NOTE: The original rule seems to check `declare` context by visiting AST nodes.
-        // https://github.com/gajus/eslint-plugin-jsdoc/blob/e343ab5b1efaa59b07c600138aee070b4083857e/src/rules/checkTagNames.js#L121
-        // But...
-        // - No test case covers this(= only checks inside of `.d.ts`)
-        // - I've never seen this usage before
-        // So, I leave this part out for now.
-        let is_declare = false;
-        let is_ambient = is_dts || is_declare;
-
-        for jsdoc in ctx
+        let mut jsdocs = ctx
             .jsdoc()
             .iter_all()
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
             .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
-        {
-            for tag in jsdoc.tags() {
-                let tag_name = tag.kind.parsed();
+            .peekable();
+        if jsdocs.peek().is_none() {
+            return;
+        }
+        check_settings(ctx);
 
-                // If user explicitly allowed, skip
-                if user_defined_tags.contains(&tag_name)
-                    || config.defined_tags.contains(&tag_name.to_string())
-                {
-                    continue;
+        // Only typed checks depend on which declaration owns the comment. For
+        // consecutive JSDocs only the nearest one documents the declaration.
+        let mut attached = FxHashMap::default();
+        if self.0.typed {
+            for node in ctx.nodes() {
+                if let Some(jsdoc) = ctx.jsdoc().get_one_by_node(ctx.nodes(), node) {
+                    attached.insert(jsdoc.span.start, node.kind());
                 }
+            }
+        }
+        for jsdoc in jsdocs {
+            self.check_block(ctx, jsdoc, attached.get(&jsdoc.span.start).copied());
+            inline::check(self, ctx, jsdoc);
+        }
+    }
+}
 
-                // If user explicitly blocked, report
-                if let Some(reason) = settings.check_blocked_tag_name(tag_name) {
-                    ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &reason));
-                    continue;
+impl CheckTagNames {
+    fn check_block(&self, ctx: &LintContext, jsdoc: &JSDoc, node: Option<AstKind>) {
+        let settings = &ctx.settings().jsdoc;
+        let config = &self.0;
+        let include_prop = !settings.has_tag_preference("prop");
+        // The JSDoc parser's description and name spans normalize LF and CRLF.
+        // For other line breaks, keep block text intact and still report its tags.
+        let fix_typed = config.typed && config.enable_fixer && {
+            let content = ctx.source_range(jsdoc.span);
+            !content.contains(['\u{2028}', '\u{2029}'])
+                && content
+                    .match_indices('\r')
+                    .all(|(index, _)| content.as_bytes().get(index + 1) == Some(&b'\n'))
+        };
+        let mut property_fix = if fix_typed {
+            node.and_then(|node| property_fixer::property_fix(ctx, jsdoc, node, include_prop))
+        } else {
+            None
+        };
+
+        let grouped = property_fix.is_some();
+        for (idx, tag) in jsdoc.tags().iter().enumerate() {
+            let name = tag.kind.parsed();
+            if grouped && (name == "property" || (name == "prop" && include_prop)) {
+                let message = if name == "property" {
+                    "'@property' is redundant when using a type system."
+                } else {
+                    r#"Invalid JSDoc tag (preference). Replace "prop" JSDoc tag with "property"."#
+                };
+                let diagnostic = check_tag_names_diagnostic(tag.kind.span, message);
+                // One edit handles the entire block; attaching it to each tag would
+                // duplicate the whole object text for every documented property.
+                if let Some(fixes) = property_fix.take() {
+                    ctx.diagnostic_with_fix(diagnostic, |_| {
+                        RuleFix::from(fixes).with_message(
+                            "Remove redundant property tags and preserve their descriptions.",
+                        )
+                    });
+                } else {
+                    ctx.diagnostic(diagnostic);
                 }
-
-                // If preferred or default aliased, report to use it
-                if let Some(reason) = settings.check_preferred_tag_name(tag_name) {
-                    ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &reason));
-                    continue;
-                }
-
-                // Additional check for `typed` mode
-                if config.typed {
-                    if ALWAYS_INVALID_TAGS_IF_TYPED.contains(&tag_name) {
-                        ctx.diagnostic(check_tag_names_diagnostic(
-                            tag.kind.span,
-                            &format!("`@{tag_name}` is redundant when using a type system."),
-                        ));
-                        continue;
-                    }
-
-                    if tag.kind.parsed() == "template" && tag.comment().parsed().is_empty() {
-                        ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &format!("`@{tag_name}` without a name is redundant when using a type system.")));
-                        continue;
-                    }
-
-                    if !is_ambient && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.contains(&tag_name) {
-                        ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &format!("`@{tag_name}` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.")));
-                        continue;
-                    }
-                }
-
-                // If invalid or unknown, report
-                let is_valid = (config.jsx_tags && JSX_TAGS.contains(&tag_name))
-                    || is_valid_block_tag(tag_name, settings.mode);
-                if !is_valid {
-                    ctx.diagnostic(check_tag_names_diagnostic(
-                        tag.kind.span,
-                        &format!("`@{tag_name}` is invalid tag name."),
-                    ));
+                continue;
+            }
+            if config.jsx_tags && JSX_TAGS.contains(&name) {
+                continue;
+            }
+            if config.typed && typed::check(ctx, jsdoc, idx, node, fix_typed) {
+                continue;
+            }
+            let valid = is_valid_block_tag(name, &settings.mode)
+                || (config.typed && name == "template")
+                || settings.is_configured_tag(name)
+                || config.defined_tags.iter().any(|custom| custom == name);
+            if !valid {
+                ctx.diagnostic(check_tag_names_diagnostic(
+                    tag.kind.span,
+                    format!(r#"Invalid JSDoc tag name "{name}"."#),
+                ));
+                continue;
+            }
+            if let Some((message, replacement)) = settings.tag_preference(name) {
+                let diagnostic = check_tag_names_diagnostic(tag.kind.span, message.into_owned());
+                if let Some(replacement) = replacement {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        fixer
+                            .replace(tag.kind.span, format!("@{replacement}"))
+                            .with_message(format!("Rename the tag to `@{replacement}`."))
+                    });
+                } else {
+                    ctx.diagnostic(diagnostic);
                 }
             }
         }
     }
+}
+
+/// When the block separates two tokens, keep the whitespace needed for tokenization and ASI.
+fn remove_comment(source: &str, full: Span) -> Fix {
+    let span = remove_comment_span(source, full);
+    let left = &source[..span.start as usize];
+    let right = &source[span.end as usize..];
+    let left_code = left.trim_end();
+    let right_code = right.trim_start();
+    if left_code.is_empty() || right_code.is_empty() {
+        return Fix::delete(span);
+    }
+    let newline = ['\r', '\n', '\u{2028}', '\u{2029}'];
+    let removed = span.source_text(source);
+    if removed.contains(newline)
+        && !left[left_code.len()..].contains(newline)
+        && !right[..right.len() - right_code.len()].contains(newline)
+    {
+        return Fix::new(if removed.contains("\r\n") { "\r\n" } else { "\n" }, span);
+    }
+    if left.len() == left_code.len() && right.len() == right_code.len() {
+        return Fix::new(" ", span);
+    }
+    Fix::delete(span)
+}
+
+/// Include the line break before a standalone comment. At the beginning of a
+/// line without a preceding newline, remove one following whitespace character.
+fn remove_comment_span(source: &str, span: Span) -> Span {
+    let before = &source[..span.start as usize];
+    if let Some((line, indent)) = before.rsplit_once('\n')
+        && indent.bytes().all(|b| matches!(b, b' ' | b'\t'))
+    {
+        let start = line.strip_suffix('\r').unwrap_or(line).len();
+        return Span::new(u32::try_from(start).unwrap(), span.end);
+    }
+    let after = &source[span.end as usize..];
+    let following = if after.starts_with("\r\n") {
+        2
+    } else {
+        after
+            .chars()
+            .next()
+            .filter(|c| c.is_whitespace())
+            .map_or(0, |c| u32::try_from(c.len_utf8()).unwrap())
+    };
+    Span::new(span.start, span.end + following)
 }
 
 #[test]
@@ -651,6 +784,20 @@ fn test() {
                      */
                   ",
             None,
+            None,
+        ),
+        (
+            "
+                    /**
+                     * @module
+                     * A comment related to the module
+                     */
+                  ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
             None,
         ),
         // Typed
@@ -1077,20 +1224,6 @@ fn test() {
         ),
         // Typed
         (
-            "
-                    /**
-                     * @module
-                     * A comment related to the module
-                     */
-                  ",
-            Some(serde_json::json!([
-              {
-                "typed": true,
-              },
-            ])),
-            None,
-        ),
-        (
             "/** @type {string} */let a;
                           ",
             Some(serde_json::json!([
@@ -1294,10 +1427,39 @@ fn test() {
             None,
         )];
 
-    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail)
+        .expect_fix(vec![
+            (
+                "/**\r * Keep.\r * @type {string}\r * @deprecated Keep.\r */\rconst x = 1;",
+                "/**\r * Keep.\r * @type {string}\r * @deprecated Keep.\r */\rconst x = 1;",
+                Some(serde_json::json!([{ "typed": true }])),
+            ),
+            (
+                "/**\u{2028} * Keep.\u{2028} * @property x - description\u{2028} */\u{2028}const obj = {x: true};",
+                "/**\u{2028} * Keep.\u{2028} * @property x - description\u{2028} */\u{2028}const obj = {x: true};",
+                Some(serde_json::json!([{ "typed": true }])),
+            ),
+            (
+                "/**\n * Summary.\n * @prop {{\n *   a: boolean\n * }} x - First.\n * - Second.\n */\nconst obj = {\n  x: true,\n};",
+                "/**\n * Summary.\n */\nconst obj = {\n  /**\n   * - First.\n   * - Second.\n   */\n  x: true,\n};",
+                Some(serde_json::json!([{ "typed": true }])),
+            ),
+            (
+                "const t = typeof/** @type {string} */value;",
+                "const t = typeof value;",
+                Some(serde_json::json!([{ "typed": true }])),
+            ),
+            (
+                "function f() { return\n/** @type {string} */foo; }",
+                "function f() { return\nfoo; }",
+                Some(serde_json::json!([{ "typed": true }])),
+            ),
+        ])
+        .test_and_snapshot();
     // Currently only 1 snapshot can be saved under a rule name
     Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, dts_pass, dts_fail)
         .change_rule_path("test.d.ts")
+        .expect_fix(vec![("/** @arg foo */", "/** @param foo */")])
         .test();
 }
 
@@ -1370,5 +1532,15 @@ fn upstream_block_tag_modes() {
     ];
     fail.extend(strict_cases.iter().map(|source| (source.as_str(), None, mode("jsdoc"))));
 
-    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail).test();
+    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail)
+        .expect_fix(vec![
+            ("/** @typeParam T */", "/** @template T */", None, None),
+            (
+                "/** @date */",
+                "/** @date */",
+                None,
+                Some(json!({ "settings": { "jsdoc": { "tagNamePreference": { "tag date": "date2" } } } })),
+            ),
+        ])
+        .test();
 }

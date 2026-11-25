@@ -2,307 +2,286 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "typoo".
    ╭─[check_tag_names.tsx:2:33]
  1 │ 
  2 │                             /** @typoo {string} (fail: invalid name) */
    ·                                 ──────
  3 │                             let a;
    ╰────
-  help: `@typoo` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "Param".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @Param (fail: invalid name)
    ·                                  ──────
  4 │                                */
    ╰────
-  help: `@Param` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "foo".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @foo (fail: invalid name)
    ·                                  ────
  4 │                                */
    ╰────
-  help: `@foo` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "arg" JSDoc tag with "param".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @arg foo (fail: invalid name, default aliased)
    ·                                  ────
  4 │                                */
    ╰────
-  help: Replace tag `@arg` with `@param`.
+  help: Rename the tag to `@param`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "param" JSDoc tag with "arg".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @param foo (fail: valid name but user preferred)
    ·                                  ──────
  4 │                                */
    ╰────
-  help: Replace tag `@param` with `@arg`.
+  help: Rename the tag to `@arg`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "constructor" JSDoc tag with "cons".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @constructor foo (fail: invalid name and user preferred)
    ·                                  ────────────
  4 │                                */
    ╰────
-  help: Replace tag `@constructor` with `@cons`.
+  help: Rename the tag to `@cons`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "arg" JSDoc tag with "somethingDifferent".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @arg foo (fail: invalid name and user preferred)
    ·                                  ────
  4 │                                */
    ╰────
-  help: Replace tag `@arg` with `@somethingDifferent`.
+  help: Rename the tag to `@somethingDifferent`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "param" JSDoc tag with "parameter".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @param foo (fail: valid name but user preferred)
    ·                                  ──────
  4 │                                */
    ╰────
-  help: Replace tag `@param` with `@parameter`.
+  help: Rename the tag to `@parameter`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "bar".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @bar foo (fail: invalid name)
    ·                                  ────
  4 │                                */
    ╰────
-  help: `@bar` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "baz".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @baz @bar foo (fail: invalid name)
    ·                                  ────
  4 │                                */
    ╰────
-  help: `@baz` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "baz".
    ╭─[check_tag_names.tsx:4:36]
  3 │                                  * @bar
  4 │                                  * @baz (fail: invalid name)
    ·                                    ────
  5 │                                  */
    ╰────
-  help: `@baz` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Blacklisted tag found (`@todo`)
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
  4 │                                */
    ╰────
-  help: Unexpected tag `@todo`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Please resolve to-dos or add to the tracker
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
  4 │                                */
    ╰────
-  help: Please resolve to-dos or add to the tracker
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Please use x-todo instead of todo
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
  4 │                                */
    ╰────
-  help: Please use x-todo instead of todo
+  help: Rename the tag to `@x-todo`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "prop" JSDoc tag with "property".
    ╭─[check_tag_names.tsx:4:34]
  3 │                                * @property {object} a
  4 │                                * @prop {boolean} b (fail: invalid name, default aliased)
    ·                                  ─────
  5 │                                */
    ╰────
-  help: Replace tag `@prop` with `@property`.
+  help: Rename the tag to `@property`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "abc" JSDoc tag with "abcd".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @abc foo (fail: invalid name and user preferred)
    ·                                  ────
  4 │                                * @abcd bar
    ╰────
-  help: Replace tag `@abc` with `@abcd`.
+  help: Rename the tag to `@abcd`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "abc" JSDoc tag with "abcd".
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @abc (fail: invalid name and user preferred)
    ·                                  ────
  4 │                                * @abcd
    ╰────
-  help: Replace tag `@abc` with `@abcd`.
+  help: Rename the tag to `@abcd`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "jsxFrag".
    ╭─[check_tag_names.tsx:3:33]
  2 │                             /** @jsx h */
  3 │                             /** @jsxFrag Fragment */
    ·                                 ────────
  4 │                             /** @jsxImportSource preact */
    ╰────
-  help: `@jsxFrag` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "jsxImportSource".
    ╭─[check_tag_names.tsx:4:33]
  3 │                             /** @jsxFrag Fragment */
  4 │                             /** @jsxImportSource preact */
    ·                                 ────────────────
  5 │                             /** @jsxRuntime automatic */
    ╰────
-  help: `@jsxImportSource` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag name "jsxRuntime".
    ╭─[check_tag_names.tsx:5:33]
  4 │                             /** @jsxImportSource preact */
  5 │                             /** @jsxRuntime automatic */
    ·                                 ───────────
  6 │                           
    ╰────
-  help: `@jsxRuntime` is invalid tag name.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Invalid JSDoc tag (preference). Replace "constructor" JSDoc tag with "class".
    ╭─[check_tag_names.tsx:3:30]
  2 │                           /**
  3 │                            * @constructor (fail: invalid name)
    ·                              ────────────
  4 │                            */
    ╰────
-  help: Replace tag `@constructor` with `@class`.
+  help: Rename the tag to `@class`.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): Please don't use todo
    ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
  4 │                                */
    ╰────
-  help: Please don't use todo
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:24]
- 2 │                     /**
- 3 │                      * @module
-   ·                        ───────
- 4 │                      * A comment related to the module
-   ╰────
-  help: `@module` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
-
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@type' is redundant when using a type system.
    ╭─[check_tag_names.tsx:1:5]
  1 │ /** @type {string} */let a;
    ·     ─────
  2 │                           
    ╰────
-  help: `@type` is redundant when using a type system.
+  help: Remove the redundant `@type` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@type' is redundant when using a type system.
    ╭─[check_tag_names.tsx:4:33]
  3 │                              * Existing comment.
  4 │                              *  @type {string}
    ·                                 ─────
  5 │                              */
    ╰────
-  help: `@type` is redundant when using a type system.
+  help: Remove the redundant `@type` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@typedef' is redundant when using a type system.
    ╭─[check_tag_names.tsx:2:31]
  1 │ 
  2 │                           /** @typedef {Object} MyObject
    ·                               ────────
  3 │                            * @property {string} id - my id
    ╰────
-  help: `@typedef` is redundant when using a type system.
+  help: Remove the redundant `@typedef` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@property' is redundant when using a type system.
    ╭─[check_tag_names.tsx:3:30]
  2 │                           /** @typedef {Object} MyObject
  3 │                            * @property {string} id - my id
    ·                              ─────────
  4 │                            */
    ╰────
-  help: `@property` is redundant when using a type system.
+  help: Remove the redundant `@property` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@property' is redundant when using a type system.
    ╭─[check_tag_names.tsx:3:30]
  2 │                           /**
  3 │                            * @property {string} id - my id
    ·                              ─────────
  4 │                            */
    ╰────
-  help: `@property` is redundant when using a type system.
+  help: Remove the redundant `@property` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@typedef' is redundant when using a type system.
    ╭─[check_tag_names.tsx:2:31]
  1 │ 
  2 │                           /** @typedef {Object} MyObject */
    ·                               ────────
  3 │                           
    ╰────
-  help: `@typedef` is redundant when using a type system.
+  help: Remove the redundant `@typedef` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@typedef' is redundant when using a type system.
    ╭─[check_tag_names.tsx:2:31]
  1 │ 
  2 │                           /** @typedef {Object} MyObject
    ·                               ────────
  3 │                            */
    ╰────
-  help: `@typedef` is redundant when using a type system.
+  help: Remove the redundant `@typedef` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@abstract' is redundant outside of ambient (`declare`/`.d.ts`) contexts when using a type system.
    ╭─[check_tag_names.tsx:2:33]
  1 │ 
  2 │                             /** @abstract */
    ·                                 ─────────
  3 │                             let a;
    ╰────
-  help: `@abstract` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
+  help: Remove the redundant `@abstract` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@abstract' is redundant outside of ambient (`declare`/`.d.ts`) contexts when using a type system.
    ╭─[check_tag_names.tsx:3:35]
  2 │                             const a = {
  3 │                               /** @abstract */
    ·                                   ─────────
  4 │                               b: true,
    ╰────
-  help: `@abstract` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
+  help: Remove the redundant `@abstract` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@template' without a name is redundant when using a type system.
    ╭─[check_tag_names.tsx:2:33]
  1 │ 
  2 │                             /** @template */
    ·                                 ─────────
  3 │                             let a;
    ╰────
-  help: `@template` without a name is redundant when using a type system.
+  help: Remove the redundant `@template` annotation.
 
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
+  ⚠ jsdoc(check-tag-names): '@template' without a name is redundant when using a type system.
    ╭─[check_tag_names.tsx:5:32]
  4 │                              *
  5 │                              * @template
    ·                                ─────────
  6 │                              */
    ╰────
-  help: `@template` without a name is redundant when using a type system.
+  help: Remove the redundant `@template` annotation.

@@ -817,7 +817,6 @@ Only for `require-(yields|returns|description|example|param|throws)` rule
 
 type: `"typescript" | "jsdoc" | "closure" | "permissive"`
 
-default: `"typescript"`
 
 Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `"typescript"`.
 
@@ -829,6 +828,14 @@ type: `boolean`
 default: `true`
 
 Only for `require-(yields|returns|description|example|param|throws)` rule
+
+
+#### settings.jsdoc.structuredTags
+
+type: `Record<string, object>`
+
+
+Custom tag definitions. `jsdoc/check-tag-names` recognizes each tag name.
 
 
 #### settings.jsdoc.tagNamePreference
