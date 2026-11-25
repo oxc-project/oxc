@@ -2,9 +2,9 @@ use oxc_ecmascript::side_effects::PropertyReadSideEffects;
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, CompressOptionsUnused, TreeShakeOptions, default_options, test, test_options,
-    test_options_source_type, test_same, test_same_options, test_same_options_source_type,
-    test_same_smallest, test_smallest,
+    CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, TreeShakeOptions,
+    default_options, test, test_options, test_options_source_type, test_same, test_same_options,
+    test_same_options_source_type, test_same_smallest, test_smallest,
 };
 
 #[test]
@@ -884,6 +884,65 @@ fn remove_unused_assignment_expression() {
         "function foo() { bar() } foo()",
         source_type,
         &options,
+    );
+}
+
+#[test]
+fn remove_unused_assignment_keep_names() {
+    let keep_names = CompressOptions {
+        keep_names: CompressOptionsKeepNames::all_true(),
+        ..CompressOptions::smallest()
+    };
+    let function_only = CompressOptions {
+        keep_names: CompressOptionsKeepNames::function_only(),
+        ..CompressOptions::smallest()
+    };
+
+    // The assignment names the function or class, so it stays when its value is used.
+    test_same_options("function foo() { let f; return (f = () => {}).name } foo();", &keep_names);
+    test_same_options(
+        "function foo() { let f; return (f = function () {}).name } foo();",
+        &keep_names,
+    );
+    test_same_options("function foo() { let f; return (f = class {}).name } foo();", &keep_names);
+    test_same_options("function foo() { let f; return bar(f = () => {}) } foo();", &keep_names);
+    test_same_options("function foo() { let f; return g = f = () => {} } foo();", &keep_names);
+    // The class reads its name while it is evaluated, even though the value is unused.
+    test_same_options(
+        "function foo() { let f; f = class { static { bar(this.name) } } } foo();",
+        &keep_names,
+    );
+    // The value is unused, so the assignment is still removed.
+    test_options(
+        "function foo() { let f; f = () => {}, bar() } foo();",
+        "function foo() { bar() } foo();",
+        &keep_names,
+    );
+    test_options(
+        "function foo() { let f; f = class {}, bar() } foo();",
+        "function foo() { bar() } foo();",
+        &keep_names,
+    );
+    // The binding is read, so the assignment is not removed at all.
+    test_options(
+        "function foo() { let f; f = () => {}, bar(f) } foo();",
+        "function foo() { let f = () => {}; bar(f) } foo();",
+        &keep_names,
+    );
+    // Only the kinds that `keepNames` asks for.
+    test_same_options(
+        "function foo() { let f; return (f = () => {}).name } foo();",
+        &function_only,
+    );
+    test_options(
+        "function foo() { let f; return (f = class {}).name } foo();",
+        "function foo() { return (class {}).name } foo();",
+        &function_only,
+    );
+    // Names are not guaranteed without `keepNames`.
+    test_smallest(
+        "function foo() { let f; return (f = () => {}).name } foo();",
+        "function foo() { return (() => {}).name } foo();",
     );
 }
 
