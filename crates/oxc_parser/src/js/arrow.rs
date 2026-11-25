@@ -624,8 +624,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         let kind = self.lookahead(|p| {
-            p.bump(Kind::Async);
-            p.is_generic_arrow_function_expression()
+            let is_async = p.eat(Kind::Async);
+            p.is_generic_arrow_function_expression(is_async)
         });
         // Most `<` do not start type parameters. Decide that here, without a call.
         if kind == Tristate::False {
@@ -655,10 +655,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Whether the `<` at the cursor starts the type parameters of an arrow function.
+    /// `is_async` is whether the `<` follows `async`.
     ///
     /// Called in TS, in TSX only after `async`, and in JS only for invalid code.
     /// Never called in JSX.
-    fn is_generic_arrow_function_expression(&mut self) -> Tristate {
+    fn is_generic_arrow_function_expression(&mut self, is_async: bool) -> Tristate {
         debug_assert!(self.at(Kind::LAngle));
         self.bump_any(); // `<`
         let second = self.cur_kind();
@@ -691,8 +692,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.bump_any(); // the name
         match self.cur_kind() {
-            // `<T,` is not a type, so it can only start type parameters.
-            Kind::Comma => Tristate::True,
+            // `<T,` is not a type, so it can only start type parameters, or the type arguments
+            // of a call to a function named `async`: `async<A, B>()`.
+            Kind::Comma => {
+                if is_async {
+                    Tristate::Maybe
+                } else {
+                    Tristate::True
+                }
+            }
             Kind::Dot | Kind::LBrack | Kind::Pipe | Kind::Amp | Kind::LAngle => Tristate::False,
             Kind::RAngle => {
                 self.bump_any(); // `>`
