@@ -246,7 +246,9 @@ for (const { name, optionSetResults } of results) {
   console.log(`[${name}] Ran ${optionSetResults[0].total} fixtures`);
   for (const r of optionSetResults) {
     const pct = ((r.passed / r.total) * 100).toFixed(2);
-    console.log(`  ${JSON.stringify(r.options)}: ${r.passed}/${r.total} (${pct}%)`);
+    const nonIdempotent =
+      r.nonIdempotent.length > 0 ? `, ${r.nonIdempotent.length} not idempotent` : "";
+    console.log(`  ${JSON.stringify(r.options)}: ${r.passed}/${r.total} (${pct}%)${nonIdempotent}`);
   }
 }
 
@@ -279,6 +281,8 @@ type OptionSetResult = {
   passed: number;
   total: number;
   failures: Failure[];
+  /** The projects' files oxfmt formats as written to no fixpoint, `true` where the second pass errored */
+  nonIdempotent: [name: string, errored: boolean][];
 };
 
 type CategoryResult = {
@@ -321,12 +325,16 @@ async function runCategory(category: Category): Promise<CategoryResult> {
       const outcomes = await Promise.all(
         fixtures.map((fixture) => runTask({ ...fixture, options })),
       );
-      const failures = outcomes.filter((o) => o !== null);
+      const failures = outcomes.flatMap(({ failure }) => (failure === null ? [] : [failure]));
+      const nonIdempotent = outcomes.flatMap(({ nonIdempotent }, i): [string, boolean][] =>
+        nonIdempotent === null ? [] : [[fixtures[i].name, nonIdempotent]],
+      );
       return {
         options,
         passed: fixtures.length - failures.length,
         total: fixtures.length,
         failures,
+        nonIdempotent,
       };
     }),
   );
@@ -400,6 +408,14 @@ function writeReport(results: CategoryResult[], divergences: Divergence[]) {
           return [name, `- [${name}](${diffRelPath})`];
         });
         lines.push(...listDivergences(divergences, items), "");
+      }
+      // A bug, no divergence: as `conformance:prettier` lists them
+      if (r.nonIdempotent.length > 0) {
+        lines.push("#### Not idempotent (as written)", "");
+        for (const [name, errored] of r.nonIdempotent) {
+          lines.push(`- ${name}${errored ? " (second pass errored)" : ""}`);
+        }
+        lines.push("");
       }
     }
   }
