@@ -112,6 +112,17 @@ impl<'a> JSDocTag<'a> {
         (type_part, comment_part)
     }
 
+    /// Returns the normalized comment after an optional leading type expression.
+    /// If the type ends on a later line, the remaining comment starts with a newline.
+    pub fn parsed_type_comment_preserving_lines(&self) -> String {
+        let mut body = self.comment().parsed_preserving_whitespace();
+        if let Some((_, end)) = utils::find_type_range(&body) {
+            let first_line = if body[..end].contains('\n') { "\n" } else { "" };
+            body.replace_range(..end, first_line);
+        }
+        body
+    }
+
     /// Use for `@param`, `@property`, `@typedef`, ...etc.
     /// Comment can be multiline.
     ///

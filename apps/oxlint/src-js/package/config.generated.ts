@@ -1045,6 +1045,7 @@ export interface DummyRuleMap {
   "jsdoc/require-returns"?: RuleNoConfig | [AllowWarnDeny, RequireReturnsConfig];
   "jsdoc/require-returns-description"?: RuleNoConfig;
   "jsdoc/require-returns-type"?: RuleNoConfig;
+  "jsdoc/require-template-description"?: RuleNoConfig;
   "jsdoc/require-throws-description"?: RuleNoConfig;
   "jsdoc/require-throws-type"?: RuleNoConfig;
   "jsdoc/require-yields"?: RuleNoConfig | [AllowWarnDeny, RequireYieldsConfig];

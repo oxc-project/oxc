@@ -313,6 +313,7 @@ pub use crate::rules::jsdoc::require_property_type::RequirePropertyType as Jsdoc
 pub use crate::rules::jsdoc::require_returns::RequireReturns as JsdocRequireReturns;
 pub use crate::rules::jsdoc::require_returns_description::RequireReturnsDescription as JsdocRequireReturnsDescription;
 pub use crate::rules::jsdoc::require_returns_type::RequireReturnsType as JsdocRequireReturnsType;
+pub use crate::rules::jsdoc::require_template_description::RequireTemplateDescription as JsdocRequireTemplateDescription;
 pub use crate::rules::jsdoc::require_throws_description::RequireThrowsDescription as JsdocRequireThrowsDescription;
 pub use crate::rules::jsdoc::require_throws_type::RequireThrowsType as JsdocRequireThrowsType;
 pub use crate::rules::jsdoc::require_yields::RequireYields as JsdocRequireYields;
@@ -1640,6 +1641,7 @@ pub enum RuleEnum {
     JsdocRequireReturns(JsdocRequireReturns),
     JsdocRequireReturnsDescription(JsdocRequireReturnsDescription),
     JsdocRequireReturnsType(JsdocRequireReturnsType),
+    JsdocRequireTemplateDescription(JsdocRequireTemplateDescription),
     JsdocRequireThrowsDescription(JsdocRequireThrowsDescription),
     JsdocRequireThrowsType(JsdocRequireThrowsType),
     JsdocRequireYields(JsdocRequireYields),
@@ -2528,164 +2530,165 @@ const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 724usize;
 const JSDOC_REQUIRE_RETURNS_ID: usize = 725usize;
 const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 726usize;
 const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 727usize;
-const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 728usize;
-const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 729usize;
-const JSDOC_REQUIRE_YIELDS_ID: usize = 730usize;
-const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 731usize;
-const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 732usize;
-const PROMISE_ALWAYS_RETURN_ID: usize = 733usize;
-const PROMISE_AVOID_NEW_ID: usize = 734usize;
-const PROMISE_CATCH_OR_RETURN_ID: usize = 735usize;
-const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 736usize;
-const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 737usize;
-const PROMISE_NO_NESTING_ID: usize = 738usize;
-const PROMISE_NO_NEW_STATICS_ID: usize = 739usize;
-const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 740usize;
-const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 741usize;
-const PROMISE_NO_RETURN_WRAP_ID: usize = 742usize;
-const PROMISE_PARAM_NAMES_ID: usize = 743usize;
-const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 744usize;
-const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 745usize;
-const PROMISE_PREFER_CATCH_ID: usize = 746usize;
-const PROMISE_SPEC_ONLY_ID: usize = 747usize;
-const PROMISE_VALID_PARAMS_ID: usize = 748usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = 749usize;
-const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 750usize;
-const VITEST_CONSISTENT_TEST_IT_ID: usize = 751usize;
-const VITEST_CONSISTENT_VITEST_VI_ID: usize = 752usize;
-const VITEST_EXPECT_EXPECT_ID: usize = 753usize;
-const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 754usize;
-const VITEST_MAX_EXPECTS_ID: usize = 755usize;
-const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 756usize;
-const VITEST_NO_ALIAS_METHODS_ID: usize = 757usize;
-const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 758usize;
-const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 759usize;
-const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 760usize;
-const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 761usize;
-const VITEST_NO_DISABLED_TESTS_ID: usize = 762usize;
-const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 763usize;
-const VITEST_NO_FOCUSED_TESTS_ID: usize = 764usize;
-const VITEST_NO_HOOKS_ID: usize = 765usize;
-const VITEST_NO_IDENTICAL_TITLE_ID: usize = 766usize;
-const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 767usize;
-const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 768usize;
-const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 769usize;
-const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 770usize;
-const VITEST_NO_MOCKS_IMPORT_ID: usize = 771usize;
-const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 772usize;
-const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 773usize;
-const VITEST_NO_STANDALONE_EXPECT_ID: usize = 774usize;
-const VITEST_NO_TEST_PREFIXES_ID: usize = 775usize;
-const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 776usize;
-const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 777usize;
-const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 778usize;
-const VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID: usize = 779usize;
-const VITEST_PADDING_AROUND_ALL_ID: usize = 780usize;
-const VITEST_PADDING_AROUND_BEFORE_ALL_BLOCKS_ID: usize = 781usize;
-const VITEST_PADDING_AROUND_BEFORE_EACH_BLOCKS_ID: usize = 782usize;
-const VITEST_PADDING_AROUND_DESCRIBE_BLOCKS_ID: usize = 783usize;
-const VITEST_PADDING_AROUND_EXPECT_GROUPS_ID: usize = 784usize;
-const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 785usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 786usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = 787usize;
-const VITEST_PREFER_CALLED_TIMES_ID: usize = 788usize;
-const VITEST_PREFER_CALLED_WITH_ID: usize = 789usize;
-const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 790usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 791usize;
-const VITEST_PREFER_EACH_ID: usize = 792usize;
-const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 793usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 794usize;
-const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 795usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 796usize;
-const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 797usize;
-const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 798usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 799usize;
-const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 800usize;
-const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 801usize;
-const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 802usize;
-const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 803usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 804usize;
-const VITEST_PREFER_SPY_ON_ID: usize = 805usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 806usize;
-const VITEST_PREFER_STRICT_EQUAL_ID: usize = 807usize;
-const VITEST_PREFER_TO_BE_ID: usize = 808usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = 809usize;
-const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 810usize;
-const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 811usize;
-const VITEST_PREFER_TO_CONTAIN_ID: usize = 812usize;
-const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 813usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 814usize;
-const VITEST_PREFER_TODO_ID: usize = 815usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 816usize;
-const VITEST_REQUIRE_HOOK_ID: usize = 817usize;
-const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 818usize;
-const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 819usize;
-const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 820usize;
-const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 821usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 822usize;
-const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 823usize;
-const VITEST_VALID_EXPECT_ID: usize = 824usize;
-const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 825usize;
-const VITEST_VALID_TITLE_ID: usize = 826usize;
-const VITEST_WARN_TODO_ID: usize = 827usize;
-const NODE_CALLBACK_RETURN_ID: usize = 828usize;
-const NODE_EXPORTS_STYLE_ID: usize = 829usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = 830usize;
-const NODE_HANDLE_CALLBACK_ERR_ID: usize = 831usize;
-const NODE_NO_EXPORTS_ASSIGN_ID: usize = 832usize;
-const NODE_NO_MIXED_REQUIRES_ID: usize = 833usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = 834usize;
-const NODE_NO_PATH_CONCAT_ID: usize = 835usize;
-const NODE_NO_PROCESS_ENV_ID: usize = 836usize;
-const NODE_NO_SYNC_ID: usize = 837usize;
-const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 838usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 839usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 840usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 841usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 842usize;
-const VUE_MAX_PROPS_ID: usize = 843usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = 844usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 845usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 846usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 847usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 848usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 849usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 850usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 851usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 852usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 853usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 854usize;
-const VUE_NO_DUPE_KEYS_ID: usize = 855usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 856usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 857usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 858usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 859usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 860usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 861usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 862usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = 863usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = 864usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 865usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 866usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 867usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 868usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 869usize;
-const VUE_PROP_NAME_CASING_ID: usize = 870usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 871usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 872usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 873usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 874usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = 875usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = 876usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 877usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = 878usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 879usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 880usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = 881usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = 882usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = 883usize;
-const VUE_VALID_NEXT_TICK_ID: usize = 884usize;
-static RULE_NAMES: [&str; 885usize] = [
+const JSDOC_REQUIRE_TEMPLATE_DESCRIPTION_ID: usize = 728usize;
+const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 729usize;
+const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 730usize;
+const JSDOC_REQUIRE_YIELDS_ID: usize = 731usize;
+const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 732usize;
+const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 733usize;
+const PROMISE_ALWAYS_RETURN_ID: usize = 734usize;
+const PROMISE_AVOID_NEW_ID: usize = 735usize;
+const PROMISE_CATCH_OR_RETURN_ID: usize = 736usize;
+const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 737usize;
+const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 738usize;
+const PROMISE_NO_NESTING_ID: usize = 739usize;
+const PROMISE_NO_NEW_STATICS_ID: usize = 740usize;
+const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 741usize;
+const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 742usize;
+const PROMISE_NO_RETURN_WRAP_ID: usize = 743usize;
+const PROMISE_PARAM_NAMES_ID: usize = 744usize;
+const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 745usize;
+const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 746usize;
+const PROMISE_PREFER_CATCH_ID: usize = 747usize;
+const PROMISE_SPEC_ONLY_ID: usize = 748usize;
+const PROMISE_VALID_PARAMS_ID: usize = 749usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = 750usize;
+const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 751usize;
+const VITEST_CONSISTENT_TEST_IT_ID: usize = 752usize;
+const VITEST_CONSISTENT_VITEST_VI_ID: usize = 753usize;
+const VITEST_EXPECT_EXPECT_ID: usize = 754usize;
+const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 755usize;
+const VITEST_MAX_EXPECTS_ID: usize = 756usize;
+const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 757usize;
+const VITEST_NO_ALIAS_METHODS_ID: usize = 758usize;
+const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 759usize;
+const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 760usize;
+const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 761usize;
+const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 762usize;
+const VITEST_NO_DISABLED_TESTS_ID: usize = 763usize;
+const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 764usize;
+const VITEST_NO_FOCUSED_TESTS_ID: usize = 765usize;
+const VITEST_NO_HOOKS_ID: usize = 766usize;
+const VITEST_NO_IDENTICAL_TITLE_ID: usize = 767usize;
+const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 768usize;
+const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 769usize;
+const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 770usize;
+const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 771usize;
+const VITEST_NO_MOCKS_IMPORT_ID: usize = 772usize;
+const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 773usize;
+const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 774usize;
+const VITEST_NO_STANDALONE_EXPECT_ID: usize = 775usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = 776usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 777usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 778usize;
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 779usize;
+const VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID: usize = 780usize;
+const VITEST_PADDING_AROUND_ALL_ID: usize = 781usize;
+const VITEST_PADDING_AROUND_BEFORE_ALL_BLOCKS_ID: usize = 782usize;
+const VITEST_PADDING_AROUND_BEFORE_EACH_BLOCKS_ID: usize = 783usize;
+const VITEST_PADDING_AROUND_DESCRIBE_BLOCKS_ID: usize = 784usize;
+const VITEST_PADDING_AROUND_EXPECT_GROUPS_ID: usize = 785usize;
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 786usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 787usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = 788usize;
+const VITEST_PREFER_CALLED_TIMES_ID: usize = 789usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = 790usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 791usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 792usize;
+const VITEST_PREFER_EACH_ID: usize = 793usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 794usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 795usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 796usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 797usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 798usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 799usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 800usize;
+const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 801usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 802usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 803usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 804usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 805usize;
+const VITEST_PREFER_SPY_ON_ID: usize = 806usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 807usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = 808usize;
+const VITEST_PREFER_TO_BE_ID: usize = 809usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = 810usize;
+const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 811usize;
+const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 812usize;
+const VITEST_PREFER_TO_CONTAIN_ID: usize = 813usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 814usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 815usize;
+const VITEST_PREFER_TODO_ID: usize = 816usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 817usize;
+const VITEST_REQUIRE_HOOK_ID: usize = 818usize;
+const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 819usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 820usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 821usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 822usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 823usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 824usize;
+const VITEST_VALID_EXPECT_ID: usize = 825usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 826usize;
+const VITEST_VALID_TITLE_ID: usize = 827usize;
+const VITEST_WARN_TODO_ID: usize = 828usize;
+const NODE_CALLBACK_RETURN_ID: usize = 829usize;
+const NODE_EXPORTS_STYLE_ID: usize = 830usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = 831usize;
+const NODE_HANDLE_CALLBACK_ERR_ID: usize = 832usize;
+const NODE_NO_EXPORTS_ASSIGN_ID: usize = 833usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = 834usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = 835usize;
+const NODE_NO_PATH_CONCAT_ID: usize = 836usize;
+const NODE_NO_PROCESS_ENV_ID: usize = 837usize;
+const NODE_NO_SYNC_ID: usize = 838usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 839usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 840usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 841usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 842usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 843usize;
+const VUE_MAX_PROPS_ID: usize = 844usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 845usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 846usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 847usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 848usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 849usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 850usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 851usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 852usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 853usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 854usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 855usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 856usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 857usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 858usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 859usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 860usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 861usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 862usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 863usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 864usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 865usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 866usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 867usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 868usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 869usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 870usize;
+const VUE_PROP_NAME_CASING_ID: usize = 871usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 872usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 873usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 874usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 875usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 876usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 877usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 878usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 879usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 880usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 881usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 882usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 883usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 884usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 885usize;
+static RULE_NAMES: [&str; 886usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3414,6 +3417,7 @@ static RULE_NAMES: [&str; 885usize] = [
     JsdocRequireReturns::NAME,
     JsdocRequireReturnsDescription::NAME,
     JsdocRequireReturnsType::NAME,
+    JsdocRequireTemplateDescription::NAME,
     JsdocRequireThrowsDescription::NAME,
     JsdocRequireThrowsType::NAME,
     JsdocRequireYields::NAME,
@@ -4425,6 +4429,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JSDOC_REQUIRE_RETURNS_ID,
             Self::JsdocRequireReturnsDescription(_) => JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID,
             Self::JsdocRequireReturnsType(_) => JSDOC_REQUIRE_RETURNS_TYPE_ID,
+            Self::JsdocRequireTemplateDescription(_) => JSDOC_REQUIRE_TEMPLATE_DESCRIPTION_ID,
             Self::JsdocRequireThrowsDescription(_) => JSDOC_REQUIRE_THROWS_DESCRIPTION_ID,
             Self::JsdocRequireThrowsType(_) => JSDOC_REQUIRE_THROWS_TYPE_ID,
             Self::JsdocRequireYields(_) => JSDOC_REQUIRE_YIELDS_ID,
@@ -5493,6 +5498,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::CATEGORY,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::CATEGORY,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::CATEGORY,
+            Self::JsdocRequireTemplateDescription(_) => JsdocRequireTemplateDescription::CATEGORY,
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::CATEGORY,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::CATEGORY,
             Self::JsdocRequireYields(_) => JsdocRequireYields::CATEGORY,
@@ -6523,6 +6529,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::FIX,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::FIX,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::FIX,
+            Self::JsdocRequireTemplateDescription(_) => JsdocRequireTemplateDescription::FIX,
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::FIX,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::FIX,
             Self::JsdocRequireYields(_) => JsdocRequireYields::FIX,
@@ -7767,6 +7774,9 @@ impl RuleEnum {
                 JsdocRequireReturnsDescription::documentation()
             }
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::documentation(),
+            Self::JsdocRequireTemplateDescription(_) => {
+                JsdocRequireTemplateDescription::documentation()
+            }
             Self::JsdocRequireThrowsDescription(_) => {
                 JsdocRequireThrowsDescription::documentation()
             }
@@ -10103,6 +10113,10 @@ impl RuleEnum {
             }
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::config_schema(generator)
                 .or_else(|| JsdocRequireReturnsType::schema(generator)),
+            Self::JsdocRequireTemplateDescription(_) => {
+                JsdocRequireTemplateDescription::config_schema(generator)
+                    .or_else(|| JsdocRequireTemplateDescription::schema(generator))
+            }
             Self::JsdocRequireThrowsDescription(_) => {
                 JsdocRequireThrowsDescription::config_schema(generator)
                     .or_else(|| JsdocRequireThrowsDescription::schema(generator))
@@ -11281,6 +11295,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => "jsdoc",
             Self::JsdocRequireReturnsDescription(_) => "jsdoc",
             Self::JsdocRequireReturnsType(_) => "jsdoc",
+            Self::JsdocRequireTemplateDescription(_) => "jsdoc",
             Self::JsdocRequireThrowsDescription(_) => "jsdoc",
             Self::JsdocRequireThrowsType(_) => "jsdoc",
             Self::JsdocRequireYields(_) => "jsdoc",
@@ -13314,6 +13329,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.run(node, ctx),
             Self::JsdocRequireReturnsDescription(rule) => rule.run(node, ctx),
             Self::JsdocRequireReturnsType(rule) => rule.run(node, ctx),
+            Self::JsdocRequireTemplateDescription(rule) => rule.run(node, ctx),
             Self::JsdocRequireThrowsDescription(rule) => rule.run(node, ctx),
             Self::JsdocRequireThrowsType(rule) => rule.run(node, ctx),
             Self::JsdocRequireYields(rule) => rule.run(node, ctx),
@@ -14216,6 +14232,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.run_once(ctx),
             Self::JsdocRequireReturnsDescription(rule) => rule.run_once(ctx),
             Self::JsdocRequireReturnsType(rule) => rule.run_once(ctx),
+            Self::JsdocRequireTemplateDescription(rule) => rule.run_once(ctx),
             Self::JsdocRequireThrowsDescription(rule) => rule.run_once(ctx),
             Self::JsdocRequireThrowsType(rule) => rule.run_once(ctx),
             Self::JsdocRequireYields(rule) => rule.run_once(ctx),
@@ -15116,6 +15133,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.should_run(ctx),
             Self::JsdocRequireReturnsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireReturnsType(rule) => rule.should_run(ctx),
+            Self::JsdocRequireTemplateDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireThrowsDescription(rule) => rule.should_run(ctx),
             Self::JsdocRequireThrowsType(rule) => rule.should_run(ctx),
             Self::JsdocRequireYields(rule) => rule.should_run(ctx),
@@ -16134,6 +16152,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::FLAGS,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::FLAGS,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::FLAGS,
+            Self::JsdocRequireTemplateDescription(_) => JsdocRequireTemplateDescription::FLAGS,
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::FLAGS,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::FLAGS,
             Self::JsdocRequireYields(_) => JsdocRequireYields::FLAGS,
@@ -17206,6 +17225,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::VERSION,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::VERSION,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::VERSION,
+            Self::JsdocRequireTemplateDescription(_) => JsdocRequireTemplateDescription::VERSION,
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::VERSION,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::VERSION,
             Self::JsdocRequireYields(_) => JsdocRequireYields::VERSION,
@@ -18241,6 +18261,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(_) => JsdocRequireReturns::INFO,
             Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::INFO,
             Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::INFO,
+            Self::JsdocRequireTemplateDescription(_) => JsdocRequireTemplateDescription::INFO,
             Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::INFO,
             Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::INFO,
             Self::JsdocRequireYields(_) => JsdocRequireYields::INFO,
@@ -19145,6 +19166,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.types_info(),
             Self::JsdocRequireReturnsDescription(rule) => rule.types_info(),
             Self::JsdocRequireReturnsType(rule) => rule.types_info(),
+            Self::JsdocRequireTemplateDescription(rule) => rule.types_info(),
             Self::JsdocRequireThrowsDescription(rule) => rule.types_info(),
             Self::JsdocRequireThrowsType(rule) => rule.types_info(),
             Self::JsdocRequireYields(rule) => rule.types_info(),
@@ -20034,6 +20056,7 @@ impl RuleEnum {
             Self::JsdocRequireReturns(rule) => rule.run_info(),
             Self::JsdocRequireReturnsDescription(rule) => rule.run_info(),
             Self::JsdocRequireReturnsType(rule) => rule.run_info(),
+            Self::JsdocRequireTemplateDescription(rule) => rule.run_info(),
             Self::JsdocRequireThrowsDescription(rule) => rule.run_info(),
             Self::JsdocRequireThrowsType(rule) => rule.run_info(),
             Self::JsdocRequireYields(rule) => rule.run_info(),
@@ -21055,6 +21078,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsdocRequireReturns(JsdocRequireReturns::default()),
         RuleEnum::JsdocRequireReturnsDescription(JsdocRequireReturnsDescription::default()),
         RuleEnum::JsdocRequireReturnsType(JsdocRequireReturnsType::default()),
+        RuleEnum::JsdocRequireTemplateDescription(JsdocRequireTemplateDescription::default()),
         RuleEnum::JsdocRequireThrowsDescription(JsdocRequireThrowsDescription::default()),
         RuleEnum::JsdocRequireThrowsType(JsdocRequireThrowsType::default()),
         RuleEnum::JsdocRequireYields(JsdocRequireYields::default()),
