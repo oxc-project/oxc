@@ -123,6 +123,10 @@ pub struct ExpressionRoot {
     /// The host puts the code in parens (Vue's `v-if`, an event handler's `$event => (…)`):
     /// a top-level sequence reads as one value there, and prints in parens as anywhere.
     pub in_parens: bool,
+    /// The last `host_suffix` bytes of the text are the host's, not code (an Angular alias, ` as x`):
+    /// they print as written right after the root, inside its layout (`{⏎  a: 1,⏎} as x` when it hugs),
+    /// and the other fields' "after the code" is after them. Left as written when the code ends in a line comment.
+    pub host_suffix: usize,
 }
 
 /// The layout an expression prints in, inside its host's delimiters.

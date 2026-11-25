@@ -18,9 +18,12 @@ use oxc_formatter_core::{
     },
     dispatch_fragment_ir, format_args, map_text_in_ir, write,
 };
-use oxc_htmlish_parser::ast::{
-    AngularAction, AngularCode, AngularExpression, Attribute, Block, BlockParameterKind,
-    LetDeclaration, NestedPipe, TemplateBinding, ValueInterpolation,
+use oxc_htmlish_parser::{
+    Span,
+    ast::{
+        AngularAction, AngularCode, AngularExpression, Attribute, Block, BlockParameterKind,
+        LetDeclaration, NestedPipe, TemplateBinding, ValueInterpolation,
+    },
 };
 
 use super::{
@@ -42,7 +45,8 @@ pub enum JsInAngularTemplate {
     /// an expression in a `"`-quoted attribute value, whose strings print in `'`;
     /// an object, an array, a string or a template literal hugs the quotes.
     /// `tailwind_classes`: its strings are Tailwind classes (`TailwindAttributes::binds`).
-    Binding { tailwind_classes: bool },
+    /// `alias`: the lone expression's alias, ` as x` after the code in its layout (`{⏎  a: 1,⏎} as x`, as Prettier prints it).
+    Binding { tailwind_classes: bool, alias: Option<Span> },
     /// A `{{ }}` in another attribute's value (`title="Hi {{ name }}"`), or a piece of its code: an expression it lays out.
     /// `before_brace`: as [`Interpolation`](Self::Interpolation)'s.
     ValueInterpolation { before_brace: bool },
@@ -61,6 +65,16 @@ impl JsInAngularTemplate {
         !matches!(self, Self::Interpolation { .. } | Self::BlockPiece)
     }
 
+    /// The length of the alias text the code ends in, as `dispatch_piece` joins it (JS's `ExpressionRoot::host_suffix`).
+    pub const fn suffix_len(self) -> usize {
+        match self {
+            Self::Binding { alias: Some(alias), .. } => {
+                ALIAS.len() + (alias.end - alias.start) as usize
+            }
+            _ => 0,
+        }
+    }
+
     /// Of a piece an object's `}` follows (`before_brace`) or not, where `}}` would end its `{{ }}`.
     const fn before_brace(self, before_brace: bool) -> Self {
         match self {
@@ -75,12 +89,25 @@ impl JsInAngularTemplate {
 pub(super) const SEPARATOR: FormatWith<fn(&mut HtmlishFormatter<'_, '_>)> =
     format_with(|f| write!(f, [";", soft_line_break_or_space()]));
 
-/// A piece of code formatted as `part`; `None` when the dispatcher leaves it as written.
+/// What precedes an alias after the code ([`JsInAngularTemplate::Binding`]).
+const ALIAS: &str = " as ";
+
+/// A piece of code formatted as `part`, its alias after it ([`JsInAngularTemplate::suffix_len`] measures it);
+/// `None` when the dispatcher leaves it as written.
 fn dispatch_piece<'a>(
     part: JsInAngularTemplate,
     piece: &'a str,
     f: &HtmlishFormatter<'_, 'a>,
 ) -> Option<Ir<'a>> {
+    let piece = match part {
+        JsInAngularTemplate::Binding { alias: Some(alias), .. } => {
+            let alias = alias.slice(f.context().tree().source());
+            let with_alias = f.allocator().alloc_concat_strs_array([piece, ALIAS, alias]);
+            debug_assert_eq!(with_alias.len() - piece.len(), part.suffix_len());
+            with_alias
+        }
+        _ => piece,
+    };
     if part.in_html_attribute() {
         embed::dispatch_attribute_value("ts", &part, unescaped(piece, f), f)
     } else {
@@ -108,7 +135,7 @@ pub fn write_binding<'a>(
     f: &mut HtmlishFormatter<'_, 'a>,
 ) -> bool {
     let Some(expression) = expression else { return false };
-    let part = JsInAngularTemplate::Binding { tailwind_classes };
+    let part = JsInAngularTemplate::Binding { tailwind_classes, alias: None };
     // The whole value, its quote entities read back by the caller, which an object or an array hugs
     if expression.pipes.is_empty()
         && expression.comment.is_none()
@@ -229,6 +256,23 @@ pub fn write_template_bindings<'a>(
         [TemplateBinding::Expression { key: None, angular, alias: None, .. }] => {
             return write_binding(angular.as_deref(), value, false, f);
         }
+        // With an alias, it lays out as a binding's value, the alias in its layout;
+        // with a pipe or a comment, which `Parts::dispatch` refuses, as the other bindings do
+        [
+            TemplateBinding::Expression {
+                key: None,
+                angular: Some(angular),
+                alias: Some(alias),
+                ..
+            },
+        ] => {
+            let part =
+                JsInAngularTemplate::Binding { tailwind_classes: false, alias: Some(*alias) };
+            if let Some(parts) = Parts::dispatch(angular, part, f) {
+                embed::write_quoted(&parts.format(), f);
+                return true;
+            }
+        }
         _ => {}
     }
     // Each expression's, by binding
@@ -282,7 +326,7 @@ pub fn write_template_bindings<'a>(
                         parts.write(f);
                     }
                     if let Some(alias) = alias {
-                        write!(f, [" as ", text(alias.slice(source))]);
+                        write!(f, [ALIAS, text(alias.slice(source))]);
                     }
                 }
                 TemplateBinding::Let { name, value } => {
@@ -292,7 +336,7 @@ pub fn write_template_bindings<'a>(
                     }
                 }
                 TemplateBinding::As { key, alias } => {
-                    write!(f, [text(key.slice(source)), " as ", text(alias.slice(source))]);
+                    write!(f, [text(key.slice(source)), ALIAS, text(alias.slice(source))]);
                 }
             }
         }
@@ -468,7 +512,7 @@ impl<'a> Code<'a> {
         }
         // A nested pipe is no binding's whole value, which hugs the quotes; nor what follows the code follows it
         let nested_part = match part {
-            JsInAngularTemplate::Binding { tailwind_classes } => {
+            JsInAngularTemplate::Binding { tailwind_classes, .. } => {
                 JsInAngularTemplate::AttributePiece { tailwind_classes }
             }
             part => part,
@@ -564,9 +608,13 @@ impl<'a> Parts<'a> {
         let comment = expression.comment.map(|comment| comment.slice(source));
         // A binding's value hugs the quotes only as a whole: none of its pieces does when pipes or a comment follow
         let part = match part {
-            JsInAngularTemplate::Binding { tailwind_classes }
+            JsInAngularTemplate::Binding { tailwind_classes, alias }
                 if !expression.pipes.is_empty() || comment.is_some() =>
             {
+                // `None` for an alias: the caller's microsyntax path prints it after the pipes
+                if alias.is_some() {
+                    return None;
+                }
                 JsInAngularTemplate::AttributePiece { tailwind_classes }
             }
             part => part,

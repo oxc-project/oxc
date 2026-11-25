@@ -92,11 +92,12 @@ pub fn format_with_session<'a>(
 /// - emits neither a BOM nor the trailing newline
 ///
 /// `source_text` is the part of the host's document as written; it is wrapped here to parse as `root` says.
+/// An expression's may end in the host's own text ([`ExpressionRoot::host_suffix`]), split off first and printed after the root.
 /// `embedded_in` is what the host does with the code, for the rules that keep what it reads of it.
 ///
 /// # Errors
 /// Returns the first parse error, an error when the code is not the one `root` names,
-/// when a comment would not print (`v-slot="/* c */"` has no params to attach it to),
+/// when a comment would not print (`v-slot="/* c */"` has no params to attach it to), when the host's text is not one line at its end or a line comment ends the code before it,
 /// or, for a host that inlines the code ([`JsEmbeddedIn::inlines_code`]), when it ends in a line comment without a line break after it
 /// or is a top-level sequence in no parens.
 pub fn format_to_ir<'a>(
@@ -109,8 +110,12 @@ pub fn format_to_ir<'a>(
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
 
+    // The code, and the host's text it ends in, if any
+    let (source_text, host_suffix) = print::split_host_suffix(source_text, root)?;
+    let host_suffix = allocator.alloc_str(host_suffix);
+
     // Fast path: a name, about half of a Vue template's values, prints as written with no parse (`FormatName`)
-    if let Some(content) = print::FormatName::new(allocator, source_text, root) {
+    if let Some(content) = print::FormatName::new(allocator, source_text, root, host_suffix) {
         let js_context = JsFormatContext::new(content.name, source_type, &[], options);
         let (ir, _) = formatter::build_ir(
             js_context,
@@ -140,7 +145,8 @@ pub fn format_to_ir<'a>(
     js_context.set_in_html_attribute(embedded_in.in_html_attribute);
 
     let node = AstNode::new(program, AstNodes::Dummy());
-    let content = print::FormatRoot { program: &node, root, ends_in_line_comment };
+    let content =
+        print::FormatRoot { program: &node, root, ends_in_line_comment, suffix: host_suffix };
     let (ir, js_context) = formatter::build_ir(
         js_context,
         session,
