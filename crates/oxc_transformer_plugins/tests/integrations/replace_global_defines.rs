@@ -215,6 +215,13 @@ fn invalid_define_value() {
     for value in ["console.log foo", "1 2", "foo;"] {
         assert!(ReplaceGlobalDefinesConfig::new(&[("foo", value)]).is_err(), "{value}");
     }
+
+    let errors = ReplaceGlobalDefinesConfig::new(&[("Foo", "1 +")]).unwrap_err();
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message,
+        "The define value `1 +` for key `Foo` is not a valid expression: Unexpected token"
+    );
 }
 
 #[test]
