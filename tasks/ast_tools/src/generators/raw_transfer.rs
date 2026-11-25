@@ -708,7 +708,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                                 .push(format!("const {field_name} = {field_fn}({field_pos});"));
                         } else {
                             self.assignments_preamble
-                                .push(format!("{field_name}.push(...{field_fn}({field_pos}));"));
+                                .push(format!("{field_fn}({field_pos}, {field_name});"));
                         }
                     }
                     TypeDef::Option(option_def) => {
@@ -1136,6 +1136,8 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
 }
 
 /// Generate deserialize function for a `Vec`.
+///
+/// Elements are pushed onto `arr` if it is provided, or onto a new array otherwise.
 fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = vec_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
@@ -1158,9 +1160,8 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
 
     #[rustfmt::skip]
     write_it!(code, "
-        function {fn_name}(pos) {{
-            const arr = [],
-                pos32 = pos >> 2;
+        function {fn_name}(pos, arr = []) {{
+            const pos32 = pos >> 2;
             pos = int32[{ptr_pos32}];
             const endPos = pos + {end_pos_offset};
             while (pos !== endPos) {{
