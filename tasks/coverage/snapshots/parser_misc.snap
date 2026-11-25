@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 166/166 (100.00%)
 Positive Passed: 166/166 (100.00%)
-Negative Passed: 298/298 (100.00%)
+Negative Passed: 299/299 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -6003,3 +6003,12 @@ Negative Passed: 298/298 (100.00%)
  1 │ class A extends B<C> {}
    ·                  ───
    ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[misc/fail/yield-of-outside-generator.cjs:2:3]
+ 1 │ function f() {
+ 2 │   yield of;
+   ·   ─────
+ 3 │   next();
+   ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
