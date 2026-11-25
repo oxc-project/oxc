@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, TSType, TSTypeAnnotation, match_member_expression},
+    ast::{
+        Expression, IdentifierReference, TSSignature, TSType, TSTypeAnnotation,
+        match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -132,19 +135,67 @@ fn has_type_predicate_return_type(return_type: Option<&TSTypeAnnotation<'_>>) ->
         .is_some_and(|annotation| matches!(annotation.type_annotation, TSType::TSTypePredicate(_)))
 }
 
-fn has_type_predicate_function_type(type_annotation: Option<&TSTypeAnnotation<'_>>) -> bool {
-    let Some(annotation) = type_annotation else {
-        return false;
-    };
-    let mut ty = &annotation.type_annotation;
+fn has_type_predicate_ts_type(mut ty: &TSType<'_>) -> bool {
     while let TSType::TSParenthesizedType(paren) = ty {
         ty = &paren.type_annotation;
     }
-    matches!(
-        ty,
-        TSType::TSFunctionType(func_type)
-            if matches!(func_type.return_type.type_annotation, TSType::TSTypePredicate(_))
-    )
+    match ty {
+        TSType::TSFunctionType(func_type) => {
+            matches!(func_type.return_type.type_annotation, TSType::TSTypePredicate(_))
+        }
+        TSType::TSTypeLiteral(type_lit) => type_lit.members.iter().any(|member| {
+            matches!(
+                member,
+                TSSignature::TSCallSignatureDeclaration(call_sig)
+                    if has_type_predicate_return_type(call_sig.return_type.as_deref())
+            )
+        }),
+        _ => false,
+    }
+}
+
+fn has_type_predicate_function_type(type_annotation: Option<&TSTypeAnnotation<'_>>) -> bool {
+    type_annotation
+        .is_some_and(|annotation| has_type_predicate_ts_type(&annotation.type_annotation))
+}
+
+fn has_type_predicate_init(expr: &Expression<'_>) -> bool {
+    let mut current = expr;
+    loop {
+        match current {
+            Expression::ParenthesizedExpression(e) => current = &e.expression,
+            Expression::TSAsExpression(e) => {
+                if has_type_predicate_ts_type(&e.type_annotation) {
+                    return true;
+                }
+                current = &e.expression;
+            }
+            Expression::TSSatisfiesExpression(e) => {
+                if has_type_predicate_ts_type(&e.type_annotation) {
+                    return true;
+                }
+                current = &e.expression;
+            }
+            Expression::TSTypeAssertion(e) => {
+                if has_type_predicate_ts_type(&e.type_annotation) {
+                    return true;
+                }
+                current = &e.expression;
+            }
+            Expression::TSInstantiationExpression(e) => current = &e.expression,
+            Expression::TSNonNullExpression(e) => current = &e.expression,
+            _ => break,
+        }
+    }
+    match current.get_inner_expression() {
+        Expression::ArrowFunctionExpression(arrow) => {
+            has_type_predicate_return_type(arrow.return_type.as_deref())
+        }
+        Expression::FunctionExpression(func) => {
+            has_type_predicate_return_type(func.return_type.as_deref())
+        }
+        _ => false,
+    }
 }
 
 fn is_type_predicate_callback(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
@@ -162,18 +213,8 @@ fn is_type_predicate_callback(ident: &IdentifierReference<'_>, ctx: &LintContext
             has_type_predicate_function_type(param.type_annotation.as_deref())
         }
         AstKind::VariableDeclarator(declarator) => {
-            if has_type_predicate_function_type(declarator.type_annotation.as_deref()) {
-                return true;
-            }
-            match declarator.init.as_ref().map(Expression::without_parentheses) {
-                Some(Expression::ArrowFunctionExpression(arrow)) => {
-                    has_type_predicate_return_type(arrow.return_type.as_deref())
-                }
-                Some(Expression::FunctionExpression(func)) => {
-                    has_type_predicate_return_type(func.return_type.as_deref())
-                }
-                _ => false,
-            }
+            has_type_predicate_function_type(declarator.type_annotation.as_deref())
+                || declarator.init.as_ref().is_some_and(has_type_predicate_init)
         }
         _ => false,
     }
@@ -380,7 +421,12 @@ fn test() {
         "const isPrimitive = (value: unknown): value is number | string => typeof value === 'number' || typeof value === 'string'; export const allPrimitive = (spec: readonly unknown[]): boolean => spec.every(isPrimitive);",
         "const isString = function (value: unknown): value is string { return typeof value === 'string'; }; foo.filter(isString);",
         "const isString: (value: unknown) => value is string = value => typeof value === 'string'; foo.filter(isString);",
+        "const isString: { (value: unknown): value is string } = value => typeof value === 'string'; foo.filter(isString);",
+        "const isString = ((value: unknown): value is string => typeof value === 'string') satisfies (value: unknown) => boolean; foo.filter(isString);",
+        "const isString = ((value: unknown) => typeof value === 'string') as (value: unknown) => value is string; foo.filter(isString);",
+        "const isString = ((value: unknown): value is string => typeof value === 'string') as Guard; foo.filter(isString);",
         "function run(predicate: (value: unknown) => value is string) { foo.filter(predicate); foo.every(predicate); foo.find(predicate); foo.findLast(predicate); }",
+        "function run(predicate: { (value: unknown): value is string }) { foo.filter(predicate); }",
         "declare function isString(value: unknown): value is string; foo.filter(isString);",
         "import { isString } from './guards'; foo.filter(isString); foo.every(isString); foo.find(isString); foo.findLast(isString);",
         "import isString from './guards'; foo.filter(isString);",
@@ -420,6 +466,7 @@ fn test() {
         "function isString(value: unknown): value is string { return typeof value === 'string'; } foo.map(isString);",
         "import { isString } from './guards'; foo.map(isString);",
         "function isString(value: unknown): value is string { return typeof value === 'string'; } function isObject(value: unknown): boolean { return typeof value === 'object'; } foo.filter(condition ? isString : isObject);",
+        "const isString: { (value: unknown): boolean } = value => typeof value === 'string'; foo.filter(isString);",
         "try {} catch (callback) { foo.filter(callback); }",
     ];
 
