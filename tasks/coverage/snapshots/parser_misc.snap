@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 174/174 (100.00%)
 Positive Passed: 174/174 (100.00%)
-Negative Passed: 312/312 (100.00%)
+Negative Passed: 318/318 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -795,12 +795,40 @@ Negative Passed: 312/312 (100.00%)
  15 │ });
     ╰────
 
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-export-all.mjs:1:1]
+ 1 │ @d export * from 'm';
+   · ──
+ 2 │ @d export * as ns from 'm';
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-export-all.mjs:2:1]
+ 1 │ @d export * from 'm';
+ 2 │ @d export * as ns from 'm';
+   · ──
+   ╰────
+
   × 'export statement' declaration can only be used at the top level of a module
    ╭─[misc/fail/decorated-export-in-block.mjs:2:8]
  1 │ {
  2 │   @dec export class C {}
    ·        ──────
  3 │ }
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-export-named.mjs:1:1]
+ 1 │ @d export {};
+   · ──
+ 2 │ @d export { x } from 'm';
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-export-named.mjs:2:1]
+ 1 │ @d export {};
+ 2 │ @d export { x } from 'm';
+   · ──
    ╰────
 
   × Expected `class` but found `Identifier`
@@ -6113,6 +6141,39 @@ Negative Passed: 312/312 (100.00%)
  1 │ declare function if(): void;
    ·                  ─┬
    ·                   ╰── `Identifier` expected
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/ts-decorated-export-as-namespace.d.ts:2:1]
+ 1 │ export {};
+ 2 │ @d export as namespace N;
+   · ──
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/ts-decorated-export-assignment.ts:1:1]
+ 1 │ @d export = x;
+   · ──
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/ts-decorated-export-import-equals.ts:1:1]
+ 1 │ @d export import A = B;
+   · ──
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/ts-decorated-export-type.ts:1:1]
+ 1 │ @d export type {};
+   · ──
+ 2 │ @d export type * from 'm';
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/ts-decorated-export-type.ts:2:1]
+ 1 │ @d export type {};
+ 2 │ @d export type * from 'm';
+   · ──
    ╰────
 
   × Expected function name
