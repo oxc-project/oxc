@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 173/173 (100.00%)
-Positive Passed: 173/173 (100.00%)
-Negative Passed: 311/311 (100.00%)
+AST Parsed     : 174/174 (100.00%)
+Positive Passed: 174/174 (100.00%)
+Negative Passed: 312/312 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -6202,6 +6202,15 @@ Negative Passed: 311/311 (100.00%)
  3 │ interface C extends this.D {}
    ·                     ──────
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/ts-type-literal-computed-await.ts:2:13]
+ 1 │ async function f() {
+ 2 │   let a: { [await b]: number };
+   ·             ─────
+ 3 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-type-member-call-missing-separator.ts:1:20]
