@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 172/172 (100.00%)
-Positive Passed: 172/172 (100.00%)
-Negative Passed: 307/307 (100.00%)
+AST Parsed     : 173/173 (100.00%)
+Positive Passed: 173/173 (100.00%)
+Negative Passed: 311/311 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -1441,6 +1441,13 @@ Negative Passed: 307/307 (100.00%)
    ·     ┬                ┬
    ·     │                ╰── `)` expected
    ·     ╰── Opened here
+   ╰────
+
+  × Expected `(` but found `<`
+   ╭─[misc/fail/function-type-parameters-missing-name.js:1:9]
+ 1 │ function<T>() {}
+   ·         ┬
+   ·         ╰── `(` expected
    ╰────
 
   × A 'get' accessor must not have any formal parameters.
@@ -6075,6 +6082,90 @@ Negative Passed: 307/307 (100.00%)
    ·                 ┬
    ·                 ╰── `=>` expected
    ╰────
+
+  × Expected function name
+   ╭─[misc/fail/ts-declare-function-missing-name.ts:1:18]
+ 1 │ declare function ();
+   ·                  ─
+ 2 │ declare function<T>();
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected function name
+   ╭─[misc/fail/ts-declare-function-missing-name.ts:2:17]
+ 1 │ declare function ();
+ 2 │ declare function<T>();
+   ·                 ─
+ 3 │ export declare function ();
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected function name
+   ╭─[misc/fail/ts-declare-function-missing-name.ts:3:25]
+ 2 │ declare function<T>();
+ 3 │ export declare function ();
+   ·                         ─
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected `Identifier` but found `if`
+   ╭─[misc/fail/ts-declare-function-reserved-name.ts:1:18]
+ 1 │ declare function if(): void;
+   ·                  ─┬
+   ·                   ╰── `Identifier` expected
+   ╰────
+
+  × Expected function name
+   ╭─[misc/fail/ts-function-declaration-type-parameters-missing-name.ts:1:9]
+ 1 │ function<T>() {}
+   ·         ─
+ 2 │ async function<T>() {}
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected function name
+   ╭─[misc/fail/ts-function-declaration-type-parameters-missing-name.ts:2:15]
+ 1 │ function<T>() {}
+ 2 │ async function<T>() {}
+   ·               ─
+ 3 │ function*<T>() {}
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected function name
+   ╭─[misc/fail/ts-function-declaration-type-parameters-missing-name.ts:3:10]
+ 2 │ async function<T>() {}
+ 3 │ function*<T>() {}
+   ·          ─
+ 4 │ export function<T>() {}
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected function name
+   ╭─[misc/fail/ts-function-declaration-type-parameters-missing-name.ts:4:16]
+ 3 │ function*<T>() {}
+ 4 │ export function<T>() {}
+   ·                ─
+ 5 │ function<T>(): void;
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected function name
+   ╭─[misc/fail/ts-function-declaration-type-parameters-missing-name.ts:5:9]
+ 4 │ export function<T>() {}
+ 5 │ function<T>(): void;
+   ·         ─
+ 6 │ declare namespace N { function<T>(); }
+   ╰────
+  help: Function name is required in function declaration or named export
+
+  × Expected function name
+   ╭─[misc/fail/ts-function-declaration-type-parameters-missing-name.ts:6:31]
+ 5 │ function<T>(): void;
+ 6 │ declare namespace N { function<T>(); }
+   ·                               ─
+   ╰────
+  help: Function name is required in function declaration or named export
 
   × Expected `=>` but found `:`
    ╭─[misc/fail/ts-function-type-colon-separator.ts:1:13]
