@@ -1,0 +1,19 @@
+// Font shorthand and custom-property `/` after a font-size-capable node
+// (`--custom()`, `var()`, `calc()`, `min()`, `max()`, `clamp()`) collapses trailing
+// whitespace when left-glued, matching Prettier's `font` rule and CSS/Less values.
+// Sass variables and non-font variable declarations keep their `/` spacing.
+.a {
+  font: --custom(1px)/   2;
+  --font: --custom(1px)/   2;
+  font: var(--size)/   2;
+  font: calc(1px + 2px)/   2;
+  font: --custom(1px)/   var(--x);
+  font: --custom(1px)/(2 + 3);
+  font: --custom(1px)/   (2 + 3);
+  font: --custom(1px)/   2 / 3;
+  font: --custom(1px)/   2/   3;
+  font: --custom(1px)   /   2;
+  font: --custom(1px)   /2;
+  font: $w/   2;
+}
+$font: $w/   2;

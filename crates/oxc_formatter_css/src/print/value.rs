@@ -577,6 +577,10 @@ impl ValueContext<'_> {
     fn is_font_or_custom(&self) -> bool {
         self.decl_prop.is_some_and(|p| p == "font" || p.starts_with("--"))
     }
+
+    fn is_font_size_solidus(&self, operand: &ComponentValue<'_>, op_start: u32) -> bool {
+        self.is_font_or_custom() && operand.span().end == op_start && is_possible_font_size(operand)
+    }
 }
 
 /// Splits a flat component stream at top-level commas.
@@ -1981,6 +1985,10 @@ fn write_sass_binary<'a>(
                 // (`2/$w` -> `2 / $w`, `$w /2` -> `$w / 2`)
                 // while plain numbers keep the source gap (`10px/8px`, `1/2`).
                 if matches!(op.kind, SassBinaryOperatorKind::Division) {
+                    if ctx.is_font_size_solidus(operand, op_span.start) {
+                        run_end += 1;
+                        continue;
+                    }
                     let wf = |v: &ComponentValue<'_>| is_word_like(v) || is_func_like(v);
                     let left_absorbs = operand.span().end == op_span.start && wf(operand);
                     if !left_absorbs {
@@ -2036,6 +2044,8 @@ fn write_sass_binary<'a>(
                                 || run.get(j + 1).is_some_and(|(next, _)| {
                                     is_word_like(next) || is_func_like(next)
                                 }));
+                        let font_size_tight =
+                            op_text == "/" && ctx.is_font_size_solidus(operand, op_span.start);
                         // Division: space before `/` unless a word-led operand absorbs it
                         // (see the run-merge rule above).
                         let division_spaces =
@@ -2045,7 +2055,8 @@ fn write_sass_binary<'a>(
                             || division_spaces
                             // `*` always spaces (it also ends its run above)
                             || op_text == "*"
-                            || (fuses_paren
+                            || (!font_size_tight
+                                && fuses_paren
                                 && run.get(j + 1).is_some_and(|(next, _)| {
                                     matches!(next, ComponentValue::SassParenthesizedExpression(_))
                                 }))

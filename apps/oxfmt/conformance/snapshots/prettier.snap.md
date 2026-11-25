@@ -382,12 +382,10 @@
 
 ## scss
 
-121/153 (79.08%)
+122/153 (79.74%)
 
 ### Failed
 
-- externals/prettier/css/font/font.css (💥, 94.12%)
-  - ❓unclassified
 - externals/prettier/scss/comments/4594.scss (💥, 83.78%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/4878.scss (💥, 89.39%)
