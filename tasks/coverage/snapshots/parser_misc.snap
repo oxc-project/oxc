@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 158/158 (100.00%)
-Positive Passed: 158/158 (100.00%)
-Negative Passed: 292/292 (100.00%)
+AST Parsed     : 159/159 (100.00%)
+Positive Passed: 159/159 (100.00%)
+Negative Passed: 294/294 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -260,6 +260,20 @@ Negative Passed: 292/292 (100.00%)
    ·           ─────
    ╰────
 
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-get-or-set-same-line.js:1:11]
+ 1 │ class A { accessor get m() {} }
+   ·           ────────
+ 2 │ class B { accessor set m(v) {} }
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-get-or-set-same-line.js:2:11]
+ 1 │ class A { accessor get m() {} }
+ 2 │ class B { accessor set m(v) {} }
+   ·           ────────
+   ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
  2 │   class C {
@@ -277,6 +291,21 @@ Negative Passed: 292/292 (100.00%)
  4 │   }
    ╰────
   help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-named-get-or-set.ts:1:11]
+ 1 │ class A { accessor get
+   ·           ────────
+ 2 │  m() {} }
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-named-get-or-set.ts:3:11]
+ 2 │  m() {} }
+ 3 │ class B { accessor set
+   ·           ────────
+ 4 │  m(v) {} }
+   ╰────
 
   × Cannot use `await` as an identifier in an async context
    ╭─[misc/fail/await-arrow-parameter-before-export.js:2:6]

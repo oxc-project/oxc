@@ -301,7 +301,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             MethodDefinitionType::MethodDefinition
         };
 
-        if self.parse_contextual_modifier(Kind::Get) {
+        // In JavaScript, a `get` or `set` after `accessor` is the field name, and ASI can end the
+        // field at a following line break. A name on the same line makes the element invalid, so
+        // keep the getter or setter there for its clearer error. tsc keeps it across a line break.
+        let get_or_set_is_accessor_name = modifiers.contains(ModifierKind::Accessor)
+            && !self.is_ts
+            && matches!(self.cur_kind(), Kind::Get | Kind::Set)
+            && self.lexer.peek_token().is_on_new_line();
+
+        if !get_or_set_is_accessor_name && self.parse_contextual_modifier(Kind::Get) {
             verify_class_element_modifiers(self, &modifiers);
             return self.parse_accessor_declaration(
                 start,
@@ -312,7 +320,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        if self.parse_contextual_modifier(Kind::Set) {
+        if !get_or_set_is_accessor_name && self.parse_contextual_modifier(Kind::Set) {
             verify_class_element_modifiers(self, &modifiers);
             return self.parse_accessor_declaration(
                 start,
