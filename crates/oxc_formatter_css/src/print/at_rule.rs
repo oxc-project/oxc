@@ -148,8 +148,7 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
             | "viewport"
             | "namespace"
             | "styleset"
-            | "property"
-            | "layer" => {
+            | "property" => {
                 let _ = f.context().comments().take_before(region_end);
                 if !raw.is_empty() {
                     write!(f, space());
