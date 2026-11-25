@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.95.0] - 2026-11-23
+
+### 🚀 Features
+
+- a96e2bd linter/typescript/no-unsafe-class-instance-assignment: Add rule (#29982) (Cameron)
+
+### 🐛 Bug Fixes
+
+- 18d6e27 linter: Escape file and rule names in checkstyle and junit reporters (#28962) (Zain Qureshi)
+- 4263221 agent: Implement all_rules for --rules support (#27585) (Bartok)
+- 279185a react-compiler: Ignore ESLint suppressions when hooks and memo validations are enabled (#29655) (Boshen)
+- 5d2129c oxlint: Write --init errors to stderr (#29654) (oxc-captain[bot])
+
+### ⚡ Performance
+
+- 2c4240a oxlint: Convert diagnostic offsets to positions with a line index (#29987) (Nicholas Rayburn)
+- f43a92f linter/plugins: Match selectors without allocating ancestor arrays (#29652) (Shanon Jackson)
+
+## [1.94.0] - 2026-11-16
+
+### 🚀 Features
+
+- db5bc6b linter: Output recommended flag in `--rules` JSON output (#29338) (Cam McHenry)
+- acd8814 linter/typescript/no-misused-promises: Add `flagUnions` option (#29380) (camc314)
+- fa492d6 minifier: Merge adjacent switch cases with identical bodies (#29316) (camc314)
+
+### 🐛 Bug Fixes
+
+- b31fb57 linter/eslint/no-new-wrappers: Offer wrapper rewrites as suggestions (#29494) (oxc-captain[bot])
+- 523d59b linter/eslint/no-useless-escape: Demote useless escape fixes to suggestions (#29508) (oxc-captain[bot])
+- 6da36f8 linter: Print config: validate CLI options before printing config (#29538) (Cam McHenry)
+- dda4d11 linter: Print config: reflect CLI options like `--type-aware` in the printed config (#29537) (Cam McHenry)
+- 0b643b3 linter: Print config: use resolved config instead of config builder (#29533) (Cam McHenry)
+- 09ef22f linter: Print config: preserve original rule configuration when generating rule sets (#29530) (Cam McHenry)
+- 9f465fd react-compiler: Preserve ref mutation hints (#28553) (Nash Aschenbath)
+
+### ⚡ Performance
+
+- aed0190 parser: Skip unused identifier hashes (#29168) (Boshen)
+- 0dfb188 oxlint: Build diagnostic output while linting runs (#28747) (YT)
+
+### 📚 Documentation
+
+- cdb5ac4 oxlint: Remove experimental label from `typeCheck` (#29175) (Yuji Sugiura)
+
+## [1.93.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 6bbb92a linter: Remove unused `oxlint-disable` directives with `--fix` (#27698) (Ryan Tsao)
+- 3b35cb6 linter/disable-directives: Preserve separators and disable spans (#28921) (camc314)
+
 ## [1.92.0] - 2026-11-06
 
 ### 🚀 Features

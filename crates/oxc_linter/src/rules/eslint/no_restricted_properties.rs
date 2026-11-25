@@ -238,7 +238,8 @@ declare_oxc_lint!(
     none,
     config = PropertyDetailsList,
     version = "1.63.0",
-    short_description = "This rule allows you to disallow access to certain properties on certain objects.",
+    short_description =
+        "This rule allows you to disallow access to certain properties on certain objects.",
 );
 
 impl Rule for NoRestrictedProperties {
@@ -429,6 +430,15 @@ fn property_key_name_and_span<'a>(key: &'a PropertyKey<'a>) -> Option<(Cow<'a, s
         PropertyKey::Identifier(ident) => Some((Cow::Borrowed(ident.name.as_str()), ident.span)),
         PropertyKey::StaticIdentifier(ident) => {
             Some((Cow::Borrowed(ident.name.as_str()), ident.span))
+        }
+        PropertyKey::StaticStringLiteral(literal) => {
+            literal.value.as_str().map(|name| (Cow::Borrowed(name), literal.span))
+        }
+        PropertyKey::StaticNumericLiteral(literal) => {
+            Some((Cow::Owned(literal.value.to_string()), literal.span))
+        }
+        PropertyKey::StaticBigIntLiteral(literal) => {
+            Some((Cow::Borrowed(literal.value.as_str()), literal.span))
         }
         PropertyKey::PrivateIdentifier(ident) => {
             Some((Cow::Borrowed(ident.name.as_str()), ident.span))

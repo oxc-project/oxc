@@ -9,9 +9,9 @@ use std::{borrow::Cow, fmt::Write as _};
 
 use cow_utils::CowUtils;
 
-use oxc_htmlish_parser::ast::{Namespace, NodeId, NodeKind, Root};
+use oxc_htmlish_parser::ast::{Interpolation, Namespace, NodeId, NodeKind, Root};
 
-/// `fold_names`: a `.html` file, where known names print lowercase (DIVERGENCES.md#tag-name-case).
+/// `fold_names`: a `.html` file or a Vue file read as HTML, where known names print lowercase (DIVERGENCES.md#tag-name-case).
 pub fn fingerprint(source: &str, root: &Root<'_>, fold_names: bool) -> String {
     let mut out = String::new();
     walk(source, root, NodeId::DOCUMENT, Text::Words, fold_names, &mut out);
@@ -111,17 +111,23 @@ fn walk(
                 }
             }
             // The expression's tokens may be re-flowed until it is formatted.
-            NodeKind::Interpolation(interpolation) => {
-                write!(out, "{{{{{}}}}}", words(interpolation.expression.slice(source))).unwrap();
+            NodeKind::Interpolation(_) => {
+                let expression = Interpolation::expression(root[id].span).slice(source);
+                write!(out, "{{{{{}}}}}", words(expression)).unwrap();
             }
             NodeKind::Block(block) => {
                 write!(out, "[@{}", words(block.name.slice(source))).unwrap();
                 for parameter in &block.parameters {
-                    write!(out, " ({})", words(parameter.slice(source))).unwrap();
+                    write!(out, " ({:?})", parameter.span.slice(source)).unwrap();
                 }
                 out.push('{');
                 walk(source, root, id, text, fold_names, out);
                 out.push_str(if block.close.is_some() { "}]" } else { "]" });
+            }
+            // Its head is formatted, its value prints as written with no dispatcher
+            NodeKind::LetDeclaration(declaration) => {
+                let name = declaration.name.slice(source);
+                write!(out, "[@let {name} = {:?}]", declaration.value.slice(source)).unwrap();
             }
             // HTML reads a doctype ASCII case-insensitively
             NodeKind::DocType(_) => {

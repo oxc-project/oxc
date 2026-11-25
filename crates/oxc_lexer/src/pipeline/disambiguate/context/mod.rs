@@ -1,6 +1,6 @@
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use super::common::Tokens;
+use super::common::TokensView;
 
 mod anchor;
 mod frame;
@@ -12,7 +12,7 @@ mod types;
 mod walker;
 mod words;
 
-pub(super) use scan::{after, angles_before, before};
+pub(super) use scan::{after, angles_before, before, lt_run_opens};
 use walker::Walk;
 
 #[cfg(test)]
@@ -35,8 +35,6 @@ pub(super) enum After {
 pub(super) struct Site {
     /// Inside a type: annotation, alias, type argument list, type literal.
     pub in_type: bool,
-    /// An operand may start here, in expression context.
-    pub operand: bool,
     /// A `<` here opens the type-parameter list of a declaration or member.
     pub type_params: bool,
 }
@@ -106,13 +104,13 @@ impl Walks {
 
     /// The full walk advanced to pos, restarted if it has passed the token there.
     #[cpu_version(Generic)]
-    fn full_to(&mut self, tokens: &Tokens, pos: usize) -> &mut Walk {
+    fn full_to(&mut self, tokens: &TokensView, pos: usize) -> &mut Walk {
         let cpu = BASELINE;
 
         let w = &mut self.full;
         let inside_last = pos < w.walked_to && pos >= w.last_start;
         if w.walked_to > pos && !inside_last {
-            w.reset(tokens.module, cpu);
+            w.reset(tokens.is_module, cpu);
         }
         w.advance(tokens, pos);
         w

@@ -5,10 +5,10 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/infer-expression.ts
 ```
 ==================== .D.TS ====================
 
-declare const n: number;
-declare const s: string;
-declare const t: string;
-declare const b: boolean;
+declare const n = 0;
+declare const s = "";
+declare const t = "";
+declare const b = true;
 declare let unaryA: number;
 declare const unaryB = -12n;
 declare const unaryC: unknown;

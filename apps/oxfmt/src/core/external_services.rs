@@ -3,7 +3,7 @@
 //!
 //! [`ExternalServices`] wraps the JS callbacks as `Arc<dyn Fn>`s (private `wrap_*` helpers), serving:
 //! - [`ExternalServices::init`]: JS-side worker-pool setup
-//! - [`ExternalServices::format_file`]: Tier 3/4 whole-file delegation (`core::format`)
+//! - [`ExternalServices::format_file`]: Whole-file delegation (`core::format`)
 //! - the embed callback `Arc`s (`format_embedded_doc` / `sort_tailwindcss_classes`),
 //!   consumed by the `core::embed::services` profiles
 
@@ -19,7 +19,7 @@ use tracing::debug_span;
 
 use crate::core::embed::{FormatEmbeddedDocWithConfigCallback, TailwindWithConfigCallback};
 
-/// Callback function type for formatting whole files (Tier 3/4 delegation).
+/// Callback function type for formatting whole files.
 /// Takes (options, code) and returns formatted code or an error.
 /// The `options` Value is owned and includes `parser` and `filepath` set by the caller.
 pub type FormatFileWithConfigCallback =
@@ -229,15 +229,13 @@ impl ExternalServices {
 
 // NOTE: These methods are all wrapped by `block_on` to run the async JS calls in a blocking manner.
 //
-// When called from `rayon` worker threads (Mode::Cli), this works fine.
-// Because `rayon` threads are separate from the `tokio` runtime.
+// Code running on a Tokio worker (inside `napi`'s `async` functions) must stay in `block_in_place()`
+// for the whole time it blocks:
+// - Calling `block_on` directly panics with nested async runtime access
+// - Other blocking (e.g. `mpsc` recv) keeps the worker's core,
+//   and tasks it waits on (e.g. `jsTextToDoc()` from Prettier workers) never run with a single worker
 //
-// However, in cases like `--stdin-filepath` or Node.js API calls,
-// where already inside an async context (the `napi`'s `async` function),
-// calling `block_on` directly would cause issues with nested async runtime access.
-//
-// Therefore, `block_in_place()` is used at the call site
-// to temporarily convert the current async task into a blocking context.
+// `rayon` threads (Mode::Cli formatting) are separate from the `tokio` runtime, so they can call these directly.
 
 /// Wrap JS `initExternalServices` callback as a normal Rust function.
 fn wrap_init_external_services(

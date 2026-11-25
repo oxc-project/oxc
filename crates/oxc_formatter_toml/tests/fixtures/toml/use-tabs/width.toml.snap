@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# The 2nd line is 80 / 81 characters, and 81 / 82 columns since the tab indent takes `tabWidth`
+indented_80 = [
+	["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+	[1, 2],
+]
+indented_81 = [
+	["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+	[1, 2],
+]
+
+==================== Output ====================
+---------------------------------
+{ printWidth: 80, useTabs: true }
+---------------------------------
+# The 2nd line is 80 / 81 characters, and 81 / 82 columns since the tab indent takes `tabWidth`
+indented_80 = [
+	[
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"b",
+	], # c
+	[1, 2],
+]
+indented_81 = [
+	[
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"b",
+	], # c
+	[1, 2],
+]
+
+----------------------------------
+{ printWidth: 100, useTabs: true }
+----------------------------------
+# The 2nd line is 80 / 81 characters, and 81 / 82 columns since the tab indent takes `tabWidth`
+indented_80 = [
+	["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+	[1, 2],
+]
+indented_81 = [
+	["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+	[1, 2],
+]
+
+===================== End =====================

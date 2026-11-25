@@ -95,6 +95,7 @@
     "**/generated/**",
     "npm/runtime/**",
     "tasks/coverage/**",
+    "tasks/transform_conformance/tests/babel-plugin-proposal-decorators/upstream/**",
     "crates/oxc_semantic/tests/**",
     "napi/minify/**", // TODO
     "apps/oxlint/src-js/package/config.generated.ts",

@@ -1,6 +1,6 @@
 use std::iter;
 
-use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
@@ -23,6 +23,31 @@ pub fn arrow_function_body_as_function_body_mut<'a, 'b>(
         });
     }
     body.as_function_body_mut().unwrap()
+}
+
+/// Take a non-computed string, numeric or BigInt literal property key as an expression.
+///
+/// `'x'` -> `"x"`, `123` -> `123`, `1n` -> `1n`.
+/// Returns `None` for other keys.
+pub fn take_literal_property_key<'a>(
+    key: &mut PropertyKey<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Option<Expression<'a>> {
+    if !matches!(
+        key,
+        PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)
+    ) {
+        return None;
+    }
+    let expr = match key.take_in(ctx) {
+        PropertyKey::StaticStringLiteral(lit) => Expression::StringLiteral(lit),
+        PropertyKey::StaticNumericLiteral(lit) => Expression::NumericLiteral(lit),
+        PropertyKey::StaticBigIntLiteral(lit) => Expression::BigIntLiteral(lit),
+        _ => unreachable!(),
+    };
+    Some(expr)
 }
 
 /// `object` -> `object.call`.
@@ -232,7 +257,6 @@ pub fn create_class_constructor_with_params<'a>(
         None,
         stmts,
         false,
-        false,
         scope_id,
         ctx,
     )
@@ -246,7 +270,6 @@ pub fn create_class_method<'a>(
     params: ArenaBox<'a, FormalParameters<'a>>,
     return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     stmts: ArenaVec<'a, Statement<'a>>,
-    computed: bool,
     is_static: bool,
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
@@ -272,11 +295,151 @@ pub fn create_class_method<'a>(
             ctx,
         ),
         kind,
-        computed,
         is_static,
         false,
         false,
         None,
         ctx,
     )
+}
+
+/// Create a getter or setter method that accesses a private backing field.
+///
+/// Instance: `get <key>() { return this.#<storage_name>; }`
+/// Static:   `get <key>() { return ClassName.#<storage_name>; }`
+pub fn create_accessor_method<'a>(
+    decorators: ArenaVec<'a, Decorator<'a>>,
+    key: PropertyKey<'a>,
+    kind: MethodDefinitionKind,
+    is_static: bool,
+    storage_name: Str<'a>,
+    object_binding: Option<&BoundIdentifier<'a>>,
+    class_scope_id: ScopeId,
+    return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+    ctx: &mut TraverseCtx<'a>,
+) -> ClassElement<'a> {
+    let is_getter = kind == MethodDefinitionKind::Get;
+    let scope_flags = ScopeFlags::Function
+        | ScopeFlags::StrictMode
+        | if is_getter { ScopeFlags::GetAccessor } else { ScopeFlags::SetAccessor };
+    let scope_id = ctx.create_child_scope(class_scope_id, scope_flags);
+
+    // For static accessors use class name, for instance accessors use `this`.
+    let create_object = |ctx: &mut TraverseCtx<'a>| -> Expression<'a> {
+        if let Some(binding) = object_binding {
+            binding.create_read_expression(ctx)
+        } else {
+            Expression::new_this_expression(SPAN, ctx)
+        }
+    };
+
+    let (params, body_stmt) = if is_getter {
+        let params =
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
+        let field_expr = Expression::new_private_field_expression(
+            SPAN,
+            create_object(ctx),
+            PrivateIdentifier::new(SPAN, storage_name, ctx),
+            false,
+            ctx,
+        );
+        let stmt = Statement::new_return_statement(SPAN, Some(field_expr), ctx);
+        (params, stmt)
+    } else {
+        // The body reads `object_binding`, so a parameter with the same name would shadow it,
+        // as in `class value { static accessor x; }`. Use a unique name in that case.
+        let flags = SymbolFlags::FunctionScopedVariable;
+        let value_binding = if object_binding.is_some_and(|binding| binding.name == "value") {
+            ctx.generate_uid("value", scope_id, flags)
+        } else {
+            ctx.generate_binding(static_ident!("value"), scope_id, flags)
+        };
+        let param =
+            FormalParameter::new_plain(SPAN, value_binding.create_binding_pattern(ctx), ctx);
+        let params =
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [param], None, ctx);
+        let assign = Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            AssignmentTarget::new_private_field_expression(
+                SPAN,
+                create_object(ctx),
+                PrivateIdentifier::new(SPAN, storage_name, ctx),
+                false,
+                ctx,
+            ),
+            value_binding.create_read_expression(ctx),
+            ctx,
+        );
+        let stmt = Statement::new_expression_statement(SPAN, assign, ctx);
+        (params, stmt)
+    };
+
+    create_class_method(
+        decorators,
+        key,
+        kind,
+        params,
+        return_type,
+        ArenaVec::from_value_in(body_stmt, ctx),
+        is_static,
+        scope_id,
+        ctx,
+    )
+}
+
+/// `export default Class`
+pub fn create_export_default_class_reference<'a>(
+    class_binding: &BoundIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Statement<'a> {
+    let export_default_class_reference = ModuleDeclaration::new_export_default_declaration(
+        SPAN,
+        ExportDefaultDeclarationKind::Identifier(ArenaBox::new_in(
+            class_binding.create_read_reference(ctx),
+            ctx,
+        )),
+        ctx,
+    );
+    Statement::from(export_default_class_reference)
+}
+
+/// `export { Class }`
+pub fn create_export_named_class_reference<'a>(
+    class_binding: &BoundIdentifier<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Statement<'a> {
+    let kind = ImportOrExportKind::Value;
+    let local = ModuleExportName::IdentifierReference(class_binding.create_read_reference(ctx));
+    let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
+    let specifiers = [ExportSpecifier::new(SPAN, local, exported, kind, ctx)];
+    let export_class_reference =
+        ModuleDeclaration::new_export_named_declaration(SPAN, specifiers, kind, ctx);
+    Statement::from(export_class_reference)
+}
+
+/// Create `var` declaration.
+pub fn create_variable_declaration<'a>(
+    binding: &BoundIdentifier<'a>,
+    init: Expression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Statement<'a> {
+    let kind = VariableDeclarationKind::Var;
+    let declarator = VariableDeclarator::new(
+        SPAN,
+        binding.create_binding_pattern(ctx),
+        None,
+        Some(init),
+        false,
+        ctx,
+    );
+    Statement::new_variable_declaration(SPAN, kind, [declarator], false, ctx)
+}
+
+/// Create `new WeakSet()` expression.
+pub fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    let weak_set = static_ident!("WeakSet");
+    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
+    let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }

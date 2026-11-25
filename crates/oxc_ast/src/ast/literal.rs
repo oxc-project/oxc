@@ -13,11 +13,7 @@ use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_str::{JSStr, Str};
-use oxc_syntax::{
-    GetNodeId,
-    node::NodeId,
-    number::{BigintBase, NumberBase},
-};
+use oxc_syntax::{GetNodeId, node::NodeId};
 
 /// Boolean literal
 ///
@@ -72,10 +68,6 @@ pub struct NumericLiteral<'a> {
     #[content_eq(skip)]
     #[estree(json_safe, from_span)]
     pub raw: Option<Str<'a>>,
-    /// The base representation used by the literal in source code
-    #[content_eq(skip)]
-    #[estree(skip)]
-    pub base: NumberBase,
 }
 
 /// String literal
@@ -122,10 +114,6 @@ pub struct BigIntLiteral<'a> {
     #[content_eq(skip)]
     #[estree(json_safe, from_span)]
     pub raw: Option<Str<'a>>,
-    /// The base representation used by the literal in source code
-    #[content_eq(skip)]
-    #[estree(skip)]
-    pub base: BigintBase,
 }
 
 /// Regular expression literal
@@ -200,7 +188,10 @@ bitflags! {
     /// Regular expression flags.
     ///
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
+    #[ast]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[generate_derive(CloneIn, ContentEq, Dummy, ESTree)]
+    #[estree(no_type, via = RegExpFlagsConverter)]
     pub struct RegExpFlags: u8 {
         /// Global flag
         ///
@@ -238,10 +229,3 @@ bitflags! {
         const V = 1 << 7;
     }
 }
-
-/// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
-#[ast(foreign = RegExpFlags)]
-#[generate_derive(ESTree)]
-#[estree(no_type, via = RegExpFlagsConverter)]
-#[expect(dead_code)]
-struct RegExpFlagsAlias(#[estree(skip)] u8);

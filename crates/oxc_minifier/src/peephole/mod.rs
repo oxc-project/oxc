@@ -459,10 +459,15 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
-                Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+                Statement::LabeledStatement(_) => {
+                    Self::try_fold_labeled(stmt, ctx);
+                    Self::remove_unused_label(stmt, ctx);
+                }
                 Statement::SwitchStatement(_) => {
                     Self::drop_unreachable_switch_cases(stmt, ctx);
+                    Self::merge_identical_switch_cases(stmt, ctx);
                     Self::try_fold_switch(stmt, ctx);
+                    Self::fold_switch_with_default_to_if(stmt, ctx);
                 }
                 Statement::FunctionDeclaration(f) => {
                     Self::init_function_declaration_symbol_value(f.id.as_ref(), ctx);
@@ -573,6 +578,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             match expr {
                 Expression::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
+                    Self::inline_nested_template_literals(t, ctx);
                     Self::substitute_template_literal(expr, ctx);
                 }
                 Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),

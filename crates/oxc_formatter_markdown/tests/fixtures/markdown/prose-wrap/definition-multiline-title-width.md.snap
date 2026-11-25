@@ -1,0 +1,60 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+
+[label]: https://example.com/a/b "t
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+[label]: https://example.com/a/b "t
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+[label]: https://example.com/a/b "t
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+[label]: https://example.com/a/b "t
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+[label]: https://example.com/a/b "t
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+[label]: https://example.com/a/b "t
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+[label]: https://example.com/a/b "t
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+===================== End =====================

@@ -176,14 +176,6 @@ mod test {
         // Both implementations should handle NaN the same way
         assert_eq!(f64::NAN.to_int_32(), 0);
         assert_eq!(f64_to_int32_generic(f64::NAN), 0);
-
-        #[cfg(target_arch = "aarch64")]
-        {
-            // SAFETY: This is a test and we're only testing NaN handling
-            unsafe {
-                assert_eq!(f64_to_int32_arm64(f64::NAN), 0);
-            }
-        }
     }
 
     #[test]

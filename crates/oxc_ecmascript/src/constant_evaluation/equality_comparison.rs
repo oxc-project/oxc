@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Expression, NumberBase};
+use oxc_ast::ast::Expression;
 
 use super::{ConstantEvaluation, ConstantEvaluationCtx, DetermineValueType, ValueType};
 
@@ -25,13 +25,8 @@ pub(super) fn abstract_equality_comparison<'a>(
             || matches!(right, ValueType::Boolean)
         {
             if let Some(num) = right_expr.evaluate_value_to_number(ctx) {
-                let number_literal_expr = Expression::new_numeric_literal(
-                    oxc_span::SPAN,
-                    num,
-                    None,
-                    if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
-                    ctx,
-                );
+                let number_literal_expr =
+                    Expression::new_numeric_literal(oxc_span::SPAN, num, None, ctx);
                 return abstract_equality_comparison(ctx, left_expr, &number_literal_expr);
             }
             return None;
@@ -41,13 +36,8 @@ pub(super) fn abstract_equality_comparison<'a>(
             || matches!(left, ValueType::Boolean)
         {
             if let Some(num) = left_expr.evaluate_value_to_number(ctx) {
-                let number_literal_expr = Expression::new_numeric_literal(
-                    oxc_span::SPAN,
-                    num,
-                    None,
-                    if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
-                    ctx,
-                );
+                let number_literal_expr =
+                    Expression::new_numeric_literal(oxc_span::SPAN, num, None, ctx);
                 return abstract_equality_comparison(ctx, &number_literal_expr, right_expr);
             }
             return None;
@@ -129,10 +119,7 @@ pub(super) fn strict_equality_comparison<'a>(
         };
     }
 
-    // Then, try to evaluate based on the value of the expression.
-    // There's only one special case:
-    // Any strict equality comparison against NaN returns false.
-    if left_expr.is_nan() || right_expr.is_nan() {
+    if ctx.is_global_expr("NaN", left_expr) || ctx.is_global_expr("NaN", right_expr) {
         return Some(false);
     }
     None

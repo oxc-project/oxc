@@ -278,9 +278,10 @@ impl<'a> Codegen<'a> {
         self
     }
 
-    /// Set the symbol table used for identifier renaming.
+    /// Set the scoping used to rename identifiers and labels.
     ///
-    /// Can be used for easy renaming of variables (based on semantic analysis).
+    /// The symbol, reference, and label IDs in the AST must come from the semantic analysis that
+    /// built `scoping`.
     #[must_use]
     pub fn with_scoping(mut self, scoping: Option<Scoping>) -> Self {
         self.scoping = scoping;
@@ -1078,6 +1079,18 @@ impl<'a> Codegen<'a> {
             return unsafe { std::mem::transmute_copy(&name) };
         }
         ident.name.as_str()
+    }
+
+    #[inline]
+    fn get_label_name(&self, label: &LabelIdentifier<'a>) -> &'a str {
+        if let Some(scoping) = &self.scoping
+            && let Some(label_id) = label.label_id.get()
+        {
+            let name = scoping.label_name(label_id);
+            // SAFETY: Hack the lifetime to be part of the allocator.
+            return unsafe { std::mem::transmute_copy(&name) };
+        }
+        label.name.as_str()
     }
 
     fn print_space_before_operator(&mut self, next: Operator) {

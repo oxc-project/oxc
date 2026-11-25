@@ -231,6 +231,9 @@ const TRAVERSE_CRATE_PATH: &str = "crates/oxc_traverse";
 /// Path to `oxc_minifier` crate
 const MINIFIER_CRATE_PATH: &str = "crates/oxc_minifier";
 
+/// Path to `oxc_coverage` crate
+const COVERAGE_CRATE_PATH: &str = "tasks/coverage";
+
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 
@@ -269,6 +272,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::VisitJsGenerator,
     &generators::ScopesCollectorGenerator,
     &generators::Utf8ToUtf16ConverterGenerator,
+    &generators::FullEqGenerator,
     #[cfg(feature = "generate-js")]
     &generators::ESTreeVisitGenerator,
     #[cfg(feature = "generate-js")]

@@ -173,11 +173,8 @@
 // Re-export AST types from other crates
 pub use oxc_span::{Language, LanguageVariant, ModuleKind, SourceType, Span};
 pub use oxc_str::{Ident, Str};
-pub use oxc_syntax::{
-    number::{BigintBase, NumberBase},
-    operator::{
-        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-    },
+pub use oxc_syntax::operator::{
+    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 
 pub(crate) mod comment;

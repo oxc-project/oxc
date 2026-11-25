@@ -1,0 +1,145 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+empty = {}
+empty_spaced = {  }
+simple = {a=1,b=2}
+nested = { a = { b = { c = 1 } } }
+with_array = { a = [1, 2], b = "x" }
+long = { name = "aaaaaaaaaaaaaaaa", version = "bbbbbbbbbbbbbbbb", path = "cccccccccccccccccccccccc" }
+long_nested_array = { features = ["aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccccccccccccc", "ddddddddddddddd"] }
+with_comment = { a = 1 # c
+, b = 2 }
+own_line_comments = {
+  # leading
+  a = 1,
+  b = 2, # trailing
+  # dangling
+}
+nested_array_comment = { b = [ 1, # c
+ 2 ] }
+blank_lines_and_same_line = {
+  x = 1, # c
+
+
+  y = 2, z = 3
+}
+comment_only_same_line = { # c
+}
+comment_only_own_line = {
+  # own
+}
+comment_after_brace = { # c
+  x = 1 }
+nested_commented = { x = { y = 1 # c
+} }
+commented_in_array = [{ y = 1 # c
+}, 2]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+empty = {}
+empty_spaced = {}
+simple = { a = 1, b = 2 }
+nested = { a = { b = { c = 1 } } }
+with_array = { a = [1, 2], b = "x" }
+long = { name = "aaaaaaaaaaaaaaaa", version = "bbbbbbbbbbbbbbbb", path = "cccccccccccccccccccccccc" }
+long_nested_array = { features = [
+  "aaaaaaaaaaaaaaaa",
+  "bbbbbbbbbbbbbbbb",
+  "cccccccccccccccc",
+  "ddddddddddddddd",
+] }
+with_comment = {
+  a = 1, # c
+  b = 2
+}
+own_line_comments = {
+  # leading
+  a = 1,
+  b = 2 # trailing
+  # dangling
+}
+nested_array_comment = { b = [
+  1, # c
+  2,
+] }
+blank_lines_and_same_line = {
+  x = 1, # c
+  y = 2,
+  z = 3
+}
+comment_only_same_line = { # c
+}
+comment_only_own_line = {
+  # own
+}
+comment_after_brace = { # c
+  x = 1
+}
+nested_commented = { x = {
+  y = 1 # c
+} }
+commented_in_array = [
+  {
+    y = 1 # c
+  },
+  2,
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+empty = {}
+empty_spaced = {}
+simple = { a = 1, b = 2 }
+nested = { a = { b = { c = 1 } } }
+with_array = { a = [1, 2], b = "x" }
+long = { name = "aaaaaaaaaaaaaaaa", version = "bbbbbbbbbbbbbbbb", path = "cccccccccccccccccccccccc" }
+long_nested_array = { features = [
+  "aaaaaaaaaaaaaaaa",
+  "bbbbbbbbbbbbbbbb",
+  "cccccccccccccccc",
+  "ddddddddddddddd",
+] }
+with_comment = {
+  a = 1, # c
+  b = 2
+}
+own_line_comments = {
+  # leading
+  a = 1,
+  b = 2 # trailing
+  # dangling
+}
+nested_array_comment = { b = [
+  1, # c
+  2,
+] }
+blank_lines_and_same_line = {
+  x = 1, # c
+  y = 2,
+  z = 3
+}
+comment_only_same_line = { # c
+}
+comment_only_own_line = {
+  # own
+}
+comment_after_brace = { # c
+  x = 1
+}
+nested_commented = { x = {
+  y = 1 # c
+} }
+commented_in_array = [
+  {
+    y = 1 # c
+  },
+  2,
+]
+
+===================== End =====================

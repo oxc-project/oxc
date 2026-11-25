@@ -135,7 +135,7 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                     return true;
                 }
 
-                !property.computed && Self::from(&property.value).is_simple_impl(depth + 1)
+                !property.key.is_computed() && Self::from(&property.value).is_simple_impl(depth + 1)
             } else {
                 false
             }

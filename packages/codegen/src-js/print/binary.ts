@@ -90,7 +90,7 @@ export function printBinaryish(
 
       if (leftType === "PrivateIdentifier") {
         // Private-in expression as the left operand
-        printPrivateInExpression(left as PrivateInExpression, state, v.leftPrecedence);
+        printPrivateInExpression(left as PrivateInExpression, state, v.leftPrecedence, v.ctx);
         binVisitRightAndFinish(v, state);
         break;
       }

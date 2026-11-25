@@ -6,7 +6,7 @@ use oxc_simd::{BASELINE, cpu_version};
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use crate::pipeline::{
-    disambiguate::{common::Tokens, type_context::lt_run_split},
+    disambiguate::{common::TokensView, type_context::lt_run_split},
     operators::is_op_char,
 };
 
@@ -19,7 +19,7 @@ use super::{
 
 impl Walk {
     #[cpu_version(Generic)]
-    pub(super) fn step_op(&mut self, tokens: &Tokens, pos: usize, newline: bool) -> usize {
+    pub(super) fn step_op(&mut self, tokens: &TokensView, pos: usize, newline: bool) -> usize {
         let cpu = BASELINE;
 
         let c = tokens.src[pos];
@@ -71,7 +71,7 @@ impl Walk {
             b'=' if len == 2 && c1 == b'>' => self.arrow(tokens, pos),
             b'=' if len == 1 => self.assign(),
             // A postfix non-null assertion, or a definite assignment.
-            b'!' if len == 1 && tokens.ts && postfix => self.value_done(),
+            b'!' if len == 1 && tokens.is_ts && postfix => self.value_done(),
             // A postfix increment or decrement keeps the value.
             b'+' | b'-' if len == 2 && c1 == c && postfix => self.value_done(),
             b'*' if len == 1 && self.top_kind() == FrameKind::FnHead => {
@@ -92,9 +92,8 @@ impl Walk {
             // Two openers, not a shift.
             b'<' if c1 == b'<'
                 && len == 2
-                && tokens.ts
-                && (!self.operand_allowed() || self.after_dot)
-                && !self.no_type_args
+                && tokens.is_ts
+                && self.lt_run_may_open(tokens, pos)
                 && lt_run_split(tokens, pos, cpu) =>
             {
                 self.less_than(tokens, pos);
@@ -118,7 +117,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn arrow(&mut self, tokens: &Tokens, pos: usize) {
+    pub(super) fn arrow(&mut self, tokens: &TokensView, pos: usize) {
         let cpu = BASELINE;
 
         let is_async = if self.closed_group { self.closed_group_async } else { self.arrow_async };
@@ -151,15 +150,15 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn question(&mut self, tokens: &Tokens, pos: usize) {
+    pub(super) fn question(&mut self, tokens: &TokensView, pos: usize) {
         let cpu = BASELINE;
 
         // Optional marker (`a?: T`, `a?,`, `a?)`) vs conditional.
         let nx = tokens.peek(pos + 1, cpu);
-        let member = self.top_kind() == FrameKind::ClassBody;
-        let optional = nx.kind >= OP_KIND_BASE
-            && (matches!(nx.byte, b':' | b',' | b')' | b']' | b'>')
-                || (member && matches!(nx.byte, b'(' | b'<')));
+        // No conditional can follow a class member key.
+        let key = self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeySeen;
+        let optional =
+            key || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b':' | b',' | b')' | b']' | b'>'));
         if optional && !self.operand_allowed() {
             // Keep the member / parameter state.
             self.clear_prev();
@@ -170,7 +169,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    fn colon(&mut self, tokens: &Tokens) {
+    fn colon(&mut self, tokens: &TokensView) {
         // A concise arrow body without a pending `?` of its own ends at a `:` (the `?` belongs to
         // the frame below).
         while self.top_kind() == FrameKind::Concise && self.top().open_questions == 0 {
@@ -184,6 +183,11 @@ impl Walk {
             return;
         }
         match top {
+            // `{ k: (a): T => a }`: a return type after the parameters of an arrow value.
+            FrameKind::Object if tokens.is_ts && self.closed_group => {
+                self.arrow_return_type();
+                return;
+            }
             FrameKind::Object => {
                 self.top_mut().member = Member::Value;
                 self.operand_done();
@@ -191,7 +195,7 @@ impl Walk {
             }
             // A member, parameter or index signature annotation.
             FrameKind::ClassBody | FrameKind::Params | FrameKind::ComputedKey => {
-                if tokens.ts {
+                if tokens.is_ts {
                     self.open_region(RegionRule::Inline);
                 } else {
                     self.operand_done();
@@ -199,7 +203,7 @@ impl Walk {
                 return;
             }
             FrameKind::Group | FrameKind::Call => {
-                if tokens.ts && !self.operand_allowed() {
+                if tokens.is_ts && !self.operand_allowed() {
                     // Arrow parameter annotation.
                     self.open_region(RegionRule::Inline);
                 } else {
@@ -219,16 +223,13 @@ impl Walk {
             self.clear_prev();
             return;
         }
-        if tokens.ts && self.top().declarator == Declarator::Bound {
+        if tokens.is_ts && self.top().declarator == Declarator::Bound {
             // Declarator type annotation.
             self.open_region(RegionRule::Inline);
             return;
         }
-        if tokens.ts && self.closed_group && top != FrameKind::Head {
-            // `(a): T =>` arrow return type; remember the group's `async`.
-            let is_async = self.closed_group_async;
-            self.open_region(RegionRule::ArrowRet);
-            self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
+        if tokens.is_ts && self.closed_group {
+            self.arrow_return_type();
             return;
         }
         if top.is_stmt_holder() {
@@ -240,16 +241,23 @@ impl Walk {
         self.operand_done();
     }
 
+    /// `(a): T =>`: the return type of an arrow, which takes the parameter group's `async`.
+    #[cpu_version(Generic)]
+    fn arrow_return_type(&mut self) {
+        let is_async = self.closed_group_async;
+        self.open_region(RegionRule::ArrowRet);
+        self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
+    }
+
     #[cpu_version(Generic)]
     pub(super) fn semicolon(&mut self) {
         self.pop_concise();
         match self.top_kind() {
             FrameKind::Head => {
-                self.top_mut().open_questions = 0;
-                self.operand_done();
-            }
-            FrameKind::ClassBody => {
-                self.top_mut().next_member();
+                let f = self.top_mut();
+                f.open_questions = 0;
+                f.declarator = Declarator::None;
+                f.of_closed = true;
                 self.operand_done();
             }
             _ => {
@@ -356,7 +364,12 @@ impl Walk {
             FrameKind::ArrowBody => {
                 // The arrow function is complete: it cannot be continued.
                 self.pop_concise();
-                self.expect = Expect::Statement;
+                if self.top_kind() == FrameKind::ClassBody && self.top().open_questions == 0 {
+                    // A field holding it ends with it.
+                    self.end_statement();
+                } else {
+                    self.expect = Expect::Statement;
+                }
                 self.clear_prev();
             }
             _ => {
@@ -392,7 +405,12 @@ impl Walk {
         } else if matches_tk!(kw, KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch)
             && self.frames[self.stmt_frame()].kind.is_stmt_holder()
         {
-            self.push(FrameKind::Head).of_closed = kw != tk!(KwFor);
+            let f = self.push(FrameKind::Head);
+            f.of_closed = kw != tk!(KwFor);
+            // `catch (e: T)`: the binding takes an annotation.
+            if kw == tk!(KwCatch) {
+                f.declarator = Declarator::Binding;
+            }
         } else if self.operand_allowed() || kw == tk!(KwNew) {
             // The async of async (...) waits for a => rather than making an await context.
             self.push(FrameKind::Group).mods = if kw == tk!(KwAsync) { MOD_ASYNC } else { 0 };

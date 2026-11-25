@@ -7,7 +7,7 @@ use std::{
     str::FromStr,
 };
 
-use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
+use oxc_allocator::{CloneIn, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
@@ -16,7 +16,7 @@ use crate::ContentEq;
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(Dummy, ESTree)]
+#[generate_derive(ContentEq, CloneIn, Dummy, ESTree)]
 #[estree(no_type, flatten)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
@@ -39,7 +39,7 @@ pub struct SourceType {
 /// JavaScript or TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(Dummy)]
+#[generate_derive(ContentEq, CloneIn, Dummy)]
 pub enum Language {
     /// Indicates a JavaScript or JSX file
     JavaScript = 0,
@@ -52,7 +52,7 @@ pub enum Language {
 /// Script or Module
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(Dummy, ESTree)]
+#[generate_derive(ContentEq, CloneIn, Dummy, ESTree)]
 pub enum ModuleKind {
     /// Regular JS script
     Script = 0,
@@ -83,7 +83,7 @@ pub enum ModuleKind {
 /// JSX for JavaScript and TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(Dummy)]
+#[generate_derive(ContentEq, CloneIn, Dummy)]
 pub enum LanguageVariant {
     /// Standard JavaScript or TypeScript without any language extensions. Stage
     /// 3 proposals do not count as language extensions.
@@ -99,29 +99,13 @@ impl Default for SourceType {
     }
 }
 
-impl<'a> CloneIn<'a> for SourceType {
-    type Cloned = Self;
-
-    #[inline]
-    fn clone_in_impl(&self, _with_semantic_ids: CloneInSemanticIds, _: &'a Allocator) -> Self {
-        *self
-    }
-}
-
-impl ContentEq for SourceType {
-    #[inline]
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
 /// Valid file extensions.
 pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 /// Valid file extension.
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(Dummy)]
+#[generate_derive(ContentEq, CloneIn, Dummy)]
 pub enum FileExtension {
     /// `.js` file extension
     Js = 0,

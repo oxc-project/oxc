@@ -3,3 +3,11 @@
 <p><b>a</b>@for (i of items; track i) {<i>{{ i }}</i>}<b>z</b></p>
 <span>a@if (x) {}b</span>
 <span>a@case (1)@case (2) {b}c</span>
+<span>a@if (x) { }b</span>
+<span>a@if (x) {}@else {}b</span>
+<span>a@if (x) {}@else { }b</span>
+<span>a @if (x) { } b</span>
+<span>
+  @if (test) {text}
+</span>
+<p>a @if (x) {b} c</p>

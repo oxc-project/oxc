@@ -1,0 +1,9 @@
+# The 2nd line is exactly 80 / 81 after formatting
+indented_80 = [
+    ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+    [1, 2],
+]
+indented_81 = [
+    ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+    [1, 2],
+]

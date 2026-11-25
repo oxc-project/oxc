@@ -6,20 +6,18 @@
 //! - a lone `===` / `---` word starting a line gets escaped (it would read as a setext underline)
 //! - a line break before a word that would start a block (`-`, `1.`, `#`, `>`) never breaks
 //!
-//! Around Chinese / Japanese text a whitespace follows Prettier's `printWhitespace`:
-//! a line break next to CJ is kept, and a space next to one never breaks
-//! (`cjk` classifies the word edges).
+//! Between two Chinese / Japanese characters a whitespace keeps its kind:
+//! a line break is kept, and a space never breaks (`cjk` classifies the word edges).
 
 use std::borrow::Cow;
 
-use oxc_formatter_core::arena_cow_str;
+use oxc_formatter_core::{arena_cow_str, spec::cjk};
 use oxc_markdown_parser::{Constructs, lexical};
 
 use crate::options::ProseWrap;
 
 use super::{
     MarkdownFormatter,
-    cjk::{self, Kind},
     escape::{
         ends_with_unescaped_backslash, is_fake_setext_underline, leading_run_escaped,
         print_delimited_word,
@@ -209,32 +207,20 @@ pub fn push_whitespace<'a>(
         return;
     }
     // A space breaks only under `always`; otherwise it stays a space whatever its neighbors
-    let (prev, next) = if cx.has_cjk && (newline || prose_wrap == ProseWrap::Always) {
-        (
-            cx.prev_word.and_then(cjk::last_kind),
-            cx.next_word.filter(|w| w.in_sentence).and_then(|w| cjk::first_kind(w.word)),
-        )
-    } else {
-        (None, None)
-    };
-    // Next to CJ, except Korean next to a CJ letter (a space everywhere)
-    let cj_bound = (prev.is_some_and(Kind::is_cj) || next.is_some_and(Kind::is_cj))
-        && !matches!(
-            (prev, next),
-            (Some(Kind::KLetter), Some(Kind::CjLetter))
-                | (Some(Kind::CjLetter), Some(Kind::KLetter))
-        );
-    // Prettier's `isLineBreakAmbiguous`: browsers disagree on whether the break is a space or nothing
-    if newline && cj_bound {
+    // Between two CJ characters a line break stays one and a space never becomes one (DIVERGENCES.md#cj-line-break)
+    let between_cj = cx.has_cjk
+        && (newline || prose_wrap == ProseWrap::Always)
+        && cx
+            .prev_word
+            .zip(cx.next_word.filter(|w| w.in_sentence))
+            .is_some_and(|(prev, next)| cjk::between_cj(prev, next.word));
+    if newline && between_cj {
         parts.push_sep(Sep::HardLine);
         return;
     }
-    // Prettier's `isBreakable`: never a break between CJ and a neighbor word,
-    // a node edge (`None`) may break
-    let breakable = prose_wrap == ProseWrap::Always
-        && f.context().no_wrap_depth().get() == 0
-        && !(cj_bound && prev.is_some() && next.is_some());
-    // Any line break left here is a space (Prettier's `lineBreakCanBeConvertedToSpace`)
+    let breakable =
+        prose_wrap == ProseWrap::Always && f.context().no_wrap_depth().get() == 0 && !between_cj;
+    // Any line break left here is a space
     if breakable {
         parts.push_sep(Sep::Line);
     } else {

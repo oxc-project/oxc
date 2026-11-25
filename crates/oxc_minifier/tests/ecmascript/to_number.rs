@@ -27,7 +27,6 @@ fn test() {
             Expression::new_string_literal(SPAN, "foo", None, ast),
             false,
             false,
-            false,
             ast,
         )],
         ast,

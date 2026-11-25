@@ -13,13 +13,13 @@ use oxc_css_parser::ast::{
     PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
 use oxc_formatter_core::{
-    FormatElement, arena_cow_str,
+    FormatElement, PlaceholderPiece, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
     write,
 };
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
+    TEMPLATE_PLACEHOLDER,
     comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
@@ -74,7 +74,7 @@ pub(super) fn write_selector_list<'a>(
     let placeholder_idx = if f.context().template_placeholders() {
         let source = f.context().source_text();
         list.selectors.iter().position(|complex| {
-            source.text_for(&to_span(complex.span())).contains(TEMPLATE_PLACEHOLDER_PREFIX)
+            TEMPLATE_PLACEHOLDER.is_in(source.text_for(&to_span(complex.span())))
         })
     } else {
         None
@@ -152,7 +152,7 @@ pub(super) fn write_selector_list<'a>(
 ///
 /// NOTE: That extra indent on combinator-less compounds is arguably a Prettier bug, not a design:
 /// upstream keeps removing it one threshold at a time (prettier/prettier#16572 for a lone pseudo, #17541 for 2 nodes),
-/// and this `> 2` is what remains as of 3.9.6.
+/// and this `> 2` is what remains.
 /// The principled condition would be "has a combinator" (indent only wrapped continuation lines),
 /// keeping pseudo args at +2 and `)` at +0.
 pub(super) fn write_complex_selector<'a>(
@@ -311,29 +311,21 @@ pub(super) fn write_interpolable_ident<'a>(
 ///
 /// Unlike the structurally-parsed positions, garbage mode prints degraded source verbatim,
 /// so the markers are recovered from the text here.
-fn write_text_with_placeholders<'a>(mut rest: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    while let Some(start) = rest.find(TEMPLATE_PLACEHOLDER_PREFIX) {
-        let after_prefix = &rest[start + TEMPLATE_PLACEHOLDER_PREFIX.len()..];
-        let digits_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-        if digits_end > 0
-            && let Some(tail) = after_prefix[digits_end..].strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
-            && let Ok(index) = after_prefix[..digits_end].parse::<u32>()
-        {
-            if start > 0 {
-                write!(f, text(&rest[..start]));
+fn write_text_with_placeholders<'a>(source: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    for piece in TEMPLATE_PLACEHOLDER.pieces(source) {
+        match piece {
+            PlaceholderPiece::Text(run) => write!(f, text(run)),
+            PlaceholderPiece::Index(index) => {
+                if let Ok(index) = u32::try_from(index) {
+                    f.write_element(FormatElement::EmbedPlaceholder(index));
+                } else {
+                    // No index of the host's: verbatim, as any other text
+                    let mut placeholder = String::new();
+                    TEMPLATE_PLACEHOLDER.write(&mut placeholder, index);
+                    write!(f, text(f.allocator().alloc_str(&placeholder)));
+                }
             }
-            f.write_element(FormatElement::EmbedPlaceholder(index));
-            rest = tail;
-        } else {
-            // Not a valid marker: emit up to and including the prefix verbatim.
-            let consumed = start + TEMPLATE_PLACEHOLDER_PREFIX.len();
-            write!(f, text(&rest[..consumed]));
-            rest = &rest[consumed..];
         }
-    }
-    if !rest.is_empty() {
-        write!(f, text(rest));
     }
 }
 
@@ -541,8 +533,7 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
 /// exactly one space around each `+` between terms,
 /// digit-led segments lowercased, all other whitespace kept as-is (a glued `-` stays glued).
 ///
-/// NOTE: We keep a leading sign stays glued, since the An+B grammar forbids whitespace after it.
-/// But Prettier formats as `+ 3n`, output is a semantics-breaking artifact.
+/// A leading sign stays glued, since the An+B grammar forbids whitespace after it.
 fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     if !bytes.iter().any(|&b| b == b'+' || b.is_ascii_uppercase()) {

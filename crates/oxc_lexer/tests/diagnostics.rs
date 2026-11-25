@@ -2,22 +2,14 @@
 //! `*_never_flagged` counterpart: valid input must emit nothing.
 
 #![cfg(target_endian = "little")]
-#![expect(
-    clippy::cast_possible_truncation,
-    clippy::unreadable_literal,
-    reason = "test helpers: lengths fit u32; the fuzz PRNG uses raw constants"
-)]
 
 use std::str;
 
-use oxc_lexer::{DiagCode, Diagnostic, LexOptions, PAD, TokenKind, testing::lex_utf8_with_cpu};
+use oxc_lexer::{DiagCode, Diagnostic, LexOptions, TokenKind, testing::lex_with_cpu};
 use oxc_simd::{DynCpu, test_cpus};
 
 fn diags(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0); // lexer over-reads up to PAD bytes past `len`
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, LexOptions::default(), cpu);
+    let res = lex_with_cpu(code, LexOptions::default(), cpu);
     res.diagnostics().to_vec()
 }
 
@@ -26,20 +18,14 @@ fn codes(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
 }
 
 fn codes_jsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
 fn codes_tsx(code: &str, cpu: DynCpu) -> Vec<DiagCode> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ts: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
 
@@ -88,6 +74,9 @@ fn numeric_separator_and_empty_radix(cpu: DynCpu) {
     assert_eq!(codes("x = 0x_1", cpu), [DiagCode::InvalidNumericSeparator]); // after prefix
     assert_eq!(codes("x = 0xAB_", cpu), [DiagCode::InvalidNumericSeparator]); // trailing in hex
     assert_eq!(codes("x = 0x;", cpu), [DiagCode::InvalidNumericLiteral]); // empty radix
+    assert_eq!(codes("x = 1__2n;", cpu), [DiagCode::InvalidNumericSeparator]); // double
+    assert_eq!(codes("x = 0x_1n;", cpu), [DiagCode::InvalidNumericSeparator]); // after prefix
+    assert_eq!(codes("x = 0xn;", cpu), [DiagCode::InvalidNumericLiteral]); // empty radix
 }
 
 #[test_cpus]
@@ -213,6 +202,11 @@ fn regex_flags(cpu: DynCpu) {
     assert_eq!(codes("r = /x/gg;", cpu), [DiagCode::DuplicateRegexpFlag]); // duplicate
     assert_eq!(codes("r = /x/gimsuydv;", cpu), []); // all valid flags, once each
     assert_eq!(codes("r = /x/;", cpu), []); // no flags
+}
+
+#[test_cpus]
+fn diagnostics_are_not_capped(cpu: DynCpu) {
+    assert_eq!(codes(&"r = /x/q;\n".repeat(2000), cpu).len(), 2000);
 }
 
 #[test_cpus]
@@ -377,7 +371,6 @@ fn invalid_unicode_character(cpu: DynCpu) {
 fn valid_unicode_never_flagged(cpu: DynCpu) {
     // identifier chars, whitespace, and anything inside literal content
     for src in [
-        // spellchecker:disable-next-line
         "var caf\u{E9} = 1;",                   // é: ID_Continue
         "var \u{4F60}\u{597D} = 1;",            // CJK idents
         "let \u{3C0} = 3.14;",                  // π
@@ -393,11 +386,8 @@ fn valid_unicode_never_flagged(cpu: DynCpu) {
 }
 
 fn diags_bytes(code: &[u8], cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { validate_utf8: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -428,11 +418,29 @@ fn invalid_utf8(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn invalid_utf8_in_tsx_type_arguments(cpu: DynCpu) {
+    let opts = LexOptions { jsx: true, ts: true, validate_utf8: true, ..Default::default() };
+
+    // The content-blind TSX type-arg skip drops diagnostics inside the type-argument list,
+    // but must not drop UTF-8 validation's diagnostic
+    let res = lex_with_cpu(b"const el = <Foo<'\xFF'> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (17, 1, DiagCode::InvalidUtf8));
+
+    // A raw U+FFFD at code level is a binary-file error, not a UTF-8 validation error,
+    // but it's also retained in type arguments
+    let res = lex_with_cpu("const el = <Foo<\u{FFFD}> x/>;", opts, cpu);
+    let d = res.diagnostics();
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].off, d[0].len, d[0].code), (16, 3, DiagCode::InvalidUtf8));
+}
+
+#[test_cpus]
 fn valid_utf8_never_flagged(cpu: DynCpu) {
     let codes_v =
         |s: &str| diags_bytes(s.as_bytes(), cpu).iter().map(|d| d.code).collect::<Vec<_>>();
     for src in [
-        // spellchecker:disable-next-line
         "let caf\u{e9} = 1;",        // 2-byte
         "x = '\u{1F600}';",          // 4-byte emoji in string
         "a\u{a0}b",                  // NBSP (ws-reclass path preserved)
@@ -452,12 +460,14 @@ fn utf8_fuzz_against_std(cpu: DynCpu) {
     // Deterministic LCG fuzz against std::str::from_utf8: a diag iff std
     // errors, offset == valid_up_to(), len == error_len() when std has one.
     let mut s: u64 = 0x243F_6A88_85A3_08D3;
+    #[expect(clippy::unreadable_literal)]
     for _ in 0..4000 {
         let mut buf = vec![b' ']; // keep offset 0 clear of hashbang/BOM handling
         s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         let len = 3 + (s >> 59) as usize;
         for _ in 0..len {
             s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            #[expect(clippy::cast_possible_truncation)]
             let r = (s >> 33) as u8;
             buf.push(if r & 1 == 0 { 0x40 + (r >> 3) } else { r });
         }
@@ -522,6 +532,35 @@ fn invalid_identifier_escape_payload(cpu: DynCpu) {
     assert_eq!(d.len(), 2);
     assert_eq!((d[0].off, d[0].len), (5, 5));
     assert_eq!((d[1].off, d[1].len), (11, 5));
+}
+
+#[test_cpus]
+fn invalid_identifier_escapes_add_nothing_to_the_value(cpu: DynCpu) {
+    for (code, want) in [
+        // a lone surrogate, either form, adds nothing
+        (r"x\uD800y;", "xy"),
+        (r"x\u{DC00}y;", "xy"),
+        (r"class C { #p\u{D800} }", "p"),
+        // a well-formed pair is still invalid
+        (r"\uD800\uDC00x;", "x"),
+        // a char no identifier can have
+        (r"x\u0020y;", "xy"),
+        // ID_Continue only, at the start
+        (r"\u0030a;", "a"),
+        // the rest of the escape goes with it
+        (r"a\u{1100000}b;", "ab"),
+        (r"a\u{}b;", "ab"),
+        (r"a\u12xy;", "axy"),
+        // valid escapes still decode
+        (r"a\u0041\u{20BB7};", "aA\u{20BB7}"),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        let cooked = res.cooked_bytes();
+        let [atom] = res.atoms() else { panic!("{code:?}") };
+        assert!(!atom.lone_surrogates(), "{code:?}");
+        let value = &cooked[atom.start() as usize..atom.end() as usize];
+        assert_eq!(str::from_utf8(value), Ok(want), "{code:?}");
+    }
 }
 
 #[test_cpus]
@@ -645,11 +684,8 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
     // A NotEscapeSequence makes the cooked value None; legality depends on
     // tagged-ness, so the span carries a marker bit, not a diagnostic.
     let get = |code: &str| -> Vec<bool> {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
-        let (res, arena) = lex_utf8_with_cpu(&buf, len, LexOptions::default(), cpu);
-        res.templates(&arena).iter().map(|t| t.cooked_invalid()).collect()
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        res.templates().iter().map(|t| t.cooked_invalid()).collect()
     };
     assert_eq!(get(r"t = `\uZZ`;"), [true]); // bad unicode escape
     assert_eq!(get(r"t = `\xG`;"), [true]); // bad hex escape
@@ -669,8 +705,9 @@ fn template_cooked_invalid_marker(cpu: DynCpu) {
 
 #[test_cpus]
 fn unterminated_jsx_element(cpu: DynCpu) {
-    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), [DiagCode::UnterminatedJsxElement]);
-    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), [DiagCode::UnterminatedJsxElement]);
+    let want = [DiagCode::JsxTextInvalidCharacter, DiagCode::UnterminatedJsxElement];
+    assert_eq!(codes_tsx("var a = <T>(x: T) => x;", cpu), want);
+    assert_eq!(codes_tsx("f(<T>(x: T) => x);", cpu), want);
 }
 
 #[test_cpus]
@@ -680,6 +717,7 @@ fn generic_function_types_never_flagged(cpu: DynCpu) {
         "const r = f<{ m: <T>(x: T) => T }>(0);",
         "let h = <T,>(x: T) => x;",
         "const e = <T>(x)</T>;",
+        "const e = <T>(it's {'a) => b'}</T>;",
     ] {
         assert!(codes_tsx(code, cpu).is_empty(), "{code:?}");
     }
@@ -746,11 +784,8 @@ fn valid_jsx_never_flagged(cpu: DynCpu) {
 }
 
 fn diags_jsx(code: &str, cpu: DynCpu) -> Vec<Diagnostic> {
-    let mut buf = code.as_bytes().to_vec();
-    let len = buf.len() as u32;
-    buf.resize(buf.len() + PAD, 0);
     let opts = LexOptions { jsx: true, ..Default::default() };
-    let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
+    let res = lex_with_cpu(code, opts, cpu);
     res.diagnostics().to_vec()
 }
 
@@ -813,6 +848,101 @@ fn legacy_octal_adjacency_diagnostics(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn legacy_octal_values(cpu: DynCpu) {
+    for (code, want) in [
+        ("x = 070;", &[56.0][..]),
+        ("x = 0777;", &[511.0]),
+        ("x = 00;", &[0.0]),
+        ("x = 010.5;", &[8.0, 0.5]),
+        ("x = 010.toString();", &[8.0]),
+        ("x = 08;", &[8.0]),
+        ("x = 0779;", &[779.0]),
+        ("x = 08.5;", &[8.5]),
+        ("x = 09e1;", &[90.0]),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), want, "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn radix_values_above_u64_max(cpu: DynCpu) {
+    let two_64 = 18_446_744_073_709_551_616.0;
+    let bin = format!("x = 0b1{};", "0".repeat(64));
+    let max = format!("x = 0x{}8{};", "f".repeat(13), "0".repeat(242));
+    let inf = format!("x = 0x1{};", "0".repeat(300));
+    for (code, want) in [
+        ("x = 0x10000000000000000;", two_64),
+        ("x = 0x1_0000_0000_0000_0000;", two_64),
+        ("x = 0o2000000000000000000000;", two_64),
+        ("x = 02000000000000000000000;", two_64),
+        (bin.as_str(), two_64),
+        // Halfway between doubles rounds to even, anything above it rounds up.
+        ("x = 0x20000000000001000;", 36_893_488_147_419_103_232.0),
+        ("x = 0x20000000000001001;", 36_893_488_147_419_111_424.0),
+        ("x = 0x0000000000000000000001;", 1.0),
+        (max.as_str(), f64::MAX),
+        (inf.as_str(), f64::INFINITY),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), [want], "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn long_decimal_values(cpu: DynCpu) {
+    let long = format!("x = 1{}e-500;", "0".repeat(519));
+    let long_separated = format!("x = 1{}e-500;", "_000".repeat(173));
+    // 1 + 2^-53 is halfway between two doubles: zeros after it keep the tie, a 1 rounds it up.
+    let tie = format!("1.00000000000000011102230246251565404236316680908203125{}", "0".repeat(800));
+    let tie_kept = format!("x = {tie}0;");
+    let tie_broken = format!("x = {tie}1;");
+    for (code, want) in [
+        ("x = 1_000.5e-1_0;", 1000.5e-10),
+        // The exponent is past byte 511.
+        (long.as_str(), 1e19),
+        (long_separated.as_str(), 1e19),
+        (tie_kept.as_str(), 1.0),
+        (tie_broken.as_str(), 1.0 + f64::EPSILON),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        assert_eq!(res.numbers(), [want], "{code:?}");
+    }
+}
+
+#[test_cpus]
+fn bigint_values(cpu: DynCpu) {
+    for (code, want) in [
+        ("x = 9007199254740993n;", &["9007199254740993"][..]),
+        ("x = 1_000n;", &["1000"]),
+        ("x = 0n;", &["0"]),
+        ("x = 0x00ffn;", &["255"]),
+        ("x = 0x10000000000000000n;", &["18446744073709551616"]),
+        ("x = 0o777n;", &["511"]),
+        ("x = 0O2000000000000000000000n;", &["18446744073709551616"]),
+        ("x = 0b1_0000_0000n;", &["256"]),
+        // Separators skip the u64 path: 10^9 + 1 keeps the low limb's zeros, and 0 stays 0.
+        ("x = 0x3b9a_ca01n;", &["1000000001"]),
+        ("x = 0x0_0n;", &["0"]),
+        (
+            "x = 0XFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFFn;",
+            &["340282366920938463463374607431768211455"],
+        ),
+        ("x = [1n, 'a', 0B10n];", &["1", "2"]),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        let cooked = res.cooked_bytes();
+        let values: Vec<&str> = res
+            .bigints()
+            .iter()
+            .map(|s| str::from_utf8(&cooked[s.start() as usize..s.end() as usize]).unwrap())
+            .collect();
+        assert_eq!(values, want, "{code:?}");
+        assert!(res.numbers().is_empty(), "{code:?}");
+    }
+}
+
+#[test_cpus]
 fn nested_jsx_shapes_never_flagged(cpu: DynCpu) {
     for code in [
         "const a = <Foo prop=<Bar><Baz /></Bar> />;",
@@ -836,8 +966,8 @@ fn nested_jsx_shapes_never_flagged(cpu: DynCpu) {
 
 #[test_cpus]
 fn value_lanes_hold_exactly_one_entry_per_value_token(cpu: DynCpu) {
-    for (code, ts, numbers, atoms) in [
-        ("0 #a 0 #b 0 #c 0 #d 0 #e 0 #f 0 #g 0 #h 0 #i", false, 9, 0),
+    for (code, ts, numbers, bigints, atoms) in [
+        ("0 #a 0 #b 0 #c 0 #d 0 #e 0 #f 0 #g 0 #h 0 #i", false, 9, 0, 0),
         (
             "class C { #e: number = 0
 #f: string = 1
@@ -851,29 +981,30 @@ fn value_lanes_hold_exactly_one_entry_per_value_token(cpu: DynCpu) {
             true,
             9,
             0,
+            0,
         ),
-        ("1n 's' 2n 's' 3n 's' 4n 's' 5n 's' 6n 's' 7n 's' 8n 's' 9n 's'", false, 9, 0),
+        ("1n 's' 2n 's' 3n 's' 4n 's' 5n 's' 6n 's' 7n 's' 8n 's' 9n 's'", false, 0, 9, 0),
         (
             "\\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0",
             false,
             9,
+            0,
             9,
         ),
         (
             "#\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x",
             false,
             0,
+            0,
             9,
         ),
     ] {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
         let opts = LexOptions { ts, ..Default::default() };
-        let (res, _arena) = lex_utf8_with_cpu(&buf, len, opts, cpu);
-        assert_eq!(res.numbers_count, numbers, "numbers lane for {code:?}");
-        assert_eq!(res.atoms_count, atoms, "atoms lane for {code:?}");
-        assert_eq!(res.diagnostic_count, 0, "diagnostics for {code:?}: {:?}", res.diagnostics());
+        let res = lex_with_cpu(code, opts, cpu);
+        assert_eq!(res.numbers().len(), numbers, "numbers lane for {code:?}");
+        assert_eq!(res.bigints().len(), bigints, "bigints lane for {code:?}");
+        assert_eq!(res.atoms().len(), atoms, "atoms lane for {code:?}");
+        assert_eq!(res.diagnostics().len(), 0, "diagnostics for {code:?}: {:?}", res.diagnostics());
     }
 }
 
@@ -890,13 +1021,10 @@ fn block_comment_star_plus_slash_is_not_a_terminator(cpu: DynCpu) {
             1,
         ),
     ] {
-        let mut buf = code.as_bytes().to_vec();
-        let len = buf.len() as u32;
-        buf.resize(buf.len() + PAD, 0);
-        let (res, arena) = lex_utf8_with_cpu(&buf, len, LexOptions::default(), cpu);
-        let kinds = res.tok_kinds(&arena);
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        let kinds = res.kinds();
         let non_trivia = kinds.iter().filter(|k| !k.is_trivia() && **k != TokenKind::Eof).count();
         assert_eq!(non_trivia, tokens, "{code:?}: {kinds:?}");
-        assert_eq!(res.diagnostic_count, 0, "{code:?}: {:?}", res.diagnostics());
+        assert_eq!(res.diagnostics().len(), 0, "{code:?}: {:?}", res.diagnostics());
     }
 }

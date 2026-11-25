@@ -4,6 +4,57 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 38cd470 transformer: Share auto-accessor lowering and fix its private storage names (#29449) (Dunqing)
+- 4b1efd3 transformer/legacy-decorator: Move class self-references to alias symbol (#30056) (Dunqing)
+- bbe2fba transformer/legacy-decorator: Avoid class name shadowing in static setters (#30058) (Dunqing)
+- 8921865 transformer/legacy-decorator: Keep static private brand checks on the original class (#30054) (Dunqing)
+- abb3593 transformer/legacy-decorator: Share anonymous default class bindings (#29753) (Dunqing)
+- 52b5506 transformer/class-properties: Preserve names of anonymous classes (#29931) (Dunqing)
+- 08023ad transformer: Keep TypeScript assign semantics for preserved classes (#29930) (Dunqing)
+- 831fbca transformer: Don't fold computed key assignments into non-computed method keys (#29912) (Dunqing)
+- 6db561f transformer: Keep correct keys on leftover fields with setPublicClassFields (#29911) (Dunqing)
+- bdbed9e transformer/async-to-generator: Avoid invalid and shadowing inferred function names (#29815) (YT)
+- 1aadbe7 isolated-declarations: Preserve const literal initializers through parentheses (#29041) (camc314)
+- a7ea78b transformer: Keep classes whose decorators are preserved (#29748) (Dunqing)
+- 5ece804 transformer/async-to-generator: Remove leading digits from inferred function names (#29816) (YT)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- d59aa8e transformer/legacy-decorator: Apply static member decorators last (#27744) (Yunus Ozen)
+- 97307e3 transformer/legacy-decorator: Emit `String`/`Number` metadata for enums declared after the class (#29724) (Max Schwenk)
+- 3586c66 transformer: Preserve object rest assignment evaluation (#29645) (Boshen)
+- f22757c transformer/class-properties: Preserve receivers in TS-wrapped private calls (#29684) (camc314)
+- 0e1ef65 transformer/exponentiation-operator: Scope default parameter temporaries (#29685) (camc314)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+### 📚 Documentation
+
+- 3ff249b skills: Share PR title guidance with triagebot (#29980) (Cameron)
+- 1da6ea8 skills: Merge PR guidance into pr-guide skill (#29866) (Dunqing)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- 19b1691 isolated-declarations: Retain types used by exported ambient variables (#28996) (camc314)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 67ac6be isolated-declarations: Evaluate enum template literal initializers (#28997) (camc314)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🚀 Features

@@ -88,7 +88,7 @@ impl<'a> PeepholeOptimizations {
                 is_control_flow_dead = true;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement(ctx) {
             match Self::remove_unused_variable_declaration(stmt, ctx) {
                 // Multiple identity-dropped `var x;`s coalesce into a single
                 // `var x, y;`. The individual drops looked byte-identical, but
@@ -210,7 +210,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// For variable declarations:
-    /// * merge with the previous variable declarator if their kinds are the same
+    /// * merge retained declarators into an immediately preceding declaration of the same
+    ///   kind when `join_vars` is enabled or at least one declarator is removed
     /// * remove the variable declarator if it is unused
     /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
@@ -231,23 +232,31 @@ impl<'a> PeepholeOptimizations {
             ctx,
         );
 
-        // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
-        if !ctx.options().join_vars
-            && var_decl
-                .declarations
-                .iter()
-                .all(|d| !Self::should_remove_unused_declarator(d, var_decl.kind, ctx))
+        let kind = var_decl.kind;
+        if var_decl
+            .declarations
+            .iter()
+            .all(|d| !Self::should_remove_unused_declarator(d, kind, ctx))
         {
-            result.push(Statement::VariableDeclaration(var_decl));
+            if ctx.options().join_vars
+                && let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
+                && kind == prev_var_decl.kind
+            {
+                prev_var_decl.declarations.append(&mut var_decl.declarations);
+                ctx.notice_change();
+            } else {
+                result.push(Statement::VariableDeclaration(var_decl));
+            }
             return;
         }
 
+        // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last()
-            && var_decl.kind == prev_var_decl.kind
+            && kind == prev_var_decl.kind
         {
             ctx.notice_change();
         }
-        let VariableDeclaration { span, kind, declarations, declare, .. } = var_decl.unbox();
+        let VariableDeclaration { span, declarations, declare, .. } = var_decl.unbox();
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, kind, ctx) {
                 // `init` is `mut` because `remove_unused_expression` rewrites
@@ -291,6 +300,9 @@ impl<'a> PeepholeOptimizations {
             ctx,
             false,
         );
+
+        // `function a() {} b.a = a;` => `b.a = function a() {};`
+        Self::inline_single_use_function_declaration(&mut expr_stmt.expression, result, ctx);
 
         // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
         // Walk backwards through preceding sibling statements looking for `super()`.
@@ -437,6 +449,155 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Move a single-use function declaration from earlier in this statement list
+    /// into the assignment that uses it.
+    /// `function a() {} b.a = a;` => `b.a = function a() {};`
+    /// `function a() {} function b() {} x.a = a, x.b = b;` => `x.a = function a() {}, x.b = function b() {};`
+    fn inline_single_use_function_declaration(
+        expr: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.is_tree_shake_only()
+            || Self::is_script_root_scope(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
+            return;
+        }
+
+        if let Expression::SequenceExpression(sequence) = expr {
+            for expr in &mut sequence.expressions {
+                Self::inline_function_declaration_into_assignment(expr, result, ctx);
+            }
+        } else {
+            Self::inline_function_declaration_into_assignment(expr, result, ctx);
+        }
+    }
+
+    fn inline_function_declaration_into_assignment(
+        expr: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assignment) = expr else { return };
+        // `a = b = f`
+        if matches!(assignment.right, Expression::AssignmentExpression(_)) {
+            Self::inline_function_declaration_into_assignment(&mut assignment.right, result, ctx);
+            return;
+        }
+        if assignment.operator != AssignmentOperator::Assign {
+            return;
+        }
+        let Expression::Identifier(reference) = &assignment.right else { return };
+        let reference_id = reference.reference_id();
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return;
+        };
+        // check if symbol: is referenced once, is implicitly observable, as function is dead, has redeclarations
+        if ctx.scoping().get_resolved_reference_ids(symbol_id) != [reference_id]
+            || ctx.state.symbols.is_implicitly_observable(symbol_id)
+            || ctx.state.symbols.function_is_dead(symbol_id)
+            || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
+        {
+            return;
+        }
+        // A hoisted sloppy block declaration is bound in the enclosing var scope, so a
+        // direct eval there can read it even when this block has no eval. `DirectEval`
+        // propagates upward and the binding scope encloses this list, so its flag
+        // covers every eval that can see the binding.
+        let binding_scope_flags =
+            ctx.scoping().scope_flags(ctx.scoping().symbol_scope_id(symbol_id));
+        if binding_scope_flags.contains_direct_eval() {
+            return;
+        }
+        // Creating a function has no side effects, and this assignment holds the only
+        // reference, so no statement in between can observe the move. Searching the
+        // whole list keeps the result independent of which statements a pass has
+        // already merged or removed, since those steps do not request another pass.
+        let Some(index) = result.iter().rposition(|stmt| {
+            matches!(stmt, Statement::FunctionDeclaration(function)
+                if function.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id))
+        }) else {
+            return;
+        };
+        let Statement::FunctionDeclaration(function) = &result[index] else { unreachable!() };
+
+        // A sloppy block declaration can also initialize an enclosing var binding.
+        // Converting it to an expression loses that Annex B write. Check this even
+        // when `unused: false` disables function-liveness registration.
+        if !function.r#async
+            && !function.generator
+            && !binding_scope_flags.is_var()
+            && !binding_scope_flags.is_strict_mode()
+        {
+            return;
+        }
+        // The reverse Annex B write: a sloppy block function of the same name that
+        // semantic left block-scoped still assigns itself to this var binding when
+        // it is evaluated, with no resolved reference. Within this var scope, only
+        // the statements already in `result` run before this assignment.
+        if !binding_scope_flags.is_strict_mode()
+            && let Some(id) = &function.id
+            && result.iter().any(|stmt| Self::nests_annex_b_function(stmt, id.name, false))
+        {
+            return;
+        }
+
+        let Some(scope_id) = function.scope_id.get() else { return };
+        if let Some(liveness) = ctx.state.symbols.liveness_mut() {
+            liveness.unregister_function_declaration(scope_id, symbol_id);
+        }
+
+        let Statement::FunctionDeclaration(mut function) = result.remove(index) else {
+            unreachable!();
+        };
+        function.r#type = FunctionType::FunctionExpression;
+        // After the sole reference is removed, the retained name's original outer
+        // symbol has no live uses. Compression can keep that metadata; mangling
+        // rebuilds the function-expression binding from the transformed AST.
+        ctx.replace_expression(&mut assignment.right, Expression::FunctionExpression(function));
+    }
+
+    /// Whether `stmt` nests a plain function declaration named `name` below a
+    /// block, `if`, `switch`, loop, `try` or `with`, without crossing into an
+    /// expression or function body (a different var scope). In sloppy mode,
+    /// evaluating such a declaration also writes the enclosing var binding
+    /// (Annex B.3.2.1, B.3.4).
+    fn nests_annex_b_function(stmt: &Statement<'a>, name: Ident<'a>, nested: bool) -> bool {
+        let any = |stmts: &[Statement<'a>]| {
+            stmts.iter().any(|stmt| Self::nests_annex_b_function(stmt, name, true))
+        };
+        match stmt {
+            Statement::FunctionDeclaration(function) => {
+                nested
+                    && !function.r#async
+                    && !function.generator
+                    && function.id.as_ref().is_some_and(|id| id.name == name)
+            }
+            Statement::LabeledStatement(s) => Self::nests_annex_b_function(&s.body, name, nested),
+            Statement::BlockStatement(s) => any(&s.body),
+            Statement::IfStatement(s) => {
+                Self::nests_annex_b_function(&s.consequent, name, true)
+                    || s.alternate
+                        .as_ref()
+                        .is_some_and(|s| Self::nests_annex_b_function(s, name, true))
+            }
+            Statement::SwitchStatement(s) => s.cases.iter().any(|case| any(&case.consequent)),
+            Statement::TryStatement(s) => {
+                any(&s.block.body)
+                    || s.handler.as_ref().is_some_and(|handler| any(&handler.body.body))
+                    || s.finalizer.as_ref().is_some_and(|finalizer| any(&finalizer.body))
+            }
+            Statement::WithStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForInStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::ForOfStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::WhileStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            Statement::DoWhileStatement(s) => Self::nests_annex_b_function(&s.body, name, true),
+            _ => false,
+        }
+    }
+
     /// Check if a switch case can be inlined by verifying:
     /// - The test expression has no side effects
     /// - All statements can be safely inlined (no unlabeled breaks)
@@ -445,7 +606,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
+        !FindNestedBreak::has_unlabelled_break(&case.consequent)
     }
 
     fn handle_switch_statement(
@@ -570,7 +731,7 @@ impl<'a> PeepholeOptimizations {
             };
             if can_merge_with_alternate {
                 // Don't do this transformation if the branch condition could
-                // potentially access symbols declared later on on this scope below.
+                // potentially access symbols declared later on in this scope below.
                 // If so, inverting the branch condition and nesting statements after
                 // this in a block would break that access which is a behavior change.
                 //
@@ -1225,10 +1386,16 @@ impl<'a> PeepholeOptimizations {
                 return true;
             };
             // Don't inline `var e` inside `catch (e) { ... }`. Removing the var declarator
-            // would lose the function-scoped hoisting that `var` provides. The catch parameter
-            // and the var share one symbol (with CatchVariable flag) due to the redeclaration
-            // semantics in https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+            // would lose the function-scoped hoisting that `var` provides. The declarator
+            // carries the catch parameter's symbol because its initializer assigns there;
+            // `Scoping::catch_var_binding` identifies the separate enclosing binding.
             if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
+                return true;
+            }
+            // A `var` in a block is bound in the enclosing var scope, where a direct eval
+            // can read it even when the current block has no eval.
+            let binding_scope_id = ctx.scoping().symbol_scope_id(prev_decl_id.symbol_id());
+            if ctx.scoping().scope_flags(binding_scope_id).contains_direct_eval() {
                 return true;
             }
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
@@ -1258,10 +1425,7 @@ impl<'a> PeepholeOptimizations {
                 prev_decl_init.may_have_side_effects(ctx),
                 ctx,
             );
-            if replaced != Some(true) {
-                return true;
-            }
-            false
+            replaced != Some(true)
         });
         match last_non_inlined_index {
             None => 0,
@@ -1434,10 +1598,7 @@ impl<'a> PeepholeOptimizations {
                         AssignmentTarget::AssignmentTargetIdentifier(_) => false,
                         AssignmentTarget::ComputedMemberExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
-                                || Self::computed_key_blocks_reorder(
-                                    &member_expr.expression,
-                                    ctx,
-                                )
+                                || Self::computed_key_blocks_reorder(&member_expr.expression, ctx)
                         }
                         AssignmentTarget::PrivateFieldExpression(member_expr) => {
                             Self::member_part_blocks_reorder(&member_expr.object, ctx)
@@ -1584,76 +1745,29 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::CallExpression(call_expr)
-                // Don't substitute something into a call target that could change "this"
-                if !((replacement.is_member_expression()
-                    || matches!(replacement, Expression::ChainExpression(_)))
-                    && call_expr.callee.is_identifier_reference())
-                => {
-                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
-                        &mut call_expr.callee,
-                        search_for,
-                        replacement,
-                        replacement_has_side_effect,
-                        ctx,
-                    ) {
-                        return Some(changed);
+            Expression::CallExpression(call_expr) => {
+                let keep_indirect = call_expr.callee.is_specific_id(search_for)
+                    && (Self::passes_this_when_called(replacement)
+                        || (!call_expr.optional && replacement.is_specific_id("eval")));
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut call_expr.callee,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    if changed && keep_indirect {
+                        ctx.replace_expression_with(&mut call_expr.callee, |callee, ctx| {
+                            Self::preserve_indirect_access(callee.span(), callee, ctx)
+                        });
                     }
-
-                    // Do not substitute our unconditionally-executed value into a branch
-                    // unless the value itself has no side effects
-                    if !replacement_has_side_effect || !call_expr.optional {
-                        for arg in &mut call_expr.arguments {
-                            match arg {
-                                Argument::SpreadElement(spread_elem) => {
-                                    if let Some(changed) =
-                                        Self::substitute_single_use_symbol_in_expression(
-                                            &mut spread_elem.argument,
-                                            search_for,
-                                            replacement,
-                                            replacement_has_side_effect,
-                                            ctx,
-                                        )
-                                    {
-                                        return Some(changed);
-                                    }
-                                    // spread element may have sideeffects
-                                    return Some(false);
-                                }
-                                match_expression!(Argument) => {
-                                    if let Some(changed) =
-                                        Self::substitute_single_use_symbol_in_expression(
-                                            arg.to_expression_mut(),
-                                            search_for,
-                                            replacement,
-                                            replacement_has_side_effect,
-                                            ctx,
-                                        )
-                                    {
-                                        return Some(changed);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    return Some(changed);
                 }
-            Expression::NewExpression(new_expr)
-                // Don't substitute something into a call target that could change "this"
-                if !((replacement.is_member_expression()
-                    || matches!(replacement, Expression::ChainExpression(_)))
-                    && new_expr.callee.is_identifier_reference())
-                => {
-                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
-                        &mut new_expr.callee,
-                        search_for,
-                        replacement,
-                        replacement_has_side_effect,
-                        ctx,
-                    ) {
-                        return Some(changed);
-                    }
 
-                    for arg in &mut new_expr.arguments {
+                // Do not substitute our unconditionally-executed value into a branch
+                // unless the value itself has no side effects
+                if !replacement_has_side_effect || !call_expr.optional {
+                    for arg in &mut call_expr.arguments {
                         match arg {
                             Argument::SpreadElement(spread_elem) => {
                                 if let Some(changed) =
@@ -1686,6 +1800,47 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                 }
+            }
+            Expression::NewExpression(new_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut new_expr.callee,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+
+                for arg in &mut new_expr.arguments {
+                    match arg {
+                        Argument::SpreadElement(spread_elem) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut spread_elem.argument,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                            // spread element may have sideeffects
+                            return Some(false);
+                        }
+                        match_expression!(Argument) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                arg.to_expression_mut(),
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                        }
+                    }
+                }
+            }
             Expression::ArrayExpression(array_expr) => {
                 for elem in &mut array_expr.elements {
                     match elem {
@@ -1721,7 +1876,7 @@ impl<'a> PeepholeOptimizations {
                 for prop in &mut obj_expr.properties {
                     match prop {
                         ObjectPropertyKind::ObjectProperty(prop) => {
-                            if prop.computed {
+                            if prop.key.is_computed() {
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
                                         prop.key.to_expression_mut(),
@@ -1746,8 +1901,12 @@ impl<'a> PeepholeOptimizations {
                             ) {
                                 if prop.shorthand && prop.key.is_specific_id("__proto__") {
                                     // { __proto__ } -> { ['__proto__']: value }
-                                    prop.computed = true;
-                                    prop.key = PropertyKey::new_string_literal(prop.key.span(), "__proto__", None, ctx);
+                                    prop.key = PropertyKey::new_string_literal(
+                                        prop.key.span(),
+                                        "__proto__",
+                                        None,
+                                        ctx,
+                                    );
                                 }
                                 prop.shorthand = false;
                                 return Some(changed);
@@ -1770,15 +1929,8 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::TaggedTemplateExpression(tagged_expr) => {
-                // A member tag would change `this`: `let c = a.b; c``` => `(0, a.b)```
                 let keep_indirect = tagged_expr.tag.is_specific_id(search_for)
-                    && match &*replacement {
-                        match_member_expression!(Expression) => true,
-                        Expression::ChainExpression(chain) => {
-                            matches!(&chain.expression, match_member_expression!(ChainElement))
-                        }
-                        _ => false,
-                    };
+                    && Self::passes_this_when_called(replacement);
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut tagged_expr.tag,
                     search_for,
@@ -1875,6 +2027,17 @@ impl<'a> PeepholeOptimizations {
         Some(false)
     }
 
+    /// Whether a direct call of `expr` takes `this` from its member reference.
+    fn passes_this_when_called(expr: &Expression<'a>) -> bool {
+        match expr {
+            match_member_expression!(Expression) => true,
+            Expression::ChainExpression(chain) => {
+                matches!(&chain.expression, match_member_expression!(ChainElement))
+            }
+            _ => false,
+        }
+    }
+
     /// Returns `true` if the statement is an unconditional termination that can be
     /// safely removed:
     /// - Unlabeled `continue` statements that terminate a loop body
@@ -1909,14 +2072,16 @@ impl<'a> PeepholeOptimizations {
 }
 
 #[derive(Default)]
-struct FindNestedBreak {
+pub(super) struct FindNestedBreak {
     found_unlabelled_break: bool,
 }
 
 impl FindNestedBreak {
-    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+    pub(super) fn has_unlabelled_break(stmts: &[Statement]) -> bool {
         let mut visitor = Self::default();
-        visitor.visit_switch_case(node);
+        for stmt in stmts {
+            visitor.visit_statement(stmt);
+        }
         visitor.found_unlabelled_break
     }
 }

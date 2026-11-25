@@ -94,6 +94,8 @@ use crate::{
 /// Type of an enum inferred from its members
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum EnumType {
+    /// No members; contributes no type information when declarations are merged
+    Empty,
     /// All members are string literals or template literals with string-only expressions
     String,
     /// All members are numeric, bigint, unary numeric, or auto-incremented
@@ -154,15 +156,24 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
         );
     }
 
-    // `#[inline]` because this is a hot path and most `Statement`s are not `TSEnumDeclaration`s.
-    // We want to avoid overhead of a function call for the common case.
-    #[inline]
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Collect enum types here instead of in `enter_ts_enum_declaration` because the TypeScript
-        // plugin transforms enum declarations in `enter_statement`, and we need to collect the
-        // enum type before it gets transformed.
-        if let Statement::TSEnumDeclaration(decl) = stmt {
-            self.collect_enum_type(decl, ctx);
+    fn enter_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Collect enum types for the whole statement list before any statement in it is visited,
+        // so a class can refer to an enum declared below it. This can't wait for
+        // `enter_ts_enum_declaration`: the TypeScript plugin lowers enums in `enter_statement`.
+        for stmt in stmts.iter() {
+            match stmt {
+                Statement::TSEnumDeclaration(decl) => self.collect_enum_type(decl, ctx),
+                Statement::ExportDeclaration(export) => {
+                    if let Declaration::TSEnumDeclaration(decl) = &export.declaration {
+                        self.collect_enum_type(decl, ctx);
+                    }
+                }
+                _ => {}
+            }
         }
     }
 
@@ -278,13 +289,24 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_type);
         if has_type_reference {
             let enum_type = Self::infer_enum_type(&decl.body.members);
-            self.enum_types.insert(symbol_id, enum_type);
+            // A merged enum's declarations share a symbol. Empty declarations are neutral;
+            // mixed member types make it `Object`.
+            self.enum_types
+                .entry(symbol_id)
+                .and_modify(|existing| {
+                    if *existing == EnumType::Empty {
+                        *existing = enum_type;
+                    } else if enum_type != EnumType::Empty && *existing != enum_type {
+                        *existing = EnumType::Object;
+                    }
+                })
+                .or_insert(enum_type);
         }
     }
 
     /// Infer the type of an enum based on its members
     fn infer_enum_type(members: &[TSEnumMember<'a>]) -> EnumType {
-        let mut enum_type = EnumType::Object;
+        let mut enum_type = EnumType::Empty;
 
         for member in members {
             if let Some(init) = &member.initializer {
@@ -471,8 +493,9 @@ impl<'a> LegacyDecoratorMetadata<'a> {
     /// - `A.B` → `typeof A === "undefined" || typeof A.B === "undefined" ? Object : A.B`
     /// - `A.B.C` → `typeof A === "undefined" || typeof A.B === "undefined" || typeof A.B.C === "undefined" ? Object : A.B.C`
     ///
-    /// Local enums are pre-classified through [`Self::enum_types`] and emit `String` /
-    /// `Number` / `Object` directly (matching SWC and tsc).
+    /// Same-file enums, declared before or after the class, are pre-classified through
+    /// [`Self::enum_types`] and emit `String` / `Number` / `Object` directly (matching SWC
+    /// and tsc).
     /// Type-only references and `this`-typed entity names emit `Object` without a
     /// runtime check (matching tsc).
     ///
@@ -500,7 +523,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             return match enum_type {
                 EnumType::String => Self::global_string(ctx),
                 EnumType::Number => Self::global_number(ctx),
-                EnumType::Object => Self::global_object(ctx),
+                EnumType::Empty | EnumType::Object => Self::global_object(ctx),
             };
         }
 

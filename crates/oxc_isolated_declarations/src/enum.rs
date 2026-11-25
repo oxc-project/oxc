@@ -6,7 +6,7 @@ use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::{
-    number::{NumberBase, ToJsString},
+    number::ToJsString,
     operator::{BinaryOperator, UnaryOperator},
 };
 
@@ -61,13 +61,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             Expression::new_identifier(SPAN, "Infinity", self)
                         } else {
                             let value = if is_negative { -v } else { v };
-                            Expression::new_numeric_literal(
-                                SPAN,
-                                value,
-                                None,
-                                NumberBase::Decimal,
-                                self,
-                            )
+                            Expression::new_numeric_literal(SPAN, value, None, self)
                         };
 
                         if is_negative {

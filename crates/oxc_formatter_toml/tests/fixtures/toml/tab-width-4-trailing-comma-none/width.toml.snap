@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# The 2nd line is exactly 80 / 81 after formatting
+indented_80 = [
+    ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+    [1, 2],
+]
+indented_81 = [
+    ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+    [1, 2],
+]
+
+==================== Output ====================
+------------------------------------------------------
+{ printWidth: 80, tabWidth: 4, trailingComma: "none" }
+------------------------------------------------------
+# The 2nd line is exactly 80 / 81 after formatting
+indented_80 = [
+    ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+    [1, 2]
+]
+indented_81 = [
+    [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "b"
+    ], # c
+    [1, 2]
+]
+
+-------------------------------------------------------
+{ printWidth: 100, tabWidth: 4, trailingComma: "none" }
+-------------------------------------------------------
+# The 2nd line is exactly 80 / 81 after formatting
+indented_80 = [
+    ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+    [1, 2]
+]
+indented_81 = [
+    ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "b"], # c
+    [1, 2]
+]
+
+===================== End =====================

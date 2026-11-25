@@ -14,15 +14,15 @@ use oxc_ast::{
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_str::CompactStr;
 
-use crate::LintContext;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
-    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
+    ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call, validate_expect_type_of_call,
 };
-pub use padding_around_block::report_missing_padding_before_jest_block;
+use crate::{LintContext, ast_util::get_symbol_id_of_variable};
+pub use padding::{PaddingConfig, PaddingStatement, check_padding};
 
-mod padding_around_block;
+mod padding;
 mod parse_jest_fn;
 
 const JEST_METHOD_NAMES: [&str; 19] = [
@@ -167,11 +167,12 @@ pub fn parse_expect_jest_fn_call<'a>(
 
 pub struct PossibleJestNode<'a, 'b> {
     pub node: &'b AstNode<'a>,
-    pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
+    /// Canonical imported name, like `Some("test")`, otherwise `None`.
+    pub original: Option<&'a str>,
 }
 
 impl<'a, 'b> PossibleJestNode<'a, 'b> {
-    /// Resolve a call rooted in a Jest/Vitest global or import, preserving imported aliases.
+    /// Resolve a call rooted in a Jest/Vitest global, import, or extended Vitest `test`.
     ///
     /// This does not allocate or scan other calls in the file. Rules using `Rule::run` should
     /// apply their syntactic checks before resolving a potential test-framework call.
@@ -195,7 +196,13 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
         let reference = ctx.scoping().get_reference(ident.reference_id());
         let original = if let Some(symbol_id) = reference.symbol_id() {
             if !ctx.scoping().symbol_flags(symbol_id).is_import() {
-                return None;
+                if !ctx.frameworks().is_vitest() {
+                    return None;
+                }
+                return Some(Self {
+                    node,
+                    original: Some(resolve_extended_vitest_test(ctx.semantic(), symbol_id)?),
+                });
             }
             let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
             let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id)
@@ -225,14 +232,23 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
 pub fn collect_possible_jest_call_node<'a, 'c>(
     ctx: &'c LintContext<'a>,
 ) -> Vec<PossibleJestNode<'a, 'c>> {
-    iter_possible_jest_call_node(ctx.semantic()).collect()
+    iter_possible_jest_call_node(ctx).collect()
 }
 
 /// Iterate over all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn iter_possible_jest_call_node<'a, 'c>(
-    semantic: &'c Semantic<'a>,
+    ctx: &'c LintContext<'a>,
 ) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    iter_possible_jest_call_node_with_wrappers(ctx, false)
+}
+
+/// Optionally walk through parentheses and transparent TypeScript wrappers around Vitest type assertions.
+pub fn iter_possible_jest_call_node_with_wrappers<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+    follow_type_assertion_wrappers: bool,
+) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
+    let semantic = ctx.semantic();
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
     // import { jest as Jest } from '@jest/globals';
@@ -241,15 +257,20 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic).chain(
-        collect_ids_referenced_to_global(semantic)
-            // set the original of global test function to None
-            .map(|id| (id, None)),
-    );
+    let reference_id_with_original_list =
+        collect_ids_referenced_to_import(semantic, ctx.frameworks().is_vitest()).chain(
+            collect_ids_referenced_to_global(semantic)
+                // set the original of global test function to None
+                .map(|id| (id, None)),
+        );
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
         let mut id = semantic.scoping().get_reference(reference_id).node_id();
+        let follow_wrappers = follow_type_assertion_wrappers
+            && original.or_else(|| {
+                semantic.nodes().kind(id).as_identifier_reference().map(|ident| ident.name.as_str())
+            }) == Some("expectTypeOf");
         std::iter::from_fn(move || {
             loop {
                 let parent = semantic.nodes().parent_node(id);
@@ -264,7 +285,11 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
                     AstKind::StaticMemberExpression(_)
                         | AstKind::TaggedTemplateExpression(_)
                         | AstKind::ComputedMemberExpression(_)
-                ) {
+                ) || (follow_wrappers
+                    && type_assertion_wrapper_expression(parent_kind).is_some_and(|inner| {
+                        inner.address() == semantic.nodes().get_node(id).address()
+                    }))
+                {
                     id = parent.id();
                 } else {
                     return None;
@@ -274,16 +299,30 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
     })
 }
 
+/// The parent-node counterpart to `Expression::get_inner_expression` for type assertions.
+pub fn type_assertion_wrapper_expression(kind: AstKind<'_>) -> Option<&Expression<'_>> {
+    Some(match kind {
+        AstKind::ParenthesizedExpression(wrapper) => &wrapper.expression,
+        AstKind::TSAsExpression(wrapper) => &wrapper.expression,
+        AstKind::TSSatisfiesExpression(wrapper) => &wrapper.expression,
+        AstKind::TSInstantiationExpression(wrapper) => &wrapper.expression,
+        AstKind::TSNonNullExpression(wrapper) => &wrapper.expression,
+        AstKind::TSTypeAssertion(wrapper) => &wrapper.expression,
+        _ => return None,
+    })
+}
+
 fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
+    resolve_extended: bool,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
         .scoping()
         .resolved_references()
         .enumerate()
-        .filter_map(|(symbol_id, reference_ids)| {
+        .filter_map(move |(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if semantic.scoping().symbol_flags(symbol_id).is_import() {
+            let original = if semantic.scoping().symbol_flags(symbol_id).is_import() {
                 let id = semantic.scoping().symbol_declaration(symbol_id);
                 let AstKind::ImportDeclaration(import_decl) = semantic.nodes().parent_kind(id)
                 else {
@@ -291,20 +330,64 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
+                if !matches!(
                     import_decl.source.value.as_str(),
                     Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
                 ) {
-                    let original = find_original_name(import_decl, name);
-                    return Some(
-                        reference_ids.iter().map(move |&reference_id| (reference_id, original)),
-                    );
+                    return None;
                 }
-            }
+                find_original_name(import_decl, name)
+            } else {
+                if !resolve_extended {
+                    return None;
+                }
+                Some(resolve_extended_vitest_test(semantic, symbol_id)?)
+            };
 
-            None
+            Some(reference_ids.iter().map(move |&reference_id| (reference_id, original)))
         })
         .flatten()
+}
+
+/// Resolve a derived test binding to its original Vitest import name.
+fn resolve_extended_vitest_test<'a>(
+    semantic: &Semantic<'a>,
+    mut symbol_id: SymbolId,
+) -> Option<&'a str> {
+    // Arbitrarily bound iterations to 100 to prevent infinite loops in cyclical cases
+    for _ in 0..100 {
+        let declarator = semantic.symbol_declaration(symbol_id).kind().as_variable_declarator()?;
+        if !declarator.id.is_binding_identifier() {
+            return None;
+        }
+        let Expression::CallExpression(call) = declarator.init.as_ref()? else {
+            return None;
+        };
+        let Expression::StaticMemberExpression(member) = &call.callee else {
+            return None;
+        };
+        if member.property.name != "extend" {
+            return None;
+        }
+        let Expression::Identifier(base) = &member.object else {
+            return None;
+        };
+        symbol_id = get_symbol_id_of_variable(base, semantic)?;
+        if semantic.scoping().symbol_flags(symbol_id).is_import() {
+            let declaration_id = semantic.scoping().symbol_declaration(symbol_id);
+            let import_decl =
+                semantic.nodes().parent_kind(declaration_id).as_import_declaration()?;
+            if !matches!(
+                import_decl.source.value.as_str(),
+                Some("vitest" | "vite-plus/test" | "@effect/vitest")
+            ) {
+                return None;
+            }
+            return find_original_name(import_decl, base.name.as_str())
+                .filter(|name| matches!(*name, "test" | "it"));
+        }
+    }
+    None
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.

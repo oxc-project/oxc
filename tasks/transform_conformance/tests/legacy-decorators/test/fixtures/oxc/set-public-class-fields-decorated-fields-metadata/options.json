@@ -1,0 +1,19 @@
+{
+  "assumptions": {
+    "setPublicClassFields": true
+  },
+  "plugins": [
+    [
+      "transform-legacy-decorator",
+      {
+        "emitDecoratorMetadata": true
+      }
+    ],
+    [
+      "transform-typescript",
+      {
+        "removeClassFieldsWithoutInitializer": true
+      }
+    ]
+  ]
+}

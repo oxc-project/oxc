@@ -139,11 +139,11 @@ impl Rule for NoStaticOnlyClass {
                     ClassElement::MethodDefinition(v) => {
                         let not_last = idx != len - 1;
                         let (key, value) = (&v.key, &v.value);
-                        let name = if v.computed {
+                        let name = if v.key.is_computed() {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
                             let name = key
-                                .static_name()
+                                .literal_name()
                                 .and_then(StaticPropertyName::into_cow_str)
                                 .map(Cow::into_owned);
                             let Some(name) = name else {
@@ -177,11 +177,11 @@ impl Rule for NoStaticOnlyClass {
                             return fixer.noop();
                         }
                         let (key, value) = (&v.key, &v.value);
-                        let name = if v.computed {
+                        let name = if v.key.is_computed() {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
                             let name = key
-                                .static_name()
+                                .literal_name()
                                 .and_then(StaticPropertyName::into_cow_str)
                                 .map(Cow::into_owned);
                             let Some(name) = name else {

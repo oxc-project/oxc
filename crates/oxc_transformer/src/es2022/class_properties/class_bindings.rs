@@ -59,6 +59,9 @@ pub(super) struct ClassBindings<'a> {
     pub static_private_fields_use_temp: bool,
     /// `true` if temp var for class has been inserted
     pub temp_var_is_created: bool,
+    /// `true` if legacy decorators reassign the class binding after the class is defined,
+    /// so transpiled static private fields must always use temp binding
+    pub name_is_reassigned: bool,
 }
 
 impl<'a> ClassBindings<'a> {
@@ -79,6 +82,7 @@ impl<'a> ClassBindings<'a> {
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
+            name_is_reassigned: false,
         }
     }
 
@@ -113,6 +117,8 @@ impl<'a> ClassBindings<'a> {
     /// * In class expressions, this is always be temp binding.
     /// * In class declarations, it's the name binding when code is inside class body,
     ///   or a lexical alias if that name is shadowed, and temp binding outside class body.
+    /// * In class declarations whose name legacy decorators reassign, it's always temp binding,
+    ///   which keeps referring to the original class after `Foo = _decorate([dec], Foo)`.
     ///
     /// `static_private_fields_use_temp` is set accordingly at the right moments
     /// elsewhere in this transform.
@@ -122,7 +128,7 @@ impl<'a> ClassBindings<'a> {
         &mut self,
         ctx: &mut TraverseCtx<'a>,
     ) -> &BoundIdentifier<'a> {
-        if self.static_private_fields_use_temp {
+        if self.static_private_fields_use_temp || self.name_is_reassigned {
             // Create temp binding if doesn't already exist
             self.temp.get_or_insert_with(|| {
                 Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)

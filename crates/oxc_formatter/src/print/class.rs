@@ -7,7 +7,6 @@ use oxc_span::GetSpan;
 use crate::{
     Semicolons, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
-    format_args,
     formatter::{
         prelude::*,
         separated::FormatSeparatedIter,
@@ -50,9 +49,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ClassBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.body.iter().any(|element| {
-                element
-                    .property_key()
-                    .is_some_and(|key| should_preserve_quote(key, element.computed(), f))
+                element.property_key().is_some_and(|key| should_preserve_quote(key, f))
             });
             f.context_mut().push_quote_needed(quote_needed);
         }
@@ -119,7 +116,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, MethodDefinition<'a>> {
         if value.generator {
             write!(f, "*");
         }
-        format_property_key(&self.key(), self.computed, f);
+        format_property_key(&self.key(), f);
 
         if self.optional {
             write!(f, "?");
@@ -373,40 +370,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     // relative to the extends expression and any type arguments
                     let has_trailing_line_comments = comments.iter().any(Comment::is_line);
 
-                    let content = format_with(|f| {
-                        if let Some(type_arguments) = type_arguments {
-                            write!(f, [extends]);
-                            if implements.is_empty() {
-                                type_arguments.write(f);
-                            } else {
-                                type_arguments.fmt(f);
-                            }
-                        } else if implements.is_empty() {
-                            FormatNodeWithoutTrailingComments(&extends).fmt(f);
-                            // Line comments are handled separately to ensure proper placement
-                            if !has_trailing_line_comments {
-                                FormatTrailingComments::Comments(comments).fmt(f);
-                            }
-                        } else {
-                            extends.fmt(f);
+                    if type_arguments.is_none() && implements.is_empty() {
+                        FormatNodeWithoutTrailingComments(&extends).fmt(f);
+                        // Line comments are handled separately to ensure proper placement
+                        if !has_trailing_line_comments {
+                            FormatTrailingComments::Comments(comments).fmt(f);
                         }
-                    });
-
-                    if matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_)) {
-                        let content = content.memoized();
-                        write!(
-                            f,
-                            [group(&format_args!(
-                                &if_group_breaks(&format_args!(
-                                    token("("),
-                                    &soft_block_indent(&content),
-                                    token(")"),
-                                )),
-                                &if_group_fits_on_line(&content)
-                            ))]
-                        );
                     } else {
-                        content.fmt(f);
+                        extends.fmt(f);
+                    }
+
+                    // After the superclass and its own parens: `extends (B<T>)` would make `B<T>` the superclass
+                    if let Some(type_arguments) = type_arguments {
+                        if implements.is_empty() {
+                            type_arguments.write(f);
+                        } else {
+                            type_arguments.fmt(f);
+                        }
                     }
                 });
 
@@ -488,8 +468,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
 /// Heritage clauses are grouped when:
 /// 1. Superclass and/or implements are more than one
 /// 2. Superclass is a member expression and has no type arguments
-///   - ClassExpression: its parent is not an AssignmentExpression
-///   - ClassDeclaration: always
+///    (an assignment's class too, DIVERGENCES.md#assignment-class-heritage)
 /// 3. Implements is a qualified name and has no type arguments
 /// 4. There are comments in the heritage clause area
 /// 5. There are trailing line comments after type parameters
@@ -500,15 +479,12 @@ fn should_group<'a>(class: &AstNode<'_, 'a, Class<'a>>, f: &JsFormatter<'_, 'a>)
         return true;
     }
 
-    if (!class.is_expression() || !matches!(class.parent(), AstNodes::AssignmentExpression(_)))
-        && heritage.is_some_and(|heritage| {
-            is_member_expression_without_chain_wrappers(&heritage.expression)
-        })
-        && heritage.is_none_or(|heritage| heritage.type_arguments.is_none())
-        || class.implements.first().is_some_and(|implements| {
-            implements.type_arguments.is_none() && implements.expression.is_qualified_name()
-        })
-    {
+    if heritage.is_some_and(|heritage| {
+        heritage.type_arguments.is_none()
+            && is_member_expression_without_chain_wrappers(&heritage.expression)
+    }) || class.implements.first().is_some_and(|implements| {
+        implements.type_arguments.is_none() && implements.expression.is_qualified_name()
+    }) {
         return true;
     }
 
@@ -610,7 +586,7 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 fn is_binary_keyword_key(key: &PropertyKey<'_>) -> bool {
     match key {
         PropertyKey::StaticIdentifier(ident) => matches!(ident.name.as_str(), "in" | "instanceof"),
-        PropertyKey::StringLiteral(literal) => {
+        PropertyKey::StaticStringLiteral(literal) => {
             literal.value == "in" || literal.value == "instanceof"
         }
         _ => false,

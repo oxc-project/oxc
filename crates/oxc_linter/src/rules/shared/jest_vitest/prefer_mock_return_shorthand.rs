@@ -1,9 +1,10 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AccessorProperty, Argument, CallExpression, Expression, FormalParameter,
-        FormalParameterRest, Function, IdentifierReference, ImportExpression, NewExpression,
-        PropertyDefinition, Statement, StaticBlock, TaggedTemplateExpression, ThisExpression,
+        AccessorProperty, Argument, AssignmentExpression, CallExpression, Expression,
+        FormalParameter, FormalParameterRest, Function, IdentifierReference, ImportExpression,
+        NewExpression, PropertyDefinition, Statement, StaticBlock, TaggedTemplateExpression,
+        ThisExpression, UpdateExpression,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -105,15 +106,13 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    if let Expression::UpdateExpression(_) = return_expression {
-        return;
-    }
-
     let mut visitor = IdentifierCollectorVisitor::new();
 
     visitor.visit_expression(return_expression);
 
-    if matches!(expr, Expression::FunctionExpression(_)) && visitor.has_this_expression {
+    if visitor.has_mutation
+        || matches!(expr, Expression::FunctionExpression(_)) && visitor.has_this_expression
+    {
         return;
     }
 
@@ -256,16 +255,30 @@ impl<'a> VisitJs<'a> for CallLikeExpressionVisitor {
 struct IdentifierCollectorVisitor {
     references: FxHashSet<ReferenceId>,
     has_this_expression: bool,
+    has_mutation: bool,
     this_binding_depth: u32,
 }
 
 impl IdentifierCollectorVisitor {
     fn new() -> Self {
-        Self { references: FxHashSet::default(), has_this_expression: false, this_binding_depth: 0 }
+        Self {
+            references: FxHashSet::default(),
+            has_this_expression: false,
+            has_mutation: false,
+            this_binding_depth: 0,
+        }
     }
 }
 
 impl<'a> VisitJs<'a> for IdentifierCollectorVisitor {
+    fn visit_assignment_expression(&mut self, _expr: &AssignmentExpression<'a>) {
+        self.has_mutation = true;
+    }
+
+    fn visit_update_expression(&mut self, _expr: &UpdateExpression<'a>) {
+        self.has_mutation = true;
+    }
+
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         self.references.insert(ident.reference_id());
     }

@@ -4,6 +4,71 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 38cd470 transformer: Share auto-accessor lowering and fix its private storage names (#29449) (Dunqing)
+- 4b1efd3 transformer/legacy-decorator: Move class self-references to alias symbol (#30056) (Dunqing)
+- bbe2fba transformer/legacy-decorator: Avoid class name shadowing in static setters (#30058) (Dunqing)
+- 8921865 transformer/legacy-decorator: Keep static private brand checks on the original class (#30054) (Dunqing)
+- abb3593 transformer/legacy-decorator: Share anonymous default class bindings (#29753) (Dunqing)
+- 52b5506 transformer/class-properties: Preserve names of anonymous classes (#29931) (Dunqing)
+- 08023ad transformer: Keep TypeScript assign semantics for preserved classes (#29930) (Dunqing)
+- 831fbca transformer: Don't fold computed key assignments into non-computed method keys (#29912) (Dunqing)
+- 6db561f transformer: Keep correct keys on leftover fields with setPublicClassFields (#29911) (Dunqing)
+- bdbed9e transformer/async-to-generator: Avoid invalid and shadowing inferred function names (#29815) (YT)
+- a7ea78b transformer: Keep classes whose decorators are preserved (#29748) (Dunqing)
+- 5ece804 transformer/async-to-generator: Remove leading digits from inferred function names (#29816) (YT)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- d59aa8e transformer/legacy-decorator: Apply static member decorators last (#27744) (Yunus Ozen)
+- 97307e3 transformer/legacy-decorator: Emit `String`/`Number` metadata for enums declared after the class (#29724) (Max Schwenk)
+- 3586c66 transformer: Preserve object rest assignment evaluation (#29645) (Boshen)
+- f22757c transformer/class-properties: Preserve receivers in TS-wrapped private calls (#29684) (camc314)
+- 0e1ef65 transformer/exponentiation-operator: Scope default parameter temporaries (#29685) (camc314)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+### 📚 Documentation
+
+- 3ff249b skills: Share PR title guidance with triagebot (#29980) (Cameron)
+- 1da6ea8 skills: Merge PR guidance into pr-guide skill (#29866) (Dunqing)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- d520358 transformer: Retain decorated fields with define semantics (#29444) (Dunqing)
+- f8e329c transformer: Preserve optional calls on private field chains (#29443) (Dunqing)
+- e64155e transformer/react-refresh: Recognize TypeScript wrappers in HOC arguments (#29290) (camc314)
+- b372b04 transformer/optional-chaining: Preserve parenthesized chain boundaries (#29218) (camc314)
+- efcdf06 transformer: Isolate logical assignment temporaries in parameters (#29182) (Dunqing)
+- b515929 transformer: Lower wrapped assignments and preserve computed receivers (#29113) (camc314)
+
+### 📚 Documentation
+
+- 9e5a2bb agents: Require runnable playground reproductions in PRs (#29450) (Dunqing)
+- 521d194 transformer: Require reproductions in fix PR descriptions (#29224) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 3729ce1 transformer/typescript: Merge exported enums across namespace blocks (#28999) (camc314)
+- 99e67d3 transformer: Preserve static private brands with shadowed class names (#28894) (Dunqing)
+- 28a44b7 transformer/class-properties: Preserve private accessor assignment receivers (#28790) (Dunqing)
+- ea76490 transformer/class-properties: Preserve private method values in assignments (#28788) (Dunqing)
+- 8432de6 transformer/class-properties: Apply a compound assignment to a static private field once (#28606) (YT)
+- e3b1bb4 transformer/class-properties: Keep the value of a private accessor assignment (#28716) (YT)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

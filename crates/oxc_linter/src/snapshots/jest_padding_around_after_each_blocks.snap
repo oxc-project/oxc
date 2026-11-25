@@ -1,0 +1,114 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ const someText = 'abc';
+ 3 │ afterEach(() => {
+   · ▲
+ 4 │ });
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:5:1]
+ 4 │ });
+ 5 │ describe('someText', () => {
+   · ▲
+ 6 │   const something = 'abc';
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:8:3]
+ 7 │   // A comment
+ 8 │   afterEach(() => {
+   ·   ▲
+ 9 │     // stuff
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+    ╭─[padding_around_after_each_blocks.tsx:11:3]
+ 10 │   });
+ 11 │   afterEach(() => {
+    ·   ▲
+ 12 │     // other stuff
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+    ╭─[padding_around_after_each_blocks.tsx:17:3]
+ 16 │   const something = 'abc';
+ 17 │   afterEach(() => {
+    ·   ▲
+ 18 │     // stuff
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:3:1]
+ 2 │ // A comment
+ 3 │ afterEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ afterEach(() => {});
+ 2 │ foo();
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ await afterEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:3:3]
+ 2 │   const thing = 123;
+ 3 │   afterEach(() => {});
+   ·   ▲
+ 4 │ }
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:4:5]
+ 3 │     afterEach(() => {});
+ 4 │     foo();
+   ·     ▲
+ 5 │ }
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:2:2]
+ 1 │ const thing = 123
+ 2 │ ;afterEach(() => {})
+   ·  ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ jest(padding-around-after-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ label: afterEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement

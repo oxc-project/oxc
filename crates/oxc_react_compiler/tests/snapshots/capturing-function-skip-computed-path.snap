@@ -16,8 +16,3 @@ function StoreLandingUnseenGiftModalContainer(a) {
 	}
 	return t0;
 }
-export const FIXTURE_ENTRYPOINT = {
-	fn: StoreLandingUnseenGiftModalContainer,
-	params: ["TodoAdd"],
-	isComponent: "TodoAdd"
-};

@@ -97,8 +97,8 @@ The configured `end_of_line` option still applies, the printer emits the chosen 
 
 ### css-in-js specifics
 
-`format_to_ir()` accepts SCSS-like source with `` `PLACEHOLDER-N` `` markers in place of `${}` interpolations.
-`oxc-css-parser` tokenizes each as a typed `Token::Placeholder` via the fork option `template_placeholder` (`format.rs` passes the inner affix). Backtick is invalid SCSS, so the marker can never be confused with real syntax (see the `TEMPLATE_PLACEHOLDER_PREFIX` / `_SUFFIX` consts in `lib.rs`).
+`format_to_ir()` accepts SCSS-like source with `` `oxfmt_css_N` `` markers in place of `${}` interpolations.
+`oxc-css-parser` tokenizes each as a typed `Token::Placeholder` via the fork option `template_placeholder` (`format.rs` passes the inner affix). Backtick is invalid SCSS, so the marker can never be confused with real syntax (see the `TEMPLATE_PLACEHOLDER` const in `lib.rs`, an `oxc_formatter_core::Placeholder`).
 
 Each parses into a typed node that the printer emits as a `FormatElement::EmbedPlaceholder(N)` marker (`print/mod.rs::write_placeholder`), plus a `Text` for any glued suffix; the JS host (`oxc_formatter/embed/css.rs`) substitutes `${exprN}` back. No output-side string protocol — the index is carried structurally.
 
@@ -154,6 +154,11 @@ What the formatter relies on per shape:
   A postcss-simple-vars value the typed grammar could not read is verbatim too: the plugin substitutes those bytes textually.
   "Raw plus a little normalization" is the failure mode: re-spacing unknown params corrupts Tailwind syntax (`dark:bg-x` → `dark: bg-x`, `py-1.5` → `py-10.5`).
   A normal property's `<any-value>` fallback is not raw in this sense; it rides the value writer
+- The one sanctioned "raw plus normalization" (`adjust_numbers_and_strings`):
+  Less mixin calls / params / guards, Less verbatim preludes, and a media keyword glued to its parens (`and(...)`, every variant)
+  - It re-scans bytes, so every token it does not know is a corruption risk: only STANDALONE numbers normalize, and strings re-quote
+  - Verbatim: comments, unquoted `url()`, hash tokens (`#1e0`, never `#1`), and glued number runs, head included (`a.10.2`, `1.20.3`)
+  - Glued-run rule shared with the typed side (`is_word_glued_number` / `is_glued_number_head`); change both together
 - The print-layer word heuristics (`value.rs`) rebuild postcss's word model from spec tokens.
   A new one is admitted when its scope is bounded and it improves how structured output is laid out;
   never to match a fixture, and never to reproduce Prettier's string handling
@@ -182,7 +187,7 @@ Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plug
 5. A dedicated `CssVariant` only for real languages with reference compilers. Never for a plugin
 
 A report is first translated into "which line, which shape or which rung is this?", never "how do we support plugin Xxx?".
-Triage follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`.
+Triage follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`, or `#1e0` → `#1` / `a.10.2` → `a.100.2` in a raw slice.
 Specific plugin names accumulating in code is the red flag.
 
 ### Tailwind `@apply` sorting (`CssFormatOptions::sort_tailwindcss`)

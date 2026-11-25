@@ -566,7 +566,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
 
         let arguments = if is_callee {
             // `(_Class, prop, _Class, 2)`
-            let two = Expression::new_numeric_literal(SPAN, 2.0, None, NumberBase::Decimal, ctx);
+            let two = Expression::new_numeric_literal(SPAN, 2.0, None, ctx);
             ArenaVec::from_array_in([class, property, receiver, Argument::from(two)], ctx)
         } else {
             // `(_Class, prop, _Class)`
@@ -592,7 +592,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
                 Argument::from(property),
                 Argument::from(value),
                 receiver,
-                Argument::new_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal, ctx),
+                Argument::new_numeric_literal(SPAN, 1.0, None, ctx),
             ],
             ctx,
         );

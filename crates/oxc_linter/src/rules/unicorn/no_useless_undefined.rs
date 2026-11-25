@@ -57,6 +57,9 @@ declare_oxc_lint!(
     /// the `allowImplicit` option to avoid conflicts.
     /// :::
     ///
+    /// Removing trailing `undefined` arguments can change a function's behavior when it
+    /// inspects the number of arguments. These fixes require `--fix-dangerously`.
+    ///
     /// ### Why is this bad?
     ///
     /// `undefined` is the default value for new variables, parameters,
@@ -80,7 +83,7 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     recommended,
-    fix_suggestion,
+    dangerous_fix_suggestion,
     config = NoUselessUndefined,
     version = "0.6.1",
     short_description = "Disallow useless `undefined`.",
@@ -292,7 +295,6 @@ impl Rule for NoUselessUndefined {
                             },
                         );
                     }
-                    // `let foo = undefined` / `var foo = undefined`
                     AstKind::VariableDeclarator(variable_declarator) => {
                         let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
@@ -302,12 +304,9 @@ impl Rule for NoUselessUndefined {
                         };
                         if declaration.kind.is_const()
                             || declaration.kind.is_using()
+                            || declaration.kind.is_var()
                             || !variable_declarator.id.is_binding_identifier()
                         {
-                            return;
-                        }
-                        if declaration.kind.is_var() {
-                            ctx.diagnostic(no_useless_undefined_diagnostic(undefined_literal.span));
                             return;
                         }
                         ctx.diagnostic_with_fix(
@@ -474,7 +473,9 @@ impl Rule for NoUselessUndefined {
                 }
 
                 let delete_span = Span::new(start, end);
-                ctx.diagnostic_with_fix(
+                // Omitting an argument changes `arguments.length` and rest parameters,
+                // even when the omitted argument is `undefined`.
+                ctx.diagnostic_with_dangerous_fix(
                     no_useless_undefined_diagnostic_spans(undefined_args_spans),
                     |fixer| {
                         if ctx.has_comments_between(delete_span) {
@@ -1017,8 +1018,6 @@ fn test() {
         ("function* foo() {yield                 undefined;}", "function* foo() {yield;}", None),
         ("let a = undefined;", "let a;", None),
         ("let a = undefined, b = 2;", "let a, b = 2;", None),
-        ("var a = undefined;", "var a = undefined;", None),
-        ("var a = undefined, b = 2;", "var a = undefined, b = 2;", None),
         ("foo(undefined);", "foo();", None),
         ("foo(undefined, undefined);", "foo();", None),
         ("foo(undefined,);", "foo();", None),
@@ -1555,16 +1554,17 @@ fn test_var_resets() {
     let pass = vec![
         "function f(): void { using x = undefined; }",
         "async function f(): Promise<void> { await using x = undefined; }",
-    ];
-    let fail = vec![
+        "var x = undefined;",
+        "var x = ((undefined)), y = 2;",
+        "var x: number | undefined = undefined;",
+        "for (const item of items) { var value = undefined; value ??= item; }",
         "function f(): number { for (let i = 0; i < 2; i++) { var x = undefined; if (i === 0) x = 1; } return x ?? 0; }",
         "function f(): number { var x = 1; var x = undefined; return x ?? 0; }",
         "function f(): number { var x; do { var x = undefined; } while (condition); return x ?? 0; }",
         "function f(x): number { var x = undefined; return x ?? 0; }",
     ];
-    let fix = fail.iter().map(|source| (*source, *source, None)).collect();
-    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
-        .expect_fix(fix)
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
         .test();
 }
 
@@ -1643,6 +1643,63 @@ fn test_complete_fix_ranges() {
     let fail = cases.iter().map(|(source, _)| *source).collect();
     let fix = cases.into_iter().map(|(source, output)| (source, output, None)).collect();
     Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_argument_fix_safety() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let cases = [
+        ("foo(undefined);", "foo();"),
+        ("foo(undefined,);", "foo();"),
+        ("foo(value, undefined, undefined);", "foo(value);"),
+        ("foo?.(value, undefined);", "foo?.(value);"),
+        ("foo(...values, undefined);", "foo(...values);"),
+        ("foo(value, undefined,);", "foo(value,);"),
+        (
+            "const hasBothArguments = (...args) => args.length === 2; hasBothArguments({}, undefined);",
+            "const hasBothArguments = (...args) => args.length === 2; hasBothArguments({});",
+        ),
+        (
+            "function count() { return arguments.length; } count({}, undefined);",
+            "function count() { return arguments.length; } count({});",
+        ),
+        (
+            "function required(value) { if (arguments.length === 0) throw new Error(); } required(undefined);",
+            "function required(value) { if (arguments.length === 0) throw new Error(); } required();",
+        ),
+    ];
+    let mut fix = vec![];
+    for (source, output) in cases {
+        // Neither safe fixes nor suggestions may change the argument count.
+        fix.push((source, source, None, FixKind::Fix));
+        fix.push((source, source, None, FixKind::SafeFixOrSuggestion));
+        fix.push((source, output, None, FixKind::DangerousFix));
+    }
+    // Other branches still offer safe fixes in the same file.
+    fix.push((
+        "let value = undefined; foo(value, undefined);",
+        "let value; foo(value, undefined);",
+        None,
+        FixKind::Fix,
+    ));
+    fix.push((
+        "foo(value, /* keep */ undefined);",
+        "foo(value, /* keep */ undefined);",
+        None,
+        FixKind::DangerousFix,
+    ));
+    let pass = vec![
+        ("foo(value, undefined);", Some(serde_json::json!([{ "checkArguments": false }]))),
+        ("array.push(undefined);", None),
+        ("function f(undefined) { foo(undefined); }", None),
+        ("foo.bind(receiver, undefined);", None),
+    ];
+    let fail = cases.iter().map(|(source, _)| (*source, None)).collect();
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .change_rule_path_extension("js")
         .expect_fix(fix)
         .test();
 }

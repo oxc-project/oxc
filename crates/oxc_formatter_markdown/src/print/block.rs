@@ -124,12 +124,10 @@ pub fn double_gap(
         return !after_definition && !multi_line;
     }
 
-    // A nested list after a paragraph / code keeps its blank line, and after a type 6 / 7 HTML block,
-    // which only a blank line ends (DIVERGENCES.md#list-after-html-block)
+    // A nested list after a paragraph / code / HTML block keeps its blank line
     if matches!(node, Block::List(_))
         && matches!(parent, Parent::ListItem { .. })
-        && (matches!(previous, Block::CodeBlock(_) | Block::Paragraph(_))
-            || matches!(previous, Block::HtmlBlock(h) if h.kind >= 6))
+        && matches!(previous, Block::CodeBlock(_) | Block::Paragraph(_) | Block::HtmlBlock(_))
         && !adjacent
     {
         return true;
@@ -182,7 +180,7 @@ fn ignore_kind(block: &Block<'_>, f: &MarkdownFormatter<'_, '_>) -> Option<Ignor
         return None;
     }
     let value = join_pieces(&html.lines, f);
-    let inner = value.strip_prefix("<!--")?.strip_suffix("-->")?.trim();
+    let inner = value.strip_circumfix("<!--", "-->")?.trim();
     if is_suppression_marker(inner) {
         return Some(IgnoreKind::Next);
     }
@@ -343,8 +341,10 @@ fn write_footnote_definition<'a>(
 ) {
     write!(f, [token("[^"), text(f.context().slice(def.label)), token("]:")]);
     let children = &def.children;
+    // `[^1]:` alone is a definition without content
+    let [first_child, ..] = children.as_slice() else { return };
     let parent = Parent::Container { top_level: false };
-    let first = format_with(|f| write_block(&children[0], children, 0, parent, f)).memoized();
+    let first = format_with(|f| write_block(first_child, children, 0, parent, f)).memoized();
     let on_label_line = matches!(children.as_slice(), [Block::Paragraph(_)])
         && f.options().prose_wrap != ProseWrap::Always
         && !first.inspect(f).will_break();

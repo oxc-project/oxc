@@ -19,11 +19,18 @@ Key IR pieces are all exported from the crate root.
 Every scope `Tag` acts on the line breaks inside it, never on the content (the `indent` rustdoc has the examples and the rationale).
 
 The semantics of each building block live in the `write/builders.rs` rustdocs.
-e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
+e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `embedded_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
+
+A newline inside a `Text` has two readings, and the IR keeps the `Text` one element (with its width flags) for both:
+
+- Raw (the default): it prints as is, at column 0, as Prettier prints a string
+- Inside an `embedded_root` (a host around another language's IR): it resumes at the embedding, as Prettier's `replaceEndOfLine()` makes it a literal line
+  - A host never rewrites a child's `Text` into lines: that would drop its `without_expand_parent()`
 
 Every Prettier doc primitive its own language printers emit has a counterpart here; composite ones translate rather than port 1:1:
 
 - `hardlineWithoutBreakParent` is `hard_line_break().without_expand_parent()`
+- A `softline` after a `line` (a blank line only when the group breaks, the printer here merges line breaks) is `if_group_breaks(&empty_line().without_expand_parent())`
 - `conditionalGroup` is `best_fitting!`: same expansion boundary, same flat-first variant trial.
   Prettier's own doesn't switch variants on inner breaks either ("the user is expected to manually handle what breaks");
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
@@ -59,6 +66,12 @@ Pick by what you're building:
 - Known-length sequences: build exact-sized directly (e.g. `ArenaVec::from_iter_in`)
 
 `Formatter::intern` and `BestFitting` already stage this way; consumer crates get this for free.
+
+Interning does not make content shared for every IR walk:
+`Formatter::intern` / `intern_exact` return a single element as-is, not wrapped in `Interned`,
+and `Document::propagate_expand` caches per `Interned` only.
+So a single `BestFitting` placed in both variants of an outer `best_fitting!` is walked once per variant (2^depth when nested);
+prefer one group with conditional content over duplicating children into variants.
 
 ### Generic context design
 
@@ -100,6 +113,11 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - `DispatchResponse::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
   - Optional-embed callers degrade the same way for both, but never conflate them at the source
   - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
+- A host that puts stand-ins for its own parts in the code it dispatches (css-in-js's `${}`, Angular's nested pipes) uses `Placeholder` (`session/placeholder.rs`):
+  core owns its grammar (`{prefix}{index}{suffix}`, found in the child's IR, in order), the host its affixes and the substitution (`map_text_in_ir`)
+  - The affixes are their reader's: the child's input protocol where its parser tokenizes one (css-in-js's, whose backticks oxc-css-parser fixes; the host keeps a copy), the host's otherwise
+  - A child that reads a parent's learns it from the dispatch context (html-in-js's, `HtmlInJsTemplate::placeholder`, which an HTML part passes on to an HTML body in it as its own marker);
+    a host that finds its own coming back through another child needs none (JS knows html-in-js's in a `<script>`, `is_html_placeholder`)
 
 ## What belongs in core (the boundary)
 
@@ -125,6 +143,7 @@ Output targets Prettier compatibility, but the domain is defined by what it is, 
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
+The embedded-IR helpers there (`map_text_in_ir`, `Placeholder`) are the same kind: mechanical rewrites and a placeholder grammar any host uses, which name no language.
 `string_embedder` additionally carries an exit criterion: it is removed when the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half; html, the other half, has an IR-capable formatter now); until then it is the string-out channel's transport.
 
 - (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)

@@ -190,3 +190,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                                               ─────────────────────────────────────
    ╰────
   help: Consider splitting it into smaller functions.
+
+  ⚠ eslint(max-statements): function has too many statements (4). Maximum allowed is 2.
+   ╭─[max_statements.tsx:1:26]
+ 1 │ class Stack { constructor() { let a = 1; a++; a++; a++; } } var helper = () => { let b = 1; b++; b++; b++; };
+   ·                          ────────────────────────────────
+   ╰────
+  help: Consider splitting it into smaller functions.
+
+  ⚠ eslint(max-statements): function has too many statements (4). Maximum allowed is 2.
+   ╭─[max_statements.tsx:1:74]
+ 1 │ class Stack { constructor() { let a = 1; a++; a++; a++; } } var helper = () => { let b = 1; b++; b++; b++; };
+   ·                                                                          ───────────────────────────────────
+   ╰────
+  help: Consider splitting it into smaller functions.
+
+  ⚠ eslint(max-statements): function `f` has too many statements (2). Maximum allowed is 1.
+   ╭─[max_statements.tsx:1:1]
+ 1 │ function f() { a(); b(); } function g() { c(); }
+   · ──────────────────────────
+   ╰────
+  help: Consider splitting it into smaller functions.

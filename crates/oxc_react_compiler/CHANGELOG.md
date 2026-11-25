@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- b6ff506 react-compiler: Do not treat the receiver of a JSX ref property load as a ref (#29754) (Boshen)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- 279185a react-compiler: Ignore ESLint suppressions when hooks and memo validations are enabled (#29655) (Boshen)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 061becc react-compiler: Support logical assignment operators (#29137) (Yagiz Nizipli)
+
+### 🐛 Bug Fixes
+
+- 4b86eba react-compiler: Do not report hoisted function declaration initializer as access before declaration (#29641) (Boshen)
+- 9085be1 react-compiler: Only report zero-argument new Date in render body (#29419) (Boshen)
+- 9f465fd react-compiler: Preserve ref mutation hints (#28553) (Nash Aschenbath)
+- f37f271 react-compiler: Resolve computed dependencies in merged memo scopes (#29376) (camc314)
+- 6e6bd61 react-compiler: Avoid invariants for catch phis and ref-free callbacks (#29018) (camc314)
+
 ## [0.143.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

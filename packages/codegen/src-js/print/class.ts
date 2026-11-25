@@ -1,6 +1,6 @@
 // Classes.
 
-import { typeAssertIs } from "../asserts.ts";
+import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import {
   CAT_CLOSE_BRACKET,
@@ -142,21 +142,30 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
 /**
  * Whether a decorator's expression has to be parenthesized.
  *
- * The grammar allows a name, a chain of plain member accesses, and a call on either, and nothing
- * else - so a computed access needs parentheses even though a static one does not.
+ * The grammar allows a chain of `.name` / `.#name` accesses starting from a name, optionally
+ * followed by a single call, and nothing else - so `@a.b.#c()` needs no parentheses, but
+ * `@(this.a)`, `@(a().b)`, `@(a()())`, and `@(a[b])` do.
  *
  * @param expr - Decorator's expression
  */
 function decoratorNeedsWrap(expr: ESTree.Expression): boolean {
+  // Access `.type` as few times as possible, as it's a megamorphic access
+  let exprType = expr.type;
+  if (exprType === "CallExpression") {
+    debugAssert(expr.type === exprType);
+    expr = expr.callee;
+    exprType = expr.type;
+  }
+
   for (;;) {
-    switch (expr.type) {
+    switch (exprType) {
       case "Identifier":
         return false;
       case "MemberExpression":
-        // `@a.b` / `@this.b` / `@x!.y` need no parens; computed access does
-        return expr.computed;
-      case "CallExpression":
-        expr = expr.callee;
+        debugAssert(expr.type === exprType);
+        if (expr.computed) return true;
+        expr = expr.object;
+        exprType = expr.type;
         break;
       default:
         return true;

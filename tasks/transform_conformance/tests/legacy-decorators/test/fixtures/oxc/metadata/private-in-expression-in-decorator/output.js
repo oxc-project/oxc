@@ -1,6 +1,6 @@
 
 import { dec } from "dec";
-export class Cls {
+let Cls = class Cls {
   #zoo = 0;
   foo() {}
   static {
@@ -11,8 +11,10 @@ export class Cls {
       babelHelpers.decorateMetadata("design:returntype", void 0)
     ], Cls.prototype, "foo", null);
   }
-}
-export class Cls2 {
+};
+Cls = babelHelpers.decorate([dec], Cls);
+export { Cls };
+let Cls2 = class Cls2 {
   #zoo = 0;
   foo(param) {}
   static {
@@ -23,4 +25,6 @@ export class Cls2 {
       babelHelpers.decorateMetadata("design:returntype", void 0)
     ], Cls2.prototype, "foo", null);
   }
-}
+};
+Cls2 = babelHelpers.decorate([dec], Cls2);
+export { Cls2 };

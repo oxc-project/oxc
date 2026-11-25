@@ -26,7 +26,7 @@
 
 ## html-in-js
 
-### Option 1: 160/184 (86.96%)
+### Option 1: 159/184 (86.41%)
 
 ```json
 {"printWidth":80}
@@ -39,6 +39,8 @@
   - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/webawesome/carousel/carousel.test.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.test.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#assignment-class-heritage
 - [externals/webawesome/checkbox/checkbox.ts](diffs/html-in-js/externals__webawesome__checkbox__checkbox.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/color-picker/color-picker.ts](diffs/html-in-js/externals__webawesome__color-picker__color-picker.ts.md)
@@ -83,7 +85,7 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 174/184 (94.57%)
+### Option 2: 173/184 (94.02%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -94,6 +96,8 @@
   - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/webawesome/carousel/carousel.test.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.test.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#assignment-class-heritage
 - [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/format-number/format-number.ts](diffs/html-in-js/externals__webawesome__format-number__format-number.ts.md)
@@ -110,6 +114,120 @@
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+
+## angular-in-js
+
+### Option 1: 221/240 (92.08%)
+
+```json
+{"printWidth":80}
+```
+
+- [externals/ng-zorro-antd/components/auto-complete/autocomplete.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__auto-complete__autocomplete.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#arrow-exact-fill-signature
+- [externals/ng-zorro-antd/components/button/button.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__button__button.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/cdk/overflow/overflow-container.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__cdk__overflow__overflow-container.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/date-picker/date-picker.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__date-picker.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/date-picker/date-range-popup.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__date-range-popup.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/date-picker/inner-popup.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__inner-popup.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/drawer/drawer.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__drawer__drawer.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/empty/embed-empty.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__empty__embed-empty.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/empty/empty.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__empty__empty.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/form/form-control.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__form__form-control.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/form/form-item.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__form__form-item.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/modal/modal.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__modal__modal.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/slider/handle.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__slider__handle.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/slider/slider.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__slider__slider.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/steps/steps.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__steps__steps.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__time-picker__time-picker-panel.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/transfer/transfer-list.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__transfer__transfer-list.component.ts.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+- [externals/ng-zorro-antd/components/tree-select/tree-select.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__tree-select__tree-select.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/upload/upload.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__upload__upload.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+
+### Option 2: 234/240 (97.50%)
+
+```json
+{"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
+```
+
+- [externals/ng-zorro-antd/components/date-picker/date-picker.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__date-picker__date-picker.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/dropdown/dropdown-menu.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__dropdown__dropdown-menu.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/empty/empty.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__empty__empty.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/form/form-control.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__form__form-control.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/resizable/resize-handle.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__resizable__resize-handle.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/tabs/tab-body.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__tabs__tab-body.component.ts.md)
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+
+## angular
+
+### Option 1: 790/804 (98.26%)
+
+```json
+{"printWidth":80}
+```
+
+- [externals/angular-adev/content/examples/i18n/src/app/app.component.html](diffs/angular/externals__angular-adev__content__examples__i18n__src__app__app.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- [externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/profiler/recording-timeline/visualizer-controls/visualizer-controls.component.html](diffs/angular/externals__angular-devtools__projects__ng-devtools__src__lib__devtools-tabs__profiler__recording-timeline__visualizer-controls__visualizer-controls.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/router-tree/router-details-row/route-details-row.component.html](diffs/angular/externals__angular-devtools__projects__ng-devtools__src__lib__devtools-tabs__router-tree__router-details-row__route-details-row.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html](diffs/angular/externals__angular-devtools__src__app__demo-app__todo__home__todos.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/auth/sso/sso-manage.component.html](diffs/angular/externals__bitwarden-license-web__auth__sso__sso-manage.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/pam/approvals/withdraw-approval-dialog/withdraw-approval-dialog.component.html](diffs/angular/externals__bitwarden-license-web__pam__approvals__withdraw-approval-dialog__withdraw-approval-dialog.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-history.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-history.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#interpolation-in-broken-parent
+- [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-job-drawer/rotation-job-drawer.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-job-drawer__rotation-job-drawer.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#interpolation-in-broken-parent
+- [externals/bitwarden-web/admin-console/organizations/shared/components/collection-dialog/collection-dialog.component.html](diffs/angular/externals__bitwarden-web__admin-console__organizations__shared__components__collection-dialog__collection-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+- [externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__change-plan-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
+- [externals/bitwarden-web/billing/organizations/churn-mitigation-offer-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__churn-mitigation-offer-dialog.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-web/billing/organizations/organization-plans.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-plans.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
+- [externals/bitwarden-web/billing/organizations/organization-subscription-cloud.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-subscription-cloud.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+
+### Option 2: 802/804 (99.75%)
+
+```json
+{"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
+```
+
+- [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- [externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__change-plan-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
 
 ## svelte
 
@@ -157,7 +275,7 @@
 
 ## markdown-mdn
 
-### Option 1: 359/362 (99.17%)
+### Option 1: 358/362 (98.90%)
 
 ```json
 {"printWidth":80,"bracketSameLine":true}
@@ -165,12 +283,14 @@
 
 - [externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md](diffs/markdown-mdn/externals__mdn-css-guides__custom_functions_and_mixins__using_custom_functions__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
+- [externals/mdn-css-guides/scroll-driven_animations/timeline_insets/index.md](diffs/markdown-mdn/externals__mdn-css-guides__scroll-driven_animations__timeline_insets__index.md.md)
+  - apps/oxfmt/DIVERGENCES.md#multiline-text-in-code-block-fits
 - [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
 - [externals/mdn-learn/structuring_content/basic_html_syntax/index.md](diffs/markdown-mdn/externals__mdn-learn__structuring_content__basic_html_syntax__index.md.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#unquoted-value-with-slash
 
-### Option 2: 359/362 (99.17%)
+### Option 2: 358/362 (98.90%)
 
 ```json
 {"printWidth":100}
@@ -178,6 +298,8 @@
 
 - [externals/mdn-css-guides/custom_functions_and_mixins/using_custom_functions/index.md](diffs/markdown-mdn/externals__mdn-css-guides__custom_functions_and_mixins__using_custom_functions__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#value-semicolon-glue
+- [externals/mdn-css-guides/scroll-driven_animations/timeline_insets/index.md](diffs/markdown-mdn/externals__mdn-css-guides__scroll-driven_animations__timeline_insets__index.md.md)
+  - apps/oxfmt/DIVERGENCES.md#multiline-text-in-code-block-fits
 - [externals/mdn-css-guides/values_and_units/textual_data_types/index.md](diffs/markdown-mdn/externals__mdn-css-guides__values_and_units__textual_data_types__index.md.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#prelude-string-requote
 - [externals/mdn-learn/structuring_content/basic_html_syntax/index.md](diffs/markdown-mdn/externals__mdn-learn__structuring_content__basic_html_syntax__index.md.md)
@@ -291,12 +413,14 @@
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
 
-### Option 2: 301/302 (99.67%)
+### Option 2: 300/302 (99.34%)
 
 ```json
 {"printWidth":100,"tabWidth":4,"proseWrap":"always"}
 ```
 
+- [externals/aws-cloudformation-templates/EC2/ec2_with_waitcondition_template.yaml](diffs/yaml/externals__aws-cloudformation-templates__EC2__ec2_with_waitcondition_template.yaml.md)
+  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-explicit-indent
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
 

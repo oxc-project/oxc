@@ -4,6 +4,140 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 395913e parser: Parse `<=` after `as` and `satisfies` (#30028) (Cameron)
+- 9570bc8 parser: Require `class` keyword for decorated class export (#30027) (Cameron)
+- 0167451 parser: Treat `import x = require()` as module syntax (#29908) (camc314)
+- e4e2ac4 parser,semantic: Reject invalid types in type arguments (#29945) (camc314)
+- a0f67fa parser: Parse TSX `<T extends U` as start of generic arrow function (#29910) (overlookmotel)
+- 8c84c5f parser: Never parse `<` as start of generic arrow function in JSX files (#29909) (overlookmotel)
+- 777d2d1 parser: Report import/export in unambiguous code resolved to script (#29902) (camc314)
+- e385fe8 parser: Don't treat `await` in function parameters and class fields as top-level await (#29901) (camc314)
+- 5442f8a parser: Report misplaced import/export before checking parse goal (#29898) (camc314)
+- 24a1aaf parser: Discard comments from rewound speculative parses (#29847) (camc314)
+- 15bdce3 parser: `parse_expression` produce correct error for overlong source (#29761) (overlookmotel)
+- 7b2b207 parser: Parse contextual keywords after relational expressions (#25097) (camc314)
+
+### ⚡ Performance
+
+- 5e7abd1 parser: Remove unnecessary conversion when parsing BigInts (#29913) (overlookmotel)
+- 5ac3942 parser: Mark missing-digit lexer errors cold (#29806) (Boshen)
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+- a2eed1b parser: Read each comment once (#29794) (Boshen)
+- 0537b09 parser: Take the name of a JSX identifier from its token (#29746) (Boshen)
+- 1c2cd7c parser: Take the value of a string literal without escapes from its source text (#29745) (Boshen)
+- 1d84d3f parser: Take the value of JSX text from its source text (#29744) (Boshen)
+- 41e3075 parser: Check for the `<` of type arguments without a call (#29743) (Boshen)
+- 6e783b1 parser: Keep the token read after `import` (#29742) (Boshen)
+- eb9c7a4 parser: Parse `(<div />)` as a parenthesized expression directly (#29741) (Boshen)
+- 7acf20a parser: Parse JSX at the start of an expression without speculation (#29740) (Boshen)
+- 414532b parser: Cache failed type argument speculation (#29518) (Boshen)
+- d91c961 parser: Take comments from the lexer without copying inline storage (#29623) (Boshen)
+- dda1781 parser: Finish plain strings and integers in their token handler (#29622) (Boshen)
+- 6f5d371 parser: Choose how to scan a block comment from its first bytes (#29621) (Boshen)
+- d80d731 parser: Do less work to record each comment (#29620) (Boshen)
+- ce2b7aa parser: Lex the token after a line break in its token handler (#29619) (Boshen)
+- 7833ea0 parser: Finish identifier and keyword tokens in their token handler (#29618) (Boshen)
+- bb08acb parser: Dispatch tokens through handlers which finish the token (#29617) (Boshen)
+- a1ed5af parser: Parse `(…)` once with a cover grammar for arrow functions (#29603) (Boshen)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- 7e41638 parser: Keep whole parenthesized `TSInstantiationExpression` with `preserve_parens: false` (#29359) (leaysgur)
+- ab73590 parser: Preserve re-exported default import names in raw transfer (#29234) (camc314)
+- 177fdd7 parser: Classify re-exported namespaces as indirect exports (#29196) (Boshen)
+- 053cc40 parser: Preserve type-only flags on re-exported imports (#29195) (Boshen)
+- 59aed23 parser: Highlight invalid numeric separators (#29117) (camc314)
+- 8f5e82c parser: Reject exponentiation operands hidden by assertions (#29115) (camc314)
+- 42e790c parser: Require `declare` before `abstract` modifiers (#29111) (camc314)
+
+### ⚡ Performance
+
+- dd9af34 parser: Make parser and lexer checkpoints `Copy` (#29662) (Boshen)
+- 4ebe523 parser: Keep the tokens read while classifying `()` and `(x)` arrows (#29560) (Boshen)
+- 7a6b0a4 parser: Lex the token after `let` and `?.` once (#29559) (Boshen)
+- bd9fa9b parser: Lex the token after a modifier keyword once (#29558) (Boshen)
+- 2c6ee72 parser: Skip arrow speculation for array and object literals (#29557) (Boshen)
+- 85c0269 parser: Rule out type arguments from tokens before speculating (#29556) (Boshen)
+- b6edb78 parser: Avoid token loop restart after newlines (#29423) (Boshen)
+- f09af45 lexer: Keep source position in registers across byte handlers (#29401) (Boshen)
+- ae1a375 lexer: Complete single-byte tokens without a byte handler (#29400) (Boshen)
+- 11daf98 lexer: Build tokens once from pending state (#29399) (Boshen)
+- 8a6e0c1 lexer: Borrow contiguous escaped string values (#29372) (Boshen)
+- 27baf0c lexer: Buffer more comments before arena allocation (#29371) (Boshen)
+- baa84fc lexer: Size escaped strings before allocating (#29369) (Boshen)
+- 4313dee parser: Buffer module record entries (#29368) (Boshen)
+- 2df1f19 parser: Reduce regex, template, and comment allocations (#29361) (Boshen)
+- f26d9d9 parser: Reduce arena allocations and reallocations (#29358) (Boshen)
+- 0d2e41a parser: Reduce identifier dispatch overhead (#29347) (Boshen)
+- 1aaf3b0 parser: Reuse pure re-export storage (#29216) (Boshen)
+- 9add80d parser: Buffer decorator and heritage lists (#29215) (Boshen)
+- cb5cf55 parser: Collect prefixed import lists once (#29214) (Boshen)
+- ec6b166 parser: Omit discarded recovered parentheses (#29213) (Boshen)
+- 01e2b66 parser: Avoid discarded TypeScript instantiations (#29210) (Boshen)
+- 727610a parser: Collect short named import lists (#29209) (Boshen)
+- d1eaed0 parser: Collect short template literal lists (#29208) (Boshen)
+- 0301b92 parser: Reserve module record batches (#29207) (Boshen)
+- 9734804 parser: Collect short switch consequent lists (#29206) (Boshen)
+- 6674b7a parser: Collect short JSX child lists (#29205) (Boshen)
+- cc03246 parser: Collect short binding pattern lists (#29204) (Boshen)
+- e36dd2d parser: Avoid discarded cover parameter allocations (#29203) (Boshen)
+- 2d5864c parser: Collect short sequence expression lists (#29202) (Boshen)
+- 6495e66 parser: Avoid discarded block allocations (#29199) (Boshen)
+- 2601c45 parser: Collect short formal parameter lists (#29198) (Boshen)
+- 10fddc3 parser: Collect short TypeScript type lists (#29197) (Boshen)
+- 4140fb0 parser: Keep class heritage on the stack (#29190) (Boshen)
+- e028d74 parser: Collect short statement lists before allocating (#29189) (Boshen)
+- 69c7892 parser: Collect short declaration lists before allocating (#29188) (Boshen)
+- aed0190 parser: Skip unused identifier hashes (#29168) (Boshen)
+- 2c0a6c1 parser: Avoid allocating discarded directive statements (#29186) (Boshen)
+- 48532bb parser: Buffer remaining parser lists (#29185) (Boshen)
+- e59d413 parser: Reuse export entry storage (#29172) (Boshen)
+- f815f54 parser: Reduce arena list reallocations (#29169) (Boshen)
+
+### 📚 Documentation
+
+- 43e0829 parser: Fix grammar context formatting (#29373) (camc314)
+- 768cc29 parser: Clarify syntax support and AST preservation (#29121) (camc314)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 3dbf140 parser: Treat escaped contextual keywords as names, not modifiers (#28748) (Dominic Elm)
+
+### ⚡ Performance
+
+- 6611cf9 parser: Specialize quoted string value access (#28965) (Boshen)
+- 5038ba6 parser: Avoid repeated await-using lookahead (#28960) (Boshen)
+- ecc807b parser: Skip discarded arrow diagnostics (#28940) (Boshen)
+- c880368 parser: Fast-path absent TypeScript type lists (#28959) (Boshen)
+- dee6cf4 parser: Skip repeated optional call lookahead (#28876) (Boshen)
+- a524e17 parser: Reuse successful parenthesized arrow heads (#28862) (Boshen)
+- 296b12a parser: Accelerate line comment scanning (#28878) (Boshen)
+- c4fc21e parser: Accelerate escaped string scanning (#28907) (Boshen)
+- f7726b6 parser: Accelerate regex literal scanning (#28911) (Boshen)
+- a8aff38 parser: Scan whitespace in runs (#28953) (Boshen)
+- b1c137c parser: Avoid lookahead for TypeScript keyword types (#28954) (Boshen)
+- 6a8a2a7 parser: Fast-path plain identifiers (#28955) (Boshen)
+- 00deb87 parser: Initialize declaration lists with their first item (#28956) (Boshen)
+- 71dd877 parser: Specialize binary operator associativity (#28957) (Boshen)
+- 027eb7e parser: Combine async arrow lookahead (#28431) (Boshen)
+- 7b933d5 lexer: Directly dispatch common punctuation (#28792) (Boshen)
+- 45d86c3 lexer: Combine per-token annotation resets (#28492) (Boshen)
+- d497fbf lexer: Match keywords with byte patterns (#28494) (Boshen)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🚀 Features

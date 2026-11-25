@@ -68,3 +68,4 @@ src:
   - 'oxfmtrc.jsonc'
   - 'package.json'
   - 'tasks/ast_tools/src/**'
+  - 'tasks/coverage/src/generated/derive_full_eq.rs'

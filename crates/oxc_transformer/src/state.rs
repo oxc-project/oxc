@@ -3,14 +3,20 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use oxc_ast::ast::Class;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
+use oxc_syntax::scope::ScopeId;
 
 use crate::{
     CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
     common::{
-        helper_loader::HelperLoaderStore, module_imports::ModuleImportsStore,
-        statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
+        class_lowering::{ClassLowering, ClassLoweringDecisions},
+        class_transform::ClassTransform,
+        helper_loader::HelperLoaderStore,
+        module_imports::ModuleImportsStore,
+        statement_injector::StatementInjectorStore,
+        top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
     },
 };
@@ -45,8 +51,10 @@ pub struct TransformState<'a> {
     pub top_level_statements: TopLevelStatementsStore<'a>,
 
     // State for multiple plugins interacting
-    /// `true` if class properties plugin is enabled
-    pub is_class_properties_plugin_enabled: bool,
+    /// Ownership of class field and static block lowering, shared by cooperating transforms.
+    pub class_transform: ClassTransform,
+    /// Recorded lowering decisions per class, shared by cooperating transforms.
+    class_lowering_decisions: ClassLoweringDecisions,
 }
 
 impl Default for TransformState<'_> {
@@ -64,16 +72,20 @@ impl Default for TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            is_class_properties_plugin_enabled: false,
+            class_transform: ClassTransform::default(),
+            class_lowering_decisions: ClassLoweringDecisions::default(),
         }
     }
 }
 
-impl TransformState<'_> {
+impl<'a> TransformState<'a> {
     pub fn new(source_path: &Path, options: &TransformOptions) -> Self {
         let filename = source_path
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
+
+        let decorator_mode = options.decorator.mode();
+        let class_transform = ClassTransform::new(&options.env);
 
         Self {
             errors: vec![],
@@ -88,8 +100,19 @@ impl TransformState<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
+            class_transform,
+            class_lowering_decisions: ClassLoweringDecisions::new(class_transform, decorator_mode),
         }
+    }
+
+    /// Record the lowering of a class before its decorators or auto-accessors are rewritten.
+    pub fn record_class_lowering(&mut self, class: &Class<'a>) {
+        self.class_lowering_decisions.record(class);
+    }
+
+    /// The lowering of a class which has already been entered.
+    pub fn class_lowering_of(&self, scope_id: ScopeId) -> ClassLowering {
+        self.class_lowering_decisions.get(scope_id)
     }
 
     pub fn take_errors(&mut self) -> Vec<OxcDiagnostic> {

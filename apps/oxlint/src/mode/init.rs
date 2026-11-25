@@ -7,9 +7,13 @@ use std::{
 use oxc_config::ConfigDiscovery;
 use serde_json::json;
 
-use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, lint::print_and_flush_stdout};
+use crate::{
+    DEFAULT_OXLINTRC_NAME,
+    cli::CliRunResult,
+    lint::{print_and_flush_stderr, print_and_flush_stdout},
+};
 
-pub fn run_init(cwd: &Path, stdout: &mut dyn Write) -> CliRunResult {
+pub fn run_init(cwd: &Path, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
     match create_config(cwd) {
         Ok(()) => {
             print_and_flush_stdout(stdout, "Configuration file created\n");
@@ -21,7 +25,7 @@ pub fn run_init(cwd: &Path, stdout: &mut dyn Write) -> CliRunResult {
             } else {
                 "Failed to create configuration file\n"
             };
-            print_and_flush_stdout(stdout, message);
+            print_and_flush_stderr(stderr, message);
             CliRunResult::ConfigFileInitFailed
         }
     }

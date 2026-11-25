@@ -260,20 +260,17 @@ impl OnlyExportComponents {
                 }
 
                 // An anonymous function gets its name from a static property key.
-                let has_component_name = !property.computed
-                    && match &property.key {
-                        PropertyKey::StaticIdentifier(ident) => {
-                            is_react_component_name(&ident.name)
-                        }
-                        // Only the first character decides a component name.
-                        PropertyKey::StringLiteral(literal) => literal
-                            .value
-                            .chars()
-                            .next()
-                            .and_then(JSChar::to_char)
-                            .is_some_and(|c| c.is_ascii_uppercase()),
-                        _ => false,
-                    };
+                let has_component_name = match &property.key {
+                    PropertyKey::StaticIdentifier(ident) => is_react_component_name(&ident.name),
+                    // Only the first character decides a component name.
+                    PropertyKey::StaticStringLiteral(literal) => literal
+                        .value
+                        .chars()
+                        .next()
+                        .and_then(JSChar::to_char)
+                        .is_some_and(|c| c.is_ascii_uppercase()),
+                    _ => false,
+                };
                 self.is_compound_component_value(&property.value, has_component_name)
             })
     }
@@ -638,11 +635,12 @@ impl OnlyExportComponents {
             if !matches!(declarator.id, BindingPattern::BindingIdentifier(_)) {
                 return None;
             }
-            let init = declarator.init.as_ref()?.get_inner_expression();
-            (matches!(init, Expression::ObjectExpression(_))
-                || (!is_default_export
-                    && matches!(init, Expression::JSXElement(_) | Expression::JSXFragment(_))))
-            .then_some(init)
+            let init = declarator.init.as_ref()?;
+            if is_default_export {
+                let inner = init.get_inner_expression();
+                return matches!(inner, Expression::ObjectExpression(_)).then_some(inner);
+            }
+            Some(init)
         });
         self.classify_export(name, span, self.can_be_react_function_component(init), init)
     }
@@ -1163,6 +1161,19 @@ export function Button(props: PropsWithChildren): ReactNode {
             None,
         ),
         ("const App = React.unknown(() => <div />);", None),
+        (
+            "export const createThing = () => {\n  const Inner = (): unknown => null;\n  return { Inner };\n};",
+            None,
+        ),
+        (
+            "const createThing = () => {\n  const Inner = (): unknown => null;\n  return { Inner };\n};\n\nexport { createThing };",
+            None,
+        ),
+        ("export const ACCEPT = 'x';\nexport const useThing = (): unknown => null;", None),
+        (
+            "const ACCEPT = 'x';\nconst useThing = (): unknown => null;\n\nexport { ACCEPT, useThing };",
+            None,
+        ),
     ];
 
     let fail = vec![

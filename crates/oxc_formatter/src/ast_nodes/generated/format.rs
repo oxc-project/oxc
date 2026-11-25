@@ -1024,6 +1024,30 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PropertyKey<'a>> {
                 }
                 .fmt(f);
             }
+            PropertyKey::StaticStringLiteral(inner) => {
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            PropertyKey::StaticNumericLiteral(inner) => {
+                AstNode::<NumericLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            PropertyKey::StaticBigIntLiteral(inner) => {
+                AstNode::<BigIntLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
             PropertyKey::PrivateIdentifier(inner) => {
                 AstNode::<PrivateIdentifier> {
                     inner,

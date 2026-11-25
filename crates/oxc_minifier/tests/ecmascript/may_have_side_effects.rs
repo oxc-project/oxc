@@ -1012,6 +1012,7 @@ fn test_new_expressions() {
     test("new ReferenceError", false);
     // RegExp() with no arguments is valid (returns /(?:)/)
     test("new RegExp", false);
+    test("new RegExp('x', 'g', foo())", true);
     test("new SyntaxError", false);
     test("new TypeError", false);
     test("new URIError", false);
@@ -1068,6 +1069,7 @@ fn test_new_expressions() {
     // --- ArrayBuffer: ToIndex -> ToNumber, Symbol and BigInt throw ---
     test("new ArrayBuffer()", false);
     test("new ArrayBuffer(16)", false);
+    test("new ArrayBuffer(void foo())", true);
     test("new ArrayBuffer(x)", true); // unknown -> could be Symbol or BigInt
     test("new ArrayBuffer(0n)", true); // ToNumber(BigInt) throws
 
@@ -1383,6 +1385,10 @@ fn test_throwing_global_calls() {
     test("String.fromCodePoint(-1)", true);
     test("String.fromCodePoint(1.5)", true);
     test("String.fromCodePoint(0x110000)", true);
+    test("String.fromCodePoint('3.14')", true);
+    test("String.fromCodePoint(+'3.14')", true);
+    test("String.fromCodePoint(undefined)", true);
+    test("String.fromCodePoint(-Infinity)", true);
     test("String.fromCodePoint(65)", false);
     test("String.fromCodePoint(0, 0x10FFFF)", false);
     test("String.fromCodePoint(0, -1)", true);

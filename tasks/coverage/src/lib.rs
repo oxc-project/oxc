@@ -8,7 +8,13 @@ mod babel;
 mod test262;
 mod typescript;
 
+mod full_eq;
 mod tools;
+mod unambiguous_diff;
+
+mod generated {
+    mod derive_full_eq;
+}
 
 // `oxc_lexer` only supports little endian at present
 #[cfg(target_endian = "little")]
@@ -327,6 +333,7 @@ impl AppArgs {
 
     fn run_conformance_suites(&self, data: &TestData) {
         self.run_parser(data);
+        self.run_unambiguous(data);
         // `oxc_lexer` only supports little endian at present
         #[cfg(target_endian = "little")]
         self.run_lexer(data);
@@ -367,6 +374,37 @@ impl AppArgs {
         if self.filter.is_none() {
             typescript::save_reviewed_tsc_diagnostics_codes();
         }
+    }
+
+    /// Differential unambiguous parsing conformance.
+    ///
+    /// Parse each fixture as unambiguous, and again as the module or script it resolved to.
+    /// Both parses must produce the same AST, trivia, tokens, diagnostics and module record.
+    pub fn run_unambiguous(&self, data: &TestData) {
+        self.run_tool(
+            "parser_unambiguous_test262",
+            TEST262_PATH,
+            &data.test262,
+            unambiguous_diff::run_unambiguous_test262,
+        );
+        self.run_tool(
+            "parser_unambiguous_babel",
+            BABEL_PATH,
+            &data.babel,
+            unambiguous_diff::run_unambiguous_babel,
+        );
+        self.run_tool(
+            "parser_unambiguous_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            unambiguous_diff::run_unambiguous_typescript,
+        );
+        self.run_tool(
+            "parser_unambiguous_misc",
+            MISC_PATH,
+            &data.misc,
+            unambiguous_diff::run_unambiguous_misc,
+        );
     }
 
     /// Differential lexer conformance.

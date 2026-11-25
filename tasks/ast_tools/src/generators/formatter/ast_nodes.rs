@@ -644,6 +644,6 @@ fn has_kind(type_def: &TypeDef, schema: &Schema) -> bool {
     }
 }
 
-fn is_copyable(devices: &[String]) -> bool {
-    devices.contains(&"Copy".to_string())
+fn is_copyable(derives: &[String]) -> bool {
+    derives.iter().any(|name| name == "Copy")
 }

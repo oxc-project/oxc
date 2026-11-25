@@ -1,3 +1,5 @@
 codegen_misc Summary:
-AST Parsed     : 135/135 (100.00%)
-Positive Passed: 135/135 (100.00%)
+AST Parsed     : 168/168 (100.00%)
+Positive Passed: 167/168 (99.40%)
+Normal: tasks/coverage/misc/pass/for-using-escaped-of.js
+

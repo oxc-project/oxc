@@ -29,6 +29,7 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, SourceType, Span};
 use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{
     GetNodeId,
+    label::LabelId,
     node::NodeId,
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -269,6 +270,12 @@ pub struct LabelIdentifier<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub name: Ident<'a>,
+    /// Unique identifier for the label this identifier declares or targets.
+    ///
+    /// This gets initialized during semantic analysis. A `break` or `continue` label that does
+    /// not resolve to an enclosing label is [`None`]. If you choose to skip semantic analysis,
+    /// this will always be [`None`].
+    pub label_id: Cell<Option<LabelId>>,
 }
 
 /// `this` in `return this.prop;`
@@ -365,7 +372,11 @@ pub enum ObjectPropertyKind<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(rename = "Property", add_fields(optional = TsFalse))]
+#[estree(
+    rename = "Property",
+    add_fields(computed = PropertyKeyComputed, optional = TsFalse),
+    field_order(kind, key, value, method, shorthand, computed, optional, span),
+)]
 pub struct ObjectProperty<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -374,10 +385,17 @@ pub struct ObjectProperty<'a> {
     pub value: Expression<'a>,
     pub method: bool,
     pub shorthand: bool,
-    pub computed: bool,
 }
 
 /// Property Key
+///
+/// The own variants are non-computed keys. The inherited [`Expression`] variants are computed
+/// keys, so `"a"` in `{ "a": 1 }` is [`PropertyKey::StaticStringLiteral`], while `"a"` in
+/// `{ ["a"]: 1 }` is [`PropertyKey::StringLiteral`].
+///
+/// A [`PropertyKey::StaticNumericLiteral`] can hold positive infinity when the source
+/// contains an overflowing numeric literal, such as `2e308`. Transforms that create a numeric
+/// key with a negative sign (including `-0`), `NaN`, or either infinity must use a computed key.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -389,8 +407,14 @@ pub struct ObjectProperty<'a> {
 pub enum PropertyKey<'a> {
     /// `a` in `const obj = { a: 1 }; obj.a;`
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
+    /// `"a"` in `const obj = { "a": 1 };`
+    StaticStringLiteral(Box<'a, StringLiteral<'a>>) = 65,
+    /// `1` in `const obj = { 1: 1 };`
+    StaticNumericLiteral(Box<'a, NumericLiteral<'a>>) = 66,
+    /// `1n` in `const obj = { 1n: 1 };`
+    StaticBigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 67,
     /// `#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
-    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
+    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 68,
 
     // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
@@ -959,7 +983,13 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(
     rename = "Property",
-    add_fields(kind = Init, method = False, shorthand = False, optional = TsFalse),
+    add_fields(
+        kind = Init,
+        method = False,
+        shorthand = False,
+        computed = AssignmentTargetPropertyPropertyComputed,
+        optional = TsFalse,
+    ),
     field_order(kind, name, binding, method, shorthand, computed, optional, span),
 )]
 pub struct AssignmentTargetPropertyProperty<'a> {
@@ -979,8 +1009,6 @@ pub struct AssignmentTargetPropertyProperty<'a> {
     /// ```
     #[estree(rename = "value")]
     pub binding: AssignmentTargetMaybeDefault<'a>,
-    /// Property was declared with a computed key
-    pub computed: bool,
 }
 
 /// `a++, b++` in `let a = 1, b = 2; let result = (a++, b++);`
@@ -1634,7 +1662,7 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 }
 
-/// `{x}` in `const {x} = 1;`.
+/// `{x}` in `const {x} = obj;`.
 ///
 /// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
@@ -1659,7 +1687,7 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(
     rename = "Property",
-    add_fields(kind = Init, method = False, optional = TsFalse),
+    add_fields(kind = Init, method = False, computed = PropertyKeyComputed, optional = TsFalse),
     field_order(kind, key, value, method, shorthand, computed, optional, span),
 )]
 pub struct BindingProperty<'a> {
@@ -1668,10 +1696,9 @@ pub struct BindingProperty<'a> {
     pub key: PropertyKey<'a>,
     pub value: BindingPattern<'a>,
     pub shorthand: bool,
-    pub computed: bool,
 }
 
-/// `[x]` in `const [x] = 1;`
+/// `[x]` in `const [x] = arr;`.
 ///
 /// See other examples in docs for [`BindingPattern`].
 #[ast(visit)]
@@ -2223,6 +2250,13 @@ pub enum ClassElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    add_fields(computed = PropertyKeyComputed),
+    field_order(
+        r#type, decorators, key, value, kind, computed, r#static, r#override, optional,
+        accessibility, span,
+    ),
+)]
 pub struct MethodDefinition<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2235,7 +2269,6 @@ pub struct MethodDefinition<'a> {
     #[visit(args(flags = self.kind.scope_flags()))]
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
-    pub computed: bool,
     pub r#static: bool,
     #[ts]
     pub r#override: bool,
@@ -2258,6 +2291,13 @@ pub enum MethodDefinitionType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    add_fields(computed = PropertyKeyComputed),
+    field_order(
+        r#type, decorators, key, type_annotation, value, computed, r#static, declare, r#override,
+        optional, definite, readonly, accessibility, span,
+    ),
+)]
 pub struct PropertyDefinition<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2290,16 +2330,6 @@ pub struct PropertyDefinition<'a> {
     /// }
     /// ```
     pub value: Option<Expression<'a>>,
-    /// Property was declared with a computed key
-    ///
-    /// ## Example
-    /// ```js
-    /// class Foo {
-    ///   ["a"]: 1; // true
-    ///   b: 2;     // false
-    /// }
-    /// ```
-    pub computed: bool,
     /// Property was declared with a `static` modifier
     pub r#static: bool,
     /// Property is declared with a `declare` modifier.
@@ -2474,7 +2504,18 @@ pub enum AccessorPropertyType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(add_fields(declare = TsFalse, optional = TsFalse, readonly = TsFalse))]
+#[estree(
+    add_fields(
+        computed = PropertyKeyComputed,
+        declare = TsFalse,
+        optional = TsFalse,
+        readonly = TsFalse,
+    ),
+    field_order(
+        r#type, decorators, key, type_annotation, value, computed, r#static, r#override, definite,
+        accessibility, declare, optional, readonly, span,
+    ),
+)]
 pub struct AccessorProperty<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2492,8 +2533,6 @@ pub struct AccessorProperty<'a> {
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Initialized value in the declaration, if present.
     pub value: Option<Expression<'a>>,
-    /// Property was declared with a computed key
-    pub computed: bool,
     /// Property was declared with a `static` modifier
     pub r#static: bool,
     /// Property was declared with a `override` modifier

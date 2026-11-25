@@ -9,7 +9,7 @@ let setupRuleConfigs: typeof import("./plugins/index.ts").setupRuleConfigs | nul
 let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
 let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | null = null;
 let destroyWorkspace: typeof import("./workspace/index.ts").destroyWorkspace | null = null;
-// Lazy-loaded JS/TS config loader (experimental)
+
 let resolvedConfigLoader: import("./js_config.ts").ConfigLoader | null = null;
 
 /**
@@ -141,7 +141,7 @@ function destroyWorkspaceWrapper(workspace: string): undefined {
   destroyWorkspace(workspace);
 }
 /**
- * Load JavaScript/TypeScript config files (experimental).
+ * Load JavaScript/TypeScript config files.
  *
  * Lazy-loads the js_config module on first call.
  * Uses native Node.js TypeScript support to import config files.

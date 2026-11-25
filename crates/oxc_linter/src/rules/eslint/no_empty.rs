@@ -80,7 +80,9 @@ impl Rule for NoEmpty {
                         && let Some(try_block_stmt) = &try_stmt.finalizer
                         && try_block_stmt.span == block.span
                     {
-                        return if let Some(finally_kw_start) = find_finally_start(ctx, block) {
+                        return if try_stmt.handler.is_some()
+                            && let Some(finally_kw_start) = find_finally_start(ctx, block)
+                        {
                             fixer.delete_range(Span::new(finally_kw_start, block.span.end))
                         } else {
                             fixer.noop()
@@ -104,31 +106,21 @@ impl Rule for NoEmpty {
 }
 
 fn find_finally_start(ctx: &LintContext, finally_clause: &BlockStatement) -> Option<u32> {
-    let src = ctx.source_text();
-    let finally_start = finally_clause.span.start as usize - 1;
-    let mut start = finally_start;
+    let src = &ctx.source_text()[..finally_clause.span.start as usize];
+    let mut chars = src.char_indices().rev().skip_while(|(_, ch)| ch.is_whitespace());
+    let mut start = 0;
 
-    let src_chars: Vec<char> = src.chars().collect();
-
-    while start > 0 {
-        if let Some(&ch) = src_chars.get(start)
-            && !ch.is_whitespace()
-        {
-            if ch == 'y'
-                && "finally".chars().rev().skip(1).all(|c| {
-                    start -= 1;
-                    src_chars.get(start) == Some(&c)
-                })
-            {
-                #[expect(clippy::cast_possible_truncation)]
-                return Some(start as u32);
-            }
+    for expected in "finally".chars().rev() {
+        let (offset, ch) = chars.next()?;
+        if ch != expected {
             return None;
         }
-        start = start.saturating_sub(1);
+        start = offset;
     }
 
-    None
+    #[expect(clippy::cast_possible_truncation)]
+    let start = start as u32;
+    (!ctx.is_inside_comment(start)).then_some(start)
 }
 
 #[test]
@@ -202,6 +194,32 @@ fn test() {
         ),
         ("try {} catch (ex) {} finally {}", "", Some(json!([ { "allowEmptyCatch": true }]))),
         ("try { foo(); } catch (ex) {} finally {}", "try { foo(); } catch (ex) {} ", None),
+        (
+            "/*😀😀😀😀😀😀😀😀😀😀😀*/\ntry{a()}finally{}/*finally                      */",
+            "/*😀😀😀😀😀😀😀😀😀😀😀*/\ntry{a()}finally{}/*finally                      */",
+            None,
+        ),
+        (
+            "/* é中😀 */ try { foo(); } catch (ex) { throw ex; } finally {}",
+            "/* é中😀 */ try { foo(); } catch (ex) { throw ex; } ",
+            None,
+        ),
+        (
+            "try { foo(); } catch (ex) { throw ex; } finally\u{2003}\u{2028}{}",
+            "try { foo(); } catch (ex) { throw ex; } ",
+            None,
+        ),
+        (
+            "/*é*/try{a()}catch(e){b()}finally//finally\n{}",
+            "/*é*/try{a()}catch(e){b()}finally//finally\n{}",
+            None,
+        ),
+        (
+            "try{a()}catch(e){b()}finally//finally\n{}",
+            "try{a()}catch(e){b()}finally//finally\n{}",
+            None,
+        ),
+        ("try{a()}catch(e){b()}//finally\nfinally{}", "try{a()}catch(e){b()}//finally\n", None),
     ];
 
     Tester::new(NoEmpty::NAME, NoEmpty::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

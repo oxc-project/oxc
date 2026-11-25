@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### ⚡ Performance
+
+- 27777a9 diagnostics: Loosen lifetime bound on `OxcDiagnostic::with_source_code` (#29849) (overlookmotel)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### ⚡ Performance
+
+- 2df1f19 parser: Reduce regex, template, and comment allocations (#29361) (Boshen)
+
+## [0.158.0] - 2026-11-09
+
+### ⚡ Performance
+
+- bee25de regular_expression: Check only the latest group per name in duplicate prescan (#29083) (Yuji Sugiura)
+
 ## [0.157.0] - 2026-11-02
 
 ### 🐛 Bug Fixes

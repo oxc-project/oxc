@@ -2,47 +2,47 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-border:    1px     `PLACEHOLDER-0`      red;
-grid-area:       area-`PLACEHOLDER-1`;
-foo: `PLACEHOLDER-2``PLACEHOLDER-3`       `PLACEHOLDER-4`;
-width: `PLACEHOLDER-5``PLACEHOLDER-6`;
-border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
-transform: `PLACEHOLDER-10`(30px);
-transform: `PLACEHOLDER-11` (30px);
-transform: `PLACEHOLDER-12`(`PLACEHOLDER-13`px);
-some-extra-long-property-name: `PLACEHOLDER-14`(`PLACEHOLDER-15`px);
+border:    1px     `oxfmt_css_0`      red;
+grid-area:       area-`oxfmt_css_1`;
+foo: `oxfmt_css_2``oxfmt_css_3`       `oxfmt_css_4`;
+width: `oxfmt_css_5``oxfmt_css_6`;
+border: `oxfmt_css_7` `oxfmt_css_8` solid `oxfmt_css_9`;
+transform: `oxfmt_css_10`(30px);
+transform: `oxfmt_css_11` (30px);
+transform: `oxfmt_css_12`(`oxfmt_css_13`px);
+some-extra-long-property-name: `oxfmt_css_14`(`oxfmt_css_15`px);
 // DIVERGES: the flag is spaced like after any value (Prettier keeps it glued); see DIVERGENCES.md#placeholder-important-space
-color: `PLACEHOLDER-16`!important;
+color: `oxfmt_css_16`!important;
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-border: 1px `PLACEHOLDER-0` red;
-grid-area: area-`PLACEHOLDER-1`;
-foo: `PLACEHOLDER-2``PLACEHOLDER-3` `PLACEHOLDER-4`;
-width: `PLACEHOLDER-5``PLACEHOLDER-6`;
-border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
-transform: `PLACEHOLDER-10`(30px);
-transform: `PLACEHOLDER-11` (30px);
-transform: `PLACEHOLDER-12`(`PLACEHOLDER-13`px);
-some-extra-long-property-name: `PLACEHOLDER-14`(`PLACEHOLDER-15`px);
+border: 1px `oxfmt_css_0` red;
+grid-area: area-`oxfmt_css_1`;
+foo: `oxfmt_css_2``oxfmt_css_3` `oxfmt_css_4`;
+width: `oxfmt_css_5``oxfmt_css_6`;
+border: `oxfmt_css_7` `oxfmt_css_8` solid `oxfmt_css_9`;
+transform: `oxfmt_css_10`(30px);
+transform: `oxfmt_css_11` (30px);
+transform: `oxfmt_css_12`(`oxfmt_css_13`px);
+some-extra-long-property-name: `oxfmt_css_14`(`oxfmt_css_15`px);
 // DIVERGES: the flag is spaced like after any value (Prettier keeps it glued); see DIVERGENCES.md#placeholder-important-space
-color: `PLACEHOLDER-16` !important;
+color: `oxfmt_css_16` !important;
 
 -------------------
 { printWidth: 100 }
 -------------------
-border: 1px `PLACEHOLDER-0` red;
-grid-area: area-`PLACEHOLDER-1`;
-foo: `PLACEHOLDER-2``PLACEHOLDER-3` `PLACEHOLDER-4`;
-width: `PLACEHOLDER-5``PLACEHOLDER-6`;
-border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
-transform: `PLACEHOLDER-10`(30px);
-transform: `PLACEHOLDER-11` (30px);
-transform: `PLACEHOLDER-12`(`PLACEHOLDER-13`px);
-some-extra-long-property-name: `PLACEHOLDER-14`(`PLACEHOLDER-15`px);
+border: 1px `oxfmt_css_0` red;
+grid-area: area-`oxfmt_css_1`;
+foo: `oxfmt_css_2``oxfmt_css_3` `oxfmt_css_4`;
+width: `oxfmt_css_5``oxfmt_css_6`;
+border: `oxfmt_css_7` `oxfmt_css_8` solid `oxfmt_css_9`;
+transform: `oxfmt_css_10`(30px);
+transform: `oxfmt_css_11` (30px);
+transform: `oxfmt_css_12`(`oxfmt_css_13`px);
+some-extra-long-property-name: `oxfmt_css_14`(`oxfmt_css_15`px);
 // DIVERGES: the flag is spaced like after any value (Prettier keeps it glued); see DIVERGENCES.md#placeholder-important-space
-color: `PLACEHOLDER-16` !important;
+color: `oxfmt_css_16` !important;
 
 ===================== End =====================

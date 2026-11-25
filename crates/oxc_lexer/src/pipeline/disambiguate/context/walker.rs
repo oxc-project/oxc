@@ -3,7 +3,7 @@
 
 use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 
-use crate::pipeline::disambiguate::common::Tokens;
+use crate::pipeline::disambiguate::common::TokensView;
 
 use super::{
     After, Site,
@@ -268,6 +268,13 @@ impl Walk {
     pub(super) fn end_statement(&mut self) {
         // Bodiless signatures and open type regions end with the statement.
         self.pop_virtual();
+        if self.top_kind() == FrameKind::ClassBody {
+            // A class body holds members, so the next one starts.
+            self.top_mut().next_member();
+            self.set_operand();
+            self.decorator = 0;
+            return;
+        }
         self.after_statement();
     }
 
@@ -296,7 +303,7 @@ impl Walk {
     }
 
     #[cpu_version(Generic)]
-    pub(super) fn advance(&mut self, tokens: &Tokens, limit: usize) {
+    pub(super) fn advance(&mut self, tokens: &TokensView, limit: usize) {
         let cpu = BASELINE;
 
         let mut pos = self.walked_to;
@@ -335,7 +342,7 @@ impl Walk {
 
     /// What the token at pos leaves behind: it is stepped unless it is the tail of the last one.
     #[cpu_version(Generic)]
-    pub(super) fn after_token(&mut self, tokens: &Tokens, pos: usize) -> After {
+    pub(super) fn after_token(&mut self, tokens: &TokensView, pos: usize) -> After {
         if pos >= self.walked_to {
             let end = self.step(tokens, pos);
             self.walked_to = end.max(self.walked_to);
@@ -392,12 +399,7 @@ impl Walk {
 
     #[cpu_version(Generic)]
     pub(super) fn site(&self) -> Site {
-        let in_type = self.in_type();
-        Site {
-            in_type,
-            operand: self.operand_allowed() && !in_type && !self.stmt_done,
-            type_params: self.type_params_expected(),
-        }
+        Site { in_type: self.in_type(), type_params: self.type_params_expected() }
     }
 
     /// Would a `<` at the next token open a type-parameter list of a declaration head or member?

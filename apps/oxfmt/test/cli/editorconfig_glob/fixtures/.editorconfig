@@ -1,0 +1,11 @@
+# No `/`, so it also matches `nested/test.js`
+[test.js]
+indent_size = 4
+
+# `*` does not match `/`, so it does not match `src/nested/test.ts`
+[src/*.ts]
+indent_size = 6
+
+# Braces with a single item match literally, so it does not match `test.mjs`
+[*.{mjs}]
+indent_size = 8

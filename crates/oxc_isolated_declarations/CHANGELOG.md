@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 1aadbe7 isolated-declarations: Preserve const literal initializers through parentheses (#29041) (camc314)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- 19b1691 isolated-declarations: Retain types used by exported ambient variables (#28996) (camc314)
+
+### 📚 Documentation
+
+- 794cf47 isolated-declarations: Add agent guide (#29125) (camc314)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- de6ac92 isolated-declarations: Preserve object accessor mutability (#29039) (camc314)
+- 67ac6be isolated-declarations: Evaluate enum template literal initializers (#28997) (camc314)
+- f05b30e isolated-declarations: Infer auto-accessor initializer types (#29038) (camc314)
+- 030d410 isolated-declarations: Preserve computed ambient enum members (#29040) (camc314)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

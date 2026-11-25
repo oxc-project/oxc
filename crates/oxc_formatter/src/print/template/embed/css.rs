@@ -1,6 +1,8 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, IndentWidth, dispatch_fragment_ir};
+use oxc_formatter_core::{
+    FormatElement, IndentWidth, Placeholder, PlaceholderPiece, dispatch_fragment_ir,
+};
 
 use crate::{
     ast_nodes::AstNode,
@@ -12,13 +14,11 @@ use crate::{
     write,
 };
 
-// css-in-js interpolation marker `` `PLACEHOLDER-N` ``.
+// css-in-js interpolation marker `` `oxfmt_css_N` ``.
 // Backtick is invalid SCSS (the variant the dispatcher formats as),
 // so the marker is unmistakably out-of-band.
-// NOTE: Keep these in sync with `oxc_formatter_css`'s.
-// Or pass it from the dispatcher?
-const PLACEHOLDER_PREFIX: &str = "`PLACEHOLDER-";
-const PLACEHOLDER_SUFFIX: &str = "`";
+// NOTE: A copy of `oxc_formatter_css`'s, whose parser reads it (its backticks are oxc-css-parser's): keep them in sync.
+const PLACEHOLDER: Placeholder<'static> = Placeholder { prefix: "`oxfmt_css_", suffix: "`" };
 
 /// Re-emit a (already arena-backed) text slice as a `Text` element.
 /// No-op for an empty slice.
@@ -67,15 +67,13 @@ pub(super) fn format_css_doc<'a>(
     }
 
     // Phase 1: Build joined text
-    // quasis[0].raw + "`PLACEHOLDER-0`" + quasis[1].raw + ...
+    // quasis[0].raw + "`oxfmt_css_0`" + quasis[1].raw + ...
     let allocator = f.allocator();
     let joined = {
         let mut sb = ArenaStringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {
             if idx > 0 {
-                sb.push_str(PLACEHOLDER_PREFIX);
-                let _ = std::fmt::Write::write_fmt(&mut sb, std::format_args!("{}", idx - 1));
-                sb.push_str(PLACEHOLDER_SUFFIX);
+                PLACEHOLDER.write(&mut sb, idx - 1);
             }
             // Use `.raw` (not `.cooked`), CSS/SCSS needs the original escape sequences
             sb.push_str(quasi_elem.value.raw.as_str());
@@ -104,11 +102,10 @@ pub(super) fn format_css_doc<'a>(
         .iter()
         .map(|el| match el {
             FormatElement::EmbedPlaceholder(_) => 1,
-            FormatElement::Text { text, .. }
-                if super::find_ignore_ascii_case(text.as_str(), PLACEHOLDER_PREFIX).is_some() =>
-            {
-                super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX).len() / 2
-            }
+            FormatElement::Text { text, .. } => PLACEHOLDER
+                .pieces(text.as_str())
+                .filter(|piece| matches!(piece, PlaceholderPiece::Index(_)))
+                .count(),
             _ => 0,
         })
         .sum();
@@ -119,7 +116,7 @@ pub(super) fn format_css_doc<'a>(
     // Phase 3: Replace each `${exprN}` placeholder with the formatted expression.
     // Two kinds survive SCSS formatting:
     // - the typed `EmbedPlaceholder(N)` marker (the main path)
-    // - a `` `PLACEHOLDER-N` `` sentinel still embedded in a `Text` run
+    // - a `` `oxfmt_css_N` `` sentinel still embedded in a `Text` run
     //   because a string / `url()` / comment keeps it opaque to the CSS lexer
     // Both print the expression the same way.
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
@@ -131,25 +128,15 @@ pub(super) fn format_css_doc<'a>(
                         write_expression(expr, f);
                     }
                 }
-                // Same scan as html.rs: `split_on_placeholders` yields alternating
-                // [literal, index, literal, ...] (invalid matches fold into the literal),
-                // so even parts are text and odd parts are a placeholder.
-                FormatElement::Text { text, .. }
-                    if super::find_ignore_ascii_case(text.as_str(), PLACEHOLDER_PREFIX)
-                        .is_some() =>
-                {
-                    let parts = super::split_on_placeholders(
-                        text.as_str(),
-                        PLACEHOLDER_PREFIX,
-                        PLACEHOLDER_SUFFIX,
-                    );
-                    for (i, part) in parts.iter().enumerate() {
-                        if i % 2 == 0 {
-                            write_text_piece(part, indent_width, f);
-                        } else if let Ok(idx) = part.parse::<usize>()
-                            && let Some(&expr) = expressions.get(idx)
-                        {
-                            write_expression(expr, f);
+                FormatElement::Text { text, .. } if PLACEHOLDER.is_in(text.as_str()) => {
+                    for piece in PLACEHOLDER.pieces(text.as_str()) {
+                        match piece {
+                            PlaceholderPiece::Text(text) => write_text_piece(text, indent_width, f),
+                            PlaceholderPiece::Index(index) => {
+                                if let Some(&expr) = expressions.get(index) {
+                                    write_expression(expr, f);
+                                }
+                            }
                         }
                     }
                 }

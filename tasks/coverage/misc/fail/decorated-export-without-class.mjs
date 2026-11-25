@@ -1,0 +1,1 @@
+export @d bogus C {}

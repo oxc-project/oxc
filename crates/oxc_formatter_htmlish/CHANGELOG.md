@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 🚀 Features
+
+- d3af78a formatter_htmlish/angular: Support Tailwind class sorting (#29737) (leaysgur)
+- 0fe3d0c formatter_htmlish/angular: Format template JS expressions (#29726) (leaysgur)
+- ae32aed formatter_htmlish/angular: Implement printer w/o JS expressions (#29657) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- f1816d8 formatter_htmlish: Count a blank line after unclosed element (#29881) (leaysgur)
+- 5952610 formatter_htmlish/angular: Do not break a parent for ICU (#29874) (leaysgur)
+- 596c70d formatter_htmlish/angular: Break as-written block parameters (#29873) (leaysgur)
+- 1fb897f formatter_htmlish: Keep blank lines before borrowed `}}` when preserved (#29872) (leaysgur)
+
+## [0.79.0] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- d41ed14 formatter: Keep the `;` of a lone statement in a Vue event handler (#29354) (leaysgur)
+- 16b84d3 formatter/htmlish: Print CDATA sections as nodes of their own (#29348) (leaysgur)
+- 79064df formatter_htmlish/angular: Keep block params, ignore whole block (#29258) (leaysgur)
+- 4d50307 formatter_htmlish: Keep attrs holding character reference (#29257) (leaysgur)
+- bed54ab formatter_htmlish: Keep whitespace as written only between two CJ characters (#29171) (leaysgur)
+- a3660bb formatter_htmlish: Keep empty comment only element as-is (#29159) (leaysgur)
+- 49b832a formatter_htmlish/vue: Preserve `v-for` alias holding `in|of` (#29156) (leaysgur)
+
+### 📚 Documentation
+
+- 9660ce4 oxfmt: Update htmlish and oxfmt divergences (#29334) (leaysgur)
+
+## [0.78.0] - 2026-11-09
+
+### ⚡ Performance
+
+- dde9c5c formatter_htmlish: Skip `</script` escape if possible (#29078) (leaysgur)
+
+### 📚 Documentation
+
+- eb2eb2d formatter_htmlish: Cover block elements in `DIVERGENCES.md#interpolation-element-as-text` (#28901) (leaysgur)
+
 ## [0.77.0] - 2026-11-06
 
 ### 💥 BREAKING CHANGES

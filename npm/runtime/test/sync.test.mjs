@@ -118,6 +118,21 @@ test("sync preserves local import-first precedence across upstream export shapes
   }
 });
 
+for (const relative of ["decorateElement.js", "esm/decorateElement.js"]) {
+  test(`sync refuses an upstream collision with Oxc-owned ${relative} before writing`, (t) => {
+    const fixture = setup(t);
+    writeFileSync(join(fixture.upstream, "helpers", relative), "// upstream collision\n");
+    const before = snapshot(fixture.runtime);
+    const result = sync(fixture);
+    assert.notEqual(result.status, 0);
+    assert.match(
+      result.stderr,
+      /Upstream helper conflicts with Oxc-owned helper decorateElement.js/,
+    );
+    assert.deepEqual(snapshot(fixture.runtime), before);
+  });
+}
+
 for (const location of ["runtime", "upstream"]) {
   test(`sync refuses ${location} patch drift before writing`, (t) => {
     const fixture = setup(t);

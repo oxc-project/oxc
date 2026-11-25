@@ -5,7 +5,10 @@ use oxc_simd::{BASELINE, cpu_version};
 
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
-use crate::pipeline::disambiguate::{common::Tokens, type_context::keyword_type};
+use crate::pipeline::disambiguate::{
+    common::{Prev, TokensView},
+    type_context::{arrow_type_params_at, keyword_type},
+};
 
 use super::{
     frame::{Declarator, FrameKind, MOD_ASYNC, MOD_STATIC, Member, RegionRule, StmtReg},
@@ -16,7 +19,7 @@ use super::{
 impl Walk {
     /// Step the word at `pos`; returns its end.
     #[cpu_version(Generic)]
-    pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
+    pub(super) fn step_word(&mut self, tokens: &TokensView, pos: usize) -> usize {
         let cpu = BASELINE;
 
         let end = tokens.next_start(pos + 1, cpu);
@@ -26,9 +29,20 @@ impl Walk {
             self.type_word(kw);
             return end;
         }
-        // `for await (`: the `await` belongs to the head.
-        if kw == tk!(KwAwait) && self.prev_kw == tk!(KwFor) {
-            return end;
+        if kw == tk!(KwAwait) {
+            // `for await (`: the `await` belongs to the head.
+            if self.prev_kw == tk!(KwFor) {
+                return end;
+            }
+            // `await using x`: the `await` belongs to the declaration.
+            let nx = tokens.peek(end, cpu);
+            if nx.kind == tk!(Ident)
+                && tokens.ident_is(nx.pos, b"using", cpu)
+                && self.using_binds(tokens, nx.pos + 5, true)
+            {
+                self.prev_kw = tk!(KwAwait);
+                return end;
+            }
         }
         let kw = self.resolve_keyword(tokens, end, kw);
 
@@ -81,7 +95,7 @@ impl Walk {
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
     #[cpu_version(Generic)]
-    fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
+    fn resolve_keyword(&mut self, tokens: &TokensView, end: usize, kw: u8) -> u8 {
         let cpu = BASELINE;
 
         let keyword = match kw {
@@ -98,18 +112,17 @@ impl Walk {
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'{'));
                 binding && (self.at_stmt_start() || self.top_kind() == FrameKind::Head)
             }
-            tk!(KwUsing) => {
-                let nx = tokens.peek(end, cpu);
-                nx.kind == tk!(Ident)
-                    && !tokens.line_break_between(end, nx.pos, cpu)
-                    && self.at_stmt_start()
-            }
+            tk!(KwUsing) => self.using_binds(tokens, end, self.prev_kw == tk!(KwAwait)),
             tk!(KwAsync) => {
                 // `async` is a modifier only when the next token is on the same line and continues
                 // a function / arrow head.
                 let nx = tokens.peek(end, cpu);
                 (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
-                    || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'[')))
+                    || (nx.kind >= OP_KIND_BASE
+                        && (matches!(nx.byte, b'(' | b'*' | b'[')
+                            || (nx.byte == b'<'
+                                && tokens.is_ts
+                                && arrow_type_params_at(tokens, nx.pos)))))
                     && !tokens.line_break_between(end, nx.pos, cpu)
             }
             tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
@@ -118,7 +131,7 @@ impl Walk {
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
                     || (kw == tk!(KwNamespace) && self.stmt_reg() == StmtReg::ExportAs);
-                tokens.ts
+                tokens.is_ts
                     && matches_tk!(nx.kind, Ident | String)
                     && !tokens.line_break_between(end, nx.pos, cpu)
                     && at_stmt
@@ -129,7 +142,7 @@ impl Walk {
                 let export_as = kw == tk!(KwAs) && self.prev_kw == tk!(KwExport);
                 let in_module_clause = self.top_kind() == FrameKind::ModuleSpec
                     || matches!(self.stmt_reg(), StmtReg::Import | StmtReg::Export);
-                export_as || (tokens.ts && !self.operand_allowed() && !in_module_clause)
+                export_as || (tokens.is_ts && !self.operand_allowed() && !in_module_clause)
             }
             tk!(KwStatic) => {
                 self.top_kind() == FrameKind::ClassBody && self.top().member == Member::KeyPos
@@ -139,6 +152,32 @@ impl Walk {
             _ => true,
         };
         if keyword { kw } else { 0 }
+    }
+
+    /// Is the `using` ending at end a declaration keyword? A name must follow on its line. In a for
+    /// head `using of` declares only before `=`, `;` or `:`, unless an `await` came first (tsc).
+    #[cpu_version(Generic)]
+    fn using_binds(&self, tokens: &TokensView, end: usize, allow_of: bool) -> bool {
+        let cpu = BASELINE;
+
+        let nx = tokens.peek(end, cpu);
+        let head = self.for_head();
+        if nx.kind != tk!(Ident) || !(self.at_stmt_start() || head) {
+            return false;
+        }
+        if head && !allow_of && tokens.ident_is(nx.pos, b"of", cpu) {
+            let n2 = tokens.peek(nx.pos + 2, cpu);
+            return n2.kind >= OP_KIND_BASE
+                && (matches!(n2.byte, b';' | b':')
+                    || (n2.byte == b'=' && !matches!(tokens.src[n2.pos + 1], b'=' | b'>')));
+        }
+        !tokens.line_break_between(end, nx.pos, cpu)
+    }
+
+    /// Inside a for head, before its first `;`, `of` or `in`.
+    #[cpu_version(Generic)]
+    fn for_head(&self) -> bool {
+        self.top_kind() == FrameKind::Head && !self.top().of_closed
     }
 
     /// True when a statement register takes the word as its name (break label, type X, import x).
@@ -164,7 +203,7 @@ impl Walk {
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
     #[cpu_version(Generic)]
-    fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
+    fn keyword_word(&mut self, tokens: &TokensView, end: usize, kw: u8) {
         let cpu = BASELINE;
 
         match kw {
@@ -210,8 +249,13 @@ impl Walk {
                 KwReturn | KwThrow | KwYield | KwAwait | KwTypeof | KwVoid | KwDelete | KwNew | KwIn
                 | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements | KwFrom
             ) => {
-                if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
-                    self.top_mut().of_closed = true;
+                if self.top_kind() == FrameKind::Head
+                    && matches_tk!(kw, KwOf | KwIn)
+                    && self.top().open_questions == 0
+                {
+                    let f = self.top_mut();
+                    f.of_closed = true;
+                    f.declarator = Declarator::None;
                 }
                 self.keyword(kw);
             }
@@ -230,7 +274,7 @@ impl Walk {
                 self.keyword(kw);
             }
             tk!(KwVar | KwConst | KwLet | KwUsing) => {
-                if self.top_kind().is_stmt_holder() {
+                if self.top_kind().is_stmt_holder() || self.for_head() {
                     self.top_mut().declarator = Declarator::Binding;
                 }
                 self.keyword(kw);
@@ -293,6 +337,11 @@ impl Walk {
                 self.keyword(kw);
                 self.set_stmt_reg(StmtReg::DeclareModule);
             }
+            tk!(KwNamespace | KwModule) => {
+                // A namespace body is never async: `namespace N { await / 2 }` divides.
+                self.push(FrameKind::FnHead);
+                self.value_done();
+            }
             _ => {
                 // A plain name, or any other keyword spelling used as one.
                 self.plain_word();
@@ -311,9 +360,14 @@ impl Walk {
 
     /// A word at member-key position of an object literal or class body.
     #[cpu_version(Generic)]
-    fn member_word(&mut self, tokens: &Tokens, pos: usize, end: usize, kw: u8) -> usize {
+    fn member_word(&mut self, tokens: &TokensView, pos: usize, end: usize, kw: u8) -> usize {
         let cpu = BASELINE;
 
+        // A decorator name, dotted or not, comes before the key.
+        if self.after_dot || matches!(tokens.prev_token(pos, cpu), Prev::Op(_, b'@')) {
+            self.value_done();
+            return end;
+        }
         let is_class = self.top_kind() == FrameKind::ClassBody;
         // Modifiers apply when a key can follow on the same line.
         let nx = tokens.peek(end, cpu);

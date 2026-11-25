@@ -1,13 +1,14 @@
-use oxc_simd::{Neon, Vec128, Vec256, VecData128, cpu_version};
+use oxc_simd::{Neon, Vec128, Vec256, cpu_version};
 
-use crate::token::tk;
+use crate::{pipeline::chunk::mm64, token::tk};
 
 use super::{
+    Planes,
     luts::{
-        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, VT_FF_MASK, WORD_LUTS,
-        WORD_MASK, WS_MASK,
+        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, VT_FF_MASK, WORD_LUTS, WORD_MASK, WS_MASK,
     },
-    punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
+    mask_tail,
+    punct::{PUNCT_HASH_HI_NEON, PUNCT_HASH_KINDS_NEON, PUNCT_HASH_LO},
 };
 
 struct Luts {
@@ -34,20 +35,7 @@ struct Classified {
 
 #[cpu_version(Neon)]
 #[inline(never)]
-pub(super) unsafe fn classify_neon(
-    ts: bool,
-    src: *const u8,
-    n: usize,
-    word: *mut u64,
-    st: *mut u64,
-    kwinit: *mut u64,
-    opch: *mut u64,
-    digit: *mut u64,
-    dot: *mut u64,
-    misc: *mut u64,
-    kind: *mut u8,
-    cpu: Neon,
-) {
+pub(super) fn classify_neon(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, cpu: Neon) {
     let mrg_lo = if ts { MERGED_LUTS.lo_ts } else { MERGED_LUTS.lo };
     let l = Luts {
         wb_lo: WORD_LUTS.lo.read(cpu),
@@ -55,59 +43,56 @@ pub(super) unsafe fn classify_neon(
         mrg_lo: mrg_lo.read(cpu),
         mrg_hi: MERGED_LUTS.hi.read(cpu),
         punct_lo: PUNCT_HASH_LO.read(cpu),
-        punct_hi: PUNCT_HASH_HI.read(cpu),
-        punct_kinds: PUNCT_HASH_KINDS.read(cpu),
+        punct_hi: PUNCT_HASH_HI_NEON.read(cpu),
+        punct_kinds: PUNCT_HASH_KINDS_NEON.read(cpu),
     };
 
     let mut cw: u64 = 0;
     let mut cs: u64 = 0;
-    let mut b = 0usize;
-    let mut i = 0usize;
     let nb_ceil = n.div_ceil(64);
-    while b < nb_ceil {
-        // The last block overreads up to 63 bytes into the caller-guaranteed zeroed PAD.
-        let c0 = chunk(Vec128::load_unaligned(src.add(i), cpu), &l);
-        let c1 = chunk(Vec128::load_unaligned(src.add(i + 16), cpu), &l);
-        let c2 = chunk(Vec128::load_unaligned(src.add(i + 32), cpu), &l);
-        let c3 = chunk(Vec128::load_unaligned(src.add(i + 48), cpu), &l);
+    let (src, out) = (&src[..nb_ceil], out.first(nb_ceil));
+    let Planes {
+        token_start: st,
+        word,
+        keyword_initial: kwinit,
+        op_char: opch,
+        digit,
+        dot,
+        misc,
+        kinds: kind,
+    } = out;
+    for b in 0..nb_ceil {
+        // The last block reads up to 63 bytes of PAD past n, masked out below.
+        let (q, _) = src[b].as_chunks::<16>();
+        let c0 = chunk(Vec128::read_unaligned(&q[0], cpu), &l);
+        let c1 = chunk(Vec128::read_unaligned(&q[1], cpu), &l);
+        let c2 = chunk(Vec128::read_unaligned(&q[2], cpu), &l);
+        let c3 = chunk(Vec128::read_unaligned(&q[3], cpu), &l);
 
-        c0.kind.store_unaligned(kind.add(i));
-        c1.kind.store_unaligned(kind.add(i + 16));
-        c2.kind.store_unaligned(kind.add(i + 32));
-        c3.kind.store_unaligned(kind.add(i + 48));
+        let (k, _) = kind[b].as_chunks_mut::<16>();
+        c0.kind.write_unaligned(&mut k[0]);
+        c1.kind.write_unaligned(&mut k[1]);
+        c2.kind.write_unaligned(&mut k[2]);
+        c3.kind.write_unaligned(&mut k[3]);
 
         let wordm = mm64(c0.word, c1.word, c2.word, c3.word);
         let wsm = mm64(c0.ws, c1.ws, c2.ws, c3.ws);
-        *word.add(b) = wordm;
-        *digit.add(b) = mm64(c0.digit, c1.digit, c2.digit, c3.digit);
-        *dot.add(b) = mm64(c0.dot, c1.dot, c2.dot, c3.dot);
-        *kwinit.add(b) = mm64(c0.kwinit, c1.kwinit, c2.kwinit, c3.kwinit);
-        *opch.add(b) = mm64(c0.opch, c1.opch, c2.opch, c3.opch);
-        *misc.add(b) = mm64(c0.misc, c1.misc, c2.misc, c3.misc);
+        word[b] = wordm;
+        digit[b] = mm64(c0.digit, c1.digit, c2.digit, c3.digit);
+        dot[b] = mm64(c0.dot, c1.dot, c2.dot, c3.dot);
+        kwinit[b] = mm64(c0.kwinit, c1.kwinit, c2.kwinit, c3.kwinit);
+        opch[b] = mm64(c0.opch, c1.opch, c2.opch, c3.opch);
+        misc[b] = mm64(c0.misc, c1.misc, c2.misc, c3.misc);
 
         let wprev = (wordm << 1) | cw;
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;
         cs = wsm >> 63;
         // A byte starts a token unless it continues a whitespace or word run
-        *st.add(b) = !((wsm & sprev) | (wordm & wprev));
-
-        i += 64;
-        b += 1;
+        st[b] = !((wsm & sprev) | (wordm & wprev));
     }
     // Zero PAD bytes classify as a token start, which would mint spurious tokens past n.
-    let rem = n & 63;
-    if rem != 0 {
-        let last = nb_ceil - 1;
-        let m = (1u64 << rem) - 1;
-        *word.add(last) &= m;
-        *st.add(last) &= m;
-        *kwinit.add(last) &= m;
-        *opch.add(last) &= m;
-        *digit.add(last) &= m;
-        *dot.add(last) &= m;
-        *misc.add(last) &= m;
-    }
+    mask_tail([st, word, kwinit, opch, digit, dot, misc], n);
 }
 
 #[cpu_version(Neon)]
@@ -125,7 +110,7 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
     let digit = tb.test_u8(DIGIT_MASK);
     let misc = v.eq_u8(b'#') | v.eq_u8(b'\\') | na | tb.test_u8(VT_FF_MASK);
 
-    let kind = punct_kinds(v, lo, hn, l)
+    let kind = punct_kinds(lo, hn, l)
         .blend(tk!(Whitespace), ws)
         .blend(tk!(Ident), word)
         .blend(tk!(Number), digit);
@@ -136,7 +121,8 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
         digit,
         dot: t.test_u8(DOT_MASK),
         kwinit: t.test_u8(KWINIT_MASK),
-        opch: t.test_u8(OPCH_MASK),
+        // Any set bit above the keyword-start bits implies an operator char
+        opch: t.gt_u8(KWINIT_MASK),
         misc,
         kind,
     }
@@ -144,25 +130,10 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
 
 #[cpu_version(Neon)]
 #[inline(always)]
-fn punct_kinds(v: Vec128<Neon>, lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) -> Vec128<Neon> {
-    // Every `PUNCT_HASH_LO` and `PUNCT_HASH_HI` entry is under 32,
-    // so `h` is in range for the 32-entry `l.punct_kinds`
+fn punct_kinds(lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) -> Vec128<Neon> {
+    // `h` is under 32 except for control chars, whose `h` is 0x80 or more.
+    // `PUNCT_HASH_KINDS_NEON` holds each kind + 1. Indexing the 32-entry `l.punct_kinds`
+    // with 32 or more gives 0, which subtracting 1 wraps round to `Invalid`.
     let h = l.punct_lo.shuffle_u8s(lo) ^ l.punct_hi.shuffle_u8s(hn);
-    let ord = l.punct_kinds.shuffle_u8s(h);
-    let ctl = v.lt_i8(0x20);
-    ord.blend(tk!(Invalid), ctl)
-}
-
-/// Bit i is the top bit of byte i of a-d, gathered by summing the lane bit values.
-#[cpu_version(Neon)]
-#[inline(always)]
-fn mm64(a: Vec128<Neon>, b: Vec128<Neon>, c: Vec128<Neon>, d: Vec128<Neon>) -> u64 {
-    const BITS: VecData128 =
-        VecData128::from_bytes([1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128]);
-
-    let m = BITS.read(a.cpu());
-    let ab = (a & m).pairwise_add_u8(b & m);
-    let cd = (c & m).pairwise_add_u8(d & m);
-    let s = ab.pairwise_add_u8(cd);
-    s.pairwise_add_u8(s).get_u64::<0>()
+    l.punct_kinds.shuffle_u8s(h).sub_u8(1)
 }

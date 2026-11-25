@@ -8,7 +8,6 @@ use oxc_span::{Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
     class::{ClassId, ElementKind},
-    number::NumberBase,
     operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -320,7 +319,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
         let mut previous_node_address = ctx.ancestry().current_address();
         for node_kind in ctx.ancestry().ancestor_kinds() {
             match node_kind {
-                AstKind::Function(_) => break,
+                AstKind::Function(_) | AstKind::TSTypeQuery(_) => break,
                 AstKind::PropertyDefinition(prop)
                     if prop
                         .value
@@ -393,25 +392,26 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
 }
 
 pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
-    // NumericLiteral :: legacy_octalIntegerLiteral
+    // NumericLiteral :: LegacyOctalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
-    fn leading_zero(s: Option<Str>) -> bool {
-        if let Some(s) = s {
-            let bytes = s.as_bytes();
-            return bytes.len() >= 2 && bytes[0] == b'0' && bytes[1].is_ascii_digit();
-        }
-        false
+
+    // `raw` is `None` if AST did not come from the parser. Skip checks in that case.
+    let Some(raw) = lit.raw else { return };
+
+    // Both productions begin with `0` followed by a decimal digit
+    let bytes = raw.as_bytes();
+    if bytes.len() < 2 || bytes[0] != b'0' || !bytes[1].is_ascii_digit() || !ctx.strict_mode() {
+        return;
     }
 
-    match lit.base {
-        NumberBase::Octal if leading_zero(lit.raw) && ctx.strict_mode() => {
-            ctx.error(diagnostics::legacy_octal(lit.span));
-        }
-        NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) && ctx.strict_mode() => {
-            ctx.error(diagnostics::leading_zero_decimal(lit.span));
-        }
-        _ => {}
+    // `LegacyOctalIntegerLiteral` contains only octal digits (`017`).
+    // `NonOctalDecimalIntegerLiteral` contains an `8` or `9` (`08`), and may be followed by
+    // a fraction or exponent (`08.5`, `08e1`).
+    if bytes[1..].iter().all(|&b| matches!(b, b'0'..=b'7')) {
+        ctx.error(diagnostics::legacy_octal(lit.span));
+    } else {
+        ctx.error(diagnostics::leading_zero_decimal(lit.span));
     }
 }
 
@@ -1058,15 +1058,15 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                 //
                 // Illegal:
                 // * `class C { [super.foo] = 1 }`
-                // * `class C { @super.foo method() {} }`
+                // * `class C { @(super.foo) method() {} }`
                 // * `class C extends super.foo {}`
                 //
                 // Legal:
                 // * `class Outer { method() { class Inner { [super.foo] = 1 } } }`
-                // * `class Outer { method() { class Inner { @super.foo method() {} } } }`
+                // * `class Outer { method() { class Inner { @(super.foo) method() {} } } }`
                 // * `class Outer { method() { class Inner extends super.foo {} } }`
                 // * `obj = { method() { class Inner { [super.foo] = 1 } } }`
-                // * `obj = { method() { class Inner { @super.foo method() {} } } }`
+                // * `obj = { method() { class Inner { @(super.foo) method() {} } } }`
                 // * `obj = { method() { class Inner extends super.foo {} } }`
                 //
                 // So continue searching up the scope tree.

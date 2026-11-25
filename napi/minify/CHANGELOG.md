@@ -4,6 +4,84 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🚀 Features
+
+- 2384875 minifier: Remove redundant `| 0` under bitwise operators (#29991) (Cameron)
+- abf889f minifier: Flatten nested string concatenations (#30015) (Cameron)
+- 5f51bd3 minifier: Fold division with short numeric results (#29994) (Cameron)
+- 1102f24 minifier: Flatten nested untagged template literals (#29993) (Cameron)
+- 12897a0 minifier: Fold switch with one case and default into if-else (#29990) (Cameron)
+- f9e90de minifier: Fold numeric identities like `x - 0` and `x * 1` (#29926) (Dunqing)
+- c265eda minifier,ecmascript: Fold additive zero and safe offsets on int32/uint32 expressions (#29865) (Andre_Ramirez)
+
+### 🐛 Bug Fixes
+
+- d615de4 codegen: Parenthesize TypeScript instantiation expressions used as operands (#30065) (Cameron)
+- 90b5af9 codegen: Keep `()` on minified `new` expressions with type arguments (#30062) (Cameron)
+- adf284e mangler: Use debug names for private members (#30061) (Cameron)
+- 7fa5d50 codegen: Keep comments from ending a line after code (#29814) (Yuji Sugiura)
+- 41dbc08 mangler: Keep names set by redeclarations with keepNames (#30055) (Dunqing)
+- 8488767 codegen: Parenthesize private `in` tests in `for` initializers (#30037) (Cameron)
+- e9e80b1 codegen: Parenthesize for-of heads that print a leading `let` or `async` (#30025) (Cameron)
+- a54befb codegen: Avoid double parentheses around `as`/`satisfies` for-of heads (#30024) (Cameron)
+- 157673a codegen: Parenthesize comma expressions in export assignments (#30022) (Cameron)
+- bedf3f5 codegen: Parenthesize comma expressions in enum initializers (#30021) (Cameron)
+- 11bafb6 codegen: Parenthesize comma expressions in JSX containers (#30020) (Cameron)
+- 967a97c codegen: Print a computed key for renamed `__proto__` shorthand (#30019) (Cameron)
+- 64b7176 minifier: Preserve throwing `String.fromCodePoint` calls (#30014) (Cameron)
+- f17a216 ecmascript: Evaluate unary expressions in `ToNumber` (#30009) (Cameron)
+- 181dd40 ecmascript: Canonicalize RegExp flags in string conversion (#30008) (Cameron)
+- cf35a2e ecmascript: Respect shadowed `NaN` in strict equality (#30005) (Cameron)
+- 2d9246e minifier: Don't inline block-level vars visible to an outer direct eval (#29992) (Cameron)
+- 32798b3 minifier: Don't treat reassigned `@__NO_SIDE_EFFECTS__` functions as pure (#29974) (oxc-captain[bot])
+- c589002 minifier: Drop redeclarations of removed declarations (#29415) (Dunqing)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- 60718a1 minifier: Keep unused classes with a static computed `prototype` key (#27966) (baltasarblanco)
+- b7e2beb minifier: Preserve indirect calls when inlining eval aliases (#29725) (Yunfei He)
+
+### ⚡ Performance
+
+- 209f078 mangler: Include digits in trailing character frequency order (#29437) (camc314)
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+- 7c39be0 minifier: Avoid rebuilding variable declarations when keeping all declarators (#29767) (camc314)
+
+### 📚 Documentation
+
+- 158fcf5 minifier: Fix duplicated word in comment (#30059) (Dunqing)
+- 3ff249b skills: Share PR title guidance with triagebot (#29980) (Cameron)
+- 1da6ea8 skills: Merge PR guidance into pr-guide skill (#29866) (Dunqing)
+- 9740083 minifier: Clarify when variable declarations are merged (#29768) (camc314)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 63b8158 minifier: Inline single use function declaration to assignment (#28917) (Aadharsh  Pannirselvam)
+- eb1833e mangler: Mangle labels (#29614) (camc314)
+- ccca379 minifier: Remove unused labels (#29607) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 7243594 minifier: Preserve throwing ArrayBuffer and URI calls (#29012) (camc314)
+
+### 📚 Documentation
+
+- 157fc5a napi/minify: Correct minifier capabilities and caveats (#29064) (camc314)
+
 ## [0.156.0] - 2026-10-27
 
 ### 💥 BREAKING CHANGES

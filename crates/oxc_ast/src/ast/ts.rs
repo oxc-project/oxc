@@ -1018,11 +1018,13 @@ pub struct TSInterfaceBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(add_fields(accessibility = Null, r#static = False))]
+#[estree(
+    add_fields(computed = PropertyKeyComputed, accessibility = Null, r#static = False),
+    field_order(computed, optional, readonly, key, type_annotation, accessibility, r#static, span),
+)]
 pub struct TSPropertySignature<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub computed: bool,
     pub optional: bool,
     pub readonly: bool,
     pub key: PropertyKey<'a>,
@@ -1109,12 +1111,22 @@ pub enum TSMethodSignatureKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(add_fields(accessibility = Null, readonly = False, r#static = False))]
+#[estree(
+    add_fields(
+        computed = PropertyKeyComputed,
+        accessibility = Null,
+        readonly = False,
+        r#static = False,
+    ),
+    field_order(
+        key, computed, optional, kind, type_parameters, params, return_type, accessibility,
+        readonly, r#static, span,
+    ),
+)]
 pub struct TSMethodSignature<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub key: PropertyKey<'a>,
-    pub computed: bool,
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
     #[scope(enter_before)]

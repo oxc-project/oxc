@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 🐛 Bug Fixes
+
+- 4b1efd3 transformer/legacy-decorator: Move class self-references to alias symbol (#30056) (Dunqing)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.158.0] - 2026-11-09
+
+### 📚 Documentation
+
+- 8d30d9b traverse: Clarify ancestor access during traversal (#29074) (camc314)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- d615de4 codegen: Parenthesize TypeScript instantiation expressions used as operands (#30065) (Cameron)
+- 90b5af9 codegen: Keep `()` on minified `new` expressions with type arguments (#30062) (Cameron)
+- 7fa5d50 codegen: Keep comments from ending a line after code (#29814) (Yuji Sugiura)
+- 8488767 codegen: Parenthesize private `in` tests in `for` initializers (#30037) (Cameron)
+- e9e80b1 codegen: Parenthesize for-of heads that print a leading `let` or `async` (#30025) (Cameron)
+- a54befb codegen: Avoid double parentheses around `as`/`satisfies` for-of heads (#30024) (Cameron)
+- 157673a codegen: Parenthesize comma expressions in export assignments (#30022) (Cameron)
+- bedf3f5 codegen: Parenthesize comma expressions in enum initializers (#30021) (Cameron)
+- 11bafb6 codegen: Parenthesize comma expressions in JSX containers (#30020) (Cameron)
+- 967a97c codegen: Print a computed key for renamed `__proto__` shorthand (#30019) (Cameron)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 702e734 codegen: Print label names from scoping (#29613) (camc314)
+
+### 🐛 Bug Fixes
+
+- 11dbaf4 ecmascript: Prefer hex integers when lengths tie (#29436) (camc314)
+
+### ⚡ Performance
+
+- aed0190 parser: Skip unused identifier hashes (#29168) (Boshen)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- c00dc61 codegen: Keep one source map mapping per generated position (#28844) (YT)
+- 1e57a4e codegen: Print infinite numeric literals as `1e400` instead of `Infinity` (#28812) (Dominic Elm)
+- 3fd78d7 codegen: Preserve names in duplicate source mappings (#26051) (camc314)
+
+### ⚡ Performance
+
+- 7761a39 codegen: Remove redundant sourcemap buffer shrinks (#28893) (Dunqing)
+- 4da1752 codegen: Use SWAR scanning and shared column tables (#28939) (Dunqing)
+- 732a8e4 codegen: Skip repeated word scans for sourcemap tails (#28869) (Dunqing)
+- 6972243 codegen: Accelerate sourcemap line scanning (#28400) (codspeed)
+
 ## [0.156.0] - 2026-10-27
 
 ### ⚡ Performance

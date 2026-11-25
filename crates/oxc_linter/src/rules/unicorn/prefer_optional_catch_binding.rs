@@ -51,6 +51,13 @@ impl Rule for PreferOptionalCatchBinding {
         let AstKind::CatchParameter(catch_param) = node.kind() else {
             return;
         };
+        // A same-named `var` assigns to this catch binding. Removing the parameter
+        // would redirect its initializer to the enclosing var binding instead.
+        if let BindingPattern::BindingIdentifier(ident) = &catch_param.pattern
+            && ctx.scoping().catch_var_binding(ident.symbol_id()).is_some()
+        {
+            return;
+        }
         let references_count = get_param_references_count(&catch_param.pattern, ctx);
         if references_count != 0 {
             return;
@@ -116,6 +123,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "function f(e) { try {} catch (e) { var e = 2; } return e; }",
         "try {} catch {}",
         "try {} catch {
                 error

@@ -186,7 +186,7 @@ impl ParameterProperties {
 
         for element in &class.body.body {
             let ClassElement::PropertyDefinition(property) = element else { continue };
-            if property.computed || property.value.is_some() {
+            if property.value.is_some() {
                 continue;
             }
             let PropertyKey::StaticIdentifier(identifier) = &property.key else { continue };

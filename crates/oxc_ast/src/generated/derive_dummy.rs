@@ -90,6 +90,7 @@ impl<'a> Dummy<'a> for LabelIdentifier<'a> {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
             name: Dummy::dummy(allocator),
+            label_id: Dummy::dummy(allocator),
         }
     }
 }
@@ -169,7 +170,6 @@ impl<'a> Dummy<'a> for ObjectProperty<'a> {
             value: Dummy::dummy(allocator),
             method: Dummy::dummy(allocator),
             shorthand: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
         }
     }
 }
@@ -599,7 +599,6 @@ impl<'a> Dummy<'a> for AssignmentTargetPropertyProperty<'a> {
             span: Dummy::dummy(allocator),
             name: Dummy::dummy(allocator),
             binding: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
         }
     }
 }
@@ -1118,7 +1117,6 @@ impl<'a> Dummy<'a> for BindingProperty<'a> {
             key: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             shorthand: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
         }
     }
 }
@@ -1378,7 +1376,6 @@ impl<'a> Dummy<'a> for MethodDefinition<'a> {
             key: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
@@ -1410,7 +1407,6 @@ impl<'a> Dummy<'a> for PropertyDefinition<'a> {
             key: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
@@ -1501,7 +1497,6 @@ impl<'a> Dummy<'a> for AccessorProperty<'a> {
             key: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
@@ -1800,7 +1795,6 @@ impl<'a> Dummy<'a> for NumericLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            base: Dummy::dummy(allocator),
         }
     }
 }
@@ -1829,7 +1823,6 @@ impl<'a> Dummy<'a> for BigIntLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            base: Dummy::dummy(allocator),
         }
     }
 }
@@ -1863,6 +1856,16 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
         Self { text: Dummy::dummy(allocator), pattern: Dummy::dummy(allocator) }
+    }
+}
+
+impl<'a> Dummy<'a> for RegExpFlags {
+    /// Create a dummy [`RegExpFlags`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::empty()
     }
 }
 
@@ -2690,7 +2693,6 @@ impl<'a> Dummy<'a> for TSPropertySignature<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
             readonly: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
@@ -2760,7 +2762,6 @@ impl<'a> Dummy<'a> for TSMethodSignature<'a> {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),

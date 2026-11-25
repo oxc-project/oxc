@@ -225,8 +225,7 @@ impl<'a> PeepholeOptimizations {
                                 // `{ __proto__: ... }` sets the prototype chain and could
                                 // install setters that make property writes side-effectful.
                                 || (p.kind == PropertyKind::Init
-                                    && !p.computed
-                                    && p.key.is_specific_static_name("__proto__"))
+                                    && p.key.is_specific_literal_name("__proto__"))
                     )
                 });
                 if has_side_effects { FreshValueKind::None } else { FreshValueKind::Object }

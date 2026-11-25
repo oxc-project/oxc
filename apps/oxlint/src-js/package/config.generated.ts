@@ -303,6 +303,8 @@ export type PackageFrom = "package";
 export type AllowInterfaces = "never" | "always" | "with-single-extends";
 export type AllowObjectTypes = "never" | "always";
 export type AllowInGenericTypeArguments = boolean | string[];
+export type ChecksConditionals = boolean | ChecksConditionalsOptions;
+export type ChecksConditionalsFlagUnions = "none" | "strict" | "all";
 export type ChecksVoidReturn = boolean | ChecksVoidReturnOptions;
 /**
  * Represents the different ways a ban config can be specified in JSON.
@@ -831,7 +833,7 @@ export interface OxlintOptions {
    */
   typeAware?: boolean;
   /**
-   * Enable experimental type checking (includes TypeScript compiler diagnostics).
+   * Enable type checking (includes TypeScript compiler diagnostics).
    *
    * Equivalent to passing `--type-check` on the CLI.
    *
@@ -850,15 +852,13 @@ export interface OxlintOverride {
    * Files matching these patterns are not globally ignored; this override
    * simply does not apply to them.
    *
-   * ## Example
-   * `[ "*.generated.ts", "fixtures/**" ]`
+   * Example: `[ "*.generated.ts", "fixtures/**" ]`
    */
   excludeFiles?: GlobSet;
   /**
    * A list of glob patterns to override.
    *
-   * ## Example
-   * `[ "*.test.ts", "*.spec.ts" ]`
+   * Example: `[ "*.test.ts", "*.spec.ts" ]`
    */
   files: GlobSet;
   /**
@@ -990,6 +990,12 @@ export interface DummyRuleMap {
   "jest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "jest/no-untyped-mock-factory"?: RuleNoConfig;
   "jest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "jest/padding-around-after-each-blocks"?: RuleNoConfig;
+  "jest/padding-around-all"?: RuleNoConfig;
+  "jest/padding-around-before-all-blocks"?: RuleNoConfig;
+  "jest/padding-around-before-each-blocks"?: RuleNoConfig;
+  "jest/padding-around-describe-blocks"?: RuleNoConfig;
+  "jest/padding-around-expect-groups"?: RuleNoConfig;
   "jest/padding-around-test-blocks"?: RuleNoConfig;
   "jest/prefer-called-with"?: RuleNoConfig;
   "jest/prefer-comparison-matcher"?: RuleNoConfig;
@@ -1489,6 +1495,7 @@ export interface DummyRuleMap {
   "typescript/no-unsafe-argument"?: RuleNoConfig;
   "typescript/no-unsafe-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-call"?: RuleNoConfig;
+  "typescript/no-unsafe-class-instance-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-declaration-merging"?: RuleNoConfig;
   "typescript/no-unsafe-enum-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-enum-comparison"?: RuleNoConfig;
@@ -1708,6 +1715,12 @@ export interface DummyRuleMap {
   "vitest/no-test-return-statement"?: RuleNoConfig;
   "vitest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "vitest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-after-each-blocks"?: RuleNoConfig;
+  "vitest/padding-around-all"?: RuleNoConfig;
+  "vitest/padding-around-before-all-blocks"?: RuleNoConfig;
+  "vitest/padding-around-before-each-blocks"?: RuleNoConfig;
+  "vitest/padding-around-describe-blocks"?: RuleNoConfig;
+  "vitest/padding-around-expect-groups"?: RuleNoConfig;
   "vitest/padding-around-test-blocks"?: RuleNoConfig;
   "vitest/prefer-called-exactly-once-with"?: RuleNoConfig;
   "vitest/prefer-called-once"?: RuleNoConfig;
@@ -4785,7 +4798,8 @@ export interface PreferRegexLiteralsConfig {
 }
 export interface PreserveCaughtErrorOptions {
   /**
-   * When set to `true`, requires that catch clauses always have a parameter.
+   * When set to `true`, requires catch clauses that throw a new error to have a
+   * caught error parameter, so the caught error is not discarded when re-throwing.
    */
   requireCatchParameter?: boolean;
 }
@@ -6061,9 +6075,9 @@ export interface NoMeaninglessVoidOperatorConfig {
 export interface NoMisusedPromisesConfig {
   /**
    * Whether to check if Promises are used in conditionals.
-   * When true, disallows using Promises in conditions where a boolean is expected.
+   * Can be a boolean to enable/disable the check, or an object to control union types.
    */
-  checksConditionals?: boolean;
+  checksConditionals?: ChecksConditionals;
   /**
    * Whether to check if Promises are used in spread syntax.
    * When true, disallows spreading Promise values.
@@ -6074,6 +6088,16 @@ export interface NoMisusedPromisesConfig {
    * Can be a boolean to enable/disable all checks, or an object for granular control.
    */
   checksVoidReturn?: ChecksVoidReturn;
+}
+export interface ChecksConditionalsOptions {
+  /**
+   * Controls which union types are reported in conditionals.
+   * - `"none"` only reports values that are always Promise-like.
+   * - `"strict"` also reports unions where the non-Promise types match the awaited Promise types,
+   * such as `Promise<number> | number`.
+   * - `"all"` reports any union containing a Promise-like type.
+   */
+  flagUnions?: ChecksConditionalsFlagUnions;
 }
 export interface ChecksVoidReturnOptions {
   /**

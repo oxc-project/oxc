@@ -111,6 +111,39 @@ impl Vec128<Neon> {
         })
     }
 
+    /// Add all 16 bytes of this [`Vec128`] together, wrapping on overflow.
+    #[inline(always)]
+    pub fn sum_u8(self) -> u8 {
+        cpu_select!(self.cpu(), {
+            Neon => {
+                // SAFETY: `Vec128<Neon>` type guarantees platform supports Neon
+                unsafe { vaddvq_u8(self.inner()) }
+            }
+            _ => unused!(self)
+        })
+    }
+
+    /// Narrow each byte of this [`Vec128`] to 4 bits, packed into a `u64`.
+    ///
+    /// Every byte must be `0x00` or `0xFF`. Byte `i` becomes bits `4 * i` to `4 * i + 3`,
+    /// so `trailing_zeros() / 4` is the index of the first `0xFF` byte.
+    ///
+    /// Neon's counterpart of `movemask`, in 2 instructions. Building a `movemask`-style mask
+    /// with 1 bit per byte takes more, so this is cheaper when only the first set byte matters.
+    #[inline(always)]
+    pub fn nibble_mask(self) -> u64 {
+        cpu_select!(self.cpu(), {
+            Neon => {
+                // SAFETY: `Vec128<Neon>` type guarantees platform supports Neon
+                unsafe {
+                    let narrowed = vshrn_n_u16::<4>(vreinterpretq_u16_u8(self.inner()));
+                    vget_lane_u64::<0>(vreinterpret_u64_u8(narrowed))
+                }
+            }
+            _ => unused!(self)
+        })
+    }
+
     /// Check every byte of this [`Vec128`] against either another [`Vec128`] or a `u8`.
     ///
     /// Each byte of the result is `0xFF` if the bytes share any set bits, otherwise `0x00`.
@@ -124,6 +157,31 @@ impl Vec128<Neon> {
             }
             _ => unused!(self, other)
         })
+    }
+
+    /// Compare every byte of this [`Vec128`] to `other`, as unsigned integers.
+    /// `other` is either a `u8`, or another [`Vec128`] to compare byte by byte.
+    ///
+    /// Each byte of the result is `0xFF` if the byte in `self` is greater, otherwise `0x00`.
+    #[inline(always)]
+    pub fn gt_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        cpu_select!(self.cpu(), {
+            Neon => {
+                let other = other.into_vec128(self.cpu());
+                // SAFETY: `Vec128<Neon>` type guarantees platform supports Neon
+                Self::new(unsafe { vcgtq_u8(self.inner(), other.inner()) }, self.cpu())
+            }
+            _ => unused!(self, other)
+        })
+    }
+
+    /// Compare every byte of this [`Vec128`] to `other`, as unsigned integers.
+    /// `other` is either a `u8`, or another [`Vec128`] to compare byte by byte.
+    ///
+    /// Each byte of the result is `0xFF` if the byte in `self` is less, otherwise `0x00`.
+    #[inline(always)]
+    pub fn lt_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        other.into_vec128(self.cpu()).gt_u8(self)
     }
 }
 

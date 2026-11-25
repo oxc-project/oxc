@@ -674,3 +674,81 @@ import { b } from "b";
 "#,
     );
 }
+
+#[test]
+fn should_tiebreak_same_source_by_subgroup_order() {
+    // Same-module imports stay adjacent, ordered by their entry position within the group.
+    let input = r#"
+import { withConnection } from "connection";
+import { resolveConfig } from "config";
+import type { CliConfig } from "config";
+import type { Connection } from "connection";
+"#;
+    assert_format(
+        input,
+        r#"{ "sortImports": { "groups": [["type-external", "value-external"]] } }"#,
+        r#"
+import type { CliConfig } from "config";
+import { resolveConfig } from "config";
+import type { Connection } from "connection";
+import { withConnection } from "connection";
+"#,
+    );
+    assert_format(
+        input,
+        r#"{ "sortImports": { "groups": [["value-external", "type-external"]] } }"#,
+        r#"
+import { resolveConfig } from "config";
+import type { CliConfig } from "config";
+import { withConnection } from "connection";
+import type { Connection } from "connection";
+"#,
+    );
+    // `desc` reverses sources, but not the subgroup order (same as `groups` order)
+    assert_format(
+        input,
+        r#"{ "sortImports": { "groups": [["type-external", "value-external"]], "order": "desc" } }"#,
+        r#"
+import type { Connection } from "connection";
+import { withConnection } from "connection";
+import type { CliConfig } from "config";
+import { resolveConfig } from "config";
+"#,
+    );
+    // Modifiers other than `type` work too, in both directions
+    assert_format(
+        r#"
+import { b } from "a";
+import * as a from "a";
+"#,
+        r#"{ "sortImports": { "groups": [["wildcard-external", "named-external"]] } }"#,
+        r#"
+import * as a from "a";
+import { b } from "a";
+"#,
+    );
+    assert_format(
+        r#"
+import * as a from "a";
+import { b } from "a";
+"#,
+        r#"{ "sortImports": { "groups": [["named-external", "wildcard-external"]] } }"#,
+        r#"
+import { b } from "a";
+import * as a from "a";
+"#,
+    );
+    // Imports matching the same entry keep their original order, in both directions
+    for input in [
+        r#"
+import { b } from "a";
+import type { A } from "a";
+"#,
+        r#"
+import type { A } from "a";
+import { b } from "a";
+"#,
+    ] {
+        assert_format(input, r#"{ "sortImports": {} }"#, input);
+    }
+}
