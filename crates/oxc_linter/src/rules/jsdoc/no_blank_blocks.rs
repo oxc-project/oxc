@@ -71,7 +71,6 @@ impl Rule for NoBlankBlocks {
         let source_text = ctx.source_text();
 
         for comment in ctx.semantic().comments() {
-            // Trailing JSDoc blocks are omitted from the semantic JSDoc index.
             if !matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal) {
                 continue;
             }
