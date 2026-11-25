@@ -744,12 +744,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         //                  AssignmentExpression ;
         // <https://tc39.es/ecma262/#prod-ExportDeclaration>
         //
-        // `abstract`/`interface` (TS) and `async` are contextual keywords, so each can be the start
-        // of the `AssignmentExpression` (`export default async;`). Peek the token after the keyword
-        // to apply the lookahead restriction without consuming it, committing only when it confirms
+        // `abstract` (TS) and `async` are contextual keywords, so each can be the start of the
+        // `AssignmentExpression` (`export default async;`). Peek the token after the keyword to
+        // apply the lookahead restriction without consuming it, committing only when it confirms
         // a declaration. `[no LineTerminator here]` maps to `!next.is_on_new_line()`.
         let kind = self.cur_kind();
-        if matches!(kind, Kind::Abstract | Kind::Async | Kind::Interface) {
+        // export default interface I {}
+        // `interface` is reserved in module code, so in TypeScript it always starts a declaration,
+        // even across a line break, as in `tsc`.
+        if self.is_ts && kind == Kind::Interface {
+            let interface_start = self.cur_start();
+            self.bump_any();
+            for decorator in &decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+            if let Declaration::TSInterfaceDeclaration(decl) =
+                self.parse_ts_interface_declaration(interface_start, &Modifiers::empty())
+            {
+                return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
+            }
+        }
+        if matches!(kind, Kind::Abstract | Kind::Async) {
             let modifier_start = self.cur_start();
             let next = self.lexer.peek_token();
             if !next.is_on_new_line() {
@@ -777,18 +792,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
                     }
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
-                }
-                // export default interface I {}
-                if self.is_ts && kind == Kind::Interface {
-                    self.bump_any();
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-                    }
-                    if let Declaration::TSInterfaceDeclaration(decl) =
-                        self.parse_ts_interface_declaration(modifier_start, &Modifiers::empty())
-                    {
-                        return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
-                    }
                 }
             }
             // Used as an identifier (`export default async;`); nothing consumed, so fall through.
