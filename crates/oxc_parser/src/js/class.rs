@@ -339,6 +339,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_constructor_declaration(start, r#type, name, &modifiers, decorators);
         }
 
+        // Index signatures exist only in TypeScript. As in tsc, `[async x` starts one there, so an
+        // `async x => x` computed key is an error in TypeScript.
         if self.is_ts && self.is_index_signature() {
             for decorator in decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
