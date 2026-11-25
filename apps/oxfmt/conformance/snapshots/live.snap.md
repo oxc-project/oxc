@@ -422,6 +422,10 @@
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
 
+#### Not idempotent (as written)
+
+- externals/aws-cloudformation-templates/EC2/ec2_with_waitcondition_template.yaml (second pass errored)
+
 ### Option 3: 301/302 (99.67%)
 
 ```json
