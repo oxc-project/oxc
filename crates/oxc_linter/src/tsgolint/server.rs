@@ -11,6 +11,9 @@
 //! A process that exits is started again on the next request, but at most [`MAX_STARTS`] times
 //! within [`START_WINDOW`]: a process that keeps exiting is not started again either.
 //!
+//! A process that sends no frame for a request within [`REQUEST_TIMEOUT`] is killed, so a stuck
+//! process does not block the language server forever.
+//!
 //! A request whose results can no longer be used, because a file it lints was closed, is
 //! canceled: the server stops it and answers with a canceled error.
 //!
@@ -54,6 +57,10 @@ const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// How long a process may take to exit after it is asked to shut down.
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// How long a request may wait for its next frame. A process that does not answer in time is
+/// killed, and the next request starts another one.
+const REQUEST_TIMEOUT: Duration = Duration::from_mins(5);
 
 /// At most this many processes are started within [`START_WINDOW`].
 const MAX_STARTS: usize = 3;
@@ -110,6 +117,8 @@ pub struct TsrsLintServer {
     /// The open documents, sent again to a respawned process.
     open_documents: Mutex<FxHashMap<PathBuf, OpenDocument>>,
     next_id: AtomicU64,
+    /// [`REQUEST_TIMEOUT`], shorter in tests.
+    request_timeout: Duration,
 }
 
 impl std::fmt::Debug for TsrsLintServer {
@@ -203,6 +212,18 @@ impl Connection {
             self.alive.store(false, Ordering::Release);
             format!("Failed to write to tsrs-lint server: {e}")
         })
+    }
+}
+
+impl Connection {
+    /// Kills a process that stopped answering. Its pending requests end with an error, and the
+    /// next request starts another process.
+    fn kill(&self, reason: &str) {
+        warn!("killing tsrs-lint server (pid {}): {reason}", self.pid);
+        self.alive.store(false, Ordering::Release);
+        let mut child = self.child.lock().expect("tsrs-lint child mutex poisoned");
+        let _ = child.kill();
+        let _ = child.wait();
     }
 }
 
@@ -317,7 +338,15 @@ impl TsrsLintServer {
             file_changes: Mutex::default(),
             open_documents: Mutex::new(FxHashMap::default()),
             next_id: AtomicU64::new(1),
+            request_timeout: REQUEST_TIMEOUT,
         }
+    }
+
+    /// Uses `timeout` instead of [`REQUEST_TIMEOUT`].
+    #[cfg(test)]
+    fn with_request_timeout(mut self, timeout: Duration) -> Self {
+        self.request_timeout = timeout;
+        self
     }
 
     /// The executable this server runs.
@@ -484,12 +513,22 @@ impl TsrsLintServer {
         let started = Instant::now();
         let mut diagnostics = vec![];
         let result = loop {
-            match events.recv() {
+            match events.recv_timeout(self.request_timeout) {
                 Ok(Event::Diagnostic(diagnostic)) => diagnostics.push(diagnostic),
                 Ok(Event::Done) => break Ok(diagnostics),
                 Ok(Event::Error(error)) => break Err(LintError::Failed(error)),
                 Ok(Event::Canceled) => break Err(LintError::Canceled),
-                Err(_) => break Err(LintError::Failed("tsrs-lint server exited".to_string())),
+                Err(RecvTimeoutError::Timeout) => {
+                    let error = format!(
+                        "tsrs-lint server did not answer request {id} within {} seconds",
+                        self.request_timeout.as_secs()
+                    );
+                    connection.kill(&error);
+                    break Err(LintError::Failed(error));
+                }
+                Err(RecvTimeoutError::Disconnected) => {
+                    break Err(LintError::Failed("tsrs-lint server exited".to_string()));
+                }
             }
         };
         connection.pending.lock().expect("tsrs-lint pending mutex poisoned").remove(&id);

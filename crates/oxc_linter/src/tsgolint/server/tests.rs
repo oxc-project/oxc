@@ -100,6 +100,14 @@ impl Fixture {
     }
 }
 
+/// Whether the process `pid` is running.
+fn is_running(pid: u64) -> bool {
+    Command::new("kill")
+        .args(["-0", &pid.to_string()])
+        .output()
+        .is_ok_and(|output| output.status.success())
+}
+
 fn configs(file_path: &str) -> Vec<Config> {
     vec![Config {
         file_paths: vec![file_path.to_string()],
@@ -304,11 +312,7 @@ fn stop_shuts_the_process_down() {
     assert!(started.elapsed() < SHUTDOWN_TIMEOUT, "stop took {:?}", started.elapsed());
     assert_eq!(fixture.messages(SHUTDOWN), vec![json!({})]);
     assert_eq!(fixture.events().last().unwrap()["event"], "exit");
-    let alive = Command::new("kill")
-        .args(["-0", &pid.to_string()])
-        .output()
-        .is_ok_and(|output| output.status.success());
-    assert!(!alive, "the process {pid} is still running");
+    assert!(!is_running(pid), "the process {pid} is still running");
 
     assert!(server.is_disabled());
     let error = failure(lint(&server, &file));
@@ -333,4 +337,21 @@ fn lint_of_text_the_server_does_not_have_is_not_sent() {
     let diagnostics = server.lint(&configs(&file), &current, false, false).expect("lint failed");
     assert_eq!(diagnostics.len(), 1);
     assert_eq!(fixture.messages(LINT).len(), 1);
+}
+
+#[test]
+fn process_that_does_not_answer_is_killed() {
+    let Some(fixture) = Fixture::new(&json!({ "lint": "hold" })) else { return };
+    let server = fixture.server().with_request_timeout(Duration::from_millis(200));
+    let file = fixture.file("index.ts");
+
+    let error = failure(lint(&server, &file));
+    assert!(error.contains("did not answer request 1 within"), "{error}");
+    let pid = fixture.events()[0]["pid"].as_u64().expect("no pid in the start event");
+    assert!(!is_running(pid), "the process {pid} is still running");
+    assert!(!server.is_disabled());
+
+    // The next request starts another process.
+    failure(lint(&server, &file));
+    assert_eq!(fixture.starts(), 2);
 }
