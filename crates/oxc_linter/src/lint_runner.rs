@@ -15,6 +15,15 @@ use crate::{
     TsrsLintServer, create_unused_directives_messages, suppression::DiffManager,
 };
 
+/// The diagnostics of [`LintRunner::run_source`].
+pub struct SourceLintResult {
+    pub messages: Vec<Message>,
+    /// Whether type-aware linting finished, or was not enabled. When it failed or was canceled,
+    /// no type-aware diagnostic marked a disable directive as used, so unused directives must not
+    /// be reported.
+    pub type_aware_finished: bool,
+}
+
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
 /// with centralized disable directives handling.
 pub struct LintRunner {
@@ -369,14 +378,17 @@ impl LintRunner {
         &self,
         files: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
-    ) -> Vec<Message> {
+    ) -> SourceLintResult {
         let mut messages = self.lint_service.run_source(file_system, files.to_owned());
+        let mut type_aware_finished = true;
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
             match type_aware_linter.lint_source(files, file_system, &self.directives_store.map()) {
-                Ok(tsgo_messages) => messages.extend(tsgo_messages),
+                Ok(Some(tsgo_messages)) => messages.extend(tsgo_messages),
+                Ok(None) => type_aware_finished = false,
                 Err(error) => {
                     tracing::warn!("type-aware linting failed: {error}");
+                    type_aware_finished = false;
                     messages.push(Message::new(
                         OxcDiagnostic::error("Type-aware linting failed")
                             .with_help(error)
@@ -387,7 +399,7 @@ impl LintRunner {
             }
         }
 
-        messages
+        SourceLintResult { messages, type_aware_finished }
     }
 
     /// Check if type-aware rules are linted through a long-lived `tsrs-lint server`.

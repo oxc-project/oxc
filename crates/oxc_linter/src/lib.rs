@@ -96,7 +96,7 @@ pub use crate::{
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
     frameworks::FrameworkFlags,
-    lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
+    lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder, SourceLintResult},
     loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,

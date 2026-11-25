@@ -18,7 +18,7 @@ use tracing::{debug, error, warn};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     FileChangeKind, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
-    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, TsrsLintServer,
+    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, SourceLintResult, TsrsLintServer,
     is_tsrs_lint_executable, read_to_string, try_find_tsgolint_executable,
 };
 
@@ -1097,9 +1097,9 @@ impl ServerLinter {
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
         let line_index = LineIndex::new(source_text);
-        let mut messages: Vec<DiagnosticReport> = self
-            .runner
-            .run_source(&[Arc::from(path.as_os_str())], &fs)
+        let SourceLintResult { messages, type_aware_finished } =
+            self.runner.run_source(&[Arc::from(path.as_os_str())], &fs);
+        let mut messages: Vec<DiagnosticReport> = messages
             .into_iter()
             .filter_map(|message| {
                 message_to_lsp_diagnostic(
@@ -1116,8 +1116,10 @@ impl ServerLinter {
         // Take directives once to avoid separate get/remove lock acquisitions.
         let directives = self.runner.directives_coordinator().take(path);
 
-        // Add unused directives if configured
+        // Add unused directives if configured. Without type-aware results, a directive for a
+        // type-aware rule (or a blanket one) may look unused while it is not.
         if let Some(severity) = self.unused_directives_severity
+            && type_aware_finished
             && let Some(directives) = directives
         {
             messages.extend(create_unused_directives_report(&directives, severity, &line_index));
@@ -2098,6 +2100,30 @@ mod test_tsrs_lint {
     fn test_tsrs_headless_failure_keeps_regular_diagnostics() {
         Tester::new(FAILURE_FIXTURE, json!({ "typeAware": true, "typeAwareServer": false }))
             .test_and_snapshot_single_file("index.ts");
+    }
+
+    /// Without type-aware results, a disable directive for a type-aware rule is not reported
+    /// unused.
+    #[test]
+    fn test_tsrs_failure_does_not_report_unused_directives() {
+        for type_aware_server in [false, true] {
+            let tester = Tester::new(
+                FAILURE_FIXTURE,
+                json!({
+                    "typeAware": true,
+                    "typeAwareServer": type_aware_server,
+                    "unusedDisableDirectives": "deny",
+                }),
+            );
+            let uri = tester.get_file_uri("disabled.ts");
+            let diagnostics = tester
+                .create_linter()
+                .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
+                .expect("lint failed");
+            assert_eq!(diagnostics.len(), 1);
+            let diagnostics = &diagnostics[0].1;
+            assert_eq!(codes(diagnostics), [""], "{diagnostics:?}");
+        }
     }
 
     /// A `tsrs-lint` without server mode adds one diagnostic, and keeps the others.

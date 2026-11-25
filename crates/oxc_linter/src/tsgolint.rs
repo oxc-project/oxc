@@ -555,6 +555,9 @@ impl TsGoLintState {
     /// - when `stdout` of subprocess cannot be opened
     /// - when `tsgolint` process cannot be awaited
     ///
+    /// Returns `None` when a long-lived server canceled the request, because its results can no
+    /// longer be shown.
+    ///
     /// # Errors
     /// A human-readable error message indicating why the linting failed.
     pub fn lint_source(
@@ -562,9 +565,9 @@ impl TsGoLintState {
         paths: &[Arc<OsStr>],
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
         disable_directives_map: &Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
-    ) -> Result<Vec<Message>, String> {
+    ) -> Result<Option<Vec<Message>>, String> {
         if paths.is_empty() {
-            return Ok(vec![]);
+            return Ok(Some(vec![]));
         }
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
@@ -654,7 +657,7 @@ impl TsGoLintState {
         let _ = child.kill();
         let _ = child.wait();
 
-        diagnostics
+        diagnostics.map(Some)
     }
 
     /// Converts a rule diagnostic into a [`Message`] with the severity configured for the rule.
@@ -701,14 +704,14 @@ impl TsGoLintState {
         resolved_configs: &FxHashMap<PathBuf, ResolvedLinterState>,
         path_file_name: &OsStr,
         disable_directives_map: &Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
-    ) -> Result<Vec<Message>, String> {
+    ) -> Result<Option<Vec<Message>>, String> {
         if configs.is_empty() {
-            return Ok(vec![]);
+            return Ok(Some(vec![]));
         }
         let diagnostics = match server.lint(configs, self.fix, self.fix_suggestions) {
             Ok(diagnostics) => diagnostics,
             // Requests are canceled when their results can no longer be shown.
-            Err(server::LintError::Canceled) => return Ok(vec![]),
+            Err(server::LintError::Canceled) => return Ok(None),
             Err(server::LintError::Failed(error)) => return Err(error),
         };
         let disable_directives_map =
@@ -743,7 +746,7 @@ impl TsGoLintState {
                 }
             }
         }
-        Ok(result)
+        Ok(Some(result))
     }
 
     /// Create a JSON input for STDIN of tsgolint in this format:
