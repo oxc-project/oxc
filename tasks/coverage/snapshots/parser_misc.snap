@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 169/169 (100.00%)
 Positive Passed: 169/169 (100.00%)
-Negative Passed: 301/301 (100.00%)
+Negative Passed: 303/303 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -493,6 +493,38 @@ Negative Passed: 301/301 (100.00%)
  1 │ class C {
  2 │   [async x => x]() {}
    ·          ─
+ 3 │ }
+   ╰────
+
+  × TS(1031): 'default' modifier cannot appear on class elements of this kind.
+   ╭─[misc/fail/class-element-default-modifier.js:2:3]
+ 1 │ class C {
+ 2 │   default m() {}
+   ·   ───────
+ 3 │   static default n() {}
+   ╰────
+
+  × TS(1031): 'default' modifier cannot appear on class elements of this kind.
+   ╭─[misc/fail/class-element-default-modifier.js:3:10]
+ 2 │   default m() {}
+ 3 │   static default n() {}
+   ·          ───────
+ 4 │   default x = 1;
+   ╰────
+
+  × TS(1031): 'default' modifier cannot appear on class elements of this kind.
+   ╭─[misc/fail/class-element-default-modifier.js:4:3]
+ 3 │   static default n() {}
+ 4 │   default x = 1;
+   ·   ───────
+ 5 │ }
+   ╰────
+
+  × TS(1031): 'default' modifier cannot appear on class elements of this kind.
+   ╭─[misc/fail/class-element-default-modifier.ts:2:3]
+ 1 │ declare class C {
+ 2 │   default m(): void;
+   ·   ───────
  3 │ }
    ╰────
 

@@ -256,7 +256,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ) {
             parser.verify_modifiers(
                 modifiers,
-                ModifierKinds::all_except([ModifierKind::Export]),
+                ModifierKinds::all_except([ModifierKind::Export, ModifierKind::Default]),
                 false,
                 diagnostics::cannot_appear_on_class_elements,
             );
