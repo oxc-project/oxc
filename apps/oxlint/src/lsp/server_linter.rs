@@ -612,6 +612,8 @@ impl Tool for ServerLinter {
             if old_option.config_path == new_options.config_path
                 && old_option.use_nested_configs() == new_options.use_nested_configs()
                 && old_option.type_aware == new_options.type_aware
+                // Sources are watched only with a `tsrs-lint server`.
+                && old_option.type_aware_server == new_options.type_aware_server
             {
                 None
             } else {
@@ -1405,6 +1407,17 @@ mod test_watchers {
                     }));
 
             assert!(watch_patterns.is_none());
+        }
+
+        #[test]
+        fn test_lint_type_aware_server_change() {
+            let ToolRestartChanges { watch_patterns, .. } =
+                Tester::new("fixtures/lsp/watchers/default", json!({ "typeAware": true }))
+                    .handle_configuration_change(json!({
+                        "typeAware": true,
+                        "typeAwareServer": false
+                    }));
+            assert!(watch_patterns.is_some());
         }
 
         #[test]
