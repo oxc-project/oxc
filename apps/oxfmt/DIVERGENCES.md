@@ -612,7 +612,7 @@ Prettier prints it in parens, which makes it the one value `b`, or makes the cod
 In parens, it is one value, and formats as Prettier does (`(a, b)`):
 the source's (`{{ (a,b) }}`), or Vue's own, around `v-if`, `v-else-if` and an event handler's expression (`$event => (…)`).
 
-## js-in-vue-interpolation-in-broken-parent
+## interpolation-in-broken-parent
 
 - Why: uniform-rule (same construct, same output: `{{ }}` in a `<div>`; prettier/prettier#11406)
 - Pin: `conformance/fixtures/js-in-vue/interpolation-in-broken-parent.vue`
@@ -654,8 +654,8 @@ the source's (`{{ (a,b) }}`), or Vue's own, around `v-if`, `v-else-if` and an ev
 </template>
 ```
 
-`{{ }}` keeps its expression on its line when it fits, in an element that puts each child on its own line
-(`ul`, `ol`, `select`, `display: table*`) as in any other.
+`{{ }}` (Vue's and Angular's) keeps its expression on its line when it fits, in an element that puts each child on its own line
+(`ul`, `ol`, `select`, `display: table*`: Angular's `<caption>` too) as in any other.
 Prettier lays out such children in the parent's group, which always breaks, so its interpolation always breaks too.
 
 ## interpolation-own-group
