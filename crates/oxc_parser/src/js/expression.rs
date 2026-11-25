@@ -1327,12 +1327,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if self.source_type.is_jsx() && self.at(Kind::LAngle) {
-            return self.parse_jsx_expression();
+            return self.parse_jsx_operand();
         }
 
         let start = self.cur_start();
         let lhs = self.parse_lhs_expression_or_higher();
         self.parse_postfix_update_expression(start, lhs)
+    }
+
+    /// Parse a JSX element or fragment and, in JavaScript, its suffixes. The JSX grammar adds
+    /// elements and fragments to `PrimaryExpression`, so `<C />.props` is a member expression.
+    /// TypeScript instead parses a JSX element as a complete `UpdateExpression` and reports a
+    /// suffix as an error.
+    fn parse_jsx_operand(&mut self) -> Expression<'a> {
+        if self.is_ts {
+            return self.parse_jsx_expression();
+        }
+        let start = self.cur_start();
+        let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+        let element = self.parse_jsx_expression();
+        self.parse_primary_expression_rest(start, element, pure_comments)
     }
 
     #[expect(clippy::inline_always)]
@@ -1392,7 +1406,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             kind if kind.is_unary_operator() => self.parse_unary_expression(),
             Kind::LAngle => {
                 if self.source_type.is_jsx() {
-                    return self.parse_jsx_expression();
+                    return self.parse_jsx_operand();
                 }
                 if self.is_ts {
                     return self.with_pure_comments(Self::parse_ts_type_assertion);
@@ -1797,10 +1811,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 allow_return_type_in_arrow_function,
                             )
                         } else {
-                            (self.parse_jsx_expression(), false)
+                            (self.parse_jsx_operand(), false)
                         };
                         if !is_arrow {
-                            // A JSX element is a complete `UpdateExpression`.
+                            // The JSX operand is a complete `UpdateExpression`.
                             break 'parse_lhs if kind_to_precedence(self.cur_kind()).is_none() {
                                 expression
                             } else {
