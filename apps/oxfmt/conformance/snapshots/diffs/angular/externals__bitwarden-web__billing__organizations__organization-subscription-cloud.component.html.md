@@ -12,20 +12,7 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -186,11 +186,9 @@
-               type="button"
-               (click)="manageBillingSync()"
-             >
-               {{
--                (hasBillingSyncToken()
--                  ? "viewBillingToken"
--                  : "setUpBillingSync"
-+                (hasBillingSyncToken() ? "viewBillingToken" : "setUpBillingSync"
-                 ) | i18n
-               }}
-             </button>
-           }
-@@ -340,9 +338,10 @@
+@@ -340,9 +340,10 @@
                org.providerId,
                'billing',
                'subscription',
@@ -37,19 +24,6 @@
        } @else {
          <p bitTypography="body1">
            {{ "billingManagedByProvider" | i18n: org.providerName }}.
-@@ -397,11 +396,9 @@
-               type="button"
-               (click)="manageBillingSync()"
-             >
-               {{
--                (hasBillingSyncToken()
--                  ? "viewBillingToken"
--                  : "setUpBillingSync"
-+                (hasBillingSyncToken() ? "viewBillingToken" : "setUpBillingSync"
-                 ) | i18n
-               }}
-             </button>
-           }
 
 `````
 
@@ -245,7 +219,9 @@
               (click)="manageBillingSync()"
             >
               {{
-                (hasBillingSyncToken() ? "viewBillingToken" : "setUpBillingSync"
+                (hasBillingSyncToken()
+                  ? "viewBillingToken"
+                  : "setUpBillingSync"
                 ) | i18n
               }}
             </button>
@@ -455,7 +431,9 @@
               (click)="manageBillingSync()"
             >
               {{
-                (hasBillingSyncToken() ? "viewBillingToken" : "setUpBillingSync"
+                (hasBillingSyncToken()
+                  ? "viewBillingToken"
+                  : "setUpBillingSync"
                 ) | i18n
               }}
             </button>

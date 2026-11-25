@@ -31,9 +31,17 @@ use super::{
 };
 use crate::context::HtmlishFormatContext;
 
-/// Parent→child context for a JS fragment of an Angular template, dispatched as TS.
+/// Parent→child context for a JS fragment of an Angular template, dispatched as TS: what it is, and what this module prints after it.
 ///
 /// The host translates it into JS's `JsRoot` and `JsEmbeddedIn`.
+#[derive(Clone, Copy, Debug)]
+pub struct JsInAngularPiece {
+    pub part: JsInAngularTemplate,
+    /// This module puts it in parens of its own, a pipe after them (`(a ? b : c) | p`, prettier#5389): JS's `ExpressionRoot::closes_paren`.
+    pub closes_paren: bool,
+}
+
+/// What a JS fragment of an Angular template is ([`JsInAngularPiece`]).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum JsInAngularTemplate {
     /// A piece of code in `{{ }}` (all of it, but its pipes and comment): an expression the interpolation lays out.
@@ -91,9 +99,10 @@ pub(super) const SEPARATOR: FormatWith<fn(&mut HtmlishFormatter<'_, '_>)> =
 const ALIAS: &str = " as ";
 
 /// A piece of code formatted as `part`, its alias after it ([`JsInAngularTemplate::suffix_len`] measures it);
-/// `None` when the dispatcher leaves it as written.
+/// `closes_paren`: [`JsInAngularPiece::closes_paren`]. `None` when the dispatcher leaves it as written.
 fn dispatch_piece<'a>(
     part: JsInAngularTemplate,
+    closes_paren: bool,
     piece: &'a str,
     f: &HtmlishFormatter<'_, 'a>,
 ) -> Option<Ir<'a>> {
@@ -106,10 +115,24 @@ fn dispatch_piece<'a>(
         }
         _ => piece,
     };
-    if part.in_html_attribute() {
-        embed::dispatch_attribute_value("ts", &part, unescaped(piece, f), f)
-    } else {
-        dispatch_fragment_ir(f, "ts", piece, Some(&part))
+    JsInAngularPiece { part, closes_paren }.dispatch(piece, f)
+}
+
+/// The only ways this module dispatches a piece: the dispatcher reads this context, never a bare [`JsInAngularTemplate`],
+/// which it would take for no Angular piece (a program, with a `;`).
+impl JsInAngularPiece {
+    /// `piece` formatted as TS, an attribute value's quote entities read back.
+    fn dispatch<'a>(self, piece: &'a str, f: &HtmlishFormatter<'_, 'a>) -> Option<Ir<'a>> {
+        if self.part.in_html_attribute() {
+            embed::dispatch_attribute_value("ts", &self, unescaped(piece, f), f)
+        } else {
+            dispatch_fragment_ir(f, "ts", piece, Some(&self))
+        }
+    }
+
+    /// Writes an attribute's whole `value` formatted as TS, quoted; `false` to print it as written.
+    fn write_attribute_value<'a>(self, value: &'a str, f: &mut HtmlishFormatter<'_, 'a>) -> bool {
+        embed::write_attribute_value("ts", &self, value, f)
     }
 }
 
@@ -139,7 +162,7 @@ pub fn write_binding<'a>(
         && expression.comment.is_none()
         && expression.code.nested.is_empty()
     {
-        return embed::write_attribute_value("ts", &part, value, f);
+        return JsInAngularPiece { part, closes_paren: false }.write_attribute_value(value, f);
     }
     let Some(parts) = Parts::dispatch(expression, part, f) else { return false };
     // Pipes (in parens all of the code too: `(a | p)`) or a comment lay out around the code
@@ -162,7 +185,7 @@ pub fn write_action(action: Option<&AngularAction<'_>>, f: &mut HtmlishFormatter
         .iter()
         .map(|statement| {
             let part = JsInAngularTemplate::AttributePiece { tailwind_classes: false };
-            dispatch_piece(part, statement.span.slice(source), f)
+            dispatch_piece(part, false, statement.span.slice(source), f)
         })
         .collect::<Option<Vec<_>>>()
     else {
@@ -493,18 +516,21 @@ const PLACEHOLDER: Placeholder<'static> = Placeholder { prefix: "oxfmt_ng_", suf
 
 impl<'a> Code<'a> {
     /// `code` formatted as `part`, each nested pipe dispatched as a name standing for it (TS reads `|` as a bitwise or);
+    /// `before_pipe`: pipes follow it, a conditional's parens closing before them ([`Self::before_operator`]).
     /// `None` when a pipe does not format, or the formatted code does not hold each name once.
     /// Not complete: JS's layout takes each for a name, no break after a property's `:` or before a `.`
     /// (apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name).
     fn dispatch(
         code: &AngularCode<'_>,
         part: JsInAngularTemplate,
+        before_pipe: bool,
         f: &HtmlishFormatter<'_, 'a>,
     ) -> Option<Self> {
+        let closes_paren = before_pipe && code.conditional;
         let source = f.context().tree().source();
         let piece = code.span.slice(source);
         if code.nested.is_empty() {
-            let ir = dispatch_piece(part, piece, f)?;
+            let ir = dispatch_piece(part, closes_paren, piece, f)?;
             return Some(Self { ir, conditional: code.conditional, replacements: vec![] });
         }
         if PLACEHOLDER.is_in(piece) {
@@ -533,7 +559,7 @@ impl<'a> Code<'a> {
             at = span.end as usize;
         }
         replaced.push_str(&source[at..code.span.end as usize]);
-        let ir = dispatch_piece(part, f.allocator().alloc_str(&replaced), f)?;
+        let ir = dispatch_piece(part, closes_paren, f.allocator().alloc_str(&replaced), f)?;
         // Each name once, in order: one dropped or printed twice would lose the pipe or repeat it
         PLACEHOLDER.are_sequential(&ir, replacements.len()).then_some(Self {
             ir,
@@ -574,14 +600,14 @@ impl<'a> Code<'a> {
 
     /// Before a pipe or an argument, a conditional prints in parens, whose branch would take it otherwise
     /// (`a ? b : c | p` is `a ? b : (c | p)`, prettier#5389);
-    /// the `)` on a line of its own when it breaks before a pipe (`own_line`), after the last branch before a `:`, as Prettier prints them.
-    fn before_operator(self, own_line: bool) -> impl Format<'a, HtmlishFormatContext<'a>> {
+    /// the `)` on a line of its own when it breaks before a pipe, JS's to break ([`JsInAngularPiece::closes_paren`]),
+    /// after the last branch before a `:`, as Prettier prints them.
+    fn before_operator(self) -> impl Format<'a, HtmlishFormatContext<'a>> {
         format_once(move |f| {
             let conditional = self.conditional;
             let ir = self.resolve(f);
             if conditional {
-                let close = own_line.then_some(soft_line_break());
-                write!(f, group(&format_args!("(", format_ir(ir), close, ")")));
+                write!(f, ["(", format_ir(ir), ")"]);
             } else {
                 f.write_elements(ir);
             }
@@ -622,7 +648,7 @@ impl<'a> Parts<'a> {
                 (code, pipes)
             }
             _ => (
-                Code::dispatch(&expression.code, code_part, f)?,
+                Code::dispatch(&expression.code, code_part, !expression.pipes.is_empty(), f)?,
                 Vec::with_capacity(expression.pipes.len()),
             ),
         };
@@ -633,7 +659,12 @@ impl<'a> Parts<'a> {
                 .iter()
                 .enumerate()
                 .map(|(j, argument)| {
-                    Code::dispatch(argument, part_of(last_pipe && j + 1 == pipe.arguments.len()), f)
+                    Code::dispatch(
+                        argument,
+                        part_of(last_pipe && j + 1 == pipe.arguments.len()),
+                        false,
+                        f,
+                    )
                 })
                 .collect::<Option<Vec<_>>>()?;
             pipes.push((pipe.name.slice(source), arguments));
@@ -689,7 +720,7 @@ impl<'a> Parts<'a> {
         } else {
             let lone = pipes.len() == 1;
             let chain = format_once(move |f| {
-                write!(f, code.before_operator(true));
+                write!(f, code.before_operator());
                 let pipes = format_once(move |f| {
                     for (name, arguments) in pipes {
                         write_pipe(name, arguments, lone, f);
@@ -727,7 +758,7 @@ fn write_pipe<'a>(
                     write!(f, [soft_line_break_or_space(), ": "]);
                 }
                 // Every argument as Prettier prints it, the last one too
-                write!(f, align(2, &group(&argument.before_operator(false))));
+                write!(f, align(2, &group(&argument.before_operator())));
             }
         });
         write!(f, group(&indent(&arguments)));

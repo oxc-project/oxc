@@ -189,8 +189,6 @@
 {"printWidth":80}
 ```
 
-- [externals/bitwarden-web/billing/organizations/organization-subscription-cloud.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-subscription-cloud.component.html.md)
-  - ❓unclassified
 - [externals/angular-adev/content/examples/i18n/src/app/app.component.html](diffs/angular/externals__angular-adev__content__examples__i18n__src__app__app.component.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
 - [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
@@ -217,6 +215,8 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
 - [externals/bitwarden-web/billing/organizations/organization-plans.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-plans.component.html.md)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
+- [externals/bitwarden-web/billing/organizations/organization-subscription-cloud.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-subscription-cloud.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
 
 ### Option 2: 802/804 (99.75%)
 
