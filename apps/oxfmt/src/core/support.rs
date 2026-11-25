@@ -57,15 +57,12 @@ pub fn classify_file(path: &Path) -> Option<FormatStrategy> {
     if file_name == "contents.lr" || MARKDOWN_EXTENSIONS.contains(ext) {
         return Some(FormatStrategy::Native(NativeLanguage::Markdown));
     }
-    // Angular templates share the extension, and stay with Prettier
-    if let Some(variant) = html_variant(ext)
-        && !file_name.ends_with(".component.html")
-    {
+    if let Some(variant) = html_variant(file_name, ext) {
         return Some(FormatStrategy::Native(NativeLanguage::Html(variant)));
     }
 
     #[cfg(feature = "napi")]
-    if let Some(language) = prettier_language(file_name, ext) {
+    if let Some(language) = prettier_language(ext) {
         return Some(FormatStrategy::Prettier(language));
     }
 
@@ -164,7 +161,6 @@ impl NativeLanguage {
 #[derive(Debug, Clone, Copy)]
 pub enum PrettierLanguage {
     Mdx,
-    Angular,
     /// Formatted only when `prettier-plugin-svelte` is enabled (`svelte` config key).
     Svelte,
     /// Formatted only when `prettier-plugin-astro` is enabled (`astro` config key).
@@ -185,7 +181,6 @@ impl PrettierLanguage {
     pub fn parser(self) -> &'static str {
         match self {
             Self::Mdx => "mdx",
-            Self::Angular => "angular",
             Self::Svelte => "svelte",
             Self::Astro => "astro",
             Self::Mjml => "mjml",
@@ -383,8 +378,10 @@ static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 
 // ---
 
-fn html_variant(ext: &str) -> Option<HtmlishVariant> {
+fn html_variant(file_name: &str, ext: &str) -> Option<HtmlishVariant> {
     match ext {
+        // Angular templates share the extension
+        "html" if file_name.ends_with(".component.html") => Some(HtmlishVariant::Angular),
         "html" | "hta" | "htm" | "inc" => Some(HtmlishVariant::Html),
         // An XML parser may read XHTML
         "xhtml" | "xht" => Some(HtmlishVariant::Xhtml),
@@ -398,10 +395,7 @@ fn html_variant(ext: &str) -> Option<HtmlishVariant> {
 /// Returns the [`PrettierLanguage`] for the file, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
-fn prettier_language(file_name: &str, ext: &str) -> Option<PrettierLanguage> {
-    if file_name.ends_with(".component.html") {
-        return Some(PrettierLanguage::Angular);
-    }
+fn prettier_language(ext: &str) -> Option<PrettierLanguage> {
     Some(match ext {
         // Formatting is gated by `ResolveOutcome::MissingPlugin` (requires `svelte` / `astro` config),
         // classified here so that each caller can surface a friendly error or skip.
@@ -523,7 +517,7 @@ mod tests {
     fn test_prettier_language() {
         fn get_parser_name(file_name: &str) -> Option<&'static str> {
             let ext = Path::new(file_name).extension().and_then(|ext| ext.to_str());
-            prettier_language(file_name, ext.unwrap_or_default()).map(PrettierLanguage::parser)
+            prettier_language(ext.unwrap_or_default()).map(PrettierLanguage::parser)
         }
 
         let test_cases = vec![
@@ -536,8 +530,6 @@ mod tests {
             // and excluded from this map.
             ("index.html", None),
             ("page.htm", None),
-            // Angular
-            ("app.component.html", Some("angular")),
             // MJML
             ("email.mjml", Some("mjml")),
             // Vue files are routed to `oxc_formatter_htmlish` in `classify_file`
@@ -709,6 +701,7 @@ mod tests {
             ("template.xhtml", HtmlishVariant::Xhtml),
             ("page.xht", HtmlishVariant::Xhtml),
             ("App.vue", HtmlishVariant::Vue),
+            ("app.component.html", HtmlishVariant::Angular),
         ] {
             let result = classify_file(Path::new(file_name));
             assert!(
@@ -716,10 +709,6 @@ mod tests {
                 "`{file_name}` should be routed to oxc_formatter_htmlish as {expected:?}"
             );
         }
-
-        // Angular templates stay with Prettier (and are not formatted in the pure Rust build)
-        let result = classify_file(Path::new("app.component.html"));
-        assert!(!matches!(result, Some(FormatStrategy::Native(_))));
     }
 
     #[test]
