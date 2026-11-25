@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock, Weak};
 
 use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -61,16 +61,21 @@ pub struct ServerLinterBuilder {
     #[cfg(feature = "napi")]
     js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
     /// The state each workspace keeps across linter rebuilds, by workspace root.
-    workspaces: Mutex<FxHashMap<Uri, Arc<WorkspaceState>>>,
+    ///
+    /// The linters of a workspace own its state, and a rebuild finds it here while the previous
+    /// linter is still alive. [`ToolBuilder::shutdown`] runs before every rebuild too, so it does
+    /// not drop the state: the state, and its `tsrs-lint server`, go away with the workspace's last
+    /// linter.
+    workspaces: Mutex<FxHashMap<Uri, Weak<WorkspaceState>>>,
 }
 
 /// What a workspace keeps across linter rebuilds (a configuration change rebuilds the linter).
+/// Dropping it stops the workspace's `tsrs-lint server`.
 #[derive(Default)]
 struct WorkspaceState {
     /// The open documents with their unsaved text, by URI.
     open_documents: Mutex<FxHashMap<Uri, OpenDocument>>,
-    /// The workspace's long-lived `tsrs-lint server`. Once started, it is kept for the language
-    /// server's lifetime.
+    /// The workspace's long-lived `tsrs-lint server`. It is kept across linter rebuilds.
     tsrs_server: Mutex<Option<Arc<TsrsLintServer>>>,
 }
 
@@ -126,6 +131,12 @@ impl WorkspaceState {
     }
 }
 
+impl Drop for WorkspaceState {
+    fn drop(&mut self) {
+        self.stop_tsrs_server();
+    }
+}
+
 /// Whether type-aware linting with `tsrs-lint` uses a long-lived `tsrs-lint server`: the
 /// `OXLINT_TSRS_LINT_SERVER` environment variable (`true`/`1` or `false`/`0`) when set, else the
 /// `typeAwareServer` option, else `true`.
@@ -150,14 +161,16 @@ impl ServerLinterBuilder {
         }
     }
 
+    /// The state of the workspace at `root_uri`: the one its current linter owns, or a new one.
     fn workspace(&self, root_uri: &Uri) -> Arc<WorkspaceState> {
-        Arc::clone(
-            self.workspaces
-                .lock()
-                .expect("workspaces mutex poisoned")
-                .entry(root_uri.clone())
-                .or_default(),
-        )
+        let mut workspaces = self.workspaces.lock().expect("workspaces mutex poisoned");
+        workspaces.retain(|_, workspace| workspace.strong_count() > 0);
+        if let Some(workspace) = workspaces.get(root_uri).and_then(Weak::upgrade) {
+            return workspace;
+        }
+        let workspace = Arc::new(WorkspaceState::default());
+        workspaces.insert(root_uri.clone(), Arc::downgrade(&workspace));
+        workspace
     }
 
     /// Creates a new `ServerLinter` instance based on the provided root URI and options.
@@ -427,12 +440,9 @@ impl ToolBuilder for ServerLinterBuilder {
 
     #[expect(unused)]
     fn shutdown(&self, root_uri: &Uri) {
-        // The workspace's `tsrs-lint server` keeps the programs of its projects: stop it with the
-        // workspace.
-        let workspace = self.workspaces.lock().expect("workspaces mutex poisoned").remove(root_uri);
-        if let Some(workspace) = workspace {
-            workspace.stop_tsrs_server();
-        }
+        // The workspace state (open documents, `tsrs-lint server`) is not dropped here: a restart
+        // shuts down before it builds the next linter, which keeps the state. It is dropped with
+        // the workspace's last linter.
 
         // We don't currently destroy JS workspaces.
         // See comment in `destroyWorkspace` in `src-js/workspace/index.ts` for explanation.
@@ -1359,9 +1369,9 @@ mod test_watchers {
 
 #[cfg(test)]
 mod test {
-    use std::{fs, path::PathBuf};
+    use std::{fs, path::PathBuf, sync::Arc};
 
-    use oxc_language_server::{CodeActionParams, LanguageId, TextDocument, Tool};
+    use oxc_language_server::{CodeActionParams, LanguageId, TextDocument, Tool, ToolBuilder};
     use oxc_linter::ExternalPluginStore;
     use rustc_hash::FxHashSet;
     use serde_json::json;
@@ -1374,7 +1384,7 @@ mod test {
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
         server_linter::ServerLinterBuilder,
-        tester::{Tester, get_file_path},
+        tester::{Tester, get_file_path, get_file_uri},
     };
 
     fn code_action_params(
@@ -1383,6 +1393,32 @@ mod test {
         context: CodeActionContext,
     ) -> CodeActionParams {
         CodeActionParams { uri: uri.clone(), range, context, document_version: None }
+    }
+
+    /// A restart shuts the workspace down and builds a new linter while the previous one is
+    /// alive: the new linter keeps the open documents. Once every linter is gone, the next one
+    /// starts afresh.
+    #[test]
+    fn test_restart_keeps_open_documents() {
+        let builder = ServerLinterBuilder::default();
+        let root_uri = Tester::get_root_uri("fixtures/lsp/no_errors");
+        let linter = builder.build(&root_uri, json!({})).0;
+        let uri = get_file_uri("fixtures/lsp/no_errors/hello_world.js");
+        linter.did_open(&TextDocument {
+            uri: &uri,
+            language_id: LanguageId::default(),
+            text: Some("debugger;".into()),
+            version: Some(1),
+        });
+
+        builder.shutdown(&root_uri);
+        let restarted = builder.build(&root_uri, json!({})).0;
+        assert!(Arc::ptr_eq(&linter.workspace, &restarted.workspace));
+        assert!(restarted.workspace.open_documents.lock().unwrap().contains_key(&uri));
+
+        drop((linter, restarted));
+        let fresh = builder.build(&root_uri, json!({})).0;
+        assert!(fresh.workspace.open_documents.lock().unwrap().is_empty());
     }
 
     #[test]
