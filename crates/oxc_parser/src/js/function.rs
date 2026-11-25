@@ -622,12 +622,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Some(BindingIdentifier::new(span, name, self))
         } else {
             if func_kind.is_id_required() {
-                match self.cur_kind() {
-                    Kind::LParen | Kind::LAngle => {
-                        self.error(diagnostics::expect_function_name(self.cur_token().span()));
-                    }
-                    kind if kind.is_reserved_keyword() => self.expect_without_advance(Kind::Ident),
-                    _ => {}
+                if kind == Kind::LParen || (kind == Kind::LAngle && self.is_ts) {
+                    self.error(diagnostics::expect_function_name(self.cur_token().span()));
+                } else if kind.is_reserved_keyword() {
+                    self.expect_without_advance(Kind::Ident);
                 }
             }
 

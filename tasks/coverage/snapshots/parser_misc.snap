@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 173/173 (100.00%)
 Positive Passed: 173/173 (100.00%)
-Negative Passed: 309/309 (100.00%)
+Negative Passed: 310/310 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -1441,6 +1441,13 @@ Negative Passed: 309/309 (100.00%)
    ·     ┬                ┬
    ·     │                ╰── `)` expected
    ·     ╰── Opened here
+   ╰────
+
+  × Expected `(` but found `<`
+   ╭─[misc/fail/function-type-parameters-missing-name.js:1:9]
+ 1 │ function<T>() {}
+   ·         ┬
+   ·         ╰── `(` expected
    ╰────
 
   × A 'get' accessor must not have any formal parameters.
