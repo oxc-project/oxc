@@ -519,16 +519,15 @@ impl<'a> Code<'a> {
         let mut replaced = String::with_capacity(piece.len());
         let mut replacements = Vec::with_capacity(code.nested.len());
         let mut at = code.span.start as usize;
-        for NestedPipe { span, in_parens, last_value, expression, .. } in &code.nested {
+        for NestedPipe { span, in_parens, last_value, spread, expression } in &code.nested {
             replaced.push_str(&source[at..span.start as usize]);
-            // A spread's prints in parens, as Prettier parens it (`[...(a | p)]`); one in parens already is `in_parens`
-            let spread = replaced.trim_end().ends_with("...");
             PLACEHOLDER.write(&mut replaced, replacements.len());
             // The last value of an object: its `}` and the pipe's last may meet (`{k: a | p: {x: 1}}`), which ends a `{{ }}`.
             // In parens too, where they cannot, as Prettier parens it (`{k: (a | p: ({x: 1}))}`), but a spread's (`{...(a | p: {x: 1})}`)
-            let before_brace = *last_value && !spread;
+            let before_brace = *last_value && !*spread;
             let parts = Parts::dispatch(expression, nested_part.before_brace(before_brace), f)?;
-            replacements.push(Replacement { parts, in_parens: *in_parens || spread });
+            // A spread's prints in parens, as Prettier parens it (`[...(a | p)]`); one in parens already is `in_parens`
+            replacements.push(Replacement { parts, in_parens: *in_parens || *spread });
             at = span.end as usize;
         }
         replaced.push_str(&source[at..code.span.end as usize]);
