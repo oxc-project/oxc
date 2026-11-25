@@ -6,8 +6,8 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
 
 use crate::{
-    ParserConfig as Config, ParserImpl, cursor::ParserCheckpoint, diagnostics, js::Tristate,
-    lexer::Kind,
+    Context, ParserConfig as Config, ParserImpl, cursor::ParserCheckpoint, diagnostics,
+    js::Tristate, lexer::Kind,
 };
 
 /// Represents either a closing JSX element or fragment.
@@ -547,7 +547,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let start = self.cur_start();
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3);
-        let argument = self.parse_expr();
+        let argument =
+            self.context_remove(Context::Decorator, Self::parse_assignment_expression_or_higher);
         self.expect(Kind::RCurly);
         JSXSpreadAttribute::boxed(self.end_span(start), argument, self)
     }
