@@ -93,8 +93,9 @@
 
 use oxc_allocator::{Allocator, ArenaVec, BitSet, GetAllocator};
 use oxc_ast::ast::*;
+use oxc_ast_visit::VisitJs;
 #[cfg(debug_assertions)]
-use oxc_ast_visit::{VisitJs, walk_js::walk_function};
+use oxc_ast_visit::walk_js::walk_function;
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
@@ -162,6 +163,11 @@ impl<'a> SymbolLiveness<'a> {
         self.recursive_functions.as_ref().is_some_and(|graph| graph.is_dead(symbol_id))
     }
 
+    pub fn has_live_direct_eval(&self, s: ScopeId) -> bool {
+        let evals = self.recursive_functions.as_ref().map(|g| &g.live_direct_eval_scopes);
+        evals.is_none_or(|e| e.as_ref().is_none_or(|l| l.contains(s.index())))
+    }
+
     /// Stop tracking a function declaration after it becomes an expression.
     pub fn unregister_function_declaration(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
         if let Some(graph) = self.recursive_functions.as_mut() {
@@ -223,9 +229,9 @@ impl<'a> SymbolLiveness<'a> {
         graph.register(scope_id, symbol_id);
     }
 
-    fn analyze(&mut self, scoping: &Scoping) -> bool {
+    fn analyze(&mut self, program: &Program<'_>, scoping: &Scoping) -> bool {
         let Some(graph) = &mut self.recursive_functions else { return false };
-        graph.analyze(scoping, &self.implicitly_observable)
+        graph.analyze(program, scoping, &self.implicitly_observable)
     }
 
     #[cfg(debug_assertions)]
@@ -250,6 +256,8 @@ struct FunctionGraph<'a> {
     /// sites consume membership, but bits persist after AST removal so later
     /// analyses can reject resurrection. Deadness is monotonic.
     dead: BitSet<'a>,
+    live_direct_eval_scopes: Option<BitSet<'a>>,
+    allocator: &'a Allocator,
     scratch: GraphScratch<'a>,
 }
 
@@ -262,6 +270,8 @@ impl<'a> FunctionGraph<'a> {
             candidates: BitSet::new_in(symbols_len, allocator),
             function_by_scope,
             dead: BitSet::new_in(symbols_len, allocator),
+            live_direct_eval_scopes: None,
+            allocator,
             scratch: GraphScratch::new(symbols_len, allocator),
         }
     }
@@ -299,8 +309,15 @@ impl<'a> FunctionGraph<'a> {
 
     /// Rebuild current reachability and report whether this run published any
     /// newly dead function, requiring another peephole pass.
-    fn analyze(&mut self, scoping: &Scoping, implicitly_observable: &BitSet<'_>) -> bool {
-        if scoping.root_scope_flags().contains_direct_eval() {
+    fn analyze(
+        &mut self,
+        program: &Program<'_>,
+        scoping: &Scoping,
+        implicitly_observable: &BitSet<'_>,
+    ) -> bool {
+        self.live_direct_eval_scopes = None;
+        let has_direct_eval = scoping.root_scope_flags().contains_direct_eval();
+        if has_direct_eval {
             // The minifier may remove direct eval but must never create one,
             // so a graph that already published dead functions cannot get
             // here.
@@ -309,7 +326,6 @@ impl<'a> FunctionGraph<'a> {
             // invalidated deadness. Declarations already removed cannot be
             // restored if a transform violated the direct-eval contract.
             self.dead.clear();
-            return false;
         }
 
         self.scratch.reset();
@@ -349,7 +365,7 @@ impl<'a> FunctionGraph<'a> {
                     self.scratch.mark_live(target);
                 }
             }
-            if !has_registered_function_owner && !self.dead.contains(bit) {
+            if !has_direct_eval && !has_registered_function_owner && !self.dead.contains(bit) {
                 self.scratch.candidates_to_untrack.set_bit(bit);
             }
         }
@@ -386,6 +402,11 @@ impl<'a> FunctionGraph<'a> {
         // owned by live candidates.
         self.scratch.propagate_liveness(&self.candidates);
 
+        if has_direct_eval {
+            self.live_direct_eval_scopes = Some(self.propagate_eval(program, scoping));
+            return false;
+        }
+
         #[cfg(debug_assertions)]
         for bit in self.dead.ones() {
             assert!(
@@ -405,6 +426,70 @@ impl<'a> FunctionGraph<'a> {
             }
         }
         published_new_dead
+    }
+
+    fn propagate_eval(&mut self, program: &Program<'_>, scoping: &Scoping) -> BitSet<'a> {
+        struct Eval<'a, 'g, 's>(
+            &'g FunctionGraph<'a>,
+            &'s Scoping,
+            ArenaVec<'a, ScopeId>,
+            ArenaVec<'a, (usize, ScopeId)>,
+        );
+        impl<'a> VisitJs<'a> for Eval<'a, '_, '_> {
+            fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+                if let Some(id) = crate::traverse_context::as_direct_eval_call(it)
+                    && let Some(r) = id.reference_id.get()
+                {
+                    let s = self.1.get_reference(r).scope_id();
+                    match self.0.owner(self.1, s) {
+                        Some(o) if !self.0.scratch.live.contains(o.index()) => {
+                            self.3.push((o.index(), s));
+                        }
+                        _ => self.2.push(s),
+                    }
+                }
+                oxc_ast_visit::walk_js::walk_call_expression(self, it);
+            }
+        }
+        fn edges<V: Copy>(v: &[(usize, V)], key: usize) -> impl Iterator<Item = V> + '_ {
+            v[v.partition_point(|&(k, _)| k < key)..]
+                .iter()
+                .take_while(move |&&(k, _)| k == key)
+                .map(|&(_, val)| val)
+        }
+        let alloc = self.allocator;
+        let mut c = Eval(self, scoping, ArenaVec::new_in(&alloc), ArenaVec::new_in(&alloc));
+        c.visit_program(program);
+        let (mut pending, mut fn_evals) = (c.2, c.3);
+        let mut live_scopes = BitSet::new_in(scoping.scopes_len(), alloc);
+        let (root, mut scope_fns) = (scoping.root_scope_id(), ArenaVec::new_in(&alloc));
+        for (idx, maybe_sym) in self.function_by_scope.iter().enumerate() {
+            let Some(sym) = *maybe_sym else { continue };
+            let decl = scoping.scope_parent_id(ScopeId::from_usize(idx)).unwrap_or(root);
+            scope_fns.push((decl.index(), sym));
+            let sym_scope = scoping.symbol_scope_id(sym);
+            if sym_scope != decl {
+                scope_fns.push((sym_scope.index(), sym));
+            }
+        }
+        fn_evals.sort_unstable_by_key(|&(k, _)| k);
+        scope_fns.sort_unstable_by_key(|&(k, _)| k);
+        while !pending.is_empty() || !self.scratch.live_worklist.is_empty() {
+            while let Some(s) = pending.pop() {
+                for anc in scoping.scope_ancestors(s) {
+                    if live_scopes.contains(anc.index()) {
+                        break;
+                    }
+                    live_scopes.set_bit(anc.index());
+                    edges(&scope_fns, anc.index()).for_each(|sym| self.scratch.mark_live(sym));
+                }
+            }
+            while let Some(o) = self.scratch.live_worklist.pop() {
+                self.scratch.mark_targets_live(o);
+                pending.extend(edges(&fn_evals, o.index()));
+            }
+        }
+        live_scopes
     }
 }
 
@@ -595,13 +680,6 @@ pub fn register_default_export(
 pub fn dead_references_affect_analysis(ctx: &TraverseCtx<'_>) -> bool {
     let Some(liveness) = ctx.state.symbols.liveness() else { return false };
     let Some(graph) = &liveness.recursive_functions else { return false };
-    // The analysis is disabled while the root scope contains direct eval, so
-    // removed references cannot affect it. The flag may be stale if this pass
-    // dropped the last eval (flags refresh after this check), but that drop
-    // also sets `direct_eval_dropped`, which forces the recompute anyway.
-    if ctx.scoping().root_scope_flags().contains_direct_eval() {
-        return false;
-    }
     ctx.state.pass_changes.removed_references.ones().any(|bit| {
         ctx.scoping()
             .get_reference(ReferenceId::from_usize(bit))
@@ -615,9 +693,6 @@ pub fn dead_references_affect_analysis(ctx: &TraverseCtx<'_>) -> bool {
 /// publish newly dead functions. Called only by pass completion after
 /// scoping has been flushed.
 pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: bool) -> bool {
-    #[cfg(not(debug_assertions))]
-    let _ = program;
-
     #[cfg(debug_assertions)]
     if let Some(dead) = ctx.state.symbols.liveness().and_then(SymbolLiveness::dead_functions) {
         debug_assert_dead_function_declarations_removed(program, ctx.scoping(), dead);
@@ -628,7 +703,7 @@ pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: 
     }
 
     let TraverseCtx { state, scoping, .. } = ctx;
-    state.symbols.liveness_mut().is_some_and(|liveness| liveness.analyze(scoping.scoping()))
+    state.symbols.liveness_mut().is_some_and(|l| l.analyze(program, scoping.scoping()))
 }
 
 /// Debug contract for previously published graph deadness: it is consumed only

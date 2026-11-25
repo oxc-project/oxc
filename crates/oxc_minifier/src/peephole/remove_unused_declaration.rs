@@ -208,7 +208,13 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &f.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
+        if Self::is_script_root_scope(ctx)
+            || (ctx.current_scope_flags().contains_direct_eval()
+                && ctx.state.symbols.liveness().is_none_or(|l| {
+                    l.has_live_direct_eval(ctx.current_scope_id())
+                        || l.has_live_direct_eval(ctx.scoping().symbol_scope_id(symbol_id))
+                }))
+        {
             return;
         }
         if !Self::function_has_no_live_references(symbol_id, ctx) {

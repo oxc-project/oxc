@@ -305,6 +305,37 @@ fn remove_unused_function_declaration() {
     test_same_options("function foo() { bar } foo()", &options);
     test_same_options("export function foo() {} foo()", &options);
     test_same_options("function foo() { bar } eval('foo()')", &options);
+    test_options("function foo() { eval('foo()') }", "", &options);
+    test_options("function foo(a = eval('foo()')) {}", "", &options);
+    test_options("function foo() { if (cond) eval('foo()') }", "", &options);
+    test_options(
+        "export function outer() { function foo() { eval('foo()') } }",
+        "export function outer() {}",
+        &options,
+    );
+    test_options("function a() { b() } function b() { eval('a()') }", "", &options);
+    test_options(
+        "import { dep } from 'pkg'; function foo() { eval('dep()') }",
+        "import 'pkg';",
+        &options,
+    );
+    test_same_options(
+        "function foo() { eval('1') } function bar() { eval('foo()') } bar()",
+        &options,
+    );
+    test_options(
+        "function foo() { eval('1') } if (x) { eval('foo()') }",
+        "function foo() {\n\teval('1');\n}\nx && eval('foo()');\n",
+        &options,
+    );
+    test_same_options("export { foo }; function foo() { eval('1') }", &options);
+    test_options("function f() { eval('1') } if (false) f()", "", &options);
+    test_options_source_type(
+        "function outer(c) { var foo = 1; if (c) { function foo() { function bar() { console.log(1); } eval('bar()'); } } return foo; } outer(true)();",
+        "function outer(c) { var foo = 1; if (c) { function foo() { function bar() { console.log(1); } eval('bar()'); } } return foo; } outer(!0)();",
+        SourceType::cjs(),
+        &options,
+    );
 }
 
 #[test]
@@ -1113,7 +1144,7 @@ fn remove_unused_import_specifiers() {
     test_same_options("import { a } from 'a'; eval('a');", &options);
     test_same_options("import a from 'a'; eval('a');", &options);
     test_same_options("import * as a from 'a'; eval('a');", &options);
-    test_same_options("import { a } from 'a'; function f() { eval('a'); }", &options);
+    test_same_options("import { a } from 'a'; function f() { eval('a'); } f();", &options);
 }
 
 #[test]
