@@ -863,6 +863,7 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
   - `externals/bitwarden-license-web/auth/sso/sso-manage.component.html`
   - `externals/bitwarden-license-web/pam/approvals/withdraw-approval-dialog/withdraw-approval-dialog.component.html`
   - `externals/bitwarden-web/billing/organizations/churn-mitigation-offer-dialog.component.html`
+  - `externals/bitwarden-web/billing/organizations/organization-subscription-cloud.component.html`
 
 ```vue
 <!-- input -->

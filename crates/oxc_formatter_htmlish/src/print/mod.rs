@@ -21,7 +21,7 @@ mod tag;
 mod text;
 mod vue;
 
-pub use angular::JsInAngularTemplate;
+pub use angular::{JsInAngularPiece, JsInAngularTemplate};
 pub use embed::{CssInHtmlStyleAttribute, JsInHtmlEventHandler};
 pub use vue::JsInVueTemplate;
 

@@ -122,6 +122,10 @@ pub struct ExpressionRoot {
     /// they print as written right after the root, inside its layout (`{⏎  a: 1,⏎} as x` when it hugs),
     /// and the other fields' "after the code" is after them. Left as written when the code ends in a line comment.
     pub host_suffix: usize,
+    /// The host prints a `)` right after the code, in parens of its own (an Angular conditional before a pipe, prettier#5389):
+    /// a conditional at the root breaks before it, as a member's object does (`(a⏎  ? b⏎  : c⏎) | p`).
+    /// Unlike [`Self::in_parens`], whose parens the host reads the code in and does not print.
+    pub closes_paren: bool,
 }
 
 /// The layout an expression prints in, inside its host's delimiters.

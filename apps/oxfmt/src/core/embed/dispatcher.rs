@@ -20,7 +20,7 @@ use oxc_formatter_css::{CssEmbeddedIn, CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_htmlish::{
     CssInHtmlStyleAttribute, HtmlishEmbeddedIn, HtmlishFormatOptions, HtmlishVariant,
-    JsInAngularTemplate, JsInHtmlEventHandler, JsInVueTemplate,
+    JsInAngularPiece, JsInAngularTemplate, JsInHtmlEventHandler, JsInVueTemplate,
 };
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
@@ -423,6 +423,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         reads_as_statements: false,
         in_parens: false,
         host_suffix: 0,
+        closes_paren: false,
     };
     if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
         // Vue: a template's `{{ }}`, a directive's value, `v-for`'s and `v-slot`'s parts, `<script generic>`
@@ -461,7 +462,9 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
             JsEmbeddedIn { in_html_attribute, inlines_code: true, ..JsEmbeddedIn::default() },
         );
     }
-    if let Some(&part) = request.parent_context_as::<JsInAngularTemplate>() {
+    if let Some(&JsInAngularPiece { part, closes_paren }) =
+        request.parent_context_as::<JsInAngularPiece>()
+    {
         // Angular: a template's `{{ }}`, a binding's value or piece of one, a block's parameters, `@let`
         let root = match part {
             JsInAngularTemplate::Interpolation { before_brace }
@@ -480,6 +483,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
             }
             JsInAngularTemplate::BlockPiece => expression(ExpressionLayout::Bare),
         };
+        let root = ExpressionRoot { closes_paren, ..root };
         let embedded_in = JsEmbeddedIn {
             // Every one but an interpolation's and a block's is a `"`-quoted attribute value
             in_html_attribute: part.in_html_attribute(),
