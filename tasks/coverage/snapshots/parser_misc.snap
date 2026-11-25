@@ -740,11 +740,19 @@ Negative Passed: 307/307 (100.00%)
    ╰────
 
   × Decorators are not valid here.
-   ╭─[misc/fail/decorated-constructor-after-overload.ts:3:3]
- 2 │   constructor();
- 3 │   @dec constructor() {}
+   ╭─[misc/fail/decorated-constructor-overloads.ts:2:3]
+ 1 │ class A {
+ 2 │   @dec constructor();
    ·   ────
- 4 │ }
+ 3 │   constructor() {}
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-constructor-overloads.ts:8:3]
+ 7 │   constructor();
+ 8 │   @dec constructor() {}
+   ·   ────
+ 9 │ }
    ╰────
 
   × Decorators are not valid here.
