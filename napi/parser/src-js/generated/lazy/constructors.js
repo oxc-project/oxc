@@ -12262,6 +12262,8 @@ function constructImportImportName(pos, ast) {
       return "namespaceObject";
     case 2:
       return new Span(pos + 8, ast);
+    case 3:
+      return new Span(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ImportImportName`);
   }
@@ -12345,6 +12347,8 @@ function constructExportImportName(pos, ast) {
       return "allButDefault";
     case 3:
       return "null";
+    case 4:
+      return new Span(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportImportName`);
   }

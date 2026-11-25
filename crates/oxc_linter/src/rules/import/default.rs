@@ -131,6 +131,7 @@ fn test() {
         // r#"import foobar from "./typescript-export-assign-default-reexport""#,
         // r#"import React from "./typescript-export-assign-default-namespace"#,
         r#"import Foo from "./vue/main.vue""#,
+        r#"import source baz from "./named-exports""#,
     ];
 
     let fail = vec![

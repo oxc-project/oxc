@@ -114,7 +114,9 @@ impl Rule for NoNamespace {
                     ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
                 }
             }
-            ImportImportName::Name(_) | ImportImportName::Default(_) => {}
+            ImportImportName::Name(_)
+            | ImportImportName::Default(_)
+            | ImportImportName::Source(_) => {}
         });
     }
 }
