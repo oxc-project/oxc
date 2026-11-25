@@ -1,0 +1,184 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A comment in the params leaves the strings and the comments in them as written */
+@keyframes /* c */ "a  b" {
+  from {
+    color: red;
+  }
+}
+@font-feature-values /* c */ "Font  One" {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@namespace /* c */ svg "http://a  b";
+@namespace /* it's */ svg "http://a  b";
+@namespace /* c */ svg "a  /* b */  c";
+@keyframes /* a  b */ foo {
+  from {
+    color: red;
+  }
+}
+@page /* a  "b */ :first {
+  margin: 0;
+}
+@media /* c */ (foo:  "a  b") {
+  a {
+    color: red;
+  }
+}
+@media /* c */ screen and (foo:  "a  /* b */") {
+  a {
+    color: red;
+  }
+}
+
+/* The string params print as written, `@namespace`'s collapse */
+@keyframes /* c */  foo {
+}
+@keyframes /* c */
+  foo {
+}
+@font-feature-values /* c */ Font  One {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@counter-style /* c */  x {
+  symbols: a;
+}
+@property /* c */  --x {
+  syntax: "*";
+  inherits: false;
+}
+a {
+  @layer /* c */  x,
+      y;
+}
+@namespace /* c */  svg
+  "x";
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A comment in the params leaves the strings and the comments in them as written */
+@keyframes /* c */ "a  b" {
+  from {
+    color: red;
+  }
+}
+@font-feature-values /* c */ "Font  One" {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@namespace /* c */ svg "http://a  b";
+@namespace /* it's */ svg "http://a  b";
+@namespace /* c */ svg "a  /* b */  c";
+@keyframes /* a  b */ foo {
+  from {
+    color: red;
+  }
+}
+@page /* a  "b */ :first {
+  margin: 0;
+}
+@media /* c */ (foo: "a  b") {
+  a {
+    color: red;
+  }
+}
+@media /* c */ screen and (foo: "a  /* b */") {
+  a {
+    color: red;
+  }
+}
+
+/* The string params print as written, `@namespace`'s collapse */
+@keyframes /* c */  foo {
+}
+@keyframes /* c */
+  foo {
+}
+@font-feature-values /* c */ Font  One {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@counter-style /* c */  x {
+  symbols: a;
+}
+@property /* c */  --x {
+  syntax: "*";
+  inherits: false;
+}
+a {
+  @layer /* c */  x,
+      y;
+}
+@namespace /* c */ svg "x";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A comment in the params leaves the strings and the comments in them as written */
+@keyframes /* c */ "a  b" {
+  from {
+    color: red;
+  }
+}
+@font-feature-values /* c */ "Font  One" {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@namespace /* c */ svg "http://a  b";
+@namespace /* it's */ svg "http://a  b";
+@namespace /* c */ svg "a  /* b */  c";
+@keyframes /* a  b */ foo {
+  from {
+    color: red;
+  }
+}
+@page /* a  "b */ :first {
+  margin: 0;
+}
+@media /* c */ (foo: "a  b") {
+  a {
+    color: red;
+  }
+}
+@media /* c */ screen and (foo: "a  /* b */") {
+  a {
+    color: red;
+  }
+}
+
+/* The string params print as written, `@namespace`'s collapse */
+@keyframes /* c */  foo {
+}
+@keyframes /* c */
+  foo {
+}
+@font-feature-values /* c */ Font  One {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@counter-style /* c */  x {
+  symbols: a;
+}
+@property /* c */  --x {
+  syntax: "*";
+  inherits: false;
+}
+a {
+  @layer /* c */  x,
+      y;
+}
+@namespace /* c */ svg "x";
+
+===================== End =====================
