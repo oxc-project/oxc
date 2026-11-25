@@ -667,13 +667,16 @@ impl Tool for ServerLinter {
         watchers
     }
 
-    /// Changes to lint configuration files restart the linter. With a `tsrs-lint server`, other
-    /// changes (sources, `package.json`, `tsconfig.json`) are sent to the server, so its programs
-    /// match the disk as a one-shot run's would. Open files are not linted again.
+    /// Changes to lint configuration files and `tsconfig*.json` restart the linter: the regular
+    /// rules resolve imports with the tsconfig. A restart keeps the `tsrs-lint server`.
     ///
-    /// Without a server, only `tsconfig*.json` changes restart the linter too. The client sends
-    /// the events of every workspace's watchers to every workspace, so the source changes another
-    /// workspace's server watches (or a server turned off since) do not restart this one.
+    /// With a server, every change (sources, `package.json`, `tsconfig.json`) is also sent to it,
+    /// so its programs match the disk as a one-shot run's would. Open files are not linted again
+    /// for a source change.
+    ///
+    /// Other changes do not restart the linter. The client sends the events of every workspace's
+    /// watchers to every workspace, so the source changes another workspace's server watches (or
+    /// a server turned off since) do not restart this one.
     fn handle_watched_file_event(
         &self,
         builder: &dyn ToolBuilder,
@@ -695,8 +698,9 @@ impl Tool for ServerLinter {
                 FileChangeType::Deleted => FileChangeKind::Deleted,
                 _ => FileChangeKind::Changed,
             };
-            server.files_changed(&[(path.into_owned(), kind)]);
-        } else if is_tsconfig_file(&path) {
+            server.files_changed(&[(path.to_path_buf(), kind)]);
+        }
+        if is_tsconfig_file(&path) {
             return self.handle_watched_file_change(builder, &file_event.uri, root_uri, options);
         }
         ToolRestartChanges { tool: None, watch_patterns: None, client_messages: vec![] }
@@ -2229,6 +2233,37 @@ mod test_tsrs_lint {
             "index.ts_headless",
         );
         assert!(linter.workspace.server().is_none());
+    }
+
+    /// With a `tsrs-lint server`, a `tsconfig.json` change restarts the linter too, so the regular
+    /// rules resolve imports with it. The restart keeps the server; a source change only reaches
+    /// the server.
+    #[test]
+    fn test_tsconfig_change_restarts_and_keeps_the_server() {
+        let options = json!({ "typeAware": true });
+        let builder = ServerLinterBuilder::default();
+        let root_uri = Tester::get_root_uri(FAILURE_FIXTURE);
+        let (linter, _) = builder.build(&root_uri, options.clone());
+        assert!(linter.runner.has_tsrs_server());
+        let server = linter.workspace.server().expect("no tsrs-lint server");
+        let event = |name: &str| FileEvent {
+            uri: Tester::new(FAILURE_FIXTURE, json!({})).get_file_uri(name),
+            kind: FileChangeType::Changed,
+        };
+
+        let changes = linter.handle_watched_file_event(
+            &builder,
+            &event("index.ts"),
+            &root_uri,
+            options.clone(),
+        );
+        assert!(changes.tool.is_none());
+
+        let changes =
+            linter.handle_watched_file_event(&builder, &event("tsconfig.json"), &root_uri, options);
+        assert!(changes.tool.is_some());
+        let kept = linter.workspace.server().expect("no tsrs-lint server");
+        assert!(std::sync::Arc::ptr_eq(&server, &kept));
     }
 
     /// A failing one-shot `tsrs-lint headless` adds one diagnostic, and keeps the others.
