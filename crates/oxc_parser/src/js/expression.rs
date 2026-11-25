@@ -982,7 +982,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             lhs = self.parse_static_member_expression(lhs_start, lhs, true);
                         } else if self.at(Kind::LBrack) {
                             // ?.[
-                            self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_start);
                             lhs = self.parse_computed_member_expression(lhs_start, lhs, true);
                         } else {
                             // ?.template`...`
@@ -1001,7 +1000,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_start);
                     lhs = self.parse_computed_member_expression(lhs_start, lhs, false);
                 }
                 kind if kind.is_template_start_of_tagged_template() => {
