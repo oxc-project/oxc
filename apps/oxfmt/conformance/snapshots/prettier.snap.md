@@ -610,8 +610,9 @@
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
 - externals/prettier/angular/control-flow/chid.html (💥, 62.50%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
-- externals/prettier/angular/control-flow/for.html (💥, 88.89%)
+- externals/prettier/angular/control-flow/for.html (💥, 85.22%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+  - apps/oxfmt/DIVERGENCES.md#interpolation-own-group
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-unread-code-as-written
 - externals/prettier/angular/control-flow/ignore.html (💥, 89.66%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-ignored-block-chain

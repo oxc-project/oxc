@@ -655,6 +655,51 @@ the source's (`{{ (a,b) }}`), or Vue's own, around `v-if`, `v-else-if` and an ev
 (`ul`, `ol`, `select`, `display: table*`) as in any other.
 Prettier lays out such children in the parent's group, which always breaks, so its interpolation always breaks too.
 
+## interpolation-own-group
+
+- Why: invariant
+- Pin: `conformance/fixtures/js-in-vue/interpolation-own-group.vue`
+- Conformance:
+  - `externals/prettier/angular/control-flow/for.html` (`first={{ first }}`)
+
+```vue
+<!-- input (printWidth: 80) -->
+<template>
+  <div>
+    <div>
+      {{ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }} &times;
+      {{ b }} =
+    </div>
+  </div>
+</template>
+
+<!-- ours -->
+<template>
+  <div>
+    <div>
+      {{ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }}
+      &times; {{ b }} =
+    </div>
+  </div>
+</template>
+
+<!-- prettier -->
+<template>
+  <div>
+    <div>
+      {{
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      }}
+      &times; {{ b }} =
+    </div>
+  </div>
+</template>
+```
+
+A `{{ }}` in Vue or Angular breaks only when it does not fit on its own, whatever follows it.
+Prettier groups it with the separator after it, so a following word that does not fit breaks the `{{ }}` too; the next pass joins it again: not a fixpoint.
+Where Prettier's output is a fixpoint (`for.html`, where the separator before it breaks instead), the same rule holds: uniform-rule (same construct, same output: a `{{ }}` a line break follows, which Prettier prints on one line).
+
 ## js-in-vue-object-before-double-brace
 
 - Why: semantics (Vue ends `{{ }}` at the first `}}`)
