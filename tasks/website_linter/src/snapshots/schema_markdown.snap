@@ -813,6 +813,15 @@ default: `false`
 Only for `require-(yields|returns|description|example|param|throws)` rule
 
 
+#### settings.jsdoc.mode
+
+type: `"typescript" | "jsdoc" | "closure" | "permissive"`
+
+default: `"typescript"`
+
+Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `"typescript"`.
+
+
 #### settings.jsdoc.overrideReplacesDocs
 
 type: `boolean`

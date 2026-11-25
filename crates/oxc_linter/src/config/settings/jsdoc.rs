@@ -6,9 +6,29 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::default_true;
 
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum JSDocMode {
+    #[default]
+    TypeScript,
+    JSDoc,
+    Closure,
+    Permissive,
+}
+
+impl JSDocMode {
+    const fn uses_closure_tags(self) -> bool {
+        matches!(self, Self::Closure | Self::Permissive)
+    }
+}
+
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md>
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, PartialEq)]
 pub struct JSDocPluginSettings {
+    /// Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `"typescript"`.
+    #[serde(default)]
+    pub mode: JSDocMode,
+
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
     #[serde(default, rename = "ignorePrivate")]
     pub ignore_private: bool,
@@ -42,7 +62,6 @@ pub struct JSDocPluginSettings {
     // Not planning to support for now
     // min_lines: number
     // max_lines: number
-    // mode: string("typescript" | "closure" | "jsdoc")
     //
     // TODO: Need more investigation to understand these usage...
     //
@@ -83,6 +102,7 @@ pub struct JSDocPluginSettings {
 impl Default for JSDocPluginSettings {
     fn default() -> Self {
         Self {
+            mode: JSDocMode::default(),
             ignore_private: false,
             ignore_internal: false,
             // Exists only for these defaults
@@ -137,7 +157,9 @@ impl JSDocPluginSettings {
                     "var" => "member",
                     "arg" | "argument" => "param",
                     "prop" => "property",
-                    "return" => "returns",
+                    "returns" if self.mode.uses_closure_tags() => "return",
+                    "return" if !self.mode.uses_closure_tags() => "returns",
+                    "typeParam" if self.mode != JSDocMode::JSDoc => "template",
                     "exception" => "throws",
                     "yield" => "yields",
                     _ => original_name,

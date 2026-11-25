@@ -411,6 +411,7 @@ export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
+export type JSDocMode = "typescript" | "jsdoc" | "closure" | "permissive";
 export type TagNamePreference =
   | string
   | {
@@ -7345,6 +7346,10 @@ export interface JSDocPluginSettings {
    * Only for `require-(yields|returns|description|example|param|throws)` rule
    */
   implementsReplacesDocs?: boolean;
+  /**
+   * Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `"typescript"`.
+   */
+  mode?: JSDocMode;
   /**
    * Only for `require-(yields|returns|description|example|param|throws)` rule
    */

@@ -128,6 +128,7 @@
           "componentWrapperFunctions": []
         },
         "jsdoc": {
+          "mode": "typescript",
           "ignorePrivate": false,
           "ignoreInternal": false,
           "ignoreReplacesDocs": true,
@@ -12244,6 +12245,15 @@
       },
       "additionalProperties": false
     },
+    "JSDocMode": {
+      "type": "string",
+      "enum": [
+        "typescript",
+        "jsdoc",
+        "closure",
+        "permissive"
+      ]
+    },
     "JSDocPluginSettings": {
       "type": "object",
       "properties": {
@@ -12282,6 +12292,16 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Only for `require-(yields|returns|description|example|param|throws)` rule"
+        },
+        "mode": {
+          "description": "Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `\"typescript\"`.",
+          "default": "typescript",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSDocMode"
+            }
+          ],
+          "markdownDescription": "Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `\"typescript\"`."
         },
         "overrideReplacesDocs": {
           "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
@@ -17412,6 +17432,7 @@
         },
         "jsdoc": {
           "default": {
+            "mode": "typescript",
             "ignorePrivate": false,
             "ignoreInternal": false,
             "ignoreReplacesDocs": true,

@@ -156,15 +156,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@abc` with `@abcd`.
 
   ⚠ jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:33]
- 1 │ 
- 2 │                             /** @jsx h */
-   ·                                 ────
- 3 │                             /** @jsxFrag Fragment */
-   ╰────
-  help: `@jsx` is invalid tag name.
-
-  ⚠ jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:3:33]
  2 │                             /** @jsx h */
  3 │                             /** @jsxFrag Fragment */

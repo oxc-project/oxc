@@ -5,6 +5,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
+    config::JSDocMode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::{should_ignore_as_internal, should_ignore_as_private},
@@ -46,6 +47,10 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ### Settings
+    ///
+    /// The default `typescript` mode recognizes TSDoc and TypeDoc block tags such as
+    /// `@remarks` and `@inline`. Set `settings.jsdoc.mode` to `jsdoc` for the standard
+    /// JSDoc vocabulary or to `closure` or `permissive` for Closure Compiler tags.
     ///
     /// Configuration for allowed tags is done via [`settings.jsdoc.tagNamePreference`](/docs/guide/usage/linter/config-file-reference.html#settings-jsdoc-tagnamepreference).
     /// There is no CLI-only parameter for this rule.
@@ -103,7 +108,8 @@ struct CheckTagNamesConfig {
     typed: bool,
 }
 
-const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
+// https://github.com/gajus/eslint-plugin-jsdoc/blob/7e9acbf2143fd98b61ea406b7ea8d723b55002ef/src/tagNames.js
+const COMMON_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
     "abstract",
     "access",
     "alias",
@@ -133,7 +139,7 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
     "hideconstructor",
     "ignore",
     "implements",
-    "inheritdoc",
+    "inheritDoc",
     "inner",
     "instance",
     "interface",
@@ -175,13 +181,94 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
     "variation",
     "version",
     "yields",
-    // JSDoc TS specific
+];
+
+// Both TypeScript and Closure modes include TSDoc and TypeDoc tags.
+const TYPED_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
+    // TSDoc
+    "alpha",
+    "beta",
+    "decorator",
+    "eventProperty",
+    "experimental",
+    "packageDocumentation",
+    "privateRemarks",
+    "remarks",
+    "sealed",
+    // TypeDoc
+    "category",
+    "categoryDescription",
+    "disableGroups",
+    "document",
+    "expand",
+    "expandType",
+    "group",
+    "groupDescription",
+    "hidden",
+    "hideCategories",
+    "hideGroups",
+    "inline",
+    "inlineType",
+    "mergeModuleWith",
+    "preventExpand",
+    "preventInline",
+    "primaryExport",
+    "showCategories",
+    "showGroups",
+    "sortStrategy",
+    "useDeclaredType",
+    // TypeScript
     "import",
-    "internal",
-    "overload",
-    "satisfies",
+    "jsx",
     "template",
 ];
+
+const CLOSURE_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
+    "closurePrimitive",
+    "customElement",
+    "define",
+    "dict",
+    "export",
+    "expose",
+    "externs",
+    "final",
+    "idGenerator",
+    "implicitCast",
+    "meaning",
+    "mixinClass",
+    "mixinFunction",
+    "ngInject",
+    "noalias",
+    "nocollapse",
+    "nocompile",
+    "noinline",
+    "nosideeffects",
+    "owner",
+    "polymer",
+    "polymerBehavior",
+    "preserve",
+    "record",
+    "return",
+    "struct",
+    "suppress",
+    "typeSummary",
+    "unrestricted",
+    "wizaction",
+];
+
+fn is_valid_block_tag(name: &str, mode: JSDocMode) -> bool {
+    COMMON_BLOCK_TAGS.contains(name)
+        || match mode {
+            JSDocMode::JSDoc => name == "inheritdoc",
+            JSDocMode::TypeScript => {
+                matches!(name, "inheritdoc" | "internal" | "overload" | "satisfies")
+                    || TYPED_BLOCK_TAGS.contains(name)
+            }
+            JSDocMode::Closure | JSDocMode::Permissive => {
+                TYPED_BLOCK_TAGS.contains(name) || CLOSURE_BLOCK_TAGS.contains(name)
+            }
+        }
+}
 
 const JSX_TAGS: [&str; 4] = ["jsx", "jsxFrag", "jsxImportSource", "jsxRuntime"];
 
@@ -305,7 +392,7 @@ impl Rule for CheckTagNames {
 
                 // If invalid or unknown, report
                 let is_valid = (config.jsx_tags && JSX_TAGS.contains(&tag_name))
-                    || VALID_BLOCK_TAGS.contains(tag_name);
+                    || is_valid_block_tag(tag_name, settings.mode);
                 if !is_valid {
                     ctx.diagnostic(check_tag_names_diagnostic(
                         tag.kind.span,
@@ -1212,4 +1299,76 @@ fn test() {
     Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, dts_pass, dts_fail)
         .change_rule_path("test.d.ts")
         .test();
+}
+
+#[test]
+fn upstream_block_tag_modes() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    // The independent tag lists and cases below come from eslint-plugin-jsdoc.
+    const JSDOC: &str = concat!(
+        "modifies abstract access alias async augments author borrows callback ",
+        "class classdesc constant constructs copyright default deprecated description ",
+        "enum event example exports external file fires function generator ",
+        "global hideconstructor ignore implements inheritdoc inheritDoc inner ",
+        "instance interface kind lends license listens member memberof memberof! ",
+        "mixes mixin module name namespace override package param private property ",
+        "protected public readonly requires returns see since static summary ",
+        "this throws todo tutorial type typedef variation version yields",
+    );
+    const TYPESCRIPT_EXTRA: &str = concat!(
+        "alpha beta decorator eventProperty experimental packageDocumentation ",
+        "privateRemarks remarks sealed category categoryDescription disableGroups ",
+        "document expand expandType group groupDescription hidden hideCategories ",
+        "hideGroups inline inlineType mergeModuleWith preventExpand preventInline ",
+        "primaryExport showCategories showGroups sortStrategy useDeclaredType ",
+        "import internal jsx overload satisfies template",
+    );
+    let block = |tags: &str| {
+        let lines = tags.split_ascii_whitespace().collect::<Vec<_>>().join("\n * @");
+        format!("/** \n * @{lines}\n */\nfunction quux (foo) {{}}")
+    };
+    let all_jsdoc = block(JSDOC);
+    let all_typescript = block(&format!("{JSDOC} {TYPESCRIPT_EXTRA}"));
+
+    let mode = |name| Some(json!({ "settings": { "jsdoc": { "mode": name } } }));
+    let pass = vec![
+        (all_jsdoc.as_str(), None, None),
+        (all_typescript.as_str(), None, mode("typescript")),
+        ("/** @return */", None, mode("closure")),
+        ("/** @externs */", None, mode("closure")),
+        ("/** @suppress */", None, mode("permissive")),
+        ("/** @inline */", None, mode("closure")),
+        ("/** @remarks */", None, mode("permissive")),
+        ("/** @internal */", None, mode("typescript")),
+        ("/**\n * @overload\n * @satisfies\n */", None, mode("typescript")),
+        (
+            "/** @typeParam T */",
+            None,
+            Some(json!({ "settings": { "jsdoc": {
+            "tagNamePreference": { "template": "typeParam" }
+        } } })),
+        ),
+    ];
+    let strict_cases: Vec<_> = TYPESCRIPT_EXTRA.split_ascii_whitespace().map(block).collect();
+    let mut fail = vec![
+        (all_typescript.as_str(), None, mode("jsdoc")),
+        ("/** @returns */", None, mode("closure")),
+        ("/** @overload */", None, mode("closure")),
+        ("/** @externs */", None, mode("typescript")),
+        ("/** @inheritdoc */", None, mode("permissive")),
+        ("/** @typeParam T */", None, mode("typescript")),
+        ("/** @Remarks */", None, mode("typescript")),
+        (
+            "/** @remarks */",
+            None,
+            Some(json!({ "settings": { "jsdoc": {
+            "tagNamePreference": { "remarks": false }
+        } } })),
+        ),
+    ];
+    fail.extend(strict_cases.iter().map(|source| (source.as_str(), None, mode("jsdoc"))));
+
+    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail).test();
 }
