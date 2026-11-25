@@ -420,16 +420,18 @@ fn stop_cancels_a_pending_request() {
 }
 
 /// A process that keeps sending frames, for other requests, is working: a request that waits
-/// longer than the timeout does not kill it.
+/// longer than the timeout does not kill it. It is canceled, and still gets its answer when the
+/// process ignores the cancellation and answers before it is given up.
 #[test]
 fn busy_process_is_not_killed() {
-    let Some(fixture) = Fixture::new(&json!({ "lint": "slow", "slow_ms": 600 })) else { return };
+    let Some(fixture) = Fixture::new(&json!({ "lint": "slow", "slow_ms": 300 })) else { return };
     let server = fixture.server().with_request_timeout(Duration::from_millis(200));
     let file = fixture.file("index.ts");
 
     let diagnostics = lint(&server, &file).expect("lint failed");
     assert_eq!(diagnostics.len(), 1);
     assert_eq!(fixture.starts(), 1);
+    assert_eq!(fixture.messages(CANCEL).len(), 1);
 }
 
 /// When processes that stop answering disable the server, the timeout is the last error.
@@ -445,4 +447,21 @@ fn processes_that_do_not_answer_are_reported_as_such() {
     let error = failure(lint(&server, &file));
     assert!(error.contains("stopped 3 times within 60 seconds"), "{error}");
     assert!(error.contains("Last error: tsrs-lint server did not answer request"), "{error}");
+}
+
+/// A request that never ends while the process answers others is canceled, then fails, and the
+/// process keeps running.
+#[test]
+fn request_that_never_ends_fails_without_killing_a_working_process() {
+    let Some(fixture) = Fixture::new(&json!({ "lint": "stuck" })) else { return };
+    let server = fixture.server().with_request_timeout(Duration::from_millis(500));
+    let file = fixture.file("index.ts");
+
+    let error = failure(lint(&server, &file));
+    assert!(error.contains("nor end it when it was canceled"), "{error}");
+    let id = &fixture.messages(LINT)[0]["id"];
+    assert_eq!(fixture.messages(CANCEL), vec![json!({ "id": id })]);
+    let pid = fixture.events()[0]["pid"].as_u64().expect("no pid in the start event");
+    assert!(is_running(pid), "the process {pid} was stopped");
+    assert!(!server.is_disabled());
 }

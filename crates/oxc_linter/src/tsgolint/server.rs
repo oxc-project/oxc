@@ -62,6 +62,9 @@ const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(2);
 /// How long a request may wait while the process sends no frame at all, for any request. A process
 /// that stays silent that long is killed, and the next request starts another one. A process busy
 /// with other requests sends their frames, so a request queued behind them does not kill it.
+///
+/// A request that gets no frame of its own for this long, while the process answers others, is
+/// canceled; if it does not end within this long again, it fails without stopping the process.
 const REQUEST_TIMEOUT: Duration = Duration::from_mins(5);
 
 /// At most this many processes are started within [`START_WINDOW`].
@@ -578,30 +581,57 @@ impl TsrsLintServer {
 
         let started = Instant::now();
         let mut diagnostics = vec![];
+        // When this request last got a frame, and when it was canceled for getting none.
+        let mut answered = started;
+        let mut canceled: Option<Instant> = None;
         let result = loop {
             // The process is silent since this request was sent, or since its last frame.
             let silent_since = connection.last_frame().map_or(started, |last| last.max(started));
-            let wait = self.request_timeout.saturating_sub(silent_since.elapsed());
+            let kill_at = silent_since + self.request_timeout;
+            let give_up_at = canceled.unwrap_or(answered) + self.request_timeout;
+            let wait = kill_at.min(give_up_at).saturating_duration_since(Instant::now());
             match events.recv_timeout(wait) {
-                Ok(Event::Diagnostic(diagnostic)) => diagnostics.push(diagnostic),
+                Ok(Event::Diagnostic(diagnostic)) => {
+                    answered = Instant::now();
+                    diagnostics.push(diagnostic);
+                }
                 Ok(Event::Done) => break Ok(diagnostics),
                 Ok(Event::Error(error)) => break Err(LintError::Failed(error)),
                 Ok(Event::Canceled) => break Err(LintError::Canceled),
-                // A frame for another request arrived meanwhile: the process is working.
-                Err(RecvTimeoutError::Timeout)
-                    if connection
-                        .last_frame()
-                        .is_some_and(|last| last.elapsed() < self.request_timeout) => {}
-                Err(RecvTimeoutError::Timeout) => {
-                    let error = format!(
-                        "tsrs-lint server did not answer request {id} within {} seconds",
-                        self.request_timeout.as_secs()
-                    );
-                    connection.kill(&error);
-                    break Err(LintError::Failed(error));
-                }
                 Err(RecvTimeoutError::Disconnected) => {
                     break Err(LintError::Failed("tsrs-lint server exited".to_string()));
+                }
+                Err(RecvTimeoutError::Timeout) => {
+                    let silence =
+                        connection.last_frame().map_or(started, |last| last.max(started)).elapsed();
+                    if silence >= self.request_timeout {
+                        // The process sends nothing at all: it is stuck.
+                        let error = format!(
+                            "tsrs-lint server did not answer request {id} within {} seconds",
+                            self.request_timeout.as_secs()
+                        );
+                        connection.kill(&error);
+                        break Err(LintError::Failed(error));
+                    }
+                    let now = Instant::now();
+                    match canceled {
+                        // The process works on other requests, but not on this one: cancel it.
+                        None if now >= answered + self.request_timeout => {
+                            debug!("canceling tsrs-lint server request {id}: no answer");
+                            let _ = connection.send(CANCEL, &CancelMessage { id });
+                            canceled = Some(now);
+                        }
+                        // It did not end after the cancellation either: stop waiting for it, and
+                        // leave the process to the requests it answers.
+                        Some(at) if now >= at + self.request_timeout => {
+                            break Err(LintError::Failed(format!(
+                                "tsrs-lint server did not answer request {id} within {} \
+                                 seconds, nor end it when it was canceled",
+                                self.request_timeout.as_secs()
+                            )));
+                        }
+                        _ => {}
+                    }
                 }
             }
         };

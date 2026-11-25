@@ -13,7 +13,8 @@
 // - `lint`: "done" (default) answers a Lint with a diagnostic for another request id, a diagnostic
 //   for this one and Done; "exit" exits; "hold" answers only after a Cancel for it, with a
 //   canceled error; "slow" sends a diagnostic for another request id every 50 ms for `slow_ms`,
-//   then answers as "done" does.
+//   then answers as "done" does; "stuck" sends a diagnostic for another request id every 50 ms,
+//   and never answers, even after a Cancel.
 
 "use strict";
 
@@ -75,6 +76,11 @@ function handle(type, message) {
         process.exit(1);
       } else if (mode === "hold") {
         held.add(message.id);
+      } else if (mode === "stuck") {
+        // Never answers, nor ends the request when it is canceled, while it sends frames for
+        // another request every 50 ms.
+        const filePath = message.configs[0]?.file_paths[0] ?? "unknown.ts";
+        setInterval(() => write(1, diagnostic(message.id + 1000, filePath)), 50);
       } else if (mode === "slow") {
         // Busy for `slow_ms`, sending frames for another request every 50 ms, then answers.
         const filePath = message.configs[0]?.file_paths[0] ?? "unknown.ts";
