@@ -1596,7 +1596,7 @@ Prettier prints the `;` when a comment follows: its last-declaration check count
 ## character-reference-in-code-as-written
 
 - Why: semantics (the HTML parser reads `&amp;` as `&` before the code runs)
-- Pin: `conformance/fixtures/html/character-reference-in-code-as-written.html`
+- Pin: `conformance/fixtures/html/character-reference-in-code-as-written.html`, `conformance/fixtures/js-in-vue/character-reference-in-interpolation-as-written.vue`
 
 ```html
 <!-- input -->
@@ -1619,6 +1619,8 @@ Prettier prints the `;` when a comment follows: its last-declaration check count
 An attribute value formatted as code (`style`, `on*`, a Vue directive, an Angular `[x]`) prints as written when it holds a character reference, `&name;` or `&#…`:
 its reader decodes the reference first (`x = a & b`), and the child would format its text as code.
 `&quot;` and `&apos;` are read back before, so they still format.
+A Vue or Angular `{{ }}` prints as written when it holds a reference to a quote (`&quot;`, `&apos;`, `&#34;`, `&#39;`), which its reader decodes first too, as the parser reads it (`Interpolation::decodes_quote`: Angular's with its `;`, Vue's as HTML's, `&quot` too):
+a string re-quoted around one reads otherwise (`'&quot;'` printed `"&quot;"` reads `"""`); any other reference is text in a string, and no code elsewhere.
 Prettier formats the text, which makes `amp` a name and its `;` the end of a statement.
 
 ## doctype-case-in-script
