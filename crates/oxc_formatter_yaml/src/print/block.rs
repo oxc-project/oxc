@@ -270,11 +270,13 @@ fn remove_unnecessary_trailing_newlines<'s>(
 ) -> Vec<Vec<&'s str>> {
     if block.chomping == Chomping::Keep {
         // NOTE: The fragment after the last break holds no line break, so it is not a kept line:
-        // either the empty artifact `split('\n')` yields after a final break,
-        // or a break-less EOF line of at-or-below-indent spaces
-        // (known divergence: Prettier counts it and prints one newline too many);
-        // a more-indented space run stays a content group.
-        lines.pop_if(|words| words.is_empty());
+        // the empty artifact `split('\n')` yields after a final break,
+        // or an EOF line of at-or-below-indent spaces (DIVERGENCES.md#keep-chomped-space-only-eof-line).
+        // A lone fragment has no break before it: it is one kept line, as yaml@2 reads it.
+        // A more-indented space run stays a content group.
+        if lines.len() > 1 {
+            lines.pop_if(|words| words.is_empty());
+        }
         return lines;
     }
 
@@ -291,23 +293,15 @@ fn remove_unnecessary_trailing_newlines<'s>(
 /// so the caller must not append the usual final `hard_line_break()`
 /// (mirrors Prettier's `shouldPrintHardline` gate).
 ///
-/// Returns `false` when the scalar emits no tail of its own,
-/// no content characters and no kept line break (empty, or one break-less EOF line of at-or-below-indent spaces);
-/// the caller's final newline stands.
-pub fn ends_with_keep_chomped_block(root: &Root<'_>, f: &YamlFormatter<'_, '_>) -> bool {
+/// Returns `false` for an empty content region, the only scalar emitting no tail of its own
+/// (any line leaves one, see `remove_unnecessary_trailing_newlines`); the caller's final newline stands.
+pub fn ends_with_keep_chomped_block(root: &Root<'_>) -> bool {
     root.children
         .last()
         .and_then(|document| document.body.content.as_deref())
         .and_then(last_descendant_block_scalar)
         .is_some_and(|block| {
-            // Content characters guarantee a tail;
-            // an empty content region emits one exactly when its trailing run holds a line break.
-            block.chomping == Chomping::Keep
-                && (block.content_end > block.content_start
-                    || f.context()
-                        .source_text()
-                        .bytes_range(block.content_end, block.span.end)
-                        .contains(&b'\n'))
+            block.chomping == Chomping::Keep && block.span.end > block.content_start
         })
 }
 

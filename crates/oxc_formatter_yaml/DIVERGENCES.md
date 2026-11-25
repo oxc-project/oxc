@@ -28,20 +28,21 @@ After a contentless keep-chomped scalar (its conformance failures), Prettier pri
 ## keep-chomped-space-only-eof-line
 
 - Why: semantics (prettier/prettier#19256)
-- Pin: `tests/fixtures/yaml/keep-chomped-eos-spaces-only.yaml`, `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
-- Conformance:
-  - `externals/prettier/yaml/yaml-test-suite/snippet: JEF9-3.yaml*` (the suite asserts no JSON value, only yaml@2's dump)
+- Pin: `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
 
 ```yaml
 # input (no final newline; the last line is two spaces)
 key: |+
+
 ␣␣
 
-# ours: value "" (the break-less space-only line adds nothing to the kept tail)
-# prettier: prints one newline too many, value "\n"
+# ours: value "\n" (the break-less space-only line adds nothing after the blank line)
+# prettier: prints one newline too many, value "\n\n"
 ```
 
-A space-only EOF line at-or-below the block's indent holds no line break, so it adds nothing to the kept tail (psych/PyYAML agree).
+A break-less EOF line of at-or-below-indent spaces adds nothing to the kept tail after another line.
+As the scalar's only line it is one kept line, which Prettier prints too.
+Values as yaml@2 reads them.
 
 ## empty-document-end-marker
 
