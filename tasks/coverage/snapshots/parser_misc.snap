@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 171/171 (100.00%)
-Positive Passed: 171/171 (100.00%)
-Negative Passed: 305/305 (100.00%)
+AST Parsed     : 172/172 (100.00%)
+Positive Passed: 172/172 (100.00%)
+Negative Passed: 307/307 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -738,6 +738,62 @@ Negative Passed: 305/305 (100.00%)
    ·              ╰── for this label
  3 │ }
    ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-constructor-overloads.ts:2:3]
+ 1 │ class A {
+ 2 │   @dec constructor();
+   ·   ────
+ 3 │   constructor() {}
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-constructor-overloads.ts:8:3]
+ 7 │   constructor();
+ 8 │   @dec constructor() {}
+   ·   ────
+ 9 │ }
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-constructor.js:2:3]
+ 1 │ class A {
+ 2 │   @dec constructor() {}
+   ·   ────
+ 3 │ }
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/decorated-constructor.js:6:3]
+ 5 │ class B {
+ 6 │   @dec 'constructor'() {}
+   ·   ────
+ 7 │ }
+   ╰────
+
+  × Decorators are not valid here.
+    ╭─[misc/fail/decorated-constructor.js:10:3]
+  9 │ class C {
+ 10 │   @dec \u0063onstructor() {}
+    ·   ────
+ 11 │ }
+    ╰────
+
+  × Decorators are not valid here.
+    ╭─[misc/fail/decorated-constructor.js:14:3]
+ 13 │ (class {
+ 14 │   @dec @dec2 constructor() {}
+    ·   ────
+ 15 │ });
+    ╰────
+
+  × Decorators are not valid here.
+    ╭─[misc/fail/decorated-constructor.js:14:8]
+ 13 │ (class {
+ 14 │   @dec @dec2 constructor() {}
+    ·        ─────
+ 15 │ });
+    ╰────
 
   × 'export statement' declaration can only be used at the top level of a module
    ╭─[misc/fail/decorated-export-in-block.mjs:2:8]

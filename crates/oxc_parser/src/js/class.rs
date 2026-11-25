@@ -239,11 +239,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_class_element(&mut self) -> ClassElement<'a> {
         let elem = self.parse_class_element_impl();
         if let ClassElement::MethodDefinition(def) = &elem
-            && def.value.body.is_none()
             && !def.decorators.is_empty()
         {
-            for decorator in &def.decorators {
-                self.error(diagnostics::decorator_on_overload(decorator.span));
+            if def.kind.is_constructor() {
+                for decorator in &def.decorators {
+                    self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                }
+            } else if def.value.body.is_none() {
+                for decorator in &def.decorators {
+                    self.error(diagnostics::decorator_on_overload(decorator.span));
+                }
             }
         }
         elem
