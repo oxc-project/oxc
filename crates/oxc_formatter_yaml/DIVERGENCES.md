@@ -158,6 +158,34 @@ folded: >
 
 More-indented lines in a folded scalar are never re-flowed under `proseWrap: always`: their line breaks are literal per YAML folding, so wrapping breaks idempotency and the value.
 
+## block-scalar-explicit-indent
+
+- Why: semantics
+- Pin: `tests/fixtures/yaml/block-scalar-explicit-indent.yaml`
+- Conformance:
+  - `externals/aws-cloudformation-templates/EC2/ec2_with_waitcondition_template.yaml`
+
+```yaml
+# input: value "  x\n"
+a:
+    b: |2
+        x
+
+# ours: value "  x\n"
+a:
+  b: |2
+      x
+
+# prettier: the content stays at its source column, value "    x\n"
+a:
+  b: |2
+        x
+```
+
+An indentation indicator counts from the enclosing collection's items (YAML's `n + m`), so the content is re-indented with them.
+Prettier keeps it at its source column: the value changes when the items move left, and the output fails to re-parse when they move right (a wider `tabWidth`, or a source indented narrower than the output).
+psych and js-yaml agree.
+
 ## flow-flat-with-newline
 
 - Why: uniform-rule (a group is flat or fully expanded)
