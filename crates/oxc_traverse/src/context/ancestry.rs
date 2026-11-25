@@ -142,6 +142,25 @@ impl<'a> TraverseAncestry<'a> {
         Self { stack: NonEmptyStack::with_capacity(INITIAL_STACK_CAPACITY, Ancestor::None) }
     }
 
+    /// Reset ancestry stack to its initial state (single `Ancestor::None` entry).
+    ///
+    /// For use when a traversal ends by unwinding: a panic in a visitor method skips the
+    /// `pop_stack`s which correspond to the `push_stack`s in `walk_*` methods, so the stack would
+    /// be left containing stale `Ancestor`s. Reusing the `TraverseCtx` in that state would
+    /// violate the safety invariants of this type.
+    ///
+    /// # SAFETY
+    /// This method must not be public outside this crate, or consumer could break safety invariants.
+    #[inline]
+    pub(crate) fn reset(&mut self) {
+        // The loop condition guarantees the stack has at least 2 entries, so `pop` will not
+        // underflow, and the stack always retains at least 1 entry (which `NonEmptyStack::pop`
+        // also asserts, for good measure).
+        while self.stack.len() > 1 {
+            self.stack.pop();
+        }
+    }
+
     /// Push item onto ancestry stack.
     ///
     /// # SAFETY
