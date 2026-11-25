@@ -942,9 +942,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse statements that start with `@`.
     fn parse_decorated_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
-        let decorators = self.parse_decorators();
+        let checkpoint = (self.source_type.is_unambiguous()
+            && self.ctx.has_top_level()
+            && !self.ctx.has_await())
+        .then(|| self.checkpoint());
+        let mut decorators = self.parse_decorators();
         let kind = self.cur_kind();
         if kind == Kind::Export {
+            // `export` commits to the Module goal, which applies to the decorators before it too.
+            // e.g. `@dec(await (x)) export class C {}`
+            if let Some(checkpoint) = checkpoint
+                && self.state.encountered_await_identifier
+            {
+                self.rewind(checkpoint);
+                self.ctx = self.ctx.and_await(true);
+                decorators = self.parse_decorators();
+            }
             // Export span.start starts after decorators.
             return self.parse_export_declaration(self.cur_start(), decorators, stmt_ctx);
         }
