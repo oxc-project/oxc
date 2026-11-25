@@ -708,12 +708,14 @@ impl TsGoLintState {
         if configs.is_empty() {
             return Ok(Some(vec![]));
         }
-        let diagnostics = match server.lint(configs, self.fix, self.fix_suggestions) {
-            Ok(diagnostics) => diagnostics,
-            // Requests are canceled when their results can no longer be shown.
-            Err(server::LintError::Canceled) => return Ok(None),
-            Err(server::LintError::Failed(error)) => return Err(error),
-        };
+        let diagnostics =
+            match server.lint(configs, source_overrides, self.fix, self.fix_suggestions) {
+                Ok(diagnostics) => diagnostics,
+                // Requests are canceled when their results can no longer be shown, or would not match
+                // the text being linted.
+                Err(server::LintError::Canceled) => return Ok(None),
+                Err(server::LintError::Failed(error)) => return Err(error),
+            };
         let disable_directives_map =
             disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
         let mut result = vec![];

@@ -145,7 +145,8 @@ type Pending = Arc<Mutex<FxHashMap<u64, PendingRequest>>>;
 /// Why a lint request has no results.
 #[derive(Debug)]
 pub(super) enum LintError {
-    /// The request was canceled before it finished.
+    /// The request was canceled before it finished, or not sent because the server has other
+    /// text for one of its files than the text being linted.
     Canceled,
     Failed(String),
 }
@@ -434,9 +435,15 @@ impl TsrsLintServer {
     }
 
     /// Lints the files of `configs` and returns their diagnostics.
+    ///
+    /// `sources` is the text oxlint lints each file with, by path. The server lints the text it
+    /// was last sent for an open file, and the request carries no version: when an edit reached
+    /// the server since `sources` was read, its results would not match `sources`, so the request
+    /// is not sent and ends as canceled. The edit's own lint follows.
     pub(super) fn lint(
         &self,
         configs: &[Config],
+        sources: &FxHashMap<String, String>,
         fix: bool,
         fix_suggestions: bool,
     ) -> Result<Vec<TsGoLintDiagnostic>, LintError> {
@@ -448,6 +455,13 @@ impl TsrsLintServer {
             let mut connection =
                 self.connection.lock().expect("tsrs-lint connection mutex poisoned");
             let connection = self.ensure_connection(&mut connection)?;
+            // The connection lock orders this check with the document updates.
+            if let Some(path) = self.stale_document(sources) {
+                debug!(
+                    "tsrs-lint server request {id} not sent: `{path}` changed since it was read"
+                );
+                return Err(LintError::Canceled);
+            }
             self.send_file_changes(&connection);
             connection
                 .pending
@@ -493,6 +507,18 @@ impl TsrsLintServer {
             }
         }
         result
+    }
+
+    /// An open document whose text the server has is not the one in `sources`.
+    fn stale_document<'a>(&self, sources: &'a FxHashMap<String, String>) -> Option<&'a str> {
+        let documents =
+            self.open_documents.lock().expect("tsrs-lint open documents mutex poisoned");
+        sources.iter().find_map(|(path, text)| {
+            documents
+                .get(Path::new(path))
+                .is_some_and(|document| *document.text != **text)
+                .then_some(path.as_str())
+        })
     }
 
     /// Returns the running process, spawning it (and sending it the open documents) when there is

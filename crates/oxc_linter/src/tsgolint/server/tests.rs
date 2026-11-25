@@ -11,6 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use rustc_hash::FxHashMap;
 use serde_json::{Value, json};
 
 use super::{
@@ -107,7 +108,7 @@ fn configs(file_path: &str) -> Vec<Config> {
 }
 
 fn lint(server: &TsrsLintServer, file_path: &str) -> Result<Vec<TsGoLintDiagnostic>, LintError> {
-    server.lint(&configs(file_path), false, false)
+    server.lint(&configs(file_path), &FxHashMap::default(), false, false)
 }
 
 fn failure(result: Result<Vec<TsGoLintDiagnostic>, LintError>) -> String {
@@ -313,4 +314,23 @@ fn stop_shuts_the_process_down() {
     let error = failure(lint(&server, &file));
     assert_eq!(error, "tsrs-lint server was stopped");
     assert_eq!(fixture.starts(), 1);
+}
+
+#[test]
+fn lint_of_text_the_server_does_not_have_is_not_sent() {
+    let Some(fixture) = Fixture::new(&json!({})) else { return };
+    let server = fixture.server();
+    let file = fixture.file("index.ts");
+    server.did_open(Path::new(&file), 2, Arc::from("let a = 2;"));
+
+    // The text was read before version 2 reached the server.
+    let read_before = FxHashMap::from_iter([(file.clone(), "let a = 1;".to_string())]);
+    let result = server.lint(&configs(&file), &read_before, false, false);
+    assert!(matches!(result, Err(LintError::Canceled)), "{result:?}");
+    assert_eq!(fixture.messages(LINT), [] as [Value; 0]);
+
+    let current = FxHashMap::from_iter([(file.clone(), "let a = 2;".to_string())]);
+    let diagnostics = server.lint(&configs(&file), &current, false, false).expect("lint failed");
+    assert_eq!(diagnostics.len(), 1);
+    assert_eq!(fixture.messages(LINT).len(), 1);
 }
