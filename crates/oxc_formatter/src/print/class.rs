@@ -645,16 +645,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
             let verbatim_end = self
                 .content_end(f)
                 .map(|end| f.comments().end_including_source_parens(end, span.end));
-            if write_suppressed_content(span, verbatim_end, f) {
-                if is_property {
-                    if needs_semi {
-                        write!(f, ";");
-                    }
-                } else {
-                    // A bodyless method / index signature: the formatter's `;`, per `semi`
-                    OptionalSemicolon.fmt(f);
-                }
-            }
+            let semi = needs_semi || (!is_property && f.options().semicolons.is_always());
+            write_suppressed_content(span, verbatim_end, semi, f);
         } else {
             // Same-line comments between the content end and the source semicolon
             // move behind it like Prettier: `x = 1 /* c */;` -> `x = 1; /* c */`

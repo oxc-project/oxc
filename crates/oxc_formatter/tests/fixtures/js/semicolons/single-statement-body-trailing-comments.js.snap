@@ -1,0 +1,360 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+if (a) foo() // long comment past column eighty so inline group measurement breaks
+;
+while (a) foo() // c
+;
+for (;;) foo() // c
+;
+for (k in o) foo() // c
+;
+for (v of o) foo() // c
+;
+with (o) foo() // c
+;
+if (a) var x = 1 // c
+;
+if (a) var uninit // c
+;
+if (a) debugger // c
+;
+if (a) do {} while (b) // c
+;
+outer: while (a) if (b) continue outer // c
+;
+if (a) (x = 1 // c
+);
+if (a) foo() /* l1
+l2 */;
+if (a) foo() /** @type {X} */ // trailing
+;
+if (a) while (b) foo() // c
+;
+if (a) lbl: foo() // c
+;
+function returnsAndThrows(a) {
+  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) return // long comment past 80
+  ;
+  if (a) return foo() // very long comment past column eighty forcing a line wrap if inline
+  ;
+  if (a) return (x) => (y // c
+  );
+  if (a) throw err() // very long comment past column eighty forcing a line wrap if inline
+  ;
+}
+if (a) ugly(  1  ) // prettier-ignore
+;
+if (a) ugly(  1  ) /* c */; // prettier-ignore
+if (a)
+  // prettier-ignore
+  while (b) foo() // c
+;
+if (a)
+  // prettier-ignore
+  (ugly(  1  ) /* c */);
+if (a)
+  // prettier-ignore
+  return (x = (y = 1 /* c */));
+if (a)
+  // prettier-ignore
+  foo() /* ) */ ;
+if (a) return (x = 1 /* c */) /* ) */ ;
+do foo() /* c */; while (b);
+if (x) a();
+else if (b) foo() // long comment past column eighty so inline group measurement breaks
+;
+if (a) foo()
+// own
+;
+if (a) while (/* prettier-ignore */ x) (foo() // c
+);
+if (a) if (b) x() /* prettier-ignore */; else (foo() // c
+);
+if (a) while (x) /* prettier-ignore */ (foo() // c
+);
+if (a) lbl: /* prettier-ignore */ while (b) (foo() // c
+);
+if (a) /* prettier-ignore */ foo(  1  ) // c
+;
+if (a) /* prettier-ignore */ foo(  1  ); // c
+if (a) /* prettier-ignore */ foo(  1  ) // c
+if (a) while (b) /* prettier-ignore */ (foo() // c
+);
+// prettier-ignore
+foo(  1  ) /* c */
+;
+foo(  1  ) /* prettier-ignore */
+;
+
+==================== Output ====================
+------------------------------
+{ printWidth: 80, semi: true }
+------------------------------
+if (a) foo(); // long comment past column eighty so inline group measurement breaks
+while (a) foo(); // c
+for (;;) foo(); // c
+for (k in o) foo(); // c
+for (v of o) foo(); // c
+with (o) foo(); // c
+if (a) var x = 1; // c
+if (a) var uninit; // c
+if (a) debugger; // c
+if (a) do {} while (b); // c
+outer: while (a) if (b) continue outer; // c
+if (a) x = 1; // c
+if (a) foo(); /* l1
+l2 */
+if (a) foo(); /** @type {X} */ // trailing
+if (a) while (b) foo(); // c
+if (a) lbl: foo(); // c
+function returnsAndThrows(a) {
+  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) return; // long comment past 80
+  if (a) return foo(); // very long comment past column eighty forcing a line wrap if inline
+  if (a) return (x) => y; // c
+  if (a) throw err(); // very long comment past column eighty forcing a line wrap if inline
+}
+if (a) ugly(  1  ); // prettier-ignore
+if (a) ugly(  1  ); /* c */ // prettier-ignore
+if (a)
+  // prettier-ignore
+  while (b) foo(); // c
+if (a)
+  // prettier-ignore
+  (ugly(  1  ) /* c */);
+if (a)
+  // prettier-ignore
+  return (x = (y = 1 /* c */));
+if (a)
+  // prettier-ignore
+  foo(); /* ) */
+if (a) return (x = 1 /* c */); /* ) */
+do foo(); /* c */
+while (b);
+if (x) a();
+else if (b) foo(); // long comment past column eighty so inline group measurement breaks
+if (a) foo();
+// own
+if (a) while (/* prettier-ignore */ x) foo(); // c
+if (a)
+  if (b) x(); /* prettier-ignore */
+  else foo(); // c
+if (a)
+  while (x)
+    /* prettier-ignore */ (foo() // c
+);
+if (a) lbl: /* prettier-ignore */ while (b) foo(); // c
+if (a) /* prettier-ignore */ foo(  1  ); // c
+if (a) /* prettier-ignore */ foo(  1  ); // c
+if (a) /* prettier-ignore */ foo(  1  ); // c
+if (a)
+  while (b)
+    /* prettier-ignore */ (foo() // c
+);
+// prettier-ignore
+foo(  1  ); /* c */
+foo(  1  ); /* prettier-ignore */
+
+-------------------------------
+{ printWidth: 100, semi: true }
+-------------------------------
+if (a) foo(); // long comment past column eighty so inline group measurement breaks
+while (a) foo(); // c
+for (;;) foo(); // c
+for (k in o) foo(); // c
+for (v of o) foo(); // c
+with (o) foo(); // c
+if (a) var x = 1; // c
+if (a) var uninit; // c
+if (a) debugger; // c
+if (a) do {} while (b); // c
+outer: while (a) if (b) continue outer; // c
+if (a) x = 1; // c
+if (a) foo(); /* l1
+l2 */
+if (a) foo(); /** @type {X} */ // trailing
+if (a) while (b) foo(); // c
+if (a) lbl: foo(); // c
+function returnsAndThrows(a) {
+  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) return; // long comment past 80
+  if (a) return foo(); // very long comment past column eighty forcing a line wrap if inline
+  if (a) return (x) => y; // c
+  if (a) throw err(); // very long comment past column eighty forcing a line wrap if inline
+}
+if (a) ugly(  1  ); // prettier-ignore
+if (a) ugly(  1  ); /* c */ // prettier-ignore
+if (a)
+  // prettier-ignore
+  while (b) foo(); // c
+if (a)
+  // prettier-ignore
+  (ugly(  1  ) /* c */);
+if (a)
+  // prettier-ignore
+  return (x = (y = 1 /* c */));
+if (a)
+  // prettier-ignore
+  foo(); /* ) */
+if (a) return (x = 1 /* c */); /* ) */
+do foo(); /* c */
+while (b);
+if (x) a();
+else if (b) foo(); // long comment past column eighty so inline group measurement breaks
+if (a) foo();
+// own
+if (a) while (/* prettier-ignore */ x) foo(); // c
+if (a)
+  if (b) x(); /* prettier-ignore */
+  else foo(); // c
+if (a)
+  while (x)
+    /* prettier-ignore */ (foo() // c
+);
+if (a) lbl: /* prettier-ignore */ while (b) foo(); // c
+if (a) /* prettier-ignore */ foo(  1  ); // c
+if (a) /* prettier-ignore */ foo(  1  ); // c
+if (a) /* prettier-ignore */ foo(  1  ); // c
+if (a)
+  while (b)
+    /* prettier-ignore */ (foo() // c
+);
+// prettier-ignore
+foo(  1  ); /* c */
+foo(  1  ); /* prettier-ignore */
+
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+if (a) foo() // long comment past column eighty so inline group measurement breaks
+while (a) foo() // c
+for (;;) foo() // c
+for (k in o) foo() // c
+for (v of o) foo() // c
+with (o) foo() // c
+if (a) var x = 1 // c
+if (a) var uninit // c
+if (a) debugger // c
+if (a) do {} while (b) // c
+outer: while (a) if (b) continue outer // c
+if (a) x = 1 // c
+if (a) foo() /* l1
+l2 */
+if (a) foo() /** @type {X} */ // trailing
+if (a) while (b) foo() // c
+if (a) lbl: foo() // c
+function returnsAndThrows(a) {
+  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) return // long comment past 80
+  if (a) return foo() // very long comment past column eighty forcing a line wrap if inline
+  if (a) return (x) => y // c
+  if (a) throw err() // very long comment past column eighty forcing a line wrap if inline
+}
+if (a) ugly(  1  ) // prettier-ignore
+if (a) ugly(  1  ) /* c */ // prettier-ignore
+if (a)
+  // prettier-ignore
+  while (b) foo() // c
+if (a)
+  // prettier-ignore
+  (ugly(  1  ) /* c */)
+if (a)
+  // prettier-ignore
+  return (x = (y = 1 /* c */))
+if (a)
+  // prettier-ignore
+  foo() /* ) */
+if (a) return (x = 1 /* c */) /* ) */
+do foo() /* c */
+while (b)
+if (x) a()
+else if (b) foo() // long comment past column eighty so inline group measurement breaks
+if (a) foo()
+// own
+if (a) while (/* prettier-ignore */ x) foo() // c
+if (a)
+  if (b) x() /* prettier-ignore */
+  else foo() // c
+if (a)
+  while (x)
+    /* prettier-ignore */ (foo() // c
+)
+if (a) lbl: /* prettier-ignore */ while (b) foo() // c
+if (a) /* prettier-ignore */ foo(  1  ) // c
+if (a) /* prettier-ignore */ foo(  1  ) // c
+if (a) /* prettier-ignore */ foo(  1  ) // c
+if (a)
+  while (b)
+    /* prettier-ignore */ (foo() // c
+)
+// prettier-ignore
+foo(  1  ) /* c */
+foo(  1  ) /* prettier-ignore */
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+if (a) foo() // long comment past column eighty so inline group measurement breaks
+while (a) foo() // c
+for (;;) foo() // c
+for (k in o) foo() // c
+for (v of o) foo() // c
+with (o) foo() // c
+if (a) var x = 1 // c
+if (a) var uninit // c
+if (a) debugger // c
+if (a) do {} while (b) // c
+outer: while (a) if (b) continue outer // c
+if (a) x = 1 // c
+if (a) foo() /* l1
+l2 */
+if (a) foo() /** @type {X} */ // trailing
+if (a) while (b) foo() // c
+if (a) lbl: foo() // c
+function returnsAndThrows(a) {
+  if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) return // long comment past 80
+  if (a) return foo() // very long comment past column eighty forcing a line wrap if inline
+  if (a) return (x) => y // c
+  if (a) throw err() // very long comment past column eighty forcing a line wrap if inline
+}
+if (a) ugly(  1  ) // prettier-ignore
+if (a) ugly(  1  ) /* c */ // prettier-ignore
+if (a)
+  // prettier-ignore
+  while (b) foo() // c
+if (a)
+  // prettier-ignore
+  (ugly(  1  ) /* c */)
+if (a)
+  // prettier-ignore
+  return (x = (y = 1 /* c */))
+if (a)
+  // prettier-ignore
+  foo() /* ) */
+if (a) return (x = 1 /* c */) /* ) */
+do foo() /* c */
+while (b)
+if (x) a()
+else if (b) foo() // long comment past column eighty so inline group measurement breaks
+if (a) foo()
+// own
+if (a) while (/* prettier-ignore */ x) foo() // c
+if (a)
+  if (b) x() /* prettier-ignore */
+  else foo() // c
+if (a)
+  while (x)
+    /* prettier-ignore */ (foo() // c
+)
+if (a) lbl: /* prettier-ignore */ while (b) foo() // c
+if (a) /* prettier-ignore */ foo(  1  ) // c
+if (a) /* prettier-ignore */ foo(  1  ) // c
+if (a) /* prettier-ignore */ foo(  1  ) // c
+if (a)
+  while (b)
+    /* prettier-ignore */ (foo() // c
+)
+// prettier-ignore
+foo(  1  ) /* c */
+foo(  1  ) /* prettier-ignore */
+
+===================== End =====================

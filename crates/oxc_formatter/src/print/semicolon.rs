@@ -1,6 +1,7 @@
 use oxc_ast::ast::{Comment, Declaration, ExportDefaultDeclarationKind, Expression, Statement};
 use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
+use oxc_syntax::{identifier::is_white_space_single_line, line_terminator::is_line_terminator};
 
 use crate::{
     ast_nodes::{AstNode, AstNodeKind, AstNodes},
@@ -310,9 +311,8 @@ pub fn write_suppressed_statement<'a>(
         }
         _ => format_leading_comments(span).fmt(f),
     }
-    if write_suppressed_content(span, suppressed_statement_content_end(stmt.as_ref(), f), f) {
-        OptionalSemicolon.fmt(f);
-    }
+    let semi = f.options().semicolons.is_always();
+    write_suppressed_content(span, suppressed_statement_content_end(stmt.as_ref(), f), semi, f);
     true
 }
 
@@ -393,6 +393,64 @@ pub fn suppressed_statement_content_end(
     // Extended once here for every kind (a no-op where no `)` can follow the content),
     // so no arm has to remember it.
     content_end.map(|end| f.comments().end_including_source_parens(end, span.end))
+}
+
+pub fn body_comment_limit(body: &Statement<'_>, f: &JsFormatter<'_, '_>) -> Option<u32> {
+    let oxc_span::Span { start, end, .. } = body.span();
+    let (comments, src) = (f.comments(), f.source_text());
+    let in_body = comments.comments_in_range(start, end);
+    let is_ws = |c| is_white_space_single_line(c) || is_line_terminator(c);
+    let tail_src = src.slice_range(in_body.last()?.span.end, end);
+    if comments.has_trailing_suppression_comment(end)
+        || !tail_src.chars().all(|c| is_ws(c) || matches!(c, ';' | ')'))
+    {
+        return None;
+    }
+    let (mut suppressed, mut pos, mut leaf) = (comments.is_suppressed(start), 0, body);
+    loop {
+        let is_labeled = matches!(leaf, Statement::LabeledStatement(_));
+        leaf = match leaf {
+            Statement::IfStatement(s) => s.alternate.as_ref().unwrap_or(&s.consequent),
+            Statement::WhileStatement(s) => &s.body,
+            Statement::WithStatement(s) => &s.body,
+            Statement::ForStatement(s) => &s.body,
+            Statement::ForInStatement(s) => &s.body,
+            Statement::ForOfStatement(s) => &s.body,
+            Statement::LabeledStatement(s) => &s.body,
+            _ => break,
+        };
+        let mut before = leaf.span().start;
+        let next = pos + in_body[pos..].partition_point(|c| c.span.end <= before);
+        for c in in_body[pos..next].iter().rev() {
+            if suppressed || is_labeled || !src.slice_range(c.span.end, before).chars().all(is_ws) {
+                break;
+            }
+            (suppressed, before) = (comments.is_suppression_comment(c), c.span.start);
+        }
+        pos = next;
+    }
+    let ee =
+        |e: &Expression<'_>, s, g| semicolon_terminated_expression_content_end(f, e, s, end, g);
+    let ret =
+        |a: &Expression<'_>| Some(assignment_chain_leaf_end(a, f)).filter(|&e| e < a.span().end);
+    let leaf_end = (!suppressed).then(|| -> Option<u32> {
+        Some(match leaf {
+            Statement::ExpressionStatement(s) => ee(&s.expression, s.expression.span().end, false),
+            Statement::VariableDeclaration(s) => {
+                let d = s.declarations.last()?;
+                ee(d.init.as_ref()?, d.span.end, true)
+            }
+            Statement::ReturnStatement(s) => ret(s.argument.as_ref()?)?,
+            Statement::ThrowStatement(s) => ret(&s.argument)?,
+            _ => return None,
+        })
+    });
+    let content_end = leaf_end.flatten().or_else(|| suppressed_statement_content_end(leaf, f))?;
+    let tail = &in_body[in_body.partition_point(|c| c.span.end <= content_end)..];
+    (!tail.first().is_none_or(Comment::preceded_by_newline)
+        && comments.has_semicolon_or_closing_paren_in_range(content_end, end)
+        && !tail.iter().any(|c| comments.is_suppression_comment(c)))
+    .then_some(content_end)
 }
 
 /// [`suppressed_statement_content_end`] for a declaration (also behind `export`):
