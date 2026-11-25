@@ -1,11 +1,58 @@
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    rules::shared::no_conditional_in_test::{DOCUMENTATION, run},
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
+
+fn no_conditional_in_test(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Remove conditional tests").with_label(span)
+}
+
+pub const DOCUMENTATION: &str = r"### What it does
+
+Disallow conditional tests.
+
+### Why is this bad?
+
+A test that contains conditionals can pass or fail depending on runtime
+conditions, which makes the test non-deterministic and harder to reason
+about. It is better to have a single unconditional test case per test.
+
+### Examples
+
+Examples of **incorrect** code for this rule:
+
+```js
+test('my test', () => {
+  if (true) {
+    doTheThing()
+  }
+})
+```
+
+Examples of **correct** code for this rule:
+
+```js
+test('my test', () => {
+  expect(true).toBe(true)
+})
+```
+
+### Notes
+
+Like [`eslint-plugin-vitest`](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/src/rules/no-conditional-in-test.ts),
+this rule only reports an `if` statement that is a direct statement of the
+`test`/`it` callback body. Conditionals in functions defined inside the test,
+and `switch` statements, ternaries, and logical expressions, are not reported.
+If you want the wider net that also reports those, use
+`jest/no-conditional-in-test` instead.
+";
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConditionalInTest;
@@ -13,16 +60,46 @@ pub struct NoConditionalInTest;
 declare_oxc_lint!(NoConditionalInTest, vitest, pedantic, docs = DOCUMENTATION, version = "0.8.0",);
 
 impl Rule for NoConditionalInTest {
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::IfStatement(_)
-            | AstKind::SwitchStatement(_)
-            | AstKind::ConditionalExpression(_)
-            | AstKind::LogicalExpression(_) => {}
-            _ => return,
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // See <https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/src/rules/no-conditional-in-test.ts>
+        // Only an `if` statement that is a direct statement of the `test`/`it`
+        // callback body is reported:
+        // `IfStatement` -> `FunctionBody` -> callback function -> test `CallExpression`.
+        let AstKind::IfStatement(stmt) = node.kind() else { return };
+
+        let mut ancestors = ctx.nodes().ancestors(node.id());
+
+        // The `if` must be a direct statement of a function body, not nested in
+        // an inner function, block, or another statement.
+        if !matches!(ancestors.next().map(AstNode::kind), Some(AstKind::FunctionBody(_))) {
+            return;
         }
 
-        run(node, ctx);
+        // The body must belong to the callback function itself.
+        if !matches!(
+            ancestors.next().map(AstNode::kind),
+            Some(AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        ) {
+            return;
+        }
+
+        // The callback must be directly passed to a `test`/`it` call.
+        let Some(call_node) = ancestors.next() else { return };
+        let AstKind::CallExpression(call_expr) = call_node.kind() else { return };
+        let Some(possible_jest_node) =
+            PossibleJestNode::from_call_expression(call_node, call_expr, ctx)
+        else {
+            return;
+        };
+
+        if is_type_of_jest_fn_call(
+            call_expr,
+            &possible_jest_node,
+            ctx,
+            &[JestFnKind::General(JestGeneralFnKind::Test)],
+        ) {
+            ctx.diagnostic(no_conditional_in_test(stmt.span));
+        }
     }
 }
 
@@ -51,11 +128,22 @@ fn test() {
                   });
                 ",
         "
+                  it.concurrent('foo', () => {
+                    switch('bar') {}
+                  })
+                ",
+        "
                   fit.concurrent('foo', () => {
                     switch('bar') {}
                   })
                 ",
+        "
+                  fit.concurrent('foo', () => {
+                    if ('bar') {}
+                  })
+                ",
         "it('foo', () => {})",
+        r#"it("foo", function () {})"#,
         "
                   switch (true) {
                     case true: {}
@@ -141,8 +229,6 @@ fn test() {
                   });
                 ",
         "if (foo) {}",
-        "it('foo', () => {})",
-        r#"it("foo", function () {})"#,
         "it('foo', () => {}); function myTest() { if ('bar') {} }",
         "
                   foo('bar', () => {
@@ -229,11 +315,94 @@ fn test() {
                     });
                   });
                 ",
+        // `switch` statements, ternaries, and logical expressions are not
+        // reported, matching eslint-plugin-vitest.
         "
-                  fit.concurrent('foo', () => {
-                    if ('bar') {}
-                  })
-                ",
+                    it('foo', () => {
+                      expect(bar ? foo : baz).toBe(boo);
+                    })
+                  ",
+        "
+                    it('foo', () => {
+                      const foo = bar ? foo : baz;
+                    })
+                  ",
+        "
+                    it('foo', () => {
+                      switch (true) {
+                        case true: {}
+                      }
+                    })
+                  ",
+        "
+                    it('foo', () => {
+                      bar && baz();
+                    })
+                  ",
+        // Conditionals in functions defined inside the test are not reported.
+        "
+                    it('foo', () => {
+                      const foo = function (bar) {
+                        return foo ? bar : null;
+                      };
+                    });
+                  ",
+        "
+                    it('foo', () => {
+                      function foo(bar) {
+                        if (bar) {
+                          return 1;
+                        } else {
+                          return 2;
+                        }
+                      };
+                    });
+                  ",
+        "
+                    it('foo', () => {
+                      function Greeting(props) {
+                        if (!props.name) return 'Hello, stranger'
+                        return `Hello, ${props.name}`
+                      }
+
+                      expect(Greeting({})).toBe('Hello, stranger');
+                    });
+                  ",
+        "
+                    it('foo', () => {
+                      const queryFn = (page) => (page > 0 ? 'next' : 'first')
+
+                      expect(queryFn(0)).toBe('first');
+                    });
+                  ",
+        "
+                    it('is not valid', () => {
+                      const values = something.map((thing) => {
+                        switch (thing.isFoo) {
+                          case true:
+                            return thing.foo;
+                          default:
+                            return thing.bar;
+                        }
+                      });
+
+                      switch('invalid') {
+                        case true:
+                          expect(values).toStrictEqual(['foo']);
+                      }
+                    });
+                  ",
+        // An `if` that is not a direct statement of the test callback body is
+        // not reported.
+        "
+                    it('foo', () => {
+                      {
+                        if ('bar') {
+                        } else if ('baz') {
+                        }
+                      }
+                    })
+                  ",
     ];
 
     pass.extend([
@@ -264,154 +433,11 @@ fn test() {
     let mut fail = vec![
         "
                     it('foo', () => {
-                      expect(bar ? foo : baz).toBe(boo);
+                      if ('bar') {}
                     })
                   ",
         "
                     it('foo', function () {
-                      const foo = function (bar) {
-                        return foo ? bar : null;
-                      };
-                    });
-                  ",
-        "
-                    it('foo', () => {
-                      const foo = bar ? foo : baz;
-                    })
-                  ",
-        "
-                    it('foo', () => {
-                      const foo = bar ? foo : baz;
-                    })
-                    const foo = bar ? foo : baz;
-                  ",
-        "
-                    it('foo', () => {
-                      const foo = bar ? foo : baz;
-                      const anotherFoo = anotherBar ? anotherFoo : anotherBaz;
-                    })
-                  ",
-        "
-                    it('is invalid', () => {
-                      const values = something.map(thing => {
-                        switch (thing.isFoo) {
-                          case true:
-                            return thing.foo;
-                          default:
-                            return thing.bar;
-                        }
-                      });
-
-                      expect(values).toStrictEqual(['foo']);
-                    });
-                  ",
-        "
-                    it('foo', () => {
-                      switch (true) {
-                        case true: {}
-                      }
-                    })
-                  ",
-        "
-                    it('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    it.skip('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    it.only('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    test('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    test.skip('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    test.only('foo', () => {
-                      switch('bar') {}
-                    })
-                  ",
-        "
-                    describe('foo', () => {
-                      it('bar', () => {
-
-                        switch('bar') {}
-                      })
-                    })
-                  ",
-        "
-                    describe('foo', () => {
-                      it('bar', () => {
-                        switch('bar') {}
-                      })
-                      it('baz', () => {
-                        switch('qux') {}
-                        switch('quux') {}
-                      })
-                    })
-                  ",
-        "
-                    it('foo', () => {
-                      callExpression()
-                      switch ('bar') {}
-                    })
-                  ",
-        "
-                    describe('valid', () => {
-                      describe('still valid', () => {
-                        it('is not valid', () => {
-                          const values = something.map((thing) => {
-                            switch (thing.isFoo) {
-                              case true:
-                                return thing.foo;
-                              default:
-                                return thing.bar;
-                            }
-                          });
-
-                          switch('invalid') {
-                            case true:
-                              expect(values).toStrictEqual(['foo']);
-                          }
-                        });
-                      });
-                    });
-                  ",
-        "
-                    it('foo', () => {
-                      const foo = function(bar) {
-                        if (bar) {
-                          return 1;
-                        } else {
-                          return 2;
-                        }
-                      };
-                    });
-                  ",
-        "
-                    it('foo', () => {
-                      function foo(bar) {
-                        if (bar) {
-                          return 1;
-                        } else {
-                          return 2;
-                        }
-                      };
-                    });
-                  ",
-        "
-                    it('foo', () => {
                       if ('bar') {}
                     })
                   ",
@@ -421,12 +447,12 @@ fn test() {
                     })
                   ",
         "
-                    it.skip('foo', function () {
+                    it.only('foo', () => {
                       if ('bar') {}
                     })
                   ",
         "
-                    it.only('foo', () => {
+                    it.concurrent('foo', () => {
                       if ('bar') {}
                     })
                   ",
@@ -442,6 +468,11 @@ fn test() {
                   ",
         "
                     test.only('foo', () => {
+                      if ('bar') {}
+                    })
+                  ",
+        "
+                    test('foo', function () {
                       if ('bar') {}
                     })
                   ",
@@ -465,6 +496,13 @@ fn test() {
                   ",
         "
                     it('foo', () => {
+                      if ('bar') {
+                      } else if ('baz') {
+                      }
+                    })
+                  ",
+        "
+                    it('foo', () => {
                       callExpression()
                       if ('bar') {}
                     })
@@ -482,6 +520,11 @@ fn test() {
                     })
                   ",
         "
+                    it.each([1, 2])('foo', (value) => {
+                      if (value) {}
+                    })
+                  ",
+        "
                     it.only.each``('foo', () => {
                       callExpression()
                       if ('bar') {}
@@ -496,7 +539,7 @@ fn test() {
         "
                     describe('valid', () => {
                       describe('still valid', () => {
-                        it('is invalid', () => {
+                        it('is not valid', () => {
                           const values = something.map((thing) => {
                             if (thing.isFoo) {
                               return thing.foo
@@ -537,8 +580,8 @@ fn test() {
                   "#,
         r#"
                     import { test } from "vitest";
-                    test('foo', () => {
-                      switch('bar') {}
+                    test('foo', function () {
+                      if ('bar') {}
                     })
                   "#,
         r"import { test as baseTest } from 'vitest';
@@ -546,9 +589,6 @@ fn test() {
         const customTest = extendedTest.extend({});
         customTest.only('foo', () => {
             if (condition) {}
-            switch (value) {}
-            const result = condition ? 1 : 0;
-            condition && doSomething();
         });",
         r"import { it as customTest } from 'vitest';
         customTest.each([true])('foo', value => {

@@ -4945,12 +4945,8 @@ impl RuleRunner for crate::rules::vitest::no_conditional_expect::NoConditionalEx
 }
 
 impl RuleRunner for crate::rules::vitest::no_conditional_in_test::NoConditionalInTest {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ConditionalExpression,
-        AstType::IfStatement,
-        AstType::LogicalExpression,
-        AstType::SwitchStatement,
-    ]));
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::IfStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
