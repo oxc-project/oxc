@@ -24,8 +24,8 @@ use crate::{
 };
 
 enum WorkerGuardInner<'a> {
-    Vec(RwLockReadGuard<'a, Vec<Arc<WorkspaceWorker>>>),
-    Single(&'a Arc<WorkspaceWorker>),
+    Vec(RwLockReadGuard<'a, Vec<WorkspaceWorker>>),
+    Single(&'a WorkspaceWorker),
 }
 
 /// A RAII guard that holds a shared read lock over the workers list and exposes
@@ -36,16 +36,6 @@ enum WorkerGuardInner<'a> {
 pub struct WorkerGuard<'a> {
     guard: WorkerGuardInner<'a>,
     index: usize,
-}
-
-impl WorkerGuard<'_> {
-    /// A shared reference to the worker, for work that outlives this guard.
-    pub fn shared(&self) -> Arc<WorkspaceWorker> {
-        match &self.guard {
-            WorkerGuardInner::Vec(vec_guard) => Arc::clone(&vec_guard[self.index]),
-            WorkerGuardInner::Single(single_guard) => Arc::clone(single_guard),
-        }
-    }
 }
 
 impl std::ops::Deref for WorkerGuard<'_> {
@@ -70,7 +60,7 @@ pub enum ManagerMode {
     // The manager will create workers dynamically for file URIs. It also supports workspaces configured by the client, but does not require them.
     // This is useful for tasks on URIs that are outside of any configured workspace.
     // At first it is `None` until the diagnostic mode is known, then it is set to a worker with the root URI `file:///` and the same diagnostic mode as the other workers.
-    DynamicWithWorkspaces(Box<OnceCell<Arc<WorkspaceWorker>>>),
+    DynamicWithWorkspaces(Box<OnceCell<WorkspaceWorker>>),
 }
 
 /// Manages the lifecycle of [`WorkspaceWorker`]s for the language server.
@@ -88,7 +78,7 @@ pub enum ManagerMode {
 /// **Workers are never cloned** – they are expensive and each root URI must
 /// have at most one live worker at any point in time.
 pub struct WorkerManager {
-    workers: RwLock<Vec<Arc<WorkspaceWorker>>>,
+    workers: RwLock<Vec<WorkspaceWorker>>,
     mode: ManagerMode,
     tool_builder: Arc<dyn ToolBuilder>,
 }
@@ -126,7 +116,7 @@ impl WorkerManager {
         workers: Vec<WorkspaceWorker>,
         diagnostic_mode: DiagnosticMode,
     ) -> Vec<ClientMessage> {
-        *self.workers.write().await = workers.into_iter().map(Arc::new).collect();
+        *self.workers.write().await = workers;
 
         // for dynamic workspaces we need to start them manually
         if let ManagerMode::DynamicWithWorkspaces(cell) = &self.mode {
@@ -142,7 +132,7 @@ impl WorkerManager {
             );
             let client_messages = worker.start_worker(serde_json::Value::Null).await;
 
-            let _ = cell.set(Arc::new(worker));
+            let _ = cell.set(worker);
 
             return client_messages;
         }
@@ -181,14 +171,14 @@ impl WorkerManager {
 
     /// Acquire a shared read lock over the worker list.
     /// Does not include the dynamic worker in `DynamicWithWorkspaces` mode, which must be accessed by `read_dynamic_worker`.
-    pub async fn read_workspace_workers(&self) -> RwLockReadGuard<'_, Vec<Arc<WorkspaceWorker>>> {
+    pub async fn read_workspace_workers(&self) -> RwLockReadGuard<'_, Vec<WorkspaceWorker>> {
         self.workers.read().await
     }
 
     /// Return the dynamic worker from `DynamicWithWorkspaces` mode, if enabled.
     pub fn read_dynamic_worker(&self) -> Option<&WorkspaceWorker> {
         if let ManagerMode::DynamicWithWorkspaces(worker) = &self.mode {
-            return worker.get().map(AsRef::as_ref);
+            return worker.get();
         }
         None
     }
@@ -214,7 +204,7 @@ impl WorkerManager {
 
     /// Append new workers to the list (used after `didChangeWorkspaceFolders`).
     pub async fn add_workers(&self, workers: Vec<WorkspaceWorker>) {
-        self.workers.write().await.extend(workers.into_iter().map(Arc::new));
+        self.workers.write().await.extend(workers);
     }
 
     /// Build a new [`WorkspaceWorker`] for the given root URI without starting
@@ -231,7 +221,7 @@ impl WorkerManager {
     /// For non-`file://` URIs the first worker (index `0`) is returned when
     /// the list is non-empty, mirroring the behaviour of rust-analyzer and
     /// typescript-language-server.
-    fn find_worker_index_for_uri(workers: &[Arc<WorkspaceWorker>], uri: &Uri) -> Option<usize> {
+    fn find_worker_index_for_uri(workers: &[WorkspaceWorker], uri: &Uri) -> Option<usize> {
         if uri.scheme().as_str() != "file" {
             return if workers.is_empty() { None } else { Some(0) };
         }
@@ -258,7 +248,7 @@ impl WorkerManager {
     // SAFETY: call this method only when you are sure, that we are not in `DynamicWithWorkspaces` mode,
     // or else it will return [`None`] for URIs that are outside of any workspace.
     fn find_worker_for_uri<'a>(
-        workers: &'a [Arc<WorkspaceWorker>],
+        workers: &'a [WorkspaceWorker],
         uri: &Uri,
     ) -> Option<&'a WorkspaceWorker> {
         let index = Self::find_worker_index_for_uri(workers, uri)?;
@@ -337,8 +327,8 @@ impl WorkerManager {
         &self,
         added: &[WorkspaceFolder],
         removed: &[WorkspaceFolder],
-    ) -> Vec<Arc<WorkspaceWorker>> {
-        let mut workers_to_shutdown: Vec<Arc<WorkspaceWorker>> = vec![];
+    ) -> Vec<WorkspaceWorker> {
+        let mut workers_to_shutdown: Vec<WorkspaceWorker> = vec![];
         let mut workers = self.workers.write().await;
 
         // Transition out of single-file mode when real workspace folders arrive.
@@ -414,9 +404,9 @@ impl WorkerManager {
             if self.is_single_file_mode() && Self::find_worker_for_uri(&workers, uri).is_none() {
                 #[expect(clippy::missing_panics_doc)]
                 // We wrapped the worker in `Some` to avoid moving it before acquiring the lock, so it should always be `Some` here.
-                workers.push(Arc::new(worker.take().expect(
+                workers.push(worker.take().expect(
                     "freshly created worker should be available when storing it in the list",
-                )));
+                ));
             }
         }
 
