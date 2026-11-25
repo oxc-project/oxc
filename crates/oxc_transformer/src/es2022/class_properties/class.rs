@@ -396,14 +396,6 @@ impl<'a> ClassProperties<'a> {
         // to before class
         self.transform_class_elements(class, ctx);
 
-        // Computed keys move outside the class. Reparent their first-level scopes as well,
-        // including functions containing brand checks against the lexical alias.
-        if !self.insert_before.is_empty() {
-            let keys = std::mem::take(&mut self.insert_before);
-            self.reparent_initializers_scope(&keys, ctx.current_scope_id(), None, ctx);
-            self.insert_before = keys;
-        }
-
         // Insert temp var for class if required. Name class if required.
         let class_details = self.classes_stack.last_mut();
         let shadowed_name_declaration = if let Some(binding) = &class_details.bindings.shadowed_name
@@ -494,6 +486,8 @@ impl<'a> ClassProperties<'a> {
         };
 
         if !self.insert_before.is_empty() {
+            // Computed keys move to before the class, in the scope containing the class
+            ctx.move_scopes_of_expressions(&self.insert_before, ctx.current_scope_id());
             ctx.state.statement_injector.insert_many_before(
                 &stmt_address,
                 exprs_into_stmts(self.insert_before.drain(..), &ctx.ast),
@@ -748,7 +742,9 @@ impl<'a> ClassProperties<'a> {
                 .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
 
-        // Insert computed key initializers
+        // Insert computed key initializers.
+        // They move out of the class, into the scope containing the class expression.
+        ctx.move_scopes_of_expressions(&self.insert_before, ctx.current_scope_id());
         exprs.extend(self.insert_before.drain(..));
 
         // Insert class + static property assignments + static blocks
