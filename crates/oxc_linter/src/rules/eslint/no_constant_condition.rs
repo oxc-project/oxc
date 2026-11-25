@@ -263,7 +263,7 @@ impl<'a> VisitJs<'a> for YieldBeforeLoopExitFinder {
 fn test() {
     use serde_json::json;
 
-    use crate::tester::Tester;
+    use crate::tester::{TestCase, Tester};
 
     let pass = vec![
         ("if(a);", None),
@@ -606,6 +606,17 @@ fn test() {
         ),
         ("function* foo() { for (let foo = 1 + 2 + 3 + (yield); true; baz) {}}", None),
     ];
+
+    let pass: Vec<TestCase> = pass.into_iter().map(Into::into).collect();
+    let fail: Vec<TestCase> = fail
+        .into_iter()
+        .map(|(source, config)| {
+            // In sloppy mode Annex B hoists `function Boolean` to top scope; test ESM semantics.
+            let path = (source == "if (Boolean(1)) { function Boolean() {}}")
+                .then(|| std::path::PathBuf::from("no_constant_condition.mts"));
+            (source, config, None, path).into()
+        })
+        .collect();
 
     Tester::new(NoConstantCondition::NAME, NoConstantCondition::PLUGIN, pass, fail)
         .test_and_snapshot();

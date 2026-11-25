@@ -7,7 +7,11 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::GetSpan;
 use oxc_str::Ident;
-use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
+use oxc_syntax::{
+    node::NodeId,
+    scope::{ScopeFlags, ScopeId},
+    symbol::{SymbolFlags, SymbolId},
+};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
 
@@ -197,39 +201,19 @@ impl<'a> Binder<'a> for Function<'a> {
                 SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
             };
 
-            let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
-            ident.symbol_id.set(Some(symbol_id));
-
-            let scope_flags = builder.current_scope_flags();
-
-            // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
-            // scopes also create an implicit var-like binding in the enclosing function
-            // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
-            if is_declaration // function expressions are bound in their own (var) scope
-                && !self.r#async // Annex B only applies to plain functions
-                && !self.generator // not generators or async generators
-                && !builder.source_type.is_typescript() // Annex B is JavaScript-only
-                && !scope_flags.is_var() // already in a var scope, no hoisting needed
-                && !scope_flags.is_strict_mode()
-            // no Annex B in strict mode / modules
+            let symbol_id = if is_declaration
+                && !self.r#async
+                && !self.generator
+                && !builder
+                    .current_scope_flags()
+                    .intersects(ScopeFlags::Var | ScopeFlags::StrictMode)
+                && !builder.in_ambient_context()
             {
-                let block_scope_id = builder.current_scope_id;
-                let var_scope_id = builder
-                    .scoping
-                    .scope_ancestors(block_scope_id)
-                    .skip(1)
-                    .find(|&id| builder.scoping.scope_flags(id).is_var());
-                if let Some(var_scope_id) = var_scope_id
-                    && !builder.scoping.scope_has_binding(var_scope_id, ident.name)
-                {
-                    builder.scoping.move_binding_by_symbol_id(
-                        block_scope_id,
-                        var_scope_id,
-                        symbol_id,
-                    );
-                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
-                }
-            }
+                declare_block_function(builder, ident.span, ident.name, includes, excludes)
+            } else {
+                builder.declare_symbol(ident.span, ident.name, includes, excludes)
+            };
+            ident.symbol_id.set(Some(symbol_id));
 
             // Save `@__NO_SIDE_EFFECTS__`
             if self.pure {
@@ -253,6 +237,77 @@ impl<'a> Binder<'a> for Function<'a> {
                 PropertyKind::Init => {}
             }
         }
+    }
+}
+
+enum BlockFunctionBinding {
+    Hoist { var_scope_id: ScopeId, var_binding: Option<SymbolId> },
+    Local { block_binding: Option<SymbolId> },
+}
+
+#[cold]
+#[inline(never)]
+fn declare_block_function<'a>(
+    builder: &mut SemanticBuilder<'a>,
+    span: Span,
+    name: Ident<'a>,
+    includes: SymbolFlags,
+    excludes: SymbolFlags,
+) -> SymbolId {
+    let block_scope_id = builder.current_scope_id;
+    match resolve_annex_b_target(builder, block_scope_id, name) {
+        BlockFunctionBinding::Hoist { var_scope_id, var_binding } => builder
+            .declare_hoisted_function(span, name, var_scope_id, var_binding, includes, excludes),
+        BlockFunctionBinding::Local { block_binding } => builder.declare_symbol_with_binding(
+            span,
+            name,
+            block_scope_id,
+            block_binding,
+            includes,
+            excludes,
+        ),
+    }
+}
+
+fn resolve_annex_b_target<'a>(
+    builder: &SemanticBuilder<'a>,
+    block_scope_id: ScopeId,
+    name: Ident<'a>,
+) -> BlockFunctionBinding {
+    let block_binding = builder.scoping.get_binding(block_scope_id, name);
+    if let Some(id) = block_binding
+        && (!builder.source_type.is_typescript() || builder.scoping.symbol_flags(id).is_value())
+    {
+        return BlockFunctionBinding::Local { block_binding };
+    }
+
+    let Some(var_scope_id) = builder
+        .scoping
+        .scope_ancestors(block_scope_id)
+        .skip(1)
+        .find(|&id| builder.scoping.scope_flags(id).is_var())
+    else {
+        return BlockFunctionBinding::Local { block_binding };
+    };
+
+    let var_binding = builder.scoping.get_binding(var_scope_id, name);
+    let hoist = match var_binding {
+        None => true,
+        Some(var_sym_id) if builder.source_type.is_typescript() => {
+            let hoisted = builder.hoisting_variables.get(&(block_scope_id, name));
+            if builder.scoping.symbol_flags(var_sym_id).is_value() {
+                // Merge into `var_scope_id` rather than a local type-only binding in `block_scope_id`.
+                block_binding.is_some() && hoisted == Some(&var_sym_id)
+            } else {
+                hoisted.is_none_or(|&id| id == var_sym_id)
+            }
+        }
+        Some(_) => false,
+    };
+    if hoist {
+        BlockFunctionBinding::Hoist { var_scope_id, var_binding }
+    } else {
+        BlockFunctionBinding::Local { block_binding }
     }
 }
 

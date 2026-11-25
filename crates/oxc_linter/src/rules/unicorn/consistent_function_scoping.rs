@@ -663,7 +663,7 @@ fn get_short_span_for_fn_scope(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{TestCase, Tester};
 
     let pass = vec![
         ("function doFoo(foo) { return foo; }", None),
@@ -1596,6 +1596,21 @@ fn test() {
         ),
         ("function outer() { const inner = (inner) => inner(); return inner; }", None),
     ];
+
+    let pass: Vec<TestCase> = pass.into_iter().map(Into::into).collect();
+    let fail: Vec<TestCase> = fail
+        .into_iter()
+        .map(|(source, config)| {
+            // Top-level block functions hoist to root scope in sloppy mode; test ESM semantics.
+            let path = matches!(
+                source,
+                "{ { function doBar(bar) { return bar; } } }"
+                    | "for (let foo = 0; foo < 1; foo++) { function doBar(bar) { return bar; } }"
+            )
+            .then(|| std::path::PathBuf::from("consistent_function_scoping.mts"));
+            (source, config, None, path).into()
+        })
+        .collect();
 
     Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::PLUGIN, pass, fail)
         .test_and_snapshot();

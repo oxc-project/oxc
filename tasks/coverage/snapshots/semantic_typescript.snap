@@ -2,7 +2,7 @@ commit: 01f1a759
 
 semantic_typescript Summary:
 AST Parsed     : 5856/5856 (100.00%)
-Positive Passed: 4214/5856 (71.96%)
+Positive Passed: 4219/5856 (72.05%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -5280,17 +5280,6 @@ rebuilt        : ["use"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/duplicateAnonymousInners1.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/duplicateLabel3.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["f"]
-Bindings mismatch:
-after transform: ScopeId(1): ["f"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "f":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(0): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/duplicateVarAndImport.ts
 Bindings mismatch:
@@ -14339,17 +14328,6 @@ rebuilt        : SymbolId(0): Span { start: 26, end: 27 }
 Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 26, end: 27 }]
 rebuilt        : SymbolId(0): []
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/functionInIfStatementInModule.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["_Midori"]
-rebuilt        : ScopeId(1): ["Foo", "_Midori"]
-Bindings mismatch:
-after transform: ScopeId(2): ["Foo"]
-rebuilt        : ScopeId(2): []
-Symbol scope ID mismatch for "Foo":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(1)
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/functionOverloads10.ts
 Symbol span mismatch for "foo":
@@ -31176,17 +31154,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["isString1", "isString2"]
 
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/typeGuards/typeGuardsInFunctionAndModuleBlock.ts
-Bindings mismatch:
-after transform: ScopeId(9): ["x", "y"]
-rebuilt        : ScopeId(9): ["foo", "x", "y"]
-Bindings mismatch:
-after transform: ScopeId(10): ["foo"]
-rebuilt        : ScopeId(10): []
-Symbol scope ID mismatch for "foo":
-after transform: SymbolId(19): ScopeId(10)
-rebuilt        : SymbolId(19): ScopeId(9)
-
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance1.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["checkM", "checkTruths", "m", "x", "x2"]
@@ -32258,17 +32225,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["a"]
 
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel3.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["f"]
-Bindings mismatch:
-after transform: ScopeId(1): ["f"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "f":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(0): ScopeId(0)
-
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty3.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C"]
@@ -32588,17 +32544,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["dec"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/for-ofStatements/ES5For-of19.ts
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["foo"]
-Bindings mismatch:
-after transform: ScopeId(2): ["foo"]
-rebuilt        : ScopeId(2): []
-Symbol scope ID mismatch for "foo":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(1): ScopeId(0)
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/for-ofStatements/ES5For-ofTypeCheck14.ts
 Bindings mismatch:

@@ -227,8 +227,7 @@ fn duplicated_code_references_branch_locals<'a>(
         let scope_id = block.scope_id();
         let scoping = ctx.scoping();
         if scoping.get_bindings(scope_id).is_empty()
-            && (!ctx.source_type().is_javascript()
-                || scoping.scope_flags(scope_id).is_strict_mode()
+            && (scoping.scope_flags(scope_id).is_strict_mode()
                 || !block.body.iter().any(is_hoistable_block_function))
         {
             return false;
@@ -247,7 +246,11 @@ fn is_hoistable_block_function(mut statement: &Statement) -> bool {
     while let Statement::LabeledStatement(labeled) = statement {
         statement = &labeled.body;
     }
-    matches!(statement, Statement::FunctionDeclaration(func) if !func.r#async && !func.generator)
+    matches!(
+        statement,
+        Statement::FunctionDeclaration(func)
+            if !func.r#async && !func.generator && !func.is_typescript_syntax()
+    )
 }
 
 struct BranchLocalReferenceFinder<'c, 'a> {
@@ -274,13 +277,16 @@ impl<'a> Visit<'a> for BranchLocalReferenceFinder<'_, 'a> {
         }
 
         // Annex B block functions can be recorded as bindings of the enclosing var scope.
-        let declaration = scoping.symbol_declaration(symbol_id);
         let nodes = self.ctx.nodes();
-        self.found = matches!(nodes.kind(declaration), AstKind::Function(func) if func.is_declaration())
-            && matches!(
-                nodes.ancestor_kinds(declaration).find(|kind| !matches!(kind, AstKind::LabeledStatement(_))),
-                Some(AstKind::BlockStatement(block)) if block.scope_id() == self.scope_id
-            );
+        self.found = scoping.symbol_declarations(symbol_id).any(|declaration| {
+            matches!(nodes.kind(declaration), AstKind::Function(func) if func.is_declaration())
+                && matches!(
+                    nodes
+                        .ancestor_kinds(declaration)
+                        .find(|kind| !matches!(kind, AstKind::LabeledStatement(_))),
+                    Some(AstKind::BlockStatement(block)) if block.scope_id() == self.scope_id
+                )
+        });
     }
 }
 
@@ -844,6 +850,27 @@ fn test() {
         ",
             None,
             Some(std::path::PathBuf::from("branches_sharing_code.cjs")),
+        )
+            .into(),
+    );
+    let ts_merged_type_prefix = r"
+        function g(flag, use) {
+            type f = number;
+            if (flag) {
+                use(() => f());
+                first();
+            } else {
+                use(() => f());
+                function f() {}
+            }
+        }
+        ";
+    fix.push(
+        (
+            ts_merged_type_prefix,
+            ts_merged_type_prefix,
+            None,
+            Some(std::path::PathBuf::from("branches_sharing_code.cts")),
         )
             .into(),
     );
