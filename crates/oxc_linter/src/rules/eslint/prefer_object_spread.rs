@@ -2,12 +2,14 @@ use std::cmp::max;
 
 use oxc_allocator::ArenaBox;
 use oxc_ast::AstKind;
+use oxc_ast::StaticPropertyName;
 use oxc_ast::ast::{
     CallExpression, Expression, ObjectExpression, ObjectPropertyKind, PropertyKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
     AstNode,
@@ -39,6 +41,8 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// When `Object.assign` is called using an object literal as the first argument, this rule requires using the object spread syntax instead. This rule also warns on cases where an `Object.assign` call is made using a single argument that is an object literal, in this case, the `Object.assign` call is not needed.
+    ///
+    /// In TypeScript, an object literal is subject to excess property checking when it has a contextual type, and duplicate keys are a compile error, while the `Object.assign` call is not. Because the assignment target is unknown without type information, rewrites that write properties into the merged literal are offered as suggestions in TypeScript files. Merges that would create duplicate keys are offered as suggestions in any file.
     ///
     /// ### Examples
     ///
@@ -120,6 +124,7 @@ impl Rule for PreferObjectSpread {
         }
 
         let arguments_len = call_expr.arguments.len();
+        let is_typescript = ctx.source_type().is_typescript();
         let mut needs_suggestion = !matches!(
             call_expr.arguments[0].as_expression(),
             Some(Expression::ObjectExpression(_))
@@ -152,6 +157,21 @@ impl Rule for PreferObjectSpread {
 
                 needs_suggestion |= !is_plain_data_object(obj_expr);
             }
+
+            // In TypeScript, the merged object literal is subject to excess
+            // property checking in typed assignments (TS2353), which the
+            // `Object.assign` call result is not. Without type information the
+            // assignment target is unknown, so only offer a suggestion.
+            if is_typescript && inlines_property(obj_expr) {
+                needs_suggestion = true;
+            }
+        }
+
+        // Inlining two arguments that share a statically known property key
+        // would create a duplicate-key object literal (TS1117,
+        // `eslint/no-dupe-keys`), which no source literal had.
+        if !needs_suggestion && arguments_len > 1 && merges_duplicate_static_keys(call_expr) {
+            needs_suggestion = true;
         }
 
         let diagnostic = prefer_object_spread_diagnostic(call_expr.span(), arguments_len == 1);
@@ -278,6 +298,41 @@ fn is_plain_data_object(obj_expr: &ObjectExpression) -> bool {
                 && !p.method
                 && p.kind == PropertyKind::Init
                 && !p.key.is_specific_literal_name("__proto__"))
+    })
+}
+
+/// Returns `true` if the object expression has a property that the fixer
+/// writes into the merged object literal, i.e. any property other than a
+/// spread.
+fn inlines_property(obj_expr: &ObjectExpression) -> bool {
+    obj_expr.properties.iter().any(|p| matches!(p, ObjectPropertyKind::ObjectProperty(_)))
+}
+
+/// Returns `true` if inlining the object literal arguments of an
+/// `Object.assign` call would merge the same statically known property key
+/// twice, producing a duplicate-key object literal (TS1117,
+/// `eslint/no-dupe-keys`) that none of the source literals had.
+///
+/// Duplicates that already exist within a single argument are also reported,
+/// so that no rewrite is offered as a safe fix when the merged literal would
+/// trigger `eslint/no-dupe-keys`.
+fn merges_duplicate_static_keys<'a>(call_expr: &CallExpression<'a>) -> bool {
+    let mut seen_keys: FxHashSet<StaticPropertyName<'a>> = FxHashSet::default();
+
+    call_expr.arguments.iter().any(|arg| {
+        let Some(Expression::ObjectExpression(obj_expr)) =
+            arg.as_expression().map(Expression::get_inner_expression)
+        else {
+            return false;
+        };
+
+        obj_expr.properties.iter().any(|p| {
+            let ObjectPropertyKind::ObjectProperty(p) = p else {
+                return false;
+            };
+
+            p.key.static_name().is_some_and(|name| !seen_keys.insert(name))
+        })
     })
 }
 
@@ -653,7 +708,16 @@ fn test() {
         ("Object.assign({}, src)", "({ ...src})", None, FixKind::Suggestion),
         ("Object.assign({}, foo)", "({ ...foo})", None, FixKind::All),
         ("Object.assign  ({}, foo)", "({ ...foo})", None, FixKind::All),
-        ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None, FixKind::Fix),
+        // In TypeScript, inlining literal properties creates a fresh object literal that is
+        // subject to excess property checking (TS2353) in typed assignments, so only a
+        // suggestion is offered (#29781).
+        ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None, FixKind::Suggestion),
+        (
+            "Object.assign({}, { foo: 'bar' })",
+            "Object.assign({}, { foo: 'bar' })",
+            None,
+            FixKind::Fix,
+        ),
         ("Object.assign({}, baz, { foo: 'bar' })", "({ ...baz, foo: 'bar'})", None, FixKind::All),
         (
             "Object.assign({}, { foo: 'bar', baz: 'foo' })",
@@ -1095,13 +1159,67 @@ fn test() {
             None,
             FixKind::Fix,
         ),
-        ("Object.assign({ a: 1 }, { b })", "({a: 1, b})", None, FixKind::Fix),
+        ("Object.assign({ a: 1 }, { b })", "({a: 1, b})", None, FixKind::Suggestion),
+        ("Object.assign({ a: 1 }, { b })", "Object.assign({ a: 1 }, { b })", None, FixKind::Fix),
         (
             "Object.assign({ get a() {}, set b(val) {} })",
             "({get a() {}, set b(val) {}})",
             None,
+            FixKind::Suggestion,
+        ),
+        (
+            "Object.assign({ get a() {}, set b(val) {} })",
+            "Object.assign({ get a() {}, set b(val) {} })",
+            None,
             FixKind::Fix,
         ),
+        // Merging two arguments that share a static key creates a duplicate-key object
+        // literal (TS1117, `eslint/no-dupe-keys`), so only a suggestion is offered (#29781).
+        (
+            "const options = Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 });",
+            "const options = Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 });",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const options = Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 });",
+            "const options = {retries: 3, timeout: 1000, timeout: 5000};",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const point: { x: number } = Object.assign({}, { x: 1, label: 'p' });",
+            "const point: { x: number } = Object.assign({}, { x: 1, label: 'p' });",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const point: { x: number } = Object.assign({}, { x: 1, label: 'p' });",
+            "const point: { x: number } = { x: 1, label: 'p'};",
+            None,
+            FixKind::Suggestion,
+        ),
+        // A single-argument literal has the same excess property hazard in a typed
+        // assignment.
+        (
+            "const point: { x: number } = Object.assign({ x: 1, label: 'p' });",
+            "const point: { x: number } = Object.assign({ x: 1, label: 'p' });",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const point: { x: number } = Object.assign({ x: 1, label: 'p' });",
+            "const point: { x: number } = {x: 1, label: 'p'};",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "Object.assign({ a: 1 }, { a: 2 })",
+            "Object.assign({ a: 1 }, { a: 2 })",
+            None,
+            FixKind::Fix,
+        ),
+        ("Object.assign({ a: 1 }, { a: 2 })", "({a: 1, a: 2})", None, FixKind::Suggestion),
         (
             "Object.assign(({ __proto__: proto }))",
             "Object.assign(({ __proto__: proto }))",
@@ -1157,6 +1275,48 @@ fn test() {
         ),
     ];
     Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+/// JavaScript has no excess property checking, so plain data literal merges
+/// keep their safe fix there. Duplicate-key merges are still only suggestions.
+#[test]
+fn test_javascript() {
+    use crate::fixer::FixKind;
+    use crate::tester::Tester;
+
+    let pass = vec!["Object.assign(a, b)", "let a = Object.assign(b, { c: 1 })"];
+
+    let fail = vec![
+        "Object.assign({}, { foo: 'bar' })",
+        "Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 })",
+    ];
+
+    let fix = vec![
+        ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None, FixKind::Fix),
+        (
+            "const point = Object.assign({}, { x: 1, label: 'p' });",
+            "const point = { x: 1, label: 'p'};",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 })",
+            "Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 })",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign({ retries: 3, timeout: 1000 }, { timeout: 5000 })",
+            "({retries: 3, timeout: 1000, timeout: 5000})",
+            None,
+            FixKind::Suggestion,
+        ),
+    ];
+    Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
+        .change_rule_path_extension("js")
+        .with_snapshot_suffix("javascript")
         .expect_fix(fix)
         .test_and_snapshot();
 }
