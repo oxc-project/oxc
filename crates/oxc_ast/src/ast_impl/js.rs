@@ -290,6 +290,24 @@ impl<'a> Expression<'a> {
         }
     }
 
+    /// Returns `true` if this [`Expression`] is a `DecoratorMemberExpression`: an identifier
+    /// followed by any number of `.name` or `.#name` accesses, e.g. `a`, `a.b`, `a.#b.c`.
+    ///
+    /// Only that, or a single call of it (`DecoratorCallExpression`), may follow `@` without
+    /// parentheses. See <https://github.com/tc39/proposal-decorators>.
+    pub fn is_decorator_member_expression(&self) -> bool {
+        match self {
+            Expression::Identifier(_) => true,
+            Expression::StaticMemberExpression(member) => {
+                member.object.is_decorator_member_expression()
+            }
+            Expression::PrivateFieldExpression(field) => {
+                field.object.is_decorator_member_expression()
+            }
+            _ => false,
+        }
+    }
+
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))

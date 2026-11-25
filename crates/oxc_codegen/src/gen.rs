@@ -3276,26 +3276,11 @@ impl Gen for AssignmentPattern<'_> {
 
 impl Gen for Decorator<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        /// Whether `expr` is a `DecoratorMemberExpression` in the decorators grammar. Only that,
-        /// or a single call of it (`DecoratorCallExpression`), may follow `@` without parentheses.
-        fn is_decorator_member_expression(expr: &Expression) -> bool {
-            match expr {
-                Expression::Identifier(_) => true,
-                Expression::StaticMemberExpression(member) => {
-                    is_decorator_member_expression(&member.object)
-                }
-                Expression::PrivateFieldExpression(field) => {
-                    is_decorator_member_expression(&field.object)
-                }
-                _ => false,
-            }
-        }
-
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'@');
         let wrap = match &self.expression {
-            Expression::CallExpression(call) => !is_decorator_member_expression(&call.callee),
-            expr => !is_decorator_member_expression(expr),
+            Expression::CallExpression(call) => !call.callee.is_decorator_member_expression(),
+            expr => !expr.is_decorator_member_expression(),
         };
         p.wrap(wrap, |p| {
             self.expression.print_expr(p, Precedence::Lowest, Context::empty());
