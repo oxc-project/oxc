@@ -500,7 +500,7 @@
 
 ## yaml
 
-1604/1625 (98.71%)
+1605/1625 (98.77%)
 
 ### Failed
 
@@ -528,8 +528,6 @@
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
 - externals/prettier/yaml/yaml-test-suite/snippet: HWV9.yaml - Document-end marker (💥, 66.67%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#empty-document-end-marker
-- externals/prettier/yaml/yaml-test-suite/snippet: JEF9-3.yaml - Trailing whitespace in streams (💥, 66.67%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#keep-chomped-space-only-eof-line
 - externals/prettier/yaml/yaml-test-suite/snippet: K3WX.yaml - Colon and adjacent value after comment on next line (💥, 25.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
 - externals/prettier/yaml/yaml-test-suite/snippet: NJ66.yaml - Multiline plain flow mapping key (💥, 50.00%)
