@@ -590,10 +590,15 @@ impl<C: Config> ParserImpl<'_, C> {
             // ClassStaticBlock : `static { ClassStaticBlockBody }`   e.g. `static { x = 1; }`
             // member named `static`                                  e.g. `static() {}`, `static = 1`, `static;`
             // repeated `static`                                      e.g. `static static x`
+            // JS auto-accessor named `static`, ended by ASI          e.g. `accessor static\n x`
+            // In TypeScript it stays a misplaced modifier, as in tsc.
+            let after_js_accessor =
+                !self.is_ts && seen_modifier_kinds.contains(ModifierKind::Accessor);
             if seen_modifier_kinds.contains(ModifierKind::Static)
                 || !self.eat_if_next(|next| {
                     let next_kind = next.kind();
-                    !(stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
+                    !((stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
+                        || (after_js_accessor && next.is_on_new_line()))
                         && Self::can_follow_modifier(next_kind)
                 })
             {
