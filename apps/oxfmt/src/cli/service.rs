@@ -11,8 +11,8 @@ use tracing::debug_span;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
-use super::command::OutputMode;
-use crate::core::{FormatPlan, FormatResult, SourceFormatter, utils};
+use super::{cache::FormatCache, command::OutputMode};
+use crate::core::{ExternalCalls, FormatPlan, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
     /// Path with elapsed time, only measured in check mode
@@ -24,19 +24,25 @@ pub struct FormatService {
     cwd: Box<Path>,
     format_mode: OutputMode,
     formatter: SourceFormatter,
+    cache: Option<FormatCache>,
 }
 
 impl FormatService {
-    pub fn new<T>(cwd: T, format_mode: OutputMode, formatter: SourceFormatter) -> Self
+    pub fn new<T>(
+        cwd: T,
+        format_mode: OutputMode,
+        formatter: SourceFormatter,
+        cache: Option<FormatCache>,
+    ) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), format_mode, formatter }
+        Self { cwd: cwd.into(), format_mode, formatter, cache }
     }
 
     /// Process entries as they are received from the channel
     pub fn run_streaming(
-        &self,
+        self,
         rx_entry: mpsc::Receiver<FormatPlan>,
         tx_error: &DiagnosticSender,
         tx_success: &mpsc::Sender<SuccessResult>,
@@ -66,7 +72,21 @@ impl FormatService {
                 return;
             };
 
-            let (code, is_changed) = match self.formatter.format(&source_text, plan) {
+            let key =
+                self.cache.as_ref().map(|cache| (cache, FormatCache::key(&plan, &source_text)));
+            if key.is_some_and(|(cache, key)| cache.is_formatted(key)) {
+                let _ = tx_success.send(SuccessResult::Unchanged);
+                return;
+            }
+            let (result, with_node) =
+                ExternalCalls::track(|| self.formatter.format(&source_text, plan));
+            if let Some((cache, key)) = key
+                && !with_node
+                && matches!(result, FormatResult::Success { is_changed: false, .. })
+            {
+                cache.set_formatted(key);
+            }
+            let (code, is_changed) = match result {
                 FormatResult::Success { code, is_changed } => (code, is_changed),
                 FormatResult::Error(diagnostics) => {
                     let errors = DiagnosticService::wrap_diagnostics(
@@ -119,5 +139,9 @@ impl FormatService {
             };
             let _ = tx_success.send(result);
         });
+
+        if let Some(cache) = self.cache {
+            cache.save();
+        }
     }
 }

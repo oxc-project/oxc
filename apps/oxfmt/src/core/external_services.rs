@@ -268,6 +268,7 @@ fn wrap_format_file(
     cb_handle: Arc<RwLock<Option<JsFormatFileCb>>>,
 ) -> FormatFileWithConfigCallback {
     Arc::new(move |options: Value, code: &str| {
+        super::ExternalCalls::mark();
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {
             return Err("JS callback unavailable (environment shutting down)".to_string());
@@ -317,6 +318,7 @@ fn wrap_format_embedded_doc(
     cb_handle: Arc<RwLock<Option<JsFormatEmbeddedDocCb>>>,
 ) -> FormatEmbeddedDocWithConfigCallback {
     Arc::new(move |options: Value, code: &str| {
+        super::ExternalCalls::mark();
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {
             return Err("JS callback unavailable (environment shutting down)".to_string());
@@ -344,6 +346,7 @@ fn wrap_sort_tailwind_classes(
     cb_handle: Arc<RwLock<Option<JsSortTailwindClassesCb>>>,
 ) -> TailwindWithConfigCallback {
     Arc::new(move |options: &Value, classes: Vec<String>| {
+        super::ExternalCalls::mark();
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {
             // Return original classes if callback unavailable

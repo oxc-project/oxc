@@ -1,5 +1,6 @@
 mod config;
 pub mod embed;
+mod external_calls;
 mod format;
 mod global_ignore;
 mod language;
@@ -14,6 +15,7 @@ mod external_services;
 pub use config::{ConfigResolver, ConfigScopes, ResolveOutcome, config_discovery};
 #[cfg(feature = "napi")]
 pub use config::{JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader, resolve_for_api};
+pub use external_calls::ExternalCalls;
 pub use format::{FormatPlan, FormatResult, SourceFormatter};
 pub use global_ignore::{build_global_ignore_matchers, is_ignored, resolve_ignore_paths};
 pub use language::Language;

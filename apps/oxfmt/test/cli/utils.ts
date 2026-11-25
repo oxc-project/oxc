@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
+export const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 const CLI_TEST_DIR = import.meta.dirname;
 
 // --- Types ---
@@ -331,7 +331,7 @@ function buildTreeView(files: Map<string, string | undefined>, cwdRelative: stri
 
 // --- Output normalization ---
 
-function normalizeOutput(output: string, cwd: string): string {
+export function normalizeOutput(output: string, cwd: string): string {
   if (!output) return "";
 
   const cwdPath = cwd.replace(/\\/g, "/");

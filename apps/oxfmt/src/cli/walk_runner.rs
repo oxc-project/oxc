@@ -10,6 +10,7 @@ use std::{
 use oxc_diagnostics::{DiagnosticService, GraphicalTheme};
 
 use super::{
+    cache::FormatCache,
     command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
     result::CliRunResult,
@@ -73,8 +74,14 @@ impl WalkRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
-            self.options;
+        let FormatCommand {
+            paths,
+            mode,
+            config_options,
+            ignore_options,
+            runtime_options,
+            cache_options,
+        } = self.options;
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
         let Mode::Cli(format_mode) = mode else {
@@ -146,7 +153,12 @@ impl WalkRunner {
         // Spawn formatting service on a dedicated thread so it doesn't occupy the rayon pool.
         // It just blocks on `rx_entry` waiting for entries; `par_bridge()` inside still uses rayon.
         std::thread::spawn(move || {
-            let format_service = FormatService::new(cwd_for_format, format_mode, source_formatter);
+            // Read while the walk starts.
+            let cache = cache_options.cache.then(|| {
+                FormatCache::open(&cwd_for_format, cache_options.cache_location.as_deref())
+            });
+            let format_service =
+                FormatService::new(cwd_for_format, format_mode, source_formatter, cache);
             format_service.run_streaming(rx_entry, &tx_error_for_format, &tx_success);
         });
 
