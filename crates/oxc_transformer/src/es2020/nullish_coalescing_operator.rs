@@ -35,7 +35,10 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{
+    context::TraverseCtx, state::TransformState,
+    utils::ast_builder::wrap_anonymous_function_or_class,
+};
 
 pub struct NullishCoalescingOperator;
 
@@ -125,11 +128,13 @@ impl<'a> NullishCoalescingOperator {
             SymbolFlags::FunctionScopedVariable,
         );
 
+        let left = wrap_anonymous_function_or_class(logical_expr.left, ctx);
+
         let assignment = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
-            logical_expr.left,
+            left,
             ctx,
         );
         let mut new_expr = Self::create_conditional_expression(

@@ -8,7 +8,7 @@ use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::BoundIdentifier;
 
-use crate::context::TraverseCtx;
+use crate::{context::TraverseCtx, utils::ast_builder::wrap_anonymous_function_or_class};
 
 use super::var_declarations::VarDeclarationsStore;
 
@@ -143,7 +143,7 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
         SPAN,
         AssignmentOperator::Assign,
         temp_var_binding.create_target(ReferenceFlags::Write, ctx),
-        expr,
+        wrap_anonymous_function_or_class(expr, ctx),
         ctx,
     );
 

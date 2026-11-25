@@ -41,8 +41,12 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
-    utils::ast_builder::wrap_expression_in_arrow_function_iife,
+    common::var_declarations::VarDeclarationsStore,
+    context::TraverseCtx,
+    state::TransformState,
+    utils::ast_builder::{
+        wrap_anonymous_function_or_class, wrap_expression_in_arrow_function_iife,
+    },
 };
 
 pub struct ExponentiationOperator<'a> {
@@ -628,7 +632,7 @@ impl<'a> ExponentiationOperator<'a> {
             SPAN,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
-            expr,
+            wrap_anonymous_function_or_class(expr, ctx),
             ctx,
         ));
 
