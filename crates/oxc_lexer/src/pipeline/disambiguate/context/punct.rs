@@ -183,6 +183,11 @@ impl Walk {
             return;
         }
         match top {
+            // `{ k: (a): T => a }`: a return type after the parameters of an arrow value.
+            FrameKind::Object if tokens.is_ts && self.closed_group => {
+                self.arrow_return_type();
+                return;
+            }
             FrameKind::Object => {
                 self.top_mut().member = Member::Value;
                 self.operand_done();
@@ -223,11 +228,8 @@ impl Walk {
             self.open_region(RegionRule::Inline);
             return;
         }
-        if tokens.is_ts && self.closed_group && top != FrameKind::Head {
-            // `(a): T =>` arrow return type; remember the group's `async`.
-            let is_async = self.closed_group_async;
-            self.open_region(RegionRule::ArrowRet);
-            self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
+        if tokens.is_ts && self.closed_group {
+            self.arrow_return_type();
             return;
         }
         if top.is_stmt_holder() {
@@ -239,12 +241,23 @@ impl Walk {
         self.operand_done();
     }
 
+    /// `(a): T =>`: the return type of an arrow, which takes the parameter group's `async`.
+    #[cpu_version(Generic)]
+    fn arrow_return_type(&mut self) {
+        let is_async = self.closed_group_async;
+        self.open_region(RegionRule::ArrowRet);
+        self.top_mut().mods = if is_async { MOD_ASYNC } else { 0 };
+    }
+
     #[cpu_version(Generic)]
     pub(super) fn semicolon(&mut self) {
         self.pop_concise();
         match self.top_kind() {
             FrameKind::Head => {
-                self.top_mut().open_questions = 0;
+                let f = self.top_mut();
+                f.open_questions = 0;
+                f.declarator = Declarator::None;
+                f.of_closed = true;
                 self.operand_done();
             }
             _ => {
@@ -392,7 +405,12 @@ impl Walk {
         } else if matches_tk!(kw, KwIf | KwWhile | KwFor | KwWith | KwSwitch | KwCatch)
             && self.frames[self.stmt_frame()].kind.is_stmt_holder()
         {
-            self.push(FrameKind::Head).of_closed = kw != tk!(KwFor);
+            let f = self.push(FrameKind::Head);
+            f.of_closed = kw != tk!(KwFor);
+            // `catch (e: T)`: the binding takes an annotation.
+            if kw == tk!(KwCatch) {
+                f.declarator = Declarator::Binding;
+            }
         } else if self.operand_allowed() || kw == tk!(KwNew) {
             // The async of async (...) waits for a => rather than making an await context.
             self.push(FrameKind::Group).mods = if kw == tk!(KwAsync) { MOD_ASYNC } else { 0 };

@@ -1,9 +1,9 @@
-use std::str;
+use std::{io::Write, str};
 
-use oxc_simd::{Cpu, cpu_multiversion, cpu_version};
+use oxc_simd::{BASELINE, Cpu, cpu_multiversion, cpu_version};
 use oxc_syntax::identifier::is_identifier_start;
 
-use crate::error::DiagCode;
+use crate::{error::DiagCode, token::StringSpan};
 
 use crate::pipeline::bytes::{decode_char_at, hex_digit};
 
@@ -64,6 +64,40 @@ impl Lanes {
         }
         self.numbers.push(parse_number(src, s, e, cpu));
     }
+
+    /// BigInt value as decimal digits in the cooked bytes, without separators or the `n`.
+    #[cpu_version(Generic)]
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn push_bigint(&mut self, src: &[u8], s: usize, e: usize) {
+        let code = validate_number(src, s, e, BASELINE);
+        if code != DiagCode::Ok {
+            self.push_diag(s as u32, (e - s) as u32, code);
+        }
+        let start = self.cooked.len() as u32;
+        let body = &src[s..e - 1];
+        let radix = match body {
+            [b'0', b'x' | b'X', ..] => 16,
+            [b'0', b'o' | b'O', ..] => 8,
+            [b'0', b'b' | b'B', ..] => 2,
+            _ => 10,
+        };
+        if radix == 10 {
+            self.cooked.extend(body.iter().filter(|&&c| c != b'_'));
+        } else {
+            let digits = &body[2..];
+            // At most 64 bits and no separators: one u64, no limbs.
+            if let Some(v) =
+                str::from_utf8(digits).ok().and_then(|d| u64::from_str_radix(d, radix).ok())
+            {
+                write!(self.cooked, "{v}").unwrap();
+            } else {
+                write_radix_decimal(digits, radix.trailing_zeros(), &mut self.cooked);
+            }
+        }
+        let end = self.cooked.len() as u32;
+        self.bigints.push(StringSpan::new(start, end & StringSpan::END_MASK, false, BASELINE));
+    }
 }
 
 static KEEP: [u64; 9] = [
@@ -113,18 +147,28 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
         };
         if radix != 0 {
             i = s + 2;
+        } else if d.is_ascii_digit() && src[s + 1..e].iter().all(|&c| matches!(c, b'0'..=b'7')) {
+            // Legacy octal: 070 is 56, while an 8 or 9 keeps the run decimal (08, 0779, 08.5).
+            radix = 8;
+            i = s + 1;
         }
     }
     if radix != 0 {
+        // Up to 16 hex, 21 octal or 64 binary bytes always fit in the u64 below.
+        let fast_len = match radix {
+            16 => 16,
+            8 => 21,
+            _ => 64,
+        };
+        if e - i > fast_len {
+            return parse_radix_slow(&src[i..e], radix.trailing_zeros());
+        }
         let mut v: u64 = 0;
         while i < e {
             let c = src[i];
             i += 1;
             if c == b'_' {
                 continue;
-            }
-            if c == b'n' {
-                break;
             }
             match hex_digit(c, cpu) {
                 Some(h) => v = v.wrapping_mul(radix).wrapping_add(h as u64),
@@ -135,6 +179,7 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
     }
 
     let mut flt = false;
+    let mut sep = false;
     let mut dl = 0usize;
     let mut v: u64 = 0;
     for k in s..e {
@@ -144,25 +189,119 @@ fn parse_number(src: &[u8], s: usize, e: usize, cpu: impl Cpu) -> f64 {
         } else if c.is_ascii_digit() {
             dl += 1;
             v = v.wrapping_mul(10).wrapping_add((c - b'0') as u64);
+        } else if c == b'_' {
+            sep = true;
         }
     }
     if !flt && dl <= 19 {
         return v as f64;
     }
 
-    let mut buf = [0u8; 512];
-    let mut bl = 0usize;
-    let mut k = s;
-    while k < e && bl < buf.len() - 1 {
-        let c = src[k];
-        k += 1;
-        if c == b'_' || c == b'n' {
+    let text = &src[s..e];
+    if sep { parse_decimal_separated(text) } else { parse_decimal(text) }
+}
+
+/// Decimal text without separators, rounded to nearest, ties to even.
+#[cpu_version(Generic)]
+fn parse_decimal(text: &[u8]) -> f64 {
+    str::from_utf8(text).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
+}
+
+/// Decimal text with separators, copied without them: on the stack, or the heap past 64 bytes.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn parse_decimal_separated(text: &[u8]) -> f64 {
+    let mut stack = [0u8; 64];
+    let mut heap = Vec::new();
+    let buf: &mut [u8] = if text.len() <= stack.len() {
+        &mut stack
+    } else {
+        heap.resize(text.len(), 0);
+        &mut heap
+    };
+    let mut len = 0;
+    for &c in text {
+        if c != b'_' {
+            buf[len] = c;
+            len += 1;
+        }
+    }
+    parse_decimal(&buf[..len])
+}
+
+/// Hex, octal or binary digits after the prefix, any length, rounded to nearest, ties to even.
+#[cpu_version(Generic)]
+#[cold]
+#[inline(never)]
+fn parse_radix_slow(digits: &[u8], bits: u32) -> f64 {
+    let cpu = BASELINE;
+    let mut significand = 0u64;
+    let mut exponent = 0u32;
+    let mut sticky = 0u32;
+    for &c in digits {
+        if c == b'_' {
             continue;
         }
-        buf[bl] = c;
-        bl += 1;
+        let Some(d) = hex_digit(c, cpu) else { break };
+        if significand < 1 << 54 {
+            significand = (significand << bits) | u64::from(d);
+        } else {
+            exponent += bits;
+            if exponent > 1023 {
+                return f64::INFINITY;
+            }
+            sticky |= u32::from(d);
+        }
     }
-    str::from_utf8(&buf[..bl]).ok().and_then(|st| st.parse::<f64>().ok()).unwrap_or(0.0)
+    // Bit 0 records any dropped nonzero digit; with 55+ bits kept it sits below the rounding bit.
+    significand |= u64::from(sticky != 0);
+    (significand as f64) * f64::from_bits(u64::from(exponent + 1023) << 52)
+}
+
+/// Hex, octal or binary digits after the prefix, `bits` per digit, appended to `out` in decimal.
+#[cpu_version(Generic)]
+fn write_radix_decimal(digits: &[u8], bits: u32, out: &mut Vec<u8>) {
+    // Base 10^9 limbs, least significant first, fed at most 32 bits at a time so nothing overflows.
+    let mut limbs = Vec::new();
+    let (mut chunk, mut chunk_bits) = (0u64, 0u32);
+    for &c in digits {
+        if c == b'_' {
+            continue;
+        }
+        let Some(d) = hex_digit(c, BASELINE) else { break };
+        if chunk_bits + bits > 32 {
+            shift_add(&mut limbs, chunk_bits, chunk);
+            (chunk, chunk_bits) = (0, 0);
+        }
+        chunk = (chunk << bits) | u64::from(d);
+        chunk_bits += bits;
+    }
+    shift_add(&mut limbs, chunk_bits, chunk);
+    let Some((top, rest)) = limbs.split_last() else {
+        out.push(b'0');
+        return;
+    };
+    write!(out, "{top}").unwrap();
+    for limb in rest.iter().rev() {
+        write!(out, "{limb:09}").unwrap();
+    }
+}
+
+/// `limbs = limbs * 2^shift + add`, in base 10^9.
+#[cpu_version(Generic)]
+fn shift_add(limbs: &mut Vec<u64>, shift: u32, add: u64) {
+    const BASE: u64 = 1_000_000_000;
+    let mut carry = add;
+    for limb in &mut *limbs {
+        let x = (*limb << shift) + carry;
+        *limb = x % BASE;
+        carry = x / BASE;
+    }
+    while carry != 0 {
+        limbs.push(carry % BASE);
+        carry /= BASE;
+    }
 }
 
 /// First error in the number src[s..e], or Ok when unsure, so no valid number is ever flagged.

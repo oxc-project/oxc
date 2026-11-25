@@ -1,0 +1,15 @@
+commit: 01f1a759
+
+parser_unambiguous_typescript Summary:
+AST Parsed     : 16786/16786 (100.00%)
+Positive Passed: 16781/16786 (99.97%)
+Diagnostics: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts/index.ts
+
+Diagnostics: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts/index.ts
+
+Diagnostics: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.8.ts/index.ts
+
+Diagnostics: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword2.ts/file1.ts
+
+Diagnostics: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword2.ts/file2.ts
+

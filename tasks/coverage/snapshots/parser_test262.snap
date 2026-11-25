@@ -39074,14 +39074,6 @@ Negative Passed: 4669/4669 (100.00%)
   help: Classes can only be declared at top level or inside a block
 
   × Invalid class declaration
-    ╭─[test262/test/language/statements/if/if-cls-else-cls.js:15:27]
- 14 │ 
- 15 │ if (true) class C {} else class D {}
-    ·                           ────────
-    ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
     ╭─[test262/test/language/statements/if/if-cls-else-stmt.js:15:11]
  14 │ 
  15 │ if (true) class C {} else ;

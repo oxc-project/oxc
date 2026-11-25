@@ -8,18 +8,23 @@ import { parseArgs } from "node:util";
 const DEFAULT_RULES_ROOT = path.join("crates", "oxc_linter", "src", "rules");
 
 function analyzeRuleFile(source: string, releaseVersion: string): string {
-  return source.replace(/declare_oxc_lint!\(([\s\S]*?\n)\s*\);/g, (match, body: string) => {
-    // Strip leading doc comments, then extract comma-delimited fields: name, plugin, category
-    const stripped = body.replace(/^(?:\s*\/\/\/.*\n)*/, "");
-    const fields = [...stripped.matchAll(/(\w+)\s*,/g)];
-    if (fields.length < 3) return match;
+  return source.replace(
+    /^([ \t]*declare_oxc_lint!\()([^\n]*?|[\s\S]*?\n[ \t]*)\);(?=[ \t]*(?:\/\/|$))/gm,
+    (declaration, prefix: string, body: string) => {
+      const header = body.replace(/\/\/[^\n]*/g, "");
+      const category = /^\s*\w+(?:\s*\(\s*tsgolint\s*\))?\s*,\s*\w+\s*,\s*(\w+)\s*,/.exec(
+        header,
+      )?.[1];
+      if (category === undefined || category === "nursery") return declaration;
 
-    const category = fields[2][1];
-    if (category === "nursery") return match;
-    if (!/version\s*=\s*"next"/.test(body)) return match;
-
-    return match.replace(/(version\s*=\s*)"next"/, `$1"${releaseVersion}"`);
-  });
+      const updatedBody = body.replace(
+        /\/\/[^\n]*|"(?:[^"\\]|\\[\s\S])*"|\b(version\s*=\s*)"next"/g,
+        (match, field: string | undefined) =>
+          field === undefined ? match : `${field}"${releaseVersion}"`,
+      );
+      return `${prefix}${updatedBody});`;
+    },
+  );
 }
 
 const { values } = parseArgs({

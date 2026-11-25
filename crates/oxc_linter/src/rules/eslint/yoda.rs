@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BinaryExpression, BinaryOperator, Expression, LogicalExpression, LogicalOperator,
-        UnaryOperator,
+        ArrowFunctionBody, BinaryExpression, BinaryOperator, Expression, LogicalExpression,
+        LogicalOperator, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -329,20 +329,92 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, node: &AstNode, ctx: &LintCon
         let left_str = ctx.source_range(left_span);
         let right_str = ctx.source_range(right_span);
         let flipped_operator_str = flip_operator(expr.operator).as_str();
-        let prefix = if right_str.starts_with(['[', '(', '/', '+', '-', '`']) && could_be_asi_hazard(node, ctx) {
+        let needs_parens = match flip_position(node, ctx) {
+            Some(FlipPosition::StatementStart) => {
+                right_str.starts_with('{') || starts_with_function_or_class(right_str)
+            }
+            Some(FlipPosition::ArrowBody) => right_str.starts_with('{'),
+            Some(FlipPosition::ExportDefault) => starts_with_function_or_class(right_str),
+            None => false,
+        };
+        let needs_semicolon = (needs_parens
+            || right_str.starts_with(['[', '(', '/', '+', '-', '`']))
+            && could_be_asi_hazard(node, ctx);
+        let prefix = if needs_semicolon {
             ";"
         } else if left_prev_token {
             " "
         } else {
             ""
         };
+        let (open, close) = if needs_parens { ("(", ")") } else { ("", "") };
+        let suffix = if right_next_token { " " } else { "" };
         let replacement = format!(
-            "{prefix}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
-            if right_next_token { " " } else { "" }
+            "{prefix}{open}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{close}{suffix}"
         );
 
         fix.replace(expr.span, replacement)
     });
+}
+
+/// Grammar positions of the flipped expression where its first token
+/// determines how the surrounding statement is parsed.
+#[derive(Debug, Clone, Copy)]
+enum FlipPosition {
+    /// The expression begins an expression statement.
+    StatementStart,
+    /// The expression is the concise body of an arrow function.
+    ArrowBody,
+    /// The expression follows `export default`.
+    ExportDefault,
+}
+
+/// Walks up the ancestors that begin at the same offset as `node` (the same
+/// walk as ESLint's `isStartOfExpressionStatement`) to find the grammar
+/// position that the flipped expression will occupy.
+fn flip_position(node: &AstNode, ctx: &LintContext) -> Option<FlipPosition> {
+    let start = node.span().start;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        if ancestor.span().start != start {
+            return match ancestor.kind() {
+                AstKind::ArrowFunctionExpression(arrow)
+                    if !matches!(arrow.body, ArrowFunctionBody::FunctionBody(_))
+                        && arrow.body.span().start == start =>
+                {
+                    Some(FlipPosition::ArrowBody)
+                }
+                AstKind::ExportDefaultDeclaration(decl)
+                    if decl.declaration.span().start == start =>
+                {
+                    Some(FlipPosition::ExportDefault)
+                }
+                _ => None,
+            };
+        }
+        if matches!(ancestor.kind(), AstKind::ExpressionStatement(_)) {
+            return Some(FlipPosition::StatementStart);
+        }
+    }
+    None
+}
+
+/// Mirrors ESLint's `startsFunctionOrClass` from the yoda rule: whether the
+/// operand's source starts with a `function` or `class` expression, including
+/// an `async function` expression.
+fn starts_with_function_or_class(source: &str) -> bool {
+    let is_word_char = |c: char| c.is_alphanumeric() || c == '_' || c == '$';
+    let word_len = |text: &str| {
+        text.chars().take_while(|&c| is_word_char(c)).map(char::len_utf8).sum::<usize>()
+    };
+    let first_len = word_len(source);
+    match &source[..first_len] {
+        "function" | "class" => true,
+        "async" => {
+            let rest = source[first_len..].trim_start();
+            &rest[..word_len(rest)] == "function"
+        }
+        _ => false,
+    }
 }
 
 fn match_token(token: Option<char>) -> bool {
@@ -1275,6 +1347,34 @@ fn test() {
             "foo();\n0 === [a, b].indexOf(x) && go();",
             "foo();\n[a, b].indexOf(x) === 0 && go();",
             None,
+        ),
+        (
+            "0 === { a: 0 }[k] && go();",
+            "({ a: 0 }[k] === 0) && go();",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const f = () => 0 === { a: 0 }[k];",
+            "const f = () => ({ a: 0 }[k] === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "export default 0 === function () {}.length;",
+            "export default (function () {}.length === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("1 < {}.x;", "({}.x > 1);", Some(serde_json::json!(["never"]))),
+        (
+            "const a = [b]\n0 === { a: 0 }[k];",
+            "const a = [b]\n;({ a: 0 }[k] === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("0 === classy;", "classy === 0;", Some(serde_json::json!(["never"]))),
+        ("1<{}[x]in y;", "({}[x]>1) in y;", Some(serde_json::json!(["never"]))),
+        (
+            "export default 1<function(){}[x]in y;",
+            "export default (function(){}[x]>1) in y;",
+            Some(serde_json::json!(["never"])),
         ),
     ];
 

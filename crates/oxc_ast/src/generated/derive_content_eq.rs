@@ -1605,6 +1605,12 @@ impl ContentEq for RegExpPattern<'_> {
     }
 }
 
+impl ContentEq for RegExpFlags {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 impl ContentEq for JSXElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.opening_element, &other.opening_element)
@@ -2604,6 +2610,12 @@ impl ContentEq for CommentPosition {
 }
 
 impl ContentEq for CommentContent {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for CommentNewlines {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }

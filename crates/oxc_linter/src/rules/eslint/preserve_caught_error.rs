@@ -78,10 +78,19 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             return;
         };
 
-        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(options_argument_index)
-            && has_cause_property(obj_expr, catch_param, self.ctx)
-        {
+        let BindingPattern::BindingIdentifier(catch_ident) = catch_param else {
+            self.ctx.diagnostic(preserve_caught_error_diagnostic(throw_stmt.span));
             return;
+        };
+
+        match args.get(options_argument_index) {
+            Some(Argument::ObjectExpression(obj_expr)) => {
+                if has_cause_property(obj_expr, catch_param, self.ctx) {
+                    return;
+                }
+            }
+            Some(_) => return,
+            None => {}
         }
 
         // Allow spread arguments - they may contain cause property
@@ -90,9 +99,7 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
         }
 
         self.ctx.diagnostic_with_fix(preserve_caught_error_diagnostic(throw_stmt.span), |fixer| {
-            let Some(ident) = catch_param.get_identifier_name() else {
-                return fixer.noop();
-            };
+            let ident = catch_ident.name;
             // Keep the catch binding unchanged as part of each fix, so removing or renaming it
             // conflicts with inserting a reference to it (e.g. `prefer-optional-catch-binding`).
             let preserve_catch_param = || fixer.replace_with(catch_param, catch_param);
@@ -227,15 +234,13 @@ fn error_options_argument_index(expr: &Expression, ctx: &LintContext) -> Option<
         return None;
     };
 
-    if ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
-        || ident.is_global_reference_name(static_ident!("TypeError"), ctx.scoping())
-    {
-        Some(1)
-    } else if is_aggregate_error(ident, ctx) {
-        Some(2)
-    } else {
-        None
-    }
+    let index = match ident.name.as_str() {
+        "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError" | "TypeError"
+        | "URIError" => 1,
+        "AggregateError" => 2,
+        _ => return None,
+    };
+    ident.is_global_reference(ctx.scoping()).then_some(index)
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
@@ -489,6 +494,52 @@ fn test() {
         (
             r#"try { doSomething(); } catch { class Foo { static { throw new Error("Something went wrong"); } } }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new EvalError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new RangeError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new ReferenceError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new URIError("e", { cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try {
+					return JSON.parse(text);
+				} catch (error) {
+					const options = { cause: error };
+					throw new Error("Invalid JSON", options);
+				}"#,
+            None,
+        ),
+        (
+            r#"try {
+					doSomething();
+				} catch (err) {
+					const options = { cause: other };
+					throw new Error("Something failed", options);
+				}"#,
+            None,
+        ),
+        (
+            r#"try {
+					doSomething();
+				} catch (err) {
+					throw new Error("Something failed", obj.options);
+				}"#,
+            None,
         ),
     ];
 
@@ -751,6 +802,24 @@ fn test() {
         (
             r#"try { doSomething(); } catch { if (shouldThrow) { throw new Error("Something went wrong"); } }"#,
             Some(serde_json::json!([{ "requireCatchParameter": true }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON"); }"#,
+            None,
+        ),
+        (r#"try { doSomething(); } catch (error) { throw new EvalError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new RangeError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new ReferenceError("e"); }"#, None),
+        (r#"try { doSomething(); } catch (error) { throw new URIError("e"); }"#, None),
+        (
+            r#"try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }"#,
+            None,
+        ),
+        ("try { doSomething(); } catch ({ message }) { throw new Error(message, options); }", None),
+        ("try { doSomething(); } catch ({ message }) { throw new Error(...args); }", None),
+        (
+            r#"try { doSomething(); } catch ([error]) { throw new Error("Something failed", { ...options }); }"#,
+            None,
         ),
     ];
 
@@ -1176,6 +1245,12 @@ fn test() {
         (
             r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error"); }"#,
             r#"try {} catch (err) { if (err.code === "A") { throw new Error("Type A", { cause: err }); } throw new TypeError("Fallback error", { cause: err }); }"#,
+            None,
+        ),
+        // Fixes built-in error constructors other than `Error`
+        (
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\"); }",
+            "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\", { cause: err }); }",
             None,
         ),
     ];

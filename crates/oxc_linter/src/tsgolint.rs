@@ -451,8 +451,8 @@ impl TsGoLintRun {
                 }
                 Ok(())
             }
-            Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
-            Err(err) => Err(format!("Error running tsgolint: {err:?}")),
+            Ok(Err(err)) => Err(format!("Error running type-aware linter: {err:?}")),
+            Err(err) => Err(format!("Error running type-aware linter: {err:?}")),
         }
     }
 }
@@ -506,7 +506,7 @@ impl TsGoLintState {
             Ok(c) => c,
             Err(e) => {
                 return Err(format!(
-                    "Failed to spawn tsgolint from path `{}`, with error: {e}",
+                    "Failed to spawn type-aware linter from path `{}`, with error: {e}",
                     self.executable_path.display()
                 ));
             }
@@ -518,7 +518,7 @@ impl TsGoLintState {
         if let Err(e) = stdin.write_all(json.as_bytes())
             && e.kind() != ErrorKind::BrokenPipe
         {
-            return Err(format!("Failed to write to tsgolint stdin: {e}"));
+            return Err(format!("Failed to write to type-aware linter stdin: {e}"));
         }
         drop(stdin);
 
@@ -1121,7 +1121,7 @@ impl Iterator for TsGoLintMessageStream {
                     self.buffer.extend_from_slice(&read_buf[..n]);
                 }
                 Err(e) => {
-                    return Some(Err(format!("Failed to read from tsgolint stdout: {e}")));
+                    return Some(Err(format!("Failed to read from type-aware linter stdout: {e}")));
                 }
             }
         }
@@ -1142,13 +1142,13 @@ impl std::fmt::Display for TsGoLintMessageParseError {
             TsGoLintMessageParseError::IncompleteData => write!(f, "Incomplete data"),
             TsGoLintMessageParseError::InvalidMessageType(e) => write!(f, "{e}"),
             TsGoLintMessageParseError::InvalidErrorPayload(e) => {
-                write!(f, "Failed to parse tsgolint error payload: {e}")
+                write!(f, "Failed to parse type-aware linter error payload: {e}")
             }
             TsGoLintMessageParseError::InvalidDiagnosticPayload(e) => {
-                write!(f, "Failed to parse tsgolint diagnostic payload: {e}")
+                write!(f, "Failed to parse type-aware linter diagnostic payload: {e}")
             }
             TsGoLintMessageParseError::InvalidTimingPayload(e) => {
-                write!(f, "Failed to parse tsgolint timing payload: {e}")
+                write!(f, "Failed to parse type-aware linter timing payload: {e}")
             }
         }
     }
@@ -1523,7 +1523,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
             return Ok(path);
         }
         return Err(format!(
-            "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to '{path_str}' which does not exist"
+            "Failed to find type-aware linter executable: OXLINT_TSGOLINT_PATH points to '{path_str}' which does not exist"
         ));
     }
 

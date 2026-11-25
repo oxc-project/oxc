@@ -1,6 +1,6 @@
 use oxc_simd::{Cpu, cpu_multiversion};
 
-use crate::{error::DiagCode, token::TokenKind};
+use crate::token::TokenKind;
 
 use crate::pipeline::{
     bitmap::{Bitmap, Bitmaps},
@@ -25,7 +25,7 @@ use super::{
 enum AngleVerdict {
     TypeParams,
     Jsx,
-    Ambiguous { gt: usize, lp: usize },
+    Ambiguous,
 }
 
 #[cpu_multiversion]
@@ -34,7 +34,6 @@ pub(super) fn jsx_over_type_params(
     lex: Lex,
     lt: usize,
     name_pos: usize,
-    lanes: &mut Lanes,
     disambiguate: &mut DisambiguateState,
     cpu: impl Cpu,
 ) -> bool {
@@ -44,13 +43,7 @@ pub(super) fn jsx_over_type_params(
     match ts_angle_verdict(lex.src, name_pos, lex.bitmaps.word, cpu) {
         AngleVerdict::TypeParams => false,
         AngleVerdict::Jsx => true,
-        AngleVerdict::Ambiguous { gt, lp } => {
-            let (jsx, unterminated) = disambiguate.jsx_over_generic(lex, lt, lp, cpu);
-            if unterminated {
-                lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
-            }
-            jsx
-        }
+        AngleVerdict::Ambiguous => disambiguate.jsx_over_generic(lex, lt, cpu),
     }
 }
 
@@ -148,7 +141,7 @@ fn ts_angle_verdict(src: Source, t: usize, word: Bitmap, cpu: impl Cpu) -> Angle
     if c == b'>' {
         let q = jsx_skip_trivia_fast(src, p + 1, cpu);
         let v = if q < src.len() && src[q] == b'(' {
-            AngleVerdict::Ambiguous { gt: p, lp: q }
+            AngleVerdict::Ambiguous
         } else {
             AngleVerdict::Jsx
         };

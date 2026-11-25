@@ -1,6 +1,6 @@
 commit: 51225612
 
-Passed: 361/482
+Passed: 366/487
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (57/73)
+# babel-plugin-transform-typescript (59/75)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (33/115)
+# legacy-decorators (36/118)
 * oxc/accessor/input.ts
 x Output mismatch
 

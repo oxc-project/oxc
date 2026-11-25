@@ -1,8 +1,8 @@
 commit: 51225612
 
 semantic_babel Summary:
-AST Parsed     : 2360/2360 (100.00%)
-Positive Passed: 2265/2360 (95.97%)
+AST Parsed     : 2364/2364 (100.00%)
+Positive Passed: 2269/2364 (95.98%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 Cannot use export statement outside a module
 

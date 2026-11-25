@@ -1,0 +1,74 @@
+empty = []
+empty_spaced = [ ]
+empty_multiline = [
+]
+short = [ 1,2,3 ]
+trailing = [1, 2, 3,]
+collapsible = [
+  1,
+  2,
+]
+nested = [[1, 2], [3, 4]]
+mixed = [ "a", 1, true, 1.5, { a = 1 } ]
+with_comments = [
+  1, # one
+  # own line
+  2,
+  3 # three without comma
+]
+comment_after_bracket = [ # after bracket
+
+  1,
+  2,
+]
+comment_only_same_line = [ # c
+]
+comment_only = [
+  # nothing but a comment
+]
+blank_lines_inside = [
+  1,
+
+  2,
+
+
+  3,
+]
+blank_lines_with_comment = [
+  1, # keeps it multiline
+
+  2,
+
+
+
+
+  3,
+]
+blank_lines_around_brackets = [
+
+
+  1, # c
+
+
+]
+comment_before_comma = [
+  1
+  # c
+  , 2
+]
+two_values_one_line = [1, 2, # c
+]
+array_of_inline_tables = [
+  { name = "a", value = 1 },
+  { name = "b", value = 2 },
+]
+comment_after_commented_value = [
+  1 # a
+  , # b
+  2,
+]
+blank_lines_expanded = ["aaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbb",
+
+  "cccccccccccccccccccccccccccccccc", [1,
+
+  2]]

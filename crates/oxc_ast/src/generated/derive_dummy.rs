@@ -1859,6 +1859,16 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
     }
 }
 
+impl<'a> Dummy<'a> for RegExpFlags {
+    /// Create a dummy [`RegExpFlags`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::empty()
+    }
+}
+
 impl<'a> Dummy<'a> for JSXElement<'a> {
     /// Create a dummy [`JSXElement`].
     ///

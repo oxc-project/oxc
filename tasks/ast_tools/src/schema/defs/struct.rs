@@ -30,6 +30,11 @@ pub struct StructDef {
     pub plural_name: Option<String>,
     pub has_lifetime: bool,
     pub is_foreign: bool,
+    /// `true` if struct is defined with `bitflags!` macro.
+    ///
+    /// `oxc_ast_tools` sees it as a tuple struct `struct Foo(u8)`, but the actual struct's field
+    /// is `bitflags`' private internal type, so derives must not access the field.
+    pub is_bitflags: bool,
     pub file_id: FileId,
     pub containers: Containers,
     #[expect(unused)]
@@ -57,6 +62,7 @@ impl StructDef {
         plural_name: Option<String>,
         has_lifetime: bool,
         is_foreign: bool,
+        is_bitflags: bool,
         file_id: FileId,
         visibility: Visibility,
         derives: Vec<String>,
@@ -69,6 +75,7 @@ impl StructDef {
             plural_name,
             has_lifetime,
             is_foreign,
+            is_bitflags,
             file_id,
             containers: Containers::default(),
             visibility,

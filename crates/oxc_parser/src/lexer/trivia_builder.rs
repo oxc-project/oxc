@@ -1,4 +1,5 @@
 use std::{
+    array,
     num::NonZeroU32,
     ops::{Deref, DerefMut},
 };
@@ -23,7 +24,7 @@ pub struct Comments<'a> {
 impl<'a> Comments<'a> {
     fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
+            inline: array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
             len: 0,
             vec: ArenaVec::new_in(&allocator),
             starts_end: 0,
@@ -161,6 +162,12 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub(super) fn checkpoint(&self) -> TriviaCheckpoint {
+        // Checkpoint does not store `processed`, as it's always the same as `comments.len()`.
+        // Checkpoints are only created between tokens.
+        // Once a token is finished, all comments before it have been attached,
+        // and attaching comments sets `processed` to `comments.len()`.
+        debug_assert_eq!(self.processed, self.comments.len());
+
         TriviaCheckpoint {
             comments_len: self.comments.len(),
             irregular_whitespaces_len: self.irregular_whitespaces.len(),

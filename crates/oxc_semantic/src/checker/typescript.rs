@@ -280,7 +280,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
                     // E = -1
                     | Expression::UnaryExpression(_)
             );
-        } else if need_initializer {
+        } else if need_initializer && (decl.r#const || !ctx.in_ambient_context()) {
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
     });

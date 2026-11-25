@@ -3651,7 +3651,7 @@ impl RuleRunner for crate::rules::unicorn::no_useless_iterator_to_array::NoUsele
 
 impl RuleRunner for crate::rules::unicorn::no_useless_length_check::NoUselessLengthCheck {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::LogicalExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::ForOfStatement, AstType::LogicalExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

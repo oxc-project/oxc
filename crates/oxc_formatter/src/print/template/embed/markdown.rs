@@ -43,7 +43,9 @@ pub(super) fn try_embed_markdown<'a>(
 
     // Phase 5: Layout
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24-L29
-    let content = format_once(|f| f.write_elements(ir));
+    // The markdown's column 0, where the newlines in its texts (e.g. a `prettier-ignore`d block) resume
+    let ir = format_once(|f| f.write_elements(ir));
+    let content = embedded_root(&ir);
     if has_indent {
         write!(f, ["`", indent(&format_args!(soft_line_break(), content)), soft_line_break(), "`"]);
     } else {

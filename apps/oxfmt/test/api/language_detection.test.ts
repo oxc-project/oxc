@@ -15,7 +15,6 @@ describe("Language detection by file name", () => {
     ["schema.graphqls", ...GRAPHQL],
     ["a.md", ...MARKDOWN],
     ["a.markdown", ...MARKDOWN],
-    ["README", ...MARKDOWN],
     ["contents.lr", ...MARKDOWN],
     ["config.yml", ...YAML],
     ["grammar.sublime-syntax", ...YAML],

@@ -40,12 +40,14 @@ pub(super) fn emit_value(
     let s = sp.start as usize;
     let e = sp.end as usize;
     let k = kinds[j];
-    if k < tk!(IdentEscaped) {
+    if k == tk!(Number) {
         lanes.push_number(src, s, e, cpu);
+    } else if k == tk!(BigInt) {
+        lanes.push_bigint(src, s, e);
     } else if k == tk!(IdentEscaped) {
-        lanes.push_atom(src, s, e, cpu);
+        lanes.push_atom(src, s, e);
     } else {
-        lanes.push_atom(src, s + 1, e, cpu);
+        lanes.push_atom(src, s + 1, e);
     }
 }
 

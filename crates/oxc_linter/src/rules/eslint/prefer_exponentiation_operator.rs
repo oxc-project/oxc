@@ -116,11 +116,20 @@ impl Rule for PreferExponentiationOperator {
                 let replacement = format!("{base_text} ** {exponent_text}");
 
                 // Check if we need to wrap the entire expression in parentheses based on parent context
-                let mut replacement = if needs_parens_for_parent(node, ctx) {
-                    format!("({replacement})")
-                } else {
-                    replacement
-                };
+                let needs_parens = needs_parens_for_parent(node, ctx)
+                    || match replacement_position(node, ctx) {
+                        Some(ReplacementPosition::StatementStart) => {
+                            base_text.starts_with('{') || starts_with_function_or_class(&base_text)
+                        }
+                        Some(ReplacementPosition::ArrowBody) => base_text.starts_with('{'),
+                        Some(ReplacementPosition::ExportDefault) => {
+                            starts_with_function_or_class(&base_text)
+                        }
+                        None => false,
+                    };
+
+                let mut replacement =
+                    if needs_parens { format!("({replacement})") } else { replacement };
                 if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
                     && could_be_asi_hazard(node, ctx)
                 {
@@ -168,6 +177,59 @@ fn get_exponent_text(source_text: &str, expr: &Expression) -> String {
     } else {
         source_text.to_string()
     }
+}
+
+/// Grammar positions where the replacement's leading token determines how the
+/// surrounding code is parsed.
+#[derive(Debug, Clone, Copy)]
+enum ReplacementPosition {
+    /// The replacement begins an expression statement.
+    StatementStart,
+    /// The replacement begins the concise body of an arrow function.
+    ArrowBody,
+    /// The replacement begins the expression after `export default`.
+    ExportDefault,
+}
+
+/// Walks up the ancestors that begin at the same offset as `node` (the same
+/// walk as ESLint's `isStartOfExpressionStatement`) to find the grammar
+/// position that the replacement will begin.
+fn replacement_position(node: &AstNode, ctx: &LintContext) -> Option<ReplacementPosition> {
+    let start = node.span().start;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        if ancestor.span().start != start {
+            return match ancestor.kind() {
+                AstKind::ArrowFunctionExpression(arrow)
+                    if arrow.is_expression() && arrow.body.span().start == start =>
+                {
+                    Some(ReplacementPosition::ArrowBody)
+                }
+                AstKind::ExportDefaultDeclaration(decl)
+                    if decl.declaration.span().start == start =>
+                {
+                    Some(ReplacementPosition::ExportDefault)
+                }
+                _ => None,
+            };
+        }
+        if matches!(ancestor.kind(), AstKind::ExpressionStatement(_)) {
+            return Some(ReplacementPosition::StatementStart);
+        }
+    }
+    None
+}
+
+/// Returns `true` if `text` starts with a `function`, `class`, or
+/// `async function` expression.
+fn starts_with_function_or_class(text: &str) -> bool {
+    fn keyword(text: &str, keyword: &str) -> bool {
+        text.starts_with(keyword)
+            && !text[keyword.len()..]
+                .starts_with(|c: char| c.is_alphanumeric() || matches!(c, '_' | '$'))
+    }
+    keyword(text, "function")
+        || keyword(text, "class")
+        || (keyword(text, "async") && keyword(text["async".len()..].trim_start(), "function"))
 }
 
 fn needs_parens_for_parent(node: &AstNode, ctx: &LintContext) -> bool {
@@ -254,6 +316,12 @@ fn test() {
         "(Math.pow(a, b)).toFixed(2)",
         "Math.pow(a, b)<T>()",
         "Math.pow(a, b)<T>",
+        "Math.pow({ a: 2 }[k], 2) > 3 && go()",
+        "const f = () => Math.pow({ a: 2 }[k], 2)",
+        "Math.pow(function (x) {}.length, 2) > 0 && f()",
+        "Math.pow({ a: 1 }.a, 2)",
+        "Math.pow(async function () {}, 2)",
+        "Math.pow(class {}, 2)",
     ];
 
     let fix = vec![
@@ -314,6 +382,32 @@ fn test() {
         ("foo\nMath.pow(a.b, c)", "foo\na.b ** c"),
         ("Math.pow((a).b, c)", "(a).b ** c"),
         ("foo;\nMath.pow((a).b, c)", "foo;\n(a).b ** c"),
+        ("Math.pow({ a: 2 }[k], 2) > 3 && go()", "({ a: 2 }[k] ** 2) > 3 && go()"),
+        ("const f = () => Math.pow({ a: 2 }[k], 2)", "const f = () => ({ a: 2 }[k] ** 2)"),
+        (
+            "Math.pow(function (x) {}.length, 2) > 0 && f()",
+            "(function (x) {}.length ** 2) > 0 && f()",
+        ),
+        ("Math.pow({ a: 1 }.a, 2)", "({ a: 1 }.a ** 2)"),
+        ("Math.pow(async function () {}, 2)", "(async function () {} ** 2)"),
+        ("Math.pow(class {}, 2)", "(class {} ** 2)"),
+        ("const x = Math.pow({ a: 1 }.a, 2)", "const x = { a: 1 }.a ** 2"),
+        ("foo(Math.pow({ a: 1 }.a, 2))", "foo({ a: 1 }.a ** 2)"),
+        ("const i = () => Math.pow({}.a, 2) + 1", "const i = () => ({}.a ** 2) + 1"),
+        (
+            "const g = () => Math.pow(function () {}.length, 2)",
+            "const g = () => function () {}.length ** 2",
+        ),
+        (
+            "export default Math.pow(function () {}.length, 2)",
+            "export default (function () {}.length ** 2)",
+        ),
+        ("export default Math.pow(class {}.x, 2)", "export default (class {}.x ** 2)"),
+        (
+            "export default Math.pow(async function () {}.length, 2)",
+            "export default (async function () {}.length ** 2)",
+        ),
+        ("export default Math.pow({}.a, 2)", "export default {}.a ** 2"),
     ];
 
     Tester::new(

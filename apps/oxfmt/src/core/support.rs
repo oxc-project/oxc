@@ -54,7 +54,7 @@ pub fn classify_file(path: &Path) -> Option<FormatStrategy> {
     if YAML_FILENAMES.contains(file_name) || YAML_EXTENSIONS.contains(ext) {
         return Some(FormatStrategy::Native(NativeLanguage::Yaml));
     }
-    if MARKDOWN_FILENAMES.contains(file_name) || MARKDOWN_EXTENSIONS.contains(ext) {
+    if file_name == "contents.lr" || MARKDOWN_EXTENSIONS.contains(ext) {
         return Some(FormatStrategy::Native(NativeLanguage::Markdown));
     }
     // Angular templates share the extension, and stay with Prettier
@@ -105,7 +105,7 @@ pub enum FormatStrategy {
     /// Files like `.prettierrc`: mirroring Prettier's yaml embed,
     /// formatted as JSON first, then as YAML if that fails.
     YamlRc,
-    /// Files formatted by delegating to Prettier (Tier 3/4).
+    /// Files formatted by delegating to Prettier.
     #[cfg(feature = "napi")]
     Prettier(PrettierLanguage),
 }
@@ -367,11 +367,6 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 
 // ---
 
-static MARKDOWN_FILENAMES: phf::Set<&'static str> = phf_set! {
-    "contents.lr",
-    "README",
-};
-
 static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "md",
     "livemd",
@@ -563,7 +558,6 @@ mod tests {
             ("partial.hbs", Some("glimmer")),
             // Markdown files are routed to `oxc_formatter_markdown` in `classify_file`
             // and excluded from this map.
-            ("README", None),
             ("contents.lr", None),
             ("docs.md", None),
             ("guide.markdown", None),
@@ -692,14 +686,17 @@ mod tests {
 
     #[test]
     fn test_markdown_files_route_to_oxc_formatter_markdown() {
-        // MARKDOWN_EXTENSIONS and MARKDOWN_FILENAMES
-        for file_name in ["docs.md", "guide.markdown", "notes.mdown", "README", "contents.lr"] {
+        // MARKDOWN_EXTENSIONS and `contents.lr`
+        for file_name in ["docs.md", "guide.markdown", "notes.mdown", "contents.lr"] {
             let result = classify_file(Path::new(file_name));
             assert!(
                 matches!(result, Some(FormatStrategy::Native(NativeLanguage::Markdown))),
                 "`{file_name}` should be routed to oxc_formatter_markdown"
             );
         }
+
+        // Extensionless `README` is usually plain text, as Prettier treats it
+        assert!(classify_file(Path::new("README")).is_none(), "`README` should not be formatted");
     }
 
     #[test]

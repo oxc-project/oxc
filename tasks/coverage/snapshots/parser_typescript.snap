@@ -4058,69 +4058,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Classes can only be declared at top level or inside a block
 
-  × Invalid class declaration
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:6:19]
- 5 │ if (cond) class C1 {}
- 6 │ if (cond) {} else class C2 {}
-   ·                   ─────────
- 7 │ while (cond) class C3 {}
-   ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:7:14]
- 6 │ if (cond) {} else class C2 {}
- 7 │ while (cond) class C3 {}
-   ·              ─────────
- 8 │ do class C4 {} while (cond);
-   ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:8:4]
- 7 │ while (cond) class C3 {}
- 8 │ do class C4 {} while (cond);
-   ·    ─────────
- 9 │ for (;;) class C5 {}
-   ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:9:10]
-  8 │ do class C4 {} while (cond);
-  9 │ for (;;) class C5 {}
-    ·          ─────────
- 10 │ for (const k in {}) class C6 {}
-    ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:10:21]
-  9 │ for (;;) class C5 {}
- 10 │ for (const k in {}) class C6 {}
-    ·                     ─────────
- 11 │ for (const v of []) class C7 {}
-    ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:11:21]
- 10 │ for (const k in {}) class C6 {}
- 11 │ for (const v of []) class C7 {}
-    ·                     ─────────
- 12 │ if (cond) label: class C8 {}
-    ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/classDeclarationInStatementPosition.ts:12:18]
- 11 │ for (const v of []) class C7 {}
- 12 │ if (cond) label: class C8 {}
-    ·                  ─────────
- 13 │ 
-    ╰────
-  help: Classes can only be declared at top level or inside a block
-
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/classExpressionPropertyModifiers.ts:2:36]
  1 │ const a = class Cat {
@@ -31916,15 +31853,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Classes can only be declared at top level or inside a block
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:8:11]
- 7 │ label: var a = 1;
- 8 │ label: let b = 1;
-   ·           ▲
- 9 │ label: const c = 1;
-   ╰────
-  help: Try inserting a semicolon here
-
   × Generators can only be declared at the top level or inside a block
    ╭─[typescript/tsc/testdata/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:2:8]
  1 │ label: function fn() { }
@@ -31968,15 +31896,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Classes can only be declared at top level or inside a block
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:8:11]
- 7 │ label: var a = 1;
- 8 │ label: let b = 1;
-   ·           ▲
- 9 │ label: const c = 1;
-   ╰────
-  help: Try inserting a semicolon here
-
   × Generators can only be declared at the top level or inside a block
    ╭─[typescript/tsc/testdata/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:3:8]
  2 │ label: function fn() { }
@@ -32019,15 +31938,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  8 │ label: var a = 1;
    ╰────
   help: Classes can only be declared at top level or inside a block
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:9:11]
-  8 │ label: var a = 1;
-  9 │ label: let b = 1;
-    ·           ▲
- 10 │ label: const c = 1;
-    ╰────
-  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/conformance/statements/throwStatements/invalidThrowStatement.ts:1:6]
