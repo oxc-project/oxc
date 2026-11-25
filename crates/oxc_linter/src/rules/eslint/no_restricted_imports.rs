@@ -887,7 +887,7 @@ impl RestrictedPattern {
             }
             ImportImportName::NamespaceObject => Some(ImportNameViolation::Default),
             ImportImportName::Source(_) => {
-                (!self.is_side_effect_import_allowed()).then_some(ImportNameViolation::General)
+                self.restricts_unnamed_bindings().then_some(ImportNameViolation::General)
             }
         }
     }
@@ -914,7 +914,7 @@ impl RestrictedPattern {
             }
             ExportImportName::Null => None,
             ExportImportName::Source(_) => {
-                (!self.is_side_effect_import_allowed()).then_some(ImportNameViolation::General)
+                self.restricts_unnamed_bindings().then_some(ImportNameViolation::General)
             }
         }
     }
@@ -941,6 +941,10 @@ impl RestrictedPattern {
             NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
             NameSpanAllowedResult::Allowed => None,
         }
+    }
+
+    fn restricts_unnamed_bindings(&self) -> bool {
+        self.import_names.is_none() && self.import_name_pattern.is_none()
     }
 
     fn is_side_effect_import_allowed(&self) -> bool {
@@ -3727,6 +3731,12 @@ fn test() {
                 serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNames": ["default"] }] }]),
             ),
         ),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNamePattern": "^__" }] }]),
+            ),
+        ),
     ]);
     fail.extend([
         ("import source wasm from 'foo'; export { wasm };", Some(serde_json::json!(["foo"]))),
@@ -3739,6 +3749,12 @@ fn test() {
         (
             "import source wasm from 'foo';",
             Some(serde_json::json!([{ "patterns": [{ "group": ["foo"] }] }])),
+        ),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "allowImportNamePattern": "^__" }] }]),
+            ),
         ),
     ]);
 

@@ -1108,3 +1108,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import source wasm from 'foo';
    · ──────────────────────────────
    ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import source wasm from 'foo';
+   · ──────────────────────────────
+   ╰────
