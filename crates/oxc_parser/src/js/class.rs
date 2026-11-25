@@ -109,12 +109,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let body = self.parse_class_body();
 
-        self.verify_modifiers(
-            modifiers,
-            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Abstract]),
-            true,
-            diagnostics::modifier_cannot_be_used_here,
-        );
+        let allowed = if self.is_ts {
+            ModifierKinds::new([ModifierKind::Declare, ModifierKind::Abstract])
+        } else {
+            ModifierKinds::none()
+        };
+        self.verify_modifiers(modifiers, allowed, true, |modifier, allowed| match modifier.kind {
+            ModifierKind::Declare | ModifierKind::Abstract => {
+                diagnostics::modifier_in_ts(modifier.kind, modifier.span())
+            }
+            _ => diagnostics::modifier_cannot_be_used_here(modifier, allowed),
+        });
 
         Class::boxed(
             self.end_span(start),
