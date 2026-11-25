@@ -54,7 +54,6 @@ pub fn write_block_scalar<'a>(
     is_folded: bool,
     f: &mut YamlFormatter<'_, 'a>,
 ) {
-    let parent_indent = f.context().collection_depth().get();
     let is_last_descendant = block.span.end >= f.context().last_descendant_end();
 
     // Header: indicator, explicit indent digit, chomping indicator
@@ -94,7 +93,7 @@ pub fn write_block_scalar<'a>(
     }
 
     let line_groups: Vec<Vec<&'a str>> =
-        block_value_line_contents(block, is_folded, parent_indent, is_last_descendant, f);
+        block_value_line_contents(block, is_folded, is_last_descendant, f);
 
     // Blank runs are the scalar's VALUE
     let chomping_keep = block.chomping == Chomping::Keep;
@@ -138,12 +137,17 @@ pub fn write_block_scalar<'a>(
         }
     });
 
-    if let Some(indent) = block.indent {
-        let width = u8::try_from(indent - 1 + parent_indent).unwrap_or(u8::MAX);
-        write!(f, dedent_to_root(&align(width, &contents)));
+    // An explicit indicator counts from the enclosing collection's items (YAML's `n + m`), where `dedent` returns:
+    // the content moves with them (DIVERGENCES.md#block-scalar-explicit-indent).
+    // At the root it counts from column 0, the YAML's own under an embedding host (hence `dedent_to_root`).
+    let width = block
+        .indent
+        .map_or(f.options().indent_width.value(), |indent| u8::try_from(indent).unwrap_or(u8::MAX));
+    let contents = align(width, &contents);
+    if block.indent.is_some() && f.context().collection_depth().get() == 0 {
+        write!(f, dedent_to_root(&contents));
     } else {
-        let tab_width = f.options().indent_width.value();
-        write!(f, dedent(&align(tab_width, &contents)));
+        write!(f, dedent(&contents));
     }
 }
 
@@ -156,7 +160,6 @@ pub fn write_block_scalar<'a>(
 fn block_value_line_contents<'s>(
     block: &BlockScalar,
     is_folded: bool,
-    parent_indent: u32,
     is_last_descendant: bool,
     f: &YamlFormatter<'_, 's>,
 ) -> Vec<Vec<&'s str>> {
@@ -169,20 +172,7 @@ fn block_value_line_contents<'s>(
         end: block.span.end,
     }));
 
-    // Leading indentation to strip from every line
-    let leading_space_count = if let Some(indent) = block.indent {
-        (indent - 1 + parent_indent) as usize
-    } else {
-        content
-            .split('\n')
-            .find_map(|l| {
-                let spaces = l.len() - l.trim_start_matches(' ').len();
-                // First line containing a non-space, non-CR character
-                l[spaces..].chars().next().filter(|c| *c != '\r').map(|_| spaces)
-            })
-            .unwrap_or(usize::MAX)
-    };
-    let strip = |l: &'s str| l.get(leading_space_count.min(l.len())..).unwrap_or("");
+    let strip = |l: &'s str| l.get((block.content_indent as usize).min(l.len())..).unwrap_or("");
 
     let prose_wrap = f.options().prose_wrap;
     // Literal blocks (`|`) are never re-flowed;

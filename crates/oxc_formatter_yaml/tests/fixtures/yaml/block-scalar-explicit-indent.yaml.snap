@@ -1,0 +1,63 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# An indentation indicator counts from the enclosing collection's items (YAML's `n + m`):
+# the content moves with them when they are re-indented, keeping its value.
+moves-left:
+    value: |2
+          more-indented
+    entry:
+        - |2
+              more-indented
+        - key: |2
+                more-indented
+moves-right:
+ value: >2
+     more-indented
+ entry:
+ - |2
+     more-indented
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# An indentation indicator counts from the enclosing collection's items (YAML's `n + m`):
+# the content moves with them when they are re-indented, keeping its value.
+moves-left:
+  value: |2
+        more-indented
+  entry:
+    - |2
+          more-indented
+    - key: |2
+            more-indented
+moves-right:
+  value: >2
+      more-indented
+  entry:
+    - |2
+        more-indented
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# An indentation indicator counts from the enclosing collection's items (YAML's `n + m`):
+# the content moves with them when they are re-indented, keeping its value.
+moves-left:
+  value: |2
+        more-indented
+  entry:
+    - |2
+          more-indented
+    - key: |2
+            more-indented
+moves-right:
+  value: >2
+      more-indented
+  entry:
+    - |2
+        more-indented
+
+===================== End =====================
