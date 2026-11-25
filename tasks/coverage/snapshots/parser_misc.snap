@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 164/164 (100.00%)
-Positive Passed: 164/164 (100.00%)
+AST Parsed     : 165/165 (100.00%)
+Positive Passed: 165/165 (100.00%)
 Negative Passed: 298/298 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
