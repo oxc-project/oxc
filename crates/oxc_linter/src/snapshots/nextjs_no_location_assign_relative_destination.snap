@@ -455,3 +455,73 @@ source: crates/oxc_linter/src/tester.rs
  4 │                       }
    ╰────
   help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:4:23]
+ 3 │                       for (const id of ids) url += '/' + id;
+ 4 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:4:23]
+ 3 │                       obj?.track((url = '/dashboard'));
+ 4 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:4:23]
+ 3 │                       const { a = (url = '/dashboard') } = obj;
+ 4 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:4:23]
+ 3 │                       admin && (url = '/admin');
+ 4 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = [] ? '/dashboard' : 'https://example.com'
+   · ─────────────────────────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = 1n ? '/dashboard' : 'https://example.com'
+   · ─────────────────────────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = '/users/' + 1n
+   · ──────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:3:23]
+ 2 │                       var url = '/dashboard';
+ 3 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:5:25]
+ 4 │                         if (admin) url = '/admin';
+ 5 │                         location.href = url;
+   ·                         ───────────────────
+ 6 │                       }
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.

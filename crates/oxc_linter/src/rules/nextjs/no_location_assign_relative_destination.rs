@@ -172,6 +172,10 @@ const MAX_FIXPOINT_ROUNDS: usize = 8;
 const MAX_ALTERNATIVES: usize = 32;
 /// Strings are cut to this many bytes. Only the beginning of a URL decides whether it is relative.
 const MAX_STRING_LENGTH: usize = 2048;
+/// Maximum number of control flow blocks visited to find the definitions reaching one read.
+const MAX_VISITED_BLOCKS: usize = 512;
+/// Maximum number of references to a reassigned variable whose definitions are collected.
+const MAX_REFERENCES: usize = 512;
 
 fn has_relative_url<'a>(expression: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
     let evaluator = Evaluator {
@@ -181,12 +185,16 @@ fn has_relative_url<'a>(expression: &Expression<'a>, ctx: &LintContext<'a>) -> b
         finished_reads: RefCell::new(Vec::new()),
         definitions: RefCell::new(FxHashMap::default()),
     };
-    // Values such as `null` or `undefined` are not navigations to a page, so only strings count.
+    // Values such as `null` or `undefined` are not navigations to a page, so only strings, and
+    // objects that convert to strings, count.
     evaluator.values(expression).is_some_and(|values| {
         !values.is_empty()
-            && values.iter().all(|value| {
-                matches!(value, Value::String { value, complete, followed }
-                    if is_relative_url(value, *complete, *followed))
+            && values.iter().all(|value| match value {
+                Value::String { value, complete, followed, widened } => {
+                    is_relative_url(value, *complete, *followed && !*widened)
+                }
+                Value::Object(string) => is_relative_url(string, true, false),
+                _ => false,
             })
     })
 }
@@ -204,27 +212,37 @@ impl<'a> GlobalContext<'a> for RuleGlobalContext<'_, 'a> {
 enum Value<'a> {
     /// A string. When `complete` is `false`, `value` is only its beginning, and `followed` tells
     /// whether known text follows the unknown part, as in `` `/${locale}/dashboard` ``.
+    ///
+    /// `widened` marks a beginning that came from widening a loop variable. Its unknown part was
+    /// built by the loop and may start with `/`, so `followed` says nothing about it.
     String {
         value: Cow<'a, str>,
         complete: bool,
         followed: bool,
+        widened: bool,
     },
     Number(f64),
+    /// A BigInt, by its decimal digits.
+    BigInt(Cow<'a, str>),
     Boolean(bool),
     Null,
     Undefined,
+    /// An array, object or regular expression literal, by the string it converts to. Objects are
+    /// always truthy, and can be changed after they are created.
+    Object(Cow<'a, str>),
 }
 
 impl<'a> Value<'a> {
     fn string(value: Cow<'a, str>, complete: bool) -> Self {
         if value.len() <= MAX_STRING_LENGTH {
-            return Self::String { value, complete, followed: false };
+            return Self::String { value, complete, followed: false, widened: false };
         }
         let end = value.floor_char_boundary(MAX_STRING_LENGTH);
         Self::String {
             value: Cow::Owned(value[..end].to_owned()),
             complete: false,
             followed: false,
+            widened: false,
         }
     }
 
@@ -232,6 +250,7 @@ impl<'a> Value<'a> {
     fn has_known_text(&self) -> bool {
         match self {
             Self::String { value, followed, .. } => !value.is_empty() || *followed,
+            Self::Object(string) => !string.is_empty(),
             _ => true,
         }
     }
@@ -258,6 +277,7 @@ impl<'a> Value<'a> {
                 };
                 (string, true)
             }
+            Self::BigInt(string) | Self::Object(string) => (string.clone(), true),
             Self::Boolean(boolean) => {
                 (Cow::Borrowed(if *boolean { "true" } else { "false" }), true)
             }
@@ -266,10 +286,11 @@ impl<'a> Value<'a> {
         }
     }
 
-    /// `ToNumber` of a value that is not a string.
+    /// `ToNumber` of a value that is not a string, or `None` if it is not known.
     fn to_number(&self) -> Option<f64> {
         match self {
-            Self::String { .. } => None,
+            // Adding a BigInt to a number throws.
+            Self::String { .. } | Self::BigInt(_) | Self::Object(_) => None,
             Self::Number(number) => Some(*number),
             Self::Boolean(boolean) => Some(if *boolean { 1.0 } else { 0.0 }),
             Self::Null => Some(0.0),
@@ -287,8 +308,10 @@ impl<'a> Value<'a> {
                 }
             }
             Self::Number(number) => Some(*number != 0.0 && !number.is_nan()),
+            Self::BigInt(digits) => Some(digits != "0"),
             Self::Boolean(boolean) => Some(*boolean),
             Self::Null | Self::Undefined => Some(false),
+            Self::Object(_) => Some(true),
         }
     }
 
@@ -298,13 +321,23 @@ impl<'a> Value<'a> {
 
     /// The `+` operator. `right` is `None` when the right operand is unknown.
     fn add(&self, right: Option<&Self>) -> Option<Self> {
+        // `+` converts objects to strings first.
+        if let Self::Object(string) = self {
+            return Self::string(string.clone(), true).add(right);
+        }
+        if let Some(Self::Object(string)) = right {
+            return self.add(Some(&Self::string(string.clone(), true)));
+        }
         match (self, right) {
             // Nothing appended to an incomplete string can change its beginning.
-            (Self::String { value, complete: false, followed }, right) => Some(Self::String {
-                value: value.clone(),
-                complete: false,
-                followed: *followed || right.is_some_and(Self::has_known_text),
-            }),
+            (Self::String { value, complete: false, followed, widened }, right) => {
+                Some(Self::String {
+                    value: value.clone(),
+                    complete: false,
+                    followed: *followed || right.is_some_and(Self::has_known_text),
+                    widened: *widened,
+                })
+            }
             (Self::String { value, .. }, None) => Some(Self::string(value.clone(), false)),
             (_, None) => None,
             (Self::String { .. }, Some(right)) | (_, Some(right @ Self::String { .. })) => {
@@ -314,11 +347,12 @@ impl<'a> Value<'a> {
                 value.push_str(&right_string);
                 let mut result = Self::string(Cow::Owned(value), complete);
                 if let (
-                    Self::String { followed, .. },
-                    Self::String { followed: right_followed, .. },
+                    Self::String { followed, widened, .. },
+                    Self::String { followed: right_followed, widened: right_widened, .. },
                 ) = (&mut result, right)
                 {
                     *followed |= *right_followed;
+                    *widened |= *right_widened;
                 }
                 Some(result)
             }
@@ -342,7 +376,7 @@ fn widen(values: Values<'_>) -> Values<'_> {
     for value in values {
         let value = match value {
             Value::String { value, followed, .. } => {
-                Value::String { value, complete: false, followed }
+                Value::String { value, complete: false, followed, widened: true }
             }
             value => value,
         };
@@ -359,11 +393,12 @@ fn widen(values: Values<'_>) -> Values<'_> {
 fn covers(value: &Value<'_>, covered: &Value<'_>) -> bool {
     match (value, covered) {
         (
-            Value::String { value, complete: false, followed },
+            Value::String { value, complete: false, followed, .. },
             Value::String {
                 value: covered,
                 complete: covered_complete,
                 followed: covered_followed,
+                ..
             },
         ) => {
             // A beginning known to be followed by more text does not stand for the beginning
@@ -495,10 +530,16 @@ impl<'a> Evaluator<'_, 'a> {
                         .collect(),
                 )
             }
-            // Arrays, objects and regular expressions convert to strings in `+`.
-            _ => expression
+            Expression::BigIntLiteral(_) => expression
                 .to_js_string(&RuleGlobalContext(self.ctx))
-                .map(|string| vec![Value::string(string, true)]),
+                .map(|digits| vec![Value::BigInt(digits)]),
+            // Arrays, objects and regular expressions convert to strings in `+`.
+            Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::RegExpLiteral(_) => expression
+                .to_js_string(&RuleGlobalContext(self.ctx))
+                .map(|string| vec![Value::Object(string)]),
+            _ => None,
         }
     }
 
@@ -637,12 +678,27 @@ impl<'a> Evaluator<'_, 'a> {
         symbol_id: SymbolId,
         read: NodeId,
     ) -> Option<Values<'a>> {
+        let values = self.resolve_variable_values(identifier, symbol_id, read)?;
+        // An object held in a variable may have been changed since it was created, as in
+        // `parts.push(url)` or `parts[0] = url`.
+        (!values.iter().any(|value| matches!(value, Value::Object(_)))).then_some(values)
+    }
+
+    fn resolve_variable_values(
+        &self,
+        identifier: &IdentifierReference<'a>,
+        symbol_id: SymbolId,
+        read: NodeId,
+    ) -> Option<Values<'a>> {
         let scoping = self.ctx.scoping();
-        // A variable that is declared once and never written holds its initial value everywhere.
+        let declaration = scoping.symbol_declaration(symbol_id);
+        // A variable that is declared once and never written holds its initial value everywhere,
+        // except that a `var` in the function of the read may be read before its declaration
+        // runs, or when its declaration does not run at all.
         if !scoping.symbol_is_mutated(symbol_id)
             && scoping.symbol_redeclarations(symbol_id).is_empty()
+            && !self.is_var_in_function_of(declaration, read)
         {
-            let declaration = scoping.symbol_declaration(symbol_id);
             return match declarator_definition(declaration, self.ctx)? {
                 DefinitionValue::Expression(init) => self.values(init),
                 DefinitionValue::Undefined | DefinitionValue::Keep => Some(vec![Value::Undefined]),
@@ -656,7 +712,7 @@ impl<'a> Evaluator<'_, 'a> {
             .entry(symbol_id)
             .or_insert_with(|| Definitions::new(symbol_id, self.ctx).map(Rc::new))
             .clone()?;
-        let reaching = definitions.reaching(read, identifier.span.start, self.ctx);
+        let reaching = definitions.reaching(read, identifier.span.start, self.ctx)?;
         let mut values = Vec::new();
         if reaching.undefined {
             values.push(Value::Undefined);
@@ -665,6 +721,14 @@ impl<'a> Evaluator<'_, 'a> {
             push_alternatives(&mut values, self.definition_values(&definitions.list[index])?)?;
         }
         (!values.is_empty()).then_some(values)
+    }
+
+    /// Whether `declaration` declares a `var` in the function that contains `read`.
+    fn is_var_in_function_of(&self, declaration: NodeId, read: NodeId) -> bool {
+        matches!(
+            self.ctx.nodes().parent_kind(declaration),
+            AstKind::VariableDeclaration(declarations) if declarations.kind.is_var()
+        ) && enclosing_function(declaration, self.ctx) == enclosing_function(read, self.ctx)
     }
 
     fn definition_values(&self, definition: &Definition<'a>) -> Option<Values<'a>> {
@@ -714,6 +778,9 @@ struct Definition<'a> {
     end: u32,
     function: NodeId,
     value: DefinitionValue<'a>,
+    /// Whether the definition may be skipped by a part of its block that the control flow graph
+    /// does not split, such as an optional chain or a destructuring default.
+    conditional: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -794,6 +861,11 @@ impl<'a> Definitions<'a> {
     fn new(symbol_id: SymbolId, ctx: &LintContext<'a>) -> Option<Self> {
         let scoping = ctx.scoping();
         let nodes = ctx.nodes();
+        // Definitions are collected again for each destination, so this keeps the cost of a
+        // file with many destinations linear.
+        if scoping.get_resolved_reference_ids(symbol_id).len() > MAX_REFERENCES {
+            return None;
+        }
         let mut list = Vec::new();
         let mut hoisted = false;
         let mut function = None;
@@ -815,6 +887,7 @@ impl<'a> Definitions<'a> {
                     end: declarator.span.end,
                     function: declaration_function,
                     value,
+                    conditional: false,
                 });
             }
         }
@@ -859,6 +932,7 @@ impl<'a> Definitions<'a> {
                 end,
                 function: enclosing_function(write, ctx),
                 value,
+                conditional: is_conditionally_evaluated(write, ctx),
             });
         }
 
@@ -881,17 +955,19 @@ impl<'a> Definitions<'a> {
     ///
     /// Definitions in the function of the read are followed backwards through the control flow
     /// graph. Definitions in other functions may run at any time, so they can always reach.
-    fn reaching(&self, read: NodeId, read_start: u32, ctx: &LintContext<'a>) -> Reaching {
+    ///
+    /// Returns `None` if the walk visits too many blocks.
+    fn reaching(&self, read: NodeId, read_start: u32, ctx: &LintContext<'a>) -> Option<Reaching> {
         let function = enclosing_function(read, ctx);
         let mut reaching = vec![false; self.list.len()];
         let mut undefined = false;
 
         if function != self.function {
             // A read in a closure may run after any definition, or before all of them.
-            return Reaching {
+            return Some(Reaching {
                 definitions: (0..self.list.len()).collect(),
                 undefined: self.hoisted,
-            };
+            });
         }
 
         for &index in &self.in_closures {
@@ -907,22 +983,40 @@ impl<'a> Definitions<'a> {
             if !visited.insert((block, crossed_back_edge, throws)) {
                 continue;
             }
+            // Each read walks the graph on its own, so this keeps the cost of a file with many
+            // reads linear.
+            if visited.len() > MAX_VISITED_BLOCKS {
+                return None;
+            }
 
             // Without a back edge, a definition that ends after the read has not run yet.
-            let candidates = self
+            let mut candidates: Vec<usize> = self
                 .by_block
                 .get(&block)
                 .into_iter()
                 .flatten()
                 .copied()
-                .filter(|&index| crossed_back_edge || self.list[index].end <= read_start);
+                .filter(|&index| crossed_back_edge || self.list[index].end <= read_start)
+                .collect();
             if throws {
                 for index in candidates {
                     reaching[index] = true;
                 }
-            } else if let Some(last) = candidates.max_by_key(|&index| self.list[index].end) {
-                reaching[last] = true;
-                continue;
+            } else {
+                // The definitions of a block run in source order, so the last one that is sure to
+                // run hides everything before it.
+                candidates.sort_unstable_by_key(|&index| std::cmp::Reverse(self.list[index].end));
+                let mut covered = false;
+                for index in candidates {
+                    reaching[index] = true;
+                    if !self.list[index].conditional {
+                        covered = true;
+                        break;
+                    }
+                }
+                if covered {
+                    continue;
+                }
             }
 
             let mut has_predecessor = false;
@@ -948,15 +1042,43 @@ impl<'a> Definitions<'a> {
             }
         }
 
-        Reaching {
+        Some(Reaching {
             definitions: reaching
                 .iter()
                 .enumerate()
                 .filter_map(|(index, &reaches)| reaches.then_some(index))
                 .collect(),
             undefined,
+        })
+    }
+}
+
+/// Whether the write at `write` may be skipped although its control flow block runs: inside an
+/// optional chain such as `obj?.track((url = '/dashboard'))`, or inside a destructuring default
+/// such as `const { a = (url = '/dashboard') } = obj`.
+fn is_conditionally_evaluated(write: NodeId, ctx: &LintContext<'_>) -> bool {
+    let span = ctx.nodes().kind(write).span();
+    for ancestor in ctx.nodes().ancestors(write) {
+        let default = match ancestor.kind() {
+            AstKind::ChainExpression(_) => return true,
+            AstKind::AssignmentPattern(pattern) => pattern.right.span(),
+            AstKind::AssignmentTargetWithDefault(target) => target.init.span(),
+            AstKind::AssignmentTargetPropertyIdentifier(property) => {
+                let Some(init) = &property.init else { continue };
+                init.span()
+            }
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_)
+            | AstKind::PropertyDefinition(_)
+            | AstKind::Program(_) => return false,
+            _ => continue,
+        };
+        if default.contains_inclusive(span) {
+            return true;
         }
     }
+    false
 }
 
 fn enclosing_function(node: NodeId, ctx: &LintContext<'_>) -> NodeId {
@@ -1204,6 +1326,110 @@ fn test() {
                   import { location } from './my-module';
                   location.href = '/foo'
                 ",
+        // A loop may append text starting with `/` to `/`, which makes the URL protocol-relative.
+        "
+                  let url = '/';
+                  while (more()) url = url + '/x';
+                  location.href = url;
+                ",
+        "
+                  let url = '/';
+                  for (const part of parts) url += '/example.com';
+                  location.href = url;
+                ",
+        r"
+                  let url = '/';
+                  while (more()) url += '\\host';
+                  location.assign(url);
+                ",
+        "
+                  let url = '/';
+                  while (more()) url = url + '/';
+                  location.href = url + 'x';
+                ",
+        // An assignment in an optional chain or a destructuring default may not run.
+        "
+                  let url = 'https://example.com';
+                  obj?.track((url = '/dashboard'));
+                  location.href = url;
+                ",
+        "
+                  let url = 'https://example.com';
+                  obj?.[(url = '/dashboard')];
+                  location.href = url;
+                ",
+        "
+                  let url = 'https://example.com';
+                  obj?.a.b((url = '/dashboard'));
+                  location.href = url;
+                ",
+        "
+                  let url = 'https://example.com';
+                  if (obj?.f((url = '/dashboard'))) {}
+                  location.href = url;
+                ",
+        "
+                  let url = 'https://example.com';
+                  const { a = (url = '/dashboard') } = obj;
+                  location.href = url;
+                ",
+        "
+                  let url = 'https://example.com';
+                  const [a = (url = '/dashboard')] = list;
+                  location.href = url;
+                ",
+        "
+                  let url = 'https://example.com';
+                  ({ a: obj.b = (url = '/dashboard') } = obj);
+                  location.href = url;
+                ",
+        "
+                  let url = 'https://example.com';
+                  ({ a = (url = '/dashboard') } = obj);
+                  location.href = url;
+                ",
+        // Arrays and objects can be changed after they are created.
+        "
+                  const parts = ['/dashboard'];
+                  if (external) parts[0] = 'https://example.com';
+                  location.href = parts;
+                ",
+        "
+                  const parts = [];
+                  parts.push('https://example.com');
+                  location.assign(`${parts}`);
+                ",
+        "
+                  const target = {};
+                  target.toString = () => 'https://example.com';
+                  location.href = '' + target;
+                ",
+        // Arrays and objects are truthy, and `0n` is falsy.
+        "location.href = [] ? 'https://example.com' : '/dashboard'",
+        "location.href = ![] ? '/dashboard' : 'https://example.com'",
+        "location.href = [''] ? 'https://example.com' : '/dashboard'",
+        "location.href = 0n ? '/dashboard' : 'https://example.com'",
+        "location.href = !0n ? 'https://example.com' : '/dashboard'",
+        "location.href = 1n",
+        // A `var` read before its declaration runs, or when it does not run, is `undefined`.
+        "
+                  function go() {
+                    location.href = url;
+                    var url = '/dashboard';
+                  }
+                ",
+        "
+                  for (const id of ids) {
+                    if (id) location.href = url;
+                    var url = '/dashboard';
+                  }
+                ",
+        "
+                  if (internal) {
+                    var url = '/dashboard';
+                  }
+                  location.href = url;
+                ",
     ];
 
     let fail = vec![
@@ -1349,6 +1575,36 @@ fn test() {
         "
                       function handleClick() {
                         location.assign('/dashboard')
+                      }",
+        // Loops that keep a relative beginning are still reported.
+        "
+                      let url = '/users';
+                      for (const id of ids) url += '/' + id;
+                      location.href = url;",
+        // Assignments that may not run are still reported when every value is relative.
+        "
+                      let url = '/home';
+                      obj?.track((url = '/dashboard'));
+                      location.href = url;",
+        "
+                      let url = '/home';
+                      const { a = (url = '/dashboard') } = obj;
+                      location.href = url;",
+        "
+                      let url = '/home';
+                      admin && (url = '/admin');
+                      location.href = url;",
+        "location.href = [] ? '/dashboard' : 'https://example.com'",
+        "location.href = 1n ? '/dashboard' : 'https://example.com'",
+        "location.href = '/users/' + 1n",
+        "
+                      var url = '/dashboard';
+                      location.href = url;",
+        "
+                      function go() {
+                        var url = '/home';
+                        if (admin) url = '/admin';
+                        location.href = url;
                       }",
     ];
 
