@@ -625,3 +625,31 @@ A footnote's single paragraph follows the marker only when it prints as one line
 Prettier asks `preserve` whether the source is one line, and its block form above moves the lazy `=` into the footnote,
 where it underlines the paragraph.
 Its `never` keeps the marker line whatever the paragraph holds (admissible here); ours follows the same rule as the other modes.
+
+## definition-multiline-title-width
+
+- Why: cost
+- Pin: `tests/fixtures/markdown/prose-wrap/definition-multiline-title-width.md`
+- Drop when: the core printer can measure a multi-line `Text` as a whole, the way Prettier measures a string
+
+```markdown
+<!-- input (proseWrap: always) -->
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+
+<!-- ours -->
+[label]: https://example.com/a/b "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+
+<!-- prettier -->
+[label]:
+  https://example.com/a/b
+  "ttttttttttttttttttttttttttt
+second line of the title that is long enough"
+```
+
+Under `proseWrap: always`, a definition that does not fit on one line puts its destination and title on lines of their own.
+With a multi-line title, ours measures only up to the title's first line break, as the core printer does for any multi-line `Text`;
+Prettier measures the title as one string, the widths of all its lines summed, so the definition breaks even when every line fits.
+Layout-only, and only for a multi-line definition title under `always`.
+Matching needs a core `TextWidth` mode for a whole-string measure: markdown cannot sum the widths itself, as it does not know the definition's start column when building the IR.
