@@ -420,6 +420,10 @@ fn test() {
             "#!/usr/bin/env node\nimport * as vitest from 'vite-plus/test';\ndescribe('suite', () => {});",
             "#!/usr/bin/env node\nimport { describe } from 'vite-plus/test';\nimport * as vitest from 'vite-plus/test';\ndescribe('suite', () => {});",
         ),
+        (
+            "import source vitest from 'vitest';\ndescribe('suite', () => {});",
+            "import { describe } from 'vitest';\nimport source vitest from 'vitest';\ndescribe('suite', () => {});",
+        ),
         // the `}` inside the comment is not the end of the specifier list
         (
             "import { it } from /* } */ 'vitest';\ndescribe('suite', () => {});",

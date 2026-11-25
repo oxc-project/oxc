@@ -271,6 +271,7 @@ fn test() {
         "import { default as foo } from './typescript-export-default'",
         "import { a, b } from './cyclic-star-a'",
         "import { a, b } from './cyclic-star-b'",
+        "import source baz from './named-exports'; export { baz }",
     ];
 
     let fail = vec![

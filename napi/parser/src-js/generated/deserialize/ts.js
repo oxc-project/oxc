@@ -4687,6 +4687,14 @@ function deserializeImportImportName(pos) {
         start,
         end,
       };
+    case 3:
+      var { start, end } = deserializeSpan(pos + 8);
+      return {
+        kind: "Source",
+        name: null,
+        start,
+        end,
+      };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ImportImportName`);
   }
@@ -4734,6 +4742,14 @@ function deserializeExportImportName(pos) {
         name: null,
         start: null,
         end: null,
+      };
+    case 4:
+      var { start, end } = deserializeSpan(pos + 8);
+      return {
+        kind: "Source",
+        name: null,
+        start,
+        end,
       };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ExportImportName`);

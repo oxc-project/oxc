@@ -765,6 +765,9 @@ impl RestrictedPath {
                 }
             }
             ImportImportName::NamespaceObject => Some(ImportNameViolation::Default),
+            ImportImportName::Source(_) => {
+                self.import_names.is_none().then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -789,6 +792,9 @@ impl RestrictedPath {
                 Some(ImportNameViolation::Default)
             }
             ExportImportName::Null => None,
+            ExportImportName::Source(_) => {
+                self.import_names.is_none().then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -880,6 +886,9 @@ impl RestrictedPattern {
                 }
             }
             ImportImportName::NamespaceObject => Some(ImportNameViolation::Default),
+            ImportImportName::Source(_) => {
+                (!self.is_side_effect_import_allowed()).then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -904,6 +913,9 @@ impl RestrictedPattern {
                 Some(ImportNameViolation::Default)
             }
             ExportImportName::Null => None,
+            ExportImportName::Source(_) => {
+                (!self.is_side_effect_import_allowed()).then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -3702,6 +3714,32 @@ fn test() {
             Some(serde_json::json!([{ "paths": [{ "name": "zod", "importNames": ["default"] }] }])),
         ),
         ("import { z } from 'zod'; export { z } from 'zod';", Some(restricted_z_name)),
+    ]);
+
+    pass.extend([
+        (
+            "import source wasm from 'foo'; export { wasm };",
+            Some(serde_json::json!([{ "paths": [{ "name": "foo", "importNames": ["default"] }] }])),
+        ),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNames": ["default"] }] }]),
+            ),
+        ),
+    ]);
+    fail.extend([
+        ("import source wasm from 'foo'; export { wasm };", Some(serde_json::json!(["foo"]))),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "paths": [{ "name": "foo", "allowImportNames": ["bar"] }] }]),
+            ),
+        ),
+        (
+            "import source wasm from 'foo';",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo"] }] }])),
+        ),
     ]);
 
     Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::PLUGIN, pass, fail)

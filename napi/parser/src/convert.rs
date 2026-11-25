@@ -120,6 +120,9 @@ impl From<&module_record::ImportImportName<'_>> for ImportName {
             module_record::ImportImportName::Default(span) => {
                 (ImportNameKind::Default, None, Some(span.start), Some(span.end))
             }
+            module_record::ImportImportName::Source(span) => {
+                (ImportNameKind::Source, None, Some(span.start), Some(span.end))
+            }
         };
         Self { kind, name, start, end }
     }
@@ -149,6 +152,9 @@ impl From<&module_record::ExportImportName<'_>> for ExportImportName {
                 (ExportImportNameKind::AllButDefault, None, None, None)
             }
             module_record::ExportImportName::Null => (ExportImportNameKind::None, None, None, None),
+            module_record::ExportImportName::Source(span) => {
+                (ExportImportNameKind::Source, None, Some(span.start), Some(span.end))
+            }
         };
         Self { kind, name, start, end }
     }

@@ -181,6 +181,7 @@ fn test() {
     let pass = vec![
         r#"import "./malformed.js""#,
         r#"import bar, { foo } from "./bar";"#,
+        r#"import source foo from "./bar";"#,
         r#"import bar, { foo } from "./empty-folder";"#,
         // unsupported syntax
         // r#"export default from "./bar";"#,

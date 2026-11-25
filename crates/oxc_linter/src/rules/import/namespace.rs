@@ -158,6 +158,7 @@ impl Rule for Namespace {
                     // TODO: Hard to confirm if it's a namespace object
                     continue;
                 }
+                ImportImportName::Source(_) => continue,
             };
 
             if !module.has_module_syntax {
