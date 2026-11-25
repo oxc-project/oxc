@@ -3,6 +3,38 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
+   ╭─[require_throws_description.tsx:1:27]
+ 1 │ function example() {} /** @throws {Error} */
+   ·                           ───────
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
+   ╭─[require_throws_description.tsx:1:27]
+ 1 │ function example() {} /** @exception */
+   ·                           ──────────
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
+   ╭─[require_throws_description.tsx:2:4]
+ 1 │ /**
+ 2 │  * @throws {TypeError}
+   ·    ───────
+ 3 │  * @exception {RangeError}
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
+   ╭─[require_throws_description.tsx:2:4]
+ 1 │ /**
+ 2 │  * @throws
+   ·    ───────
+ 3 │  * {Error}
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
    ╭─[require_throws_description.tsx:3:24]
  2 │                     /**
  3 │                      * @throws
