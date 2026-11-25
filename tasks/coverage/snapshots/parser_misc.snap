@@ -6144,8 +6144,9 @@ Negative Passed: 318/318 (100.00%)
    ╰────
 
   × Decorators are not valid here.
-   ╭─[misc/fail/ts-decorated-export-as-namespace.ts:1:1]
- 1 │ @d export as namespace N;
+   ╭─[misc/fail/ts-decorated-export-as-namespace.d.ts:2:1]
+ 1 │ export {};
+ 2 │ @d export as namespace N;
    · ──
    ╰────
 
