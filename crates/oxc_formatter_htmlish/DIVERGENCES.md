@@ -1229,7 +1229,7 @@ One right after the tag name (`<div // c`) moves to its own line, as after any o
 ```
 
 The content of an element with `i18n` prints as written, a custom ID (`i18n="@@id"`) or not; its start tag is formatted.
-The message's ID is a hash of its text, whitespace included (`@angular/compiler` 22.2.3's `parseTemplate`):
+The message's ID is a hash of its text, whitespace included (`@angular/compiler` 22.2.5's `parseTemplate`):
 `<p i18n>Hello <b>world</b></p>` and `<p i18n>⏎  Hello <b>world</b>⏎</p>` are two messages,
 so reformatting the content silently drops its existing translations.
 So does an attribute's value marked by `i18n-x` (`i18n-title` for `title`), its `{{ }}` too,
