@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import { ImportNameKind, type ImportName } from "../src-js/index.js";
 import { parseSync } from "./parser.ts";
 
 describe("esm", () => {
@@ -144,7 +145,12 @@ describe.each([false, true])(
       const ret = parseSync("test.js", source, { experimentalRawTransfer });
       expect(ret.errors).toEqual([]);
       const start = source.indexOf("source x") + "source ".length;
-      const importName = { kind: "Source", name: null, start, end: start + 1 };
+      const importName: ImportName = {
+        kind: ImportNameKind.Source,
+        name: null,
+        start,
+        end: start + 1,
+      };
       expect(ret.module.staticImports[0].entries[0].importName).toEqual(importName);
       const entries = ret.module.staticExports.flatMap((declaration) => declaration.entries);
       expect(entries).toHaveLength(expectedCount);
