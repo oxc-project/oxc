@@ -243,8 +243,10 @@ impl<'a> TypeScript<'a> {
                         }
                         prop.declare = true;
                     } else if self.remove_class_fields_without_initializer
+                        && !prop.declare
                         && let Some(key) = prop.key.as_expression_mut()
                     {
+                        // A `declare` field is erased along with its key, so the key never runs.
                         // `TypeScript` uses `isSimpleInlineableExpression` to check if the key needs to be kept.
                         // There is a little difference that we treat `BigIntLiteral` and `RegExpLiteral` can be kept, and
                         // `IdentifierReference` without symbol is not kept.
