@@ -1,6 +1,8 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, dispatch_fragment_ir, map_text_in_ir};
+use oxc_formatter_core::{
+    FormatElement, Placeholder, PlaceholderPiece, dispatch_fragment_ir, map_text_in_ir,
+};
 
 use crate::{
     ast_nodes::AstNode,
@@ -18,7 +20,7 @@ use crate::{
 /// Format an HTML(Angular)-in-JS template literal via the dispatcher with placeholder replacement.
 ///
 /// Uses `.cooked` values (unlike CSS which uses `.raw`), joins quasis with
-/// `PRETTIER_HTML_PLACEHOLDER_{depth}_{N}_IN_JS` markers, formats via the given `embedded_language`,
+/// `oxfmt_html_{depth}_{N}_` placeholders ([`HTML_PLACEHOLDER_PREFIX`]), formats via the given `embedded_language`,
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` IR.
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
@@ -62,17 +64,15 @@ pub(super) fn format_html_doc<'a>(
     }
 
     // Phase 1: Build joined text using .cooked with HTML placeholders
-    // quasis[0].cooked + "PRETTIER_HTML_PLACEHOLDER_{depth}_0_IN_JS" + quasis[1].cooked + ...
+    // quasis[0].cooked + "oxfmt_html_{depth}_0_" + quasis[1].cooked + ...
     let allocator = f.allocator();
     let prefix = std::format!("{HTML_PLACEHOLDER_PREFIX}{}_", f.session().dispatch_depth());
-    let prefix = prefix.as_str();
+    let placeholder = Placeholder { prefix: &prefix, suffix: HTML_PLACEHOLDER_SUFFIX };
     let joined = {
         let mut sb = ArenaStringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {
             if idx > 0 {
-                sb.push_str(prefix);
-                let _ = std::fmt::Write::write_fmt(&mut sb, std::format_args!("{}", idx - 1));
-                sb.push_str(HTML_PLACEHOLDER_SUFFIX);
+                placeholder.write(&mut sb, idx - 1);
             }
             let Some(cooked) = quasi_elem.value.cooked.as_ref() else {
                 return false;
@@ -96,10 +96,7 @@ pub(super) fn format_html_doc<'a>(
     // Validate before formatting any expression.
     // Formatting consumes comment state,
     // so discovering an unusable placeholder layout afterwards would make the verbatim fallback unsafe.
-    let mut next_placeholder = 0;
-    if !placeholders_are_sequential(&ir, prefix, &mut next_placeholder)
-        || next_placeholder != expressions.len()
-    {
+    if !placeholder.are_sequential(&ir, expressions.len()) {
         return false;
     }
 
@@ -122,27 +119,20 @@ pub(super) fn format_html_doc<'a>(
     let ir = map_text_in_ir(ir, allocator, &mut |text, out| {
         let escaped = super::escape_template_chars(text, allocator);
         let text = escaped.unwrap_or(text);
-        if super::find_ignore_ascii_case(text, prefix).is_some() {
-            let parts = super::split_on_placeholders(text, prefix, HTML_PLACEHOLDER_SUFFIX);
-            if parts.len() > 1 {
-                for (index, part) in parts.iter().enumerate() {
-                    if index.is_multiple_of(2) {
-                        if !part.is_empty() {
-                            out.push(FormatElement::text(part, indent_width));
+        if placeholder.pieces(text).any(|piece| matches!(piece, PlaceholderPiece::Index(_))) {
+            for piece in placeholder.pieces(text) {
+                match piece {
+                    PlaceholderPiece::Text(text) => {
+                        if !text.is_empty() {
+                            out.push(FormatElement::text(text, indent_width));
                         }
-                    } else {
-                        let expression = part
-                            .parse::<usize>()
-                            .ok()
-                            .and_then(|index| formatted_expressions.get(index))
-                            .expect(
-                                "placeholder indices were validated before expression formatting",
-                            );
-                        out.push(expression.clone());
+                    }
+                    PlaceholderPiece::Index(index) => {
+                        out.push(formatted_expressions[index].clone());
                     }
                 }
-                return true;
             }
+            return true;
         }
         // No placeholder to substitute; push the escaped text if escaping changed it
         let Some(text) = escaped else { return false };
@@ -215,107 +205,5 @@ fn write_html_template<'a>(
         let leading = if has_leading_ws { " " } else { "" };
         let trailing = if has_trailing_ws { " " } else { "" };
         write!(f, [group(&format_args!("`", leading, group(content), trailing, "`"))]);
-    }
-}
-
-/// Check that placeholders appear in index order starting at `*next`, one occurrence each.
-///
-/// `BestFitting` alternatives describe the same logical content,
-/// so every variant must contain the same index sequence and contributes it only once to its parent sequence.
-/// On success `*next` is one past the last index seen; the caller checks it against the expression count.
-fn placeholders_are_sequential(ir: &[FormatElement<'_>], prefix: &str, next: &mut usize) -> bool {
-    for element in ir {
-        match element {
-            FormatElement::Text { text, .. } => {
-                if super::find_ignore_ascii_case(text, prefix).is_none() {
-                    continue;
-                }
-                let parts = super::split_on_placeholders(text, prefix, HTML_PLACEHOLDER_SUFFIX);
-                for part in parts.iter().skip(1).step_by(2) {
-                    if !part.parse::<usize>().is_ok_and(|index| index == *next) {
-                        return false;
-                    }
-                    *next += 1;
-                }
-            }
-            FormatElement::BestFitting(best_fitting) => {
-                let start = *next;
-                let mut variants = best_fitting.variants().iter();
-                let Some(first) = variants.next() else { return false };
-                if !placeholders_are_sequential(first, prefix, next) {
-                    return false;
-                }
-                for variant in variants {
-                    let mut variant_next = start;
-                    if !placeholders_are_sequential(variant, prefix, &mut variant_next)
-                        || variant_next != *next
-                    {
-                        return false;
-                    }
-                }
-            }
-            FormatElement::Interned(interned)
-                if !placeholders_are_sequential(interned, prefix, next) =>
-            {
-                return false;
-            }
-            _ => {}
-        }
-    }
-    true
-}
-
-#[cfg(test)]
-mod tests {
-    use oxc_allocator::{Allocator, ArenaVec};
-    use oxc_formatter_core::{BestFittingElement, FormatElement, IndentWidth};
-
-    use super::placeholders_are_sequential;
-
-    fn text(text: &'static str) -> FormatElement<'static> {
-        FormatElement::text(text, IndentWidth::default())
-    }
-
-    fn best_fitting<'a>(
-        allocator: &'a Allocator,
-        first: FormatElement<'a>,
-        second: FormatElement<'a>,
-    ) -> FormatElement<'a> {
-        let first = ArenaVec::from_array_in([first], &allocator).into_arena_slice();
-        let second = ArenaVec::from_array_in([second], &allocator).into_arena_slice();
-        let variants = ArenaVec::from_array_in([first as &[_], second as &[_]], &allocator);
-        // SAFETY: The helper always constructs exactly two variants
-        FormatElement::BestFitting(unsafe { BestFittingElement::from_vec_unchecked(variants) })
-    }
-
-    #[test]
-    fn placeholder_indices_count_best_fitting_variants_once() {
-        let allocator = Allocator::default();
-        let element = best_fitting(
-            &allocator,
-            text("aPRETTIER_HTML_PLACEHOLDER_0_0_IN_JSbPRETTIER_HTML_PLACEHOLDER_0_1_IN_JSc"),
-            text("PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS PRETTIER_HTML_PLACEHOLDER_0_1_IN_JS"),
-        );
-
-        let mut next = 0;
-        assert!(placeholders_are_sequential(&[element], "PRETTIER_HTML_PLACEHOLDER_0_", &mut next));
-        assert_eq!(next, 2);
-    }
-
-    #[test]
-    fn placeholder_indices_reject_different_best_fitting_variants() {
-        let allocator = Allocator::default();
-        let element = best_fitting(
-            &allocator,
-            text("PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS"),
-            text("PRETTIER_HTML_PLACEHOLDER_0_1_IN_JS"),
-        );
-
-        let mut next = 0;
-        assert!(!placeholders_are_sequential(
-            &[element],
-            "PRETTIER_HTML_PLACEHOLDER_0_",
-            &mut next
-        ));
     }
 }

@@ -113,6 +113,8 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - `DispatchResponse::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
   - Optional-embed callers degrade the same way for both, but never conflate them at the source
   - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
+- A host that puts stand-ins for its own parts in the code it dispatches (css-in-js's `${}`, Angular's nested pipes) uses `Placeholder` (`session/placeholder.rs`):
+  core owns its grammar (`{prefix}{index}{suffix}`, found in the child's IR, in order), the host its affixes and the substitution (`map_text_in_ir`)
 
 ## What belongs in core (the boundary)
 
@@ -138,6 +140,7 @@ Output targets Prettier compatibility, but the domain is defined by what it is, 
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
+The embedded-IR helpers there (`map_text_in_ir`, `Placeholder`) are the same kind: mechanical rewrites and a placeholder grammar any host uses, which name no language.
 `string_embedder` additionally carries an exit criterion: it is removed when the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half; html, the other half, has an IR-capable formatter now); until then it is the string-out channel's transport.
 
 - (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
