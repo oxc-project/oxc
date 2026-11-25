@@ -382,3 +382,26 @@ fn document_updates_do_not_wait_for_a_starting_process() {
     // Both reached the process once it ran, before the request.
     assert_eq!(fixture.frame_types(), vec![HELLO, DID_OPEN, FILES_CHANGED, LINT]);
 }
+
+#[test]
+fn stop_cancels_a_pending_request() {
+    let Some(fixture) = Fixture::new(&json!({ "lint": "hold" })) else { return };
+    let server = Arc::new(fixture.server());
+    let file = fixture.file("index.ts");
+
+    let (sender, result) = mpsc::channel();
+    {
+        let server = Arc::clone(&server);
+        std::thread::spawn(move || sender.send(lint(&server, &file)));
+    }
+    fixture.wait_for_frame(LINT);
+    let pid = fixture.events()[0]["pid"].as_u64().expect("no pid in the start event");
+
+    server.stop();
+
+    // The process is down although the request still holds it, and the request is canceled.
+    assert!(!is_running(pid), "the process {pid} is still running");
+    let result = result.recv_timeout(WAIT_TIMEOUT).expect("the request did not end");
+    assert!(matches!(result, Err(LintError::Canceled)), "{result:?}");
+    assert_eq!(fixture.messages(SHUTDOWN), vec![json!({})]);
+}

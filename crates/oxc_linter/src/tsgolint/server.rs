@@ -18,7 +18,7 @@
 //! canceled: the server stops it and answers with a canceled error.
 //!
 //! [`TsrsLintServer::stop`] (or dropping the last reference) asks the process to shut down, and
-//! kills it if it has not exited within [`SHUTDOWN_TIMEOUT`].
+//! kills it if it has not exited within [`SHUTDOWN_TIMEOUT`]. Its pending requests are canceled.
 //!
 //! Changes on disk are collected and sent as one `FilesChanged` frame before the next frame, so a
 //! burst of watcher events (an install, a build) reaches the process as one batch.
@@ -233,15 +233,16 @@ impl Connection {
     }
 }
 
-impl Drop for Connection {
-    /// Asks the process to shut down, and kills it if it does not exit in time.
-    fn drop(&mut self) {
+impl Connection {
+    /// Asks the process to shut down, and kills it if it does not exit in time. Its pending
+    /// requests end as canceled.
+    fn shut_down(&self) {
         self.stopping.store(true, Ordering::Release);
         if self.is_alive() {
             debug!("asking tsrs-lint server (pid {}) to shut down", self.pid);
             let _ = self.send(SHUTDOWN, &serde_json::json!({}));
         }
-        let child = self.child.get_mut().expect("tsrs-lint child mutex poisoned");
+        let mut child = self.child.lock().expect("tsrs-lint child mutex poisoned");
         let deadline = Instant::now() + SHUTDOWN_TIMEOUT;
         while Instant::now() < deadline {
             match child.try_wait() {
@@ -260,6 +261,12 @@ impl Drop for Connection {
         );
         let _ = child.kill();
         let _ = child.wait();
+    }
+}
+
+impl Drop for Connection {
+    fn drop(&mut self) {
+        self.shut_down();
     }
 }
 
@@ -362,18 +369,25 @@ impl TsrsLintServer {
         &self.executable_path
     }
 
-    /// Shuts the process down, and does not start another one. Pending requests end with an
-    /// error.
+    /// Shuts the process down, and does not start another one. Pending requests end as
+    /// canceled: their results are no longer shown.
     ///
     /// # Panics
     /// Panics if an internal mutex is poisoned.
     pub fn stop(&self) {
-        let mut connection = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
-        info!("stopping tsrs-lint server for `{}`", self.cwd.display());
-        *self.disabled.lock().expect("tsrs-lint disabled mutex poisoned") =
-            Some("tsrs-lint server was stopped".to_string());
-        // Dropping the connection shuts the process down.
-        connection.take();
+        let connection = {
+            let mut connection =
+                self.connection.lock().expect("tsrs-lint connection mutex poisoned");
+            info!("stopping tsrs-lint server for `{}`", self.cwd.display());
+            *self.disabled.lock().expect("tsrs-lint disabled mutex poisoned") =
+                Some("tsrs-lint server was stopped".to_string());
+            connection.take()
+        };
+        // A pending request holds the connection too: shut the process down now, not when the
+        // last reference is dropped.
+        if let Some(connection) = connection {
+            connection.shut_down();
+        }
     }
 
     /// Whether the server is not started again: its executable cannot serve this client, its
@@ -721,7 +735,7 @@ impl TsrsLintServer {
             std::thread::Builder::new()
                 .name("tsrs-lint-reader".into())
                 .spawn(move || {
-                    let exit_error = read_loop(stdout, &pending, &alive, &hello_sender);
+                    let exit_error = read_loop(stdout, &pending, &alive, &stopping, &hello_sender);
                     if stopping.load(Ordering::Acquire) {
                         debug!("tsrs-lint server (pid {pid}) stopped: {exit_error}");
                     } else {
@@ -777,6 +791,7 @@ fn read_loop(
     stdout: ChildStdout,
     pending: &Pending,
     alive: &AtomicBool,
+    stopping: &AtomicBool,
     hello: &mpsc::Sender<HelloPayload>,
 ) -> String {
     let mut reader = BufReader::new(stdout);
@@ -827,8 +842,11 @@ fn read_loop(
     alive.store(false, Ordering::Release);
     let waiting: Vec<_> =
         pending.lock().expect("tsrs-lint pending mutex poisoned").drain().collect();
+    // The requests of a process asked to shut down are canceled: their results are not shown.
+    let stopped = stopping.load(Ordering::Acquire);
     for (_, request) in waiting {
-        let _ = request.sender.send(Event::Error(exit_error.clone()));
+        let event = if stopped { Event::Canceled } else { Event::Error(exit_error.clone()) };
+        let _ = request.sender.send(event);
     }
     exit_error
 }
