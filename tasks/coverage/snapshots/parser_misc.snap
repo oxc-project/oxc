@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 171/171 (100.00%)
 Positive Passed: 171/171 (100.00%)
-Negative Passed: 304/304 (100.00%)
+Negative Passed: 305/305 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -328,6 +328,14 @@ Negative Passed: 304/304 (100.00%)
  3 │ class B { accessor static
    ·                    ──────
  4 │  x }
+   ╰────
+
+  × Classes may not have a static property named 'prototype'
+   ╭─[misc/fail/auto-accessor-static-prototype-ambient.ts:2:19]
+ 1 │ declare class C {
+ 2 │   static accessor prototype: number;
+   ·                   ─────────
+ 3 │ }
    ╰────
 
   × Classes may not have a static property named 'prototype'

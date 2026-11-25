@@ -705,10 +705,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if name == "constructor" {
                     self.error(diagnostics::constructor_accessor(span));
                 }
-                if name == "prototype"
-                    && modifiers.contains(ModifierKind::Static)
-                    && !self.ctx.has_ambient()
-                {
+                if name == "prototype" && modifiers.contains(ModifierKind::Static) {
                     self.error(diagnostics::static_prototype(span));
                 }
             }
