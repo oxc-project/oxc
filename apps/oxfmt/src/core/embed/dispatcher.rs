@@ -409,6 +409,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         layout,
         tailwind_classes: false,
         ends_at_double_brace: false,
+        ends_before_brace: false,
         reads_as_statements: false,
         in_parens: false,
     };
@@ -450,9 +451,12 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
     }
     if let Some(&part) = request.parent_context_as::<JsInAngularTemplate>() {
         let root = match part {
-            JsInAngularTemplate::Interpolation | JsInAngularTemplate::ValueInterpolation => {
-                ExpressionRoot { ends_at_double_brace: true, ..expression(ExpressionLayout::Bare) }
-            }
+            JsInAngularTemplate::Interpolation { before_brace }
+            | JsInAngularTemplate::ValueInterpolation { before_brace } => ExpressionRoot {
+                ends_at_double_brace: true,
+                ends_before_brace: before_brace,
+                ..expression(ExpressionLayout::Bare)
+            },
             JsInAngularTemplate::Binding { tailwind_classes } => ExpressionRoot {
                 tailwind_classes,
                 ..expression(ExpressionLayout::Hug { literals: true })
