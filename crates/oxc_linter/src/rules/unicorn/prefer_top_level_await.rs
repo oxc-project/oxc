@@ -7,7 +7,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
+    AstNode,
+    ast_util::{is_method_call, iter_outer_expressions, variable_declaration_kind},
+    context::LintContext,
     rule::Rule,
 };
 
@@ -85,6 +87,14 @@ impl Rule for PreferTopLevelAwait {
                 )
             })
         {
+            return;
+        }
+
+        if matches!(
+            iter_outer_expressions(ctx.nodes(), node.id())
+                .find(|kind| !matches!(kind, AstKind::ChainExpression(_))),
+            Some(AstKind::VariableDeclarator(_))
+        ) {
             return;
         }
 
@@ -194,6 +204,18 @@ fn test() {
     use std::path::PathBuf;
 
     let pass = vec![
+        ("export const promised = Promise.resolve(1).catch(() => 0);", None, None, None),
+        ("let promised = promise.then(onFulfilled);", None, None, None),
+        ("var promised = (promise.finally(onFinally));", None, None, None),
+        ("const promised = promise?.catch?.(onRejected);", None, None, None),
+        ("const promised = (async () => {})();", None, None, None),
+        ("async function run() {} const promised = run();", None, None, None),
+        (
+            "const promised = (promise?.catch(onRejected) as Promise<number>)!;",
+            None,
+            None,
+            Some(PathBuf::from("test.mts")),
+        ),
         ("a()", None, None, None),
         ("a = async () => {}", None, None, None),
         ("(async function *() {})()", None, None, None),
