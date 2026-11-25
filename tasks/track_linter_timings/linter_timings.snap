@@ -260,6 +260,7 @@ jsdoc/require-property-type                             |      7
 jsdoc/require-returns                                   |      7
 jsdoc/require-returns-description                       |  16812
 jsdoc/require-returns-type                              |  16812
+jsdoc/require-template-description                      |      7
 jsdoc/require-throws-description                        |      7
 jsdoc/require-throws-type                               |      7
 jsdoc/require-yields                                    |  14339
