@@ -174,15 +174,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Insert `- `
 
-  ⚠ jsdoc(require-hyphen-before-param-description): There must be a hyphen before @param description.
-   ╭─[require_hyphen_before_param_description.tsx:3:25]
- 2 │           /**
- 3 │            * @param foo Foo.
-   ·                         ────
- 4 │            * @returns {SomeType} - A description.
-   ╰────
-  help: Insert `- `
-
   ⚠ jsdoc(require-hyphen-before-param-description): There must be no hyphen before @returns description.
    ╭─[require_hyphen_before_param_description.tsx:4:34]
  3 │            * @param foo Foo.
@@ -191,6 +182,86 @@ source: crates/oxc_linter/src/tester.rs
  5 │            */
    ╰────
   help: Delete this code.
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be no hyphen before @returns description.
+   ╭─[require_hyphen_before_param_description.tsx:4:34]
+ 3 │            * @param foo - Foo.
+ 4 │            * @returns {SomeType} - A description.
+   ·                                  ─
+ 5 │            */
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be no hyphen before @returns description.
+   ╭─[require_hyphen_before_param_description.tsx:2:13]
+ 1 │ /**
+ 2 │  * @returns - R
+   ·             ─
+ 3 │  * @param a A
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be a hyphen before @param description.
+   ╭─[require_hyphen_before_param_description.tsx:3:13]
+ 2 │  * @returns - R
+ 3 │  * @param a A
+   ·             ─
+ 4 │  * @param b B
+   ╰────
+  help: Insert `- `
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be a hyphen before @param description.
+   ╭─[require_hyphen_before_param_description.tsx:4:13]
+ 3 │  * @param a A
+ 4 │  * @param b B
+   ·             ─
+ 5 │  */
+   ╰────
+  help: Insert `- `
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be a hyphen before @property description.
+   ╭─[require_hyphen_before_param_description.tsx:2:16]
+ 1 │ /**
+ 2 │  * @property a A
+   ·                ─
+ 3 │  * @returns - R
+   ╰────
+  help: Insert `- `
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be no hyphen before @returns description.
+   ╭─[require_hyphen_before_param_description.tsx:3:13]
+ 2 │  * @property a A
+ 3 │  * @returns - R
+   ·             ─
+ 4 │  */
+   ╰────
+  help: Delete this code.
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be a hyphen before @param description.
+   ╭─[require_hyphen_before_param_description.tsx:2:13]
+ 1 │ /**
+ 2 │  * @param a A
+   ·             ─
+ 3 │  * @param b B
+   ╰────
+  help: Insert `- `
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be a hyphen before @param description.
+   ╭─[require_hyphen_before_param_description.tsx:3:13]
+ 2 │  * @param a A
+ 3 │  * @param b B
+   ·             ─
+ 4 │  */
+   ╰────
+  help: Insert `- `
+
+  ⚠ jsdoc(require-hyphen-before-param-description): There must be a hyphen before @param description.
+   ╭─[require_hyphen_before_param_description.tsx:5:14]
+ 4 │  */
+ 5 │ /** @param c C */
+   ·              ─
+   ╰────
+  help: Insert `- `
 
   ⚠ jsdoc(require-hyphen-before-param-description): There must be no hyphen before @returns description.
     ╭─[require_hyphen_before_param_description.tsx:10:59]

@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use oxc_ast::ast::CommentContent;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -5,7 +6,6 @@ use oxc_semantic::{JSDoc, JSDocTag};
 use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use std::collections::BTreeMap;
 
 use crate::{
     context::LintContext,
@@ -32,7 +32,7 @@ struct HyphenTagOptions {
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(untagged)]
 enum HyphenTags {
-    Overrides(BTreeMap<String, AlwaysNever>),
+    Overrides(IndexMap<String, AlwaysNever>),
     Legacy(HyphenTagKeyword),
 }
 
@@ -105,22 +105,24 @@ impl Rule for RequireHyphenBeforeParamDescription {
             {
                 continue;
             }
+            let mut issues = Vec::new();
             for (index, tag) in jsdoc.tags().iter().enumerate() {
                 let name = tag.kind.parsed();
-                let mode = if name == param {
-                    &self.0.0
+                let (order, wildcard, mode) = if name == param {
+                    (0, false, &self.0.0)
                 } else if let Some(tags) = overrides
                     && settings.preferred_tag_name(name) == name
-                    && let Some(mode) = tags
-                        .get(name)
+                    && let Some((order, key, mode)) = tags
+                        .get_full(name)
                         .or_else(|| {
-                            tags.iter().find_map(|(key, mode)| {
-                                (settings.preferred_tag_name(key) == name).then_some(mode)
+                            tags.iter().enumerate().find_map(|(order, (key, mode))| {
+                                (settings.preferred_tag_name(key) == name)
+                                    .then_some((order, key, mode))
                             })
                         })
-                        .or_else(|| tags.get("*"))
+                        .or_else(|| tags.get_full("*"))
                 {
-                    mode
+                    (order + 1, key == "*", mode)
                 } else {
                     continue;
                 };
@@ -134,7 +136,35 @@ impl Rule for RequireHyphenBeforeParamDescription {
                     }
                     continue;
                 }
-                check_hyphen(tag, mode, ctx);
+                if let Some(issue) = check_hyphen(tag, mode, ctx) {
+                    // The wildcard visits each tag name in the order it first appears.
+                    let group = if wildcard {
+                        jsdoc.tags()[..index]
+                            .iter()
+                            .position(|tag| tag.kind.parsed() == name)
+                            .unwrap_or(index)
+                    } else {
+                        0
+                    };
+                    issues.push(((order, group, index), issue));
+                }
+            }
+            let Some(&(first, _)) = issues.first() else { continue };
+            // ESLint applies the first report in source order. Its block replacement includes
+            // edits visited up to that report: parameters first, followed by configured tags.
+            // Overlap later edits with that pass while keeping each diagnostic individually fixable.
+            let mut issues = issues.into_iter();
+            while let Some((_, issue)) = issues.next() {
+                let remaining = issues.as_slice();
+                let deferred = remaining
+                    .iter()
+                    .position(|(order, _)| *order <= first)
+                    .unwrap_or(remaining.len());
+                let through = remaining[..deferred].last().map(|(_, issue)| issue.edit.start);
+                issue.report(ctx, through);
+                for (_, issue) in issues.by_ref().take(deferred) {
+                    issue.report(ctx, None);
+                }
             }
         }
     }
@@ -243,11 +273,33 @@ fn description<'a>(tag: &JSDocTag, ctx: &LintContext<'a>) -> Option<(&'a str, bo
     Some((&name_and_description[name_len..], name_len > 0))
 }
 
-fn check_hyphen(tag: &JSDocTag, mode: &AlwaysNever, ctx: &LintContext) {
-    let Some((after_name, has_name)) = description(tag, ctx) else { return };
+struct HyphenIssue {
+    diagnostic: OxcDiagnostic,
+    edit: Span,
+}
+
+impl HyphenIssue {
+    fn report(self, ctx: &LintContext, through: Option<u32>) {
+        ctx.diagnostic_with_fix(self.diagnostic, |fixer| {
+            let mut fix = if self.edit.is_empty() {
+                fixer.insert_text_before_range(self.edit, "- ")
+            } else {
+                fixer.delete_range(self.edit)
+            };
+            if let Some(end) = through {
+                // Extend the fix range without modifying the intervening text.
+                fix.push(fixer.delete_range(Span::empty(end)));
+            }
+            fix
+        });
+    }
+}
+
+fn check_hyphen(tag: &JSDocTag, mode: &AlwaysNever, ctx: &LintContext) -> Option<HyphenIssue> {
+    let (after_name, has_name) = description(tag, ctx)?;
     let text = first_content(after_name);
     if text.is_empty() {
-        return;
+        return None;
     }
     let before = &after_name[..after_name.len() - text.len()];
     let start = tag.span.end - u32::try_from(text.len()).unwrap();
@@ -259,7 +311,7 @@ fn check_hyphen(tag: &JSDocTag, mode: &AlwaysNever, ctx: &LintContext) {
         .is_some_and(|rest| rest.contains('\n') || !first_content(&text[1..]).is_empty());
     if let Some(rest) = text.strip_prefix('-') {
         if *mode == AlwaysNever::Always && !hyphen_newline {
-            return;
+            return None;
         }
         let end = rest.find(['\n', '\r']).unwrap_or(rest.len());
         let spaces = end - rest[..end].trim_start().len();
@@ -275,14 +327,16 @@ fn check_hyphen(tag: &JSDocTag, mode: &AlwaysNever, ctx: &LintContext) {
         };
         let edit = Span::new(remove_start, start + 1 + u32::try_from(spaces).unwrap());
         let diagnostic = OxcDiagnostic::warn(message).with_label(Span::sized(start, 1));
-        ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete_range(edit));
+        Some(HyphenIssue { diagnostic, edit })
     } else if *mode == AlwaysNever::Always && !(has_name && before.contains('\n')) {
         let word_len = text.find(char::is_whitespace).unwrap_or(text.len());
         let label = Span::sized(start, u32::try_from(word_len).unwrap());
         let diagnostic =
             OxcDiagnostic::warn(format!("There must be a hyphen before @{name} description."))
                 .with_label(label);
-        ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.insert_text_before_range(label, "- "));
+        Some(HyphenIssue { diagnostic, edit: Span::empty(start) })
+    } else {
+        None
     }
 }
 #[test]
@@ -644,10 +698,26 @@ fn test() {
             Some(json!(["never", {"tags": {"property": "never"}}])),
             None,
         ),
-        // eslint-plugin-jsdoc replaces the whole block, so its first pass only applies
-        // the parameter fix. Oxlint can apply both non-overlapping edits in a single pass.
-        (two_tags, param_fixed, None, None),
-        (two_tags, both_fixed, Some(json!(["always", {"tags": {"returns": "never"}}])), None),
+        (two_tags, param_fixed, Some(json!(["always", {"tags": {"returns": "never"}}])), None),
+        (param_fixed, both_fixed, Some(json!(["always", {"tags": {"returns": "never"}}])), None),
+        (
+            "/**\n * @returns - R\n * @param a A\n * @param b B\n */",
+            "/**\n * @returns R\n * @param a - A\n * @param b - B\n */",
+            Some(json!(["always", {"tags": {"returns": "never"}}])),
+            None,
+        ),
+        (
+            "/**\n * @property a A\n * @returns - R\n */",
+            "/**\n * @property a - A\n * @returns R\n */",
+            Some(json!(["always", {"tags": {"returns": "never", "property": "always"}}])),
+            None,
+        ),
+        (
+            "/**\n * @param a A\n * @param b B\n */\n/** @param c C */",
+            "/**\n * @param a - A\n * @param b B\n */\n/** @param c - C */",
+            None,
+            None,
+        ),
         (
             "
       /**
