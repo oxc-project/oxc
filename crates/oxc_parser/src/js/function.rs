@@ -11,7 +11,7 @@ use crate::{
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {
-        matches!(self, Self::Declaration)
+        matches!(self, Self::Declaration | Self::TSDeclaration)
     }
 
     pub(crate) fn is_expression(self) -> bool {
@@ -623,7 +623,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             if func_kind.is_id_required() {
                 match self.cur_kind() {
-                    Kind::LParen => {
+                    Kind::LParen | Kind::LAngle => {
                         self.error(diagnostics::expect_function_name(self.cur_token().span()));
                     }
                     kind if kind.is_reserved_keyword() => self.expect_without_advance(Kind::Ident),
