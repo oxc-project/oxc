@@ -16,6 +16,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @namespace /* c */ svg "http://a  b";
 @namespace /* it's */ svg "http://a  b";
 @namespace /* c */ svg "a  /* b */  c";
+@namespace /* c */  svg
+  "x";
 @keyframes /* a  b */ foo {
   from {
     color: red;
@@ -35,12 +37,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   }
 }
 
-/* The string params print as written, `@namespace`'s collapse */
-@keyframes /* c */  foo {
-}
-@keyframes /* c */
-  foo {
-}
+/* The string params print as written */
 @font-feature-values /* c */ Font  One {
   @styleset {
     nice-style: 12;
@@ -53,8 +50,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   syntax: "*";
   inherits: false;
 }
-@namespace /* c */  svg
-  "x";
 
 ==================== Output ====================
 ------------------
@@ -74,6 +69,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @namespace /* c */ svg "http://a  b";
 @namespace /* it's */ svg "http://a  b";
 @namespace /* c */ svg "a  /* b */  c";
+@namespace /* c */ svg "x";
 @keyframes /* a  b */ foo {
   from {
     color: red;
@@ -93,12 +89,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   }
 }
 
-/* The string params print as written, `@namespace`'s collapse */
-@keyframes /* c */  foo {
-}
-@keyframes /* c */
-  foo {
-}
+/* The string params print as written */
 @font-feature-values /* c */ Font  One {
   @styleset {
     nice-style: 12;
@@ -111,7 +102,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   syntax: "*";
   inherits: false;
 }
-@namespace /* c */ svg "x";
 
 -------------------
 { printWidth: 100 }
@@ -130,6 +120,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @namespace /* c */ svg "http://a  b";
 @namespace /* it's */ svg "http://a  b";
 @namespace /* c */ svg "a  /* b */  c";
+@namespace /* c */ svg "x";
 @keyframes /* a  b */ foo {
   from {
     color: red;
@@ -149,12 +140,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   }
 }
 
-/* The string params print as written, `@namespace`'s collapse */
-@keyframes /* c */  foo {
-}
-@keyframes /* c */
-  foo {
-}
+/* The string params print as written */
 @font-feature-values /* c */ Font  One {
   @styleset {
     nice-style: 12;
@@ -167,6 +153,5 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   syntax: "*";
   inherits: false;
 }
-@namespace /* c */ svg "x";
 
 ===================== End =====================
