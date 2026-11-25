@@ -256,7 +256,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ) {
             parser.verify_modifiers(
                 modifiers,
-                ModifierKinds::all_except([ModifierKind::Export]),
+                ModifierKinds::all_except([ModifierKind::Export, ModifierKind::Default]),
                 false,
                 diagnostics::cannot_appear_on_class_elements,
             );
@@ -466,9 +466,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModifierKind::Static,
                 ModifierKind::Abstract,
                 ModifierKind::Override,
+                // `default` is already rejected on every class element.
+                ModifierKind::Default,
             ]),
             true,
-            diagnostics::accessor_modifier,
+            |modifier, allowed| {
+                diagnostics::accessor_modifier(
+                    modifier,
+                    allowed.map(|allowed| allowed.without(ModifierKind::Default)),
+                )
+            },
         );
         if let Some(definite_token_start) = definite
             && !modifiers.contains(ModifierKind::Declare)
