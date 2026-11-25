@@ -932,10 +932,10 @@ Code naming a JS reserved word prints as written: Angular reads it as a name (it
 `@for`'s `let` aliases format, as its other parameters do.
 Prettier prints them as written.
 
-## js-in-angular-for-params-as-written
+## js-in-angular-unread-code-as-written
 
 - Why: uniform-rule (code Angular's compiler does not read prints as written)
-- Pin: `conformance/fixtures/js-in-angular/for-params-as-written.component.html`
+- Pin: `conformance/fixtures/js-in-angular/unread-code-as-written.component.html`
 - Conformance:
   - `externals/prettier/angular/control-flow/for.html`
 
@@ -948,6 +948,7 @@ Prettier prints them as written.
 @for (let   item of items;index as i) {
   x
 }
+@let = 1;
 
 <!-- ours -->
 <p>{{   a  b   }}</p>
@@ -957,6 +958,7 @@ Prettier prints them as written.
 @for (let   item of items; index as i) {
   x
 }
+@let = 1;
 
 <!-- prettier -->
 <p>{{   a  b   }}</p>
@@ -966,9 +968,10 @@ Prettier prints them as written.
 @for (let item of items; index as i) {
   x
 }
+@let  = 1;
 ```
 
-A block's parameters Angular's compiler does not read print as written, each trimmed, as a `{{ }}` it does not read prints as written, in Prettier too.
+A block's parameters Angular's compiler does not read print as written, each trimmed, and a `@let` it does not read (no name), as a `{{ }}` it does not read prints as written, in Prettier too.
 `@for (let item of items)` is an `*ngFor`'s value, not `@for`'s parameters (`item of items`, `track …`, `let a = $index`).
 Prettier reads such a `@for`'s as an `*ngFor`'s value, and an `@if`'s in a way of its own (`a; b`).
 
@@ -1057,27 +1060,27 @@ A key in a structural directive's value (`*ngIf`, `*ngFor`) keeps its spelling, 
 What follows it prints as Prettier prints it (the `:`).
 Prettier prints the name Angular reads from it, quoted where it is no identifier.
 
-## js-in-angular-let-head-as-written
+## js-in-angular-let-comment-as-written
 
-- Why: uniform-rule (same construct, same output: a block's parameters)
-- Pin: `conformance/fixtures/js-in-angular/embedded-off/let-head-as-written.component.html`
-- Conformance:
-  - `externals/prettier/angular/let-declaration/minor-options/snippet: #0`
+- Why: semantics (Angular ends `@let` at its `;`, and reads what follows as text)
+- Pin: `conformance/fixtures/js-in-angular/let-comment-as-written.component.html`
 
 ```html
-<!-- input (embeddedLanguageFormatting: off) -->
-@let    foo     =  'Hello'   + ', World';
+<!-- input -->
+@let bar = a // c
+;
 
 <!-- ours -->
-@let    foo     =  'Hello'   + ', World';
+@let bar = a // c
+;
 
 <!-- prettier -->
-@let foo = 'Hello'   + ', World';
+@let bar =
+  a; // c
 ```
 
-A `@let` whose value does not format (`embeddedLanguageFormatting: off`, or code that fails) prints as written, its name and `=` too,
-as a block's parameters print as written around code that does not format.
-Prettier formats around the value as written.
+A `@let` whose value ends in a comment prints its value as written up to the `;`, the line break that ends the comment too; its name and `=` format.
+Prettier prints the comment after the `;`, outside the declaration, where Angular reads `// c` as text, rendered in the page.
 
 ## js-in-angular-tailwind-bind-class
 

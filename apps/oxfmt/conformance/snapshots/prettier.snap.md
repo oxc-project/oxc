@@ -584,7 +584,7 @@
 
 ## angular-html
 
-82/128 (64.06%)
+83/128 (64.84%)
 
 ### Failed
 
@@ -613,7 +613,7 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
 - externals/prettier/angular/control-flow/for.html (💥, 88.89%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
-  - apps/oxfmt/DIVERGENCES.md#js-in-angular-for-params-as-written
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-unread-code-as-written
 - externals/prettier/angular/control-flow/ignore.html (💥, 89.66%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-ignored-block-chain
 - externals/prettier/angular/control-flow/multiple-switch-cases.html (💥, 98.31%)
@@ -634,10 +634,8 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
 - externals/prettier/angular/icu-expression/combination-01.html (💥, 25.00%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
-- externals/prettier/angular/let-declaration/complex.html (💥, 95.56%)
+- externals/prettier/angular/let-declaration/complex.html (💥, 96.70%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-written
-- externals/prettier/angular/let-declaration/minor-options/snippet: #0 (💥✨, 50.00%)
-  - apps/oxfmt/DIVERGENCES.md#js-in-angular-let-head-as-written
 - externals/prettier/angular/template-literal/template-literal.html (💥, 88.89%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
 - externals/prettier/angular/trailing-comma/trailing-comma.html (💥💥💥, 92.78%)
