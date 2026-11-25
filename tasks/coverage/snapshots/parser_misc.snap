@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 174/174 (100.00%)
-Positive Passed: 174/174 (100.00%)
-Negative Passed: 318/318 (100.00%)
+AST Parsed     : 175/175 (100.00%)
+Positive Passed: 175/175 (100.00%)
+Negative Passed: 320/320 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -1882,6 +1882,20 @@ Negative Passed: 318/318 (100.00%)
    ·                        ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Expected `}` but found `,`
+   ╭─[misc/fail/jsx-spread-attribute-unparenthesized-comma.jsx:1:9]
+ 1 │ <X {...a, b} />;
+   ·         ┬
+   ·         ╰── `}` expected
+   ╰────
+
+  × Expected `}` but found `,`
+   ╭─[misc/fail/jsx-spread-attribute-unparenthesized-comma.tsx:1:9]
+ 1 │ <X {...a, b} />;
+   ·         ┬
+   ·         ╰── `}` expected
+   ╰────
 
   × TS(18007): JSX expressions may not use the comma operator
    ╭─[misc/fail/jsx-unparenthesized-comma.jsx:1:5]
