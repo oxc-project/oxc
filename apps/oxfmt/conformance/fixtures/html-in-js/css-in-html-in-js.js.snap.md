@@ -10,6 +10,13 @@ function d(color) {
 	return /* HTML */ `<style>.dynamic { color: ${color}; }</style><p style="color: ${color};">${color}</p>`;
 }
 
+// An escaped newline in an attribute selector's value (its `\` re-escaped) breaks no selector, as in a CSS file
+const continued = html`<style>
+  div span[foo="a long long long long long long long long\\
+long long long long attribute value"] {
+  }
+</style>`;
+
 `````
 
 # Output
@@ -39,6 +46,13 @@ function d(color) {
     </style>
     <p style="color: ${color};">${color}</p>`;
 }
+
+// An escaped newline in an attribute selector's value (its `\` re-escaped) breaks no selector, as in a CSS file
+const continued = html`<style>
+  div span[foo="a long long long long long long long long\\
+long long long long attribute value"] {
+  }
+</style>`;
 
 `````
 
@@ -71,5 +85,14 @@ function d(color) {
     <p style="color: ${color};">${color}</p>
   `;
 }
+
+// An escaped newline in an attribute selector's value (its `\` re-escaped) breaks no selector, as in a CSS file
+const continued = html`
+  <style>
+    div span[foo="a long long long long long long long long\\
+long long long long attribute value"] {
+    }
+  </style>
+`;
 
 `````
