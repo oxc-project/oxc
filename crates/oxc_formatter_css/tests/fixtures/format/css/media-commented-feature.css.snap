@@ -1,0 +1,73 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A comment in the params: a token opening with `(` prints as `(feature: value)`, any other as written */
+@media /* c */ (foo:'a') {
+}
+@media /* c */ (min-width:100px) and (foo : 'a'), print and (MIN-WIDTH: 100.0PX) {
+}
+@media /* c */ (foo: a   b) and (bar:/* d */'b') and (baz: 'a"b') {
+}
+@media /* c */ (400PX <= WIDTH) and (HOVER) {
+}
+@media /* c */ (min-width:
+    100px) {
+}
+@media all and/* c */(max-width:1024px) {
+}
+@media /* c */ screen and/* d */(foo:'a') {
+}
+
+/* DIVERGENCES.md#media-feature-comment-case */
+@media (/* A */ COLOR) {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A comment in the params: a token opening with `(` prints as `(feature: value)`, any other as written */
+@media /* c */ (foo: "a") {
+}
+@media /* c */ (min-width: 100px) and (foo: "a"), print and (min-width: 100px) {
+}
+@media /* c */ (foo: a   b) and (bar: /* d */"b") and (baz: 'a"b') {
+}
+@media /* c */ (400px <= width) and (hover) {
+}
+@media /* c */ (min-width: 100px) {
+}
+@media all and/* c */(max-width:1024px) {
+}
+@media /* c */ screen and/* d */(foo:'a') {
+}
+
+/* DIVERGENCES.md#media-feature-comment-case */
+@media (/* A */ color) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A comment in the params: a token opening with `(` prints as `(feature: value)`, any other as written */
+@media /* c */ (foo: "a") {
+}
+@media /* c */ (min-width: 100px) and (foo: "a"), print and (min-width: 100px) {
+}
+@media /* c */ (foo: a   b) and (bar: /* d */"b") and (baz: 'a"b') {
+}
+@media /* c */ (400px <= width) and (hover) {
+}
+@media /* c */ (min-width: 100px) {
+}
+@media all and/* c */(max-width:1024px) {
+}
+@media /* c */ screen and/* d */(foo:'a') {
+}
+
+/* DIVERGENCES.md#media-feature-comment-case */
+@media (/* A */ color) {
+}
+
+===================== End =====================

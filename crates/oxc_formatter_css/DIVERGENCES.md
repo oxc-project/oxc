@@ -1550,6 +1550,27 @@ Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may
 So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
 Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.
 
+## media-feature-comment-case
+
+- Why: invariant
+- Pin: `tests/fixtures/format/css/media-commented-feature.css`
+
+```css
+/* input */
+@media (/* A */ COLOR) {}
+
+/* ours */
+@media (/* A */ color) {
+}
+
+/* prettier */
+@media (/* a */ color) {
+}
+```
+
+A comment in a media feature keeps its text, only the code around it lowercases;
+Prettier lowercases the whole feature, so the comment's text is no longer the user's.
+
 ## missed-semicolon-accepted
 
 - Why: uniform-rule (acceptance: the grammar owner decides)
