@@ -194,10 +194,11 @@ impl PreferImportingVitestGlobals {
     ) -> RuleFix {
         let module_record = ctx.module_record();
 
-        let vitest_esm_import = module_record
-            .import_entries
-            .iter()
-            .find(|e| is_vitest_import_source(e.module_request.name()) && !e.is_type);
+        let vitest_esm_import = module_record.import_entries.iter().find(|e| {
+            is_vitest_import_source(e.module_request.name())
+                && !e.is_type
+                && !matches!(e.import_name, ImportImportName::Source(_))
+        });
 
         // 1. Existing `import { ... }` from a Vitest source — append to named specifiers.
         if let Some(entry) = vitest_esm_import
@@ -382,6 +383,9 @@ fn test() {
             describe('suite', () => {});",
         "import * as abc from 'vite-plus/test';
             describe('suite', () => {});",
+        "import source wasm from 'vitest';
+            import { it } from 'vitest';
+            describe('suite', () => {});",
         r#"import { "default" as vitest } from 'vitest'; describe('suite', () => {});"#,
         "const x = require('something', 'else'); describe('suite', () => {});",
         "const x = require('jest'); describe('suite', () => {});",
@@ -423,6 +427,10 @@ fn test() {
         (
             "import source vitest from 'vitest';\ndescribe('suite', () => {});",
             "import { describe } from 'vitest';\nimport source vitest from 'vitest';\ndescribe('suite', () => {});",
+        ),
+        (
+            "import source wasm from 'vitest';\nimport { it } from 'vitest';\ndescribe('suite', () => {});",
+            "import source wasm from 'vitest';\nimport { it, describe } from 'vitest';\ndescribe('suite', () => {});",
         ),
         // the `}` inside the comment is not the end of the specifier list
         (
