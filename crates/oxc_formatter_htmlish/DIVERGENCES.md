@@ -857,6 +857,9 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 - Conformance:
   - `externals/prettier/vue/interpolation/ng-non-bindable.vue` (`<template><span>{{ }}</span></template>`)
   - `externals/prettier/angular/control-flow/for.html`
+  - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/profiler/recording-timeline/visualizer-controls/visualizer-controls.component.html`
+  - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/router-tree/router-details-row/route-details-row.component.html`
+  - `externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html`
 
 ```vue
 <!-- input -->
@@ -1141,6 +1144,7 @@ One right after the tag name (`<div // c`) moves to its own line, as after any o
 - Conformance:
   - `externals/prettier/angular/angular/attributes.component.html`
   - `externals/prettier/angular/icu-expression/*`
+  - `externals/angular-adev/content/examples/i18n/src/app/app.component.html`
 
 ```html
 <!-- input -->

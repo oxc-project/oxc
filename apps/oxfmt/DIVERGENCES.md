@@ -831,6 +831,7 @@ Prettier indents it when a pipe follows, in a `{{ }}` and a binding (`[title]`) 
   - `externals/prettier/angular/bracket-same-line/angularjs.html`
   - `externals/prettier/angular/template-literal/template-literal.html`
   - `externals/prettier/angular/trailing-comma/trailing-comma.html`
+  - `externals/angular-components/dev-app/input/input-demo.component.html`
 
 ```html
 <!-- input -->
@@ -861,6 +862,7 @@ Prettier wraps one without a side effect (neither an assignment nor a call) in p
   - `externals/prettier/angular/angular/interpolation.component.html`
   - `externals/prettier/angular/angular/real-world.component.html`
   - `externals/prettier/angular/let-declaration/complex.html`
+  - `externals/bitwarden-web/vault/components/vault-items/vault-cipher-row.component.html`
 - Drop when: the parser reads a pipe inside the code, and the formatter dispatches the code with a placeholder in its place
 
 ```html
