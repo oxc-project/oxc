@@ -616,6 +616,9 @@ the source's (`{{ (a,b) }}`), or Vue's own, around `v-if`, `v-else-if` and an ev
 
 - Why: uniform-rule (same construct, same output: `{{ }}` in a `<div>`; prettier/prettier#11406)
 - Pin: `conformance/fixtures/js-in-vue/interpolation-in-broken-parent.vue`
+- Conformance:
+  - `externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-history.component.html`
+  - `externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-job-drawer/rotation-job-drawer.component.html`
 
 ```vue
 <!-- input -->
@@ -760,6 +763,7 @@ Prettier does it for a property's value only.
   - `externals/prettier/angular/angular/real-world.component.html` (`printWidth: 1`)
   - `externals/prettier/angular/expression/logical-expressions.html`
   - `externals/ng-zorro-antd/components/transfer/transfer-list.component.ts`
+  - `externals/bitwarden-web/admin-console/organizations/shared/components/collection-dialog/collection-dialog.component.html`
 
 ```html
 <!-- input -->
@@ -816,6 +820,9 @@ Prettier indents it in Angular's `{{ }}` and actions only (an action's in the pa
 
 - Why: uniform-rule (same construct, same output: the chain without the pipe)
 - Pin: `conformance/fixtures/js-in-angular/pipe-operand-as-root.component.html`
+- Conformance:
+  - `externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html`
+  - `externals/bitwarden-web/billing/organizations/organization-plans.component.html`
 
 ```html
 <!-- input -->

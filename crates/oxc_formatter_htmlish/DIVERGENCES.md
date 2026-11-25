@@ -860,6 +860,9 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
   - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/profiler/recording-timeline/visualizer-controls/visualizer-controls.component.html`
   - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/router-tree/router-details-row/route-details-row.component.html`
   - `externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html`
+  - `externals/bitwarden-license-web/auth/sso/sso-manage.component.html`
+  - `externals/bitwarden-license-web/pam/approvals/withdraw-approval-dialog/withdraw-approval-dialog.component.html`
+  - `externals/bitwarden-web/billing/organizations/churn-mitigation-offer-dialog.component.html`
 
 ```vue
 <!-- input -->
