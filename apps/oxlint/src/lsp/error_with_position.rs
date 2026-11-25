@@ -1,6 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::LazyLock};
 
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 use tower_lsp_server::gen_lsp_types::{
     Code, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location,
     Message as LspMessage, Range, Uri,
@@ -10,6 +11,7 @@ use oxc_diagnostics::{OxcCode, Severity};
 use oxc_language_server::LineIndex;
 use oxc_linter::{
     AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
+    rules::{RULES, RuleEnum},
 };
 
 use crate::lsp::{
@@ -245,10 +247,16 @@ pub fn generate_inverted_diagnostics(
 }
 
 /// Generate diagnostics for unused disable directives, with fixes to remove them.
+/// Reports the unused disable and enable directives.
+///
+/// Without type-aware results (`type_aware_finished` is false), no type-aware diagnostic marked a
+/// directive as used: the disable directives that may cover a type-aware rule, blanket ones and
+/// those naming one, are not reported.
 pub fn create_unused_directives_report(
     directives: &DisableDirectives,
     severity: AllowWarnDeny,
     line_index: &LineIndex,
+    type_aware_finished: bool,
 ) -> Vec<DiagnosticReport> {
     let source_text = line_index.text();
     let mut reports = Vec::new();
@@ -265,6 +273,11 @@ pub fn create_unused_directives_report(
     for unused_comment in unused_disable {
         let span = unused_comment.span;
         match unused_comment.r#type {
+            // A comment whose rules are all unused is reported whole: skip it when it may disable
+            // a type-aware rule.
+            RuleCommentType::All
+                if !type_aware_finished
+                    && directives.comment_may_disable(span, may_name_type_aware_rule) => {}
             RuleCommentType::All => {
                 reports.push(build_unused_disable_diagnostic_report(
                     unused_comment.directive_prefix.unused_disable_message(),
@@ -276,6 +289,9 @@ pub fn create_unused_directives_report(
             }
             RuleCommentType::Single(rules) => {
                 for rule in rules {
+                    if !type_aware_finished && may_name_type_aware_rule(&rule.rule_name) {
+                        continue;
+                    }
                     reports.push(build_unused_disable_diagnostic_report(
                         rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
                         rule.name_span,
@@ -305,6 +321,17 @@ pub fn create_unused_directives_report(
     }
 
     reports
+}
+
+/// Whether `rule_name`, as a directive writes it (`no-floating-promises`,
+/// `typescript/no-floating-promises`, `@typescript-eslint/no-floating-promises`), may name a
+/// type-aware rule.
+fn may_name_type_aware_rule(rule_name: &str) -> bool {
+    static TYPE_AWARE_RULES: LazyLock<FxHashSet<&'static str>> = LazyLock::new(|| {
+        RULES.iter().filter(|rule| rule.is_tsgolint_rule()).map(RuleEnum::name).collect()
+    });
+    let name = rule_name.rsplit('/').next().unwrap_or(rule_name);
+    TYPE_AWARE_RULES.contains(name)
 }
 
 fn build_unused_disable_diagnostic_report(

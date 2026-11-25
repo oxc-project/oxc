@@ -1164,12 +1164,16 @@ impl ServerLinter {
         let directives = self.runner.directives_coordinator().take(path);
 
         // Add unused directives if configured. Without type-aware results, a directive for a
-        // type-aware rule (or a blanket one) may look unused while it is not.
+        // type-aware rule (or a blanket one) may look unused while it is not: those are skipped.
         if let Some(severity) = self.unused_directives_severity
-            && type_aware_finished
             && let Some(directives) = directives
         {
-            messages.extend(create_unused_directives_report(&directives, severity, &line_index));
+            messages.extend(create_unused_directives_report(
+                &directives,
+                severity,
+                &line_index,
+                type_aware_finished,
+            ));
         }
         Ok(messages)
     }
@@ -2273,8 +2277,8 @@ mod test_tsrs_lint {
             .test_and_snapshot_single_file("index.ts");
     }
 
-    /// Without type-aware results, a disable directive for a type-aware rule is not reported
-    /// unused.
+    /// Without type-aware results, a disable directive for a type-aware rule, or a blanket one, is
+    /// not reported unused. One for a regular rule still is.
     #[test]
     fn test_tsrs_failure_does_not_report_unused_directives() {
         for type_aware_server in [false, true] {
@@ -2293,7 +2297,13 @@ mod test_tsrs_lint {
                 .expect("lint failed");
             assert_eq!(diagnostics.len(), 1);
             let diagnostics = &diagnostics[0].1;
-            assert_eq!(codes(diagnostics), [""], "{diagnostics:?}");
+            assert_eq!(codes(diagnostics), ["", ""], "{diagnostics:?}");
+            // The `no-debugger` directive, on line 5.
+            assert_eq!(diagnostics[1].range.start.line, 4);
+            let Message::String(unused) = &diagnostics[1].message else {
+                panic!("expected a string message");
+            };
+            assert!(unused.starts_with("Unused oxlint-disable directive"), "{unused}");
         }
     }
 

@@ -430,6 +430,17 @@ impl DisableDirectives {
         &self.disable_rule_comments
     }
 
+    /// Whether the disable comment at `comment_span` disables every rule, or a rule whose name, as
+    /// the comment writes it, matches `matches`.
+    pub fn comment_may_disable(&self, comment_span: Span, matches: impl Fn(&str) -> bool) -> bool {
+        self.intervals.iter().any(|interval| match &interval.val {
+            DisabledRule::All { comment_span: span, .. } => *span == comment_span,
+            DisabledRule::Single { comment_span: span, rule_name, .. } => {
+                *span == comment_span && matches(rule_name)
+            }
+        })
+    }
+
     pub fn unused_enable_comments(&self) -> &[(DirectivePrefix, Option<String>, Span)] {
         &self.unused_enable_comments
     }
