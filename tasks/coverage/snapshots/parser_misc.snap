@@ -517,7 +517,23 @@ Negative Passed: 303/303 (100.00%)
  3 │   static default n() {}
  4 │   default x = 1;
    ·   ───────
- 5 │ }
+ 5 │   default accessor y;
+   ╰────
+
+  × TS(1031): 'default' modifier cannot appear on class elements of this kind.
+   ╭─[misc/fail/class-element-default-modifier.js:5:3]
+ 4 │   default x = 1;
+ 5 │   default accessor y;
+   ·   ───────
+ 6 │   accessor default z;
+   ╰────
+
+  × TS(1031): 'default' modifier cannot appear on class elements of this kind.
+   ╭─[misc/fail/class-element-default-modifier.js:6:12]
+ 5 │   default accessor y;
+ 6 │   accessor default z;
+   ·            ───────
+ 7 │ }
    ╰────
 
   × TS(1031): 'default' modifier cannot appear on class elements of this kind.
