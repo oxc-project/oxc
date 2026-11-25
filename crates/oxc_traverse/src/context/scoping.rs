@@ -1,4 +1,4 @@
-use std::str;
+use std::{cell::Cell, str};
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
@@ -132,6 +132,36 @@ impl<'a> TraverseScoping<'a> {
         let mut collector = ChildScopeCollector::new();
         collector.visit_expression(expr);
         self.insert_scope_below(self.current_scope_id, &collector.scope_ids, flags)
+    }
+
+    /// Move the scopes of statements which have been moved to a new location in the AST.
+    ///
+    /// All child scopes of the statements are reassigned to be children of `parent_id`.
+    /// If that changes whether they are in strict mode, the `StrictMode` flag of every scope
+    /// within the statements is updated to match. Scopes which are strict mode in their own right
+    /// (classes, and functions with a `"use strict"` directive) remain strict mode.
+    pub fn move_scopes_of_statements(&mut self, stmts: &[Statement], parent_id: ScopeId) {
+        let mut collector = ChildScopeCollector::new();
+        for stmt in stmts {
+            collector.visit_statement(stmt);
+        }
+
+        let is_strict_mode = self.scoping.scope_flags(parent_id).is_strict_mode();
+        let mut strict_mode_changed = false;
+        for &scope_id in &collector.scope_ids {
+            if let Some(old_parent_id) = self.scoping.scope_parent_id(scope_id) {
+                strict_mode_changed |=
+                    self.scoping.scope_flags(old_parent_id).is_strict_mode() != is_strict_mode;
+            }
+            self.scoping.change_scope_parent_id(scope_id, Some(parent_id));
+        }
+
+        if strict_mode_changed {
+            let mut updater = StrictModeUpdater { scoping: &mut self.scoping };
+            for stmt in stmts {
+                updater.visit_statement(stmt);
+            }
+        }
     }
 
     /// Insert a scope into scope tree below a `Vec` of statements.
@@ -435,5 +465,24 @@ impl TraverseScoping<'_> {
 
     pub fn delete_typescript_bindings(&mut self) {
         self.scoping.delete_typescript_bindings();
+    }
+}
+
+/// Visitor which sets the `StrictMode` flag of each scope it visits from its parent scope's,
+/// for [`TraverseScoping::move_scopes_of_statements`].
+///
+/// Parent scopes are visited before their children, so each parent's flag is already up to date.
+struct StrictModeUpdater<'s> {
+    scoping: &'s mut Scoping,
+}
+
+impl Visit<'_> for StrictModeUpdater<'_> {
+    fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        let scope_id = scope_id.get().unwrap();
+        let parent_id = self.scoping.scope_parent_id(scope_id).unwrap();
+        // `flags` includes `StrictMode` for classes and functions with a `"use strict"` directive.
+        let is_strict_mode =
+            self.scoping.scope_flags(parent_id).is_strict_mode() || flags.is_strict_mode();
+        self.scoping.scope_flags_mut(scope_id).set(ScopeFlags::StrictMode, is_strict_mode);
     }
 }
