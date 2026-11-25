@@ -428,3 +428,18 @@ fn busy_process_is_not_killed() {
     assert_eq!(diagnostics.len(), 1);
     assert_eq!(fixture.starts(), 1);
 }
+
+/// When processes that stop answering disable the server, the timeout is the last error.
+#[test]
+fn processes_that_do_not_answer_are_reported_as_such() {
+    let Some(fixture) = Fixture::new(&json!({ "lint": "hold" })) else { return };
+    let server = fixture.server().with_request_timeout(Duration::from_millis(100));
+    let file = fixture.file("index.ts");
+
+    for _ in 0..3 {
+        failure(lint(&server, &file));
+    }
+    let error = failure(lint(&server, &file));
+    assert!(error.contains("stopped 3 times within 60 seconds"), "{error}");
+    assert!(error.contains("Last error: tsrs-lint server did not answer request"), "{error}");
+}

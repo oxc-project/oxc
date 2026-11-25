@@ -184,6 +184,8 @@ struct Connection {
     stopping: Arc<AtomicBool>,
     /// When the process last sent a frame, for any request.
     last_frame: Arc<Mutex<Option<Instant>>>,
+    /// Why the process was killed, if it was: why it stopped, rather than the end of its output.
+    kill_reason: Arc<Mutex<Option<String>>>,
     pid: u32,
 }
 
@@ -235,6 +237,8 @@ impl Connection {
     /// next request starts another process.
     fn kill(&self, reason: &str) {
         warn!("killing tsrs-lint server (pid {}): {reason}", self.pid);
+        *self.kill_reason.lock().expect("tsrs-lint kill reason mutex poisoned") =
+            Some(reason.to_string());
         self.alive.store(false, Ordering::Release);
         let mut child = self.child.lock().expect("tsrs-lint child mutex poisoned");
         let _ = child.kill();
@@ -760,6 +764,7 @@ impl TsrsLintServer {
         let alive = Arc::new(AtomicBool::new(true));
         let stopping = Arc::new(AtomicBool::new(false));
         let last_frame = Arc::new(Mutex::new(None));
+        let kill_reason = Arc::new(Mutex::new(None));
         let pid = child.id();
         let (hello_sender, hello) = mpsc::channel();
         {
@@ -767,11 +772,19 @@ impl TsrsLintServer {
             let alive = Arc::clone(&alive);
             let stopping = Arc::clone(&stopping);
             let last_frame = Arc::clone(&last_frame);
+            let kill_reason = Arc::clone(&kill_reason);
             let last_exit = Arc::clone(&self.last_exit);
             let reader =
                 std::thread::Builder::new().name("tsrs-lint-reader".into()).spawn(move || {
-                    let exit_error =
-                        read_loop(stdout, &pending, &alive, &stopping, &last_frame, &hello_sender);
+                    let exit_error = read_loop(
+                        stdout,
+                        &pending,
+                        &alive,
+                        &stopping,
+                        &last_frame,
+                        &kill_reason,
+                        &hello_sender,
+                    );
                     if stopping.load(Ordering::Acquire) {
                         debug!("tsrs-lint server (pid {pid}) stopped: {exit_error}");
                     } else {
@@ -796,6 +809,7 @@ impl TsrsLintServer {
             alive,
             stopping,
             last_frame,
+            kill_reason,
             pid,
         };
         // A `tsrs-lint` without server mode exits without reading its input, so the write may
@@ -849,6 +863,7 @@ fn read_loop(
     alive: &AtomicBool,
     stopping: &AtomicBool,
     last_frame: &Mutex<Option<Instant>>,
+    kill_reason: &Mutex<Option<String>>,
     hello: &mpsc::Sender<HelloPayload>,
 ) -> String {
     let mut reader = BufReader::new(stdout);
@@ -898,6 +913,12 @@ fn read_loop(
         }
     };
     alive.store(false, Ordering::Release);
+    // A killed process's output ends because it was killed: report why.
+    let exit_error = kill_reason
+        .lock()
+        .expect("tsrs-lint kill reason mutex poisoned")
+        .clone()
+        .unwrap_or(exit_error);
     let waiting: Vec<_> =
         pending.lock().expect("tsrs-lint pending mutex poisoned").drain().collect();
     // The requests of a process asked to shut down are canceled: their results are not shown.
