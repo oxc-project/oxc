@@ -8,7 +8,8 @@
 // - `start`: "ok" (default) answers the handshake; "exit" exits at once without reading its input,
 //   as a `tsrs-lint` without server mode does.
 // - `protocol_version`: the protocol version it answers the handshake with (default 1).
-// - `hello_delay_ms`: how long it waits before it answers the handshake (default 0).
+// - `hello_delay_ms`: how long it waits before it answers the handshake (default 0). It logs
+//   `{ "event": "hello" }` when it answers.
 // - `lint`: "done" (default) answers a Lint with a diagnostic for another request id, a diagnostic
 //   for this one and Done; "exit" exits; "hold" answers only after a Cancel for it, with a
 //   canceled error; "slow" sends a diagnostic for another request id every 50 ms for `slow_ms`,
@@ -62,10 +63,10 @@ function handle(type, message) {
   switch (type) {
     // Hello
     case 22:
-      setTimeout(
-        () => write(4, { protocol_version: behavior.protocol_version ?? 1, version: "0.0.0-fake" }),
-        behavior.hello_delay_ms ?? 0,
-      );
+      setTimeout(() => {
+        log({ event: "hello" });
+        write(4, { protocol_version: behavior.protocol_version ?? 1, version: "0.0.0-fake" });
+      }, behavior.hello_delay_ms ?? 0);
       break;
     // Lint
     case 20: {

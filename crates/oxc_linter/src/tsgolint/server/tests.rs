@@ -369,7 +369,7 @@ fn process_that_does_not_answer_is_killed() {
 
 #[test]
 fn document_updates_do_not_wait_for_a_starting_process() {
-    let Some(fixture) = Fixture::new(&json!({ "hello_delay_ms": 1000 })) else { return };
+    let Some(fixture) = Fixture::new(&json!({ "hello_delay_ms": 2000 })) else { return };
     let server = Arc::new(fixture.server());
     let file = fixture.file("index.ts");
 
@@ -381,12 +381,14 @@ fn document_updates_do_not_wait_for_a_starting_process() {
     }
     fixture.wait_for_frame(HELLO);
 
-    // The process has not answered the handshake yet.
-    let started = Instant::now();
     server.did_open(Path::new(&file), 1, Arc::from("let a = 1;"));
     server.files_changed(&[(PathBuf::from(fixture.file("a.ts")), FileChangeKind::Changed)]);
     assert!(!server.is_disabled());
-    assert!(started.elapsed() < Duration::from_millis(500), "took {:?}", started.elapsed());
+    // They returned before the process answered the handshake: they did not wait for it.
+    assert!(
+        !fixture.events().iter().any(|event| event["event"] == "hello"),
+        "the updates waited for the handshake"
+    );
 
     let result = result.recv_timeout(WAIT_TIMEOUT).expect("the request did not end");
     assert_eq!(result.expect("lint failed").len(), 1);
