@@ -204,9 +204,9 @@
 - [externals/bitwarden-license-web/pam/approvals/withdraw-approval-dialog/withdraw-approval-dialog.component.html](diffs/angular/externals__bitwarden-license-web__pam__approvals__withdraw-approval-dialog__withdraw-approval-dialog.component.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
 - [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-history.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-history.component.html.md)
-  - apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent
+  - apps/oxfmt/DIVERGENCES.md#interpolation-in-broken-parent
 - [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-job-drawer/rotation-job-drawer.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-job-drawer__rotation-job-drawer.component.html.md)
-  - apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent
+  - apps/oxfmt/DIVERGENCES.md#interpolation-in-broken-parent
 - [externals/bitwarden-web/admin-console/organizations/shared/components/collection-dialog/collection-dialog.component.html](diffs/angular/externals__bitwarden-web__admin-console__organizations__shared__components__collection-dialog__collection-dialog.component.html.md)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
 - [externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__change-plan-dialog.component.html.md)

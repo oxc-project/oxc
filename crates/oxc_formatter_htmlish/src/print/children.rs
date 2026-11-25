@@ -138,7 +138,7 @@ pub fn write_children<'a>(
                 write_between(between(t, prev, child), force_next_empty_line(t, prev), f);
             }
             // Its own group, or the parent's breaks put `{{ }}`'s expression on its own line
-            // (`apps/oxfmt/DIVERGENCES.md#js-in-vue-interpolation-in-broken-parent`)
+            // (`apps/oxfmt/DIVERGENCES.md#interpolation-in-broken-parent`)
             if t.is_interpolation(child) {
                 write!(f, group(&format_with(|f| write_child(t, child, f))));
             } else {
