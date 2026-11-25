@@ -1,0 +1,60 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+({}).a++;
+(function () {}).a++;
+(class {}).a--;
+class A {
+  #x;
+  m() {
+    (function () {}).#x;
+    ({}).#x;
+    (class {}).#x = 1;
+  }
+}
+new ({}).a();
+// A type cast prints its own parens
+/** @type {A} */ ({}.a).b;
+/** @type {A} */ (function () {}.a);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+({}).a++;
+(function () {}).a++;
+(class {}).a--;
+class A {
+  #x;
+  m() {
+    (function () {}).#x;
+    ({}).#x;
+    (class {}).#x = 1;
+  }
+}
+new {}.a();
+// A type cast prints its own parens
+/** @type {A} */ ({}.a).b;
+/** @type {A} */ (function () {}.a);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+({}).a++;
+(function () {}).a++;
+(class {}).a--;
+class A {
+  #x;
+  m() {
+    (function () {}).#x;
+    ({}).#x;
+    (class {}).#x = 1;
+  }
+}
+new {}.a();
+// A type cast prints its own parens
+/** @type {A} */ ({}.a).b;
+/** @type {A} */ (function () {}.a);
+
+===================== End =====================

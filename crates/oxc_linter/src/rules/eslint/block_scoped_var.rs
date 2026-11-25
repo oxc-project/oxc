@@ -1,8 +1,5 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{
-    AstKind,
-    ast::{BindingPattern, VariableDeclarationKind},
-};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::declarator_initializes};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
@@ -133,7 +130,7 @@ impl Rule for BlockScopedVar {
         let AstKind::VariableDeclaration(decl) = node.kind() else {
             return;
         };
-        if decl.kind != VariableDeclarationKind::Var {
+        if !decl.kind.is_var() {
             return;
         }
         let node_scope_id = node.scope_id();
@@ -187,31 +184,70 @@ fn run_for_all_redeclarations(
         .symbol_redeclarations(*symbol)
         .iter()
         .filter(|redeclaration| {
-            let redeclare_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
+            let declaration = ctx.nodes().get_node(redeclaration.declaration);
             check_if_has_reference_outside_scope(
                 declare_scope_id,
-                redeclare_scope_id,
+                declaration.scope_id(),
                 ctx.scoping(),
-            )
+            ) && redeclaration_has_write(declaration, redeclaration.span, *symbol, ctx)
         })
         .for_each(|redeclaration| {
             ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, &name));
         });
 }
 
+fn redeclaration_has_write(
+    node: &AstNode,
+    span: Span,
+    symbol_id: SymbolId,
+    ctx: &LintContext,
+) -> bool {
+    let pattern = match node.kind() {
+        AstKind::VariableDeclarator(decl) => {
+            // An initializer in another catch writes to its catch parameter,
+            // even though the declaration also contributes to this hoisted var.
+            return declarator_initializes(decl, symbol_id)
+                && (decl.init.is_some()
+                    || matches!(
+                        ctx.nodes().parent_kind(ctx.nodes().parent_id(node.id())),
+                        AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
+                    ));
+        }
+        AstKind::FormalParameter(param) => {
+            if param.initializer.is_some() {
+                return true;
+            }
+            &param.pattern
+        }
+        AstKind::FormalParameterRest(param) => &param.rest.argument,
+        _ => return false,
+    };
+
+    let mut has_default = false;
+    pattern.bound_names(&mut |ident| {
+        if ident.span == span {
+            has_default = ctx
+                .nodes()
+                .ancestors(ident.node_id.get())
+                .take_while(|ancestor| ancestor.id() != node.id())
+                .any(|ancestor| matches!(ancestor.kind(), AstKind::AssignmentPattern(_)));
+        }
+    });
+    has_default
+}
+
 fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &LintContext) {
     // e.g. "var [a, b] = [1, 2]"
     pattern.bound_names(&mut |ident| {
         let name = ident.name;
-        let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
-            return;
-        };
+        // The declarator's identifier is attached to the catch parameter when
+        // its initializer assigns there. This rule checks the hoisted var's uses.
+        let symbol = ident.symbol_id();
+        let symbol = ctx.scoping().catch_var_binding(symbol).unwrap_or(symbol);
 
         let binding = (pattern, name, &symbol);
 
-        // e.g. "if (true) { var a = 4; } else { var a = 4; }"
-        // in this case we can't find the reference of 'a' by call `get_resolved_references`
-        // so I use `symbol_redeclarations` to find all the redeclarations
+        // ESLint includes binding initializers as write references; Oxc tracks them as declarations.
         run_for_all_redeclarations(binding, node_scope_id, ctx);
 
         // e.g. "var a = 4; console.log(a);"
@@ -234,6 +270,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "function f() { try {} catch (x) { { var x = 1; } use(x); } }",
         "if (1) {
             var a = 4;
         } else {
@@ -327,9 +364,21 @@ fn test() {
                 }
             }
         ",
+        "export function f(a) { var x; if (a) { var x; } }",
+        "export function g(a, y) { if (a) { var y; } }",
+        "function f() { { var x; } var x; }",
+        "function f() { { var x; } { var x; } }",
+        "function f(a, y) { if (a) { var y = 1; } }",
+        "function f({x}) { { var x; } }",
+        "function f(...x) { { var x; } }",
+        "function f() { function x() {} { var x; } }",
+        "function f({x, y = 1}) { { var x; } }",
+        "function f(...[x]) { { var x; } }",
     ];
 
     let fail = vec![
+        "function f(x) { use(x); try {} catch (x) { var x = 1; } use(x); }",
+        "function f() { try {} catch (x) { var x = 1; } try {} catch (x) { var x = 2; } use(x); }",
         r"
             if (true) {
                 var a = 3;
@@ -435,6 +484,13 @@ fn test() {
                 }
             }
         ",
+        "function f() { var x = 0; { var x; } }",
+        "function f(a, y = 0) { if (a) { var y; } }",
+        "function f({x, y = 1}) { { var y; } }",
+        "function f(...[x = 1]) { { var x; } }",
+        "function f() { for (var x in {}) {} { var x; } }",
+        "function f() { for (var x of []) {} { var x; } }",
+        "function f() { var {x} = {}; { var x; } }",
     ];
 
     Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail)

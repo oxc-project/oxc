@@ -42,7 +42,7 @@ where
 
     let help_suffix = match pat {
         IgnorePattern::None => ".".into(),
-        IgnorePattern::Default => {
+        IgnorePattern::Default | IgnorePattern::PrefixUnderscore => {
             name.strip_prefix('_').map_or(".".into(), |name| format!(" to '{name}'."))
         }
         IgnorePattern::Some(r) => {
@@ -116,7 +116,11 @@ where
     R: fmt::Display,
 {
     let name = symbol.name();
-    let suffix = pat.diagnostic_help("parameters");
+    let suffix = if name == "_" && pat.is_default() {
+        std::borrow::Cow::Borrowed("")
+    } else {
+        pat.diagnostic_help("parameters")
+    };
 
     OxcDiagnostic::warn(if only_used_as_type {
         format!("Parameter '{name}' is declared but only used as a type.{suffix}")

@@ -78,7 +78,7 @@ impl<'a> PeepholeOptimizations {
                         found_constructor_method = true;
                     }
                     Ancestor::ClassBody(class) if found_constructor_method => {
-                        return class.super_class().is_some().then_some(scope_id);
+                        return class.heritage().is_some().then_some(scope_id);
                     }
                     _ => {}
                 }
@@ -92,16 +92,14 @@ impl<'a> PeepholeOptimizations {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                let new_expr = unary_expr.argument.take_in(ctx);
-                ctx.replace_expression(e, new_expr);
+                ctx.replace_expression_with(e, Self::unwrap_unary);
                 Self::remove_unused_expression(e, ctx)
             }
             UnaryOperator::Typeof => {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
-                    let new_expr = unary_expr.argument.take_in(ctx);
-                    ctx.replace_expression(e, new_expr);
+                    ctx.replace_expression_with(e, Self::unwrap_unary);
                     Self::remove_unused_expression(e, ctx)
                 }
             }
@@ -180,7 +178,7 @@ impl<'a> PeepholeOptimizations {
                         };
                         if let Some((name, id)) = name_and_id
                             && Self::inject_optional_chaining_if_matched(
-                                &name,
+                                name,
                                 id,
                                 logical_right,
                                 ctx,
@@ -242,6 +240,9 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        if !ctx.is_tree_shake_only() {
+            Self::de_morgan_for_void_expr(logical_expr, ctx);
+        }
         false
     }
 
@@ -473,7 +474,11 @@ impl<'a> PeepholeOptimizations {
                     // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
                     // But we can ignore that by using the assumption.
                     match key {
-                        PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
+                        PropertyKey::StaticIdentifier(_)
+                        | PropertyKey::StaticStringLiteral(_)
+                        | PropertyKey::StaticNumericLiteral(_)
+                        | PropertyKey::StaticBigIntLiteral(_)
+                        | PropertyKey::PrivateIdentifier(_) => {}
                         match_expression!(PropertyKey) => {
                             let mut prop_key = key.into_expression();
                             if Self::remove_unused_expression(&mut prop_key, ctx) {
@@ -602,9 +607,10 @@ impl<'a> PeepholeOptimizations {
                         false
                     }
                     (false, false) => {
-                        let new_expr = Expression::new_sequence_expression(
+                        let new_expr = Self::join_sequence(
                             binary_expr.span,
-                            [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
+                            binary_expr.left.take_in(ctx),
+                            binary_expr.right.take_in(ctx),
                             ctx,
                         );
                         ctx.replace_expression(e, new_expr);
@@ -613,6 +619,9 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             BinaryOperator::Addition => {
+                if !e.may_have_side_effects(ctx) {
+                    return true;
+                }
                 Self::fold_string_addition_chain(e, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
@@ -771,7 +780,7 @@ impl<'a> PeepholeOptimizations {
         else {
             unreachable!()
         };
-        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
+        if Self::is_script_root_scope(ctx) {
             return false;
         }
         let reference_id = ident.reference_id();
@@ -793,7 +802,17 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.references.has_reads() {
             return false;
         }
+        // Eval in the binding's scope can read writes from a nested block or function,
+        // even when that nested scope has no direct eval or resolved reads of its own.
+        // This also covers eval in the current scope: the flag propagates to enclosing scopes.
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        if ctx.scoping().scope_flags(scope_id).contains_direct_eval() {
+            return false;
+        }
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(a = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -868,7 +887,10 @@ impl<'a> PeepholeOptimizations {
         // refs dead). Safe in value positions too — a plain `=` assignment's
         // value IS the RHS value.
         let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(b.x = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -904,7 +926,7 @@ impl<'a> PeepholeOptimizations {
         match target {
             AssignmentTarget::StaticMemberExpression(e) => Some(e.property.name.as_str()),
             AssignmentTarget::ComputedMemberExpression(e) => match &e.expression {
-                Expression::StringLiteral(s) => Some(s.value.as_str()),
+                Expression::StringLiteral(s) => s.value.as_str(),
                 _ => None,
             },
             _ => None,
@@ -1035,10 +1057,10 @@ impl<'a> PeepholeOptimizations {
                 // when an `Extracts` class is actually removed.
                 let mut exprs = ArenaVec::new_in(ctx);
 
-                if let Some(e) = &mut c.super_class
-                    && e.may_have_side_effects(ctx)
+                if c.heritage_expression()
+                    .is_some_and(|expression| expression.may_have_side_effects(ctx))
                 {
-                    exprs.push(c.super_class.take().unwrap());
+                    exprs.push(c.heritage.take().unwrap().expression);
                 }
 
                 for e in &mut c.body.body {
@@ -1092,14 +1114,13 @@ impl<'a> PeepholeOptimizations {
         if !c.decorators.is_empty() {
             return ClassRemovability::Keep;
         }
-        if let Some(super_class) = &c.super_class {
+        if let Some(super_class) = c.heritage_expression() {
             // Unwrap parens and sequence tails — `(0, x)` — so the
             // classification does not change when a later fold surfaces
             // the inner expression.
-            let mut e = super_class.get_inner_expression();
-            while let Expression::SequenceExpression(seq) = e {
-                let Some(last) = seq.expressions.last() else { break };
-                e = last.get_inner_expression();
+            let mut e = super_class;
+            if let Expression::SequenceExpression(seq) = e {
+                e = Self::last_expression_in_sequence(seq).unwrap_or(e);
             }
             // Keep the existing statically-provable TypeError for literal
             // arrow heritage: `class C extends (() => {}) {}`.
@@ -1119,6 +1140,14 @@ impl<'a> PeepholeOptimizations {
                     return ClassRemovability::Keep;
                 }
                 _ => {}
+            }
+            // `static ["prototype"]` throws a `TypeError` when the class is evaluated:
+            // the constructor's own `prototype` is non-writable and non-configurable.
+            if e.r#static()
+                && e.computed()
+                && e.property_key().is_some_and(|key| key.is_specific_static_name("prototype"))
+            {
+                return ClassRemovability::Keep;
             }
             if e.r#static() {
                 let value = match e {
@@ -1142,7 +1171,7 @@ impl<'a> PeepholeOptimizations {
                 extracts = true;
             }
         }
-        if c.super_class.as_ref().is_some_and(|e| e.may_have_side_effects(ctx)) {
+        if c.heritage_expression().is_some_and(|e| e.may_have_side_effects(ctx)) {
             extracts = true;
         }
         if extracts { ClassRemovability::Extracts } else { ClassRemovability::RemovesClean }

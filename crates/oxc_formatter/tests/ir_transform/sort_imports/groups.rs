@@ -649,3 +649,106 @@ import "node:os";
 "#,
     );
 }
+
+#[test]
+fn accepts_side_effect_group_united_with_other_groups() {
+    // perfectionist rejects this config (its mixed group would sort side-effects together).
+    // We accept it: `sort_within_group` preserves side-effect relative order in EVERY group,
+    // so side-effect imports hold their in-group slots while the others sort around them,
+    // the same guarantee (and the same crossing) as the default no-side-effect-group setup.
+    assert_format(
+        r#"
+import { b } from "b";
+import "./polyfill";
+import { a } from "a";
+"#,
+        r#"{
+  "sortImports": {
+    "groups": [["side_effect", "external"]]
+  }
+}"#,
+        r#"
+import { a } from "a";
+import "./polyfill";
+import { b } from "b";
+"#,
+    );
+}
+
+#[test]
+fn should_tiebreak_same_source_by_subgroup_order() {
+    // Same-module imports stay adjacent, ordered by their entry position within the group.
+    let input = r#"
+import { withConnection } from "connection";
+import { resolveConfig } from "config";
+import type { CliConfig } from "config";
+import type { Connection } from "connection";
+"#;
+    assert_format(
+        input,
+        r#"{ "sortImports": { "groups": [["type-external", "value-external"]] } }"#,
+        r#"
+import type { CliConfig } from "config";
+import { resolveConfig } from "config";
+import type { Connection } from "connection";
+import { withConnection } from "connection";
+"#,
+    );
+    assert_format(
+        input,
+        r#"{ "sortImports": { "groups": [["value-external", "type-external"]] } }"#,
+        r#"
+import { resolveConfig } from "config";
+import type { CliConfig } from "config";
+import { withConnection } from "connection";
+import type { Connection } from "connection";
+"#,
+    );
+    // `desc` reverses sources, but not the subgroup order (same as `groups` order)
+    assert_format(
+        input,
+        r#"{ "sortImports": { "groups": [["type-external", "value-external"]], "order": "desc" } }"#,
+        r#"
+import type { Connection } from "connection";
+import { withConnection } from "connection";
+import type { CliConfig } from "config";
+import { resolveConfig } from "config";
+"#,
+    );
+    // Modifiers other than `type` work too, in both directions
+    assert_format(
+        r#"
+import { b } from "a";
+import * as a from "a";
+"#,
+        r#"{ "sortImports": { "groups": [["wildcard-external", "named-external"]] } }"#,
+        r#"
+import * as a from "a";
+import { b } from "a";
+"#,
+    );
+    assert_format(
+        r#"
+import * as a from "a";
+import { b } from "a";
+"#,
+        r#"{ "sortImports": { "groups": [["named-external", "wildcard-external"]] } }"#,
+        r#"
+import { b } from "a";
+import * as a from "a";
+"#,
+    );
+    // Imports matching the same entry keep their original order, in both directions
+    for input in [
+        r#"
+import { b } from "a";
+import type { A } from "a";
+"#,
+        r#"
+import type { A } from "a";
+import { b } from "a";
+"#,
+    ] {
+        assert_format(input, r#"{ "sortImports": {} }"#, input);
+    }
+}

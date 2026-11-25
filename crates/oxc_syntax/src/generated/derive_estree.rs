@@ -39,6 +39,9 @@ impl ESTree for ImportImportName<'_> {
             Self::Default(it) => {
                 crate::serialize::ImportOrExportNameDefault(it).serialize(serializer)
             }
+            Self::Source(it) => {
+                crate::serialize::ImportOrExportNameSource(it).serialize(serializer)
+            }
         }
     }
 }
@@ -65,6 +68,9 @@ impl ESTree for ExportImportName<'_> {
                 crate::serialize::ExportImportNameAllButDefault(()).serialize(serializer)
             }
             Self::Null => crate::serialize::ExportNameNull(()).serialize(serializer),
+            Self::Source(it) => {
+                crate::serialize::ImportOrExportNameSource(it).serialize(serializer)
+            }
         }
     }
 }

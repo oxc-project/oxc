@@ -222,7 +222,7 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[0].source_text, "");
         assert_eq!(sources[0].start, 102);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[1].start, 129);
@@ -256,7 +256,7 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[0].source_text, "");
         assert_eq!(sources[0].start, 104);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
         assert_eq!(sources[1].start, 122);
@@ -276,7 +276,7 @@ mod test {
 
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
-        assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[0].source_text, "");
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
     }
 

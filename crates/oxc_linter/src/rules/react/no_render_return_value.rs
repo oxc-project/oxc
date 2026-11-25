@@ -49,8 +49,10 @@ declare_oxc_lint!(
     NoRenderReturnValue,
     react,
     correctness,
+    recommended,
     version = "0.0.15",
-    short_description = "This rule will warn you if you try to use the `ReactDOM.render()` return value.",
+    short_description =
+        "This rule will warn you if you try to use the `ReactDOM.render()` return value.",
 );
 
 impl Rule for NoRenderReturnValue {

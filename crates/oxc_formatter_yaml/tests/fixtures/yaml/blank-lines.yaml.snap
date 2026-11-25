@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# DIVERGENCE (DIVERGENCES.md#blank-lines; prettier#15528): a blank line right after a node is preserved
 # (normalized to one) for every node kind alike, and never invented.
 - a
 - b
@@ -25,14 +25,14 @@ literal: |
 ---
 last: value # trailing
 
-# one blank stays one; Prettier doubles it when the final item
-# has a trailing comment (the prettier#9130 shape, still alive there)
+# one blank stays one, also when the final item
+# has a trailing comment
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# DIVERGENCE (DIVERGENCES.md#blank-lines; prettier#15528): a blank line right after a node is preserved
 # (normalized to one) for every node kind alike, and never invented.
 - a
 - b
@@ -52,13 +52,13 @@ literal: |
 ---
 last: value # trailing
 
-# one blank stays one; Prettier doubles it when the final item
-# has a trailing comment (the prettier#9130 shape, still alive there)
+# one blank stays one, also when the final item
+# has a trailing comment
 
 -------------------
 { printWidth: 100 }
 -------------------
-# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# DIVERGENCE (DIVERGENCES.md#blank-lines; prettier#15528): a blank line right after a node is preserved
 # (normalized to one) for every node kind alike, and never invented.
 - a
 - b
@@ -78,7 +78,7 @@ literal: |
 ---
 last: value # trailing
 
-# one blank stays one; Prettier doubles it when the final item
-# has a trailing comment (the prettier#9130 shape, still alive there)
+# one blank stays one, also when the final item
+# has a trailing comment
 
 ===================== End =====================

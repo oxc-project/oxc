@@ -1,30 +1,32 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::prefer_to_be::{DOCUMENTATION, run_on_jest_node},
-    utils::PossibleJestNode,
+    rules::shared::prefer_to_be::{DOCUMENTATION, run},
 };
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToBe;
 
-declare_oxc_lint!(PreferToBe, vitest, style, fix, docs = DOCUMENTATION, version = "0.2.14",);
+declare_oxc_lint!(PreferToBe, vitest, style, suggestion, docs = DOCUMENTATION, version = "0.2.14",);
 
 impl Rule for PreferToBe {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run_on_jest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 #[test]
 fn tests() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("expect(null).toBeNull();", None),
@@ -155,7 +157,7 @@ fn tests() {
         ("expect(\"a string\").toEqual(undefined as number);", None),
     ];
 
-    let fix = vec![
+    let fix: Vec<_> = vec![
         ("expect(value).toEqual(\"my string\");", "expect(value).toBe(\"my string\");", None),
         ("expect(value).toStrictEqual(\"my string\");", "expect(value).toBe(\"my string\");", None),
         ("expect(value).toStrictEqual(1);", "expect(value).toBe(1);", None),
@@ -310,7 +312,10 @@ fn tests() {
             "expect(\"a string\").toBeUndefined();",
             None,
         ),
-    ];
+    ]
+    .into_iter()
+    .map(|(source, expected, config)| (source, expected, config, FixKind::Suggestion))
+    .collect();
 
     Tester::new(PreferToBe::NAME, PreferToBe::PLUGIN, pass, fail)
         .with_vitest_plugin(true)

@@ -2,7 +2,7 @@ use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::ArenaVec;
+use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
     AstKind,
     ast::{
@@ -12,6 +12,8 @@ use oxc_ast::{
 };
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+
+use super::type_assertion_wrapper_expression;
 
 use crate::{
     context::LintContext,
@@ -73,7 +75,7 @@ pub fn parse_jest_fn_call<'a>(
         parent_kind: Some(KnownMemberExpressionParentKind::Call),
         grandparent_kind: None,
     };
-    let mut chain = get_node_chain(&params);
+    let mut chain = get_node_chain(&params, false);
     let all_member_expr_except_last =
         chain.iter().rev().skip(1).all(|member| {
             matches!(member.parent_kind, Some(KnownMemberExpressionParentKind::Member))
@@ -144,25 +146,14 @@ pub fn parse_jest_fn_call<'a>(
         let is_vitest = ctx.frameworks().is_vitest();
         if is_jest || is_vitest {
             let mut call_chains = Vec::from([Cow::Borrowed(name)]);
-            call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
+            for member in &members {
+                call_chains.push(member.name()?);
+            }
 
-            match (is_jest, is_vitest) {
-                (true, true) => {
-                    if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
-                        return None;
-                    }
-                }
-                (true, false) => {
-                    if !is_valid_jest_call(&call_chains) {
-                        return None;
-                    }
-                }
-                (false, true) => {
-                    if !is_valid_vitest_call(&call_chains) {
-                        return None;
-                    }
-                }
-                (false, false) => unreachable!(),
+            if !((is_jest && is_valid_jest_call(&call_chains))
+                || (is_vitest && is_valid_vitest_call(&call_chains)))
+            {
+                return None;
             }
 
             if is_vitest && is_extend_fixture(&call_chains[1..]) {
@@ -309,6 +300,118 @@ fn find_modifiers_and_matcher(
     Err(ExpectError::MatcherNotFound)
 }
 
+/// Validate the matcher chain of a Vitest `expectTypeOf` call.
+///
+/// The call is identified by name: `possible_jest_node.original` when present, otherwise the
+/// callee's first identifier. Returns `None` if that name is not `expectTypeOf` or the callee
+/// chain cannot be resolved, and `Some(Ok(()))` for a call whose chain continues into an outer
+/// call, which is validated instead.
+pub fn validate_expect_type_of_call<'a>(
+    call_expr: &'a CallExpression<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+) -> Option<Result<(), ExpectError>> {
+    let name = possible_jest_node.original.or_else(|| {
+        resolve_first_ident(&call_expr.callee, true).map(|ident| ident.name.as_str())
+    })?;
+    if name != "expectTypeOf" {
+        return None;
+    }
+
+    let node = possible_jest_node.node;
+    if has_outer_assertion_call(node, ctx) {
+        return Some(Ok(()));
+    }
+
+    let chain = get_node_chain(
+        &NodeChainParams {
+            expr: &call_expr.callee,
+            parent: None,
+            parent_kind: Some(KnownMemberExpressionParentKind::Call),
+            grandparent_kind: None,
+        },
+        true,
+    );
+    let (_, members) = chain.split_first()?;
+    let result = validate_type_matcher_chain(members);
+    if matches!(result, Err(ExpectError::MatcherNotFound)) {
+        let mut parent = ctx.nodes().parent_node(node.id());
+        while type_assertion_wrapper_expression(parent.kind()).is_some() {
+            parent = ctx.nodes().parent_node(parent.id());
+        }
+        if matches!(
+            parent.kind(),
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_)
+        ) {
+            return Some(Err(ExpectError::MatcherNotCalled));
+        }
+    }
+    Some(result)
+}
+
+fn validate_type_matcher_chain(
+    members: &[KnownMemberExpressionProperty],
+) -> Result<(), ExpectError> {
+    let mut seen_not = false;
+
+    for member in members {
+        let name = member.name();
+        let name = name.as_deref();
+        let is_type_modifier = matches!(
+            name,
+            Some(
+                "asserts"
+                    | "branded"
+                    | "constructorParameters"
+                    | "guards"
+                    | "instance"
+                    | "items"
+                    | "not"
+                    | "parameters"
+                    | "resolves"
+                    | "returns"
+                    | "thisParameter"
+            )
+        );
+
+        if matches!(member.parent_kind, Some(KnownMemberExpressionParentKind::Member))
+            && matches!(member.grandparent_kind, Some(KnownMemberExpressionParentKind::Call))
+        {
+            return if is_type_modifier { Err(ExpectError::ModifierUnknown) } else { Ok(()) };
+        }
+        if !is_type_modifier {
+            return Err(ExpectError::ModifierUnknown);
+        }
+        if name == Some("not") {
+            if seen_not {
+                return Err(ExpectError::ModifierUnknown);
+            }
+            seen_not = true;
+        }
+    }
+
+    Err(ExpectError::MatcherNotFound)
+}
+
+fn has_outer_assertion_call<'a, 'b>(mut node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    loop {
+        let parent = ctx.nodes().parent_node(node.id());
+        let object = match parent.kind() {
+            AstKind::CallExpression(call) => return call.callee.address() == node.address(),
+            AstKind::StaticMemberExpression(member) => &member.object,
+            AstKind::ComputedMemberExpression(member) => &member.object,
+            kind => {
+                let Some(inner) = type_assertion_wrapper_expression(kind) else { return false };
+                inner
+            }
+        };
+        if object.address() != node.address() {
+            return false;
+        }
+        node = parent;
+    }
+}
+
 fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let mut node = node;
 
@@ -389,18 +492,26 @@ fn resolve_to_jest_fn<'a>(
     call_expr: &'a CallExpression<'a>,
     original: Option<&'a str>,
 ) -> Option<ResolvedJestFn<'a>> {
-    let ident = resolve_first_ident(&call_expr.callee)?;
+    let ident = resolve_first_ident(&call_expr.callee, false)?;
     Some(ResolvedJestFn { local: ident.name.as_str(), original })
 }
 
-fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierReference<'a>> {
+fn resolve_first_ident<'a>(
+    expr: &'a Expression<'a>,
+    unwrap_wrappers: bool,
+) -> Option<&'a IdentifierReference<'a>> {
+    let expr = if unwrap_wrappers { expr.get_inner_expression() } else { expr };
     match expr {
         Expression::Identifier(ident) => Some(ident),
         match_member_expression!(Expression) => {
-            resolve_first_ident(expr.to_member_expression().object())
+            resolve_first_ident(expr.to_member_expression().object(), unwrap_wrappers)
         }
-        Expression::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
-        Expression::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
+        Expression::CallExpression(call_expr) => {
+            resolve_first_ident(&call_expr.callee, unwrap_wrappers)
+        }
+        Expression::TaggedTemplateExpression(tagged_expr) => {
+            resolve_first_ident(&tagged_expr.tag, unwrap_wrappers)
+        }
         _ => None,
     }
 }
@@ -465,8 +576,9 @@ impl<'a> ParsedExpectFnCall<'a> {
         self.members.get(matcher_index)
     }
 
-    pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
-        self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
+    /// The modifiers (`.not`, `.resolves`, `.rejects`) in the chain, in source order.
+    pub fn modifiers(&self) -> impl Iterator<Item = &KnownMemberExpressionProperty<'a>> {
+        self.modifier_indices.iter().filter_map(|i| self.members.get(*i))
     }
 }
 
@@ -497,11 +609,11 @@ impl<'a> KnownMemberExpressionProperty<'a> {
             MemberExpressionElement::Expression(expr) => match expr {
                 Expression::Identifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
                 Expression::StringLiteral(string_literal) => {
-                    Some(Cow::Borrowed(string_literal.value.as_str()))
+                    Some(Cow::Borrowed(string_literal.value.as_str()?))
                 }
-                Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
-                    template_literal.single_quasi().expect("get string content").as_str(),
-                )),
+                Expression::TemplateLiteral(template_literal) => {
+                    Some(Cow::Borrowed(template_literal.single_quasi()?.as_str()?))
+                }
                 _ => None,
             },
             MemberExpressionElement::IdentName(ident_name) => {
@@ -538,13 +650,17 @@ impl<'a> MemberExpressionElement<'a> {
     pub fn from_member_expr(
         member_expr: &'a MemberExpression<'a>,
     ) -> Option<(Span, MemberExpressionElement<'a>)> {
-        let (span, _) = member_expr.static_property_info()?;
         match member_expr {
             MemberExpression::ComputedMemberExpression(expr) => {
+                let span = match &expr.expression {
+                    Expression::StringLiteral(lit) => lit.span,
+                    Expression::TemplateLiteral(lit) if lit.single_quasi().is_some() => lit.span,
+                    _ => return None,
+                };
                 Some((span, Self::Expression(&expr.expression)))
             }
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((span, Self::IdentName(&expr.property)))
+                Some((expr.property.span, Self::IdentName(&expr.property)))
             }
             // Jest fn chains don't have private fields, just ignore it.
             MemberExpression::PrivateFieldExpression(_) => None,
@@ -567,17 +683,22 @@ struct NodeChainParams<'a> {
 }
 
 /// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
-fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpressionProperty<'a>> {
+fn get_node_chain<'a>(
+    params: &NodeChainParams<'a>,
+    unwrap_wrappers: bool,
+) -> Vec<KnownMemberExpressionProperty<'a>> {
     let mut chain = Vec::new();
-    recurse_extend_node_chain(params, &mut chain);
+    recurse_extend_node_chain(params, &mut chain, unwrap_wrappers);
     chain
 }
 
 fn recurse_extend_node_chain<'a>(
     params: &NodeChainParams<'a>,
     chain: &mut Vec<KnownMemberExpressionProperty<'a>>,
+    unwrap_wrappers: bool,
 ) {
     let NodeChainParams { expr, parent, parent_kind, grandparent_kind } = params;
+    let expr = if unwrap_wrappers { expr.get_inner_expression() } else { expr };
 
     match expr {
         match_member_expression!(Expression) => {
@@ -589,7 +710,7 @@ fn recurse_extend_node_chain<'a>(
                 grandparent_kind: *parent_kind,
             };
 
-            recurse_extend_node_chain(&params, chain);
+            recurse_extend_node_chain(&params, chain, unwrap_wrappers);
             if let Some((span, element)) = MemberExpressionElement::from_member_expr(member_expr) {
                 chain.push(KnownMemberExpressionProperty {
                     element,
@@ -616,7 +737,7 @@ fn recurse_extend_node_chain<'a>(
                 parent_kind: Some(KnownMemberExpressionParentKind::Call),
                 grandparent_kind: *parent_kind,
             };
-            recurse_extend_node_chain(&params, chain);
+            recurse_extend_node_chain(&params, chain, unwrap_wrappers);
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
             let params = NodeChainParams {
@@ -625,7 +746,7 @@ fn recurse_extend_node_chain<'a>(
                 parent_kind: Some(KnownMemberExpressionParentKind::TaggedTemplate),
                 grandparent_kind: *parent_kind,
             };
-            recurse_extend_node_chain(&params, chain);
+            recurse_extend_node_chain(&params, chain, unwrap_wrappers);
         }
         Expression::StringLiteral(string_literal) => {
             chain.push(KnownMemberExpressionProperty {

@@ -1,0 +1,1 @@
+const A = <div className={`${condition ? 'active ' : ''} suffix`} />;

@@ -162,10 +162,10 @@ const loadPluginJSXA11yRules = (linter) => {
 
     const recommendedValue = pluginJSXA11yRecommendedRules.get(prefixedName);
     rule.meta.docs.recommended =
-      recommendedValue &&
+      recommendedValue
       // Type is `string | [string, opt]`
-      recommendedValue !== "off" &&
-      recommendedValue[0] !== "off";
+      && recommendedValue !== "off"
+      && recommendedValue[0] !== "off";
 
     linter.defineRule(prefixedName, rule);
   }

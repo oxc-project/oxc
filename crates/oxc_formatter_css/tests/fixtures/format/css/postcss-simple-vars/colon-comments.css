@@ -1,0 +1,9 @@
+/* A comment between the name and the colon never crosses the `:`
+   (kept verbatim, glued, as Prettier prints it). */
+$x /* between */: red;
+$y /* between-empty */: ;
+$z /* prettier-ignore */: red   blue;
+$w/* glued */:red;
+
+/* A comment after the colon stays before the `;`. */
+$g: /* c */;

@@ -1,19 +1,21 @@
-use oxc_ast::{AstKind, ast::Argument};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+use oxc_ast::{AstKind, ast::Argument};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
+use oxc_span::Span;
+
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{PossibleJestNode, parse_general_jest_fn_call},
 };
 
 fn prefer_import_in_mock_diagnostic(span: Span, path: &str) -> OxcDiagnostic {
     let help = format!(
-        "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import('{path}')`"
+        "Dynamic import improves the type information and IntelliSense. Substitute `{path}` with `import({path})`"
     );
 
     OxcDiagnostic::warn("Mocked modules must be dynamic imported.").with_help(help).with_label(span)
@@ -77,27 +79,26 @@ declare_oxc_lint!(
 impl Rule for PreferImportInMock {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         Ok(Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<PreferImportInMockConfig>>(value)
+            DefaultRuleConfig::<PreferImportInMockConfig>::from_value(value)
                 .unwrap_or_default()
                 .into_inner(),
         )))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        self.run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        self.run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 const MOCK_METHODS: [&str; 2] = ["mock", "doMock"];
 
 impl PreferImportInMock {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -110,7 +111,11 @@ impl PreferImportInMock {
             return;
         }
 
-        if parse_general_jest_fn_call(call_expr, possible_jest_node, ctx).is_none() {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        if parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx).is_none() {
             return;
         }
 
@@ -118,20 +123,21 @@ impl PreferImportInMock {
             return;
         };
 
+        // Use the raw source text so the fix preserves the original quote style
+        // and escapes; re-serializing the cooked value can change the module
+        // specifier or produce invalid syntax.
+        let raw = import_value
+            .raw
+            .map_or_else(|| ctx.source_range(import_value.span), |raw| raw.as_str());
+
         ctx.diagnostic_with_fix(
-            prefer_import_in_mock_diagnostic(
-                call_expr.arguments_span().unwrap(),
-                import_value.value.as_ref(),
-            ),
+            prefer_import_in_mock_diagnostic(call_expr.arguments_span().unwrap(), raw),
             |fixer| {
                 if !self.fixable {
                     return fixer.noop();
                 }
 
-                fixer.replace(
-                    import_value.span,
-                    format!("import('{}')", import_value.value.as_ref()),
-                )
+                fixer.replace(import_value.span, format!("import({raw})"))
             },
         );
     }
@@ -156,6 +162,10 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r#"vi.mock("\uD800")"#, None),
+        (r#"vi.doMock("a\uDC00b", () => ({}))"#, None),
         ("vi.mock('foo', () => {})", Some(serde_json::json!([ { "fixable": false, }, ]))),
         (r#"vi.mock("node:fs/promises")"#, Some(serde_json::json!([ { "fixable": false, }, ]))),
         (
@@ -192,14 +202,17 @@ fn test() {
                   ",
             None,
         ),
+        (r#"vi.mock("./it's.js", () => ({ x: 1 }))"#, None),
+        (r"vi.mock('./dir\\file.js', () => ({ x: 2 }))", None),
     ];
 
     let fix = vec![
+        (r#"vi.mock("\uD800")"#, r#"vi.mock(import("\uD800"))"#),
         ("vi.mock('foo', () => {})", "vi.mock(import('foo'), () => {})"),
-        (r#"vi.mock("node:fs/promises")"#, "vi.mock(import('node:fs/promises'))"),
+        (r#"vi.mock("node:fs/promises")"#, r#"vi.mock(import("node:fs/promises"))"#),
         (
             r#"vi.mock("./foo.js", () => ({ Foo: vi.fn() }))"#,
-            "vi.mock(import('./foo.js'), () => ({ Foo: vi.fn() }))",
+            r#"vi.mock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#,
         ),
         (
             "
@@ -212,10 +225,10 @@ fn test() {
                   ",
         ),
         ("vi.doMock('foo', () => {})", "vi.doMock(import('foo'), () => {})"),
-        (r#"vi.doMock("node:fs/promises")"#, "vi.doMock(import('node:fs/promises'))"),
+        (r#"vi.doMock("node:fs/promises")"#, r#"vi.doMock(import("node:fs/promises"))"#),
         (
             r#"vi.doMock("./foo.js", () => ({ Foo: vi.fn() }))"#,
-            "vi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))",
+            r#"vi.doMock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#,
         ),
         (
             "
@@ -226,6 +239,15 @@ fn test() {
                     import { vi as renamedVi } from 'vitest';
                     renamedVi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))
                   ",
+        ),
+        (r#"vi.doMock("a\uDC00b", () => ({}))"#, r#"vi.doMock(import("a\uDC00b"), () => ({}))"#),
+        (
+            r#"vi.mock("./it's.js", () => ({ x: 1 }))"#,
+            r#"vi.mock(import("./it's.js"), () => ({ x: 1 }))"#,
+        ),
+        (
+            r"vi.mock('./dir\\file.js', () => ({ x: 2 }))",
+            r"vi.mock(import('./dir\\file.js'), () => ({ x: 2 }))",
         ),
     ];
 

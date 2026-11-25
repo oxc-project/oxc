@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoUnnecessarySliceEnd,
     unicorn,
     pedantic,
+    recommended,
     fix,
     version = "0.16.10",
     short_description = "Disallows unnecessarily passing a second argument to `slice(...)`, for cases where it would not change the result.",

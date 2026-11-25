@@ -168,25 +168,37 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = arg0.foo; new x[bar]()}",
         "function wrapper(arg0, arg1) { new arg0.foo[bar]();}",
     );
-    test_same("function wrapper(arg0, arg1) { let x = arg0.foo; new x()}");
-    test_same("function wrapper(arg0, arg1) { let x = arg0[foo]; new x()}");
-    test_same("function wrapper(arg0, arg1) { let x = arg0?.foo; new x()}");
-    test_same("function wrapper(arg0, arg1) { let x = arg0?.[foo]; new x()}");
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0.foo; new x()}",
+        "function wrapper(arg0, arg1) { new arg0.foo();}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0[foo]; new x()}",
+        "function wrapper(arg0, arg1) { new arg0[foo]();}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0?.foo; new x()}",
+        "function wrapper(arg0, arg1) { new (arg0?.foo)();}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; new x()}",
+        "function wrapper(arg0, arg1) { new (arg0?.[foo])();}",
+    );
     test(
         "function wrapper(arg0, arg1) { let x = arg0.foo; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; new x();}",
+        "function wrapper(arg0, arg1) { new arg0.foo();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0[foo]; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; new x();}",
+        "function wrapper(arg0, arg1) { new arg0[foo]();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.foo; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; new x();}",
+        "function wrapper(arg0, arg1) { new (arg0?.foo)();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0?.[foo]; new (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; new x();}",
+        "function wrapper(arg0, arg1) { new (arg0?.[foo])();}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return (x(), 1);}",
@@ -225,7 +237,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper() { var i, x = 1; for (i = x; i < 10; i++) console.log(i) }",
-        "function wrapper() { var i; for (i = 1; i < 10; i++) console.log(i) }",
+        "function wrapper() { for (var i = 1; i < 10; i++) console.log(i) }",
     );
     test(
         "function wrapper() { var x = i; for (var i = x; i < 10; i++) console.log(i) }",
@@ -276,12 +288,12 @@ fn test_inline_single_use_variable() {
     // cannot be compressed to `function wrapper() { var foo; globalThis[console.log(foo)] = (() => { foo = 1 })() }`
     test(
         "function wrapper() { var foo; var bar = (() => { foo = 1 })(); globalThis[console.log(foo)] = bar }",
-        "function wrapper() { var foo, bar = (foo = 1, void 0); globalThis[console.log(foo)] = bar }",
+        "function wrapper() { var foo = 1, bar = void 0; globalThis[console.log(foo)] = bar }",
     );
     // cannot be compressed to `function wrapper() { let foo; return foo.bar = (() => { foo = {} })(), foo }`
     test(
         "function wrapper() { let foo; const bar = (() => { foo = {} })(); foo.bar = bar; return foo }",
-        "function wrapper() { let foo, bar = (foo = {}, void 0); return foo.bar = void 0, foo }",
+        "function wrapper() { let foo = {}, bar; return foo.bar = void 0, foo }",
     );
     test(
         "function wrapper() { let foo = {}; const bar = (() => { console.log() })(); foo.bar = bar; return foo }",
@@ -316,6 +328,95 @@ fn test_inline_past_readonly_variable() {
     test(
         "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
         "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
+    );
+}
+
+#[test]
+fn test_inline_into_tag_keeps_this() {
+    test("function f(a) { let c = a?.b; return c`` }", "function f(a) { return (0, a?.b)`` }");
+    test("function f(a) { let c = a[b]; return c`` }", "function f(a) { return (0, a[b])`` }");
+    test(
+        "function f(a, t) { let c = a.b; return t`${c}` }",
+        "function f(a, t) { return t`${a.b}` }",
+    );
+    test("function f(a) { let c = a; return c.b`` }", "function f(a) { return a.b`` }");
+}
+
+#[test]
+fn test_inline_into_call_arguments() {
+    test("function f(o, g) { var a = o.a; return g(a) }", "function f(o, g) { return g(o.a) }");
+    test(
+        "function f(o, g) { var a = o.a; return g(a, o.c) }",
+        "function f(o, g) { return g(o.a, o.c) }",
+    );
+    test(
+        "function f(o, g) { var a = o.a, b = o.b; return g(a, b) }",
+        "function f(o, g) { return g(o.a, o.b) }",
+    );
+    test(
+        "function f(o, g) { let a = o.a; return g(a, o.c) }",
+        "function f(o, g) { return g(o.a, o.c) }",
+    );
+    test(
+        "function f(o, g) { var a = o.a; return g(...a) }",
+        "function f(o, g) { return g(...o.a) }",
+    );
+    // Earlier member reads could run getters that change `o.a`.
+    test_same("function f(o, g) { var a = o.a; return g(o.b, a) }");
+    test_same("function f(o, g) { var a = o.a; return g.h(a) }");
+    // An optional call can skip evaluating its arguments.
+    test_same("function f(o, g) { var a = o.a; return g?.(a) }");
+}
+
+#[test]
+fn test_inline_eval_alias_stays_indirect() {
+    for kind in ["const", "let", "var"] {
+        test(
+            &format!("function f(a) {{ {kind} e = eval; return e('typeof a'); }}"),
+            "function f(a) { return (0, eval)('typeof a'); }",
+        );
+    }
+    test_same("function f(a) { return (0, eval)('typeof a'); }");
+    test_same("const e = eval; function f(a) { return e('typeof a'); }");
+    test(
+        "function f(a) { const e = eval; return e?.('typeof a'); }",
+        "function f(a) { return eval?.('typeof a'); }",
+    );
+    test_script(
+        "function f(a, eval) { const e = eval; return e('typeof a'); }",
+        "function f(a, eval) { return (0, eval)('typeof a'); }",
+    );
+}
+
+#[test]
+fn test_inline_into_callee_keeps_this() {
+    test("function f(o) { var c = o.m; return c(1) }", "function f(o) { return (0, o.m)(1) }");
+    test("function f(o) { var c = o?.m; return c(1) }", "function f(o) { return (0, o?.m)(1) }");
+    test("function f(o) { var c = o.m; return c?.(1) }", "function f(o) { return (0, o.m)?.(1) }");
+    test("function f(o) { var c = o?.(); return c(1) }", "function f(o) { return (o?.())(1) }");
+    test(
+        "function f(o) { var c = o.m; return c.call(o, 1) }",
+        "function f(o) { return o.m.call(o, 1) }",
+    );
+    test(
+        "function f(o) { var c = o.m, a = o.a; return c(a) }",
+        "function f(o) { return (0, o.m)(o.a) }",
+    );
+    test(
+        "function f(o) { var a = o.a, c = o.m; return c(a) }",
+        "function f(o) { var a = o.a; return (0, o.m)(a) }",
+    );
+}
+
+#[test]
+fn test_inline_into_new_arguments() {
+    test(
+        "function f(o, C) { var a = o.a; return new C(a) }",
+        "function f(o, C) { return new C(o.a) }",
+    );
+    test(
+        "function f(o) { var C = o.C, a = o.a; return new C(a) }",
+        "function f(o) { return new o.C(o.a) }",
     );
 }
 
@@ -495,6 +596,45 @@ fn keep_exposed_variables() {
 }
 
 #[test]
+fn keep_script_root_var_in_nested_statement() {
+    // A `var` nested in a statement still declares a Script-root binding that
+    // later scripts can read.
+    test_script_same("try { var x = foo(); throw x } catch {}");
+    test_script_same("l: { var x = foo(); if (x) break l; bar() }");
+    // The result does not depend on a function that the same run removes.
+    test_script(
+        "(function (a) {})(1); try { var x = foo(); throw x } catch {}",
+        "try { var x = foo(); throw x } catch {}",
+    );
+}
+
+#[test]
+fn keep_block_var_read_by_outer_direct_eval() {
+    test(
+        "function f(a, b) { { var x = a; b(x); } return eval('x') }",
+        "function f(a, b) { var x = a; return b(x), eval('x') }",
+    );
+    test_same("function f(a, b) { if (a) { var x = a; b(x); } return eval('x') }");
+    test(
+        "function f(a, b) { switch (a) { case 0: break; default: var x = a; b(x); } return eval('x') }",
+        "function f(a, b) { if (a !== 0) { var x = a; b(x); } return eval('x') }",
+    );
+    test(
+        "function f(a, b) { { var x = a, y = x; b(y); } return eval('x') }",
+        "function f(a, b) { var x = a, y = x; return b(y), eval('x') }",
+    );
+    test(
+        "function f(a, b) { { var x = a; b(x); } return () => eval('x') }",
+        "function f(a, b) { var x = a; return b(x), () => eval('x') }",
+    );
+    // A block-scoped `let` is not visible to an eval outside the block.
+    test(
+        "function f(a, b) { { let x = a; b(x); } return eval('x') }",
+        "function f(a, b) { return b(a), eval('x') }",
+    );
+}
+
+#[test]
 fn keep_names() {
     test(
         "var x = function() {}; var y = x; console.log(y.name)",
@@ -560,7 +700,7 @@ fn integration() {
         ",
         "
         var bar = foo.bar;
-        (typeof bar != 'object' || !bar) && console.log('foo')
+        typeof bar == 'object' && bar || console.log('foo')
         ",
     );
 }

@@ -7,8 +7,8 @@ Usage: [-c=<./.oxlintrc.json>] [PATH]...
 Basic Configuration
     -c, --config=<./.oxlintrc.json>  Oxlint configuration file
                               * `.json` and `.jsonc` config files are supported in all runtimes
-                              * JavaScript/TypeScript config files are experimental and require
-                              running via Node.js
+                              * JavaScript/TypeScript config files require running Oxlint via
+                              Node.js
                               * you can use comments in configuration files.
                               * tries to be compatible with ESLint v8's format
         --tsconfig=<./tsconfig.json>  Override the TypeScript config used for import resolution.
@@ -104,7 +104,6 @@ Available options:
         --lsp                 Start the language server
         --disable-nested-config  Disable the automatic loading of nested configuration files
         --type-aware          Enable rules that require type information
-        --type-check          Enable experimental type checking (includes TypeScript compiler
-                              diagnostics)
+        --type-check          Enable type checking (includes TypeScript compiler diagnostics)
     -h, --help                Prints help information
     -V, --version             Prints version information

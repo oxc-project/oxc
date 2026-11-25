@@ -95,12 +95,12 @@ impl Rule for NoExtraLabel {
         match node.kind() {
             AstKind::BreakStatement(break_stmt) => {
                 if let Some(label) = &break_stmt.label {
-                    report_label_if_extra(label, node, ctx);
+                    report_label_if_extra(label, node, 5, ctx);
                 }
             }
             AstKind::ContinueStatement(cont_stmt) => {
                 if let Some(label) = &cont_stmt.label {
-                    report_label_if_extra(label, node, ctx);
+                    report_label_if_extra(label, node, 8, ctx);
                 }
             }
             _ => {}
@@ -108,7 +108,12 @@ impl Rule for NoExtraLabel {
     }
 }
 
-fn report_label_if_extra(label: &LabelIdentifier, node: &AstNode, ctx: &LintContext) {
+fn report_label_if_extra(
+    label: &LabelIdentifier,
+    node: &AstNode,
+    keyword_len: u32,
+    ctx: &LintContext,
+) {
     let nodes = ctx.nodes();
     for ancestor_id in nodes.ancestor_ids(node.id()) {
         if !is_breakable_statement(nodes.kind(ancestor_id)) {
@@ -121,14 +126,8 @@ fn report_label_if_extra(label: &LabelIdentifier, node: &AstNode, ctx: &LintCont
             return;
         }
 
-        let keyword_len: u32 = match node.kind() {
-            AstKind::BreakStatement(_) => 5,
-            AstKind::ContinueStatement(_) => 8,
-            _ => unreachable!(),
-        };
-
         let keyword_end = node.span().start + keyword_len;
-        let delete_span = Span::new(keyword_end, label.span.end);
+        let delete_span = Span::sized(keyword_end, label.span.end - keyword_end);
 
         let diagnostic = no_extra_label_diagnostic(label);
         if ctx.comments().iter().any(|comment| delete_span.contains_inclusive(comment.span)) {

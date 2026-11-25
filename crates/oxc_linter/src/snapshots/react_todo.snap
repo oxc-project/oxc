@@ -1,0 +1,29 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(todo): Support local variables named `fbt`
+   ╭─[todo.tsx:2:23]
+ 1 │ function Component() {
+ 2 │                 const fbt = 'span';
+   ·                       ─┬─
+   ·                        ╰── Local variables named `fbt` are not supported
+ 3 │                 return <fbt desc='label'>Hello</fbt>;
+   ╰────
+  help: Local variables named `fbt` may conflict with the fbt plugin and are not yet supported
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax
+
+  ⚠ react(todo): `try`/`finally` without `catch` is not supported by React Compiler
+   ╭─[todo.tsx:4:21]
+ 3 │                 useEffect(() => {
+ 4 │                     try {
+   ·                     ─┬─
+   ·                      ╰── Unsupported `try` starts here
+ 5 │                         doSomething();
+ 6 │                     } finally {
+   ·                      ────┬────
+   ·                          ╰── This `finally` clause requires unsupported control flow
+ 7 │                         cleanup();
+   ╰────
+  help: React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax

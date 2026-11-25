@@ -65,6 +65,15 @@ fn test() {
               }
               return 2;
             });",
+        "const state = { open: false }; aVariable.mockImplementation(() => (state.open = true));",
+        "const state = { open: false }; aVariable.mockImplementationOnce(() => { return state.open ||= true; });",
+        "const state = { open: false }; aVariable.mockImplementation(() => ((state.open = true) as boolean));",
+        "const state = { open: false }; aVariable.mockImplementation(function () { return (state.open = true); });",
+        "const state = { open: false }; aVariable.mockImplementation(() => ([state.open] = [true]));",
+        "const state = { count: 0 }; aVariable.mockImplementation(() => (state.count++ as number));",
+        "const state = { count: 0 }; aVariable.mockImplementation(() => [state.count++]);",
+        "const state = { open: false }; aVariable.mockImplementation(() => ({ value: (state.open = true) }));",
+        "const state = { open: false }; aVariable.mockImplementation(() => (true ? (state.open = true) : false));",
         "aVariable.mockImplementation(() => value++)",
         "aVariable.mockImplementationOnce(() => --value)",
         "const aValue = 0;
@@ -323,6 +332,23 @@ fn test() {
                 return 0;
               }
             });",
+        "jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(
+              function (this: HTMLElement) {
+                return this.dataset.testId === 'ai-assistant-messages' ? 400 : 68;
+              },
+            );",
+        "aVariable.mockImplementation(function () {
+              return () => this.value;
+            });",
+        "aVariable.mockImplementation(function () {
+              return class { [this.key] = 1; };
+            });",
+        "aVariable.mockImplementation(function () {
+              return class { @this.decorator field = 1; };
+            });",
+        "aVariable.mockImplementation(function () {
+              return class { method(@this.decorator x) {} };
+            });",
     ];
 
     let fail = vec![
@@ -544,6 +570,12 @@ fn test() {
             aVariable.mockImplementation(() => true ? true : true ? value : false);
             aVariable.mockImplementation(() => true ? true : true ? x : false);
             aVariable.mockImplementation(() => true ? true : true ? true : false);",
+        "aVariable.mockImplementationOnce(() => this.value);",
+        "aVariable.mockImplementation(() => ({ get value() { return this.x; } }));",
+        "aVariable.mockImplementation(function () { return class { field = this.x; } });",
+        "aVariable.mockImplementation(function () { return class { accessor field = this.x; } });",
+        "aVariable.mockImplementation(function () { return class { static { this.x; } } });",
+        "aVariable.mockImplementation(function () { return class { method(x = this.x) {} } });",
     ];
 
     let fix = vec![
@@ -913,6 +945,30 @@ fn test() {
             aVariable.mockImplementation(() => true ? true : true ? value : false);
             aVariable.mockReturnValue(true ? true : true ? x : false);
             aVariable.mockReturnValue(true ? true : true ? true : false);",
+        ),
+        (
+            "aVariable.mockImplementationOnce(() => this.value);",
+            "aVariable.mockReturnValueOnce(this.value);",
+        ),
+        (
+            "aVariable.mockImplementation(() => ({ get value() { return this.x; } }));",
+            "aVariable.mockReturnValue({ get value() { return this.x; } });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { field = this.x; } });",
+            "aVariable.mockReturnValue(class { field = this.x; });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { accessor field = this.x; } });",
+            "aVariable.mockReturnValue(class { accessor field = this.x; });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { static { this.x; } } });",
+            "aVariable.mockReturnValue(class { static { this.x; } });",
+        ),
+        (
+            "aVariable.mockImplementation(function () { return class { method(x = this.x) {} } });",
+            "aVariable.mockReturnValue(class { method(x = this.x) {} });",
         ),
     ];
 

@@ -279,6 +279,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for LabelIdentifier<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             name: CloneIn::clone_in_impl(&self.name, with_semantic_ids, allocator),
+            label_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
+                &self.label_id,
+                with_semantic_ids,
+            ),
         }
     }
 }
@@ -451,7 +455,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ObjectProperty<'_> {
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             method: CloneIn::clone_in_impl(&self.method, with_semantic_ids, allocator),
             shorthand: CloneIn::clone_in_impl(&self.shorthand, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
         }
     }
 }
@@ -470,6 +473,15 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
                 with_semantic_ids,
                 allocator,
             )),
+            Self::StaticStringLiteral(it) => PropertyKey::StaticStringLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::StaticNumericLiteral(it) => PropertyKey::StaticNumericLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::StaticBigIntLiteral(it) => PropertyKey::StaticBigIntLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
             Self::PrivateIdentifier(it) => PropertyKey::PrivateIdentifier(CloneIn::clone_in_impl(
                 it,
                 with_semantic_ids,
@@ -592,11 +604,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             tail: CloneIn::clone_in_impl(&self.tail, with_semantic_ids, allocator),
-            lone_surrogates: CloneIn::clone_in_impl(
-                &self.lone_surrogates,
-                with_semantic_ids,
-                allocator,
-            ),
         }
     }
 }
@@ -1215,7 +1222,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetPropertyProperty<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             name: CloneIn::clone_in_impl(&self.name, with_semantic_ids, allocator),
             binding: CloneIn::clone_in_impl(&self.binding, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
         }
     }
 }
@@ -1404,7 +1410,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Statement<'_> {
             | Self::TSTypeAliasDeclaration(_)
             | Self::TSInterfaceDeclaration(_)
             | Self::TSEnumDeclaration(_)
-            | Self::TSModuleDeclaration(_)
+            | Self::TSExternalModuleDeclaration(_)
+            | Self::TSNamespaceDeclaration(_)
             | Self::TSGlobalDeclaration(_)
             | Self::TSImportEqualsDeclaration(_) => Statement::from(CloneIn::clone_in_impl(
                 self.to_declaration(),
@@ -1511,7 +1518,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for Declaration<'_> {
                 with_semantic_ids,
                 allocator,
             )),
-            Self::TSModuleDeclaration(it) => Declaration::TSModuleDeclaration(
+            Self::TSExternalModuleDeclaration(it) => Declaration::TSExternalModuleDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSNamespaceDeclaration(it) => Declaration::TSNamespaceDeclaration(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
             Self::TSGlobalDeclaration(it) => Declaration::TSGlobalDeclaration(
@@ -1566,7 +1576,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclarator<'_> {
         VariableDeclarator {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
             type_annotation: CloneIn::clone_in_impl(
                 &self.type_annotation,
@@ -2116,7 +2125,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for BindingProperty<'_> {
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             shorthand: CloneIn::clone_in_impl(&self.shorthand, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
         }
     }
 }
@@ -2435,12 +2443,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
                 with_semantic_ids,
                 allocator,
             ),
-            super_class: CloneIn::clone_in_impl(&self.super_class, with_semantic_ids, allocator),
-            super_type_arguments: CloneIn::clone_in_impl(
-                &self.super_type_arguments,
-                with_semantic_ids,
-                allocator,
-            ),
+            heritage: CloneIn::clone_in_impl(&self.heritage, with_semantic_ids, allocator),
             implements: CloneIn::clone_in_impl(&self.implements, with_semantic_ids, allocator),
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
             r#abstract: CloneIn::clone_in_impl(&self.r#abstract, with_semantic_ids, allocator),
@@ -2448,6 +2451,25 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
             scope_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
                 &self.scope_id,
                 with_semantic_ids,
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ClassHeritage<'_> {
+    type Cloned = ClassHeritage<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ClassHeritage {
+            expression: CloneIn::clone_in_impl(&self.expression, with_semantic_ids, allocator),
+            type_arguments: CloneIn::clone_in_impl(
+                &self.type_arguments,
+                with_semantic_ids,
+                allocator,
             ),
         }
     }
@@ -2532,7 +2554,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for MethodDefinition<'_> {
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             r#override: CloneIn::clone_in_impl(&self.r#override, with_semantic_ids, allocator),
             optional: CloneIn::clone_in_impl(&self.optional, with_semantic_ids, allocator),
@@ -2578,7 +2599,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
                 allocator,
             ),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
             r#override: CloneIn::clone_in_impl(&self.r#override, with_semantic_ids, allocator),
@@ -2730,7 +2750,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AccessorProperty<'_> {
                 allocator,
             ),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             r#override: CloneIn::clone_in_impl(&self.r#override, with_semantic_ids, allocator),
             definite: CloneIn::clone_in_impl(&self.definite, with_semantic_ids, allocator),
@@ -3204,7 +3223,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for NumericLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            base: CloneIn::clone_in_impl(&self.base, with_semantic_ids, allocator),
         }
     }
 }
@@ -3222,11 +3240,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            lone_surrogates: CloneIn::clone_in_impl(
-                &self.lone_surrogates,
-                with_semantic_ids,
-                allocator,
-            ),
         }
     }
 }
@@ -3244,7 +3257,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            base: CloneIn::clone_in_impl(&self.base, with_semantic_ids, allocator),
         }
     }
 }
@@ -3293,6 +3305,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'_> {
             text: CloneIn::clone_in_impl(&self.text, with_semantic_ids, allocator),
             pattern: CloneIn::clone_in_impl(&self.pattern, with_semantic_ids, allocator),
         }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for RegExpFlags {
+    type Cloned = RegExpFlags;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
     }
 }
 
@@ -4818,7 +4843,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSPropertySignature<'_> {
         TSPropertySignature {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             optional: CloneIn::clone_in_impl(&self.optional, with_semantic_ids, allocator),
             readonly: CloneIn::clone_in_impl(&self.readonly, with_semantic_ids, allocator),
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
@@ -4942,7 +4966,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSMethodSignature<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             optional: CloneIn::clone_in_impl(&self.optional, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             type_parameters: CloneIn::clone_in_impl(
@@ -5019,7 +5042,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInterfaceHeritage<'_> {
         TSInterfaceHeritage {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            expression: CloneIn::clone_in_impl(&self.expression, with_semantic_ids, allocator),
+            type_name: CloneIn::clone_in_impl(&self.type_name, with_semantic_ids, allocator),
             type_arguments: CloneIn::clone_in_impl(
                 &self.type_arguments,
                 with_semantic_ids,
@@ -5076,15 +5099,37 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypePredicateName<'_> {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclaration<'_> {
-    type Cloned = TSModuleDeclaration<'new_alloc>;
+impl<'new_alloc> CloneIn<'new_alloc> for TSExternalModuleDeclaration<'_> {
+    type Cloned = TSExternalModuleDeclaration<'new_alloc>;
 
     fn clone_in_impl(
         &self,
         with_semantic_ids: CloneInSemanticIds,
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
-        TSModuleDeclaration {
+        TSExternalModuleDeclaration {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
+            body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
+            declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
+            scope_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
+                &self.scope_id,
+                with_semantic_ids,
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TSNamespaceDeclaration<'_> {
+    type Cloned = TSNamespaceDeclaration<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        TSNamespaceDeclaration {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
@@ -5099,8 +5144,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclaration<'_> {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationKind {
-    type Cloned = TSModuleDeclarationKind;
+impl<'new_alloc> CloneIn<'new_alloc> for TSNamespaceDeclarationKind {
+    type Cloned = TSNamespaceDeclarationKind;
 
     #[inline(always)]
     fn clone_in_impl(
@@ -5112,8 +5157,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationKind {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationName<'_> {
-    type Cloned = TSModuleDeclarationName<'new_alloc>;
+impl<'new_alloc> CloneIn<'new_alloc> for TSNamespaceDeclarationBody<'_> {
+    type Cloned = TSNamespaceDeclarationBody<'new_alloc>;
 
     fn clone_in_impl(
         &self,
@@ -5121,31 +5166,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationName<'_> {
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => TSModuleDeclarationName::Identifier(CloneIn::clone_in_impl(
-                it,
-                with_semantic_ids,
-                allocator,
-            )),
-            Self::StringLiteral(it) => TSModuleDeclarationName::StringLiteral(
+            Self::TSNamespaceDeclaration(it) => TSNamespaceDeclarationBody::TSNamespaceDeclaration(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationBody<'_> {
-    type Cloned = TSModuleDeclarationBody<'new_alloc>;
-
-    fn clone_in_impl(
-        &self,
-        with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        match self {
-            Self::TSModuleDeclaration(it) => TSModuleDeclarationBody::TSModuleDeclaration(
-                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
-            ),
-            Self::TSModuleBlock(it) => TSModuleDeclarationBody::TSModuleBlock(
+            Self::TSModuleBlock(it) => TSNamespaceDeclarationBody::TSModuleBlock(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
         }
@@ -5766,6 +5790,32 @@ impl<'new_alloc> CloneIn<'new_alloc> for CommentContent {
     }
 }
 
+impl<'new_alloc> CloneIn<'new_alloc> for CommentNewlines {
+    type Cloned = CommentNewlines;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for CommentPlacement {
+    type Cloned = CommentPlacement;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for Comment {
     type Cloned = Comment;
 
@@ -5777,6 +5827,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Comment {
         Comment {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             attached_to: CloneIn::clone_in_impl(&self.attached_to, with_semantic_ids, allocator),
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            placement: CloneIn::clone_in_impl(&self.placement, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             position: CloneIn::clone_in_impl(&self.position, with_semantic_ids, allocator),
             newlines: CloneIn::clone_in_impl(&self.newlines, with_semantic_ids, allocator),

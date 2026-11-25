@@ -95,7 +95,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireDirectExport {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -154,7 +154,6 @@ fn check_expression<'a>(
                 ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
-        // Check for CallExpression (Vue.extend, defineComponent)
         Expression::CallExpression(call_expr) => {
             check_call_expression(call_expr, span, ctx);
         }
@@ -163,7 +162,6 @@ fn check_expression<'a>(
 }
 
 fn check_call_expression<'a>(call_expr: &CallExpression<'a>, span: Span, ctx: &LintContext<'a>) {
-    // Check for defineComponent
     if let Some(callee_ident) = call_expr.callee.get_identifier_reference()
         && callee_ident.name == "defineComponent"
     {

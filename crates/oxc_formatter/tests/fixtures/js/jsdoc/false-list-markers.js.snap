@@ -10,12 +10,6 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 const a = 1;
 
 /**
- * - This is a real list item
- * - Another real list item
- */
-const b = 2;
-
-/**
  * This function does something — `await something + other` and returns a value that needs wrapping across lines.
  */
 function foo() {}
@@ -25,12 +19,6 @@ function foo() {}
  * result = first + second + third + fourth + fifth + sixth + more.
  */
 function bar() {}
-
-/**
- * Returns the difference of values according to: result = alpha - beta
- * - gamma - delta - epsilon - zeta - eta and continues more text here.
- */
-function baz() {}
 
 /**
  * @param {string} value - The computed value from applying: result = alpha - beta - gamma - delta - epsilon
@@ -43,21 +31,16 @@ function paramMinus(value) {}
 function paramPlus(value) {}
 
 ==================== Output ====================
------------------------------
-{ jsdoc: {}, printWidth: 80 }
------------------------------
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
 /**
  * This function handles the case where something wraps and the continuation
- * line starts with a character that looks like a list marker — like `await a +
- * b` or some em-dash — prefix.
+ * line starts with a character that looks like a list marker — like `await a
+ *
+ * - B` or some em-dash — prefix.
  */
 const a = 1;
-
-/**
- * - This is a real list item
- * - Another real list item
- */
-const b = 2;
 
 /**
  * This function does something — `await something + other` and returns a value
@@ -66,16 +49,10 @@ const b = 2;
 function foo() {}
 
 /**
- * Computes the result of adding values together with a formula: result = first
- * + second + third + fourth + fifth + sixth + more.
+ * Computes the result of adding values together with a formula: result = first +
+ * second + third + fourth + fifth + sixth + more.
  */
 function bar() {}
-
-/**
- * Returns the difference of values according to: result = alpha - beta - gamma
- * - delta - epsilon - zeta - eta and continues more text here.
- */
-function baz() {}
 
 /**
  * @param {string} value - The computed value from applying: result = alpha -
@@ -89,20 +66,16 @@ function paramMinus(value) {}
  */
 function paramPlus(value) {}
 
-------------------------------
-{ jsdoc: {}, printWidth: 100 }
-------------------------------
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
 /**
  * This function handles the case where something wraps and the continuation line starts with a
- * character that looks like a list marker — like `await a + b` or some em-dash — prefix.
+ * character that looks like a list marker — like `await a
+ *
+ * - B` or some em-dash — prefix.
  */
 const a = 1;
-
-/**
- * - This is a real list item
- * - Another real list item
- */
-const b = 2;
 
 /**
  * This function does something — `await something + other` and returns a value that needs wrapping
@@ -115,12 +88,6 @@ function foo() {}
  * fourth + fifth + sixth + more.
  */
 function bar() {}
-
-/**
- * Returns the difference of values according to: result = alpha - beta - gamma - delta - epsilon -
- * zeta - eta and continues more text here.
- */
-function baz() {}
 
 /**
  * @param {string} value - The computed value from applying: result = alpha - beta - gamma - delta -

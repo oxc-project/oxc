@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode, context::LintContext, rule::Rule,
@@ -60,9 +60,11 @@ declare_oxc_lint!(
     NoSharedComponentData,
     vue,
     correctness,
-    pending,
+    recommended,
+    suggestion,
     version = "1.67.0",
-    short_description = "Enforce that the `data` property of a Vue component definition is a function.",
+    short_description =
+        "Enforce that the `data` property of a Vue component definition is a function.",
 );
 
 impl Rule for NoSharedComponentData {
@@ -86,7 +88,13 @@ impl Rule for NoSharedComponentData {
             return;
         }
 
-        ctx.diagnostic(no_shared_component_data_diagnostic(prop.span));
+        ctx.diagnostic_with_suggestion(no_shared_component_data_diagnostic(prop.span), |fixer| {
+            let value_span = prop.value.span();
+            let value_text = ctx.source_range(value_span);
+            fixer
+                .replace(value_span, format!("function() {{\nreturn {value_text};\n}}"))
+                .with_message("Wrap `data` in a function that returns the object")
+        });
     }
 }
 
@@ -360,6 +368,98 @@ fn test() {
         ),
     ];
 
+    let fix = vec![
+        (
+            "
+        Vue.component('some-comp', {
+          data: {
+            foo: 'bar'
+          }
+        })
+      ",
+            "
+        Vue.component('some-comp', {
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        })
+      ",
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+        app.component('some-comp', {
+          data: {
+            foo: 'bar'
+          }
+        })
+      ",
+            "
+        app.component('some-comp', {
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        })
+      ",
+            None,
+            Some(PathBuf::from("test.js")),
+        ),
+        (
+            "
+        <script>
+        export default {
+          data: {
+            foo: 'bar'
+          }
+        }
+        </script>
+      ",
+            "
+        <script>
+        export default {
+          data: function() {
+return {
+            foo: 'bar'
+          };
+}
+        }
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+        <script>
+        export default {
+          data: /*a*/ (/*b*/{
+            foo: 'bar'
+          })
+        }
+        </script>
+      ",
+            "
+        <script>
+        export default {
+          data: /*a*/ function() {
+return (/*b*/{
+            foo: 'bar'
+          });
+}
+        }
+        </script>
+      ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+    ];
+
     Tester::new(NoSharedComponentData::NAME, NoSharedComponentData::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

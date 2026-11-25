@@ -998,9 +998,15 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_ts_module_declaration(&mut self, it: &mut TSModuleDeclaration<'a>) {
+    fn visit_ts_external_module_declaration(&mut self, it: &mut TSExternalModuleDeclaration<'a>) {
         self.convert_offset(&mut it.span.start);
-        walk_mut::walk_ts_module_declaration(self, it);
+        walk_mut::walk_ts_external_module_declaration(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ts_namespace_declaration(&mut self, it: &mut TSNamespaceDeclaration<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ts_namespace_declaration(self, it);
         self.convert_offset(&mut it.span.end);
     }
 

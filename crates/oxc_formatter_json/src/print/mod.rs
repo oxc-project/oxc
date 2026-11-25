@@ -1,5 +1,5 @@
-use oxc_ast::ast::Expression;
-use oxc_formatter_core::{Buffer, Format, Formatter, builders::FormatWith, builders::text, write};
+use oxc_ast::ast::{Expression, UnaryExpression};
+use oxc_formatter_core::{Format, Formatter, builders::FormatWith, builders::text, write};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -44,12 +44,12 @@ pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body:
 /// JS stringifies the parsed value into a different shape (`"16"` for `0x10`, `"NaN"` for `1_2`),
 /// Rust simply fails to parse, so `Err` mapping to `false` matches.
 pub fn number_string_round_trips(s: &str) -> bool {
-    // PERF: Use `dragonbox_ecma` directly instead of `oxc_syntax::ToJsString`
+    // PERF: Use `zmij_ecma` directly instead of `oxc_syntax::ToJsString`
     // The latter returns `String` (heap alloc),
     // while `Buffer::format` returns `&str` borrowed from a stack buffer.
     // This is only a `==` comparison on a hot path (every numeric key), so avoid the alloc.
     s.parse::<f64>()
-        .is_ok_and(|value| value.is_finite() && dragonbox_ecma::Buffer::new().format(value) == s)
+        .is_ok_and(|value| value.is_finite() && zmij_ecma::Buffer::new().format(value) == s)
 }
 
 /// Wraps a re-entrant JSON closure in a [`FormatWith`]. The closure's context is
@@ -98,7 +98,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonValue<'a, '_> {
             // Prettier's `json` parser routes through the JS estree printer,
             // which keeps both `+` and `-` operators while recursing into the argument
             // so the inner number is normalized (`-1.0e+2` → `-1.0e2`).
-            Expression::UnaryExpression(unary) => {
+            Expression::UnaryExpression(unary) if is_signed_number(unary) => {
                 write!(f, unary.operator.as_str());
                 FmtJsonValue { expression: &unary.argument }.fmt(f);
             }
@@ -124,9 +124,25 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonValue<'a, '_> {
     }
 }
 
+/// Returns `true` for `+` / `-` before a number, `Infinity` or `NaN`, the only unary forms Prettier accepts.
+/// Others are invalid, and printing them would change or break the source (`typeof x` -> `typeofx`, `-(-1)` -> `--1`).
+fn is_signed_number(unary: &UnaryExpression<'_>) -> bool {
+    unary.operator.is_arithmetic()
+        && match &unary.argument {
+            Expression::NumericLiteral(_) => true,
+            Expression::Identifier(ident) => matches!(ident.name.as_str(), "Infinity" | "NaN"),
+            _ => false,
+        }
+}
+
 /// `Format` adapter for JSON-invalid AST nodes: records a diagnostic via
 /// [`JsonFormatContext::report_invalid_json`] and emits the node's source verbatim
 /// via [`FormatSuppressedNode`] so IR construction can still complete.
+///
+/// NOTE: Validation happens at format time, so a node under `prettier-ignore` / `oxfmt-ignore` is never checked
+/// (e.g. `// prettier-ignore\n-true` is accepted, Prettier rejects it at parse time).
+/// Accepted since it is rare and the source is kept as-is;
+/// validating at parse time would need another AST walk.
 pub struct FormatInvalidJson(pub Span);
 
 impl<'a> Format<'a, JsonFormatContext<'a>> for FormatInvalidJson {

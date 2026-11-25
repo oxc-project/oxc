@@ -106,10 +106,10 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
         return;
     }
 
-    let applied = callee.object().without_parentheses();
+    let applied = callee.object().get_inner_expression();
 
     if args0.is_null_or_undefined() {
-        if !matches!(applied, Expression::Identifier(_)) {
+        if as_member_expression_without_chain_expression(applied).is_some() {
             return;
         }
     } else if let Some(applied) = as_member_expression_without_chain_expression(applied) {
@@ -138,13 +138,17 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
 fn as_member_expression_without_chain_expression<'a>(
     expr: &'a Expression,
 ) -> Option<&'a MemberExpression<'a>> {
-    match expr {
-        Expression::ChainExpression(chain_expr) => match chain_expr.expression {
-            match_member_expression!(ChainElement) => chain_expr.expression.as_member_expression(),
-            _ => None,
-        },
-        match_member_expression!(Expression) => expr.as_member_expression(),
-        _ => None,
+    let mut expr = expr;
+    loop {
+        match expr {
+            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+                ChainElement::TSNonNullExpression(non_null) => {
+                    expr = non_null.expression.get_inner_expression();
+                }
+                _ => return chain_expr.expression.as_member_expression(),
+            },
+            _ => return expr.as_member_expression(),
+        }
     }
 }
 
@@ -169,6 +173,18 @@ fn test() {
         "(a?.b).c.foo.apply(a?.b.c, args);",
         "a?.b.c.foo.apply((a?.b).c, args);",
         "class C { #apply; foo() { foo.#apply(undefined, args); } }",
+        "(c ? a : b).apply(obj, args);",
+        "(obj.foo).apply(null, args);",
+        "(obj?.foo).apply(null, args);",
+        "(obj.foo as typeof b).apply(null, args);",
+        "obj.foo!.apply(null, args);",
+        "(obj.foo satisfies typeof b).apply(null, args);",
+        "(obj.foo as typeof b).apply(other, args);",
+        "(obj.foo!)?.apply(null, args);",
+        "(obj?.foo!).apply(null, args);",
+        "(obj?.foo!)!.apply(null, args);",
+        "(obj.foo<number>).apply(null, args);",
+        "obj[key]!.apply(null, args);",
     ];
 
     let fail = vec![
@@ -192,6 +208,24 @@ fn test() {
         "(a?.b.c).foo.apply(a?.b.c, args);",
         "(a?.b).c.foo.apply((a?.b).c, args);",
         "class C { #foo; foo() { obj.#foo.apply(obj, args); } }",
+        "(c ? a : b).apply(null, args);",
+        "m!.apply(null, args);",
+        "(a as typeof b).apply(null, args);",
+        "(a satisfies typeof b).apply(null, args);",
+        "(c ? a : b).apply(undefined, args);",
+        "((a)).apply(void 0, args);",
+        "(a, b).apply(null, args);",
+        "(() => {}).apply(null, args);",
+        "(function() {}).apply(null, args);",
+        "getFunc().apply(null, args);",
+        "(obj.foo as typeof b).apply(obj, args);",
+        "obj.foo!.apply(obj, args);",
+        "(obj.foo satisfies typeof b).apply(obj, args);",
+        "(obj.foo!)?.apply(obj, args);",
+        "(obj?.foo!).apply(obj, args);",
+        "(obj?.foo!)!.apply(obj, args);",
+        "(obj.foo<number>).apply(obj, args);",
+        "obj[key]!.apply(obj, args);",
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail).test_and_snapshot();

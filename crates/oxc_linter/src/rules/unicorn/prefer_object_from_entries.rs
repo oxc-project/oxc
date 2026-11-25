@@ -81,6 +81,7 @@ declare_oxc_lint!(
     PreferObjectFromEntries,
     unicorn,
     style,
+    recommended,
     pending,
     config = PreferObjectFromEntriesConfig,
     version = "0.16.12",
@@ -97,7 +98,7 @@ impl Rule for PreferObjectFromEntries {
             && call_expr.arguments[0].is_expression()
             && does_expr_match_any_path(
                 &call_expr.callee,
-                self.functions.iter().map(|fun| fun.split('.').collect::<Vec<_>>()),
+                self.functions.iter().map(|fun| fun.split('.')),
             )
         {
             ctx.diagnostic(prefer_object_from_entries_diagnostic(call_expr.callee.span()));
@@ -108,7 +109,9 @@ impl Rule for PreferObjectFromEntries {
             return;
         }
 
-        if call_expr.optional || call_expr.callee.to_member_expression().optional() {
+        if call_expr.optional
+            || call_expr.callee.get_member_expr().is_none_or(MemberExpression::optional)
+        {
             return;
         }
 
@@ -117,7 +120,7 @@ impl Rule for PreferObjectFromEntries {
             .get(1)
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::Expression::get_inner_expression)
+            .map(Expression::get_inner_expression)
         else {
             return;
         };
@@ -131,7 +134,7 @@ impl Rule for PreferObjectFromEntries {
             .first()
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::Expression::get_inner_expression)
+            .map(Expression::get_inner_expression)
         else {
             return;
         };
@@ -164,7 +167,7 @@ impl Rule for PreferObjectFromEntries {
                 .first()
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(Expression::get_inner_expression)
             else {
                 return;
             };
@@ -180,7 +183,7 @@ impl Rule for PreferObjectFromEntries {
                 .get(1)
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(Expression::get_inner_expression)
             else {
                 return;
             };
@@ -229,7 +232,7 @@ impl Rule for PreferObjectFromEntries {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<PreferObjectFromEntriesConfig>>(value)
+        DefaultRuleConfig::<PreferObjectFromEntriesConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
             .map(|config| Self(Box::new(config)))
     }
@@ -250,8 +253,8 @@ fn is_empty_object(expr: &Expression) -> bool {
                 .first()
                 .expect("call expression must have 1 argument")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
-                .is_some_and(|expr| matches!(expr, Expression::NullLiteral(_))) =>
+                .map(Expression::get_inner_expression)
+                .is_some_and(Expression::is_null) =>
         {
             true
         }
@@ -264,6 +267,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("(x.reduce)(0,0);", None),
+        ("(pairs.reduce!)(0,0);", None),
         ("pairs.reduce(object => ({...object, key}));", None),
         ("pairs.reduce(object => ({...object, key}), {}, extraArgument);", None),
         ("pairs.reduce({}, object => ({...object, key}));", None),
@@ -271,6 +276,9 @@ fn test() {
         ("new reduce(object => ({...object, key}), {});", None),
         ("pairs.reduce?.(object => ({...object, key}), {});", None),
         ("pairs?.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)?.(object => ({...object, key}), {});", None),
+        ("(pairs?.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs?.['reduce']))(object => ({...object, key}), {});", None),
         ("pairs.notReduce(object => ({...object, key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {notEmpty});", None),
         ("pairs.reduce(object => ({...object, key}), []);", None),
@@ -341,10 +349,21 @@ fn test() {
         ("_.foo(pairs)", Some(serde_json::json!([{"functions": ["foo"]}]))),
         ("foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
         ("object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
+        ("foo(pairs)", Some(serde_json::json!([{"functions": ["", ".foo", "foo."]}]))),
+        (
+            "utils.foo(pairs)",
+            Some(serde_json::json!([{"functions": ["utils..foo", "utils.foo.extra"]}])),
+        ),
+        ("utils.foo.extra(pairs)", Some(serde_json::json!([{"functions": ["utils.foo"]}]))),
+        ("utils['foo'](pairs)", Some(serde_json::json!([{"functions": ["utils.foo"]}]))),
     ];
 
     let fail = vec![
         ("pairs.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs['reduce']))(object => ({...object, key}), {});", None),
+        ("(pairs.reduce!)(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => Object.assign(object, {key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {},);", None),
         ("pairs.reduce(object => ({...object, key,}), {});", None),
         ("pairs.reduce(object => ({...object, key}), Object.create(null));", None),
@@ -421,6 +440,10 @@ fn test() {
             Some(serde_json::json!([{"functions": ["myFromPairsFunction"]}])),
         ),
         ("utils.object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
+        (
+            "utils.foo(pairs)",
+            Some(serde_json::json!([{"functions": ["utils", "utils.foo", "utils.foo.extra"]}])),
+        ),
     ];
 
     Tester::new(PreferObjectFromEntries::NAME, PreferObjectFromEntries::PLUGIN, pass, fail)

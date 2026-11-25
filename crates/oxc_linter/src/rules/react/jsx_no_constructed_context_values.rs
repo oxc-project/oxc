@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, IdentifierReference, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXOpeningElement,
+        ChainElement, Expression, IdentifierReference, JSXAttributeItem, JSXAttributeName,
+        JSXAttributeValue, JSXElementName, JSXOpeningElement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -125,11 +125,8 @@ impl Rule for JsxNoConstructedContextValues {
 
 fn is_context_provider(jsx_opening_elem: &JSXOpeningElement, ctx: &LintContext<'_>) -> bool {
     match &jsx_opening_elem.name {
-        oxc_ast::ast::JSXElementName::MemberExpression(member_expr) => {
-            &member_expr.property.name == "Provider"
-        }
-        name @ (oxc_ast::ast::JSXElementName::Identifier(_)
-        | oxc_ast::ast::JSXElementName::IdentifierReference(_)) => {
+        JSXElementName::MemberExpression(member_expr) => &member_expr.property.name == "Provider",
+        name @ (JSXElementName::Identifier(_) | JSXElementName::IdentifierReference(_)) => {
             // Check if this identifier refers to a context created with createContext()
             name.get_identifier().is_some_and(|ident| is_react_context(ident, ctx))
         }
@@ -268,7 +265,7 @@ fn is_constructed_expression(expr: &Expression, ctx: &LintContext) -> bool {
         Expression::Identifier(ident) => is_identifier_a_constructed_value(ident, ctx),
 
         Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
-            oxc_ast::ast::ChainElement::CallExpression(call) => {
+            ChainElement::CallExpression(call) => {
                 if let Expression::Identifier(ident) = &call.callee {
                     let name = ident.name.as_str();
                     if name == "useMemo" || name == "useCallback" {

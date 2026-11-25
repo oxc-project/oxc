@@ -2,16 +2,19 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, FunctionBody,
-        FunctionType, MethodDefinition, ObjectProperty, PropertyKey,
+        FunctionType, MethodDefinition, ObjectProperty, PropertyKey, VariableDeclaration,
     },
 };
-use oxc_ast_visit::{VisitJs, walk_js::walk_for_of_statement};
+use oxc_ast_visit::{
+    VisitJs,
+    walk_js::{walk_for_of_statement, walk_variable_declaration},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::could_be_asi_hazard, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireAwait;
@@ -88,7 +91,7 @@ declare_oxc_lint!(
 impl Rule for RequireAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ArrowFunctionExpression(func) => Self::check_arrow_expression(func, ctx),
+            AstKind::ArrowFunctionExpression(func) => Self::check_arrow_expression(func, node, ctx),
             AstKind::FunctionBody(body) => Self::check_function_body(body, node, ctx),
             _ => {}
         }
@@ -96,7 +99,7 @@ impl Rule for RequireAwait {
 }
 
 impl RequireAwait {
-    fn check_arrow_expression(func: &ArrowFunctionExpression, ctx: &LintContext) {
+    fn check_arrow_expression(func: &ArrowFunctionExpression, node: &AstNode, ctx: &LintContext) {
         if !func.r#async {
             return;
         }
@@ -104,9 +107,14 @@ impl RequireAwait {
         let mut finder = AwaitFinder { found: false };
         finder.visit_expression(expression);
         if !finder.found {
-            let need_delete_span = get_delete_span(ctx, func.span.start);
+            let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
+            let needs_semicolon = arrow_needs_semicolon(node, func, ctx);
             ctx.diagnostic_with_dangerous_fix(require_await_diagnostic(func.span), |fixer| {
-                fixer.delete_range(need_delete_span)
+                if needs_semicolon {
+                    fixer.replace(need_delete_span, ";")
+                } else {
+                    fixer.delete_range(need_delete_span)
+                }
             });
         }
     }
@@ -123,7 +131,7 @@ impl RequireAwait {
                 finder.visit_function_body(body);
                 if !finder.found {
                     if matches!(func.r#type, FunctionType::FunctionDeclaration) {
-                        let need_delete_span = get_delete_span(ctx, func.span.start);
+                        let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
                         ctx.diagnostic_with_dangerous_fix(
                             require_await_diagnostic(
                                 func.id.as_ref().map_or(func.span, |ident| ident.span),
@@ -144,6 +152,7 @@ impl RequireAwait {
                                 } else {
                                     span.start
                                 },
+                                func.span.end,
                             );
                             let check_span = if matches!(key, PropertyKey::StaticIdentifier(_)) {
                                 key.span()
@@ -155,7 +164,8 @@ impl RequireAwait {
                                 |fixer| fixer.delete_range(need_delete_span),
                             );
                         } else {
-                            let need_delete_span = get_delete_span(ctx, func.span.start);
+                            let need_delete_span =
+                                get_delete_span(ctx, func.span.start, func.span.end);
                             ctx.diagnostic_with_dangerous_fix(
                                 require_await_diagnostic(
                                     func.id.as_ref().map_or(func.span, |ident| ident.span),
@@ -170,10 +180,17 @@ impl RequireAwait {
                 let mut finder = AwaitFinder { found: false };
                 finder.visit_function_body(body);
                 if !finder.found {
-                    let need_delete_span = get_delete_span(ctx, func.span.start);
+                    let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
+                    let needs_semicolon = arrow_needs_semicolon(parent, func, ctx);
                     ctx.diagnostic_with_dangerous_fix(
                         require_await_diagnostic(func.span),
-                        |fixer| fixer.delete_range(need_delete_span),
+                        |fixer| {
+                            if needs_semicolon {
+                                fixer.replace(need_delete_span, ";")
+                            } else {
+                                fixer.delete_range(need_delete_span)
+                            }
+                        },
                     );
                 }
             }
@@ -182,9 +199,11 @@ impl RequireAwait {
     }
 }
 
-fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
+fn get_delete_span(ctx: &LintContext, start: u32, end: u32) -> Span {
     // Find the position of "async" keyword from the start position
-    let async_pos = ctx.find_next_token_from(start, "async").unwrap_or(0);
+    let async_pos = ctx
+        .find_next_token_within(start, end, "async")
+        .expect("async function span must contain the `async` keyword");
     let async_start = start + async_pos;
     let async_end = async_start + 5;
     let async_key_span = Span::new(async_start, async_end);
@@ -209,6 +228,17 @@ fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
     async_key_span.expand_right(offset)
 }
 
+/// Whether removing `async` would leave `(` at the start of a statement that continues the
+/// previous line, so `async` has to be replaced with `;` instead.
+fn arrow_needs_semicolon(
+    node: &AstNode,
+    arrow: &ArrowFunctionExpression,
+    ctx: &LintContext,
+) -> bool {
+    ctx.source_text()[arrow.params.span.start as usize..].starts_with('(')
+        && could_be_asi_hazard(node, ctx)
+}
+
 struct AwaitFinder {
     found: bool,
 }
@@ -226,6 +256,14 @@ impl<'a> VisitJs<'a> for AwaitFinder {
             self.found = true;
         } else {
             walk_for_of_statement(self, stmt);
+        }
+    }
+
+    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
+        if decl.kind.is_await_using() {
+            self.found = true;
+        } else {
+            walk_variable_declaration(self, decl);
         }
     }
 
@@ -283,6 +321,9 @@ fn test() {
            }
         };
         ",
+        "async function foo() { await using x = getResource() }",
+        "async function foo() { { await using x = getResource() } }",
+        "async function foo() { for (await using x of xs) {} }",
     ];
 
     let fail = vec![
@@ -296,6 +337,8 @@ fn test() {
         "(class { async ''() { doSomething() } })",
         "async function foo() { async () => { await doSomething() } }",
         "async function foo() { await (async () => { doSomething() }) }",
+        "async function foo() { using x = getResource() }",
+        "async function foo() { async () => { await using x = getResource() } }",
     ];
 
     let fix = vec![
@@ -336,6 +379,11 @@ fn test() {
             "/* async */ async function foo() { doSomething() }",
             "/* async */ function foo() { doSomething() }",
         ),
+        ("foo\nasync () => { return 0; }", "foo\n;() => { return 0; }"),
+        ("foo\nasync () => 0", "foo\n;() => 0"),
+        ("foo\nasync x => 0", "foo\nx => 0"),
+        ("foo;\nasync () => { return 0; }", "foo;\n() => { return 0; }"),
+        ("foo\nasync /* c */ () => 0", "foo\n;/* c */ () => 0"),
     ];
 
     Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail)

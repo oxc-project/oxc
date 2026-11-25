@@ -29,3 +29,17 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Execute the code directly instead.
+
+  ⚠ eslint(no-script-url): Unexpected `javascript:` url
+   ╭─[no_script_url.tsx:1:9]
+ 1 │ var a = 'javascript:\uD800';
+   ·         ───────────────────
+   ╰────
+  help: Execute the code directly instead.
+
+  ⚠ eslint(no-script-url): Unexpected `javascript:` url
+   ╭─[no_script_url.tsx:1:9]
+ 1 │ var a = 'JAVASCRIPT:void(\uDC00)';
+   ·         ─────────────────────────
+   ╰────
+  help: Execute the code directly instead.

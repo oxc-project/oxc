@@ -19,14 +19,13 @@ fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {
 fn is_in_test(ctx: &LintContext<'_>, id: NodeId) -> bool {
     ctx.nodes().ancestors(id).any(|node| {
         let AstKind::CallExpression(ancestor_call_expr) = node.kind() else { return false };
-        let Some(ancestor_member_expr) = ancestor_call_expr.callee.as_member_expression() else {
-            return false;
-        };
-        let Some(id) = ancestor_member_expr.object().get_identifier_reference() else {
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, ancestor_call_expr, ctx)
+        else {
             return false;
         };
 
-        matches!(JestFnKind::from(id.name.as_str()), JestFnKind::General(JestGeneralFnKind::Test))
+        parse_jest_fn_call(ancestor_call_expr, &jest_node, ctx)
+            .is_some_and(|call| call.kind() == JestFnKind::General(JestGeneralFnKind::Test))
     })
 }
 
@@ -91,26 +90,26 @@ impl PreferEachConfig {
         // loop (not nested in another call) can be reported.
         let mut enclosing_loop = None;
         for parent_node in ctx.nodes().ancestors(node.id()) {
-            match parent_node.kind() {
+            let body = match parent_node.kind() {
                 AstKind::CallExpression(_) => return,
-                AstKind::ForStatement(_)
-                | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_) => {
-                    enclosing_loop = Some(parent_node);
-                    break;
-                }
-                _ => {}
-            }
+                AstKind::ForStatement(statement) => &statement.body,
+                AstKind::ForInStatement(statement) => &statement.body,
+                AstKind::ForOfStatement(statement) => &statement.body,
+                _ => continue,
+            };
+            enclosing_loop = Some((parent_node, body));
+            break;
         }
-        let Some(loop_node) = enclosing_loop else { return };
+        let Some((loop_node, body)) = enclosing_loop else { return };
 
         if skip.contains(&loop_node.id()) {
             return;
         }
 
-        let Some(jest_fn_call) =
-            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-        else {
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_jest_fn_call(call_expr, &jest_node, ctx) else {
             return;
         };
 
@@ -126,14 +125,10 @@ impl PreferEachConfig {
             return;
         }
 
-        let (loop_span, body) = match loop_node.kind() {
-            AstKind::ForStatement(statement) => (statement.span, &statement.body),
-            AstKind::ForInStatement(statement) => (statement.span, &statement.body),
-            AstKind::ForOfStatement(statement) => (statement.span, &statement.body),
-            _ => unreachable!(),
-        };
-
         skip.insert(loop_node.id());
-        ctx.diagnostic(use_prefer_each(Span::new(loop_span.start, body.span().start), fn_name));
+        ctx.diagnostic(use_prefer_each(
+            Span::new(loop_node.span().start, body.span().start),
+            fn_name,
+        ));
     }
 }

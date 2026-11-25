@@ -246,8 +246,7 @@ impl CaseCheck {
 
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let json = serde_json::from_value::<DefaultRuleConfig<FilenameCaseConfigJson>>(value)?
-            .into_inner();
+        let json = DefaultRuleConfig::<FilenameCaseConfigJson>::from_value(value)?.into_inner();
         let mut config = FilenameCaseConfig {
             ignore: json.ignore,
             multiple_file_extensions: json.multiple_file_extensions,
@@ -618,10 +617,10 @@ fn test() {
             }]),
         ),
         test_case_with_options(
-            "src/foo/BaRbAz.js", // spellchecker:disable-line
+            "src/foo/BaRbAz.js",
             serde_json::json!([{
                 "cases": { "kebabCase": true, "camelCase": true, "snakeCase": true, "pascalCase": true },
-                "ignore": [r"FOOBAR\.js", r"BaRbAz\.js"] // spellchecker:disable-line
+                "ignore": [r"FOOBAR\.js", r"BaRbAz\.js"]
             }]),
         ),
         test_case_with_options(
@@ -739,7 +738,7 @@ fn test() {
             "src/qux/FooBar.js",
             serde_json::json!([{
                 "cases": { "camelCase": true, "snakeCase": true },
-                "ignore": [r"BaRbAz\.js"] // spellchecker:disable-line
+                "ignore": [r"BaRbAz\.js"]
             }]),
         ),
         test_case_with_options(

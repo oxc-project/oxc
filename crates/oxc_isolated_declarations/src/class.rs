@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::ast::*;
+use oxc_ast::{StaticPropertyName, ast::*};
 use oxc_span::{ContentEq, GetSpan, SPAN};
+use oxc_syntax::number::ToJsString;
 
 use crate::{
     IsolatedDeclarations,
@@ -35,13 +36,43 @@ impl<'a> AccessorAnnotation<'a> {
 impl<'a> IsolatedDeclarations<'a> {
     /// Check whether two accessor keys refer to the same property.
     ///
-    /// Accessor pairing follows JavaScript property-key semantics, so an identifier,
-    /// string literal, numeric literal, or no-substitution template literal with the
-    /// same static name identifies the same property. Keep structural equality as a
-    /// fallback for supported non-static keys such as `Symbol.iterator`.
-    fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
-        left.static_name().zip(right.static_name()).is_some_and(|(left, right)| left == right)
-            || left.content_eq(right)
+    /// Follow TypeScript's binder (`getDeclarationName`), including the sign of
+    /// signed numeric literals: `[-1]` matches `"-1"`, but `[-0]` does not match `0`.
+    /// Keep structural equality as a fallback for supported non-static keys such
+    /// as `Symbol.iterator`.
+    pub(crate) fn accessor_keys_match(left: &PropertyKey<'a>, right: &PropertyKey<'a>) -> bool {
+        match (left, right) {
+            #[expect(clippy::float_cmp, reason = "Numeric property keys require exact equality.")]
+            (
+                PropertyKey::StaticNumericLiteral(left) | PropertyKey::NumericLiteral(left),
+                PropertyKey::StaticNumericLiteral(right) | PropertyKey::NumericLiteral(right),
+            ) => left.value == right.value,
+            _ => {
+                Self::accessor_key_name(left)
+                    .zip(Self::accessor_key_name(right))
+                    .is_some_and(|(left, right)| left == right)
+                    || left.content_eq(right)
+            }
+        }
+    }
+
+    fn accessor_key_name(key: &PropertyKey<'a>) -> Option<StaticPropertyName<'a>> {
+        match key {
+            PropertyKey::StaticNumericLiteral(number) | PropertyKey::NumericLiteral(number) => {
+                Some(StaticPropertyName::Owned(number.value.to_js_string().into()))
+            }
+            PropertyKey::UnaryExpression(expr)
+                if expr.operator.is_arithmetic()
+                    && let Expression::NumericLiteral(number) = &expr.argument =>
+            {
+                // Normalize the operand, but retain both `-` and `+`, just as
+                // TypeScript's binder does for computed signed numeric names.
+                Some(StaticPropertyName::Owned(
+                    format!("{}{}", expr.operator.as_str(), number.value.to_js_string()).into(),
+                ))
+            }
+            _ => key.static_name(),
+        }
     }
 
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
@@ -142,7 +173,6 @@ impl<'a> IsolatedDeclarations<'a> {
             property.key.clone_in(self.allocator()),
             type_annotation,
             value,
-            property.computed,
             property.r#static,
             false,
             property.r#override,
@@ -152,28 +182,6 @@ impl<'a> IsolatedDeclarations<'a> {
             Self::transform_accessibility(property.accessibility),
             self,
         )
-    }
-
-    fn get_literal_initializer_without_const_assertion(
-        &self,
-        expr: &Expression<'a>,
-    ) -> Option<Expression<'a>> {
-        match expr {
-            Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_) => Some(expr.clone_in(self.allocator())),
-            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                self.transform_template_to_string(lit).map(Expression::StringLiteral)
-            }
-            Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
-                Some(Expression::UnaryExpression(expr.clone_in(self.allocator())))
-            }
-            Expression::ParenthesizedExpression(expr) => {
-                self.get_literal_initializer_without_const_assertion(&expr.expression)
-            }
-            _ => None,
-        }
     }
 
     fn is_non_const_array_literal(expr: &Expression<'a>) -> bool {
@@ -216,7 +224,6 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.key.clone_in(self.allocator()),
             value,
             definition.kind,
-            definition.computed,
             definition.r#static,
             definition.r#override,
             definition.optional,
@@ -241,7 +248,6 @@ impl<'a> IsolatedDeclarations<'a> {
             key,
             None,
             None,
-            false,
             r#static,
             false,
             r#override,
@@ -270,7 +276,6 @@ impl<'a> IsolatedDeclarations<'a> {
             key,
             type_annotation,
             None,
-            false,
             false,
             false,
             param.r#override,
@@ -316,6 +321,31 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
+    /// Infer reusable parameter-property types once so transforming the constructor and the
+    /// generated property cannot report the same inference diagnostic twice.
+    fn infer_constructor_parameter_property_types(
+        &self,
+        params: &ArenaBox<'a, FormalParameters<'a>>,
+    ) -> Option<ArenaBox<'a, FormalParameters<'a>>> {
+        let mut inferred_params = None;
+
+        for (index, param) in params.items.iter().enumerate() {
+            if param.has_modifier()
+                && !param.accessibility.is_some_and(TSAccessibility::is_private)
+                && param.initializer.is_some()
+                && param.type_annotation.is_none()
+                && let Some(ts_type) = self.infer_type_from_formal_parameter(param)
+            {
+                let inferred_params =
+                    inferred_params.get_or_insert_with(|| params.clone_in(self.allocator()));
+                inferred_params.items[index].type_annotation =
+                    Some(TSTypeAnnotation::boxed(SPAN, ts_type, self));
+            }
+        }
+
+        inferred_params
+    }
+
     /// Transform constructor parameters to class properties.
     ///
     /// For example:
@@ -327,17 +357,16 @@ impl<'a> IsolatedDeclarations<'a> {
     /// `class C { public x: string; constructor(x: string) {} }`
     fn transform_constructor_parameter_properties(
         &self,
-        function: &Function<'a>,
+        params: &FormalParameters<'a>,
         typed_params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
         ArenaVec::from_iter_in(
-            function
-                .params
+            params
                 .items
                 .iter()
                 .filter(|param| {
                     // To follow up `transform_formal_parameters`'s behavior
-                    typed_params.items.len() == function.params.items.len() || param.has_modifier()
+                    typed_params.items.len() == params.items.len() || param.has_modifier()
                 })
                 .enumerate()
                 .filter_map(|(index, param)| {
@@ -347,6 +376,8 @@ impl<'a> IsolatedDeclarations<'a> {
                     let type_annotation =
                         if param.accessibility.is_some_and(TSAccessibility::is_private) {
                             None
+                        } else if param.initializer.is_some() {
+                            param.type_annotation.clone_in(self.allocator())
                         } else {
                             // transformed params will definitely have type annotation
                             typed_params.items[index].type_annotation.clone_in(self.allocator())
@@ -379,7 +410,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 // valid sources for pair-based inference on a public/protected counterpart
                 // (e.g. untyped getter paired with a `private set(v: T)`).
                 if method.key.is_private_identifier()
-                    || (method.computed && !Self::is_valid_property_key(&method.key))
+                    || (method.key.is_computed() && !Self::is_valid_property_key(&method.key))
                 {
                     continue;
                 }
@@ -453,7 +484,7 @@ impl<'a> IsolatedDeclarations<'a> {
             getter.kind == MethodDefinitionKind::Get
                 && getter.r#static == setter.r#static
                 && !getter.key.is_private_identifier()
-                && (Self::is_valid_property_key(&getter.key) || !getter.computed)
+                && (Self::is_valid_property_key(&getter.key) || !getter.key.is_computed())
                 && Self::accessor_keys_match(&getter.key, &setter.key)
                 && !getter.accessibility.is_some_and(TSAccessibility::is_private)
         })
@@ -464,7 +495,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &Class<'a>,
         declare: Option<bool>,
     ) -> ArenaBox<'a, Class<'a>> {
-        if let Some(super_class) = &decl.super_class {
+        if let Some(super_class) = decl.heritage_expression() {
             let is_not_allowed = match super_class {
                 Expression::Identifier(_) => false,
                 Expression::StaticMemberExpression(expr) => {
@@ -505,7 +536,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         has_private_key = true;
                         continue;
                     }
-                    if method.computed && self.report_property_key(&method.key) {
+                    if method.key.is_computed() && self.report_property_key(&method.key) {
                         continue;
                     }
 
@@ -552,11 +583,18 @@ impl<'a> IsolatedDeclarations<'a> {
                             let is_private =
                                 method.accessibility.is_some_and(TSAccessibility::is_private);
 
+                            let inferred_params =
+                                self.infer_constructor_parameter_property_types(&function.params);
+                            let function_params =
+                                inferred_params.as_ref().unwrap_or(&function.params);
                             let params =
-                                self.transform_formal_parameters(&function.params, is_private);
+                                self.transform_formal_parameters(function_params, is_private);
                             elements.splice(
                                 0..0,
-                                self.transform_constructor_parameter_properties(function, &params),
+                                self.transform_constructor_parameter_properties(
+                                    function_params,
+                                    &params,
+                                ),
                             );
 
                             if is_function_overloads && function.body.is_some() {
@@ -628,7 +666,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    if property.computed && self.report_property_key(&property.key) {
+                    if property.key.is_computed() && self.report_property_key(&property.key) {
                         continue;
                     }
 
@@ -643,7 +681,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    if property.computed && self.report_property_key(&property.key) {
+                    if property.key.is_computed() && self.report_property_key(&property.key) {
                         continue;
                     }
 
@@ -652,10 +690,22 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    let type_annotation = match property.accessibility {
-                        Some(TSAccessibility::Private) => None,
-                        _ => property.type_annotation.clone_in(self.allocator()),
-                    };
+                    let type_annotation =
+                        if property.accessibility.is_some_and(TSAccessibility::is_private) {
+                            None
+                        } else {
+                            let annotation =
+                                property.type_annotation.clone_in(self.allocator()).or_else(|| {
+                                    property.value.as_ref().and_then(|value| {
+                                        self.infer_type_from_expression(value)
+                                            .map(|ty| TSTypeAnnotation::boxed(SPAN, ty, self))
+                                    })
+                                });
+                            if annotation.is_none() {
+                                self.error(property_must_have_explicit_type(property.key.span()));
+                            }
+                            annotation
+                        };
 
                     // FIXME: missing many fields
                     let new_element = ClassElement::new_accessor_property(
@@ -665,7 +715,6 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.key.clone_in(self.allocator()),
                         type_annotation,
                         None,
-                        property.computed,
                         property.r#static,
                         property.r#override,
                         false,
@@ -703,7 +752,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 false,
                 false,
                 false,
-                false,
                 None,
                 self,
             );
@@ -719,8 +767,7 @@ impl<'a> IsolatedDeclarations<'a> {
             [],
             decl.id.clone_in(self.allocator()),
             decl.type_parameters.clone_in(self.allocator()),
-            decl.super_class.clone_in(self.allocator()),
-            decl.super_type_arguments.clone_in(self.allocator()),
+            decl.heritage.clone_in(self.allocator()),
             decl.implements.clone_in(self.allocator()),
             body,
             decl.r#abstract,
@@ -733,8 +780,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         kind: BindingPattern<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
-        let parameter =
-            FormalParameter::new(SPAN, [], kind, None, None, false, None, false, false, self);
+        let parameter = FormalParameter::new_plain(SPAN, kind, self);
         FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [parameter], None, self)
     }
 }

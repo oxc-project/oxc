@@ -117,24 +117,8 @@ impl IdentifierLocVisitor {
     /// names, `this`, and member-property parts carry no reference and are
     /// never looked up, so only `IdentifierReference` names are recorded.
     fn record_jsx_element_name<'a>(&mut self, name: &JSXElementName<'a>) {
-        match name {
-            JSXElementName::IdentifierReference(id) => self.record_reference(id),
-            JSXElementName::MemberExpression(m) => self.record_jsx_member_expression(m),
-            JSXElementName::Identifier(_)
-            | JSXElementName::ThisExpression(_)
-            | JSXElementName::NamespacedName(_) => {}
-        }
-    }
-
-    fn record_jsx_member_expression<'a>(&mut self, expr: &JSXMemberExpression<'a>) {
-        match &expr.object {
-            JSXMemberExpressionObject::IdentifierReference(id) => {
-                self.record_reference(id);
-            }
-            JSXMemberExpressionObject::ThisExpression(_) => {}
-            JSXMemberExpressionObject::MemberExpression(inner) => {
-                self.record_jsx_member_expression(inner);
-            }
+        if let Some(id) = name.get_identifier() {
+            self.record_reference(id);
         }
     }
 }
@@ -165,7 +149,7 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
         if let Some(type_parameters) = &it.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_type_arguments) = &it.super_type_arguments {
+        if let Some(super_type_arguments) = it.heritage_type_arguments() {
             self.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
         self.type_depth += 1;
@@ -181,7 +165,7 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
 
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         // Original walked the key only when computed.
-        if it.computed {
+        if it.key.is_computed() {
             self.visit_property_key(&it.key);
         }
         self.visit_expression(&it.value);
@@ -256,7 +240,9 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
 
     fn visit_ts_enum_declaration(&mut self, _it: &TSEnumDeclaration<'a>) {}
 
-    fn visit_ts_module_declaration(&mut self, _it: &TSModuleDeclaration<'a>) {}
+    fn visit_ts_external_module_declaration(&mut self, _it: &TSExternalModuleDeclaration<'a>) {}
+
+    fn visit_ts_namespace_declaration(&mut self, _it: &TSNamespaceDeclaration<'a>) {}
 }
 
 /// Build an index of the resolved identifier references and binding

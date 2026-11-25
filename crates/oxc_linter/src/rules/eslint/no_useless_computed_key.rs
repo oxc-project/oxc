@@ -123,12 +123,12 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessComputedKey {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ObjectProperty(property) if property.computed => {
+            AstKind::ObjectProperty(property) if property.key.is_computed() => {
                 if let Some(expr) =
                     property.key.as_expression().map(Expression::without_parentheses)
                 {
@@ -143,7 +143,7 @@ impl Rule for NoUselessComputedKey {
                     );
                 }
             }
-            AstKind::BindingProperty(binding_prop) if binding_prop.computed => {
+            AstKind::BindingProperty(binding_prop) if binding_prop.key.is_computed() => {
                 if let Some(expr) =
                     binding_prop.key.as_expression().map(Expression::without_parentheses)
                 {
@@ -159,7 +159,7 @@ impl Rule for NoUselessComputedKey {
                 }
             }
             AstKind::PropertyDefinition(prop_def)
-                if self.enforce_for_class_members && prop_def.computed =>
+                if self.enforce_for_class_members && prop_def.key.is_computed() =>
             {
                 if let Some(expr) =
                     prop_def.key.as_expression().map(Expression::without_parentheses)
@@ -176,7 +176,7 @@ impl Rule for NoUselessComputedKey {
                 }
             }
             AstKind::MethodDefinition(method_def)
-                if self.enforce_for_class_members && method_def.computed =>
+                if self.enforce_for_class_members && method_def.key.is_computed() =>
             {
                 if let Some(expr) =
                     method_def.key.as_expression().map(Expression::without_parentheses)
@@ -210,9 +210,9 @@ fn check_computed_class_member(
         Expression::StringLiteral(lit) => {
             let key_name = lit.value.as_str();
             let allowed = if is_static {
-                allow_static.contains(&key_name)
+                key_name.is_some_and(|key_name| allow_static.contains(&key_name))
             } else {
-                allow_non_static.contains(&key_name)
+                key_name.is_some_and(|key_name| allow_non_static.contains(&key_name))
             };
             if !allowed {
                 report_useless_computed_key(

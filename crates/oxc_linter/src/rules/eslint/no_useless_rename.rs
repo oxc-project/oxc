@@ -78,12 +78,13 @@ declare_oxc_lint!(
     fix,
     config = NoUselessRenameConfig,
     version = "0.2.14",
-    short_description = "Disallow renaming import, export, and destructured assignments to the same name.",
+    short_description =
+        "Disallow renaming import, export, and destructured assignments to the same name.",
 );
 
 impl Rule for NoUselessRename {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -94,7 +95,7 @@ impl Rule for NoUselessRename {
                 }
 
                 for property in &object_pattern.properties {
-                    if property.shorthand || property.computed {
+                    if property.shorthand || property.key.is_computed() {
                         continue;
                     }
 
@@ -157,11 +158,14 @@ impl Rule for NoUselessRename {
                 ctx.diagnostic_with_fix(
                     no_useless_rename_diagnostic(import_specifier.local.span),
                     |fixer| {
-                        // Always replace the entire specifier with just the local identifier
-                        // The local identifier is the name that will be used in the code
                         let local_text =
                             import_specifier.local.span.source_text(ctx.source_text()).to_string();
-                        fixer.replace(import_specifier.span, local_text)
+                        let replacement = if import_specifier.import_kind.is_type() {
+                            format!("type {local_text}")
+                        } else {
+                            local_text
+                        };
+                        fixer.replace(import_specifier.span, replacement)
                     },
                 );
             }
@@ -176,14 +180,19 @@ impl Rule for NoUselessRename {
                         ctx.diagnostic_with_fix(
                             no_useless_rename_diagnostic(specifier.local.span()),
                             |fixer| {
-                                // Always replace the entire specifier with just the local part
-                                // The local is what the variable is named inside the module
+                                // Always replace the entire specifier with just the local part.
+                                // The local is what the variable is named inside the module.
                                 let local_text = specifier
                                     .local
                                     .span()
                                     .source_text(ctx.source_text())
                                     .to_string();
-                                fixer.replace(specifier.span, local_text)
+                                let replacement = if specifier.export_kind.is_type() {
+                                    format!("type {local_text}")
+                                } else {
+                                    local_text
+                                };
+                                fixer.replace(specifier.span, replacement)
                             },
                         );
                     }
@@ -205,7 +214,12 @@ impl Rule for NoUselessRename {
                                     .span()
                                     .source_text(ctx.source_text())
                                     .to_string();
-                                fixer.replace(specifier.span, local_text)
+                                let replacement = if specifier.export_kind.is_type() {
+                                    format!("type {local_text}")
+                                } else {
+                                    local_text
+                                };
+                                fixer.replace(specifier.span, replacement)
                             },
                         );
                     }
@@ -264,6 +278,13 @@ fn fix_object_assignment_target_property<'c, 'a: 'c>(
             if with_default.binding.get_identifier_name().is_some() {
                 // For assignment targets, we need to get the span from the binding itself
                 let ident_span = with_default.binding.span();
+                // `({foo: (foo) = a} = obj)`: a shorthand property can't have parentheses.
+                if ctx
+                    .find_next_token_within(ident_span.end, with_default.init.span().start, ")")
+                    .is_some()
+                {
+                    return fixer.noop();
+                }
                 let default_start = ident_span.end;
                 let default_end = with_default.span.end;
                 (ident_span, Some(Span::new(default_start, default_end)))
@@ -590,6 +611,10 @@ fn test() {
         ("import {foo as foo, bar as baz} from 'foo';", "import {foo, bar as baz} from 'foo';"),
         ("import {foo as bar, baz as baz} from 'foo';", "import {foo as bar, baz} from 'foo';"),
         ("import {foo as foo, bar as bar} from 'foo';", "import {foo, bar} from 'foo';"),
+        (
+            "export { type Foo as Foo } from 'mod'; import { type Bar as Bar } from 'mod'; type Baz = unknown; export { type Baz as Baz };",
+            "export { type Foo } from 'mod'; import { type Bar } from 'mod'; type Baz = unknown; export { type Baz };",
+        ),
         ("var foo = 0; export {foo as foo};", "var foo = 0; export {foo};"),
         ("var foo = 0; export {foo as 'foo'};", "var foo = 0; export {foo};"),
         ("export {foo as 'foo'} from 'bar';", "export {foo} from 'bar';"),
@@ -673,6 +698,12 @@ fn test() {
             "let foo, bar; export {foo//comment
             ,bar};",
         ),
+        ("({foo: (foo) = a} = obj);", "({foo: (foo) = a} = obj);"),
+        ("({foo: foo /* ) */ = 1} = obj);", "({foo /* ) */ = 1} = obj);"),
+        ("({foo: foo = /* ) */ 1} = obj);", "({foo = /* ) */ 1} = obj);"),
+        ("({foo: foo // )\n = 1} = obj);", "({foo // )\n = 1} = obj);"),
+        ("({foo: ((foo)) = (a)} = obj);", "({foo: ((foo)) = (a)} = obj);"),
+        ("({foo: foo = (a)} = obj);", "({foo = (a)} = obj);"),
     ];
 
     Tester::new(NoUselessRename::NAME, NoUselessRename::PLUGIN, pass, fail)

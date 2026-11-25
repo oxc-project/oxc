@@ -3,7 +3,8 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::Span;
+use oxc_semantic::AstNode;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -50,11 +51,7 @@ matchers for `null`, `undefined`, and `NaN`.
 
 ### Why is this bad?
 
-When asserting against primitive literals such as numbers and strings,
-the equality matchers all operate the same, but read slightly
-differently in code.
-
-This rule recommends using the `toBe` matcher in these situations, as
+This rule recommends using the `toBe` matcher for primitive literals, as
 it forms the most grammatically natural sentence. For `null`,
 `undefined`, and `NaN` this rule recommends using their specific `toBe`
 matchers, as they give better error messages as well.
@@ -87,20 +84,23 @@ enum PreferToBeKind {
     Undefined,
 }
 
-pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c LintContext<'a>) {
-    PreferToBe::run(jest_node, ctx);
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    PreferToBe::run(node, ctx);
 }
 
 struct PreferToBe;
 
 impl PreferToBe {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let Some(jest_expect_fn_call) =
-            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+            parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -109,7 +109,7 @@ impl PreferToBe {
         };
 
         let has_not_modifier =
-            jest_expect_fn_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+            jest_expect_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
 
         if has_not_modifier {
             if matcher.is_name_equal("toBeUndefined") {
@@ -223,40 +223,46 @@ impl PreferToBe {
     /// Returns (source_start, suggestion_string).
     fn build_suggestion_with_not_modifier(
         matcher_name: &str,
-        not_modifier: Option<&&KnownMemberExpressionProperty>,
+        not_modifier: Option<&KnownMemberExpressionProperty>,
         is_cmp_mem_expr: bool,
-        span_start: u32,
-    ) -> (u32, String) {
-        if let Some(&not_modifier) = not_modifier {
-            let not_is_computed =
-                matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
-
-            if not_is_computed {
-                // ["not"]["toBe"](value) -> ["not"]["toBeMatcher"]()
-                let start = not_modifier.span.start - 1; // Include opening bracket of ["not"]
-                let suggestion = if is_cmp_mem_expr {
-                    format!("[\"not\"][\"{matcher_name}\"]()")
-                } else {
-                    format!("[\"not\"].{matcher_name}()")
-                };
-                (start, suggestion)
-            } else if is_cmp_mem_expr {
-                // .not["toBe"](value) -> .not["toBeMatcher"]()
-                (not_modifier.span.start, format!("not[\"{matcher_name}\"]()"))
-            } else {
-                // .not.toBe(value) -> .not.toBeMatcher()
-                (not_modifier.span.start, format!("not.{matcher_name}()"))
-            }
+        matcher: &KnownMemberExpressionProperty,
+        call_expr: &CallExpression,
+        ctx: &LintContext,
+    ) -> Option<(u32, String)> {
+        let first_member = not_modifier.unwrap_or(matcher);
+        let start = if let Some(Expression::ComputedMemberExpression(member)) = first_member.parent
+        {
+            let object_end = member.object.span().end;
+            object_end + ctx.find_next_token_within(object_end, first_member.span.start, "[")?
         } else {
-            // No "not" modifier
-            let start = if is_cmp_mem_expr { span_start - 1 } else { span_start };
-            let suggestion = if is_cmp_mem_expr {
-                format!("[\"{matcher_name}\"]()")
+            first_member.span.start
+        };
+
+        let (not_prefix, member_operator) = if let Some(not_modifier) = not_modifier {
+            let prefix =
+                if matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_))) {
+                    r#"["not"]"#
+                } else {
+                    "not"
+                };
+            let operator = if matcher.parent?.as_member_expression()?.optional() {
+                "?."
+            } else if is_cmp_mem_expr {
+                ""
             } else {
-                format!("{matcher_name}()")
+                "."
             };
-            (start, suggestion)
-        }
+            (prefix, operator)
+        } else {
+            ("", "")
+        };
+        let call_operator = if call_expr.optional { "?." } else { "" };
+        let suggestion = if is_cmp_mem_expr {
+            format!(r#"{not_prefix}{member_operator}["{matcher_name}"]{call_operator}()"#)
+        } else {
+            format!("{not_prefix}{member_operator}{matcher_name}{call_operator}()")
+        };
+        Some((start, suggestion))
     }
 
     fn check_and_fix(
@@ -277,8 +283,8 @@ impl PreferToBe {
             _ => return,
         };
 
-        let modifiers = jest_expect_fn_call.modifiers();
-        let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
+        let maybe_not_modifier =
+            jest_expect_fn_call.modifiers().find(|modifier| modifier.is_name_equal("not"));
 
         if kind == &PreferToBeKind::Undefined {
             let replacement_span = if let Some(not_modifier) = maybe_not_modifier {
@@ -290,13 +296,13 @@ impl PreferToBe {
             let new_matcher =
                 if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_undefined(source_text, new_matcher, replacement_span),
                 |fixer| fixer.replace(replacement_span, new_matcher),
             );
         } else if kind == &PreferToBeKind::Defined {
             let start = if is_cmp_mem_expr {
-                modifiers.first().unwrap().span.end
+                jest_expect_fn_call.modifiers().next().unwrap().span.end
             } else {
                 maybe_not_modifier.unwrap().span.start
             };
@@ -304,37 +310,45 @@ impl PreferToBe {
             let source_text = ctx.source_range(replacement_span);
             let new_matcher = if is_cmp_mem_expr { "[\"toBeDefined\"]()" } else { "toBeDefined()" };
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_defined(source_text, new_matcher, replacement_span),
                 |fixer| fixer.replace(replacement_span, new_matcher),
             );
         } else if kind == &PreferToBeKind::Null {
-            let (source_start, suggestion) = Self::build_suggestion_with_not_modifier(
+            let Some((source_start, suggestion)) = Self::build_suggestion_with_not_modifier(
                 "toBeNull",
                 maybe_not_modifier,
                 is_cmp_mem_expr,
-                span.start,
-            );
+                matcher,
+                call_expr,
+                ctx,
+            ) else {
+                return;
+            };
 
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_null(source_text, &suggestion, replacement_span),
                 |fixer| fixer.replace(replacement_span, suggestion),
             );
         } else if kind == &PreferToBeKind::NaN {
-            let (source_start, suggestion) = Self::build_suggestion_with_not_modifier(
+            let Some((source_start, suggestion)) = Self::build_suggestion_with_not_modifier(
                 "toBeNaN",
                 maybe_not_modifier,
                 is_cmp_mem_expr,
-                span.start,
-            );
+                matcher,
+                call_expr,
+                ctx,
+            ) else {
+                return;
+            };
 
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
 
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 use_to_be_na_n(source_text, &suggestion, replacement_span),
                 |fixer| fixer.replace(replacement_span, suggestion),
             );
@@ -342,9 +356,65 @@ impl PreferToBe {
             let source_text = ctx.source_range(span);
             let new_matcher = if is_cmp_mem_expr { "\"toBe\"" } else { "toBe" };
 
-            ctx.diagnostic_with_fix(use_to_be(source_text, new_matcher, span), |fixer| {
+            ctx.diagnostic_with_suggestion(use_to_be(source_text, new_matcher, span), |fixer| {
                 fixer.replace(span, new_matcher)
             });
         }
+    }
+}
+
+#[test]
+fn test_computed_matcher_trivia() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let fix: Vec<_> = vec![
+        ("expect(value)[\u{a0}\"toEqual\"](null);", "expect(value)[\"toBeNull\"]();"),
+        ("expect(value)[\u{2003}\"toEqual\"](NaN);", "expect(value)[\"toBeNaN\"]();"),
+        ("expect(value)[ \"toEqual\" ](null);", "expect(value)[\"toBeNull\"]();"),
+        (
+            "expect(value) /* [ */ [ /* [ ] */ \"toEqual\" /* ] */ ](NaN);",
+            "expect(value) /* [ */ [\"toBeNaN\"]();",
+        ),
+        ("expect(value)[ // [\n \"toEqual\"\n](null);", "expect(value)[\"toBeNull\"]();"),
+        ("expect(value)[\u{a0}\"not\"].toEqual(null);", "expect(value)[\"not\"].toBeNull();"),
+        (
+            "expect(value)[\u{2003}\"not\"][\u{a0}\"toEqual\"](NaN);",
+            "expect(value)[\"not\"][\"toBeNaN\"]();",
+        ),
+        ("expect(value).not[\u{a0}\"toEqual\"](null);", "expect(value).not[\"toBeNull\"]();"),
+        (
+            "expect(value).resolves /* [ */ [ /* [ ] */ \"not\" ].toEqual(null);",
+            "expect(value).resolves /* [ */ [\"not\"].toBeNull();",
+        ),
+        (
+            "expect(value).rejects[\u{a0}`not`][\u{2003}`toStrictEqual`](NaN);",
+            "expect(value).rejects[\"not\"][\"toBeNaN\"]();",
+        ),
+        ("expect(value)[\u{a0}`toEqual`](null);", "expect(value)[\"toBeNull\"]();"),
+        ("expect(value)?.[\u{a0}\"toEqual\"](null);", "expect(value)?.[\"toBeNull\"]();"),
+        ("expect(value)[\u{a0}\"toEqual\"]?.(null);", "expect(value)[\"toBeNull\"]?.();"),
+        ("expect(value)[\u{a0}\"not\"]?.toEqual(null);", "expect(value)[\"not\"]?.toBeNull();"),
+        (
+            "expect(value)[\u{a0}\"not\"]?.[\"toEqual\"]?.(NaN);",
+            "expect(value)[\"not\"]?.[\"toBeNaN\"]?.();",
+        ),
+        ("expect(value).not?.[\u{a0}\"toEqual\"](null);", "expect(value).not?.[\"toBeNull\"]();"),
+        ("expect(value)?.[\u{a0}\"not\"].toEqual?.(NaN);", "expect(value)?.[\"not\"].toBeNaN?.();"),
+    ]
+    .into_iter()
+    .map(|(source, expected)| (source, expected, None, FixKind::Suggestion))
+    .collect();
+
+    for plugin in ["jest", "vitest"] {
+        Tester::new(
+            "prefer-to-be",
+            plugin,
+            fix.iter().map(|(_, fixed, _, _)| *fixed).collect(),
+            fix.iter().map(|(source, _, _, _)| *source).collect(),
+        )
+        .with_jest_plugin(plugin == "jest")
+        .with_vitest_plugin(plugin == "vitest")
+        .expect_fix(fix.clone())
+        .test();
     }
 }

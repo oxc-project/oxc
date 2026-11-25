@@ -32,9 +32,9 @@ function addBlankBeforeDeprecated() {}
 function preservedBlankLine(x) {}
 
 ==================== Output ====================
------------------------------
-{ jsdoc: {}, printWidth: 80 }
------------------------------
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
 // Upstream (prettier-plugin-jsdoc) unconditionally adds a blank line
 // between description and first tag.
 
@@ -67,9 +67,9 @@ function addBlankBeforeDeprecated() {}
  */
 function preservedBlankLine(x) {}
 
-------------------------------
-{ jsdoc: {}, printWidth: 100 }
-------------------------------
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
 // Upstream (prettier-plugin-jsdoc) unconditionally adds a blank line
 // between description and first tag.
 

@@ -43,10 +43,9 @@ impl<'a> ClassProperties<'a> {
             }
         } else {
             // No symbol clashes possible. Just re-parent first-level scopes (faster).
-            let mut updater = FastInstanceInitializerVisitor::new(instance_inits_scope_id, ctx);
-            for init in inits {
-                updater.visit_expression(init);
-            }
+            // Initializers move into the constructor or `_super` function, which are strict mode
+            // like the class body, so this only re-parents.
+            ctx.move_scopes_of_expressions(inits, instance_inits_scope_id);
         }
     }
 }
@@ -147,84 +146,5 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
 
         // Record the symbol clash. Symbol in constructor needs to be renamed.
         self.clashing_symbols.entry(constructor_symbol_id).or_insert(ident.name);
-    }
-}
-
-/// Visitor to change parent scope of first-level scopes in instance property initializer.
-///
-/// Unlike `InstanceInitializerVisitor`, does not check for symbol clashes.
-///
-/// Therefore only needs to walk until find a node which has a scope. No point continuing to traverse
-/// inside that scope, as by definition any nested scopes can't be first level.
-///
-/// The visitors here are for the only types which can be the first scope reached when starting
-/// traversal from an `Expression`.
-struct FastInstanceInitializerVisitor<'a, 'v> {
-    /// Parent scope
-    parent_scope_id: ScopeId,
-    /// `TransCtx` object.
-    ctx: &'v mut TraverseCtx<'a>,
-}
-
-impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
-    fn new(instance_inits_scope_id: ScopeId, ctx: &'v mut TraverseCtx<'a>) -> Self {
-        Self { parent_scope_id: instance_inits_scope_id, ctx }
-    }
-}
-
-impl<'a> Visit<'a> for FastInstanceInitializerVisitor<'a, '_> {
-    #[inline]
-    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
-        self.reparent_scope(&func.scope_id);
-    }
-
-    #[inline]
-    fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'a>) {
-        self.reparent_scope(&func.scope_id);
-    }
-
-    #[inline]
-    fn visit_class(&mut self, class: &Class<'a>) {
-        // `decorators` is outside `Class`'s scope and can contain scopes itself
-        self.visit_decorators(&class.decorators);
-
-        self.reparent_scope(&class.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_conditional_type(&mut self, conditional: &TSConditionalType<'a>) {
-        // `check_type` is outside `TSConditionalType`'s scope and can contain scopes itself
-        self.visit_ts_type(&conditional.check_type);
-
-        self.reparent_scope(&conditional.scope_id);
-
-        // `false_type` is outside `TSConditionalType`'s scope and can contain scopes itself
-        self.visit_ts_type(&conditional.false_type);
-    }
-
-    #[inline]
-    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
-        self.reparent_scope(&signature.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_construct_signature_declaration(
-        &mut self,
-        signature: &TSConstructSignatureDeclaration<'a>,
-    ) {
-        self.reparent_scope(&signature.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_mapped_type(&mut self, mapped: &TSMappedType<'a>) {
-        self.reparent_scope(&mapped.scope_id);
-    }
-}
-
-impl FastInstanceInitializerVisitor<'_, '_> {
-    /// Update parent of scope.
-    fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
-        let scope_id = scope_id.get().unwrap();
-        self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
     }
 }

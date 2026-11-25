@@ -1,0 +1,36 @@
+[workspace]
+resolver = "3"
+members = ["apps/*", "crates/*", "napi/*", "tasks/*"]
+exclude = ["tasks/coverage/babel", "tasks/coverage/test262", "tasks/coverage/typescript", "tasks/e2e"]
+
+[workspace.package]
+authors = ["Example Author <author@example.com>", "Example contributors"]
+edition = "2024"
+license = "MIT"
+
+[workspace.lints.rust]
+absolute_paths_not_starting_with_crate = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)', 'cfg(codspeed)'] }
+
+[workspace.dependencies]
+# publish = true
+oxc_allocator = { version = "0.100.0", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.100.0", path = "crates/oxc_ast" } # AST definitions
+
+# publish = false
+serde = { version = "1.0.228", default-features = false, features = ["derive", "std", "alloc", "rc"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "io-std", "io-util", "time", "fs", "sync"] }
+
+[target.'cfg(all(not(target_env = "msvc"), not(target_os = "windows")))'.dependencies]
+jemallocator = { version = "0.5", features = [
+  "disable_initial_exec_tls",
+] }
+
+[profile.release]
+# Configurations explicitly listed here for clarity.
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols" # Set to `false` for debug information
+debug = false
+panic = "abort"   # Let it crash and force ourselves to write safe Rust.

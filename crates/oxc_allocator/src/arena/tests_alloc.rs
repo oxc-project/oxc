@@ -353,6 +353,44 @@ fn near_max_size_less_path_rounds_to_near_max() {
     assert!(arena.try_alloc_layout_fast(layout).is_none());
 }
 
+// --- `new_ptr` computes to exactly 0 (null) ---
+//
+// The fast path constructs the returned pointer with `NonNull::new(new_ptr).unwrap_unchecked()`,
+// which requires that the bounds check has already rejected every `new_ptr` which computes to null.
+// Reaching that `unwrap_unchecked` with a null pointer is UB, so it cannot be relied on to fail observably.
+// However, `try_alloc_layout_fast_impl` includes a `debug_assert!` that the pointer is non-null.
+// Tests are run with debug assertions enabled, so in fact these tests would fail due to the debug assert,
+// before reaching the `NonNull::new(new_ptr).unwrap_unchecked()` UB, and before the assertions here.
+
+/// Subtracting size takes `new_ptr` to exactly 0.
+#[test]
+fn null_from_size_subtraction() {
+    // cursor = 0x1000, size = 0x1000 → new_ptr = 0. Must be rejected.
+    let arena = TestArena::<1>::new(CHUNK_ALIGN, 0x1000);
+    let layout = Layout::from_size_align(0x1000, 1).unwrap();
+    assert!(arena.try_alloc_layout_fast(layout).is_none());
+}
+
+/// Greater path: rounding down to `layout.align()` takes `new_ptr` to exactly 0.
+#[test]
+fn null_from_align_rounding() {
+    // cursor = 0x30. Subtracting size 4 gives 0x2C, then rounding down to align 64 gives 0.
+    // Must be rejected.
+    let arena = TestArena::<1>::new(CHUNK_ALIGN, 0x30);
+    let layout = Layout::from_size_align(4, 64).unwrap();
+    assert!(arena.try_alloc_layout_fast(layout).is_none());
+}
+
+/// Less path: rounding down to `MIN_ALIGN` takes `new_ptr` to exactly 0.
+#[test]
+fn null_from_min_align_rounding() {
+    // cursor = 16 (= CHUNK_ALIGN). Subtracting size 1 gives 15, then rounding down to
+    // MIN_ALIGN 16 gives 0. Must be rejected.
+    let arena = TestArena::<16>::new(CHUNK_ALIGN, CHUNK_ALIGN);
+    let layout = Layout::from_size_align(1, 1).unwrap();
+    assert!(arena.try_alloc_layout_fast(layout).is_none());
+}
+
 // --- Multiple consecutive allocations ---
 
 /// Verify cursor moves correctly across multiple allocations.

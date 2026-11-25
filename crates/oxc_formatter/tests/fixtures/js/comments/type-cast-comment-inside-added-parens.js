@@ -5,6 +5,7 @@
 // and change the type semantics (issue #20182).
 //
 // NOTE: Prettier 3.9.5 prints the comment outside (and breaks the cast);
+// every added-paren line deviates (DIVERGENCES.md#cast-comment-inside-added-parens).
 
 // Cast binds to `(root)`; the `??` gets formatter-added parens in ternary branches.
 var target = /** @type {ShadowRoot} */ (root).host
@@ -33,7 +34,7 @@ var whole = x ? y : /** @type {D} */ (b.head ?? c);
 // arrow body sequence with a leading cast comment,
 const arrow = () => (/** @type {D} */ (a).b, x);
 
-// and return argument sequence; only the cast comment moves inside the added parens.
+// while a return argument sequence takes no added parens: the cast stays as written.
 function ret() {
   return (
     // c

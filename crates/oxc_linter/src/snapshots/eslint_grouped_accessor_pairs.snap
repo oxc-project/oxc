@@ -787,3 +787,39 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── getter 'a' is here
    ╰────
   help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter '\ud800' and setter '\ud800' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:4]
+ 1 │ ({ get "\uD800"() {}, a: 1, set "\uD800"(v) {} })
+   ·    ──────┬─────             ──────┬─────
+   ·          │                        ╰── setter '\ud800' is here
+   ·          ╰── getter '\ud800' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter '\udc00' and setter '\udc00' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:4]
+ 1 │ ({ get "\uDC00"() {}, a: 1, set ["\uDC00"](v) {} })
+   ·    ──────┬─────             ──────┬──────
+   ·          │                        ╰── setter '\udc00' is here
+   ·          ╰── getter '\udc00' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a\ud800b' and setter 'a\ud800b' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:11]
+ 1 │ class A { get "a\uD800b"() {} a() {} set [`a\uD800b`](v) {} }
+   ·           ───────┬──────             ───────┬───────
+   ·                  │                          ╰── setter 'a\ud800b' is here
+   ·                  ╰── getter 'a\ud800b' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter '\ud800' and setter '\ud800' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:15]
+ 1 │ interface I { get "\uD800"(): any, between: true, set "\uD800"(value: any) }
+   ·               ──────┬─────                        ──────┬─────
+   ·                     │                                   ╰── setter '\ud800' is here
+   ·                     ╰── getter '\ud800' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes

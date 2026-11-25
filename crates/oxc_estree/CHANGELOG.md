@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### ⚡ Performance
+
+- aea847b estree: Merge compact `serialize_field` writes (#28399) (codspeed[bot])
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 📚 Documentation
+
+- 67ecd8c estree: Correct serialization capabilities (#29120) (camc314)
+
+## [0.157.0] - 2026-11-02
+
+### ⚡ Performance
+
+- 8239dac parser: Replace dragonbox_ecma with zmij_ecma (#28282) (Boshen)
+
+## [0.156.0] - 2026-10-27
+
+### ⚡ Performance
+
+- 1ed93af data_structures: Copy short strings without a memcpy call (#27953) (leaysgur)
+
 ## [0.137.0] - 2026-06-18
 
 ### 💥 BREAKING CHANGES

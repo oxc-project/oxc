@@ -1,10 +1,8 @@
-use oxc_ast::{
-    AstKind,
-    ast::{BinaryExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -96,6 +94,7 @@ declare_oxc_lint!(
     UseIsnan,
     eslint,
     correctness,
+    recommended,
     conditional_fix,
     config = UseIsnan,
     version = "0.0.3",
@@ -106,35 +105,43 @@ impl Rule for UseIsnan {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BinaryExpression(expr) if expr.operator.is_compare() => {
-                if is_nan_identifier(&expr.left) {
+                if is_nan_identifier(&expr.left, ctx) {
                     ctx.diagnostic(comparison_with_nan(expr.left.span(), expr.operator));
                 }
-                if is_nan_identifier(&expr.right) {
+                if is_nan_identifier(&expr.right, ctx) {
                     ctx.diagnostic(comparison_with_nan(expr.right.span(), expr.operator));
                 }
             }
             AstKind::BinaryExpression(expr) if expr.operator.is_equality() => {
-                if is_nan_identifier(&expr.left) {
+                let negate = matches!(
+                    expr.operator,
+                    BinaryOperator::Inequality | BinaryOperator::StrictInequality
+                );
+                if is_nan_identifier(&expr.left, ctx) {
                     ctx.diagnostic_with_fix(
                         comparison_with_nan(expr.left.span(), expr.operator),
-                        |fixer| fixer.replace(expr.span, make_equality_fix(true, expr, ctx)),
+                        |fixer| {
+                            fixer.replace(expr.span, make_equality_fix(&expr.right, negate, ctx))
+                        },
                     );
                 }
-                if is_nan_identifier(&expr.right) {
+                if is_nan_identifier(&expr.right, ctx) {
                     ctx.diagnostic_with_fix(
                         comparison_with_nan(expr.right.span(), expr.operator),
-                        |fixer| fixer.replace(expr.span, make_equality_fix(false, expr, ctx)),
+                        |fixer| {
+                            fixer.replace(expr.span, make_equality_fix(&expr.left, negate, ctx))
+                        },
                     );
                 }
             }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {
                 let Some(test) = &case.test else { return };
-                if is_nan_identifier(test) {
+                if is_nan_identifier(test, ctx) {
                     ctx.diagnostic(case_nan(test.span()));
                 }
             }
             AstKind::SwitchStatement(switch)
-                if self.enforce_for_switch_case && is_nan_identifier(&switch.discriminant) =>
+                if self.enforce_for_switch_case && is_nan_identifier(&switch.discriminant, ctx) =>
             {
                 ctx.diagnostic(switch_nan(switch.discriminant.span()));
             }
@@ -146,7 +153,7 @@ impl Rule for UseIsnan {
                 // Match target array prototype methods whose first argument is NaN
                 let Some(method) = is_target_callee(&call.callee) else { return };
                 if let Some(expr) = call.arguments[0].as_expression()
-                    && let Some((span, _)) = get_nan_in_expression(expr)
+                    && let Some((span, _)) = get_nan_in_expression(expr, ctx)
                 {
                     ctx.diagnostic(index_of_nan(method, span));
                 }
@@ -156,32 +163,53 @@ impl Rule for UseIsnan {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
-fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {
+/// `NaN` or `Number.NaN`, where `NaN` / `Number` is the global and not a local binding.
+fn is_nan_identifier<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    let is_global = |name: &str, expr: &Expression<'a>| {
+        matches!(
+            expr.get_inner_expression(),
+            Expression::Identifier(ident)
+                if ident.name == name && ctx.is_reference_to_global_variable(ident)
+        )
+    };
     let expr = expr.get_inner_expression();
-    expr.is_specific_id("NaN") || expr.is_specific_member_access("Number", "NaN")
+    if is_global("NaN", expr) {
+        return true;
+    }
+    let member = match expr {
+        Expression::ChainExpression(chain) => chain.expression.as_member_expression(),
+        expr => expr.as_member_expression(),
+    };
+    member.is_some_and(|member| {
+        member.static_property_name().is_some_and(|name| name == "NaN")
+            && is_global("Number", member.object())
+    })
 }
 
 /// Check if an expression evaluates to NaN, handling sequence expressions.
 /// Returns the span of the NaN identifier and the expression itself if found.
-fn get_nan_in_expression<'a>(expr: &'a Expression<'a>) -> Option<(Span, &'a Expression<'a>)> {
+fn get_nan_in_expression<'a>(
+    expr: &'a Expression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(Span, &'a Expression<'a>)> {
     let expr = expr.get_inner_expression();
 
     // Handle sequence expressions like (1, NaN) - the result is the last expression
     if let Expression::SequenceExpression(seq) = expr {
         if let Some(last) = seq.expressions.last() {
             let last = last.get_inner_expression();
-            if is_nan_identifier(last) {
+            if is_nan_identifier(last, ctx) {
                 return Some((last.span(), last));
             }
         }
         return None;
     }
 
-    if is_nan_identifier(expr) {
+    if is_nan_identifier(expr, ctx) {
         return Some((expr.span(), expr));
     }
 
@@ -196,6 +224,7 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
     if let Some(expr) = callee.as_member_expression() {
         return expr
             .static_property_name()
+            .and_then(JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
@@ -203,28 +232,16 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
         let expr = chain.expression.as_member_expression()?;
         return expr
             .static_property_name()
+            .and_then(JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
     None
 }
 
-fn make_equality_fix<'a>(
-    nan_on_left: bool,
-    comparison: &BinaryExpression<'a>,
-    ctx: &LintContext<'a>,
-) -> String {
-    let non_nan = if nan_on_left {
-        comparison.right.span().source_text(ctx.source_text())
-    } else {
-        comparison.left.span().source_text(ctx.source_text())
-    };
-
-    let maybe_bang = match comparison.operator {
-        BinaryOperator::Equality | BinaryOperator::StrictEquality => "",
-        BinaryOperator::Inequality | BinaryOperator::StrictInequality => "!",
-        _ => unreachable!(),
-    };
+fn make_equality_fix<'a>(non_nan: &Expression<'a>, negate: bool, ctx: &LintContext<'a>) -> String {
+    let non_nan = non_nan.span().source_text(ctx.source_text());
+    let maybe_bang = if negate { "!" } else { "" };
 
     format!("{maybe_bang}isNaN({non_nan})")
 }
@@ -426,6 +443,19 @@ fn test() {
         ("foo.indexOf((Number.NaN, 1))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         (
             "foo.lastIndexOf((Number.NaN, 1))",
+            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
+        ),
+        ("let Number; if (x === Number.NaN) {}", None),
+        ("function f(NaN) { return x === NaN; }", None),
+        ("function f(Number) { return x === Number.NaN; }", None),
+        ("let Number; if (x === Number?.NaN) {}", None),
+        ("function f(Number) { return x === Number?.NaN; }", None),
+        (
+            "function f(NaN) { switch (NaN) { case NaN: break; } }",
+            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        ),
+        (
+            "function f(NaN) { return [1].indexOf(NaN); }",
             Some(serde_json::json!([{ "enforceForIndexOf": true }])),
         ),
     ];

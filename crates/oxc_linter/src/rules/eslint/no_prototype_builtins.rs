@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -44,6 +45,7 @@ declare_oxc_lint!(
     NoPrototypeBuiltins,
     eslint,
     pedantic,
+    recommended,
     pending,
     version = "0.0.5",
     short_description = "Disallow calling some `Object.prototype` methods directly on objects.",
@@ -59,7 +61,7 @@ impl Rule for NoPrototypeBuiltins {
         let Some(member_expr) = expr.callee.get_member_expr() else {
             return;
         };
-        let Some(prop_name) = member_expr.static_property_name() else {
+        let Some(prop_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
         if DISALLOWED_PROPS.contains(&prop_name) {

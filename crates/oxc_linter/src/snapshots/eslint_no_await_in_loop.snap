@@ -120,3 +120,66 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:54]
+ 1 │ async function foo() { for (var bar of baz) if (bar) await bar; }
+   ·                                                      ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:56]
+ 1 │ async function foo() { for (var bar of baz) if (bar) { await bar; } }
+   ·                                                        ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:66]
+ 1 │ async function foo() { for (var bar of baz) if (bar) foo(); else await bar; }
+   ·                                                                  ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:68]
+ 1 │ async function foo() { for (var bar of baz) switch (bar) { case 1: await bar; } }
+   ·                                                                    ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:51]
+ 1 │ async function foo() { for (var bar of baz) try { await bar; } catch {} }
+   ·                                                   ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:45]
+ 1 │ async function foo() { while (baz) if (baz) await bar; }
+   ·                                             ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:54]
+ 1 │ async function foo() { for (var bar in baz) if (bar) await bar; }
+   ·                                                      ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:42]
+ 1 │ async function foo() { for (;;) if (baz) await bar; }
+   ·                                          ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:31]
+ 1 │ async function foo() { while (await bar as boolean) {} }
+   ·                               ─────
+   ╰────
+  help: Collect all promises into an array and use `Promise.all()` to run them in parallel, rather than awaiting each one sequentially inside the loop.

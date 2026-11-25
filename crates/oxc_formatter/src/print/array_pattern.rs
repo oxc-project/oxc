@@ -13,10 +13,10 @@ use crate::{
 
 use super::FormatWrite;
 
-struct FormatArrayPattern<'a, 'b>(&'b AstNode<'a, ArrayPattern<'a>>);
+struct FormatArrayPattern<'a, 'b>(&'b AstNode<'b, 'a, ArrayPattern<'a>>);
 
-impl<'a> Deref for FormatArrayPattern<'a, '_> {
-    type Target = AstNode<'a, ArrayPattern<'a>>;
+impl<'a, 'b> Deref for FormatArrayPattern<'a, 'b> {
+    type Target = AstNode<'b, 'a, ArrayPattern<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.0
@@ -36,8 +36,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
                     let has_element = !self.elements.is_empty();
                     if has_element {
                         write_array_node(
-                            self.elements.len() + usize::from(self.rest.is_some()),
-                            self.elements().iter().map(AstNode::as_ref),
+                            self.span(),
+                            self.rest.as_ref().map(|rest| rest.span.start),
+                            self.elements().iter().map(|element| element.as_ref()),
                             f,
                         );
                     }
@@ -52,7 +53,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ArrayPattern<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatArrayPattern(self).fmt(f);
     }

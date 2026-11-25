@@ -1,17 +1,16 @@
 use std::borrow::Cow;
 
-use rustc_hash::FxHashSet;
 use smallvec::SmallVec;
 
 use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{BindingIdentifier, *},
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
     identifier::is_irregular_whitespace,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -21,6 +20,17 @@ use crate::{
     LintContext,
     utils::{get_function_nearest_jsdoc_node, is_regexp_callee},
 };
+
+/// Get a variable declarator's declaration kind, or `None` if its parent is not a variable declaration.
+pub fn variable_declaration_kind(
+    declarator: &VariableDeclarator<'_>,
+    nodes: &AstNodes<'_>,
+) -> Option<VariableDeclarationKind> {
+    nodes
+        .parent_kind(declarator.node_id())
+        .as_variable_declaration()
+        .map(|declaration| declaration.kind)
+}
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -47,9 +57,7 @@ fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
             (op == LogicalOperator::Or && boolean_value == Some(true))
                 || (op == LogicalOperator::And && boolean_value == Some(false))
         }
-        Expression::UnaryExpression(unary_expr) => {
-            op == LogicalOperator::And && unary_expr.operator == UnaryOperator::Void
-        }
+        Expression::UnaryExpression(unary_expr) => op.is_and() && unary_expr.operator.is_void(),
         Expression::LogicalExpression(logical_expr) => {
             op == logical_expr.operator
                 && (is_logical_identity(logical_expr.operator, &logical_expr.left)
@@ -146,7 +154,7 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                 paren_expr.expression.is_constant(in_boolean_position, semantic)
             }
             Self::Identifier(ident) => {
-                ident.name == "undefined" && semantic.is_reference_to_global_variable(ident)
+                ident.is_undefined() && semantic.is_reference_to_global_variable(ident)
             }
             _ if self.is_literal() => true,
             _ => false,
@@ -275,6 +283,16 @@ pub fn iter_outer_expressions<'a, 's>(
     })
 }
 
+/// Checks whether the first outer expression calls the node as its callee.
+pub fn is_iife<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
+    let Some(AstKind::CallExpression(call)) =
+        iter_outer_expressions(semantic.nodes(), node.id()).next()
+    else {
+        return false;
+    };
+    call.callee.span().contains_inclusive(node.span())
+}
+
 pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference<'a>,
     semantic: &'b Semantic<'a>,
@@ -301,9 +319,20 @@ pub fn get_symbol_id_of_variable(
 }
 
 pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<RegExpFlags> {
-    if args.len() <= 1 {
+    if args.is_empty() {
         return Some(RegExpFlags::empty());
     }
+
+    if args.len() == 1 {
+        return match args[0].as_expression()?.get_inner_expression() {
+            Expression::RegExpLiteral(regexp_literal) => Some(regexp_literal.regex.flags),
+            expr if expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)) => {
+                Some(RegExpFlags::empty())
+            }
+            _ => None,
+        };
+    }
+
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
         Argument::TemplateLiteral(template) => template.single_quasi()?,
@@ -311,7 +340,7 @@ pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<R
     };
     let mut flags = RegExpFlags::empty();
     for ch in flag_arg.chars() {
-        let flag = RegExpFlags::try_from(ch).ok()?;
+        let flag = RegExpFlags::try_from(ch.to_char()?).ok()?;
         flags |= flag;
     }
     Some(flags)
@@ -404,7 +433,7 @@ pub fn is_method_call<'a>(
         let Some(static_property_name) = member_expr.static_property_name() else {
             return false;
         };
-        if !methods.contains(&static_property_name) {
+        if !methods.iter().any(|method| *method == static_property_name) {
             return false;
         }
     }
@@ -433,18 +462,16 @@ pub fn is_new_expression<'a>(
         return false;
     };
 
-    if !names.contains(&ident.name.as_str()) {
-        return false;
-    }
-
-    true
+    names.contains(&ident.name.as_str())
 }
 
+/// Returns the method span and UTF-8 name for rules matching known method names.
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
     let member_expr = call_expr.callee.get_inner_expression().as_member_expression()?;
-    member_expr.static_property_info()
+    let (span, name) = member_expr.static_property_info()?;
+    Some((span, name.as_str()?))
 }
 
 pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'a str> {
@@ -512,20 +539,6 @@ pub fn leftmost_identifier_reference<'a, 'b: 'a>(
     }
 }
 
-fn is_definitely_non_error_type(ty: &TSType) -> bool {
-    match ty {
-        TSType::TSNumberKeyword(_)
-        | TSType::TSStringKeyword(_)
-        | TSType::TSBooleanKeyword(_)
-        | TSType::TSNullKeyword(_)
-        | TSType::TSUndefinedKeyword(_) => true,
-        TSType::TSUnionType(union) => union.types.iter().all(is_definitely_non_error_type),
-        TSType::TSIntersectionType(intersect) => {
-            intersect.types.iter().all(is_definitely_non_error_type)
-        }
-        _ => false,
-    }
-}
 /// Get the preceding indentation string before the start of a Span in a given source_text string slice. Useful for maintaining the format of source code when applying a linting fix.
 ///
 /// Slice into source_text until the start of given Span.
@@ -562,15 +575,7 @@ pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
     preceding_source_text.lines().last().filter(|&line| line.trim().is_empty())
 }
 
-pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
-    could_be_error_impl(ctx, expr, &mut FxHashSet::default())
-}
-
-fn could_be_error_impl(
-    ctx: &LintContext,
-    expr: &Expression,
-    visited: &mut FxHashSet<SymbolId>,
-) -> bool {
+pub fn could_be_error(expr: &Expression) -> bool {
     match expr.get_inner_expression() {
         Expression::NewExpression(_)
         | Expression::AwaitExpression(_)
@@ -580,100 +585,34 @@ fn could_be_error_impl(
         | Expression::PrivateFieldExpression(_)
         | Expression::StaticMemberExpression(_)
         | Expression::ComputedMemberExpression(_)
-        | Expression::TaggedTemplateExpression(_) => true,
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::Identifier(_) => true,
         Expression::AssignmentExpression(expr) => {
             if matches!(expr.operator, AssignmentOperator::Assign | AssignmentOperator::LogicalAnd)
             {
-                return could_be_error_impl(ctx, &expr.right, visited);
+                return could_be_error(&expr.right);
             }
 
             if matches!(
                 expr.operator,
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
             ) {
-                return expr
-                    .left
-                    .get_expression()
-                    .is_none_or(|expr| could_be_error_impl(ctx, expr, visited))
-                    || could_be_error_impl(ctx, &expr.right, visited);
+                return expr.left.get_expression().is_none_or(could_be_error)
+                    || could_be_error(&expr.right);
             }
 
             false
         }
-        Expression::SequenceExpression(expr) => {
-            expr.expressions.last().is_some_and(|expr| could_be_error_impl(ctx, expr, visited))
-        }
+        Expression::SequenceExpression(expr) => expr.expressions.last().is_some_and(could_be_error),
         Expression::LogicalExpression(expr) => {
             if matches!(expr.operator, LogicalOperator::And) {
-                return could_be_error_impl(ctx, &expr.right, visited);
+                return could_be_error(&expr.right);
             }
 
-            could_be_error_impl(ctx, &expr.left, visited)
-                || could_be_error_impl(ctx, &expr.right, visited)
+            could_be_error(&expr.left) || could_be_error(&expr.right)
         }
         Expression::ConditionalExpression(expr) => {
-            could_be_error_impl(ctx, &expr.consequent, visited)
-                || could_be_error_impl(ctx, &expr.alternate, visited)
-        }
-        Expression::Identifier(ident) => {
-            let reference = ctx.scoping().get_reference(ident.reference_id());
-            let Some(symbol_id) = reference.symbol_id() else {
-                return true;
-            };
-
-            // Check if we've already visited this symbol to prevent infinite recursion
-            // Return true (could be error) when we encounter a circular reference since we can't determine the type
-            if !visited.insert(symbol_id) {
-                return true;
-            }
-
-            let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
-            match decl.kind() {
-                AstKind::VariableDeclarator(decl) => {
-                    if decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| could_be_error_impl(ctx, init, visited))
-                    {
-                        return true;
-                    }
-
-                    ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
-                        if !reference.is_write() {
-                            return false;
-                        }
-
-                        let reference_node = ctx.nodes().get_node(reference.node_id());
-                        if reference_node.span().end > ident.span.start {
-                            return false;
-                        }
-
-                        let AstKind::AssignmentExpression(assignment) =
-                            ctx.nodes().parent_kind(reference.node_id())
-                        else {
-                            return false;
-                        };
-
-                        assignment.operator == AssignmentOperator::Assign
-                            && matches!(
-                                &assignment.left,
-                                AssignmentTarget::AssignmentTargetIdentifier(target)
-                                    if target.span == reference_node.span()
-                            )
-                            && could_be_error_impl(ctx, &assignment.right, visited)
-                    })
-                }
-                AstKind::Function(_)
-                | AstKind::Class(_)
-                | AstKind::TSModuleDeclaration(_)
-                | AstKind::TSGlobalDeclaration(_)
-                | AstKind::TSEnumDeclaration(_) => false,
-                AstKind::FormalParameter(param) => !param
-                    .type_annotation
-                    .as_ref()
-                    .is_some_and(|annot| is_definitely_non_error_type(&annot.type_annotation)),
-                _ => true,
-            }
+            could_be_error(&expr.consequent) || could_be_error(&expr.alternate)
         }
         _ => false,
     }
@@ -724,7 +663,7 @@ fn is_array_from_family_method(callee: &Expression) -> bool {
 
     let object = member_expr.object();
 
-    match member_expr.static_property_name() {
+    match member_expr.static_property_name().and_then(JSStr::as_str) {
         Some("from") => matches!(
             object.get_inner_expression(),
             Expression::Identifier(ident) if ident.name.ends_with("Array")
@@ -869,6 +808,7 @@ pub fn is_default_this_binding<'a>(
                 if call_expr.callee.get_member_expr().is_some_and(|mem_expr| {
                     mem_expr
                         .static_property_name()
+                        .and_then(JSStr::as_str)
                         .is_some_and(|name| METHOD_WHICH_HAS_THIS_ARG.binary_search(&name).is_ok())
                 }) {
                     return call_expr.arguments.len() != 2
@@ -884,36 +824,25 @@ pub fn is_default_this_binding<'a>(
     }
 }
 
-pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
-    let (key, computed) = match parent_node.kind() {
-        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::MethodDefinition(method_definition) => {
-            (&method_definition.key, method_definition.computed)
-        }
-        AstKind::ObjectProperty(property) => (&property.key, property.computed),
+pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<StaticPropertyName<'a>> {
+    let key = match parent_node.kind() {
+        AstKind::PropertyDefinition(definition) => &definition.key,
+        AstKind::MethodDefinition(definition) => &definition.key,
+        AstKind::ObjectProperty(property) => &property.key,
         _ => return None,
     };
-
-    if key.is_identifier() && !computed {
+    if key.is_identifier() {
         return key.name();
     }
-
-    if matches!(key, PropertyKey::NullLiteral(_)) {
-        return Some("null".into());
-    }
-
     match key {
-        PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
-        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
+        PropertyKey::NullLiteral(_) => Some(StaticPropertyName::from("null")),
+        // A regex key names its canonical runtime string: `[/a/ig]` names `/a/gi`.
+        PropertyKey::RegExpLiteral(_) => key.static_name(),
+        PropertyKey::StaticBigIntLiteral(bigint) | PropertyKey::BigIntLiteral(bigint) => {
+            Some(StaticPropertyName::from(bigint.value.as_str()))
+        }
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.is_empty()
-                && template.quasis.len() == 1
-                && let Some(cooked) = &template.quasis[0].value.cooked
-            {
-                return Some(Cow::Borrowed(cooked.as_str()));
-            }
-
-            None
+            template.single_quasi().map(StaticPropertyName::from)
         }
         _ => None,
     }
@@ -932,7 +861,7 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
 
     match parent_node.kind() {
         AstKind::MethodDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 tokens.push(Cow::Borrowed("private"));
             } else if let Some(accessibility) = definition.accessibility {
                 tokens.push(Cow::Borrowed(accessibility.as_str()));
@@ -943,7 +872,7 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
             }
         }
         AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 tokens.push(Cow::Borrowed("private"));
             } else if let Some(accessibility) = definition.accessibility {
                 tokens.push(Cow::Borrowed(accessibility.as_str()));
@@ -977,64 +906,49 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
 
     let method_name = match parent_node.kind() {
         AstKind::MethodDefinition(method_definition)
-            if !method_definition.computed && method_definition.key.is_private_identifier() =>
+            if method_definition.key.is_private_identifier() =>
         {
             method_definition.key.name()
         }
         AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 definition.key.name()
             } else if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)
-            } else if let Some(name) = name {
-                Some(Cow::Borrowed(name.as_str()))
             } else {
-                None
+                name.map(StaticPropertyName::from)
             }
         }
         _ => {
             if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)
-            } else if let Some(name) = name {
-                Some(Cow::Borrowed(name.as_str()))
             } else {
-                None
+                name.map(StaticPropertyName::from)
             }
         }
     };
 
     if let Some(method_name) = method_name {
-        tokens.push(Cow::Owned(format!("`{method_name}`")));
+        tokens.push(Cow::Owned(format!("`{}`", method_name.display())));
     }
 
     tokens.join(" ")
 }
 
-// get the top iterator
-// example: this.state.a.b.c.d => this.state
+/// Get the innermost static member expression in an assignment target.
+///
+/// For example, both `this.state.a.b.c` and `this.state.a[key].c` return `this.state`.
 pub fn get_outer_member_expression<'a, 'b>(
     assignment: &'b SimpleAssignmentTarget<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
-    match assignment {
-        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
-            let mut node = &**expr;
-            loop {
-                if node.object.is_null() {
-                    return Some(node);
-                }
+    let mut member = assignment.as_member_expression()?;
 
-                if let Some(MemberExpression::StaticMemberExpression(object)) =
-                    node.object.as_member_expression()
-                    && !object.property.name.is_empty()
-                {
-                    node = object;
+    while let Some(object) = member.object().as_member_expression() {
+        member = object;
+    }
 
-                    continue;
-                }
-
-                return Some(node);
-            }
-        }
+    match member {
+        MemberExpression::StaticMemberExpression(expression) => Some(expression),
         _ => None,
     }
 }
@@ -1068,7 +982,6 @@ pub fn is_node_within_call_argument<'a>(
     call: &CallExpression<'a>,
     target_arg_index: usize,
 ) -> bool {
-    // Early exit for out-of-bounds index
     if target_arg_index >= call.arguments.len() {
         return false;
     }
@@ -1095,6 +1008,25 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
             AstKind::ExpressionStatement(expr_stmt) => {
+                // An unbraced statement body cannot continue a preceding expression:
+                // the token before it is the `)` or keyword that closes the statement
+                // head, so a semicolon is never needed. Inserting one anyway would
+                // silently empty the body, turning `if (x) [a] !== b` into
+                // `if (x) ;[a] !== b`.
+                if matches!(
+                    ctx.nodes().parent_kind(ancestor.id()),
+                    AstKind::IfStatement(_)
+                        | AstKind::WhileStatement(_)
+                        | AstKind::DoWhileStatement(_)
+                        | AstKind::ForStatement(_)
+                        | AstKind::ForInStatement(_)
+                        | AstKind::ForOfStatement(_)
+                        | AstKind::WithStatement(_)
+                        | AstKind::LabeledStatement(_)
+                ) {
+                    return false;
+                }
+
                 expr_stmt_span = Some(expr_stmt.span);
                 break;
             }
@@ -1148,91 +1080,24 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
         || last_char == '$'
 }
 
-#[inline]
-#[expect(clippy::cast_possible_wrap)]
-fn is_utf8_char_boundary(b: u8) -> bool {
-    (b as i8) >= -0x40
-}
-
 /// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
 fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
-    let bytes = source_text.as_bytes();
     let comments = ctx.semantic().comments();
-
-    let mut comment_idx = comments.partition_point(|c| c.span.start < end_pos);
-    let mut current_comment_end: u32 = 0;
-    let mut i = end_pos;
-
-    // Handle case where end_pos is inside a comment
-    if comment_idx > 0 {
-        let prev_comment = &comments[comment_idx - 1];
-        if end_pos <= prev_comment.span.end {
-            i = prev_comment.span.start;
-            comment_idx -= 1;
-            if comment_idx > 0 {
-                current_comment_end = comments[comment_idx - 1].span.end;
+    let mut idx = comments.partition_point(|c| c.span.start < end_pos);
+    let mut text = &source_text[..end_pos as usize];
+    loop {
+        text =
+            text.trim_end_matches(|c: char| c.is_ascii_whitespace() || is_irregular_whitespace(c));
+        #[expect(clippy::cast_possible_truncation)]
+        let text_end = text.len() as u32;
+        match idx.checked_sub(1).map(|i| &comments[i]) {
+            Some(comment) if comment.span.end >= text_end => {
+                text = &source_text[..comment.span.start as usize];
+                idx -= 1;
             }
+            _ => return text.chars().next_back(),
         }
     }
-
-    while i > 0 {
-        if i <= current_comment_end && comment_idx > 0 {
-            comment_idx -= 1;
-            current_comment_end = comments[comment_idx].span.start;
-            i = current_comment_end;
-            continue;
-        }
-
-        i -= 1;
-
-        let byte = bytes[i as usize];
-
-        if byte.is_ascii_whitespace() {
-            continue;
-        }
-
-        // Check if we're entering a comment from the end
-        if comment_idx > 0 {
-            let comment = &comments[comment_idx - 1];
-            if i >= comment.span.start && i < comment.span.end {
-                i = comment.span.start;
-                comment_idx -= 1;
-                if comment_idx > 0 {
-                    current_comment_end = comments[comment_idx - 1].span.end;
-                }
-                continue;
-            }
-        }
-
-        if byte.is_ascii() {
-            return Some(byte as char);
-        }
-
-        // Multi-byte UTF-8: find the start byte (max 4 bytes per char)
-        let i_usize = i as usize;
-        let char_start = if is_utf8_char_boundary(bytes[i_usize.saturating_sub(1)]) {
-            i_usize - 1
-        } else if is_utf8_char_boundary(bytes[i_usize.saturating_sub(2)]) {
-            i_usize - 2
-        } else {
-            i_usize - 3
-        };
-
-        let c = source_text[char_start..].chars().next().unwrap();
-
-        // Skip irregular whitespace (NBSP, ZWNBSP, etc.)
-        if is_irregular_whitespace(c) {
-            #[expect(clippy::cast_possible_truncation)]
-            {
-                i = char_start as u32;
-            }
-            continue;
-        }
-
-        return Some(c);
-    }
-
-    None
 }
 
 #[test]

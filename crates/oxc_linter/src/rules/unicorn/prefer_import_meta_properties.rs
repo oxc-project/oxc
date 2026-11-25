@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, NewExpression, VariableDeclarator,
+        Argument, BindingPattern, CallExpression, Expression, NewExpression,
+        VariableDeclarationKind, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -11,7 +12,7 @@ use oxc_syntax::node::NodeId;
 use oxc_syntax::symbol::SymbolId;
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
 const PATH_MODULES: [&str; 2] = ["path", "node:path"];
 const URL_MODULES: [&str; 2] = ["url", "node:url"];
@@ -73,6 +74,10 @@ declare_oxc_lint!(
     /// `import.meta.dirname` is equivalent to `path.dirname(import.meta.filename)`.
     /// This rule replaces legacy patterns with `import.meta.dirname` and `import.meta.filename`.
     ///
+    /// `fileURLToPath(new URL('.', import.meta.url))` and the equivalent `'./'` form are
+    /// allowed because they return a path with a trailing separator, unlike
+    /// `import.meta.dirname`.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -83,7 +88,6 @@ declare_oxc_lint!(
     /// const filename = fileURLToPath(import.meta.url);
     /// const dirname = path.dirname(fileURLToPath(import.meta.url));
     /// const dirname = path.dirname(import.meta.filename)
-    /// const dirname = fileURLToPath(new URL('.', import.meta.url))
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -96,7 +100,8 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "1.59.0",
-    short_description = "Prefer `import.meta.{dirname,filename}` over legacy techniques for getting file paths.",
+    short_description =
+        "Prefer `import.meta.{dirname,filename}` over legacy techniques for getting file paths.",
 );
 
 impl Rule for PreferImportMetaProperties {
@@ -135,24 +140,11 @@ impl Rule for PreferImportMetaProperties {
                         return;
                     };
 
-                    if !is_url_file_url_to_path_call(url_parent, ctx)
-                        || !has_argument_expression(&url_parent.arguments, 0, new_url.span)
-                    {
-                        return;
-                    }
-
-                    if new_url.arguments.len() == 1
+                    if is_url_file_url_to_path_call(url_parent, ctx)
+                        && has_argument_expression(&url_parent.arguments, 0, new_url.span)
                         && has_argument_expression(&new_url.arguments, 0, member_expression_span)
                     {
                         iterate_problems_from_filename(url_parent.node_id(), true, ctx);
-                        return;
-                    }
-
-                    if new_url.arguments.len() == 2
-                        && is_parent_literal(&new_url.arguments[0])
-                        && has_argument_expression(&new_url.arguments, 1, member_expression_span)
-                    {
-                        report_problem(ctx, url_parent.span, ProblemKind::Dirname);
                     }
                 }
             }
@@ -177,14 +169,7 @@ fn is_process_get_builtin_module_call(call: &CallExpression<'_>, modules: &[&str
     }
     matches!(
         &call.arguments[0],
-        Argument::StringLiteral(lit) if modules.contains(&lit.value.as_str())
-    )
-}
-
-fn is_parent_literal(argument: &Argument<'_>) -> bool {
-    matches!(
-        argument,
-        Argument::StringLiteral(lit) if lit.value.as_str() == "." || lit.value.as_str() == "./"
+        Argument::StringLiteral(lit) if lit.value.as_str().is_some_and(|value| modules.contains(&value))
     )
 }
 
@@ -196,7 +181,7 @@ fn has_argument_expression(arguments: &[Argument<'_>], index: usize, node_span: 
 }
 
 fn is_url_constructor(new_expression: &NewExpression<'_>, ctx: &LintContext<'_>) -> bool {
-    if !(1..=2).contains(&new_expression.arguments.len()) {
+    if new_expression.arguments.len() != 1 {
         return false;
     }
 
@@ -317,7 +302,7 @@ fn import_declaration_source<'a>(
     else {
         return None;
     };
-    Some(import_declaration.source.value.as_str())
+    import_declaration.source.value.as_str()
 }
 
 fn check_variable_declarator(
@@ -329,7 +314,9 @@ fn check_variable_declarator(
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    if !variable_declarator.kind.is_const() {
+    if !variable_declaration_kind(variable_declarator, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
+    {
         return false;
     }
 
@@ -343,7 +330,7 @@ fn check_variable_declarator(
         }
         BindingPattern::ObjectPattern(object_pattern) => {
             for property in &object_pattern.properties {
-                if property.computed {
+                if property.key.is_computed() {
                     continue;
                 }
                 let BindingPattern::BindingIdentifier(binding_identifier) = &property.value else {
@@ -392,7 +379,10 @@ fn iterate_problems_from_filename(
     }
 
     let AstKind::VariableDeclarator(parent) = ctx.nodes().kind(parent_id) else { return };
-    if !parent.kind.is_const() || parent.init.as_ref().is_none_or(|init| init.span() != node_span) {
+    if !variable_declaration_kind(parent, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
+        || parent.init.as_ref().is_none_or(|init| init.span() != node_span)
+    {
         return;
     }
 
@@ -482,6 +472,10 @@ fn test() {
             const filename = fileURLToPath(new URL("https://example.com"));"#,
         r#"import { fileURLToPath } from "url";
             const dirname = fileURLToPath(new URL(".", "https://example.com"));"#,
+        r#"import { fileURLToPath } from "url";
+            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
+        r#"import { fileURLToPath } from "url";
+            const dirname = fileURLToPath(new URL("./", import.meta.url));"#,
     ];
 
     let fail = vec![
@@ -490,10 +484,6 @@ fn test() {
             const dirname = path.dirname(fileURLToPath(import.meta.url));"#,
         r#"import path from "path";
             const dirname = path.dirname(import.meta.filename);"#,
-        r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
-        r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL("./", import.meta.url));"#,
         r#"import { fileURLToPath } from "url";
             const filename = fileURLToPath(import.meta.url);"#,
         r#"import { fileURLToPath } from "url";
@@ -549,14 +539,6 @@ fn test() {
             const dirname = path.dirname(fileURLToPath(import.meta.url));"#,
             r#"import path from "path";
             import { fileURLToPath } from "url";
-            const dirname = import.meta.dirname;"#,
-        )
-            .into(),
-        // dirname via new URL(".", …)
-        (
-            r#"import { fileURLToPath } from "url";
-            const dirname = fileURLToPath(new URL(".", import.meta.url));"#,
-            r#"import { fileURLToPath } from "url";
             const dirname = import.meta.dirname;"#,
         )
             .into(),

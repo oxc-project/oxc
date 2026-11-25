@@ -1,5 +1,5 @@
 // This file copies from https://github.com/prettier/prettier/blob/main/tests/format/js/ignore/ignore.js,
-// and replace all `oxfmt-ignore` to `oxfmt-ignore` to verify that oxfmt correctly ignores those comments.
+// and replaces all `prettier-ignore` with `oxfmt-ignore` to verify that oxfmt correctly ignores those comments.
 function a() {
   // oxfmt-ignore
   var fnString =
@@ -59,40 +59,40 @@ const response = {
   intent: 'lights',
 };
 
-import   {foo as bar}   from   "pkg"; // prettier-ignore
-export const item={  a:1,b:2}; // prettier-ignore
+import   {foo as bar}   from   "pkg"; // oxfmt-ignore
+export const item={  a:1,b:2}; // oxfmt-ignore
 
-const config={  retries:10,timeout:5000}; // prettier-ignore
-let data=[ 1,2,3 ]; // prettier-ignore
+const config={  retries:10,timeout:5000}; // oxfmt-ignore
+let data=[ 1,2,3 ]; // oxfmt-ignore
 
 const items = [
-  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // oxfmt-ignore
 ];
 
-foo(  {a:1,b:2},  // prettier-ignore
+foo(  {a:1,b:2},  // oxfmt-ignore
   {c:3,d:4}
 );
 
 function demo() {
-  return   {a:1,b:2}; // prettier-ignore
+  return   {a:1,b:2}; // oxfmt-ignore
 }
 
 function fail() {
-  throw   new Error(  "boom"  ); // prettier-ignore
+  throw   new Error(  "boom"  ); // oxfmt-ignore
 }
 
-if (ok) logger(  payload  ); // prettier-ignore
-while (keepGoing) tick(  value  ); // prettier-ignore
+if (ok) logger(  payload  ); // oxfmt-ignore
+while (keepGoing) tick(  value  ); // oxfmt-ignore
 
-label  :  for ( ; ; ) { break   label; } // prettier-ignore
-for (let i=0;i<3;i++) step(  i  ); // prettier-ignore
-for (const k in obj) use(  k  ); // prettier-ignore
-for (const v of arr) use(  v  ); // prettier-ignore
-while (ok) run(  x  ); // prettier-ignore
-do run(  x  ); while (ok); // prettier-ignore
-switch (kind) {case 1: act(  ); break;} // prettier-ignore
-try { a(  ); } catch (e) { b(  ); } // prettier-ignore
-with (ctx) run(  x  ); // prettier-ignore
+label  :  for ( ; ; ) { break   label; } // oxfmt-ignore
+for (let i=0;i<3;i++) step(  i  ); // oxfmt-ignore
+for (const k in obj) use(  k  ); // oxfmt-ignore
+for (const v of arr) use(  v  ); // oxfmt-ignore
+while (ok) run(  x  ); // oxfmt-ignore
+do run(  x  ); while (ok); // oxfmt-ignore
+switch (kind) {case 1: act(  ); break;} // oxfmt-ignore
+try { a(  ); } catch (e) { b(  ); } // oxfmt-ignore
+with (ctx) run(  x  ); // oxfmt-ignore
 
 function f() {
   return   {a:1}; // oxfmt-ignore

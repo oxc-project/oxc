@@ -1,0 +1,5 @@
+# A root block scalar's indentation indicator counts from column 0 (as yaml@2 and libyaml):
+# its content stays at that column.
+--- |1-
+--- |2
+   more-indented

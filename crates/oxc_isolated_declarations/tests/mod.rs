@@ -1,6 +1,6 @@
 mod deno;
 
-use std::{fmt::Write, fs, path::Path, sync::Arc};
+use std::{fmt::Write, fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
@@ -27,12 +27,11 @@ fn transform(path: &Path, source_text: &str) -> String {
     let mut snapshot =
         format!("```\n==================== .D.TS ====================\n\n{code}\n\n");
     if !id_ret.diagnostics.is_empty() {
-        let source = Arc::new(source_text.to_string());
         let error_messages = id_ret
             .diagnostics
             .iter()
-            .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .fold(String::new(), |s, error| s + &format!("{error:?}"));
+            .map(|diagnostic| diagnostic.clone().render_with_source_code(source_text))
+            .fold(String::new(), |output, error| output + &error);
 
         write!(
             snapshot,

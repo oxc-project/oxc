@@ -1,0 +1,26 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# A break-less EOF line of spaces as a keep-chomped scalar's only line is one kept line break,
+# as yaml@2 reads it: the value is "\n", printed as an empty line (as Prettier does).
+key: |+
+  
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# A break-less EOF line of spaces as a keep-chomped scalar's only line is one kept line break,
+# as yaml@2 reads it: the value is "\n", printed as an empty line (as Prettier does).
+key: |+
+
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# A break-less EOF line of spaces as a keep-chomped scalar's only line is one kept line break,
+# as yaml@2 reads it: the value is "\n", printed as an empty line (as Prettier does).
+key: |+
+
+
+===================== End =====================

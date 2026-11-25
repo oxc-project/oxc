@@ -35,10 +35,8 @@ use oxc_ast::ast::*;
 use oxc_ast::match_assignment_target;
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::diagnostics::ErrorCategory;
 use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
@@ -62,7 +60,6 @@ struct ContextIdentifierVisitor<'a> {
     /// Empty when at the top level of the function being compiled.
     function_stack: Vec<ScopeId>,
     binding_info: FxHashMap<SymbolId, BindingInfo>,
-    error: Option<OxcDiagnostic>,
 }
 
 impl<'a> ContextIdentifierVisitor<'a> {
@@ -107,6 +104,9 @@ impl<'a> ContextIdentifierVisitor<'a> {
             Some(id) => id,
             None => return,
         };
+        if self.scope.is_ambient_binding(symbol_id) {
+            return;
+        }
         let &fn_scope = match self.function_stack.last() {
             Some(s) => s,
             None => return,
@@ -119,6 +119,9 @@ impl<'a> ContextIdentifierVisitor<'a> {
 
     fn handle_reassignment_identifier(&mut self, name: &str, current_scope: ScopeId) {
         if let Some(symbol_id) = self.scope.find_binding(current_scope, name) {
+            if self.scope.is_ambient_binding(symbol_id) {
+                return;
+            }
             let info = self.binding_info.entry(symbol_id).or_default();
             info.reassigned = true;
             if let Some(&fn_scope) = self.function_stack.last()
@@ -127,15 +130,6 @@ impl<'a> ContextIdentifierVisitor<'a> {
                 info.reassigned_by_inner_fn = true;
             }
         }
-    }
-
-    /// Record the TS-faithful Todo for an unsupported assignment-target wrapper
-    /// node, recording the error once (the first time it is hit).
-    fn record_unsupported_lval(&mut self, type_name: &str, span: Span) {
-        if self.error.is_some() {
-            return;
-        }
-        self.error = Some(make_unsupported_lval_error(type_name, Some(span)));
     }
 }
 
@@ -250,17 +244,22 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
         let current_scope = self.current_scope();
-        if self.error.is_none() {
+        // `const v = 1; () => { v ??= 2 }` never assigns, but marking `v`
+        // reassigned makes it a context identifier and the declaration is then
+        // rejected as a Syntax error. Logical assignment to a const is a
+        // lowering Todo instead (the store may be dead, and compiling it would
+        // rewrite `const` to `let`). `let` targets are still reassignments.
+        if !(it.operator.to_logical_operator().is_some()
+            && logical_assignment_target_is_const(self.scope, current_scope, &it.left))
+        {
             self.walk_assignment_target_for_reassignment(&it.left, current_scope);
         }
         oxc_ast_visit::walk_js::walk_assignment_expression(self, it);
     }
 
     fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
-        if let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = &it.argument {
-            let current_scope = self.current_scope();
-            self.handle_reassignment_identifier(&ident.name, current_scope);
-        }
+        let current_scope = self.current_scope();
+        self.walk_simple_assignment_target_for_reassignment(&it.argument, current_scope);
         oxc_ast_visit::walk_js::walk_update_expression(self, it);
     }
 
@@ -273,7 +272,7 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         // Non-computed object keys were never visited.
-        if it.computed {
+        if it.key.is_computed() {
             self.visit_property_key(&it.key);
         }
         self.visit_expression(&it.value);
@@ -292,7 +291,9 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_ts_enum_declaration(&mut self, _it: &TSEnumDeclaration<'a>) {}
 
-    fn visit_ts_module_declaration(&mut self, _it: &TSModuleDeclaration<'a>) {}
+    fn visit_ts_external_module_declaration(&mut self, _it: &TSExternalModuleDeclaration<'a>) {}
+
+    fn visit_ts_namespace_declaration(&mut self, _it: &TSNamespaceDeclaration<'a>) {}
 }
 
 impl<'a> ContextIdentifierVisitor<'a> {
@@ -335,18 +336,68 @@ impl<'a> ContextIdentifierVisitor<'a> {
             AssignmentTarget::StaticMemberExpression(_)
             | AssignmentTarget::ComputedMemberExpression(_)
             | AssignmentTarget::PrivateFieldExpression(_) => {}
-            // Unsupported TS assignment-target wrappers throw a TS-faithful Todo.
             AssignmentTarget::TSAsExpression(node) => {
-                self.record_unsupported_lval("TSAsExpression", node.span);
+                self.walk_assignment_target_expression_for_reassignment(
+                    &node.expression,
+                    current_scope,
+                );
             }
             AssignmentTarget::TSSatisfiesExpression(node) => {
-                self.record_unsupported_lval("TSSatisfiesExpression", node.span);
+                self.walk_assignment_target_expression_for_reassignment(
+                    &node.expression,
+                    current_scope,
+                );
             }
             AssignmentTarget::TSNonNullExpression(node) => {
-                self.record_unsupported_lval("TSNonNullExpression", node.span);
+                self.walk_assignment_target_expression_for_reassignment(
+                    &node.expression,
+                    current_scope,
+                );
             }
             AssignmentTarget::TSTypeAssertion(node) => {
-                self.record_unsupported_lval("TSTypeAssertion", node.span);
+                self.walk_assignment_target_expression_for_reassignment(
+                    &node.expression,
+                    current_scope,
+                );
+            }
+        }
+    }
+
+    fn walk_assignment_target_expression_for_reassignment(
+        &mut self,
+        expression: &Expression<'a>,
+        current_scope: ScopeId,
+    ) {
+        match expression.get_inner_expression() {
+            Expression::Identifier(ident) => {
+                self.handle_reassignment_identifier(&ident.name, current_scope);
+            }
+            Expression::StaticMemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::PrivateFieldExpression(_) => {}
+            _ => unreachable!("TypeScript wrapper contains a non-assignable expression"),
+        }
+    }
+
+    fn walk_simple_assignment_target_for_reassignment(
+        &mut self,
+        target: &SimpleAssignmentTarget<'a>,
+        current_scope: ScopeId,
+    ) {
+        match target {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                self.handle_reassignment_identifier(&ident.name, current_scope);
+            }
+            SimpleAssignmentTarget::StaticMemberExpression(_)
+            | SimpleAssignmentTarget::ComputedMemberExpression(_)
+            | SimpleAssignmentTarget::PrivateFieldExpression(_) => {}
+            _ => {
+                if let Some(expression) = target.get_expression() {
+                    self.walk_assignment_target_expression_for_reassignment(
+                        expression,
+                        current_scope,
+                    );
+                }
             }
         }
     }
@@ -370,18 +421,29 @@ impl<'a> ContextIdentifierVisitor<'a> {
     }
 }
 
-/// Build the TS-faithful Todo error for an unsupported assignment-target wrapper
-/// node, mirroring the TypeScript `FindContextIdentifiers` pass. TS throws
-/// immediately (CompilerError.throwTodo in handleAssignment's default case),
-/// aborting before BuildHIR ever runs or logs, so this must return Err rather
-/// than record-and-continue: otherwise Rust emits HIR debug entries for a
-/// function TS never lowered.
-fn make_unsupported_lval_error(type_name: &str, span: Option<Span>) -> OxcDiagnostic {
-    ErrorCategory::Todo
-        .diagnostic(format!(
-            "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
-        ))
-        .with_labels(span)
+/// Whether `target` is a simple assignment to a `const` binding.
+fn logical_assignment_target_is_const(
+    scope: &ScopeResolver<'_, '_>,
+    current_scope: ScopeId,
+    target: &AssignmentTarget<'_>,
+) -> bool {
+    let name = match target {
+        AssignmentTarget::AssignmentTargetIdentifier(ident) => ident.name.as_str(),
+        _ => {
+            let Some(expression) =
+                target.as_simple_assignment_target().and_then(|t| t.get_expression())
+            else {
+                return false;
+            };
+            let Expression::Identifier(ident) = expression.get_inner_expression() else {
+                return false;
+            };
+            ident.name.as_str()
+        }
+    };
+    scope
+        .find_binding(current_scope, name)
+        .is_some_and(|symbol_id| scope.binding_kind(symbol_id) == crate::scope::BindingKind::Const)
 }
 
 /// Check if a binding declared at `binding_scope` is captured by a function at `function_scope`.
@@ -417,7 +479,6 @@ pub fn find_context_identifiers(
         scope_stack: vec![func_scope],
         function_stack: Vec::new(),
         binding_info: FxHashMap::default(),
-        error: None,
     };
 
     // Walk params and body (like Babel's func.traverse()): the function node
@@ -433,10 +494,6 @@ pub fn find_context_identifiers(
             visitor.visit_formal_parameters(&arrow.params);
             visitor.visit_arrow_function_body(&arrow.body);
         }
-    }
-
-    if let Some(error) = visitor.error {
-        return Err(error);
     }
 
     // Supplement the walker-based analysis with resolved-reference data.

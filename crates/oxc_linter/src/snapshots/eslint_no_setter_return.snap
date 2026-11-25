@@ -295,3 +295,276 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────
    ╰────
   help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:48]
+ 1 │ Object.defineProperty(foo, 'bar', { set(val) { return 1; } })
+   ·                                                ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:49]
+ 1 │ Reflect.defineProperty(foo, 'bar', { set(val) { return 1; } })
+   ·                                                 ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:50]
+ 1 │ Object.defineProperties(foo, { baz: { set(val) { return 1; } } })
+   ·                                                  ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:41]
+ 1 │ Object.create(null, { baz: { set(val) { return 1; } } })
+   ·                                         ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:49]
+ 1 │ Object.defineProperty(foo, 'bar', { set: val => val })
+   ·                                                 ───
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:50]
+ 1 │ Reflect.defineProperty(foo, 'bar', { set: val => f(val) })
+   ·                                                  ──────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:51]
+ 1 │ Object.defineProperties(foo, { baz: { set: val => a + b } })
+   ·                                                   ─────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:40]
+ 1 │ Object.create({}, { baz: { set: val => this._val } })
+   ·                                        ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:69]
+ 1 │ Object.defineProperty(foo, 'bar', { set(val) { if (val) { return; } return false; }, get(val) { return 1; } })
+   ·                                                                     ─────────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:55]
+ 1 │ Reflect.defineProperty(foo, 'bar', { set(val) { try { return f(val) } catch (e) { return e }; } })
+   ·                                                       ─────────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:83]
+ 1 │ Reflect.defineProperty(foo, 'bar', { set(val) { try { return f(val) } catch (e) { return e }; } })
+   ·                                                                                   ────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:73]
+ 1 │ Object.defineProperties(foo, { bar: { get(){ return null; }, set(val) { return null; } } })
+   ·                                                                         ────────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:41]
+ 1 │ Object.create(null, { baz: { set(val) { return this._val; return; return undefined; } } })
+   ·                                         ─────────────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:67]
+ 1 │ Object.create(null, { baz: { set(val) { return this._val; return; return undefined; } } })
+   ·                                                                   ─────────────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:50]
+ 1 │ Object.defineProperties(foo, { baz: { set(val) { return 1; } }, bar: { set(val) { return 1; } } })
+   ·                                                  ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:83]
+ 1 │ Object.defineProperties(foo, { baz: { set(val) { return 1; } }, bar: { set(val) { return 1; } } })
+   ·                                                                                   ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:39]
+ 1 │ Object.create({}, { baz: { set(val) { return 1; } }, bar: { set: (val) => 1 } })
+   ·                                       ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:75]
+ 1 │ Object.create({}, { baz: { set(val) { return 1; } }, bar: { set: (val) => 1 } })
+   ·                                                                           ─
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:65]
+ 1 │ Object['defineProperty'](foo, 'bar', { set: function bar(val) { return 1; } })
+   ·                                                                 ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:51]
+ 1 │ Reflect.defineProperty(foo, 'bar', { 'set'(val) { return 1; } })
+   ·                                                   ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:57]
+ 1 │ Object[`defineProperties`](foo, { baz: { ['set'](val) { return 1; } } })
+   ·                                                         ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:48]
+ 1 │ Object.create({}, { baz: { [`set`]: (val) => { return 1; } } })
+   ·                                                ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:65]
+ 1 │ Object.defineProperty(foo, 'bar', { set: function Object(val) { return 1; } })
+   ·                                                                 ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:61]
+ 1 │ Object.defineProperty(foo, 'bar', { set: function(Object) { return 1; } })
+   ·                                                             ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:49]
+ 1 │ Object?.defineProperty(foo, 'bar', { set(val) { return 1; } })
+   ·                                                 ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:51]
+ 1 │ (Object?.defineProperty)(foo, 'bar', { set(val) { return 1; } })
+   ·                                                   ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:49]
+ 1 │ Object.defineProperty(foo, 'bar', { get set() { return () => 1; } })
+   ·                                                 ───────────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:53]
+ 1 │ Object.defineProperty(foo, 'bar', ({ set: ((val) => val) }))
+   ·                                                     ───
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:64]
+ 1 │ Object.create(foo, ({ bar: ({ set: (function(val) { if (val) { return val; } }) }) }))
+   ·                                                                ───────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:51]
+ 1 │ Object.defineProperty?.(foo, 'bar', { set: val => undefined })
+   ·                                                   ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:49]
+ 1 │ Object.defineProperty(foo, 'bar', { set: val => () => val })
+   ·                                                 ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:60]
+ 1 │ Reflect.defineProperty(foo, 'bar', { set(val) { if (val) { return 1; } } })
+   ·                                                            ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:56]
+ 1 │ Object.defineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } })
+   ·                                                        ─────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:55]
+ 1 │ Object.defineProperty(foo, 'bar', { [('set')]: val => val })
+   ·                                                       ───
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:54]
+ 1 │ Object[('defineProperty')](foo, 'bar', { set: val => val })
+   ·                                                      ───
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:70]
+ 1 │ Reflect[(`defineProperty`)](foo, 'bar', { [(`set`)]: function(val) { return val; } })
+   ·                                                                      ───────────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:62]
+ 1 │ Object[(`defineProperties`)](foo, { bar: { [('set')]: val => val } })
+   ·                                                              ───
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:52]
+ 1 │ Object[('create')](foo, { bar: { [(`set`)]: val => val } })
+   ·                                                    ───
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.
+
+  ⚠ eslint(no-setter-return): Setter cannot return a value
+   ╭─[no_setter_return.js:1:82]
+ 1 │ const o = {}; let v; Object.defineProperty(o, "x", { get: () => v, set: (nv) => (v = nv) }); module.exports = o;
+   ·                                                                                  ──────
+   ╰────
+  help: Remove the return statement or ensure it does not return a value.

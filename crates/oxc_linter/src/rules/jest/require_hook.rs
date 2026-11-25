@@ -23,7 +23,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireHook {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -261,6 +261,13 @@ fn tests() {
             ",
             None,
         ),
+        (
+            r"import { describe as suite, test as customTest } from '@jest/globals';
+            suite('suite', () => {
+                customTest('foo', () => { setup(); });
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -410,6 +417,11 @@ fn tests() {
                     setup();
                 });
             ",
+            None,
+        ),
+        (
+            r"import { describe as suite } from '@jest/globals';
+            suite('suite', () => { setup(); });",
             None,
         ),
     ];

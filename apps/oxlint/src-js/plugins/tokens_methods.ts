@@ -2,13 +2,21 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { cachedTokens, tokensInt32, tokensLen, initTokensBuffer, getToken } from "./tokens.ts";
+import {
+  cachedTokens,
+  tokensInt32,
+  tokensLen,
+  initTokensBuffer,
+  getToken,
+  TOKEN_SIZE32_SHIFT,
+} from "./tokens.ts";
 import {
   tokensAndCommentsInt32,
   tokensAndCommentsLen,
   getTokenOrComment,
   getTokenOrCommentEnd,
   initTokensAndCommentsBuffer,
+  MERGED_SIZE32_SHIFT,
 } from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
@@ -103,8 +111,8 @@ export function getTokens<Options extends CountOptions | number | FilterFn | nul
 
   // Number of following tokens to additionally return
   afterCount =
-    (typeof countOptions === "number" || typeof countOptions === "undefined") &&
-    typeof afterCount === "number"
+    (typeof countOptions === "number" || typeof countOptions === "undefined")
+    && typeof afterCount === "number"
       ? afterCount
       : 0;
 
@@ -1266,10 +1274,10 @@ export function getTokenByRangeStart<Options extends RangeOptions | null | undef
   type Result = TokenResult<Options> | null;
 
   const includeComments =
-    typeof rangeOptions === "object" &&
-    rangeOptions !== null &&
-    "includeComments" in rangeOptions &&
-    !!rangeOptions.includeComments;
+    typeof rangeOptions === "object"
+    && rangeOptions !== null
+    && "includeComments" in rangeOptions
+    && !!rangeOptions.includeComments;
 
   let int32: Int32Array, len: number;
   if (includeComments === false) {
@@ -1290,7 +1298,7 @@ export function getTokenByRangeStart<Options extends RangeOptions | null | undef
   // This makes it safe to use `>> 1` for division by 2 (which is faster than `>>> 1`).
   for (let lo = 0, hi = len; lo < hi;) {
     const mid = (lo + hi) >> 1;
-    const tokenStart = int32[mid << 2];
+    const tokenStart = int32[mid << TOKEN_SIZE32_SHIFT];
     if (tokenStart < offset) {
       lo = mid + 1;
     } else if (tokenStart > offset) {
@@ -1357,7 +1365,7 @@ export function isSpaceBetween(first: NodeOrToken, second: NodeOrToken): boolean
   let index = firstTokenAtOrAfter(tokensAndCommentsInt32, rangeStart, 0, tokensAndCommentsLen);
 
   for (let lastTokenEnd = rangeStart; index < tokensAndCommentsLen; index++) {
-    const tokenStart = tokensAndCommentsInt32[index << 2];
+    const tokenStart = tokensAndCommentsInt32[index << MERGED_SIZE32_SHIFT];
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) break;
     if (tokenStart !== lastTokenEnd) return true;
@@ -1413,7 +1421,7 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
   let index = firstTokenAtOrAfter(tokensAndCommentsInt32, rangeStart, 0, tokensAndCommentsLen);
 
   for (let lastTokenEnd = rangeStart; index < tokensAndCommentsLen; index++) {
-    const tokenStart = tokensAndCommentsInt32[index << 2];
+    const tokenStart = tokensAndCommentsInt32[index << MERGED_SIZE32_SHIFT];
 
     // The first token of the later node should undergo the check in the second branch
     if (tokenStart > rangeEnd) break;
@@ -1421,8 +1429,10 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
     // Deserialize to check type/value for JSXText whitespace detection
     const token = getTokenOrComment(index);
     if (
-      tokenStart !== lastTokenEnd ||
-      (tokenStart < rangeEnd && token.type === "JSXText" && JSX_WHITESPACE_REGEXP.test(token.value))
+      tokenStart !== lastTokenEnd
+      || (tokenStart < rangeEnd
+        && token.type === "JSXText"
+        && JSX_WHITESPACE_REGEXP.test(token.value))
     ) {
       return true;
     }
@@ -1442,10 +1452,10 @@ function getIncludeComments(
   options: SkipOptions | CountOptions | number | FilterFn | null | undefined,
 ): boolean {
   return (
-    typeof options === "object" &&
-    options !== null &&
-    "includeComments" in options &&
-    !!options.includeComments
+    typeof options === "object"
+    && options !== null
+    && "includeComments" in options
+    && !!options.includeComments
   );
 }
 
@@ -1469,7 +1479,7 @@ function getEntry(index: number, includeComments: boolean): TokenOrComment {
  * @returns Start offset in source text
  */
 function entryStart(index: number, int32: Int32Array): number {
-  return int32[index << 2];
+  return int32[index << TOKEN_SIZE32_SHIFT];
 }
 
 /**
@@ -1481,7 +1491,9 @@ function entryStart(index: number, int32: Int32Array): number {
  * @returns End offset in source text
  */
 function entryEnd(index: number, includeComments: boolean): number {
-  return includeComments === true ? getTokenOrCommentEnd(index) : tokensInt32![(index << 2) + 1];
+  return includeComments === true
+    ? getTokenOrCommentEnd(index)
+    : tokensInt32![(index << TOKEN_SIZE32_SHIFT) + 1];
 }
 
 /**
@@ -1534,7 +1546,10 @@ function collectEntries(
  * Note: Source text is limited to 1 GiB max, so number of tokens cannot exceed 2^30.
  * This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
  *
- * @param int32 - `Int32Array` buffer (tokens, comments, or tokensAndComments)
+ * This function is inlined into call sites by `inline_search` TSDown plugin.
+ * All call sites must have `TOKEN_SIZE32_SHIFT` const in scope.
+ *
+ * @param int32 - `Int32Array` buffer (tokens or tokensAndComments)
  * @param offset - Source offset to search for
  * @param startIndex - Starting entry index for the search
  * @param length - Total number of entries in the buffer
@@ -1548,7 +1563,7 @@ export function firstTokenAtOrAfter(
 ): number {
   for (let endIndex = length; startIndex < endIndex;) {
     const mid = (startIndex + endIndex) >> 1;
-    if (int32[mid << 2] < offset) {
+    if (int32[mid << TOKEN_SIZE32_SHIFT] < offset) {
       startIndex = mid + 1;
     } else {
       endIndex = mid;

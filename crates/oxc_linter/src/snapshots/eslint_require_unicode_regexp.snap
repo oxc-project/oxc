@@ -4,6 +4,22 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
    ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp("foo", "\uD800")
+   · ───────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
+ 1 │ new RegExp("foo", `g\uDC00`)
+   · ────────────────────────────
+   ╰────
+  help: Add the 'u' flag.
+  note: The 'u' and 'v' flags enable Unicode-aware regular expression behavior and stricter pattern parsing.
+
+  ⚠ eslint(require-unicode-regexp): Use the 'u' flag.
+   ╭─[require_unicode_regexp.tsx:1:1]
  1 │ /\a/
    · ────
    ╰────

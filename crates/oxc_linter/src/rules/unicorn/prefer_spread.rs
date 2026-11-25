@@ -1,11 +1,14 @@
 use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
@@ -67,7 +70,12 @@ fn check_unicorn_prefer_spread<'a>(
         return;
     };
 
-    let Some(static_property_name) = member_expr.static_property_name() else {
+    if member_expr.object().without_parentheses().is_super() {
+        return;
+    }
+
+    let Some(static_property_name) = member_expr.static_property_name().and_then(JSStr::as_str)
+    else {
         return;
     };
 
@@ -97,7 +105,7 @@ fn check_unicorn_prefer_spread<'a>(
         }
         // `array.concat()`
         "concat" => {
-            if is_not_array(member_expr.object().without_parentheses(), ctx) {
+            if is_not_array(member_expr.object().without_parentheses(), ctx) != Some(false) {
                 return;
             }
 
@@ -121,7 +129,7 @@ fn check_unicorn_prefer_spread<'a>(
             // Skip receivers that are statically known not to be arrays (e.g. string/number
             // literals, template literals, `x.join()`). `"foo".slice()` returns a string, so the
             // `[...x]` rewrite would change both value and type.
-            if is_not_array(member_expr_obj, ctx) {
+            if is_not_array(member_expr_obj, ctx) != Some(false) {
                 return;
             }
 
@@ -169,39 +177,6 @@ fn check_unicorn_prefer_spread<'a>(
                 member_expr.object(),
             );
         }
-        // `string.split()`
-        "split" => {
-            if call_expr.arguments.len() != 1 {
-                return;
-            }
-
-            let Some(expr) = call_expr.arguments[0].as_expression() else {
-                return;
-            };
-            let Expression::StringLiteral(string_lit) = expr.without_parentheses() else {
-                return;
-            };
-
-            if !string_lit.value.is_empty() {
-                return;
-            }
-
-            ctx.diagnostic_with_fix(
-                unicorn_prefer_spread_diagnostic(call_expr.span, "string.split()"),
-                |fixer| {
-                    let needs_semi = ast_util::could_be_asi_hazard(node, ctx);
-                    let callee_obj = member_expr.object().without_parentheses();
-                    let prefix = if needs_semi { ";" } else { "" };
-                    fixer.replace(
-                        call_expr.span,
-                        format!(
-                            "{prefix}[...{}]",
-                            callee_obj.span().source_text(ctx.source_text())
-                        ),
-                    )
-                },
-            );
-        }
         _ => {}
     }
 }
@@ -233,59 +208,71 @@ fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
     )
 }
 
-fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
-    if matches!(
-        expr.without_parentheses(),
-        Expression::TemplateLiteral(_) | Expression::BinaryExpression(_)
-    ) {
-        return true;
-    }
-    if expr.is_literal() {
-        return true;
-    }
+fn is_not_array<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> Option<bool> {
+    let mut expr = expr;
+    let mut visited_symbols = FxHashSet::default();
 
-    if let Expression::CallExpression(call_expr) = expr {
-        if let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() {
-            if Some("join") == member_expr.static_property_name() && call_expr.arguments.len() < 2 {
-                return true;
-            }
-            return false;
+    loop {
+        if matches!(
+            expr.without_parentheses(),
+            Expression::TemplateLiteral(_) | Expression::BinaryExpression(_)
+        ) {
+            return Some(true);
         }
-        return false;
-    }
+        if expr.is_literal() {
+            return Some(true);
+        }
 
-    let ident = match expr.without_parentheses() {
-        Expression::Identifier(ident) => {
-            if let Some(symbol_id) = ast_util::get_symbol_id_of_variable(ident, ctx) {
-                let symbol_table = ctx.scoping();
-                let node = ctx.nodes().get_node(symbol_table.symbol_declaration(symbol_id));
-
-                if let AstKind::VariableDeclarator(variable_declarator) = node.kind()
-                    && let Some(ref_expr) = &variable_declarator.init
+        if let Expression::CallExpression(call_expr) = expr {
+            if let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression()
+            {
+                if member_expr.static_property_name().is_some_and(|name| name == "join")
+                    && call_expr.arguments.len() < 2
                 {
-                    return is_not_array(ref_expr, ctx);
+                    return Some(true);
+                }
+                return Some(false);
+            }
+            return Some(false);
+        }
+
+        let ident = match expr.without_parentheses() {
+            Expression::Identifier(ident) => {
+                if let Some(symbol_id) = ast_util::get_symbol_id_of_variable(ident, ctx) {
+                    let symbol_table = ctx.scoping();
+                    let node = ctx.nodes().get_node(symbol_table.symbol_declaration(symbol_id));
+
+                    if let AstKind::VariableDeclarator(variable_declarator) = node.kind()
+                        && let Some(ref_expr) = &variable_declarator.init
+                    {
+                        if !visited_symbols.insert(symbol_id) {
+                            return None;
+                        }
+
+                        expr = ref_expr;
+                        continue;
+                    }
+                }
+
+                ident.name.as_str()
+            }
+            expr @ match_member_expression!(Expression) => {
+                if let Some(v) =
+                    expr.to_member_expression().static_property_name().and_then(JSStr::as_str)
+                {
+                    v
+                } else {
+                    return Some(false);
                 }
             }
+            _ => return Some(false),
+        };
 
-            ident.name.as_str()
-        }
-        expr @ match_member_expression!(Expression) => {
-            if let Some(v) = expr.to_member_expression().static_property_name() {
-                v
-            } else {
-                return false;
-            }
-        }
-        _ => return false,
-    };
-
-    if ident.starts_with(|c: char| c.is_ascii_uppercase())
-        && ident.cow_to_ascii_uppercase() != ident
-    {
-        return true;
+        return Some(
+            ident.starts_with(|c: char| c.is_ascii_uppercase())
+                && ident.cow_to_ascii_uppercase() != ident,
+        );
     }
-
-    false
 }
 
 fn report_with_spread_fixer(
@@ -436,7 +423,30 @@ fn test() {
         r#""".split(string)"#,
         "string.split()",
         r#"string.notSplit("")"#,
-        // r#"const notString = 0; notString.split("")"#,
+        r#"const notString = 0; notString.split("")"#,
+        r#""string".split("")"#,
+        r#""string".split('')"#,
+        r#"unknown.split("")"#,
+        r#"const characters = "string".split("")"#,
+        r#"(( (( (( "string" )).split ))( (("")) ) ))"#,
+        r#"bar()
+            foo.split("")"#,
+        r#"unknown.split("")"#,
+        r#""🦄".split("")"#,
+        r#"const {length} = "🦄".split("")"#,
+        r#""foo bar baz".split("")"#,
+        "foo()\nstr.split(\"\")",
+        r#"'string'
+str.split("")"#,
+        r#""string"
+str.split("")"#,
+        "class A extends B { method() { return super.slice(); } }",
+        "class A extends B { method() { return super.slice(0); } }",
+        r#"class A extends B { method() { return super["slice"](); } }"#,
+        "class A extends B { method() { return super.toSpliced(); } }",
+        "class A extends B { method() { return (super.toSpliced)(); } }",
+        r#"class A extends B { method() { return super["toSpliced"](); } }"#,
+        "class A extends B { method() { return super.concat(); } }",
     ];
 
     let fail = vec![
@@ -598,16 +608,6 @@ fn test() {
             foo.toSpliced()",
         r#""".toSpliced()"#,
         "new Uint8Array([10, 20, 30, 40, 50]).toSpliced()",
-        r#""string".split("")"#,
-        r#""string".split('')"#,
-        r#"unknown.split("")"#,
-        r#"const characters = "string".split("")"#,
-        r#"(( (( (( "string" )).split ))( (("")) ) ))"#,
-        r#"bar()
-            foo.split("")"#,
-        r#"unknown.split("")"#,
-        r#""🦄".split("")"#,
-        r#"const {length} = "🦄".split("")"#,
     ];
 
     let fix = vec![
@@ -644,11 +644,6 @@ fn test() {
         ("const copy = array.toSpliced()", "const copy = [...array]"),
         // `array.toSpliced()` - ASI hazard cases
         ("foo()\narray.toSpliced()", "foo()\n;[...array]"),
-        // `string.split()`
-        (r#""🦄".split("")"#, r#"[..."🦄"]"#),
-        (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#),
-        // `string.split()` - ASI hazard cases
-        ("foo()\nstr.split(\"\")", "foo()\n;[...str]"),
         (
             r"Array.from(path.matchAll(/\{([^{}?]+\??)\}/g))",
             "[...path.matchAll(/\\{([^{}?]+\\??)\\}/g)]",
@@ -681,17 +676,6 @@ fn test() {
         ("switch (array.slice()[0]) {}", "switch ([...array][0]) {}"),
         ("`template`\narray.toSpliced()", "`template`\n;[...array]"),
         (
-            r#"'string'
-str.split("")"#,
-            "'string'\n;[...str]",
-        ),
-        (
-            r#""string"
-str.split("")"#,
-            r#""string"
-;[...str]"#,
-        ),
-        (
             "foo()\nArray.from(set).map(x => x).filter(Boolean).length",
             "foo()\n;[...set].map(x => x).filter(Boolean).length",
         ),
@@ -705,9 +689,52 @@ str.split("")"#,
         ("(foo, Array.from(set))", "(foo, [...set])"),
         ("[Array.from(set)]", "[[...set]]"),
         ("async () => await Array.from(set)", "async () => await [...set]"),
+        (
+            "class A extends B { method() { return super.items.slice(); } }",
+            "class A extends B { method() { return [...super.items]; } }",
+        ),
+        (
+            "// leading\nfoo() // trailing\n// above\nArray.from(set).map(() => {})",
+            "// leading\nfoo() // trailing\n// above\n;[...set].map(() => {})",
+        ),
+        (
+            "foo(/* a */) /* b */ /* c */\nArray.from(set).map(() => {})",
+            "foo(/* a */) /* b */ /* c */\n;[...set].map(() => {})",
+        ),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_initializer_traversal() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "var a = a; a = []; a.slice();",
+        "var a = a; a = ''; a.slice();",
+        "var a = a; a.concat([]);",
+        "var a = b; var b = a; b = []; a.slice(0);",
+        "var a = b; var b = a; a.concat([]);",
+        "var a = b; var b = c; var c = b; a.slice();",
+        "var a = (b); var b = (a); a.slice();",
+        "const a = ''; const b = a; b.slice();",
+        "const a = ''; const b = a; b.concat('');",
+    ];
+    let fail = vec![
+        "const a = []; const b = a; b.slice();",
+        "const a = []; const b = a; b.concat([]);",
+        "const a = []; { const b = a; { const a = b; a.slice(); } }",
+    ];
+    let fix = vec![
+        ("const a = []; const b = a; b.slice();", "const a = []; const b = a; [...b];"),
+        (
+            "const a = []; { const b = a; { const a = b; a.slice(); } }",
+            "const a = []; { const b = a; { const a = b; [...a]; } }",
+        ),
+    ];
+
+    Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail).expect_fix(fix).test();
 }

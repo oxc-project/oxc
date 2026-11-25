@@ -130,12 +130,13 @@ declare_oxc_lint!(
     pending,
     config = PreferRegexLiterals,
     version = "1.64.0",
-    short_description = "Disallow use of the RegExp constructor in favor of regular expression literals.",
+    short_description =
+        "Disallow use of the RegExp constructor in favor of regular expression literals.",
 );
 
 impl Rule for PreferRegexLiterals {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

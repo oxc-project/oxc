@@ -197,3 +197,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─
    ╰────
   help: Consider wrapping the assignment in additional parentheses
+
+  ⚠ eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment
+   ╭─[no_cond_assign.tsx:1:18]
+ 1 │ while (a /* = */ = b) {}
+   ·                  ─
+   ╰────
+  help: Consider wrapping the assignment in additional parentheses
+
+  ⚠ eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment
+   ╭─[no_cond_assign.tsx:1:18]
+ 1 │ while (a /* = */ = b) {}
+   ·                  ─
+   ╰────
+  help: Consider wrapping the assignment in additional parentheses

@@ -3,6 +3,34 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:17]
+ 1 │ obj["\uD800"] = obj["\uD800"]
+   ·                 ─────────────
+   ╰────
+  help: Remove the self-assignment or assign to a different variable.
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:17]
+ 1 │ obj["\uDC00"] = obj[`\uDC00`]
+   ·                 ─────────────
+   ╰────
+  help: Remove the self-assignment or assign to a different variable.
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:19]
+ 1 │ obj[`a\uD800b`] = obj["a\uD800b"]
+   ·                   ───────────────
+   ╰────
+  help: Remove the self-assignment or assign to a different variable.
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:23]
+ 1 │ obj["\uD800\uDC00"] = obj["𐀀"]
+   ·                       ────────
+   ╰────
+  help: Remove the self-assignment or assign to a different variable.
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:5]
  1 │ a = a
    ·     ─

@@ -1,0 +1,102 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ['meta.nonce']: 2;
+  ['a-b'](): void;
+}
+type T = { color: 1; ['meta.nonce']: 2 };
+
+==================== Output ====================
+-------------------------------------------
+{ printWidth: 80, quoteProps: "as-needed" }
+-------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ["meta.nonce"]: 2;
+  ["a-b"](): void;
+}
+type T = { color: 1; ["meta.nonce"]: 2 };
+
+--------------------------------------------
+{ printWidth: 100, quoteProps: "as-needed" }
+--------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ["meta.nonce"]: 2;
+  ["a-b"](): void;
+}
+type T = { color: 1; ["meta.nonce"]: 2 };
+
+------------------------------------------
+{ printWidth: 80, quoteProps: "preserve" }
+------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ["meta.nonce"]: 2;
+  ["a-b"](): void;
+}
+type T = { color: 1; ["meta.nonce"]: 2 };
+
+-------------------------------------------
+{ printWidth: 100, quoteProps: "preserve" }
+-------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ["meta.nonce"]: 2;
+  ["a-b"](): void;
+}
+type T = { color: 1; ["meta.nonce"]: 2 };
+
+--------------------------------------------
+{ printWidth: 80, quoteProps: "consistent" }
+--------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ["meta.nonce"]: 2;
+  ["a-b"](): void;
+}
+type T = { color: 1; ["meta.nonce"]: 2 };
+
+---------------------------------------------
+{ printWidth: 100, quoteProps: "consistent" }
+---------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ["meta.nonce"]: 2;
+  ["a-b"](): void;
+}
+type T = { color: 1; ["meta.nonce"]: 2 };
+
+---------------------------------------------------------------
+{ printWidth: 80, quoteProps: "consistent", singleQuote: true }
+---------------------------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ['meta.nonce']: 2;
+  ['a-b'](): void;
+}
+type T = { color: 1; ['meta.nonce']: 2 };
+
+----------------------------------------------------------------
+{ printWidth: 100, quoteProps: "consistent", singleQuote: true }
+----------------------------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+interface I {
+  color: 1;
+  ['meta.nonce']: 2;
+  ['a-b'](): void;
+}
+type T = { color: 1; ['meta.nonce']: 2 };
+
+===================== End =====================

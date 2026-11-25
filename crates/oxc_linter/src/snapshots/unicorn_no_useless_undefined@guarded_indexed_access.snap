@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:63]
+ 1 │ function a(array, index) { return index >= 0 ? array[index] : undefined; }
+   ·                                                               ─────────
+   ╰────
+  help: Use the indexed access directly.
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:63]
+ 1 │ function b(array, index) { return index > -1 ? array[index] : undefined; }
+   ·                                                               ─────────
+   ╰────
+  help: Use the indexed access directly.
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:47]
+ 1 │ function c(array, index) { return index < 0 ? undefined : array[index]; }
+   ·                                               ─────────
+   ╰────
+  help: Use the indexed access directly.
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:73]
+ 1 │ function d(array, index) { return index < array.length ? array[index] : undefined; }
+   ·                                                                         ─────────
+   ╰────
+  help: Use the indexed access directly.
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:73]
+ 1 │ function e(array, index) { return array.length > index ? array[index] : undefined; }
+   ·                                                                         ─────────
+   ╰────
+  help: Use the indexed access directly.
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:59]
+ 1 │ function f(array, index) { return index >= array.length ? undefined : array[index]; }
+   ·                                                           ─────────
+   ╰────
+  help: Use the indexed access directly.
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:78]
+ 1 │ function g(array, index) { return index <= array.length - 1 ? array[index] : undefined; }
+   ·                                                                              ─────────
+   ╰────
+  help: Use the indexed access directly.
+
+  ⚠ unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:67]
+ 1 │ function h(array, index) { return index >= 1 ? array[index - 1] : undefined; }
+   ·                                                                   ─────────
+   ╰────
+  help: Use the indexed access directly.

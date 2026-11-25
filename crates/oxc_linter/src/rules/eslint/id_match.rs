@@ -16,15 +16,13 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    config::GlobalValue,
     context::{ContextHost, LintContext},
     rule::{Rule, TupleRuleConfig},
-    utils::deserialize_required_regex_option,
+    utils::{deserialize_required_regex_option, is_enabled_global_reference},
 };
 
 fn id_match_diagnostic(span: Span, name: &str, pattern: &str) -> OxcDiagnostic {
@@ -262,7 +260,7 @@ impl IdMatch {
             return;
         }
 
-        if is_known_external_global(ident, ctx) {
+        if is_enabled_global_reference(ident, ctx) {
             return;
         }
 
@@ -277,14 +275,15 @@ impl IdMatch {
                 if property.shorthand {
                     return;
                 }
-                if !self.options().properties && !property.computed {
+                if !self.options().properties && !property.key.is_computed() {
                     return;
                 }
             }
             AstKind::BindingProperty(property) => {
                 // A computed destructuring key is a reference expression, not
                 // a binding introduced by destructuring.
-                if property.computed && property.key.span().contains_inclusive(ident.span) {
+                if property.key.is_computed() && property.key.span().contains_inclusive(ident.span)
+                {
                     self.report_in_generic_context(ctx, node.span(), name, parent);
                 }
                 return;
@@ -300,7 +299,7 @@ impl IdMatch {
                 if property.name.span().contains_inclusive(ident.span) {
                     // Keep assignment destructuring consistent with binding
                     // destructuring for computed keys.
-                    if property.computed {
+                    if property.name.is_computed() {
                         self.report_in_generic_context(ctx, node.span(), name, parent);
                     }
                     return;
@@ -360,7 +359,8 @@ impl IdMatch {
                 return;
             }
             AstKind::ObjectProperty(property)
-                if property.key.span().contains_inclusive(ident.span) && !property.computed =>
+                if property.key.span().contains_inclusive(ident.span)
+                    && !property.key.is_computed() =>
             {
                 if !self.options().properties {
                     return;
@@ -372,7 +372,8 @@ impl IdMatch {
                 return;
             }
             AstKind::BindingProperty(property)
-                if property.key.span().contains_inclusive(ident.span) && !property.computed =>
+                if property.key.span().contains_inclusive(ident.span)
+                    && !property.key.is_computed() =>
             {
                 if self.options().ignore_destructuring
                     && binding_property_is_exact_key_value(property)
@@ -531,13 +532,6 @@ impl IdMatch {
     }
 }
 
-pub fn is_known_external_global(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    ident.is_global_reference(ctx.scoping())
-        && ctx
-            .get_global_variable_value(ident.name.as_str())
-            .is_some_and(|value| value != GlobalValue::Off)
-}
-
 fn binding_is_import_local<'a>(ident: &BindingIdentifier<'a>, parent: &AstNode<'a>) -> bool {
     match parent.kind() {
         AstKind::ImportDefaultSpecifier(specifier) => specifier.local.span == ident.span,
@@ -552,24 +546,21 @@ pub fn transparent_reference_parent<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> (&'b AstNode<'a>, Span) {
     let mut subject_span = node.span();
-    for ancestor in ctx.nodes().ancestors(node.id()) {
-        if matches!(
-            ancestor.kind(),
-            AstKind::ParenthesizedExpression(_)
-                | AstKind::TSAsExpression(_)
-                | AstKind::TSSatisfiesExpression(_)
-                | AstKind::TSTypeAssertion(_)
-                | AstKind::TSNonNullExpression(_)
-                | AstKind::TSInstantiationExpression(_)
-        ) {
-            subject_span = ancestor.span();
-            continue;
-        }
-        return (ancestor, subject_span);
+    let nodes = ctx.nodes();
+    let mut parent = nodes.parent_node(node.id());
+    while matches!(
+        parent.kind(),
+        AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSInstantiationExpression(_)
+    ) {
+        subject_span = parent.span();
+        parent = nodes.parent_node(parent.id());
     }
-    // The Program node is always present at the top of the AST, so the loop
-    // returns before exhausting the ancestor iterator in practice.
-    unreachable!("ancestors iterator must yield the Program node")
+    (parent, subject_span)
 }
 
 // Collapse OXC's formal-parameter wrappers to the parent shape used by ESLint.
@@ -600,7 +591,7 @@ fn export_specifier_is_duplicate_clone<'a>(
         return false;
     }
     match &specifier.exported {
-        ModuleExportName::IdentifierName(inner) => inner.node_id.get() == current_node.id(),
+        ModuleExportName::IdentifierName(inner) => inner.node_id() == current_node.id(),
         _ => false,
     }
 }
@@ -613,7 +604,7 @@ fn member_is_assignment_left<'a>(member_node: &AstNode<'a>, ctx: &LintContext<'a
 }
 
 fn binding_property_key_should_report(property: &BindingProperty) -> bool {
-    if property.computed {
+    if property.key.is_computed() {
         return false;
     }
     property.shorthand || binding_property_is_exact_key_value(property)
@@ -676,7 +667,7 @@ pub fn is_dynamic_import_attribute_object_property<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    if property.computed {
+    if property.key.is_computed() {
         return false;
     }
 
@@ -691,7 +682,7 @@ fn object_property_is_import_options_with<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id.get());
+    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     matches!(
         ctx.nodes().parent_kind(object_node.id()),
@@ -704,7 +695,7 @@ fn object_property_is_inside_dynamic_import_with<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id.get());
+    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     let outer_property_node = ctx.nodes().parent_node(object_node.id());
     let AstKind::ObjectProperty(outer_property) = outer_property_node.kind() else {

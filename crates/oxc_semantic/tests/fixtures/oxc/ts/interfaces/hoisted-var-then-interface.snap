@@ -1,0 +1,81 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/hoisted-var-then-interface.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "TSInterfaceDeclaration",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSInterfaceDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "SwitchStatement",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Interface)",
+            "id": 1,
+            "name": "I",
+            "node": "TSInterfaceDeclaration",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 1,
+                "name": "I",
+                "node_id": 33,
+                "scope_id": 1
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "id": 2,
+            "name": "value",
+            "node": "VariableDeclarator(value)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 4,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(FunctionScopedVariable)",
+        "id": 0,
+        "name": "I",
+        "node": "VariableDeclarator(I)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "Outer",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

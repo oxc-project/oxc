@@ -1,12 +1,20 @@
-use oxc_ast::{AstKind, ast::Expression, match_member_expression};
+use oxc_ast::{
+    AstKind,
+    ast::{BinaryOperator, Expression},
+    match_member_expression,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, globals::GLOBAL_OBJECT_NAMES,
-    rule::Rule, utils::get_precedence,
+    AstNode,
+    ast_util::{could_be_asi_hazard, is_method_call},
+    context::LintContext,
+    globals::GLOBAL_OBJECT_NAMES,
+    rule::Rule,
+    utils::get_precedence,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -108,11 +116,25 @@ impl Rule for PreferExponentiationOperator {
                 let replacement = format!("{base_text} ** {exponent_text}");
 
                 // Check if we need to wrap the entire expression in parentheses based on parent context
-                let replacement = if needs_parens_for_parent(node, ctx) {
-                    format!("({replacement})")
-                } else {
-                    replacement
-                };
+                let needs_parens = needs_parens_for_parent(node, ctx)
+                    || match replacement_position(node, ctx) {
+                        Some(ReplacementPosition::StatementStart) => {
+                            base_text.starts_with('{') || starts_with_function_or_class(&base_text)
+                        }
+                        Some(ReplacementPosition::ArrowBody) => base_text.starts_with('{'),
+                        Some(ReplacementPosition::ExportDefault) => {
+                            starts_with_function_or_class(&base_text)
+                        }
+                        None => false,
+                    };
+
+                let mut replacement =
+                    if needs_parens { format!("({replacement})") } else { replacement };
+                if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
+                    && could_be_asi_hazard(node, ctx)
+                {
+                    replacement.insert(0, ';');
+                }
 
                 fixer.replace(call_expr.span, replacement)
             } else {
@@ -157,12 +179,65 @@ fn get_exponent_text(source_text: &str, expr: &Expression) -> String {
     }
 }
 
+/// Grammar positions where the replacement's leading token determines how the
+/// surrounding code is parsed.
+#[derive(Debug, Clone, Copy)]
+enum ReplacementPosition {
+    /// The replacement begins an expression statement.
+    StatementStart,
+    /// The replacement begins the concise body of an arrow function.
+    ArrowBody,
+    /// The replacement begins the expression after `export default`.
+    ExportDefault,
+}
+
+/// Walks up the ancestors that begin at the same offset as `node` (the same
+/// walk as ESLint's `isStartOfExpressionStatement`) to find the grammar
+/// position that the replacement will begin.
+fn replacement_position(node: &AstNode, ctx: &LintContext) -> Option<ReplacementPosition> {
+    let start = node.span().start;
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        if ancestor.span().start != start {
+            return match ancestor.kind() {
+                AstKind::ArrowFunctionExpression(arrow)
+                    if arrow.is_expression() && arrow.body.span().start == start =>
+                {
+                    Some(ReplacementPosition::ArrowBody)
+                }
+                AstKind::ExportDefaultDeclaration(decl)
+                    if decl.declaration.span().start == start =>
+                {
+                    Some(ReplacementPosition::ExportDefault)
+                }
+                _ => None,
+            };
+        }
+        if matches!(ancestor.kind(), AstKind::ExpressionStatement(_)) {
+            return Some(ReplacementPosition::StatementStart);
+        }
+    }
+    None
+}
+
+/// Returns `true` if `text` starts with a `function`, `class`, or
+/// `async function` expression.
+fn starts_with_function_or_class(text: &str) -> bool {
+    fn keyword(text: &str, keyword: &str) -> bool {
+        text.starts_with(keyword)
+            && !text[keyword.len()..]
+                .starts_with(|c: char| c.is_alphanumeric() || matches!(c, '_' | '$'))
+    }
+    keyword(text, "function")
+        || keyword(text, "class")
+        || (keyword(text, "async") && keyword(text["async".len()..].trim_start(), "function"))
+}
+
 fn needs_parens_for_parent(node: &AstNode, ctx: &LintContext) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
 
     match parent.kind() {
         AstKind::BinaryExpression(bin_expr) => {
-            if bin_expr.operator == oxc_ast::ast::BinaryOperator::Exponential {
+            if bin_expr.operator == BinaryOperator::Exponential {
                 let AstKind::CallExpression(call_expr) = node.kind() else {
                     return true;
                 };
@@ -175,6 +250,13 @@ fn needs_parens_for_parent(node: &AstNode, ctx: &LintContext) -> bool {
         | AstKind::AwaitExpression(_)
         | AstKind::TSAsExpression(_)
         | AstKind::TSSatisfiesExpression(_) => true,
+        AstKind::StaticMemberExpression(_)
+        | AstKind::ComputedMemberExpression(_)
+        | AstKind::PrivateFieldExpression(_)
+        | AstKind::CallExpression(_)
+        | AstKind::TaggedTemplateExpression(_)
+        | AstKind::TSNonNullExpression(_)
+        | AstKind::TSInstantiationExpression(_) => parent.span().start == node.span().start,
         _ => false,
     }
 }
@@ -223,6 +305,23 @@ fn test() {
         "Math.pow(a, b) as any",
         // With comments - no fix should be applied
         "Math.pow(a, b) + Math.pow(c, /* comment */ d)",
+        "Math.pow(a, b).toFixed(2)",
+        "Math.pow(a, b)?.toFixed(2)",
+        "Math.pow(a, b)[0]",
+        "Math.pow(a, b)()",
+        "Math.pow(a, b)`x`",
+        "Math.pow(a, b)!",
+        "object[Math.pow(a, b)]",
+        "fn(Math.pow(a, b))",
+        "(Math.pow(a, b)).toFixed(2)",
+        "Math.pow(a, b)<T>()",
+        "Math.pow(a, b)<T>",
+        "Math.pow({ a: 2 }[k], 2) > 3 && go()",
+        "const f = () => Math.pow({ a: 2 }[k], 2)",
+        "Math.pow(function (x) {}.length, 2) > 0 && f()",
+        "Math.pow({ a: 1 }.a, 2)",
+        "Math.pow(async function () {}, 2)",
+        "Math.pow(class {}, 2)",
     ];
 
     let fix = vec![
@@ -261,6 +360,54 @@ fn test() {
         ("Math.pow(a.b, c.d)", "a.b ** c.d"),
         // Call expressions don't need parens
         ("Math.pow(f(), g())", "f() ** g()"),
+        ("Math.pow(a, b).toFixed(2)", "(a ** b).toFixed(2)"),
+        ("Math.pow(a, b)?.toFixed(2)", "(a ** b)?.toFixed(2)"),
+        ("Math.pow(a, b)[0]", "(a ** b)[0]"),
+        ("Math.pow(a, b)()", "(a ** b)()"),
+        ("Math.pow(a, b)`x`", "(a ** b)`x`"),
+        ("Math.pow(a, b)!", "(a ** b)!"),
+        ("object[Math.pow(a, b)]", "object[a ** b]"),
+        ("fn(Math.pow(a, b))", "fn(a ** b)"),
+        ("(Math.pow(a, b)).toFixed(2)", "(a ** b).toFixed(2)"),
+        ("Math.pow(a, b)<T>()", "(a ** b)<T>()"),
+        ("Math.pow(a, b)<T>", "(a ** b)<T>"),
+        ("foo\nMath.pow(a + b, c)", "foo\n;(a + b) ** c"),
+        ("foo\nMath.pow(+a, b)", "foo\n;(+a) ** b"),
+        ("foo\nMath.pow(-a, b)", "foo\n;(-a) ** b"),
+        ("foo\nMath.pow((a).b, c)", "foo\n;(a).b ** c"),
+        ("foo\nMath.pow([a, b].find(fn), c)", "foo\n;[a, b].find(fn) ** c"),
+        ("foo\nMath.pow(/regex/, 2)", "foo\n;/regex/ ** 2"),
+        ("foo\nMath.pow(`template literal`, 2)", "foo\n;`template literal` ** 2"),
+        ("foo\n100 + Math.pow((a).b, c)", "foo\n100 + (a).b ** c"),
+        ("foo\nMath.pow(a.b, c)", "foo\na.b ** c"),
+        ("Math.pow((a).b, c)", "(a).b ** c"),
+        ("foo;\nMath.pow((a).b, c)", "foo;\n(a).b ** c"),
+        ("Math.pow({ a: 2 }[k], 2) > 3 && go()", "({ a: 2 }[k] ** 2) > 3 && go()"),
+        ("const f = () => Math.pow({ a: 2 }[k], 2)", "const f = () => ({ a: 2 }[k] ** 2)"),
+        (
+            "Math.pow(function (x) {}.length, 2) > 0 && f()",
+            "(function (x) {}.length ** 2) > 0 && f()",
+        ),
+        ("Math.pow({ a: 1 }.a, 2)", "({ a: 1 }.a ** 2)"),
+        ("Math.pow(async function () {}, 2)", "(async function () {} ** 2)"),
+        ("Math.pow(class {}, 2)", "(class {} ** 2)"),
+        ("const x = Math.pow({ a: 1 }.a, 2)", "const x = { a: 1 }.a ** 2"),
+        ("foo(Math.pow({ a: 1 }.a, 2))", "foo({ a: 1 }.a ** 2)"),
+        ("const i = () => Math.pow({}.a, 2) + 1", "const i = () => ({}.a ** 2) + 1"),
+        (
+            "const g = () => Math.pow(function () {}.length, 2)",
+            "const g = () => function () {}.length ** 2",
+        ),
+        (
+            "export default Math.pow(function () {}.length, 2)",
+            "export default (function () {}.length ** 2)",
+        ),
+        ("export default Math.pow(class {}.x, 2)", "export default (class {}.x ** 2)"),
+        (
+            "export default Math.pow(async function () {}.length, 2)",
+            "export default (async function () {}.length ** 2)",
+        ),
+        ("export default Math.pow({}.a, 2)", "export default {}.a ** 2"),
     ];
 
     Tester::new(

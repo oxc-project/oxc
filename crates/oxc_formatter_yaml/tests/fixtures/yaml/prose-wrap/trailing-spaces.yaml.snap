@@ -9,7 +9,7 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
+trailing-spaces-kept-when-last: >-
   Lorizzle ipsizzle dolizzle pot amizzle  
 
 ==================== Output ====================
@@ -23,8 +23,8 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
-  Lorizzle ipsizzle dolizzle pot amizzle
+trailing-spaces-kept-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  
 
 -------------------
 { printWidth: 100 }
@@ -36,8 +36,8 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
-  Lorizzle ipsizzle dolizzle pot amizzle
+trailing-spaces-kept-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  
 
 ---------------------------------------
 { printWidth: 80, proseWrap: "always" }
@@ -49,8 +49,8 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
-  Lorizzle ipsizzle dolizzle pot amizzle
+trailing-spaces-kept-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  
 
 ----------------------------------------
 { printWidth: 100, proseWrap: "always" }
@@ -62,8 +62,8 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
-  Lorizzle ipsizzle dolizzle pot amizzle
+trailing-spaces-kept-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  
 
 --------------------------------------
 { printWidth: 80, proseWrap: "never" }
@@ -75,8 +75,8 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
-  Lorizzle ipsizzle dolizzle pot amizzle
+trailing-spaces-kept-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  
 
 ---------------------------------------
 { printWidth: 100, proseWrap: "never" }
@@ -88,7 +88,7 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
-  Lorizzle ipsizzle dolizzle pot amizzle
+trailing-spaces-kept-when-last: >-
+  Lorizzle ipsizzle dolizzle pot amizzle  
 
 ===================== End =====================

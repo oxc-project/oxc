@@ -4,6 +4,69 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### ⚡ Performance
+
+- aed0190 parser: Skip unused identifier hashes (#29168) (Boshen)
+
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 704d8cf transformer_plugins: Keep the bare inject when references to it remain (#26965) (Bharadwaj Pendyala)
+
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 4b75662 transformer_plugins: Preserve optional chains through non-null assertions (#27526) (Dunqing)
+
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- c3dedc9 semantic: Skip function body bindings in parameters (#26099) (Dunqing)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+
+### 🐛 Bug Fixes
+
+- cc2e28d parser: Reject trailing tokens in `Parser::parse_expression` (#25371) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### ⚡ Performance
+
+- 9fb1e3e transformer: Avoid large types on stack (#25035) (overlookmotel)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

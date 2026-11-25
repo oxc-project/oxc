@@ -214,12 +214,19 @@ impl<'a> BinaryExpressionVisitor<'a> {
                     self.left_precedence = Precedence::Call;
                 }
             }
+            BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd) => {
+                // Without parentheses, `|` or `&` becomes part of the type in
+                // `(value satisfies Type) | other` or `(value satisfies Type) & other`.
+                if matches!(e.left(), Expression::TSSatisfiesExpression(_)) {
+                    self.left_precedence = Precedence::Compare;
+                }
+            }
 
             _ => {}
         }
 
         if let Expression::PrivateInExpression(e) = self.e.left() {
-            e.gen_expr(p, Precedence::Lowest, Context::empty());
+            e.gen_expr(p, self.left_precedence, self.ctx);
             self.visit_right_and_finish(p);
             return false;
         }

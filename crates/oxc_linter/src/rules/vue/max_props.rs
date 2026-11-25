@@ -1,12 +1,15 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, TSSignature, TSType},
+    ast::{
+        CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
+        TSSignature, TSType,
+    },
 };
 
+use oxc_ast::StaticPropertyName;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -17,7 +20,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, for_each_define_props_type_signature},
+    utils::for_each_define_props_type_signature,
 };
 
 fn max_props_diagnostic(span: Span, cur: u32, limit: u32) -> OxcDiagnostic {
@@ -86,14 +89,22 @@ declare_oxc_lint!(
 
 impl Rule for MaxProps {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
-            self.run_on_setup(node, ctx);
-        } else {
-            self.run_on_options(node, ctx);
+        match node.kind() {
+            AstKind::CallExpression(call_expr)
+                if ctx.frameworks_options() == FrameworkOptions::VueSetup =>
+            {
+                self.run_on_setup(call_expr, ctx);
+            }
+            AstKind::ExportDefaultDeclaration(export_default_decl)
+                if ctx.frameworks_options() != FrameworkOptions::VueSetup =>
+            {
+                self.run_on_options(export_default_decl, ctx);
+            }
+            _ => {}
         }
     }
 
@@ -104,10 +115,7 @@ impl Rule for MaxProps {
 
 impl MaxProps {
     #[expect(clippy::cast_possible_truncation)] // the length of properties/arrays can't be over u32::MAX, because the source code is already limited by u32::MAX.
-    fn run_on_setup<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
+    fn run_on_setup<'a>(&self, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(ident) = call_expr.callee.get_identifier_reference() else {
             return;
         };
@@ -153,17 +161,18 @@ impl MaxProps {
     }
 
     #[expect(clippy::cast_possible_truncation)] // the length of properties can't be over u32::MAX, because the source code is already limited by u32::MAX.
-    fn run_on_options<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
-            return;
-        };
+    fn run_on_options<'a>(
+        &self,
+        export_default_decl: &ExportDefaultDeclaration<'a>,
+        ctx: &LintContext<'a>,
+    ) {
         let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
             &export_default_decl.declaration
         else {
             return;
         };
 
-        let Some(props_prop) = find_property(obj_expr, "props") else {
+        let Some(props_prop) = obj_expr.find_property("props") else {
             return;
         };
         let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()
@@ -184,7 +193,7 @@ impl MaxProps {
 fn get_type_argument_keys<'a>(
     ctx: &LintContext<'a>,
     type_argument: &TSType<'a>,
-) -> FxHashSet<CompactStr> {
+) -> FxHashSet<StaticPropertyName<'a>> {
     let mut keys = FxHashSet::default();
     for_each_define_props_type_signature(type_argument, ctx, &mut |signature| {
         let name = match signature {
@@ -193,7 +202,7 @@ fn get_type_argument_keys<'a>(
             _ => return,
         };
         if let Some(name) = name {
-            keys.insert(CompactStr::from(name));
+            keys.insert(name);
         }
     });
     keys

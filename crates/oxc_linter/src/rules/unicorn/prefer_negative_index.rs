@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule, utils::is_same_expression};
 
@@ -54,6 +55,7 @@ declare_oxc_lint!(
     PreferNegativeIndex,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.13.2",
     short_description = "Prefer using a negative index over `.length - index` when possible.",
@@ -78,7 +80,7 @@ impl Rule for PreferNegativeIndex {
             callee_object_expr.is_member_expression() && (is_prototype_call || is_prototype_apply);
 
         let Some(callee_name) = (if is_prototype {
-            callee_object_expr.to_member_expression().static_property_name()
+            callee_object_expr.to_member_expression().static_property_name().and_then(JSStr::as_str)
         } else {
             Some(name)
         }) else {
@@ -164,13 +166,13 @@ impl Rule for PreferNegativeIndex {
 
                 for member_expr in member_exprs {
                     let member_expr_span = member_expr.span();
-                    let member_expr_next_end = member_expr_span.end + 1;
-                    let member_expr_with_next_span =
-                        Span::new(member_expr_span.start, member_expr_next_end);
-                    let member_expr_with_next_str = ctx.source_range(member_expr_with_next_span);
+                    let next_text = &ctx.source_text()[member_expr_span.end as usize..];
 
-                    if member_expr_with_next_str.ends_with(' ') {
-                        fixes.push(Fix::delete(member_expr_with_next_span));
+                    if next_text.starts_with(' ') {
+                        fixes.push(Fix::delete(Span::new(
+                            member_expr_span.start,
+                            member_expr_span.end + 1,
+                        )));
                     } else {
                         fixes.push(Fix::delete(member_expr_span));
                     }
@@ -193,10 +195,10 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::ComputedMemberExpression(right_computed_expr),
         ) => is_same_node(&left_computed_expr.expression, &right_computed_expr.expression, ctx),
         (Expression::StringLiteral(left_lit), Expression::NumericLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            left_lit.value == right_lit.to_string().as_str()
         }
         (Expression::NumericLiteral(left_lit), Expression::StringLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            right_lit.value == left_lit.to_string().as_str()
         }
         (
             Expression::TemplateLiteral(left_template_lit),
@@ -206,7 +208,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            template_str.as_str() == right_string_lit.to_string()
+            template_str == right_string_lit.value
         }
         (
             Expression::StringLiteral(left_string_lit),
@@ -216,7 +218,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            left_string_lit.to_string() == template_str.as_str()
+            left_string_lit.value == template_str
         }
         _ => false,
     }
@@ -444,6 +446,8 @@ fn test() {
         "foo.subarray(foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.call(foo, foo.length - 3, foo.length - 6)",
         "Uint8Array.prototype.subarray.apply(foo, [foo.length - 3, foo.length - 6])",
+        "foo.slice(foo.length\u{a0}- 1);",
+        "foo.slice(foo.length\u{2028}- 1);",
     ];
 
     let fix = vec![
@@ -652,7 +656,8 @@ fn test() {
                                     BigUint64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
                                     NOT_SUPPORTED.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
                                     NOT_SUPPORTED.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
-                                ", None)
+                                ", None),
+        ("foo.slice(foo.length\u{a0}- 1);", "foo.slice(\u{a0}- 1);", None),
     ];
     Tester::new(PreferNegativeIndex::NAME, PreferNegativeIndex::PLUGIN, pass, fail)
         .expect_fix(fix)

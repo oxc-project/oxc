@@ -39,14 +39,17 @@ pub struct SortImportsOptions {
     /// Per-boundary newline overrides.
     /// `newline_boundary_overrides[i]` = override for boundary between `groups[i]` and `groups[i+1]`.
     /// `None` means "use global `newlines_between`".
+    /// Either empty (no overrides anywhere) or exactly `groups.len() - 1` entries
+    /// ([`Self::validate`] checks this pairing).
     pub newline_boundary_overrides: Vec<Option<bool>>,
 }
 
 impl SortImportsOptions {
-    /// Validate option combinations.
+    /// Validate option combinations and cross-field references.
     ///
     /// # Errors
-    /// Returns an error message if incompatible options are set.
+    /// Returns an error message if incompatible options are set,
+    /// or `groups` references an undefined custom group name.
     pub fn validate(&self) -> Result<(), String> {
         if self.partition_by_newline && self.newline_boundary_overrides.iter().any(Option::is_some)
         {
@@ -57,6 +60,36 @@ impl SortImportsOptions {
                 "`partitionByNewline: true` and `newlinesBetween: true` cannot be used together"
                     .to_string(),
             );
+        }
+        // A dangling name would silently match nothing at runtime.
+        for entry in self.groups.iter().flatten() {
+            if let GroupEntry::Custom(name) = entry
+                && !self.custom_groups.iter().any(|g| g.group_name == *name)
+            {
+                return Err(format!("unknown group name `{name}` in `groups`"));
+            }
+        }
+        // A `groupName` that `GroupEntry::parse` resolves to anything but `Custom`
+        // (a predefined name or `unknown`) would be silently unreachable from `groups`.
+        // Checked for every definition, not just referenced ones.
+        for custom_group in &self.custom_groups {
+            let name = custom_group.group_name.as_str();
+            if !matches!(GroupEntry::parse(name), GroupEntry::Custom(_)) {
+                return Err(format!(
+                    "`customGroups` name `{name}` conflicts with a predefined group name; predefined names and `unknown` cannot be used as `groupName`"
+                ));
+            }
+        }
+        // A short/long vec would silently fall back to the global setting for tail boundaries.
+        if !self.newline_boundary_overrides.is_empty()
+            && self.newline_boundary_overrides.len() + 1 != self.groups.len()
+        {
+            return Err(format!(
+                "`newline_boundary_overrides` must be empty or hold exactly one entry per group boundary ({} groups need {}, got {})",
+                self.groups.len(),
+                self.groups.len().saturating_sub(1),
+                self.newline_boundary_overrides.len()
+            ));
         }
         Ok(())
     }
@@ -134,6 +167,17 @@ pub struct CustomGroupDefinition {
     pub modifiers: Vec<ImportModifier>,
 }
 
+impl CustomGroupDefinition {
+    /// Check if this is a plain selector: the given selector with no other narrowing condition.
+    /// The custom-group counterpart of [`GroupName::is_plain_selector`];
+    /// keep in sync when a narrowing field is added to this struct.
+    pub fn is_plain_selector(&self, selector: ImportSelector) -> bool {
+        self.selector == Some(selector)
+            && self.element_name_pattern.is_empty()
+            && self.modifiers.is_empty()
+    }
+}
+
 /// Returns default prefixes for identifying internal imports: `["~/", "@/", "#"]`.
 pub fn default_internal_patterns() -> Vec<String> {
     ["~/", "@/", "#"].iter().map(|s| (*s).to_string()).collect()
@@ -157,4 +201,43 @@ pub fn default_groups() -> Vec<Vec<GroupEntry>> {
         vec![p("style")],
         vec![GroupEntry::Unknown],
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn options_with_custom_group_name(name: &str) -> SortImportsOptions {
+        SortImportsOptions {
+            custom_groups: vec![CustomGroupDefinition {
+                group_name: name.to_string(),
+                ..CustomGroupDefinition::default()
+            }],
+            ..SortImportsOptions::default()
+        }
+    }
+
+    #[test]
+    fn rejects_custom_group_names_conflicting_with_predefined() {
+        // Plain predefined names, compound predefined names, and `unknown` are all reserved
+        for name in
+            ["side_effect", "side_effect_style", "external", "side_effect-import", "unknown"]
+        {
+            let err = options_with_custom_group_name(name)
+                .validate()
+                .expect_err("conflicting name must be rejected");
+            assert!(err.contains(name), "error must name the conflicting group: {err}");
+        }
+    }
+
+    #[test]
+    fn accepts_non_predefined_custom_group_names() {
+        // `-` is not usable in predefined names (only as their separator),
+        // so `side-effect` / `side-effect-style` are valid custom names.
+        for name in ["side-effect", "side-effect-style", "warp-drive", "myGroup"] {
+            options_with_custom_group_name(name).validate().unwrap_or_else(|err| {
+                panic!("`{name}` must be accepted as a custom group name: {err}")
+            });
+        }
+    }
 }

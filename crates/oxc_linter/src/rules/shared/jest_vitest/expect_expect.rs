@@ -1,23 +1,28 @@
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::de::Error;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameter, Function, Statement},
+    ast::{
+        BindingPattern, BlockStatement, CallExpression, Expression, ExpressionStatement,
+        FormalParameter, FormalParameters, Function, IdentifierReference, IfStatement, Statement,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::{scope::ScopeFlags, symbol::SymbolId};
 
 use crate::{
     ast_util::get_declaration_of_variable,
     context::LintContext,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, convert_pattern, get_node_name,
-        is_type_of_jest_fn_call,
+        parse_general_jest_fn_call,
     },
 };
 
@@ -26,6 +31,8 @@ fn expect_expect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_help("Add assertion(s) in this Test")
         .with_label(span)
 }
+
+pub const SHORT_DESCRIPTION: &str = "Enforce that each test has at least one `expect()` call.";
 
 pub const DOCUMENTATION: &str = r"### What it does
 
@@ -71,10 +78,12 @@ impl Default for ExpectExpectConfig {
         Self {
             assert_function_matchers_jest: compile_assert_function_matchers(
                 &assert_function_names_jest,
-            ),
+            )
+            .expect("default Jest assertion patterns should be valid"),
             assert_function_matchers_vitest: compile_assert_function_matchers(
                 &assert_function_names_vitest,
-            ),
+            )
+            .expect("default Vitest assertion patterns should be valid"),
             assert_function_names_jest,
             additional_test_block_functions: vec![],
         }
@@ -96,14 +105,13 @@ enum AssertFunctionMatcher {
 }
 
 impl AssertFunctionMatcher {
-    fn new(name: &CompactStr) -> Self {
+    fn new(name: &CompactStr) -> Result<Self, String> {
         if is_exact_assert_function_name(name) {
-            Self::Exact(name.clone())
+            Ok(Self::Exact(name.clone()))
         } else {
-            Self::Pattern(
-                Regex::new(&convert_pattern(name))
-                    .expect("failed to compile expect-expect assert function pattern"),
-            )
+            Regex::new(&convert_pattern(name))
+                .map(Self::Pattern)
+                .map_err(|error| format!("invalid assert function pattern `{name}`: {error}"))
         }
     }
 
@@ -130,12 +138,11 @@ fn is_exact_assert_function_match(name: &str, expected: &str) -> bool {
 
 fn compile_assert_function_matchers(
     assert_function_names: &[CompactStr],
-) -> Vec<AssertFunctionMatcher> {
+) -> Result<Vec<AssertFunctionMatcher>, String> {
     assert_function_names.iter().map(AssertFunctionMatcher::new).collect()
 }
 
 impl ExpectExpectConfig {
-    #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let default_assert_function_names_jest = default_assert_function_names_jest();
         let default_assert_function_names_vitest = default_assert_function_names_vitest();
@@ -156,56 +163,54 @@ impl ExpectExpectConfig {
         let assert_function_names_vitest =
             assert_function_names.unwrap_or(default_assert_function_names_vitest);
 
+        let assert_function_matchers_jest =
+            compile_assert_function_matchers(&assert_function_names_jest)
+                .map_err(serde_json::Error::custom)?;
+        let assert_function_matchers_vitest =
+            compile_assert_function_matchers(&assert_function_names_vitest)
+                .map_err(serde_json::Error::custom)?;
+
         let additional_test_block_functions = config
             .and_then(|config| config.get("additionalTestBlockFunctions"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
+            .map_or_default(|v| {
+                v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
+            });
 
         Ok(ExpectExpectConfig {
-            assert_function_matchers_jest: compile_assert_function_matchers(
-                &assert_function_names_jest,
-            ),
-            assert_function_matchers_vitest: compile_assert_function_matchers(
-                &assert_function_names_vitest,
-            ),
             assert_function_names_jest,
+            assert_function_matchers_jest,
+            assert_function_matchers_vitest,
             additional_test_block_functions,
         })
     }
 
-    pub fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(self, jest_node, ctx, ctx.frameworks().is_vitest());
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        run(self, node, ctx, ctx.frameworks().is_vitest());
     }
 
-    pub fn run_on_vitest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(self, jest_node, ctx, true);
+    pub fn run_vitest<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        run(self, node, ctx, true);
     }
 }
 
 fn run<'a>(
     rule: &ExpectExpectConfig,
-    possible_jest_node: &PossibleJestNode<'a, '_>,
+    node: &AstNode<'a>,
     ctx: &LintContext<'a>,
     use_vitest_assertions: bool,
 ) {
-    let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let name = get_node_name(&call_expr.callee);
-        if is_type_of_jest_fn_call(
-            call_expr,
-            possible_jest_node,
-            ctx,
-            &[JestFnKind::General(JestGeneralFnKind::Test)],
-        ) || rule.additional_test_block_functions.contains(&name)
+        let parsed = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx);
+        if parsed
+            .as_ref()
+            .is_some_and(|parsed| parsed.kind == JestFnKind::General(JestGeneralFnKind::Test))
+            || rule.additional_test_block_functions.contains(&name)
         {
             if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 let Some(property_name) = member_expr.static_property_name() else {
@@ -230,6 +235,32 @@ fn run<'a>(
             // Visit each argument of the test call
             for argument in &call_expr.arguments {
                 if let Some(expr) = argument.as_expression() {
+                    if use_vitest_assertions
+                        && parsed.as_ref().is_some_and(|parsed| {
+                            !parsed.members.iter().any(|member| {
+                                member.is_name_equal("each") || member.is_name_equal("for")
+                            })
+                        })
+                    {
+                        visitor.bench_fixture = match expr {
+                            Expression::ArrowFunctionExpression(function) => {
+                                BenchFixture::from_params(&function.params)
+                            }
+                            Expression::FunctionExpression(function) => {
+                                BenchFixture::from_params(&function.params)
+                            }
+                            Expression::Identifier(identifier) => {
+                                get_declaration_of_variable(identifier, ctx).and_then(|node| {
+                                    if let AstKind::Function(function) = node.kind() {
+                                        BenchFixture::from_params(&function.params)
+                                    } else {
+                                        None
+                                    }
+                                })
+                            }
+                            _ => None,
+                        };
+                    }
                     visitor.check_expression(expr);
                     if visitor.found_assertion {
                         return;
@@ -244,9 +275,65 @@ fn run<'a>(
     }
 }
 
+#[derive(Clone, Copy)]
+enum BenchFixture {
+    Direct(SymbolId),
+    Context(SymbolId),
+}
+
+impl BenchFixture {
+    fn from_params(params: &FormalParameters<'_>) -> Option<Self> {
+        match &params.items.first()?.pattern {
+            BindingPattern::BindingIdentifier(identifier) => {
+                identifier.symbol_id.get().map(Self::Context)
+            }
+            BindingPattern::ObjectPattern(pattern) => pattern
+                .properties
+                .iter()
+                .find(|property| property.key.is_specific_static_name("bench"))?
+                .value
+                .get_binding_identifier()?
+                .symbol_id
+                .get()
+                .map(Self::Direct),
+            _ => None,
+        }
+    }
+
+    fn matches(self, callee: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
+        let callee = callee.get_inner_expression();
+        if let Some(member) = callee.as_member_expression()
+            && member.static_property_name() == Some("compare".into())
+        {
+            return self.matches(member.object(), ctx);
+        }
+        let (identifier, symbol) = match self {
+            Self::Direct(symbol) => {
+                let Expression::Identifier(identifier) = callee else { return false };
+                (identifier, symbol)
+            }
+            Self::Context(symbol) => {
+                let Some(member) = callee.as_member_expression() else { return false };
+                if member.static_property_name() != Some("bench".into()) {
+                    return false;
+                }
+                let Expression::Identifier(identifier) = member.object().get_inner_expression()
+                else {
+                    return false;
+                };
+                (identifier, symbol)
+            }
+        };
+        identifier.reference_id.get().is_some_and(|reference| {
+            ctx.scoping().get_reference(reference).symbol_id() == Some(symbol)
+        })
+    }
+}
+
 struct AssertionVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
     assert_function_matchers: &'b [AssertFunctionMatcher],
+    bench_fixture: Option<BenchFixture>,
     visited: FxHashSet<Span>,
     found_assertion: bool,
 }
@@ -259,6 +346,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         Self {
             ctx,
             assert_function_matchers,
+            bench_fixture: None,
             visited: FxHashSet::default(),
             found_assertion: false,
         }
@@ -302,7 +390,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         }
     }
 
-    fn check_identifier(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn check_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let Some(node) = get_declaration_of_variable(ident, self.ctx) else {
             return;
         };
@@ -318,7 +406,11 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
 impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         let name = get_node_name(&call_expr.callee);
-        if self.assert_function_matchers.iter().any(|matcher| matcher.is_match(&name)) {
+        if self.assert_function_matchers.iter().any(|matcher| matcher.is_match(&name))
+            || self
+                .bench_fixture
+                .is_some_and(|fixture| fixture.matches(&call_expr.callee, self.ctx))
+        {
             self.found_assertion = true;
             return;
         }
@@ -335,14 +427,14 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         walk_js::walk_call_expression(self, call_expr);
     }
 
-    fn visit_expression_statement(&mut self, stmt: &oxc_ast::ast::ExpressionStatement<'a>) {
+    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
         self.check_expression(&stmt.expression);
         if !self.found_assertion {
             walk_js::walk_expression_statement(self, stmt);
         }
     }
 
-    fn visit_block_statement(&mut self, block: &oxc_ast::ast::BlockStatement<'a>) {
+    fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
         for stmt in &block.body {
             self.visit_statement(stmt);
             if self.found_assertion {
@@ -351,7 +443,7 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
-    fn visit_if_statement(&mut self, if_stmt: &oxc_ast::ast::IfStatement<'a>) {
+    fn visit_if_statement(&mut self, if_stmt: &IfStatement<'a>) {
         if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
             self.visit_block_statement(block_stmt);
         }
@@ -363,7 +455,13 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+        if func.is_declaration()
+            && let Some(body) = &func.body
+        {
+            self.visit_function_body(body);
+        }
+    }
 
     fn visit_formal_parameter(&mut self, _param: &FormalParameter<'a>) {}
 }

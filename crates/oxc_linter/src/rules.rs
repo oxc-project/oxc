@@ -200,6 +200,7 @@ pub(crate) mod eslint {
     pub mod no_warning_comments;
     pub mod no_with;
     pub mod object_shorthand;
+    pub mod one_var;
     pub mod operator_assignment;
     pub mod prefer_arrow_callback;
     pub mod prefer_const;
@@ -266,6 +267,7 @@ pub(crate) mod typescript {
     pub mod no_extraneous_class;
     pub mod no_floating_promises;
     pub mod no_for_in_array;
+    pub mod no_generated_empty_object_type;
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
@@ -296,7 +298,9 @@ pub(crate) mod typescript {
     pub mod no_unsafe_argument;
     pub mod no_unsafe_assignment;
     pub mod no_unsafe_call;
+    pub mod no_unsafe_class_instance_assignment;
     pub mod no_unsafe_declaration_merging;
+    pub mod no_unsafe_enum_assignment;
     pub mod no_unsafe_enum_comparison;
     pub mod no_unsafe_function_type;
     pub mod no_unsafe_member_access;
@@ -375,6 +379,12 @@ pub(crate) mod jest {
     pub mod no_unneeded_async_expect_function;
     pub mod no_untyped_mock_factory;
     pub mod padding_around_after_all_blocks;
+    pub mod padding_around_after_each_blocks;
+    pub mod padding_around_all;
+    pub mod padding_around_before_all_blocks;
+    pub mod padding_around_before_each_blocks;
+    pub mod padding_around_describe_blocks;
+    pub mod padding_around_expect_groups;
     pub mod padding_around_test_blocks;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
@@ -408,19 +418,78 @@ pub(crate) mod jest {
     pub mod valid_title;
 }
 
+macro_rules! declare_react_compiler_lint {
+    (
+        $(#[$intro:meta])*
+        unlinked_upstream = $upstream_rule:literal,
+        $(#[$rest:meta])*
+        $name:ident,
+        react,
+        $category:ident,
+        $($options:tt)*
+    ) => {
+        oxc_macros::declare_oxc_lint!(
+            $(#[$intro])*
+            #[doc = "Powered by the React Compiler, which runs once per file and is shared"]
+            #[doc = "with the other React Compiler rules. Port of"]
+            #[doc = concat!("`react-hooks/", $upstream_rule, "`.")]
+            $(#[$rest])*
+            $name,
+            react,
+            $category,
+            $($options)*
+        );
+    };
+    (
+        $(#[$intro:meta])*
+        upstream = $upstream_rule:literal,
+        $(#[$rest:meta])*
+        $name:ident,
+        react,
+        $category:ident,
+        $($options:tt)*
+    ) => {
+        oxc_macros::declare_oxc_lint!(
+            $(#[$intro])*
+            #[doc = "Powered by the React Compiler, which runs once per file and is shared"]
+            #[doc = "with the other React Compiler rules. Port of"]
+            #[doc = concat!(
+                "[`react-hooks/",
+                $upstream_rule,
+                "`](https://react.dev/reference/eslint-plugin-react-hooks/lints/",
+                $upstream_rule,
+                ").",
+            )]
+            $(#[$rest])*
+            $name,
+            react,
+            $category,
+            $($options)*
+        );
+    };
+}
+
 /// <https://github.com/jsx-eslint/eslint-plugin-react>
 pub(crate) mod react {
     pub mod button_has_type;
+    pub mod capitalized_calls;
     pub mod checked_requires_onchange_or_readonly;
     pub mod display_name;
+    pub mod error_boundaries;
     pub mod exhaustive_deps;
+    pub mod exhaustive_effect_dependencies;
     pub mod forbid_component_props;
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
     pub mod function_component_definition;
+    pub mod globals;
     pub mod hook_use_state;
+    pub mod hooks;
     pub mod iframe_missing_sandbox;
+    pub mod immutability;
+    pub mod incompatible_library;
+    pub mod invariant;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
     pub mod jsx_filename_extension;
@@ -439,11 +508,13 @@ pub(crate) mod react {
     pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
     pub mod jsx_props_no_spreading;
+    pub mod memo_dependencies;
     pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_clone_element;
     pub mod no_danger;
     pub mod no_danger_with_children;
+    pub mod no_deriving_state_in_effects;
     pub mod no_did_mount_set_state;
     pub mod no_did_update_set_state;
     pub mod no_direct_mutation_state;
@@ -466,14 +537,25 @@ pub(crate) mod react {
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod prefer_function_component;
-    pub mod react_compiler;
+    pub mod preserve_manual_memoization;
+    pub mod purity;
     pub mod react_in_jsx_scope;
+    pub mod refs;
     pub mod require_render_return;
+    pub mod rule_suppression;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
+    pub mod set_state_in_effect;
+    pub mod set_state_in_render;
     pub mod state_in_constructor;
+    pub mod static_components;
     pub mod style_prop_object;
+    pub mod syntax;
+    pub mod todo;
+    pub mod unsupported_syntax;
+    pub mod use_memo;
     pub mod void_dom_elements_no_children;
+    pub mod void_use_memo;
 }
 
 /// <https://github.com/cvazac/eslint-plugin-react-perf>
@@ -728,6 +810,7 @@ pub(crate) mod jsdoc {
     pub mod check_tag_names;
     pub mod empty_tags;
     pub mod implements_on_classes;
+    pub mod no_blank_blocks;
     pub mod no_defaults;
     pub mod require_param;
     pub mod require_param_description;
@@ -740,6 +823,7 @@ pub(crate) mod jsdoc {
     pub mod require_returns;
     pub mod require_returns_description;
     pub mod require_returns_type;
+    pub mod require_template_description;
     pub mod require_throws_description;
     pub mod require_throws_type;
     pub mod require_yields;
@@ -799,6 +883,12 @@ pub(crate) mod vitest {
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
     pub mod padding_around_after_all_blocks;
+    pub mod padding_around_after_each_blocks;
+    pub mod padding_around_all;
+    pub mod padding_around_before_all_blocks;
+    pub mod padding_around_before_each_blocks;
+    pub mod padding_around_describe_blocks;
+    pub mod padding_around_expect_groups;
     pub mod padding_around_test_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;

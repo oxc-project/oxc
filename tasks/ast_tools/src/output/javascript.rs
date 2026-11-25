@@ -332,6 +332,7 @@ pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -
     // Minify
     let minify_options = MinifierOptions {
         mangle: None,
+        mangle_properties: None,
         compress: Some(CompressOptions {
             keep_names: CompressOptionsKeepNames::all_true(),
             sequences: false,

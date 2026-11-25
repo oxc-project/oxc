@@ -25,6 +25,7 @@ use super::define_generator;
 
 define_index_type! {
     pub struct NodeId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 impl Display for NodeId {

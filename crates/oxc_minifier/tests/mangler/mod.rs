@@ -4,7 +4,10 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+
+mod property_mangler;
 
 fn mangle_with_source_type(
     source_text: &str,
@@ -133,6 +136,7 @@ fn mangler() {
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x
         "function _() { var x; try { throw 0 } catch (e) { var e } }", // e can shadow x (not implemented)
         "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
+        "function _() { var y; try { throw 0 } catch (y) { var y = 2; () => { let w; y } } }", // w should not shadow the catch y
         "function _() { var x; var y; }", // x and y should have different names
         "function _() { var x; let y; }", // x and y should have different names
         "function _() { { var x; var y; } }", // x and y should have different names
@@ -160,6 +164,14 @@ fn mangler() {
         "function _() { var foo = () => { var x } }",
         "function _() { class Foo { foo() { var x } } }",
         "function _() { var Foo = class { foo() { var x } } }",
+        "function _() { var foo; try {} catch (foo) { var foo = function() {} } }",
+        // A redeclaration, not the first declaration, sets the name.
+        "function _() { var foo; var foo = function() { var x } }",
+        "function _() { var foo = 1; var foo = () => { var x } }",
+        "function _() { var Foo; var Foo = class { foo() { var x } } }",
+        "function _(foo) { var foo = function() { var x } }",
+        "function _() { var foo; function foo() { var x } }",
+        "function _(foo) { function foo() { var x } }",
     ];
 
     let mut snapshot = String::new();
@@ -195,10 +207,18 @@ fn private_member_mangling() {
         "class Foo { #method() { return 1; } publicMethod() { return this.#method(); } }",
         "class Foo { #field; #method() { return this.#field; } get() { return this.#method(); } }",
         "class Foo { #x; check() { return #x in this; } }",
+        "class Outer { get #x() {} set #x(value) {} #longName; nested() { return class { #nestedName; }; } }",
+        "class Outer { get #x() {} #longName; nested() { return class { #nestedName; }; } }",
+        "class Outer { set #x(value) {} #longName; nested() { return class { #nestedName; }; } }",
         // Nested classes
         "class Outer { #outerField = 1; inner() { return class Inner { #innerField = 2; get() { return this.#innerField; } }; } }",
         "class Outer { #shared = 1; getInner() { let self = this; return class { method() { return self.#shared; } }; } }",
         "class Outer { #shared = 1; getInner() { return class { #shared = 2; method() { return this.#shared; } }; } }",
+        // Private names in a class heritage expression resolve in the enclosing class scope.
+        "class HasOuterBrand {} class MissingOuterBrand {} class Outer { #x; create(o) { return class Inner extends (#x in o ? HasOuterBrand : MissingOuterBrand) { #x; }; } }",
+        // Classes in a heritage expression receive their private-member mappings before the
+        // outer class, matching semantic traversal order.
+        "class Outer extends (class Inner { #a; #e; }) { #a; }",
         // Mixed public and private
         "class Foo { publicField = 1; #privateField = 2; getSum() { return this.publicField + this.#privateField; } }",
         // Test same names across different classes should reuse mangled names
@@ -217,6 +237,15 @@ fn private_member_mangling() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("private_member_mangling", snapshot);
     });
+}
+
+#[test]
+fn private_member_mangling_debug() {
+    test(
+        "class C { #field = 1; get() { return this.#field; } }",
+        "class C { #slot_0 = 1; get() { return this.#slot_0; } }",
+        &MangleOptions { debug: true, ..MangleOptions::default() },
+    );
 }
 
 /// A named function expression whose name is shadowed by a same-named declaration in its
@@ -339,8 +368,8 @@ fn reserved_names() {
                  ? t(exports)
                  : t((e.lib = {}));
          })(this, function (exports) {
-             function t(e) { return e; }
-             exports.queue = t;
+             function e(e) { return e; }
+             exports.queue = e;
          });",
         &options,
     );
@@ -353,9 +382,9 @@ fn reserved_names() {
              exports.other = helper;
          })(m, m.exports);",
         "(function (module, exports) {
-             function t(e) { return e; }
-             module.exports.helper = t;
-             exports.other = t;
+             function e(e) { return e; }
+             module.exports.helper = e;
+             exports.other = e;
          })(m, m.exports);",
         &options,
     );
@@ -372,6 +401,17 @@ fn reserved_names() {
              e.queue = t;
          });",
         &MangleOptions::default(),
+    );
+}
+
+#[test]
+fn non_mangleable_symbols_do_not_consume_slots() {
+    let options = MangleOptions { debug: true, ..MangleOptions::default() };
+
+    test(
+        "var A, B; { use(A); let x; } { use(B); let y; }",
+        "var A, B; { use(A); let slot_0; } { use(B); let slot_0; }",
+        &options,
     );
 }
 
@@ -398,6 +438,9 @@ fn annex_b_block_scoped_function() {
         "function _() { function foo() { var x; use(x); } function bar() { if (true) { function baz() {} use(baz); } } }",
         // typeof must not be replaced with a constant (reviewer request)
         "console.log(typeof foo); if (true) { function foo() { return 1; } }",
+        // Block function in a catch whose parameter a `var` redeclares: it assigns the
+        // enclosing binding, so it must keep the same name
+        "function _() { try { throw 1 } catch (e) { var e = 2; { function e() {} } use(e); } use(e); }",
     ];
 
     let mut snapshot = String::new();
@@ -410,4 +453,109 @@ fn annex_b_block_scoped_function() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
+}
+
+/// Catch parameters are bound in the catch clause scope.
+/// <https://github.com/oxc-project/oxc/issues/29143>, <https://github.com/oxc-project/oxc/issues/24331>
+#[test]
+fn catch_parameter_scope() {
+    let options = MangleOptions::default();
+    // A catch binding must not take the name of an outer binding that its own default value or
+    // computed key reads.
+    test(
+        "function f(text) { const defaultCode = () => 'E_PARSE'; try { return JSON.parse(text) } catch ({ name, code = defaultCode() }) { return name + ':' + code } }",
+        "function f(e) { const t = () => 'E_PARSE'; try { return JSON.parse(e) } catch ({ name: e, code: n = t() }) { return e + ':' + n } }",
+        &options,
+    );
+    test(
+        "function _(a) { try { throw [] } catch ([x = a]) { return x } }",
+        "function _(e) { try { throw [] } catch ([t = e]) { return t } }",
+        &options,
+    );
+    test(
+        "function _() { var a = 1; try { throw ['FAIL', 'PASS'] } catch ({ [a]: b }) { let a = 0; return b } }",
+        "function _() { var e = 1; try { throw ['FAIL', 'PASS'] } catch ({ [e]: t }) { let e = 0; return t } }",
+        &options,
+    );
+    // A declaration directly in the catch body must not take an unused parameter's name
+    // (`catch (e) { let e }` is a SyntaxError), but a nested block may shadow it.
+    test(
+        "function _() { try { throw 0 } catch (e) { let x = 1; return x } }",
+        "function _() { try { throw 0 } catch (e) { let t = 1; return t } }",
+        &options,
+    );
+    test(
+        "function _() { try { throw 0 } catch (e) { { let x = 1; use(x) } } }",
+        "function _() { try { throw 0 } catch (e) { { let e = 1; use(e) } } }",
+        &options,
+    );
+}
+
+fn assert_valid_labels(source_text: &str, source_type: SourceType) {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.diagnostics.is_empty(), "Parser errors: {:?}", ret.diagnostics);
+    let ret = SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program);
+    assert!(ret.diagnostics.is_empty(), "Semantic errors: {:?}\n{source_text}", ret.diagnostics);
+}
+
+#[test]
+fn labels() {
+    let options = MangleOptions::default();
+
+    test(
+        "outer: for (;;) { inner: for (;;) { if (a) break outer; continue inner; } }",
+        "e: for (;;) { t: for (;;) { if (a) break e; continue t; } }",
+        &options,
+    );
+    test("a: { break a; } b: { break b; }", "e: { break e; } e: { break e; }", &options);
+    test(
+        "outer: { (() => { inner: for (;;) break inner; })(); break outer; }",
+        "e: { (() => { t: for (;;) break t; })(); break e; }",
+        &options,
+    );
+    test(
+        "function _(x) { foo: for (;;) { x(); break foo; } }",
+        "function _(e) { e: for (;;) { e(); break e; } }",
+        &options,
+    );
+    test(
+        "function _() { foo: { eval(''); break foo; } }",
+        "function _() { e: { eval(''); break e; } }",
+        &options,
+    );
+    assert_eq!(mangle_script("foo: function f() {}", &options), "e: function f() {}\n");
+    test(
+        "x: { if (a) break e; if (b) break x; foo(); }",
+        "x: { if (a) break e; if (b) break x; foo(); }",
+        &options,
+    );
+
+    let reserved_options =
+        MangleOptions { reserved: std::iter::once("e".into()).collect(), ..options };
+    test("foo: { break foo; }", "e: { break e; }", &reserved_options);
+
+    let debug_options = MangleOptions { debug: true, ..options.clone() };
+    test("a: { b: { break a; } }", "slot_0: { slot_1: { break slot_0; } }", &debug_options);
+
+    let depth = 100;
+    let mut source_text = String::new();
+    for i in 0..depth {
+        write!(source_text, "label{i}: {{").unwrap();
+    }
+    source_text.push_str("break label0;");
+    source_text.push_str(&"}".repeat(depth));
+    let mangled = mangle(&source_text, &options);
+    assert!(!mangled.contains("label"), "{mangled}");
+    assert_valid_labels(&mangled, SourceType::mjs());
+
+    let cases = [
+        "outer: for (;;) { inner: for (;;) { if (a) break outer; continue inner; } }",
+        "function _() { var e; a: { b: { break a; } } }",
+    ];
+    for case in cases {
+        let pass1 = mangle(case, &options);
+        let pass2 = mangle(&pass1, &options);
+        assert_eq!(pass1, pass2);
+    }
 }

@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoFuncAssign,
     eslint,
     correctness,
+    recommended,
     version = "0.0.3",
     short_description = "Disallow re-assigning `function` declarations.",
 );

@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-pattern3_type_to_poly.
 ---
 Parse errors:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unexpected token", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(314), length: 1 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unexpected token", labels: [LabeledSpan { label: None, span: Span { start: 314, end: 315 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

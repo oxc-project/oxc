@@ -189,7 +189,7 @@ fn name_anonymous_functions_impl<'a>(
                     for attr in props {
                         match attr {
                             JsxAttribute::SpreadAttribute { .. } => continue,
-                            JsxAttribute::Attribute { name: attr_name, place } => {
+                            JsxAttribute::Attribute { name: attr_name, place, .. } => {
                                 if let Some(&node_idx) = functions.get(&place.identifier) {
                                     let node = &mut nodes[node_idx];
                                     if node.generated_name.is_none() {

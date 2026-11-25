@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr, sync::OnceLock};
 
 use bpaf::{Bpaf, doc::Style};
-use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins, OxlintOptions};
 
 use crate::output_formatter::OutputFormat;
 
@@ -54,7 +54,7 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
-    /// Enable experimental type checking (includes TypeScript compiler diagnostics)
+    /// Enable type checking (includes TypeScript compiler diagnostics)
     #[bpaf(switch, hide_usage)]
     pub type_check: bool,
 
@@ -85,6 +85,24 @@ pub struct SuppressionOptions {
 }
 
 impl LintCommand {
+    pub fn config_options(&self) -> OxlintOptions {
+        let mut options = OxlintOptions::default();
+        options.type_aware = (self.type_check_only || self.type_aware).then_some(true);
+        options.type_check = (self.type_check_only || self.type_check).then_some(true);
+        options.deny_warnings = self.warning_options.deny_warnings.then_some(true);
+        options.max_warnings = self.warning_options.max_warnings;
+        options.report_unused_disable_directives = if self.type_check_only {
+            Some(AllowWarnDeny::Allow)
+        } else {
+            match self.inline_config_options.report_unused_directives {
+                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+                ReportUnusedDirectives::WithoutSeverity(false) => None,
+                ReportUnusedDirectives::WithSeverity(severity) => severity,
+            }
+        };
+        options
+    }
+
     pub fn handle_threads(&self) {
         Self::init_rayon_thread_pool(self.misc_options.threads);
     }
@@ -143,7 +161,7 @@ impl LintCommand {
 pub struct BasicOptions {
     /// Oxlint configuration file
     ///  * `.json` and `.jsonc` config files are supported in all runtimes
-    ///  * JavaScript/TypeScript config files are experimental and require running via Node.js
+    ///  * JavaScript/TypeScript config files require running Oxlint via Node.js
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
@@ -373,7 +391,7 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Default)
     } else if !cfg!(test) && crate::agent_detection::is_agent() {
         Ok(OutputFormat::Agent)
-    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+    } else if std::env::var("GITHUB_ACTIONS").is_ok_and(|value| value == "true") {
         Ok(OutputFormat::Github)
     } else {
         Ok(OutputFormat::Default)
@@ -711,7 +729,7 @@ mod lint_options {
     fn format() {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
-        assert!(options.paths.is_empty());
+        assert_eq!(options.paths.len(), 0);
 
         let options = get_lint_options("-f agent");
         assert_eq!(options.output_options.format, OutputFormat::Agent);

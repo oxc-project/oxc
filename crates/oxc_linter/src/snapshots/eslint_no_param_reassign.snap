@@ -344,3 +344,96 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─
    ╰────
   help: Consider using a different variable to avoid unintended side effects on the parameter's properties.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:30]
+ 1 │ export function f(...args) { args = args.reverse(); return args; }
+   ·                              ────
+ 2 │              export function g(x) { x = 1; return x; }
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'x'.
+   ╭─[no_param_reassign.tsx:2:37]
+ 1 │ export function f(...args) { args = args.reverse(); return args; }
+ 2 │              export function g(x) { x = 1; return x; }
+   ·                                     ─
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ const f = (...args) => args = [];
+   ·                        ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:31]
+ 1 │ const f = function(...args) { args++; };
+   ·                               ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:28]
+ 1 │ const obj = { f(...args) { args = []; } };
+   ·                            ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ class C { f(...args) { args = []; } }
+   ·                        ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'arg'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ function f(...[arg]) { arg = 1; }
+   ·                        ───
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'length'.
+   ╭─[no_param_reassign.tsx:1:27]
+ 1 │ function f(...{length}) { length = 0; }
+   ·                           ──────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:23]
+ 1 │ function f(...args) { args[0] = 1; delete args[1]; }
+   ·                       ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter's properties.
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:43]
+ 1 │ function f(...args) { args[0] = 1; delete args[1]; }
+   ·                                           ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter's properties.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:23]
+ 1 │ function f(...args) { args = []; }
+   ·                       ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:28]
+ 1 │ function f({a, ...args}) { args = {}; }
+   ·                            ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'args'.
+   ╭─[no_param_reassign.tsx:1:38]
+ 1 │ function f(...args) { function g() { args = []; } }
+   ·                                      ────
+   ╰────
+  help: Consider using a different variable to avoid unintended side effects on the parameter.

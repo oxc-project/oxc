@@ -1,0 +1,10 @@
+import { "foo" as foo } from "m";
+import { "a\u0062" as ab } from "m";
+import { "π" as π } from "m";
+import { "type" as type } from "m";
+import { "foo-bar" as dashed } from "m";
+import { "" as empty } from "m";
+import { "default" as defaultImport } from "m";
+import { "foo" as bar } from "m";
+import { "one" as one, "two" as two, three } from "m";
+import { four as four, five } from "m";

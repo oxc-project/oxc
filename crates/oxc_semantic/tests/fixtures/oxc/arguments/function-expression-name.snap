@@ -1,0 +1,233 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/function-expression-name.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 2,
+            "node": "Function(arguments)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function | FunctionExpression)",
+                "id": 2,
+                "name": "arguments",
+                "node": "Function(arguments)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(direct)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function | Arrow)",
+                "id": 5,
+                "node": "ArrowFunctionExpression",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(Function)",
+            "id": 4,
+            "node": "Function(arguments)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function | FunctionExpression)",
+                "id": 4,
+                "name": "arguments",
+                "node": "Function(arguments)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 3,
+        "node": "Function(throughArrow)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 7,
+            "node": "Function(arguments)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(Function | FunctionExpression)",
+                "id": 6,
+                "name": "arguments",
+                "node": "Function(arguments)",
+                "references": []
+              },
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 7,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 6,
+        "node": "Function(inDefault)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function | Arrow)",
+                "id": 10,
+                "node": "ArrowFunctionExpression",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(Function)",
+            "id": 9,
+            "node": "Function(arguments)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 10,
+                "name": "arguments",
+                "node": "FormalParameter(arguments)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 3,
+                    "name": "arguments",
+                    "node_id": 53,
+                    "scope_id": 9
+                  },
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 4,
+                    "name": "arguments",
+                    "node_id": 57,
+                    "scope_id": 10
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 8,
+        "node": "Function(withParameter)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function | Arrow)",
+                "id": 13,
+                "node": "ArrowFunctionExpression",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(Function)",
+            "id": 12,
+            "node": "Function(arguments)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 13,
+                "name": "arguments",
+                "node": "VariableDeclarator(arguments)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 5,
+                    "name": "arguments",
+                    "node_id": 71,
+                    "scope_id": 12
+                  },
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 6,
+                    "name": "arguments",
+                    "node_id": 75,
+                    "scope_id": 13
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 11,
+        "node": "Function(withVar)",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "arguments",
+        "node": "VariableDeclarator(arguments)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 1,
+        "name": "direct",
+        "node": "Function(direct)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 3,
+        "name": "throughArrow",
+        "node": "Function(throughArrow)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 5,
+        "name": "inDefault",
+        "node": "Function(inDefault)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 8,
+        "name": "withParameter",
+        "node": "Function(withParameter)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 11,
+        "name": "withVar",
+        "node": "Function(withVar)",
+        "references": []
+      }
+    ]
+  }
+]

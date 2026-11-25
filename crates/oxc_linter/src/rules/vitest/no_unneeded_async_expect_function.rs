@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::no_unneeded_async_expect_function::{DOCUMENTATION, run_on_jest_node},
-    utils::PossibleJestNode,
+    rules::shared::no_unneeded_async_expect_function::{DOCUMENTATION, run},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -14,18 +15,20 @@ declare_oxc_lint!(
     NoUnneededAsyncExpectFunction,
     vitest,
     style,
-    fix,
+    recommended,
+    suggestion,
     docs = DOCUMENTATION,
     version = "1.39.0",
 );
 
 impl Rule for NoUnneededAsyncExpectFunction {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run_on_jest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -296,4 +299,39 @@ fn test() {
     .with_vitest_plugin(true)
     .expect_fix(fix)
     .test_and_snapshot();
+}
+
+#[test]
+fn test_fix_kind() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let source = r"
+function load(id) {
+    if (!id) throw new Error('missing id');
+    return Promise.resolve({ id });
+}
+it('rejects without an id', async () => {
+    await expect(async () => { await load(''); }).rejects.toThrow('missing id');
+});";
+    let expected = r"
+function load(id) {
+    if (!id) throw new Error('missing id');
+    return Promise.resolve({ id });
+}
+it('rejects without an id', async () => {
+    await expect(load('')).rejects.toThrow('missing id');
+});";
+
+    Tester::new(
+        NoUnneededAsyncExpectFunction::NAME,
+        NoUnneededAsyncExpectFunction::PLUGIN,
+        vec![],
+        vec![source],
+    )
+    .with_vitest_plugin(true)
+    .expect_fix(vec![
+        (source, source, None, FixKind::SafeFix),
+        (source, expected, None, FixKind::Suggestion),
+    ])
+    .test();
 }

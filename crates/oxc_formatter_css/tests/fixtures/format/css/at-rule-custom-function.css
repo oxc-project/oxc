@@ -1,0 +1,6 @@
+@function --transparent(--color type(<color>), --alpha type(<number>)) returns type(<color>) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}
+@function --transparent-color-with-a-long-name(--color type(<color>), --alpha type(<number>)) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}

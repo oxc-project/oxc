@@ -421,3 +421,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ────────
    ╰────
   help: Consider converting method `property` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `f` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { f(x = 1) { return x; } }
+   ·           ─
+   ╰────
+  help: Consider converting method `f` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `f` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { f(x = function() { return this.y; }) { return x; } }
+   ·           ─
+   ╰────
+  help: Consider converting method `f` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `f` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { f = (x = function() { return this.y; }) => x; }
+   ·           ─
+   ╰────
+  help: Consider converting method `f` to a static method.

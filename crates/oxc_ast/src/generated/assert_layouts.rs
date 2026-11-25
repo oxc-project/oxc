@@ -48,11 +48,12 @@ const _: () = {
     assert!(offset_of!(BindingIdentifier, symbol_id) == 12);
     assert!(offset_of!(BindingIdentifier, name) == 16);
 
-    // Padding: 4 bytes
+    // Padding: 0 bytes
     assert!(size_of::<LabelIdentifier>() == 32);
     assert!(align_of::<LabelIdentifier>() == 8);
     assert!(offset_of!(LabelIdentifier, span) == 0);
     assert!(offset_of!(LabelIdentifier, node_id) == 8);
+    assert!(offset_of!(LabelIdentifier, label_id) == 12);
     assert!(offset_of!(LabelIdentifier, name) == 16);
 
     // Padding: 4 bytes
@@ -87,7 +88,7 @@ const _: () = {
     assert!(size_of::<ObjectPropertyKind>() == 16);
     assert!(align_of::<ObjectPropertyKind>() == 8);
 
-    // Padding: 0 bytes
+    // Padding: 1 bytes
     assert!(size_of::<ObjectProperty>() == 48);
     assert!(align_of::<ObjectProperty>() == 8);
     assert!(offset_of!(ObjectProperty, span) == 0);
@@ -95,7 +96,6 @@ const _: () = {
     assert!(offset_of!(ObjectProperty, kind) == 12);
     assert!(offset_of!(ObjectProperty, method) == 13);
     assert!(offset_of!(ObjectProperty, shorthand) == 14);
-    assert!(offset_of!(ObjectProperty, computed) == 15);
     assert!(offset_of!(ObjectProperty, key) == 16);
     assert!(offset_of!(ObjectProperty, value) == 32);
 
@@ -122,13 +122,12 @@ const _: () = {
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 32);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 40);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<TemplateElement>() == 48);
     assert!(align_of::<TemplateElement>() == 8);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, node_id) == 8);
     assert!(offset_of!(TemplateElement, tail) == 12);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 13);
     assert!(offset_of!(TemplateElement, value) == 16);
 
     // Padding: 0 bytes
@@ -325,12 +324,11 @@ const _: () = {
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, binding) == 16);
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, init) == 48);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<AssignmentTargetPropertyProperty>() == 48);
     assert!(align_of::<AssignmentTargetPropertyProperty>() == 8);
     assert!(offset_of!(AssignmentTargetPropertyProperty, span) == 0);
     assert!(offset_of!(AssignmentTargetPropertyProperty, node_id) == 8);
-    assert!(offset_of!(AssignmentTargetPropertyProperty, computed) == 12);
     assert!(offset_of!(AssignmentTargetPropertyProperty, name) == 16);
     assert!(offset_of!(AssignmentTargetPropertyProperty, binding) == 32);
 
@@ -412,13 +410,12 @@ const _: () = {
     assert!(size_of::<VariableDeclarationKind>() == 1);
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<VariableDeclarator>() == 56);
     assert!(align_of::<VariableDeclarator>() == 8);
     assert!(offset_of!(VariableDeclarator, span) == 0);
     assert!(offset_of!(VariableDeclarator, node_id) == 8);
-    assert!(offset_of!(VariableDeclarator, kind) == 12);
-    assert!(offset_of!(VariableDeclarator, definite) == 13);
+    assert!(offset_of!(VariableDeclarator, definite) == 12);
     assert!(offset_of!(VariableDeclarator, id) == 16);
     assert!(offset_of!(VariableDeclarator, type_annotation) == 32);
     assert!(offset_of!(VariableDeclarator, init) == 40);
@@ -612,13 +609,12 @@ const _: () = {
     assert!(offset_of!(ObjectPattern, properties) == 16);
     assert!(offset_of!(ObjectPattern, rest) == 40);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<BindingProperty>() == 48);
     assert!(align_of::<BindingProperty>() == 8);
     assert!(offset_of!(BindingProperty, span) == 0);
     assert!(offset_of!(BindingProperty, node_id) == 8);
     assert!(offset_of!(BindingProperty, shorthand) == 12);
-    assert!(offset_of!(BindingProperty, computed) == 13);
     assert!(offset_of!(BindingProperty, key) == 16);
     assert!(offset_of!(BindingProperty, value) == 32);
 
@@ -736,13 +732,18 @@ const _: () = {
     assert!(offset_of!(Class, decorators) == 16);
     assert!(offset_of!(Class, id) == 40);
     assert!(offset_of!(Class, type_parameters) == 72);
-    assert!(offset_of!(Class, super_class) == 80);
-    assert!(offset_of!(Class, super_type_arguments) == 96);
+    assert!(offset_of!(Class, heritage) == 80);
     assert!(offset_of!(Class, implements) == 104);
     assert!(offset_of!(Class, body) == 128);
     assert!(offset_of!(Class, r#type) == 136);
     assert!(offset_of!(Class, r#abstract) == 137);
     assert!(offset_of!(Class, declare) == 138);
+
+    // Padding: 0 bytes
+    assert!(size_of::<ClassHeritage>() == 24);
+    assert!(align_of::<ClassHeritage>() == 8);
+    assert!(offset_of!(ClassHeritage, expression) == 0);
+    assert!(offset_of!(ClassHeritage, type_arguments) == 16);
 
     assert!(size_of::<ClassType>() == 1);
     assert!(align_of::<ClassType>() == 1);
@@ -757,43 +758,41 @@ const _: () = {
     assert!(size_of::<ClassElement>() == 16);
     assert!(align_of::<ClassElement>() == 8);
 
-    // Padding: 5 bytes
+    // Padding: 6 bytes
     assert!(size_of::<MethodDefinition>() == 72);
     assert!(align_of::<MethodDefinition>() == 8);
     assert!(offset_of!(MethodDefinition, span) == 0);
     assert!(offset_of!(MethodDefinition, node_id) == 8);
     assert!(offset_of!(MethodDefinition, r#type) == 12);
     assert!(offset_of!(MethodDefinition, kind) == 13);
-    assert!(offset_of!(MethodDefinition, computed) == 14);
-    assert!(offset_of!(MethodDefinition, r#static) == 15);
+    assert!(offset_of!(MethodDefinition, r#static) == 14);
+    assert!(offset_of!(MethodDefinition, r#override) == 15);
     assert!(offset_of!(MethodDefinition, decorators) == 16);
     assert!(offset_of!(MethodDefinition, key) == 40);
     assert!(offset_of!(MethodDefinition, value) == 56);
-    assert!(offset_of!(MethodDefinition, r#override) == 64);
-    assert!(offset_of!(MethodDefinition, optional) == 65);
-    assert!(offset_of!(MethodDefinition, accessibility) == 66);
+    assert!(offset_of!(MethodDefinition, optional) == 64);
+    assert!(offset_of!(MethodDefinition, accessibility) == 65);
 
     assert!(size_of::<MethodDefinitionType>() == 1);
     assert!(align_of::<MethodDefinitionType>() == 1);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<PropertyDefinition>() == 88);
     assert!(align_of::<PropertyDefinition>() == 8);
     assert!(offset_of!(PropertyDefinition, span) == 0);
     assert!(offset_of!(PropertyDefinition, node_id) == 8);
     assert!(offset_of!(PropertyDefinition, r#type) == 12);
-    assert!(offset_of!(PropertyDefinition, computed) == 13);
-    assert!(offset_of!(PropertyDefinition, r#static) == 14);
-    assert!(offset_of!(PropertyDefinition, declare) == 15);
+    assert!(offset_of!(PropertyDefinition, r#static) == 13);
+    assert!(offset_of!(PropertyDefinition, declare) == 14);
+    assert!(offset_of!(PropertyDefinition, r#override) == 15);
     assert!(offset_of!(PropertyDefinition, decorators) == 16);
     assert!(offset_of!(PropertyDefinition, key) == 40);
     assert!(offset_of!(PropertyDefinition, type_annotation) == 56);
     assert!(offset_of!(PropertyDefinition, value) == 64);
-    assert!(offset_of!(PropertyDefinition, r#override) == 80);
-    assert!(offset_of!(PropertyDefinition, optional) == 81);
-    assert!(offset_of!(PropertyDefinition, definite) == 82);
-    assert!(offset_of!(PropertyDefinition, readonly) == 83);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 84);
+    assert!(offset_of!(PropertyDefinition, optional) == 80);
+    assert!(offset_of!(PropertyDefinition, definite) == 81);
+    assert!(offset_of!(PropertyDefinition, readonly) == 82);
+    assert!(offset_of!(PropertyDefinition, accessibility) == 83);
 
     assert!(size_of::<PropertyDefinitionType>() == 1);
     assert!(align_of::<PropertyDefinitionType>() == 1);
@@ -822,21 +821,20 @@ const _: () = {
     assert!(size_of::<AccessorPropertyType>() == 1);
     assert!(align_of::<AccessorPropertyType>() == 1);
 
-    // Padding: 6 bytes
+    // Padding: 7 bytes
     assert!(size_of::<AccessorProperty>() == 88);
     assert!(align_of::<AccessorProperty>() == 8);
     assert!(offset_of!(AccessorProperty, span) == 0);
     assert!(offset_of!(AccessorProperty, node_id) == 8);
     assert!(offset_of!(AccessorProperty, r#type) == 12);
-    assert!(offset_of!(AccessorProperty, computed) == 13);
-    assert!(offset_of!(AccessorProperty, r#static) == 14);
-    assert!(offset_of!(AccessorProperty, r#override) == 15);
+    assert!(offset_of!(AccessorProperty, r#static) == 13);
+    assert!(offset_of!(AccessorProperty, r#override) == 14);
+    assert!(offset_of!(AccessorProperty, definite) == 15);
     assert!(offset_of!(AccessorProperty, decorators) == 16);
     assert!(offset_of!(AccessorProperty, key) == 40);
     assert!(offset_of!(AccessorProperty, type_annotation) == 56);
     assert!(offset_of!(AccessorProperty, value) == 64);
-    assert!(offset_of!(AccessorProperty, definite) == 80);
-    assert!(offset_of!(AccessorProperty, accessibility) == 81);
+    assert!(offset_of!(AccessorProperty, accessibility) == 80);
 
     // Padding: 3 bytes
     assert!(size_of::<ImportExpression>() == 48);
@@ -987,30 +985,27 @@ const _: () = {
     assert!(offset_of!(NullLiteral, span) == 0);
     assert!(offset_of!(NullLiteral, node_id) == 8);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<NumericLiteral>() == 40);
     assert!(align_of::<NumericLiteral>() == 8);
     assert!(offset_of!(NumericLiteral, span) == 0);
     assert!(offset_of!(NumericLiteral, node_id) == 8);
-    assert!(offset_of!(NumericLiteral, base) == 12);
     assert!(offset_of!(NumericLiteral, raw) == 16);
     assert!(offset_of!(NumericLiteral, value) == 32);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<StringLiteral>() == 48);
     assert!(align_of::<StringLiteral>() == 8);
     assert!(offset_of!(StringLiteral, span) == 0);
     assert!(offset_of!(StringLiteral, node_id) == 8);
-    assert!(offset_of!(StringLiteral, lone_surrogates) == 12);
     assert!(offset_of!(StringLiteral, value) == 16);
     assert!(offset_of!(StringLiteral, raw) == 32);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<BigIntLiteral>() == 48);
     assert!(align_of::<BigIntLiteral>() == 8);
     assert!(offset_of!(BigIntLiteral, span) == 0);
     assert!(offset_of!(BigIntLiteral, node_id) == 8);
-    assert!(offset_of!(BigIntLiteral, base) == 12);
     assert!(offset_of!(BigIntLiteral, value) == 16);
     assert!(offset_of!(BigIntLiteral, raw) == 32);
 
@@ -1489,14 +1484,13 @@ const _: () = {
     assert!(offset_of!(TSInterfaceBody, node_id) == 8);
     assert!(offset_of!(TSInterfaceBody, body) == 16);
 
-    // Padding: 1 bytes
+    // Padding: 2 bytes
     assert!(size_of::<TSPropertySignature>() == 40);
     assert!(align_of::<TSPropertySignature>() == 8);
     assert!(offset_of!(TSPropertySignature, span) == 0);
     assert!(offset_of!(TSPropertySignature, node_id) == 8);
-    assert!(offset_of!(TSPropertySignature, computed) == 12);
-    assert!(offset_of!(TSPropertySignature, optional) == 13);
-    assert!(offset_of!(TSPropertySignature, readonly) == 14);
+    assert!(offset_of!(TSPropertySignature, optional) == 12);
+    assert!(offset_of!(TSPropertySignature, readonly) == 13);
     assert!(offset_of!(TSPropertySignature, key) == 16);
     assert!(offset_of!(TSPropertySignature, type_annotation) == 32);
 
@@ -1527,7 +1521,7 @@ const _: () = {
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);
 
-    // Padding: 5 bytes
+    // Padding: 6 bytes
     assert!(size_of::<TSMethodSignature>() == 72);
     assert!(align_of::<TSMethodSignature>() == 8);
     assert!(offset_of!(TSMethodSignature, span) == 0);
@@ -1538,9 +1532,8 @@ const _: () = {
     assert!(offset_of!(TSMethodSignature, this_param) == 40);
     assert!(offset_of!(TSMethodSignature, params) == 48);
     assert!(offset_of!(TSMethodSignature, return_type) == 56);
-    assert!(offset_of!(TSMethodSignature, computed) == 64);
-    assert!(offset_of!(TSMethodSignature, optional) == 65);
-    assert!(offset_of!(TSMethodSignature, kind) == 66);
+    assert!(offset_of!(TSMethodSignature, optional) == 64);
+    assert!(offset_of!(TSMethodSignature, kind) == 65);
 
     // Padding: 0 bytes
     assert!(size_of::<TSConstructSignatureDeclaration>() == 40);
@@ -1565,7 +1558,7 @@ const _: () = {
     assert!(align_of::<TSInterfaceHeritage>() == 8);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, node_id) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, expression) == 16);
+    assert!(offset_of!(TSInterfaceHeritage, type_name) == 16);
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 32);
 
     // Padding: 3 bytes
@@ -1580,25 +1573,32 @@ const _: () = {
     assert!(size_of::<TSTypePredicateName>() == 16);
     assert!(align_of::<TSTypePredicateName>() == 8);
 
+    // Padding: 7 bytes
+    assert!(size_of::<TSExternalModuleDeclaration>() == 80);
+    assert!(align_of::<TSExternalModuleDeclaration>() == 8);
+    assert!(offset_of!(TSExternalModuleDeclaration, span) == 0);
+    assert!(offset_of!(TSExternalModuleDeclaration, node_id) == 8);
+    assert!(offset_of!(TSExternalModuleDeclaration, scope_id) == 12);
+    assert!(offset_of!(TSExternalModuleDeclaration, id) == 16);
+    assert!(offset_of!(TSExternalModuleDeclaration, body) == 64);
+    assert!(offset_of!(TSExternalModuleDeclaration, declare) == 72);
+
     // Padding: 6 bytes
-    assert!(size_of::<TSModuleDeclaration>() == 96);
-    assert!(align_of::<TSModuleDeclaration>() == 8);
-    assert!(offset_of!(TSModuleDeclaration, span) == 0);
-    assert!(offset_of!(TSModuleDeclaration, node_id) == 8);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 12);
-    assert!(offset_of!(TSModuleDeclaration, id) == 16);
-    assert!(offset_of!(TSModuleDeclaration, body) == 72);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 88);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 89);
+    assert!(size_of::<TSNamespaceDeclaration>() == 72);
+    assert!(align_of::<TSNamespaceDeclaration>() == 8);
+    assert!(offset_of!(TSNamespaceDeclaration, span) == 0);
+    assert!(offset_of!(TSNamespaceDeclaration, node_id) == 8);
+    assert!(offset_of!(TSNamespaceDeclaration, scope_id) == 12);
+    assert!(offset_of!(TSNamespaceDeclaration, id) == 16);
+    assert!(offset_of!(TSNamespaceDeclaration, body) == 48);
+    assert!(offset_of!(TSNamespaceDeclaration, kind) == 64);
+    assert!(offset_of!(TSNamespaceDeclaration, declare) == 65);
 
-    assert!(size_of::<TSModuleDeclarationKind>() == 1);
-    assert!(align_of::<TSModuleDeclarationKind>() == 1);
+    assert!(size_of::<TSNamespaceDeclarationKind>() == 1);
+    assert!(align_of::<TSNamespaceDeclarationKind>() == 1);
 
-    assert!(size_of::<TSModuleDeclarationName>() == 56);
-    assert!(align_of::<TSModuleDeclarationName>() == 8);
-
-    assert!(size_of::<TSModuleDeclarationBody>() == 16);
-    assert!(align_of::<TSModuleDeclarationBody>() == 8);
+    assert!(size_of::<TSNamespaceDeclarationBody>() == 16);
+    assert!(align_of::<TSNamespaceDeclarationBody>() == 8);
 
     // Padding: 7 bytes
     assert!(size_of::<TSGlobalDeclaration>() == 96);
@@ -1827,15 +1827,20 @@ const _: () = {
     assert!(size_of::<CommentNewlines>() == 1);
     assert!(align_of::<CommentNewlines>() == 1);
 
-    // Padding: 0 bytes
-    assert!(size_of::<Comment>() == 16);
+    assert!(size_of::<CommentPlacement>() == 1);
+    assert!(align_of::<CommentPlacement>() == 1);
+
+    // Padding: 3 bytes
+    assert!(size_of::<Comment>() == 24);
     assert!(align_of::<Comment>() == 8);
     assert!(offset_of!(Comment, span) == 0);
-    assert!(offset_of!(Comment, attached_to) == 8);
-    assert!(offset_of!(Comment, kind) == 12);
-    assert!(offset_of!(Comment, position) == 13);
-    assert!(offset_of!(Comment, newlines) == 14);
-    assert!(offset_of!(Comment, content) == 15);
+    assert!(offset_of!(Comment, node_id) == 8);
+    assert!(offset_of!(Comment, attached_to) == 12);
+    assert!(offset_of!(Comment, placement) == 16);
+    assert!(offset_of!(Comment, kind) == 17);
+    assert!(offset_of!(Comment, position) == 18);
+    assert!(offset_of!(Comment, newlines) == 19);
+    assert!(offset_of!(Comment, content) == 20);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -1880,11 +1885,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(BindingIdentifier, name) == 16);
 
     // Padding: 0 bytes
-    assert!(size_of::<LabelIdentifier>() == 24);
+    assert!(size_of::<LabelIdentifier>() == 28);
     assert!(align_of::<LabelIdentifier>() == 4);
     assert!(offset_of!(LabelIdentifier, span) == 0);
     assert!(offset_of!(LabelIdentifier, node_id) == 8);
-    assert!(offset_of!(LabelIdentifier, name) == 12);
+    assert!(offset_of!(LabelIdentifier, label_id) == 12);
+    assert!(offset_of!(LabelIdentifier, name) == 16);
 
     // Padding: 0 bytes
     assert!(size_of::<ThisExpression>() == 12);
@@ -1918,7 +1924,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<ObjectPropertyKind>() == 8);
     assert!(align_of::<ObjectPropertyKind>() == 4);
 
-    // Padding: 0 bytes
+    // Padding: 1 bytes
     assert!(size_of::<ObjectProperty>() == 32);
     assert!(align_of::<ObjectProperty>() == 4);
     assert!(offset_of!(ObjectProperty, span) == 0);
@@ -1926,7 +1932,6 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ObjectProperty, kind) == 12);
     assert!(offset_of!(ObjectProperty, method) == 13);
     assert!(offset_of!(ObjectProperty, shorthand) == 14);
-    assert!(offset_of!(ObjectProperty, computed) == 15);
     assert!(offset_of!(ObjectProperty, key) == 16);
     assert!(offset_of!(ObjectProperty, value) == 24);
 
@@ -1953,17 +1958,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 20);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 24);
 
-    // Padding: 2 bytes
-    assert!(size_of::<TemplateElement>() == 32);
+    // Padding: 3 bytes
+    assert!(size_of::<TemplateElement>() == 36);
     assert!(align_of::<TemplateElement>() == 4);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, node_id) == 8);
     assert!(offset_of!(TemplateElement, tail) == 12);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 13);
     assert!(offset_of!(TemplateElement, value) == 16);
 
     // Padding: 0 bytes
-    assert!(size_of::<TemplateElementValue>() == 16);
+    assert!(size_of::<TemplateElementValue>() == 20);
     assert!(align_of::<TemplateElementValue>() == 4);
     assert!(offset_of!(TemplateElementValue, raw) == 0);
     assert!(offset_of!(TemplateElementValue, cooked) == 8);
@@ -2156,14 +2160,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, binding) == 12);
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, init) == 40);
 
-    // Padding: 3 bytes
-    assert!(size_of::<AssignmentTargetPropertyProperty>() == 32);
+    // Padding: 0 bytes
+    assert!(size_of::<AssignmentTargetPropertyProperty>() == 28);
     assert!(align_of::<AssignmentTargetPropertyProperty>() == 4);
     assert!(offset_of!(AssignmentTargetPropertyProperty, span) == 0);
     assert!(offset_of!(AssignmentTargetPropertyProperty, node_id) == 8);
-    assert!(offset_of!(AssignmentTargetPropertyProperty, computed) == 12);
-    assert!(offset_of!(AssignmentTargetPropertyProperty, name) == 16);
-    assert!(offset_of!(AssignmentTargetPropertyProperty, binding) == 24);
+    assert!(offset_of!(AssignmentTargetPropertyProperty, name) == 12);
+    assert!(offset_of!(AssignmentTargetPropertyProperty, binding) == 20);
 
     // Padding: 0 bytes
     assert!(size_of::<SequenceExpression>() == 28);
@@ -2243,13 +2246,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<VariableDeclarationKind>() == 1);
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<VariableDeclarator>() == 36);
     assert!(align_of::<VariableDeclarator>() == 4);
     assert!(offset_of!(VariableDeclarator, span) == 0);
     assert!(offset_of!(VariableDeclarator, node_id) == 8);
-    assert!(offset_of!(VariableDeclarator, kind) == 12);
-    assert!(offset_of!(VariableDeclarator, definite) == 13);
+    assert!(offset_of!(VariableDeclarator, definite) == 12);
     assert!(offset_of!(VariableDeclarator, id) == 16);
     assert!(offset_of!(VariableDeclarator, type_annotation) == 24);
     assert!(offset_of!(VariableDeclarator, init) == 28);
@@ -2331,14 +2333,14 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ForOfStatement, r#await) == 40);
 
     // Padding: 0 bytes
-    assert!(size_of::<ContinueStatement>() == 36);
+    assert!(size_of::<ContinueStatement>() == 40);
     assert!(align_of::<ContinueStatement>() == 4);
     assert!(offset_of!(ContinueStatement, span) == 0);
     assert!(offset_of!(ContinueStatement, node_id) == 8);
     assert!(offset_of!(ContinueStatement, label) == 12);
 
     // Padding: 0 bytes
-    assert!(size_of::<BreakStatement>() == 36);
+    assert!(size_of::<BreakStatement>() == 40);
     assert!(align_of::<BreakStatement>() == 4);
     assert!(offset_of!(BreakStatement, span) == 0);
     assert!(offset_of!(BreakStatement, node_id) == 8);
@@ -2378,12 +2380,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(SwitchCase, consequent) == 20);
 
     // Padding: 0 bytes
-    assert!(size_of::<LabeledStatement>() == 44);
+    assert!(size_of::<LabeledStatement>() == 48);
     assert!(align_of::<LabeledStatement>() == 4);
     assert!(offset_of!(LabeledStatement, span) == 0);
     assert!(offset_of!(LabeledStatement, node_id) == 8);
     assert!(offset_of!(LabeledStatement, label) == 12);
-    assert!(offset_of!(LabeledStatement, body) == 36);
+    assert!(offset_of!(LabeledStatement, body) == 40);
 
     // Padding: 0 bytes
     assert!(size_of::<ThrowStatement>() == 20);
@@ -2443,13 +2445,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ObjectPattern, properties) == 12);
     assert!(offset_of!(ObjectPattern, rest) == 28);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<BindingProperty>() == 32);
     assert!(align_of::<BindingProperty>() == 4);
     assert!(offset_of!(BindingProperty, span) == 0);
     assert!(offset_of!(BindingProperty, node_id) == 8);
     assert!(offset_of!(BindingProperty, shorthand) == 12);
-    assert!(offset_of!(BindingProperty, computed) == 13);
     assert!(offset_of!(BindingProperty, key) == 16);
     assert!(offset_of!(BindingProperty, value) == 24);
 
@@ -2567,13 +2568,18 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(Class, decorators) == 16);
     assert!(offset_of!(Class, id) == 32);
     assert!(offset_of!(Class, type_parameters) == 60);
-    assert!(offset_of!(Class, super_class) == 64);
-    assert!(offset_of!(Class, super_type_arguments) == 72);
+    assert!(offset_of!(Class, heritage) == 64);
     assert!(offset_of!(Class, implements) == 76);
     assert!(offset_of!(Class, body) == 92);
     assert!(offset_of!(Class, r#type) == 96);
     assert!(offset_of!(Class, r#abstract) == 97);
     assert!(offset_of!(Class, declare) == 98);
+
+    // Padding: 0 bytes
+    assert!(size_of::<ClassHeritage>() == 12);
+    assert!(align_of::<ClassHeritage>() == 4);
+    assert!(offset_of!(ClassHeritage, expression) == 0);
+    assert!(offset_of!(ClassHeritage, type_arguments) == 8);
 
     assert!(size_of::<ClassType>() == 1);
     assert!(align_of::<ClassType>() == 1);
@@ -2588,43 +2594,41 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<ClassElement>() == 8);
     assert!(align_of::<ClassElement>() == 4);
 
-    // Padding: 1 bytes
+    // Padding: 2 bytes
     assert!(size_of::<MethodDefinition>() == 48);
     assert!(align_of::<MethodDefinition>() == 4);
     assert!(offset_of!(MethodDefinition, span) == 0);
     assert!(offset_of!(MethodDefinition, node_id) == 8);
     assert!(offset_of!(MethodDefinition, r#type) == 12);
     assert!(offset_of!(MethodDefinition, kind) == 13);
-    assert!(offset_of!(MethodDefinition, computed) == 14);
-    assert!(offset_of!(MethodDefinition, r#static) == 15);
+    assert!(offset_of!(MethodDefinition, r#static) == 14);
+    assert!(offset_of!(MethodDefinition, r#override) == 15);
     assert!(offset_of!(MethodDefinition, decorators) == 16);
     assert!(offset_of!(MethodDefinition, key) == 32);
     assert!(offset_of!(MethodDefinition, value) == 40);
-    assert!(offset_of!(MethodDefinition, r#override) == 44);
-    assert!(offset_of!(MethodDefinition, optional) == 45);
-    assert!(offset_of!(MethodDefinition, accessibility) == 46);
+    assert!(offset_of!(MethodDefinition, optional) == 44);
+    assert!(offset_of!(MethodDefinition, accessibility) == 45);
 
     assert!(size_of::<MethodDefinitionType>() == 1);
     assert!(align_of::<MethodDefinitionType>() == 1);
 
-    // Padding: 3 bytes
-    assert!(size_of::<PropertyDefinition>() == 60);
+    // Padding: 0 bytes
+    assert!(size_of::<PropertyDefinition>() == 56);
     assert!(align_of::<PropertyDefinition>() == 4);
     assert!(offset_of!(PropertyDefinition, span) == 0);
     assert!(offset_of!(PropertyDefinition, node_id) == 8);
     assert!(offset_of!(PropertyDefinition, r#type) == 12);
-    assert!(offset_of!(PropertyDefinition, computed) == 13);
-    assert!(offset_of!(PropertyDefinition, r#static) == 14);
-    assert!(offset_of!(PropertyDefinition, declare) == 15);
+    assert!(offset_of!(PropertyDefinition, r#static) == 13);
+    assert!(offset_of!(PropertyDefinition, declare) == 14);
+    assert!(offset_of!(PropertyDefinition, r#override) == 15);
     assert!(offset_of!(PropertyDefinition, decorators) == 16);
     assert!(offset_of!(PropertyDefinition, key) == 32);
     assert!(offset_of!(PropertyDefinition, type_annotation) == 40);
     assert!(offset_of!(PropertyDefinition, value) == 44);
-    assert!(offset_of!(PropertyDefinition, r#override) == 52);
-    assert!(offset_of!(PropertyDefinition, optional) == 53);
-    assert!(offset_of!(PropertyDefinition, definite) == 54);
-    assert!(offset_of!(PropertyDefinition, readonly) == 55);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 56);
+    assert!(offset_of!(PropertyDefinition, optional) == 52);
+    assert!(offset_of!(PropertyDefinition, definite) == 53);
+    assert!(offset_of!(PropertyDefinition, readonly) == 54);
+    assert!(offset_of!(PropertyDefinition, accessibility) == 55);
 
     assert!(size_of::<PropertyDefinitionType>() == 1);
     assert!(align_of::<PropertyDefinitionType>() == 1);
@@ -2653,21 +2657,20 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<AccessorPropertyType>() == 1);
     assert!(align_of::<AccessorPropertyType>() == 1);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<AccessorProperty>() == 56);
     assert!(align_of::<AccessorProperty>() == 4);
     assert!(offset_of!(AccessorProperty, span) == 0);
     assert!(offset_of!(AccessorProperty, node_id) == 8);
     assert!(offset_of!(AccessorProperty, r#type) == 12);
-    assert!(offset_of!(AccessorProperty, computed) == 13);
-    assert!(offset_of!(AccessorProperty, r#static) == 14);
-    assert!(offset_of!(AccessorProperty, r#override) == 15);
+    assert!(offset_of!(AccessorProperty, r#static) == 13);
+    assert!(offset_of!(AccessorProperty, r#override) == 14);
+    assert!(offset_of!(AccessorProperty, definite) == 15);
     assert!(offset_of!(AccessorProperty, decorators) == 16);
     assert!(offset_of!(AccessorProperty, key) == 32);
     assert!(offset_of!(AccessorProperty, type_annotation) == 40);
     assert!(offset_of!(AccessorProperty, value) == 44);
-    assert!(offset_of!(AccessorProperty, definite) == 52);
-    assert!(offset_of!(AccessorProperty, accessibility) == 53);
+    assert!(offset_of!(AccessorProperty, accessibility) == 52);
 
     // Padding: 3 bytes
     assert!(size_of::<ImportExpression>() == 32);
@@ -2818,32 +2821,29 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(NullLiteral, span) == 0);
     assert!(offset_of!(NullLiteral, node_id) == 8);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<NumericLiteral>() == 32);
     assert!(align_of::<NumericLiteral>() == 8);
     assert!(offset_of!(NumericLiteral, span) == 0);
     assert!(offset_of!(NumericLiteral, node_id) == 8);
-    assert!(offset_of!(NumericLiteral, base) == 12);
-    assert!(offset_of!(NumericLiteral, raw) == 16);
+    assert!(offset_of!(NumericLiteral, raw) == 12);
     assert!(offset_of!(NumericLiteral, value) == 24);
 
-    // Padding: 3 bytes
+    // Padding: 0 bytes
     assert!(size_of::<StringLiteral>() == 32);
     assert!(align_of::<StringLiteral>() == 4);
     assert!(offset_of!(StringLiteral, span) == 0);
     assert!(offset_of!(StringLiteral, node_id) == 8);
-    assert!(offset_of!(StringLiteral, lone_surrogates) == 12);
-    assert!(offset_of!(StringLiteral, value) == 16);
+    assert!(offset_of!(StringLiteral, value) == 12);
     assert!(offset_of!(StringLiteral, raw) == 24);
 
-    // Padding: 3 bytes
-    assert!(size_of::<BigIntLiteral>() == 32);
+    // Padding: 0 bytes
+    assert!(size_of::<BigIntLiteral>() == 28);
     assert!(align_of::<BigIntLiteral>() == 4);
     assert!(offset_of!(BigIntLiteral, span) == 0);
     assert!(offset_of!(BigIntLiteral, node_id) == 8);
-    assert!(offset_of!(BigIntLiteral, base) == 12);
-    assert!(offset_of!(BigIntLiteral, value) == 16);
-    assert!(offset_of!(BigIntLiteral, raw) == 24);
+    assert!(offset_of!(BigIntLiteral, value) == 12);
+    assert!(offset_of!(BigIntLiteral, raw) == 20);
 
     // Padding: 0 bytes
     assert!(size_of::<RegExpLiteral>() == 36);
@@ -3320,14 +3320,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSInterfaceBody, node_id) == 8);
     assert!(offset_of!(TSInterfaceBody, body) == 12);
 
-    // Padding: 1 bytes
+    // Padding: 2 bytes
     assert!(size_of::<TSPropertySignature>() == 28);
     assert!(align_of::<TSPropertySignature>() == 4);
     assert!(offset_of!(TSPropertySignature, span) == 0);
     assert!(offset_of!(TSPropertySignature, node_id) == 8);
-    assert!(offset_of!(TSPropertySignature, computed) == 12);
-    assert!(offset_of!(TSPropertySignature, optional) == 13);
-    assert!(offset_of!(TSPropertySignature, readonly) == 14);
+    assert!(offset_of!(TSPropertySignature, optional) == 12);
+    assert!(offset_of!(TSPropertySignature, readonly) == 13);
     assert!(offset_of!(TSPropertySignature, key) == 16);
     assert!(offset_of!(TSPropertySignature, type_annotation) == 24);
 
@@ -3358,7 +3357,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);
 
-    // Padding: 1 bytes
+    // Padding: 2 bytes
     assert!(size_of::<TSMethodSignature>() == 44);
     assert!(align_of::<TSMethodSignature>() == 4);
     assert!(offset_of!(TSMethodSignature, span) == 0);
@@ -3369,9 +3368,8 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSMethodSignature, this_param) == 28);
     assert!(offset_of!(TSMethodSignature, params) == 32);
     assert!(offset_of!(TSMethodSignature, return_type) == 36);
-    assert!(offset_of!(TSMethodSignature, computed) == 40);
-    assert!(offset_of!(TSMethodSignature, optional) == 41);
-    assert!(offset_of!(TSMethodSignature, kind) == 42);
+    assert!(offset_of!(TSMethodSignature, optional) == 40);
+    assert!(offset_of!(TSMethodSignature, kind) == 41);
 
     // Padding: 0 bytes
     assert!(size_of::<TSConstructSignatureDeclaration>() == 28);
@@ -3396,7 +3394,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<TSInterfaceHeritage>() == 4);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, node_id) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, expression) == 12);
+    assert!(offset_of!(TSInterfaceHeritage, type_name) == 12);
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 20);
 
     // Padding: 3 bytes
@@ -3411,25 +3409,32 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<TSTypePredicateName>() == 8);
     assert!(align_of::<TSTypePredicateName>() == 4);
 
+    // Padding: 3 bytes
+    assert!(size_of::<TSExternalModuleDeclaration>() == 56);
+    assert!(align_of::<TSExternalModuleDeclaration>() == 4);
+    assert!(offset_of!(TSExternalModuleDeclaration, span) == 0);
+    assert!(offset_of!(TSExternalModuleDeclaration, node_id) == 8);
+    assert!(offset_of!(TSExternalModuleDeclaration, scope_id) == 12);
+    assert!(offset_of!(TSExternalModuleDeclaration, id) == 16);
+    assert!(offset_of!(TSExternalModuleDeclaration, body) == 48);
+    assert!(offset_of!(TSExternalModuleDeclaration, declare) == 52);
+
     // Padding: 2 bytes
-    assert!(size_of::<TSModuleDeclaration>() == 64);
-    assert!(align_of::<TSModuleDeclaration>() == 4);
-    assert!(offset_of!(TSModuleDeclaration, span) == 0);
-    assert!(offset_of!(TSModuleDeclaration, node_id) == 8);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 12);
-    assert!(offset_of!(TSModuleDeclaration, id) == 16);
-    assert!(offset_of!(TSModuleDeclaration, body) == 52);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 60);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 61);
+    assert!(size_of::<TSNamespaceDeclaration>() == 56);
+    assert!(align_of::<TSNamespaceDeclaration>() == 4);
+    assert!(offset_of!(TSNamespaceDeclaration, span) == 0);
+    assert!(offset_of!(TSNamespaceDeclaration, node_id) == 8);
+    assert!(offset_of!(TSNamespaceDeclaration, scope_id) == 12);
+    assert!(offset_of!(TSNamespaceDeclaration, id) == 16);
+    assert!(offset_of!(TSNamespaceDeclaration, body) == 44);
+    assert!(offset_of!(TSNamespaceDeclaration, kind) == 52);
+    assert!(offset_of!(TSNamespaceDeclaration, declare) == 53);
 
-    assert!(size_of::<TSModuleDeclarationKind>() == 1);
-    assert!(align_of::<TSModuleDeclarationKind>() == 1);
+    assert!(size_of::<TSNamespaceDeclarationKind>() == 1);
+    assert!(align_of::<TSNamespaceDeclarationKind>() == 1);
 
-    assert!(size_of::<TSModuleDeclarationName>() == 36);
-    assert!(align_of::<TSModuleDeclarationName>() == 4);
-
-    assert!(size_of::<TSModuleDeclarationBody>() == 8);
-    assert!(align_of::<TSModuleDeclarationBody>() == 4);
+    assert!(size_of::<TSNamespaceDeclarationBody>() == 8);
+    assert!(align_of::<TSNamespaceDeclarationBody>() == 4);
 
     // Padding: 3 bytes
     assert!(size_of::<TSGlobalDeclaration>() == 72);
@@ -3658,15 +3663,20 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<CommentNewlines>() == 1);
     assert!(align_of::<CommentNewlines>() == 1);
 
-    // Padding: 0 bytes
-    assert!(size_of::<Comment>() == 16);
+    assert!(size_of::<CommentPlacement>() == 1);
+    assert!(align_of::<CommentPlacement>() == 1);
+
+    // Padding: 3 bytes
+    assert!(size_of::<Comment>() == 24);
     assert!(align_of::<Comment>() == 4);
     assert!(offset_of!(Comment, span) == 0);
-    assert!(offset_of!(Comment, attached_to) == 8);
-    assert!(offset_of!(Comment, kind) == 12);
-    assert!(offset_of!(Comment, position) == 13);
-    assert!(offset_of!(Comment, newlines) == 14);
-    assert!(offset_of!(Comment, content) == 15);
+    assert!(offset_of!(Comment, node_id) == 8);
+    assert!(offset_of!(Comment, attached_to) == 12);
+    assert!(offset_of!(Comment, placement) == 16);
+    assert!(offset_of!(Comment, kind) == 17);
+    assert!(offset_of!(Comment, position) == 18);
+    assert!(offset_of!(Comment, newlines) == 19);
+    assert!(offset_of!(Comment, content) == 20);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

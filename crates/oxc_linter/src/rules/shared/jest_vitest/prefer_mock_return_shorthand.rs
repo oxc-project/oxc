@@ -1,13 +1,15 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, IdentifierReference, ImportExpression, NewExpression,
-        Statement, TaggedTemplateExpression, VariableDeclarationKind,
+        AccessorProperty, Argument, AssignmentExpression, CallExpression, Expression,
+        FormalParameter, FormalParameterRest, Function, IdentifierReference, ImportExpression,
+        NewExpression, PropertyDefinition, Statement, StaticBlock, TaggedTemplateExpression,
+        ThisExpression, UpdateExpression,
     },
 };
-use oxc_ast_visit::{Visit, VisitJs};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ReferenceId, SymbolId};
+use oxc_semantic::{ReferenceId, ScopeFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
@@ -88,6 +90,7 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let Some((property_span, property_name)) = mem_expr.static_property_info() else {
         return;
     };
+    let Some(property_name) = property_name.as_str() else { return };
 
     let Some(expr) = call_expr.arguments.first().and_then(Argument::as_expression) else {
         return;
@@ -103,13 +106,15 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    if let Expression::UpdateExpression(_) = return_expression {
-        return;
-    }
-
     let mut visitor = IdentifierCollectorVisitor::new();
 
     visitor.visit_expression(return_expression);
+
+    if visitor.has_mutation
+        || matches!(expr, Expression::FunctionExpression(_)) && visitor.has_this_expression
+    {
+        return;
+    }
 
     for reference_id in visitor.references {
         if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
@@ -153,7 +158,7 @@ fn is_mutable(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     if let AstKind::VariableDeclarator(_) = ctx.nodes().kind(decl_node_id)
         && let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(decl_node_id)
     {
-        return parent.kind != VariableDeclarationKind::Const;
+        return !parent.kind.is_const();
     }
 
     false
@@ -249,16 +254,97 @@ impl<'a> VisitJs<'a> for CallLikeExpressionVisitor {
 
 struct IdentifierCollectorVisitor {
     references: FxHashSet<ReferenceId>,
+    has_this_expression: bool,
+    has_mutation: bool,
+    this_binding_depth: u32,
 }
 
 impl IdentifierCollectorVisitor {
     fn new() -> Self {
-        Self { references: FxHashSet::default() }
+        Self {
+            references: FxHashSet::default(),
+            has_this_expression: false,
+            has_mutation: false,
+            this_binding_depth: 0,
+        }
     }
 }
 
-impl<'a> Visit<'a> for IdentifierCollectorVisitor {
+impl<'a> VisitJs<'a> for IdentifierCollectorVisitor {
+    fn visit_assignment_expression(&mut self, _expr: &AssignmentExpression<'a>) {
+        self.has_mutation = true;
+    }
+
+    fn visit_update_expression(&mut self, _expr: &UpdateExpression<'a>) {
+        self.has_mutation = true;
+    }
+
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         self.references.insert(ident.reference_id());
+    }
+
+    fn visit_this_expression(&mut self, _this_expr: &ThisExpression) {
+        if self.this_binding_depth == 0 {
+            self.has_this_expression = true;
+        }
+    }
+
+    fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
+        self.this_binding_depth += 1;
+        walk_js::walk_function(self, function, flags);
+        self.this_binding_depth -= 1;
+    }
+
+    fn visit_formal_parameter(&mut self, parameter: &FormalParameter<'a>) {
+        if parameter.decorators.is_empty() || self.this_binding_depth == 0 {
+            walk_js::walk_formal_parameter(self, parameter);
+            return;
+        }
+
+        self.this_binding_depth -= 1;
+        self.visit_decorators(&parameter.decorators);
+        self.this_binding_depth += 1;
+        self.visit_binding_pattern(&parameter.pattern);
+        if let Some(initializer) = &parameter.initializer {
+            self.visit_expression(initializer);
+        }
+    }
+
+    fn visit_formal_parameter_rest(&mut self, parameter: &FormalParameterRest<'a>) {
+        if parameter.decorators.is_empty() || self.this_binding_depth == 0 {
+            walk_js::walk_formal_parameter_rest(self, parameter);
+            return;
+        }
+
+        self.this_binding_depth -= 1;
+        self.visit_decorators(&parameter.decorators);
+        self.this_binding_depth += 1;
+        self.visit_binding_rest_element(&parameter.rest);
+    }
+
+    fn visit_property_definition(&mut self, property: &PropertyDefinition<'a>) {
+        self.visit_decorators(&property.decorators);
+        self.visit_property_key(&property.key);
+        if let Some(value) = &property.value {
+            self.this_binding_depth += 1;
+            self.visit_expression(value);
+            self.this_binding_depth -= 1;
+        }
+    }
+
+    fn visit_accessor_property(&mut self, property: &AccessorProperty<'a>) {
+        self.visit_decorators(&property.decorators);
+        self.visit_property_key(&property.key);
+        if let Some(value) = &property.value {
+            self.this_binding_depth += 1;
+            self.visit_expression(value);
+            self.this_binding_depth -= 1;
+        }
+    }
+
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        self.this_binding_depth += 1;
+        walk_js::walk_static_block(self, block);
+        self.this_binding_depth -= 1;
     }
 }

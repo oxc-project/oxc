@@ -1,4 +1,5 @@
 use oxc_span::Span;
+use oxc_syntax::line_terminator::{LineTerminatorSplitter, is_line_terminator};
 
 /// Represents the raw text of a JSDoc tag *outside* the type expression (`{}`) and tag name (e.g., `@param`),
 /// such as the parameter name or trailing description.
@@ -46,7 +47,7 @@ impl<'a> JSDocCommentPart<'a> {
     //
     // Since these are trimmed by `parsed()` output, this raw `Span` may not be suitable for linter diagnostics.
     //
-    // And if the passed `Span` for miette diagnostics is multiline,
+    // And if the passed `Span` for diagnostics is multiline,
     // it will just render arrow markers which is not intuitive.
     // (It renders a nice underline for single line span, but not for multiline)
     // ```
@@ -69,7 +70,7 @@ impl<'a> JSDocCommentPart<'a> {
         }
 
         let base_len = self.raw.len();
-        if self.raw.lines().count() == 1 {
+        if LineTerminatorSplitter::new(self.raw).nth(1).is_none() {
             let trimmed_start_offset = base_len - self.raw.trim_start().len();
             let trimmed_end_offset = base_len - self.raw.trim_end().len();
 
@@ -81,7 +82,8 @@ impl<'a> JSDocCommentPart<'a> {
 
         let start_trimmed = self.raw.trim_start();
         let trimmed_start_offset = base_len - start_trimmed.len();
-        let trimmed_end_offset = trimmed_start_offset + start_trimmed.find('\n').unwrap_or(0);
+        let trimmed_end_offset =
+            trimmed_start_offset + start_trimmed.find(is_line_terminator).unwrap_or(0);
         Span::new(
             self.span.start + u32::try_from(trimmed_start_offset).unwrap_or_default(),
             self.span.start + u32::try_from(trimmed_end_offset).unwrap_or_default(),
@@ -95,30 +97,33 @@ impl<'a> JSDocCommentPart<'a> {
     /// to preserve paragraph breaks, vertical structure, and indentation in the original text.
     /// This is important for preserving indented code blocks (4+ spaces) and other structured content.
     pub fn parsed_preserving_whitespace(&self) -> String {
-        if !self.raw.contains('\n') {
+        if !self.raw.contains(is_line_terminator) {
             return self.raw.trim().to_string();
         }
 
         let mut result = String::with_capacity(self.raw.len());
-        for (i, line) in self.raw.lines().enumerate() {
+        for (i, line) in LineTerminatorSplitter::new(self.raw).enumerate() {
             if i > 0 {
                 result.push('\n');
             }
             let trimmed = line.trim();
-            if let Some(rest) = trimmed.strip_prefix('*') {
-                // Strip `*` as a comment continuation prefix UNLESS it looks like
-                // markdown emphasis (`*word*`). Emphasis has `*` followed by an
-                // alphanumeric char; continuation prefixes have `*` followed by
-                // space, backtick, punctuation, or nothing.
-                let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
-                if !is_emphasis {
-                    // Strip at most one leading space after `*` (the conventional ` * ` prefix)
-                    // to preserve any additional indentation (e.g. for indented code blocks)
-                    result.push_str(rest.strip_prefix(' ').unwrap_or(rest));
-                    continue;
+            let content = match trimmed.strip_prefix('*') {
+                // Strip `*` as a comment continuation prefix
+                // UNLESS it looks like markdown emphasis (`*word*`).
+                // Emphasis has `*` followed by an alphanumeric char;
+                // continuation prefixes have `*` followed by space, backtick, punctuation, or nothing.
+                // Strip at most one leading space after `*` (the conventional ` * ` prefix)
+                // to preserve any additional indentation (e.g. for indented code blocks)
+                Some(rest) if !rest.starts_with(|c: char| c.is_alphanumeric() || c == '_') => {
+                    rest.strip_prefix(' ').unwrap_or(rest)
                 }
+                _ => trimmed,
+            };
+            result.push_str(content);
+            // Keep a Markdown hard line break, as 2 trailing spaces
+            if line.ends_with("  ") && !content.is_empty() {
+                result.push_str("  ");
             }
-            result.push_str(trimmed);
         }
         result
     }
@@ -126,12 +131,12 @@ impl<'a> JSDocCommentPart<'a> {
     /// Returns the content of the comment part without leading `*` in each line.
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
-        if !self.raw.contains('\n') {
+        if !self.raw.contains(is_line_terminator) {
             return self.raw.trim().to_string();
         }
 
         let mut result = String::with_capacity(self.raw.len());
-        for line in self.raw.lines() {
+        for line in LineTerminatorSplitter::new(self.raw) {
             // Trim leading `*` only when it's a continuation prefix (`* text` or `*` alone),
             // not when it's a markdown emphasis marker (`*word*`)
             let trimmed = line.trim();
@@ -359,6 +364,10 @@ mod test {
                 ",
                 "1\n2\n3",
             ),
+            // Every line terminator splits lines
+            ("\r * cr\r * cr\r ", "cr\ncr"),
+            ("\r\n * crlf\r\n * crlf\r\n ", "crlf\ncrlf"),
+            ("\u{2028} * ls\u{2029} * ps\u{2028} ", "ls\nps"),
         ] {
             // `Span` is not used in this test
             let comment_part = JSDocCommentPart::new(actual, SPAN);

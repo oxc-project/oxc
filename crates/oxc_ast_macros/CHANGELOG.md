@@ -4,6 +4,59 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- f573c93 syntax: [**BREAKING**] Remove `NumberBase` and `BigintBase` types (#29920) (overlookmotel)
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 💥 BREAKING CHANGES
+
+- d742f8b ast: [**BREAKING**] Add `LabelId` to `LabelIdentifier` (#29611) (camc314)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- 052bca9 ast: Prevent greyed out fields in AST types in IDEs (#28335) (overlookmotel)
+
+### ⚡ Performance
+
+- df90836 ast: Reduce compile time of `#[ast]` macro (#28336) (overlookmotel)
+
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- 1d9b9d3 ast: Add `GetNodeId` trait (#26145) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

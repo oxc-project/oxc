@@ -195,3 +195,297 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export const foo = React.lazy(() => import('./Foo')); export const Bar = () => null;
    ·              ───
    ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Root = () => <div />; export const Tag = { Root };
+   ·       ────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Root = () => <div />; export const Tag = { Root };
+   ·       ────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+   ╭─[only_export_components.tsx:1:29]
+ 1 │ const Root = () => <div />; export default { Root };
+   ·                             ────────────────────────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Root = () => <div />; export default { Root };
+   ·       ────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { Root: () => <div /> } as const satisfies Components;
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Root = () => <div />; const Label = () => <span />; const Tag = { Root, Label } as const; export { Tag };
+   ·       ────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:35]
+ 1 │ const Root = () => <div />; const Label = () => <span />; const Tag = { Root, Label } as const; export { Tag };
+   ·                                   ─────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Root = () => <div />; const Tag = { Root }; export default Tag;
+   ·       ────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:85]
+ 1 │ export const Foo = () => {}; const Tag = { Root: () => <div />, size: 1 }; export { Tag };
+   ·                                                                                     ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:61]
+ 1 │ export const Foo = () => {}; const Tag = {}; export default Tag;
+   ·                                                             ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { size: 1 } as const satisfies Config;
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Root = () => <div />; export default { Root, size: 1 };
+   ·       ────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Config = { limit: 1 };
+   ·                                           ──────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Empty = {};
+   ·                                           ─────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:48]
+ 1 │ export const Foo = () => <div />; export const Tag = { Nested: { Root } };
+   ·                                                ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:48]
+ 1 │ export const Foo = () => <div />; export const Tag = { Nested: ({ Root } as const) };
+   ·                                                ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Tag = { Root: () => <div /> }; export const helper = 1;
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Tag = { Root: () => <div /> };
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { get Root() { return <div />; } };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { set Root(value) {} };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { root: () => <div /> };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { ['Root']: () => <div /> };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { 1: () => <div /> };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { ...Components };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { Root: function helper() {} };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { Root: (a, b, c) => <div /> };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { Root: Namespace.helper };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { Root: unknownHoc(() => <div />) };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { root: memo(() => <div />) };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:43]
+ 1 │ export const Foo = () => {}; export const Tag = { Root: enabled ? () => <div /> : null };
+   ·                                           ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:2:26]
+ 1 │ export const App = () => <div />;
+ 2 │             export const CLOSED_ICON = <span />; export const FRAGMENT = <>closed</>;
+   ·                          ───────────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:2:63]
+ 1 │ export const App = () => <div />;
+ 2 │             export const CLOSED_ICON = <span />; export const FRAGMENT = <>closed</>;
+   ·                                                               ────────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:63]
+ 1 │ const Icon = <span />; const Fragment = <>closed</>; export { Icon, Fragment };
+   ·                                                               ────
+ 2 │             export const App = () => <div />;
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:69]
+ 1 │ const Icon = <span />; const Fragment = <>closed</>; export { Icon, Fragment };
+   ·                                                                     ────────
+ 2 │             export const App = () => <div />;
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:58]
+ 1 │ const Icon = <span />; export default Icon; export const labels = {};
+   ·                                                          ──────
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:2:22]
+ 1 │ const Icon = <span />;
+ 2 │             function Content() { return <span />; }
+   ·                      ───────
+ 3 │             const Label = () => <span />;
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:3:19]
+ 2 │             function Content() { return <span />; }
+ 3 │             const Label = () => <span />;
+   ·                   ─────
+ 4 │             export { Icon };
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = function App() { return <span />; };
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:2:19]
+ 1 │ const Icon = <span />;
+ 2 │             const Content = function Content() { return <span />; };
+   ·                   ───────
+ 3 │             const Label = function () { return <span />; };
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:3:19]
+ 2 │             const Content = function Content() { return <span />; };
+ 3 │             const Label = function () { return <span />; };
+   ·                   ─────
+ 4 │             export { Icon };
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = (function App() { return <div />; });
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = ((() => <div />) as React.FC);
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = ((function App() { return <div />; }) as React.FC) satisfies React.FC;
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = React.memo(function App() { return <div />; });
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = React.forwardRef(function App(props, ref) { return <div ref={ref} />; });
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = React.memo(() => <div />);
+   ·       ───
+   ╰────
+
+  ⚠ react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = React.memo(function App() { return <div />; }); export const labels = {};
+   ·       ───
+   ╰────

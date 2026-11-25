@@ -67,6 +67,14 @@ export class PrivateFieldsWithConstructorAssignments {
   constructor(public first: number) {}
 }
 
+export class DefaultedAnyParameterProperty {
+  constructor(public value: any = 1, required: string) {}
+}
+
+export class DefaultedArrayParameterProperty {
+  constructor(public values = [], required: string) {}
+}
+
 
 export class PrivateMethodClass {
   private good(a): void {}

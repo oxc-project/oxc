@@ -131,7 +131,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferImportingJestGlobals {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -232,7 +232,11 @@ fn try_merge_esm_import<'a>(
     let first_span = module_record
         .import_entries
         .iter()
-        .find(|e| e.module_request.name() == IMPORT_SOURCE && !e.is_type)?
+        .find(|e| {
+            e.module_request.name() == IMPORT_SOURCE
+                && !e.is_type
+                && !matches!(e.import_name, ImportImportName::Source(_))
+        })?
         .statement_span;
 
     // Merge only entries belonging to that same import statement
@@ -254,7 +258,7 @@ fn try_merge_esm_import<'a>(
             ImportImportName::Default(_) => {
                 functions_to_import.insert(entry.local_name.name.to_string());
             }
-            ImportImportName::NamespaceObject => {}
+            ImportImportName::NamespaceObject | ImportImportName::Source(_) => {}
         }
     }
 
@@ -300,19 +304,17 @@ fn try_merge_cjs_require<'a>(
         // Merge existing destructured properties
         if let BindingPattern::ObjectPattern(pattern) = &declarator.id {
             for prop in &pattern.properties {
-                if prop.computed {
-                    continue;
-                }
-                let Some(key_name) = prop.key.static_name() else { continue };
+                let Some(key_name) = prop.key.literal_name() else { continue };
                 let BindingPattern::BindingIdentifier(value_ident) = &prop.value else {
                     continue;
                 };
                 let value_name = value_ident.name.as_str();
 
                 if key_name == value_name {
-                    functions_to_import.insert(key_name.to_string());
+                    functions_to_import.insert(key_name.display().to_string());
                 } else {
-                    functions_to_import.insert(format!("{key_name}{alias_sep}{value_name}"));
+                    functions_to_import
+                        .insert(format!("{}{alias_sep}{value_name}", key_name.display()));
                 }
             }
         }
@@ -332,8 +334,7 @@ fn is_string_arg_matching(arg: &Argument, value: &str) -> bool {
     arg.as_expression().is_some_and(|expr| match expr {
         Expression::StringLiteral(lit) => lit.value == value,
         Expression::TemplateLiteral(tpl) => {
-            tpl.quasis.len() == 1
-                && tpl.expressions.is_empty()
+            tpl.is_no_substitution_template()
                 && tpl.quasis.first().is_some_and(|q| q.value.raw == value)
         }
         _ => false,
@@ -1052,6 +1053,21 @@ fn test() {
               expect(true).toBeDefined();
             })"#,
             r#"const { describe, expect, test } = require('@jest/globals');
+            describe("suite", () => {
+              test("foo");
+              expect(true).toBeDefined();
+            })"#,
+            None,
+            None,
+        ),
+        (
+            r#"import source wasm from '@jest/globals';
+            describe("suite", () => {
+              test("foo");
+              expect(true).toBeDefined();
+            })"#,
+            r#"import { describe, expect, test } from '@jest/globals';
+import source wasm from '@jest/globals';
             describe("suite", () => {
               test("foo");
               expect(true).toBeDefined();

@@ -1,0 +1,11 @@
+(function () {} as A)!;
+({} as A)!;
+(function () {} as A).foo;
+(class {} satisfies A)!;
+({} + foo)``;
+(function () {} + foo)``;
+() => ({} as A)!;
+const get = (key: K) => ({ a: 1, b: 2 } as const)[key];
+({}).a, b;
+((let)[0] + 1) * 2;
+((let)[0] = 1).a;

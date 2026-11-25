@@ -1,5 +1,9 @@
-commit: c86e9e4b
+commit: 51225612
 
 codegen_babel Summary:
-AST Parsed     : 2235/2235 (100.00%)
-Positive Passed: 2235/2235 (100.00%)
+AST Parsed     : 2364/2364 (100.00%)
+Positive Passed: 2362/2364 (99.92%)
+Minify: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-async-invalid-params/input.ts
+
+Minify: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-return-type-valid-error-recovery-false/input.ts
+

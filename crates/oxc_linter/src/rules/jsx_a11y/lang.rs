@@ -1,11 +1,11 @@
 use language_tags::LanguageTag;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue},
+    ast::{Expression, JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
     AstNode,
@@ -39,9 +39,10 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// <html>
     /// <html lang="foo">
     /// ```
+    ///
+    /// A missing `lang` attribute is reported by `jsx-a11y/html-has-lang`.
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
@@ -56,7 +57,8 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     version = "0.1.1",
-    short_description = "The lang prop on the `<html>` element must be a valid IETF BCP 47 language tag.",
+    short_description =
+        "The lang prop on the `<html>` element must be a valid IETF BCP 47 language tag.",
 );
 
 impl Rule for Lang {
@@ -71,29 +73,40 @@ impl Rule for Lang {
             return;
         }
 
-        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(lang_diagnostic(jsx_el.name.span())),
-            |lang_prop| {
-                if !is_valid_lang_prop(lang_prop)
-                    && let JSXAttributeItem::Attribute(attr) = lang_prop
-                {
-                    ctx.diagnostic(lang_diagnostic(attr.span));
-                }
-            },
-        );
+        if let Some(lang_prop) = has_jsx_prop_ignore_case(jsx_el, "lang")
+            && !is_valid_lang_prop(lang_prop)
+            && let JSXAttributeItem::Attribute(attr) = lang_prop
+        {
+            ctx.diagnostic(lang_diagnostic(attr.span));
+        }
     }
 }
 
 fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
     match get_prop_value(item) {
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            !container.expression.is_expression() || !container.expression.is_undefined()
+            let Some(expression) = container.expression.as_expression() else {
+                return true;
+            };
+            match expression.get_inner_expression() {
+                Expression::StringLiteral(literal) => {
+                    literal.value.as_str().is_some_and(is_valid_language_tag)
+                }
+                Expression::TemplateLiteral(template) => template
+                    .single_quasi()
+                    .is_none_or(|value| value.as_str().is_some_and(is_valid_language_tag)),
+                _ => !expression.is_undefined(),
+            }
         }
-        Some(JSXAttributeValue::StringLiteral(str)) => {
-            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
+        Some(JSXAttributeValue::StringLiteral(literal)) => {
+            literal.value.as_str().is_some_and(is_valid_language_tag)
         }
         _ => true,
     }
+}
+
+fn is_valid_language_tag(value: &str) -> bool {
+    LanguageTag::parse(value).as_ref().is_ok_and(LanguageTag::is_valid)
 }
 
 #[test]
@@ -122,10 +135,22 @@ fn test() {
         ("<html lang='zh-yue-Hant' />", None, None),
         ("<html lang='ja-Latn' />", None, None),
         ("<html lang={foo} />", None, None),
+        ("<html />", None, None),
+        ("<html><body /></html>", None, None),
         ("<HTML lang='foo' />", None, None),
         ("<Foo lang={undefined} />", None, None),
         ("<Foo lang='en' />", None, Some(settings())),
         ("<Box as='html' lang='en'  />", None, Some(settings())),
+        (r#"<html lang={"en"} />"#, None, None),
+        (r#"<html lang={"en-US"} />"#, None, None),
+        (r"<html lang={`zh-Hans`} />", None, None),
+        (r"<html lang={`\u0065n`} />", None, None),
+        (r#"<html lang={("en" as const)} />"#, None, None),
+        (r"<html lang={language} />", None, None),
+        (r"<html lang={`${language}`} />", None, None),
+        (r#"<div lang={"foo"} />"#, None, None),
+        (r#"<Foo lang={"en"} />"#, None, Some(settings())),
+        (r#"<Box as="html" lang={`en-US`} />"#, None, Some(settings())),
     ];
 
     let fail = vec![
@@ -135,6 +160,18 @@ fn test() {
         ("<html lang={undefined} />", None, None),
         ("<Foo lang={undefined} />", None, Some(settings())),
         ("<Box as='html' lang='foo' />", None, Some(settings())),
+        (r#"<html lang={"foo"} />"#, None, None),
+        (r#"<html lang={""} />"#, None, None),
+        (r#"<html lang={"zz-LL"} />"#, None, None),
+        (r"<html lang={``} />", None, None),
+        (r"<html lang={`foo`} />", None, None),
+        (r"<html lang={`\u0066oo`} />", None, None),
+        (r#"<html lang={("foo" as const)} />"#, None, None),
+        (r"<html lang={`zz-LL`} />", None, None),
+        (r#"<Foo lang={"foo"} />"#, None, Some(settings())),
+        (r#"<Box as="html" lang={`foo`} />"#, None, Some(settings())),
+        (r#"<html lang={"\uD800"} />"#, None, None),
+        (r"<html lang={`\uD800`} />", None, None),
     ];
 
     Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail).test_and_snapshot();

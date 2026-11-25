@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, TSNonNullExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -65,10 +68,11 @@ declare_oxc_lint!(
     /// ```
     NoNonNullAssertedNullishCoalescing,
     typescript,
-    restriction,
+    suspicious,
     suggestion,
     version = "0.5.0",
-    short_description = "Disallow non-null assertions in the left operand of a nullish coalescing operator.",
+    short_description =
+        "Disallow non-null assertions in the left operand of a nullish coalescing operator.",
 );
 
 impl Rule for NoNonNullAssertedNullishCoalescing {
@@ -107,16 +111,13 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
     }
 }
 
-fn non_null_assertion_spans(expr: &oxc_ast::ast::TSNonNullExpression) -> Vec<Span> {
+fn non_null_assertion_spans(expr: &TSNonNullExpression) -> Vec<Span> {
     let mut spans = Vec::new();
     collect_non_null_assertion_spans(expr, &mut spans);
     spans
 }
 
-fn collect_non_null_assertion_spans(
-    expr: &oxc_ast::ast::TSNonNullExpression,
-    spans: &mut Vec<Span>,
-) {
+fn collect_non_null_assertion_spans(expr: &TSNonNullExpression, spans: &mut Vec<Span>) {
     collect_non_null_assertion_spans_from_expression(&expr.expression, spans);
     spans.push(Span::sized(expr.span.end - 1, 1));
 }

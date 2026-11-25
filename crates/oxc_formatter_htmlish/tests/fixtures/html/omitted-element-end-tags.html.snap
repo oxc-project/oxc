@@ -1,0 +1,26 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!doctype html><title>t</title></head><p>x</p>y<!-- display: inline --></body></html>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!doctype html><title>t</title>
+</head>
+<p>x</p>
+y<!-- display: inline --></body>
+</html>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!doctype html><title>t</title>
+</head>
+<p>x</p>
+y<!-- display: inline --></body>
+</html>
+
+===================== End =====================

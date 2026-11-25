@@ -1,24 +1,22 @@
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
+use crate::core::config_discovery;
+
 #[derive(Debug, Default, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct FormatOptions {
+    /// An empty string is treated as unset.
     pub config_path: Option<String>,
     pub disable_nested_config: bool,
 }
 
 impl FormatOptions {
-    /// `fmt.configPath` with the empty string treated as unset.
-    pub fn explicit_config_path(&self) -> Option<&str> {
-        self.config_path.as_deref().filter(|s| !s.is_empty())
-    }
-
-    /// Whether to search for nested config files per file.
-    /// An explicit `fmt.configPath` takes absolute precedence,
-    /// and `fmt.disableNestedConfig` opts out explicitly.
+    /// Nested config search: off with `fmt.disableNestedConfig`, an explicit `fmt.configPath`, or in Vite+ mode.
     pub fn use_nested_configs(&self) -> bool {
-        !self.disable_nested_config && self.explicit_config_path().is_none()
+        !self.disable_nested_config
+            && self.config_path.is_none()
+            && config_discovery().nested_configs()
     }
 }
 
@@ -46,7 +44,11 @@ impl TryFrom<Value> for FormatOptions {
         };
 
         Ok(Self {
-            config_path: object.get("fmt.configPath").and_then(Value::as_str).map(str::to_owned),
+            config_path: object
+                .get("fmt.configPath")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned),
             disable_nested_config: object
                 .get("fmt.disableNestedConfig")
                 .and_then(Value::as_bool)
@@ -108,8 +110,7 @@ mod test {
         });
 
         let options = FormatOptions::try_from(json).unwrap();
-        assert_eq!(options.config_path, Some(String::new()));
-        assert!(options.explicit_config_path().is_none());
+        assert_eq!(options.config_path, None);
     }
 
     #[test]
@@ -123,9 +124,5 @@ mod test {
 
         let options = FormatOptions { disable_nested_config: true, ..Default::default() };
         assert!(!options.use_nested_configs());
-
-        // Empty `fmt.configPath` is treated as unset
-        let options = FormatOptions { config_path: Some(String::new()), ..Default::default() };
-        assert!(options.use_nested_configs());
     }
 }

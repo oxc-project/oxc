@@ -85,13 +85,18 @@ pub struct SymbolValue<'a> {
     /// `None` when the value is not a constant evaluated value.
     pub initialized_constant: Option<ConstantValue<'a>>,
 
-    /// The `initialized_constant` is the implicit `undefined` of a declaration
-    /// with no initializer (`let x;`), not an evaluated initializer. Textually
-    /// inlining such a read prints `void 0` — longer than a mangled identifier
-    /// read — and there is no initializer whose elimination pays for it, so
-    /// `inline_identifier_reference` skips it (rolldown#10174). Constant-driven
-    /// folds (`if (x)`, `x === void 0`, `return x`) are unaffected: they
-    /// resolve the value through `initialized_constant`.
+    /// Whether bare reads may be replaced with the constant. IIFE parameter
+    /// constants guide folding, but their arguments remain at the call site,
+    /// so replacing bare reads would duplicate the argument's text.
+    pub allow_constant_inlining: bool,
+
+    /// The `initialized_constant` originates from the implicit `undefined` of
+    /// a declaration with no initializer, possibly through direct aliases.
+    /// Textually inlining such a read prints `void 0` — longer than a mangled
+    /// identifier read — and can also preempt more profitable alias collapsing,
+    /// so `inline_identifier_reference` skips it (rolldown#10174).
+    /// Constant-driven folds (`if (x)`, `x === void 0`, `return x`) are
+    /// unaffected: they resolve the value through `initialized_constant`.
     pub implicit_undefined: bool,
 
     pub references: ReferenceCounts,
@@ -110,4 +115,33 @@ pub struct SymbolValue<'a> {
     /// indistinguishable inside `if (x)` / `x ? …` / `!x`, so such reads fold to
     /// `false` there. See `minimize_expression_in_boolean_context` / #14001.
     pub boolean_falsy: bool,
+}
+
+impl SymbolValue<'_> {
+    /// Constants with one read can always be inlined without duplication:
+    /// `const value = "a long string"; use(value)` -> `use("a long string")`.
+    ///
+    /// With multiple reads, only integers in `-99..=999`, strings with `len() <= 3`,
+    /// booleans, `null`, and `undefined` can be inlined. Bindings with writes or an
+    /// implicit `undefined` cannot be inlined.
+    ///
+    /// Inspired by [esbuild's constant inliner][esbuild] and [SWC's variable inliner][swc].
+    ///
+    /// [esbuild]: https://github.com/evanw/esbuild/blob/f6058f8364fe7ab91ca57a83e02577ed74c9cae4/internal/js_ast/js_ast.go#L1650-L1685
+    /// [swc]: https://github.com/swc-project/swc/blob/6c778430811853d4feee2ab3af1473669deb7b2a/crates/swc_ecma_minifier/src/compress/optimize/inline.rs#L277-L295
+    pub fn can_inline_initialized_constant(&self) -> bool {
+        if !self.allow_constant_inlining || self.references.has_writes() || self.implicit_undefined
+        {
+            return false;
+        }
+        let Some(constant) = &self.initialized_constant else { return false };
+        self.references.has_single_read()
+            || match constant {
+                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
+                ConstantValue::BigInt(_) => false,
+                // A lone surrogate is 3 bytes but prints as a 6-character escape.
+                ConstantValue::String(s) => s.as_str().is_some_and(|s| s.len() <= 3),
+                ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
+            }
+    }
 }

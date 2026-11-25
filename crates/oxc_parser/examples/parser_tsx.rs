@@ -10,7 +10,7 @@
 //! ```
 
 use oxc_allocator::Allocator;
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
 /// Parse a TypeScript JSX file and validate the results
@@ -41,12 +41,14 @@ export const Counter: React.FC = () => {
     let ParserReturn {
         program,     // AST
         diagnostics, // Syntax errors
-        panicked,    // Parser encountered an error it couldn't recover from
+        fatal_error, // Parser encountered an error it couldn't recover from
         ..
-    } = Parser::new(&allocator, source_text, source_type).parse();
+    } = Parser::new(&allocator, source_text, source_type)
+        .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+        .parse();
 
-    if panicked {
-        return Err("Parser panicked".to_string());
+    if fatal_error {
+        return Err("Parser encountered a fatal error".to_string());
     }
 
     if !diagnostics.is_empty() {

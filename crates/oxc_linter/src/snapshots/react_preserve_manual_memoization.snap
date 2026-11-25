@@ -1,0 +1,15 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(preserve-manual-memoization): Existing memoization could not be preserved
+   ╭─[preserve_manual_memoization.tsx:7:10]
+ 6 │   x.push(props);
+ 7 │   return useCallback(() => {
+   ·          ─────┬───── ┬
+   ·               │      ╰── Manual memoization callback starts here
+   ·               ╰── Manual memoization is not preserved here
+ 8 │     doSomething();
+   ╰────
+  help: React Compiler could not prove that this useMemo/useCallback remains memoized. Fix related React Compiler errors inside the callback first. If manual memoization is not required for semantics, remove it; otherwise restructure the callback to avoid values that invalidate memoization
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/preserve-manual-memoization

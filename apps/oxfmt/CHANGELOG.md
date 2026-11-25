@@ -4,6 +4,335 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 🚀 Features
+
+- 42f62d6 formatter/sort_imports: Break ties for the same source by subgroup (#29817) (leaysgur)
+- d3af78a formatter_htmlish/angular: Support Tailwind class sorting (#29737) (leaysgur)
+- 0fe3d0c formatter_htmlish/angular: Format template JS expressions (#29726) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- f1816d8 formatter_htmlish: Count a blank line after unclosed element (#29881) (leaysgur)
+- 488a9fa formatter: Break an assigned class's heritage as a class anywhere else (#29869) (leaysgur)
+- 7caf3be oxfmt: Run `WalkRunner` in `block_in_place()` to avoid hang with 1 Tokio worker (#29728) (Yuji Sugiura)
+
+## [0.79.0] - 2026-11-16
+
+### 🚀 Features
+
+- 21e1fc1 formatter_graphql: Support empty selection sets and braced unicode escapes (#29345) (leaysgur)
+- 292f216 oxfmt: Bump prettier to 3.10.1 (#29333) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 552732b formatter: Fix parenthesized `TSInstantiationExpression` issue (#29389) (leaysgur)
+- 7e41638 parser: Keep whole parenthesized `TSInstantiationExpression` with `preserve_parens: false` (#29359) (leaysgur)
+- d41ed14 formatter: Keep the `;` of a lone statement in a Vue event handler (#29354) (leaysgur)
+- 58d7356 formatter: Break a conditional type alias with a generic constructor type after `=` (#29411) (leaysgur)
+- 59b8eaa formatter: Print binaryish or `yield` args like `return` (#29407) (leaysgur)
+- d6632f3 formatter: Keep a comment after `TSPropertySignature`'s `:` (#29393) (leaysgur)
+- cf50f9b formatter: Keep a blank line between dangling comments (#29392) (leaysgur)
+- e648de6 formatter: Print sequence in `yield` and unary like in `return` (#29353) (leaysgur)
+- 547684d formatter: Keep parens around `<` on the left of `>` (#29351) (leaysgur)
+- 16b84d3 formatter/htmlish: Print CDATA sections as nodes of their own (#29348) (leaysgur)
+- f9f2385 formatter_css: Print `@supports selector()` like rule selector (#29343) (leaysgur)
+- f31a8d1 formatter: Align union hug and conditional branch (#29261) (leaysgur)
+- 4d50307 formatter_htmlish: Keep attrs holding character reference (#29257) (leaysgur)
+- 1905d2b formatter_markdown: Keep whitespace as written only between two CJ characters (#29170) (leaysgur)
+- 49b832a formatter_htmlish/vue: Preserve `v-for` alias holding `in|of` (#29156) (leaysgur)
+
+### 📚 Documentation
+
+- 0467739 formatter: Classify js/ts conformance failures for prettier 3.10 (#29336) (leaysgur)
+- 9660ce4 oxfmt: Update htmlish and oxfmt divergences (#29334) (leaysgur)
+
+## [0.78.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- 449e91f oxfmt: Format ts-in-astro as TSX (#29080) (leaysgur)
+- fd51bff jsdoc: Handle every line terminators as newline (#28902) (leaysgur)
+- 2f80765 formatter_toml: Format whitespace-only document to empty (#28899) (leaysgur)
+- 5e1e02c formatter_graphql: Allow empty document (#28898) (leaysgur)
+- 06e72c0 formatter/tailwind: Normalize CR in Tailwind template with `preserveWhitespace` (#28896) (leaysgur)
+
+### ⚡ Performance
+
+- 934ca98 formatter: Use `Arc` for tailwind options across embedding (#29079) (leaysgur)
+- dde9c5c formatter_htmlish: Skip `</script` escape if possible (#29078) (leaysgur)
+- dc4d918 formatter: Format embedded expr of one name without parsing (#29077) (leaysgur)
+
+## [0.77.0] - 2026-11-06
+
+### 💥 BREAKING CHANGES
+
+- 00d1a67 oxfmt: [**BREAKING**] Format `parser:vue` files by `oxc_formatter_htmlish` (#28848) (leaysgur)
+
+### 🚀 Features
+
+- 119d82f formatter: Format a template's expressions and handlers as `JsRoot` (#28846) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fa66fde oxlint,oxfmt: Resolve Vite+ config root from the config file directory (#28801) (MK (fengmk2))
+- 4d4104d formatter_htmlish: Preserve `doctype` case in embedded (#28797) (leaysgur)
+- ebfd40a formatter: Sort Tailwind calls printed as member chains (#28800) (Yuji Sugiura)
+- e62e5cb formatter: Decide quotes of a Tailwind key printed as one class (#28798) (Yuji Sugiura)
+- 959edc1 formatter: Don't sort templates in nested non-Tailwind calls (#28794) (Yuji Sugiura)
+- 94fbef5 formatter_css: Treat comments in `style` attr as fill items (#28832) (leaysgur)
+- 255c5cc formatter: Measure Tailwind class argument after collapsing whitespace (#28745) (Lee Jaeha / Adam)
+- e6c4fef formatter: Decide template and object key layouts from collapsed Tailwind classes (#28791) (Yuji Sugiura)
+- 0b44164 formatter: Decide JSX opening element layout from collapsed Tailwind class string (#28744) (Lee Jaeha / Adam)
+
+### ⚡ Performance
+
+- 2766d07 oxfmt: Spawn Prettier workers on demand (#28789) (YT)
+- 07627f7 oxfmt: Use worker_threads for tinypool again (#28787) (Yuji Sugiura)
+
+## [0.76.0] - 2026-11-02
+
+### 💥 BREAKING CHANGES
+
+- 296623d oxfmt: [**BREAKING**] Format `parser:html` files by `oxc_formatter_htmlish` (#28273) (Yuji Sugiura)
+
+### 🚀 Features
+
+- 336b2c1 oxfmt: Support html-in-js templates closing a dynamic tag name (#28389) (Yuji Sugiura)
+- 36e5ddb oxfmt: Add debug span for reading files (#28204) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fef809a formatter_htmlish: Handle XHTML (#28703) (leaysgur)
+- fb3aefa formatter: Keep source parens around html-in-js placeholders past comments (#28381) (Yuji Sugiura)
+- e738dae formatter: Quote keys added in an HTML event handler with single quotes (#28380) (Yuji Sugiura)
+- 2e7a629 oxfmt: Format HTML in a `<script>` body as an embedded part (#28379) (Yuji Sugiura)
+
+### 📚 Documentation
+
+- a82ce83 oxfmt: Update unclassified divergence (#28685) (Yuji Sugiura)
+- 01ed68a oxfmt,formatter_htmlish,formatter: Clean up behavior comments (#28384) (Yuji Sugiura)
+
+## [0.75.0] - 2026-10-27
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 529b057 formatter_core: Keep front matter verbatim when body starts with indented delimiter (#27946) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 2c1cc20 formatter: Keep comment only Vue bindings as-is (#27820) (leaysgur)
+- 5605362 oxfmt: Validate editorconfig as like oxfmtrc (#27778) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- 3a980c9 formatter_toml: Handle BOM like other languages (#27775) (leaysgur)
+- 97c9fc4 oxfmt: Handle BOM in config JSON (#27774) (leaysgur)
+- 28eb4a7 oxfmt: Print trailing newline for `--list-different` (#27773) (leaysgur)
+
+### 📚 Documentation
+
+- 1325225 oxfmt: Update useless comment prefix (#27956) (leaysgur)
+- 8a3a6c8 oxfmt: Update stale notes on the JSDoc string-out channel and fixture origins (#27824) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 1ef2888 oxfmt: [**BREAKING**] Improve `--migrate prettier` (#27444) (leaysgur)
+- c2e6d5f formatter_toml: [**BREAKING**] Add `oxc_formatter_toml` crate wrapping `oxc-toml` (#27365) (leaysgur)
+
+### 🚀 Features
+
+- ce4e8dc oxfmt: Support `overrides[].parser` -> `associations[].language` migration (#27475) (leaysgur)
+- a495e82 oxfmt: Support `associations` config to specify language over filepath (#27437) (leaysgur)
+- 77f8156 oxfmt/lsp: Show root config errors to LSP client (#26014) (Sysix)
+- c1adce3 oxfmt/lsp: Support astro language (#27388) (leaysgur)
+- 4f024a1 oxfmt: Support astro plugin in `--migrate prettier` (#27387) (leaysgur)
+- 5db28fa oxfmt: Support Astro via `prettier-plugin-astro@1.x` (#27386) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 76ec31b formatter_css: Support css-in-js placeholders in property names and conditions (#27640) (leaysgur)
+- 99bb268 formatter_css: Keep css-in-js placeholder as media type (#27639) (leaysgur)
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- b6eb914 oxfmt: Normalize symlink targets in CLI snapshots (#27498) (camc314)
+- 5dae56f oxfmt/lsp: Return error on config resolving error (#26003) (Sysix)
+- 2349a31 oxfmt: Follow symlinked configs in discovery (#27389) (leaysgur)
+- db360de oxfmt: Load svelte plugin for svelte-in-mdx-in-md (#27369) (leaysgur)
+- 6e573f9 oxlint,oxfmt: Set stderr blocking (#27363) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+### 📚 Documentation
+
+- 408d87f oxfmt: Simplify oxfmtrc docs (#27432) (leaysgur)
+- 902e188 oxfmt: Update how `embeddedLanguageFormatting` option works (#27362) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 7d0e54d formatter_markdown: Preserve line breaks around Chinese/Japanese characters in all `proseWrap` (#27331) (leaysgur)
+- e9ae2d8 formatter_css: Fix layouts found in mdn-content repo (css-in-md) (#27326) (leaysgur)
+- df85b4c oxfmt: Keep blank lines after a line break in Prettier Doc to IR (#27325) (leaysgur)
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+- 1686018 oxfmt: Make one state `conditionalGroup` fit up to first `hardline` (#27275) (leaysgur)
+- 267557c formatter,oxfmt: Embed only original JSDoc plugin supported languages (#27241) (leaysgur)
+- 2606c60 oxfmt: Do not re-include a file below an excluded directory with a negated pattern (#27237) (Nicolas Le Cam)
+- c2de02b formatter: Decide embedded template layout from AST, not source shape (#27218) (leaysgur)
+- 6da7657 oxfmt: Render diagnostics with source in Stdin mode (#27130) (leaysgur)
+- e9b2ec5 oxfmt/lsp: Reload `.prettierignore` on watched file change (#27129) (leaysgur)
+- 30eb463 oxfmt: Check global ignores before resolving nested config in Stdin mode (#27128) (leaysgur)
+
+### ⚡ Performance
+
+- 0aba566 oxfmt: Do not resolve root js config from nested context (#27147) (leaysgur)
+
+### 📚 Documentation
+
+- af4b269 oxfmt: Document why `format()` API does not take cwd (#27131) (leaysgur)
+
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- e0b1f9f oxfmt: Bump bundled Prettier version to 3.9.9 (#27002) (leaysgur)
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 1f7b8ad oxfmt: Allow repeated CLI calls in the same process (#27051) (Liang)
+
+## [0.70.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+
+### 📚 Documentation
+
+- 8fa3617 oxfmt: Unify DIVERGENCES reference and drop notes (#26750) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- 586f27a formatter_core: Add `prefix_align` builder and `Tag::(Start|End)Prefix` (#26520) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d35d89f oxfmt: Skip shutdown delay on fixed Node 24 releases (#26518) (Pablo García)
+- aef8b4a formatter_css: Handle less-test-suites failures (#26513) (leaysgur)
+- 876fbe3 oxfmt: Expand `Fill` parts in tsx-in-vue (#26427) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- f7acdc0 formatter: Treat a JSDoc cast target as opaque in chain layouts (#26375) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+- 5f9580d oxfmt: Bump prettier-plugin-tailwindcss (#26273) (leaysgur)
+
+### ⚡ Performance
+
+- 1cad286 oxfmt: Match editorconfig once per file (#26239) (Yuji Sugiura)
+- 260c5eb oxfmt: Match `overrides` once per file (#26238) (leaysgur)
+- 61565bc oxfmt: Share resolved `FormatConfig` via `Arc` instead of cloning per file (#26237) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- faf11d9 formatter_yaml: Keep trailing whitespace in block scalars (#26072) (leaysgur)
+
+### ⚡ Performance
+
+- ac4785a diagnostics: Use fixed ANSI styles (#26130) (Boshen)
+
+### 📚 Documentation
+
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
+## [0.64.0] - 2026-08-18
+
+### 🚀 Features
+
+- c07fe7c oxfmt: Support `experimentalOperatorPosition` (#25643) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- a38f7b3 oxlint,oxfmt: Apply .gitignore only to walk targets, not explicitly named files (#25531) (leaysgur)
+- 1a83a8d oxfmt: Mirror printer line suppression and restore dedent-to-root (#25573) (leaysgur)
+
+### 📚 Documentation
+
+- 223e785 oxfmt/conformance: Update notes on conformance (#25757) (Yuji Sugiura)
+- 673dc6d oxfmt: Move some docs from AGENTS.md to code comment (#25649) (leaysgur)
+- fed6681 oxfmt: Skip expanding overrides options (#25572) (leaysgur)
+
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+- ab12665 formatter_core: Add `hardlineWithoutBreakParent` equivalent IR (#25273) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 95dc917 oxfmt: Drop IR Space at line start for js-in-xxx (#25460) (leaysgur)
+- ab52a59 formatter: Format xxx-in-js inside JSDoc js fence (#25414) (leaysgur)
+- 1a2c64a formatter,oxfmt: Apply effective print width for JSDoc fence (#25413) (leaysgur)
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+
+### ⚡ Performance
+
+- c9d1a5b oxfmt: Spawn tinypool lazily (#25298) (leaysgur)
+
+### 📚 Documentation
+
+- 6eae5c9 formatter,oxfmt: Record embed-layer decisions in place (#25422) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 0c16cb5 oxfmt: [**BREAKING**] Format parser:yaml files by oxc_formatter_yaml (#24890) (leaysgur)
+
+### 🚀 Features
+
+- 1b57f78 oxfmt: Support tsx-in-vue (#25063) (leaysgur)
+- be7f6da oxfmt: Colorize diff file list in check mode (#25061) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 20f68e7 oxlint,oxfmt: Respect `.gitignore` for walk targets and explicit paths (#25133) (leaysgur)
+- a9e76e9 oxfmt: Rework tsx-in-vue support (#25106) (leaysgur)
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+- 22fdda4 oxfmt/conformance: Fix typo (#25053) (leaysgur)
+- e6e584b oxfmt: Type jsdoc. enum options (#25008) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+
 ## [0.61.0] - 2026-07-27
 
 ### 🚀 Features

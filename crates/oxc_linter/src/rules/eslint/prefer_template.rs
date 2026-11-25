@@ -6,7 +6,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::{could_be_asi_hazard, outermost_paren_parent},
+    context::LintContext,
+    fixer::RuleFixer,
+    rule::Rule,
+};
 
 fn prefer_template_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected string concatenation.")
@@ -56,11 +62,9 @@ impl Rule for PreferTemplate {
         if !matches!(expr.operator, BinaryOperator::Addition) {
             return;
         }
-        // check is the outermost binary expression
-        let not_outermost = ctx.nodes().ancestor_kinds(node.id()).any(
-            |v| matches!(v, AstKind::BinaryExpression(e) if e.operator == BinaryOperator::Addition),
-        );
-        if not_outermost {
+        if outermost_paren_parent(node, ctx).is_some_and(
+            |parent| matches!(parent.kind(), AstKind::BinaryExpression(e) if e.operator == BinaryOperator::Addition),
+        ) {
             return;
         }
         if check_should_report(expr) {
@@ -74,7 +78,10 @@ impl Rule for PreferTemplate {
                     return fixer.noop();
                 }
 
-                let result = build_template_for_binary(source_text, &fixer, expr, None, None);
+                let mut result = build_template_for_binary(source_text, &fixer, expr, None, None);
+                if could_be_asi_hazard(node, ctx) {
+                    result.insert(0, ';');
+                }
                 fixer.replace(expr.span, result)
             });
         }
@@ -95,7 +102,9 @@ fn build_template_for_binary(
     let right = &binary.right;
 
     // Find the + operator between left and right
-    let plus_offset = fixer.find_next_token_from(left.span().end, "+").unwrap_or(0);
+    let plus_offset = fixer
+        .find_next_token_within(left.span().end, right.span().start, "+")
+        .expect("binary expression gap must contain the `+` operator");
     let plus_pos = left.span().end + plus_offset;
     let text_before_plus = &source_text[left.span().end as usize..plus_pos as usize];
     let text_after_plus = &source_text[plus_pos as usize + 1..right.span().start as usize];
@@ -367,8 +376,8 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
         return false;
     }
 
-    let left = expr.left.get_inner_expression();
-    let right = expr.right.get_inner_expression();
+    let left = expr.left.without_parentheses();
+    let right = expr.right.without_parentheses();
 
     let left_is_string = left.is_string_literal();
     let right_is_string = right.is_string_literal();
@@ -389,8 +398,8 @@ fn all_none_string_literal(expr: &Expression) -> bool {
     if let Expression::BinaryExpression(binary) = expr
         && binary.operator == BinaryOperator::Addition
     {
-        return all_none_string_literal(binary.left.get_inner_expression())
-            && all_none_string_literal(binary.right.get_inner_expression());
+        return all_none_string_literal(binary.left.without_parentheses())
+            && all_none_string_literal(binary.right.without_parentheses());
     }
 
     !expr.is_string_literal()
@@ -400,8 +409,8 @@ fn any_none_string_literal(expr: &Expression) -> bool {
     if let Expression::BinaryExpression(binary) = expr
         && binary.operator == BinaryOperator::Addition
     {
-        return any_none_string_literal(binary.left.get_inner_expression())
-            || any_none_string_literal(binary.right.get_inner_expression());
+        return any_none_string_literal(binary.left.without_parentheses())
+            || any_none_string_literal(binary.right.without_parentheses());
     }
 
     !expr.is_string_literal()
@@ -422,6 +431,9 @@ fn test() {
         r#"var foo = `foo` +
 			    `bar` +
 			    "hoge";"#,
+        r#"a + ("x" as string)"#,
+        r#"a + ("x" satisfies string)"#,
+        r#"a + "x"!"#,
     ];
 
     let fail = vec![
@@ -494,6 +506,17 @@ fn test() {
         r#"var foo = "Hello " + "world " + "another " + test"#,
         r#"'Hello ' + '"world" ' + test"#,
         r#""Hello " + "'world' " + test"#,
+        r#"export function f(a, b, c) { return a + (b ? "|" + c : ""); }"#,
+        r#"export const g = (x) => x + [1].map(function (y) { return "v" + y; }).length;"#,
+        r#"a + ((b ? (("|" + c)) : ""))"#,
+        r#"a + (("|" + c) * d)"#,
+        r#"a + fn("|" + c)"#,
+        r#"a + (() => "|" + c)()"#,
+        r#"a + `${"|" + c}`"#,
+        r#"(a + "x" as string) + c"#,
+        r#"(a + "x" satisfies string) + c"#,
+        r#"(a + "x")! + c"#,
+        r#"((a + "x") as string) + "y""#,
     ];
 
     let fix = vec![
@@ -669,6 +692,30 @@ fn test() {
         ),
         (r#"'Hello ' + '"world" ' + test"#, r#"`Hello ` + `"world" ${  test}`"#, None),
         (r#""Hello " + "'world' " + test"#, "`Hello ` + `'world' ${  test}`", None),
+        (
+            r#"export function f(a, b, c) { return a + (b ? "|" + c : ""); }"#,
+            r#"export function f(a, b, c) { return a + (b ? `|${  c}` : ""); }"#,
+            None,
+        ),
+        (
+            r#"export const g = (x) => x + [1].map(function (y) { return "v" + y; }).length;"#,
+            r"export const g = (x) => x + [1].map(function (y) { return `v${  y}`; }).length;",
+            None,
+        ),
+        (r#"a + ((b ? (("|" + c)) : ""))"#, r#"a + ((b ? ((`|${  c}`)) : ""))"#, None),
+        (r#"a + (("|" + c) * d)"#, "a + ((`|${  c}`) * d)", None),
+        (r#"a + fn("|" + c)"#, "a + fn(`|${  c}`)", None),
+        (r#"a + (() => "|" + c)()"#, "a + (() => `|${  c}`)()", None),
+        (r#"a + (("|" + c))"#, "`${a  }|${  c}`", None),
+        (r#"(a + "x" as string) + c"#, "(`${a  }x` as string) + c", None),
+        (r#"(a + "x" satisfies string) + c"#, "(`${a  }x` satisfies string) + c", None),
+        (r#"(a + "x")! + c"#, "(`${a  }x`)! + c", None),
+        ("foo\n'bar' + baz", "foo\n;`bar${  baz}`", None),
+        ("foo()\n'bar' + baz", "foo()\n;`bar${  baz}`", None),
+        ("foo[0]\n'bar' + baz", "foo[0]\n;`bar${  baz}`", None),
+        ("`template`\n'bar' + baz", "`template`\n;`bar${  baz}`", None),
+        ("'qux'\n'bar' + baz", "'qux'\n;`bar${  baz}`", None),
+        ("foo;\n'bar' + baz", "foo;\n`bar${  baz}`", None),
     ];
 
     Tester::new(PreferTemplate::NAME, PreferTemplate::PLUGIN, pass, fail)

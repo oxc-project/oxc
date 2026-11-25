@@ -184,3 +184,66 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────────
    ╰────
   help: Prefer `.flatMap(…)` over `.map(…).flat()`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:52]
+ 1 │ const result = values.filter((value) => value > 0).flatMap((value) => [value, value]);
+   ·                                                    ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:33]
+ 1 │ (array).filter(x => (x.active)).flatMap(x => ([x.id, x.slug]));
+   ·                                 ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:42]
+ 1 │ array.filter(x => x.active && x.visible).flatMap(x => [x, ...x.children]);
+   ·                                          ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:36]
+ 1 │ array.filter(x => x.a ? x.b : x.c).flatMap(x => [x, x]);
+   ·                                    ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:31]
+ 1 │ array.filter(x => x.a = true).flatMap(x => [x, x]);
+   ·                               ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:33]
+ 1 │ array.filter(x => x as boolean).flatMap(x => [x, x]);
+   ·                                 ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:26]
+ 1 │ ((array.filter(x => x))).flatMap(x => [x, x]);
+   ·                          ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:28]
+ 1 │ (a ? b : c).filter(x => x).flatMap(x => [x, x]);
+   ·                            ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.
+
+  ⚠ unicorn(prefer-array-flat-map): Prefer a single `.flatMap(…)` over `.filter(…).flatMap(…)`.
+   ╭─[prefer_array_flat_map.tsx:1:31]
+ 1 │ array.filter(x => (x.a, x.b)).flatMap(x => [x, x]);
+   ·                               ───────
+   ╰────
+  help: Replace `.filter(…).flatMap(…)` with a single `.flatMap(…)`.

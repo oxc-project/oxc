@@ -1,0 +1,3 @@
+/* only the prelude's first `name (` hugs, nested ones keep the gap */
+@include foo (a (b), c (d));
+@include foo (a), bar (b);

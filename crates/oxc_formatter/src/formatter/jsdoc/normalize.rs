@@ -3,6 +3,8 @@ use std::fmt::Write as _;
 
 use cow_utils::CowUtils;
 
+use oxc_syntax::line_terminator::{LineTerminatorSplitter, is_line_terminator};
+
 use crate::options::QuoteStyle;
 
 /// Normalize JSDoc tag aliases to their canonical form.
@@ -30,196 +32,6 @@ pub fn normalize_tag_kind(kind: &str) -> &str {
         // @linkcode, @linkplain are also NOT normalized to @link.
         _ => kind,
     }
-}
-
-/// Normalize markdown emphasis markers:
-/// - `__text__` → `**text**` (double underscore bold → asterisk bold)
-/// - `*text*` → `_text_` (single asterisk italic → underscore italic)
-///
-/// Matches prettier-plugin-jsdoc which normalizes emphasis through remark.
-/// Bold uses `**`, italic uses `_`.
-pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
-    if !text.contains("__") && !text.contains('*') {
-        return Cow::Borrowed(text);
-    }
-
-    // Read-only scan: check if any emphasis change would actually occur,
-    // avoiding a heap allocation when `*` or `__` appear only inside code spans.
-    if !emphasis_needs_change(text.as_bytes()) {
-        return Cow::Borrowed(text);
-    }
-
-    // Work with bytes directly — all significant chars (_, *, `, whitespace)
-    // are ASCII single-byte, so byte-level mutation is safe and uses ~3x less
-    // memory than Vec<char>.
-    let mut bytes: Vec<u8> = text.as_bytes().to_vec();
-    let len = bytes.len();
-    let mut i = 0;
-    let mut in_code = false;
-
-    // First pass: convert `__` → `**`
-    while i < len {
-        if bytes[i] == b'`' {
-            in_code = !in_code;
-            i += 1;
-            continue;
-        }
-        if in_code {
-            i += 1;
-            continue;
-        }
-        if bytes[i] == b'_' && i + 1 < len && bytes[i + 1] == b'_' {
-            bytes[i] = b'*';
-            bytes[i + 1] = b'*';
-            i += 2;
-            continue;
-        }
-        i += 1;
-    }
-
-    // Second pass: convert single `*text*` → `_text_`
-    // Skip `**` (bold) and content inside backticks.
-    in_code = false;
-    i = 0;
-    while i < len {
-        if bytes[i] == b'`' {
-            in_code = !in_code;
-            i += 1;
-            continue;
-        }
-        if in_code {
-            i += 1;
-            continue;
-        }
-
-        // Skip `**` (bold markers)
-        if bytes[i] == b'*' && i + 1 < len && bytes[i + 1] == b'*' {
-            i += 2;
-            continue;
-        }
-
-        // Single `*` — check if it's an opening emphasis marker:
-        // Must be followed by a non-whitespace character
-        if bytes[i] == b'*' && i + 1 < len && !bytes[i + 1].is_ascii_whitespace() {
-            // Look for matching closing `*`
-            let opener = i;
-            let mut j = opener + 1;
-            while j < len {
-                if bytes[j] == b'`' {
-                    // Skip inline code spans
-                    j += 1;
-                    while j < len && bytes[j] != b'`' {
-                        j += 1;
-                    }
-                    if j < len {
-                        j += 1;
-                    }
-                    continue;
-                }
-                // Skip `**` inside emphasis
-                if bytes[j] == b'*' && j + 1 < len && bytes[j + 1] == b'*' {
-                    j += 2;
-                    continue;
-                }
-                // Found closing `*`: must be preceded by non-whitespace
-                if bytes[j] == b'*' && j > opener + 1 && !bytes[j - 1].is_ascii_whitespace() {
-                    bytes[opener] = b'_';
-                    bytes[j] = b'_';
-                    i = j + 1;
-                    break;
-                }
-                j += 1;
-            }
-            if i <= opener {
-                i = opener + 1;
-            }
-            continue;
-        }
-
-        i += 1;
-    }
-
-    // We only replaced ASCII bytes (_, *) with other ASCII bytes (*, _),
-    // so UTF-8 validity is preserved.
-    Cow::Owned(String::from_utf8(bytes).unwrap())
-}
-
-/// Read-only scan that checks whether `normalize_markdown_emphasis` would
-/// actually change any bytes. Runs the same two-pass logic without mutation.
-fn emphasis_needs_change(bytes: &[u8]) -> bool {
-    let len = bytes.len();
-    let mut i = 0;
-    let mut in_code = false;
-
-    // Pass 1: would any `__` outside code be converted to `**`?
-    while i < len {
-        if bytes[i] == b'`' {
-            in_code = !in_code;
-            i += 1;
-            continue;
-        }
-        if in_code {
-            i += 1;
-            continue;
-        }
-        if bytes[i] == b'_' && i + 1 < len && bytes[i + 1] == b'_' {
-            return true;
-        }
-        i += 1;
-    }
-
-    // Pass 2: would any single `*text*` outside code be converted to `_text_`?
-    // After pass 1, `__` would become `**`, so `**` sequences need to be skipped.
-    // Since we're read-only, `__` is still `__` — but the mutation pass would have
-    // converted it. We simulate that by also skipping `__` as if it were `**`.
-    in_code = false;
-    i = 0;
-    while i < len {
-        if bytes[i] == b'`' {
-            in_code = !in_code;
-            i += 1;
-            continue;
-        }
-        if in_code {
-            i += 1;
-            continue;
-        }
-        // Skip `**` and `__` (which would become `**` after pass 1)
-        if (bytes[i] == b'*' || bytes[i] == b'_') && i + 1 < len && bytes[i + 1] == bytes[i] {
-            i += 2;
-            continue;
-        }
-        // Single `*` — check for matching closing emphasis
-        if bytes[i] == b'*' && i + 1 < len && !bytes[i + 1].is_ascii_whitespace() {
-            let opener = i;
-            let mut j = opener + 1;
-            while j < len {
-                if bytes[j] == b'`' {
-                    j += 1;
-                    while j < len && bytes[j] != b'`' {
-                        j += 1;
-                    }
-                    if j < len {
-                        j += 1;
-                    }
-                    continue;
-                }
-                if bytes[j] == b'*' && j + 1 < len && bytes[j + 1] == b'*' {
-                    j += 2;
-                    continue;
-                }
-                if bytes[j] == b'*' && j > opener + 1 && !bytes[j - 1].is_ascii_whitespace() {
-                    return true;
-                }
-                j += 1;
-            }
-            i = opener + 1;
-            continue;
-        }
-        i += 1;
-    }
-
-    false
 }
 
 /// Capitalize the first ASCII lowercase letter of a string.
@@ -285,52 +97,31 @@ pub fn append_trailing_dot(s: &str) -> Cow<'_, str> {
     Cow::Borrowed(s)
 }
 
-/// Strip JSDoc `*` continuation prefixes from multi-line type content.
+/// Strip JSDoc `*` continuation prefixes from multi-line type or name content,
+/// joining the lines with `separator`.
 ///
 /// When a type expression spans multiple lines inside a JSDoc block, the raw
 /// content extracted by the parser includes `\n   *   ` prefixes from the
-/// continuation lines. This function joins lines by replacing each
-/// `\n<whitespace>*<optional space>` with a single space.
-fn strip_jsdoc_continuation_prefixes(s: &str) -> String {
+/// continuation lines.
+/// Each `<line terminator><whitespace>*<optional space>` is replaced with `separator`:
+/// - `' '` collapses the type to one line for normalization
+/// - `'\n'` keeps its lines for the TS formatter,
+///   as upstream's `comment-parser` strips `*` prefixes but keeps the newlines for `formatType()`
+///
+/// NOTE: This compensates for `oxc_jsdoc`'s `JSDocTagTypePart::parsed()` and `JSDocTagTypeNamePart::raw()`
+/// returning the raw source text, `*` prefixes and line terminators included;
+/// the upgrade path is to strip them there.
+pub fn strip_jsdoc_star_prefixes(s: &str, separator: char) -> String {
     let mut result = String::with_capacity(s.len());
-    for (i, line) in s.lines().enumerate() {
+    for (i, line) in LineTerminatorSplitter::new(s).enumerate() {
         if i == 0 {
             result.push_str(line);
             continue;
         }
-        result.push(' ');
+        result.push(separator);
         let trimmed = line.trim_start();
         if let Some(rest) = trimmed.strip_prefix('*') {
             // Strip the `*` and optional single space after it
-            let rest = rest.strip_prefix(' ').unwrap_or(rest);
-            result.push_str(rest);
-        } else {
-            result.push_str(trimmed);
-        }
-    }
-    result
-}
-
-/// Strip JSDoc `*` continuation prefixes but **preserve newlines**.
-///
-/// Similar to `strip_jsdoc_continuation_prefixes()` but keeps `\n` instead
-/// of collapsing to spaces. This preserves multi-line type structure so the
-/// TS formatter receives multi-line input and maintains the line breaks.
-/// Matches upstream behavior where `comment-parser` strips `*` prefixes
-/// but the type retains its newline structure for `formatType()`.
-pub fn strip_jsdoc_stars_preserve_newlines(s: &str) -> String {
-    if !s.contains('\n') {
-        return s.to_string();
-    }
-    let mut result = String::with_capacity(s.len());
-    for (i, line) in s.lines().enumerate() {
-        if i == 0 {
-            result.push_str(line);
-            continue;
-        }
-        result.push('\n');
-        let trimmed = line.trim_start();
-        if let Some(rest) = trimmed.strip_prefix('*') {
             let rest = rest.strip_prefix(' ').unwrap_or(rest);
             result.push_str(rest);
         } else {
@@ -373,8 +164,8 @@ fn normalize_type_impl(
     // may include `\n * ` or `\n *` prefixes from continuation lines.
     // These `*` chars must be removed before normalization, otherwise
     // the `*` → `any` replacement will corrupt the type.
-    if type_str.contains('\n') {
-        let stripped = strip_jsdoc_continuation_prefixes(type_str);
+    if type_str.contains(is_line_terminator) {
+        let stripped = strip_jsdoc_star_prefixes(type_str, ' ');
         return Cow::Owned(
             normalize_type_impl(&stripped, convert_quotes, quote_style).into_owned(),
         );

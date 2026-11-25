@@ -1,9 +1,13 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{ChainElement, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, Ident, static_ident};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
+use oxc_syntax::scope::ScopeId;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -40,14 +44,35 @@ enum CoercionKind {
 }
 
 /// Reports an implicit coercion with an auto-fix suggestion
-fn report_coercion(ctx: &LintContext, span: Span, kind: CoercionKind, operand: &str) {
-    let (diagnostic, wrapper) = match kind {
-        CoercionKind::Boolean => (boolean_coercion_diagnostic(span), "Boolean"),
-        CoercionKind::Number => (number_coercion_diagnostic(span), "Number"),
-        CoercionKind::String => (string_coercion_diagnostic(span), "String"),
+///
+/// The fix replaces the shorthand with a call to the global `Boolean`, `Number`,
+/// or `String` constructor. If that name is shadowed by a binding in the
+/// enclosing scopes, the replacement would resolve to the shadowing binding
+/// and change the program's behavior, so only the diagnostic is reported and
+/// the fix is skipped.
+fn report_coercion(
+    ctx: &LintContext,
+    scope_id: ScopeId,
+    span: Span,
+    kind: CoercionKind,
+    operand: &str,
+) {
+    let diagnostic = match kind {
+        CoercionKind::Boolean => boolean_coercion_diagnostic(span),
+        CoercionKind::Number => number_coercion_diagnostic(span),
+        CoercionKind::String => string_coercion_diagnostic(span),
     };
+    let wrapper: Ident<'static> = match kind {
+        CoercionKind::Boolean => static_ident!("Boolean"),
+        CoercionKind::Number => static_ident!("Number"),
+        CoercionKind::String => static_ident!("String"),
+    };
+    if ctx.scoping().find_binding(scope_id, wrapper).is_some() {
+        ctx.diagnostic(diagnostic);
+        return;
+    }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        fixer.replace(span, format!("{wrapper}({operand})"))
+        fixer.replace(span, format!("{}({operand})", wrapper.as_str()))
     });
 }
 
@@ -178,12 +203,13 @@ declare_oxc_lint!(
     fix,
     config = NoImplicitCoercionConfig,
     version = "1.33.0",
-    short_description = "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
+    short_description =
+        "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
 );
 
 impl Rule for NoImplicitCoercion {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -197,7 +223,7 @@ impl Rule for NoImplicitCoercion {
                     && inner.operator == UnaryOperator::LogicalNot
                 {
                     let operand = get_operand_text(ctx, &inner.argument);
-                    report_coercion(ctx, unary_expr.span, CoercionKind::Boolean, operand);
+                    report_coercion(ctx, node.scope_id(), unary_expr.span, CoercionKind::Boolean, operand);
                     return;
                 }
 
@@ -209,7 +235,7 @@ impl Rule for NoImplicitCoercion {
                     && !is_already_numeric(&unary_expr.argument)
                 {
                     let operand = get_operand_text(ctx, &unary_expr.argument);
-                    report_coercion(ctx, unary_expr.span, CoercionKind::Number, operand);
+                    report_coercion(ctx, node.scope_id(), unary_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -224,7 +250,7 @@ impl Rule for NoImplicitCoercion {
                     && !is_already_numeric(&inner.argument)
                 {
                     let operand = get_operand_text(ctx, &inner.argument);
-                    report_coercion(ctx, unary_expr.span, CoercionKind::Number, operand);
+                    report_coercion(ctx, node.scope_id(), unary_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -250,7 +276,7 @@ impl Rule for NoImplicitCoercion {
                         // Check if this is part of a larger expression like `1 * a / 2`
                         // We should still report `1 * a` in such cases
                         let operand = get_operand_text(ctx, &bin_expr.right);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::Number, operand);
                         return;
                     }
                     if right_is_one
@@ -258,7 +284,7 @@ impl Rule for NoImplicitCoercion {
                         && !is_part_of_larger_binary_expression(ctx, node)
                     {
                         let operand = get_operand_text(ctx, &bin_expr.left);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::Number, operand);
                         return;
                     }
                 }
@@ -271,7 +297,7 @@ impl Rule for NoImplicitCoercion {
                     && !is_already_numeric(&bin_expr.left)
                 {
                     let operand = get_operand_text(ctx, &bin_expr.left);
-                    report_coercion(ctx, bin_expr.span, CoercionKind::Number, operand);
+                    report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::Number, operand);
                     return;
                 }
 
@@ -285,12 +311,12 @@ impl Rule for NoImplicitCoercion {
 
                     if left_is_empty_string && !is_string_literal_or_string_call(&bin_expr.right) {
                         let operand = get_operand_text(ctx, &bin_expr.right);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::String, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::String, operand);
                         return;
                     }
                     if right_is_empty_string && !is_string_literal_or_string_call(&bin_expr.left) {
                         let operand = get_operand_text(ctx, &bin_expr.left);
-                        report_coercion(ctx, bin_expr.span, CoercionKind::String, operand);
+                        report_coercion(ctx, node.scope_id(), bin_expr.span, CoercionKind::String, operand);
                     }
                 }
             }
@@ -315,30 +341,25 @@ impl Rule for NoImplicitCoercion {
                     let first_quasi = &template.quasis[0];
                     let last_quasi = &template.quasis[1];
 
-                    // Check if both quasi parts contain no meaningful content.
-                    // We use the cooked value to handle escape sequences properly.
-                    // ESLint considers templates like `\n${foo}` as coercion because
-                    // escape sequences that become whitespace don't add meaningful content.
-                    // We also allow backslash characters in the cooked value because they
-                    // typically come from line continuations (e.g., `\\\n${foo}`) which
-                    // ESLint also treats as implicit coercion.
-                    let first_is_empty_or_whitespace = first_quasi
+                    // Only an empty cooked value is shorthand coercion. Whitespace is part of the
+                    // resulting string and must not be discarded by the fixer.
+                    let first_is_empty = first_quasi
                         .value
                         .cooked
                         .as_ref()
-                        .is_some_and(|s| s.chars().all(|c| c.is_whitespace() || c == '\\'));
-                    let last_is_empty_or_whitespace = last_quasi
+                        .is_some_and(|s| s.is_empty());
+                    let last_is_empty = last_quasi
                         .value
                         .cooked
                         .as_ref()
-                        .is_some_and(|s| s.chars().all(|c| c.is_whitespace() || c == '\\'));
+                        .is_some_and(|s| s.is_empty());
 
-                    if first_is_empty_or_whitespace && last_is_empty_or_whitespace {
+                    if first_is_empty && last_is_empty {
                         let expr = &template.expressions[0];
                         // Don't warn if the expression is already a string literal or String() call
                         if !is_string_literal_or_string_call(expr) {
                             let operand = get_operand_text(ctx, expr);
-                            report_coercion(ctx, template.span(), CoercionKind::String, operand);
+                            report_coercion(ctx, node.scope_id(), template.span(), CoercionKind::String, operand);
                         }
                     }
                 }
@@ -365,9 +386,7 @@ fn is_empty_string(expr: &Expression) -> bool {
     match expr.without_parentheses() {
         Expression::StringLiteral(lit) => lit.value.is_empty(),
         Expression::TemplateLiteral(template) => {
-            template.expressions.is_empty()
-                && template.quasis.len() == 1
-                && template.quasis[0].value.raw.is_empty()
+            template.is_no_substitution_template() && template.quasis[0].value.raw.is_empty()
         }
         _ => false,
     }
@@ -418,15 +437,14 @@ fn is_indexof_call(expr: &Expression) -> bool {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             if let Expression::ChainExpression(chain) = callee
-                && let oxc_ast::ast::ChainElement::StaticMemberExpression(member) =
-                    &chain.expression
+                && let ChainElement::StaticMemberExpression(member) = &chain.expression
             {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             false
         }
         Expression::ChainExpression(chain) => {
-            if let oxc_ast::ast::ChainElement::CallExpression(call) = &chain.expression
+            if let ChainElement::CallExpression(call) = &chain.expression
                 && let Expression::StaticMemberExpression(member) =
                     call.callee.without_parentheses()
             {
@@ -554,6 +572,20 @@ fn test() {
         ("foo += `${bar}`", None),
         ("`a${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         ("`${foo}b`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        ("` ${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        ("`${foo} `", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        (r"`\n${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        (r"`${foo}\t`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
+        (
+            r"`\\
+			${foo}`",
+            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
+        ),
+        (
+            r"`${foo}\\
+			`",
+            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
+        ),
         ("`${foo}${bar}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         ("tag`${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         ("`${foo}`", None),
@@ -597,16 +629,7 @@ fn test() {
         (r#"foo.bar+"""#, None),
         ("foo.bar+``", None),
         ("`${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
-        (
-            r"`\\
-			${foo}`",
-            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
-        ),
-        (
-            r"`${foo}\\
-			`",
-            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
-        ),
+        ("`\\\n${foo}`", Some(serde_json::json!([{ "disallowTemplateShorthand": true }]))),
         (r#"foo += """#, None),
         ("foo += ``", None),
         ("var a = !!foo", Some(serde_json::json!([{ "boolean": true, "allow": ["~"] }]))),
@@ -627,6 +650,7 @@ fn test() {
         ("(a * 1) / 2", None),
         ("a * 1 / (b * 1)", None),
         ("a * 1 + 2", None),
+        ("function f(Boolean) { return !!(foo + bar); }", None),
     ];
 
     let fix = vec![
@@ -637,6 +661,23 @@ fn test() {
             "var a = Boolean(foo)",
             Some(serde_json::json!([{ "boolean": true, "allow": ["~"] }])),
         ),
+        (
+            "`${foo}`",
+            "String(foo)",
+            Some(serde_json::json!([{ "disallowTemplateShorthand": true }])),
+        ),
+        (
+            "function f(Boolean) { return !!(foo + bar); }",
+            "function f(Boolean) { return !!(foo + bar); }",
+            None,
+        ),
+        ("function f(Number) { return +(foo); }", "function f(Number) { return +(foo); }", None),
+        (
+            "function f(String) { return `` + foo; }",
+            "function f(String) { return `` + foo; }",
+            None,
+        ),
+        ("{ let Boolean; !!foo; }", "{ let Boolean; !!foo; }", None),
     ];
     Tester::new(NoImplicitCoercion::NAME, NoImplicitCoercion::PLUGIN, pass, fail)
         .expect_fix(fix)

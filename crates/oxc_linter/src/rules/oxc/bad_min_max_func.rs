@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -46,6 +47,7 @@ declare_oxc_lint!(
     BadMinMaxFunc,
     oxc,
     correctness,
+    recommended,
     version = "0.0.3",
     short_description = "Checks whether the clamp function `Math.min(Math.max(x, y), z)` always evaluates to a constant result because the arguments are in the wrong order.",
 );
@@ -109,7 +111,7 @@ impl BadMinMaxFunc {
             if let Argument::NumericLiteral(literal) = arg { Some(literal.value) } else { None }
         });
 
-        let min_max = match member_expr.static_property_name() {
+        let min_max = match member_expr.static_property_name().and_then(JSStr::as_str) {
             Some("max") => MinMax::Max(number_args.fold(f64::NEG_INFINITY, f64::max)),
             Some("min") => MinMax::Min(number_args.fold(f64::INFINITY, f64::min)),
             _ => return None,

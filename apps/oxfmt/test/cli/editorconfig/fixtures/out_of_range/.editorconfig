@@ -1,0 +1,5 @@
+root = true
+
+[*]
+tab_width = 260
+max_line_length = 65546

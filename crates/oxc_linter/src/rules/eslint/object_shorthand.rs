@@ -3,10 +3,11 @@ use lazy_regex::Regex;
 use schemars::JsonSchema;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, PropertyKind,
+        ArrowFunctionExpression, Expression, Function, IdentifierReference, NewTarget,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind, Super,
+        ThisExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -157,7 +158,8 @@ declare_oxc_lint!(
     fix,
     config = ObjectShorthandTupleConfig,
     version = "1.59.0",
-    short_description = "Require or disallow method and property shorthand syntax for object literals.",
+    short_description =
+        "Require or disallow method and property shorthand syntax for object literals.",
 );
 
 impl Rule for ObjectShorthand {
@@ -225,13 +227,14 @@ fn make_function_shorthand<'a>(
         };
 
         let property_key_span = property.key.span();
-        let key_text = if property.computed {
-            let (Some(paren_start), Some(paren_end_offset)) = (
-                ctx.find_prev_token_from(property_key_span.start, "["),
-                ctx.find_next_token_from(property_key_span.end, "]"),
+        let key_text = if property.key.is_computed() {
+            let (Some(paren_start_offset), Some(paren_end_offset)) = (
+                ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
+                ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
             ) else {
                 return fixer.noop();
             };
+            let paren_start = property.span.start + paren_start_offset;
             ctx.source_range(Span::new(paren_start, property_key_span.end + paren_end_offset + 1))
         } else {
             ctx.source_range(property_key_span)
@@ -240,10 +243,10 @@ fn make_function_shorthand<'a>(
         match fn_or_arrow_fn {
             Either::Left(func) => {
                 let next_token = if func.generator {
-                    ctx.find_next_token_from(property_key_span.end, "*")
+                    ctx.find_next_token_within(property_key_span.end, func.span.end, "*")
                         .map(|offset| offset + 1 /* "*".len() */)
                 } else {
-                    ctx.find_next_token_from(property_key_span.end, "function")
+                    ctx.find_next_token_within(property_key_span.end, func.span.end, "function")
                         .map(|offset| offset + 8 /* "function".len() */)
                 };
                 let Some(func_token) = next_token else {
@@ -256,8 +259,8 @@ fn make_function_shorthand<'a>(
             }
             Either::Right(func) => {
                 let next_token = ctx
-                    .find_prev_token_from(func.body.span().start, "=>")
-                    .map(|offset| offset + 2 /* "=>".len() */);
+                    .find_prev_token_within(func.span.start, func.body.span().start, "=>")
+                    .map(|offset| func.span.start + offset + 2 /* "=>".len() */);
                 let Some(arrow_token) = next_token else {
                     return fixer.noop();
                 };
@@ -270,8 +273,9 @@ fn make_function_shorthand<'a>(
                     func.return_type.as_ref().map_or(func.params.span.end, |p| p.span.end),
                 ));
                 let should_add_parens = if func.r#async {
-                    if let Some(async_token) = ctx.find_next_token_from(func.span.start, "async")
-                        && let Some(first) = func.params.items.first()
+                    if let Some(first) = func.params.items.first()
+                        && let Some(async_token) =
+                            ctx.find_next_token_within(func.span.start, first.span.start, "async")
                     {
                         ctx.find_next_token_within(
                             func.span.start + async_token,
@@ -314,14 +318,17 @@ fn make_function_long_form<'a>(
     };
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let property_key_span = property.key.span();
-        let key_text_range = if property.computed {
-            let (Some(paren_start), Some(paren_end_offset)) = (
-                ctx.find_prev_token_from(property_key_span.start, "["),
-                ctx.find_next_token_from(property_key_span.end, "]"),
+        let key_text_range = if property.key.is_computed() {
+            let (Some(paren_start_offset), Some(paren_end_offset)) = (
+                ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
+                ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
             ) else {
                 return fixer.noop();
             };
-            Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
+            Span::new(
+                property.span.start + paren_start_offset,
+                property_key_span.end + paren_end_offset + 1,
+            )
         } else {
             property_key_span
         };
@@ -349,14 +356,18 @@ fn check_longform_methods<'a>(
 ) {
     if rule.ignore_constructors
         && property.key.is_identifier()
-        && property.key.name().is_some_and(is_constructor)
+        && property
+            .key
+            .name()
+            .and_then(StaticPropertyName::into_cow_str)
+            .is_some_and(|name| is_constructor(&name))
     {
         return;
     }
 
-    if let (Some(pattern), Some(static_name)) =
-        (rule.methods_ignore_pattern.as_ref(), property.key.static_name())
-        && pattern.is_match(static_name.as_ref())
+    if let Some(pattern) = rule.methods_ignore_pattern.as_ref()
+        && let Some(static_name) = property.key.static_name()
+        && static_name.as_str().is_some_and(|name| pattern.is_match(name))
     {
         return;
     }
@@ -380,7 +391,7 @@ fn check_longform_methods<'a>(
 }
 
 fn check_shorthand_properties<'a>(ctx: &LintContext<'a>, property: &ObjectProperty<'a>) {
-    if let Some(property_name) = property.key.name() {
+    if let Some(property_name) = property.key.name().and_then(StaticPropertyName::into_cow_str) {
         ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
             fixer.replace(property.span, format!("{property_name}: {property_name}"))
         });
@@ -409,7 +420,7 @@ fn check_longform_properties<'a>(
         return;
     }
 
-    if let Some(property_name) = property.key.name()
+    if let Some(property_name) = property.key.name().and_then(StaticPropertyName::into_cow_str)
         && property_name == value_identifier.name
     {
         ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
@@ -498,12 +509,7 @@ impl<'a, 'c> ArrowFunctionLexicalIdentifierVisitor<'a, 'c> {
 }
 
 impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         if self.has_lexical_identifier {
@@ -513,19 +519,19 @@ impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
         walk::walk_arrow_function_expression(self, it);
     }
 
-    fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
+    fn visit_this_expression(&mut self, _it: &ThisExpression) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
+    fn visit_super(&mut self, _it: &Super) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_new_target(&mut self, _it: &oxc_ast::ast::NewTarget) {
+    fn visit_new_target(&mut self, _it: &NewTarget) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         if self.ctx.scoping().root_unresolved_references().get("arguments").is_some_and(
             |references| references.iter().any(|&reference_id| reference_id == it.reference_id()),
         ) {
@@ -575,7 +581,7 @@ fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
 }
 
 fn is_property_key_string_literal(property: &ObjectProperty) -> bool {
-    matches!(property.key.as_expression(), Some(Expression::StringLiteral(_)))
+    matches!(property.key, PropertyKey::StaticStringLiteral(_) | PropertyKey::StringLiteral(_))
 }
 
 fn is_shorthand_property(property: &ObjectProperty) -> bool {
@@ -586,7 +592,9 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
     match &property.value {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::Identifier(value_identifier) => {
-            if let Some(property_name) = property.key.name() {
+            if let Some(property_name) =
+                property.key.name().and_then(StaticPropertyName::into_cow_str)
+            {
                 property_name == value_identifier.name
             } else {
                 false
@@ -597,17 +605,9 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
 }
 
 fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
-    // Ignore getters and setters
-    if property.kind != PropertyKind::Init {
-        return false;
-    }
-
-    // Ignore computed properties, unless they are functions
-    if property.computed && !is_property_value_function(property) {
-        return false;
-    }
-
-    true
+    property.kind == PropertyKind::Init
+        && !property.key.is_specific_literal_name("__proto__")
+        && (!property.key.is_computed() || is_property_value_function(property))
 }
 
 #[test]
@@ -831,6 +831,10 @@ fn test() {
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
+            "({ x: (): typeof this.foo => { return 1; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
             "function foo() { ({ x: () => { arguments; } }) }",
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
@@ -966,6 +970,20 @@ fn test() {
                * @param {string} name
                */ (val) })",
             None,
+        ),
+        ("({ __proto__: function() {} })", None),
+        ("({ '__proto__': function() {} })", None),
+        ("({ __proto__: __proto__ })", Some(serde_json::json!(["properties"]))),
+        ("({ '__proto__': __proto__ })", Some(serde_json::json!(["properties"]))),
+        ("({ __proto__() {} })", Some(serde_json::json!(["never"]))),
+        ("({ __proto__ })", Some(serde_json::json!(["never"]))),
+        ("({ '__proto__'() {} })", Some(serde_json::json!(["always", { "avoidQuotes": true }]))),
+        (
+            "({ __proto__: () => {} })",
+            Some(serde_json::json!([
+                "always",
+                { "avoidExplicitReturnArrows": true }
+            ])),
         ),
     ];
 
@@ -2007,6 +2025,12 @@ fn test() {
                             }
                         ",
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        ("({ ['__proto__']: function() {} })", "({ ['__proto__']() {} })", None),
+        (
+            "({ ['__proto__']() {} })",
+            "({ ['__proto__']: function() {} })",
+            Some(serde_json::json!(["never"])),
         ),
     ];
 

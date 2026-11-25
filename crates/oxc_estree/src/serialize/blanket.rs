@@ -64,6 +64,7 @@ mod tests {
         }
     }
 
+    #[expect(clippy::mut_mut)]
     #[test]
     fn serialize_mut_ref() {
         let cases = [(&mut "foo", r#""foo""#), (&mut &mut "bar", r#""bar""#)];

@@ -108,10 +108,12 @@ declare_oxc_lint!(
     RequireParam,
     jsdoc,
     pedantic,
+    recommended,
     pending,
     config = RequireParamConfig,
     version = "0.4.3",
-    short_description = "Requires that all function parameters are documented with JSDoc `@param` tags.",
+    short_description =
+        "Requires that all function parameters are documented with JSDoc `@param` tags.",
 );
 
 impl Rule for RequireParam {
@@ -201,7 +203,7 @@ impl Rule for RequireParam {
         }
 
         // Collected JSDoc `@param` tags
-        let tags_to_check = collect_tags(&jsdocs, settings.resolve_tag_name("param"));
+        let tags_to_check = collect_tags(jsdocs, settings.resolve_tag_name("param"));
 
         if config.ignore_when_all_params_missing && tags_to_check.is_empty() {
             return;
@@ -295,7 +297,7 @@ fn default_exempted_by() -> Vec<String> {
 }
 
 const DEFAULT_CHECK_TYPES_PATTERN: &str =
-    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$"; // spellchecker:disable-line
+    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$";
 
 fn default_check_types_pattern_str() -> String {
     DEFAULT_CHECK_TYPES_PATTERN.to_string()
@@ -365,14 +367,10 @@ fn is_first_fn_param_typed(params: &FormalParameters) -> bool {
 }
 
 fn is_parent_fn_typed(node_id: NodeId, ctx: &LintContext) -> bool {
-    if matches!(
+    matches!(
         ctx.nodes().parent_node(node_id).kind(),
         AstKind::VariableDeclarator(var) if var.type_annotation.is_some()
-    ) {
-        return true;
-    }
-
-    false
+    )
 }
 
 #[test]
@@ -930,6 +928,70 @@ fn test() {
                 serde_json::json!([{ "interfaceExemptsParamsCheck": true }]),
             ),
             None,
+        ),
+        (
+            "
+            /** @param base - Base value. */
+            function outer(base: number): number {
+                function inner(value: number): number {
+                    return value + base;
+                }
+                return inner(base);
+            }
+            /** @param base - Base value. */
+            export function exportedOuter(base: number): number {
+                function inner(value: number): number {
+                    return value + base;
+                }
+                return inner(base);
+            }
+            export const use = outer;
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            /** @param type the type */
+            function register(type: string): void {
+                const listeners: Record<string, unknown> = {};
+                listeners[type] = function callback(e: Event): void {
+                    void e;
+                };
+            }
+            export { register };
+            ",
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
+        (
+            "
+            /** @param type the type */
+            function register(type: string): void {
+                const listeners: Record<string, unknown> = {};
+                listeners[type] = (e: Event): void => {
+                    void e;
+                };
+            }
+            export { register };
+            ",
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
+        // https://github.com/oxc-project/oxc/issues/28859
+        (
+            r#"
+            /**
+             * For example, if the map looks like this `{ "domain1.com": "test.local" }
+             *
+             * @param p the param
+             */
+            export function f(p: string): void {
+                void p;
+            }
+            "#,
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
         ),
     ];
 
@@ -1593,6 +1655,22 @@ fn test() {
 				      ",
             Some(serde_json::json!([{ "interfaceExemptsParamsCheck": true }])),
             None,
+        ),
+        // https://github.com/oxc-project/oxc/issues/28859
+        (
+            "
+            /**
+             * Example { a
+             *
+             * @param p the param
+             */
+            export function f(p: string, q: string): void {
+                void p;
+                void q;
+            }
+            ",
+            None,
+            Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
         ),
     ];
 

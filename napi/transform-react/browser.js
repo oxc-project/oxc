@@ -1,1 +1,1 @@
-export * from '@oxc-transform-react/binding-wasm32-wasi'
+export * from '@oxc-transform-react/binding-wasm32-wasip1'

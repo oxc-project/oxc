@@ -102,7 +102,7 @@ declare_oxc_lint!(
 
 impl Rule for OperatorAssignment {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -213,7 +213,8 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
                         Expression::AssignmentExpression(_)
                         | Expression::ArrowFunctionExpression(_)
                         | Expression::YieldExpression(_)
-                        | Expression::LogicalExpression(_) => {
+                        | Expression::LogicalExpression(_)
+                        | Expression::ConditionalExpression(_) => {
                             format!("{former}({right_expr_text})")
                         }
                         // For the rest
@@ -279,11 +280,13 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
     }
 }
 
+/// Locates `operator` within `search_span`, the gap between the two operands.
 #[expect(clippy::cast_possible_truncation)]
-fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span {
-    let offset = init_span.source_text(ctx.source_text()).find(operator).unwrap_or(0) as u32;
-    let start = init_span.start + offset;
-    Span::sized(start, operator.len() as u32)
+fn get_operator_span(search_span: Span, operator: &str, ctx: &LintContext) -> Span {
+    let offset = ctx
+        .find_next_token_within(search_span.start, search_span.end, operator)
+        .expect("assignment operator must be present between the operands");
+    Span::sized(search_span.start + offset, operator.len() as u32)
 }
 
 fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {
@@ -507,6 +510,8 @@ fn test() {
 
     let fix = vec![
         ("x = x + y", "x += y", None),
+        // a `=` inside a comment is not the operator
+        ("x /* = */ = x + y", "x /* = */ += y", None),
         ("x = x - y", "x -= y", None),
         ("x = x * y", "x *= y", None),
         ("x = x / y", "x /= y", None),
@@ -594,6 +599,8 @@ fn test() {
             "x = x + + /** fooo */ (() => {})",
             Some(serde_json::json!(["never"])),
         ),
+        ("x += c ? 1 : 2", "x = x + (c ? 1 : 2)", Some(serde_json::json!(["never"]))),
+        ("x *= c ? a : b", "x = x * (c ? a : b)", Some(serde_json::json!(["never"]))),
     ];
     Tester::new(OperatorAssignment::NAME, OperatorAssignment::PLUGIN, pass, fail)
         .expect_fix(fix)

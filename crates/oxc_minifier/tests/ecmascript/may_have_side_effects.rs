@@ -85,7 +85,7 @@ fn test_ts(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
@@ -118,7 +118,7 @@ fn test_with_target(source_text: &str, target: &str, expected: bool) {
 fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
@@ -132,7 +132,7 @@ fn test_in_function(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::FunctionDeclaration(stmt)) = &ret.program.body.first() else {
@@ -164,7 +164,7 @@ fn test_assign_target_with_global_variables(
     };
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(!ret.panicked, "{source_text}");
+    assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
@@ -720,6 +720,18 @@ fn test_binary_expressions() {
     test("[] instanceof 1", true); // throws an error
     test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
     test("[] instanceof Object", false);
+    for constructor in ["Object", "Number", "Boolean", "String", "Array"] {
+        for left in [
+            "(foo() > 0)",
+            "!foo()",
+            "void foo()",
+            "[foo()]",
+            "({ value: foo() })",
+            "(class { static value = foo() })",
+        ] {
+            test(&format!("{left} instanceof {constructor}"), true);
+        }
+    }
     test("a instanceof Object", true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
 
     // b maybe not a object
@@ -915,10 +927,27 @@ fn test_known_global_property_reads() {
     // Math properties
     test("Math.PI", false);
     test("Math.E", false);
+    test("Math.LN10", false);
+    test("Math.LN2", false);
+    test("Math.LOG10E", false);
+    test("Math.LOG2E", false);
+    test("Math.SQRT1_2", false);
+    test("Math.SQRT2", false);
     test("Math.abs", false);
     test("Math.floor", false);
     test("Math.random", false);
     test("Math.unknownProp", true);
+
+    // Number properties
+    test("Number.POSITIVE_INFINITY", false);
+    test("Number.NEGATIVE_INFINITY", false);
+    test("Number.EPSILON", false);
+    test("Number.NaN", false);
+    test("Number.MAX_VALUE", false);
+    test("Number.MIN_VALUE", false);
+    test("Number.MAX_SAFE_INTEGER", false);
+    test("Number.MIN_SAFE_INTEGER", false);
+    test("Number.UNKNOWN", true);
 
     // Object properties
     test("Object.keys", false);
@@ -983,6 +1012,7 @@ fn test_new_expressions() {
     test("new ReferenceError", false);
     // RegExp() with no arguments is valid (returns /(?:)/)
     test("new RegExp", false);
+    test("new RegExp('x', 'g', foo())", true);
     test("new SyntaxError", false);
     test("new TypeError", false);
     test("new URIError", false);
@@ -1039,6 +1069,7 @@ fn test_new_expressions() {
     // --- ArrayBuffer: ToIndex -> ToNumber, Symbol and BigInt throw ---
     test("new ArrayBuffer()", false);
     test("new ArrayBuffer(16)", false);
+    test("new ArrayBuffer(void foo())", true);
     test("new ArrayBuffer(x)", true); // unknown -> could be Symbol or BigInt
     test("new ArrayBuffer(0n)", true); // ToNumber(BigInt) throws
 
@@ -1354,6 +1385,10 @@ fn test_throwing_global_calls() {
     test("String.fromCodePoint(-1)", true);
     test("String.fromCodePoint(1.5)", true);
     test("String.fromCodePoint(0x110000)", true);
+    test("String.fromCodePoint('3.14')", true);
+    test("String.fromCodePoint(+'3.14')", true);
+    test("String.fromCodePoint(undefined)", true);
+    test("String.fromCodePoint(-Infinity)", true);
     test("String.fromCodePoint(65)", false);
     test("String.fromCodePoint(0, 0x10FFFF)", false);
     test("String.fromCodePoint(0, -1)", true);
@@ -1648,4 +1683,39 @@ fn test_property_write_side_effects_support() {
     // Sub-expression side effects still propagate
     test_with_ctx("(foo()).b = 1", &no_side_effects_ctx, true);
     test_with_ctx("a[foo()] = 1", &no_side_effects_ctx, true);
+}
+
+#[test]
+fn throwing_buffer_lengths_and_uri_arguments() {
+    for source in [
+        "new ArrayBuffer(-1)",
+        "new ArrayBuffer('-1')",
+        "new ArrayBuffer(-Infinity)",
+        "new ArrayBuffer(0n)",
+        "new ArrayBuffer(...[])",
+        "new ArrayBuffer(Infinity)",
+        "new ArrayBuffer(9007199254740992)",
+        "new ArrayBuffer(0, { get maxByteLength() { foo(); } })",
+        "decodeURI('%')",
+        "decodeURIComponent('%')",
+        "decodeURIComponent('%C0%AF')",
+        "decodeURIComponent(...[])",
+        "decodeURIComponent('%ED%A0%80')",
+        r#"encodeURI("\uD800")"#,
+        r#"encodeURIComponent("\uDC00")"#,
+        "decodeURIComponent(x)",
+        "encodeURI(x)",
+    ] {
+        test(source, true);
+    }
+    for source in [
+        "new ArrayBuffer(-0.5)",
+        "new ArrayBuffer(NaN)",
+        "decodeURI('hello')",
+        "decodeURIComponent(123)",
+        r#"encodeURI("\uD83D\uDE00")"#,
+        "encodeURIComponent(123)",
+    ] {
+        test(source, false);
+    }
 }

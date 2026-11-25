@@ -5,6 +5,24 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ unicorn(no-useless-switch-case): Useless case in switch statement.
    ╭─[no_useless_switch_case.tsx:3:13]
  2 │         switch (foo) {
+ 3 │             case undefined:
+   ·             ───────────────
+ 4 │             default:
+   ╰────
+  help: Consider removing this case or removing the `default` case.
+
+  ⚠ unicorn(no-useless-switch-case): Useless case in switch statement.
+   ╭─[no_useless_switch_case.tsx:3:13]
+ 2 │         switch (foo) {
+ 3 │             case null:
+   ·             ──────────
+ 4 │             default:
+   ╰────
+  help: Consider removing this case or removing the `default` case.
+
+  ⚠ unicorn(no-useless-switch-case): Useless case in switch statement.
+   ╭─[no_useless_switch_case.tsx:3:13]
+ 2 │         switch (foo) {
  3 │             case a:
    ·             ───────
  4 │             default:

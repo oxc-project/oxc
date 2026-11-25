@@ -105,13 +105,13 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentVitestVi {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportDeclaration(import) => {
-                if !is_vitest_import_source(import.source.value.as_str()) {
+                if !import.source.value.as_str().is_some_and(is_vitest_import_source) {
                     return;
                 }
 
@@ -127,17 +127,14 @@ impl Rule for ConsistentVitestVi {
                 ctx.diagnostic_with_fix(
                     consistent_vitest_vi_diagnostic(vitest_import.span(), &self.function),
                     |fixer| {
-                        let mut specifiers_without_opposite_accessor: Vec<&str> = import
-                            .specifiers
-                            .as_ref()
-                            .map(|specs| {
+                        let mut specifiers_without_opposite_accessor: Vec<&str> =
+                            import.specifiers.as_ref().map_or_default(|specs| {
                                 specs
                                     .iter()
                                     .filter(|spec| spec.name() != opposite.as_str())
                                     .map(|spec| fixer.source_range(spec.span()))
                                     .collect()
-                            })
-                            .unwrap_or_default();
+                            });
 
                         if specifiers_without_opposite_accessor.is_empty() {
                             fixer.replace(vitest_import.local().span, self.function.as_str())

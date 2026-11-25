@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div class="a b  c"></div>
+<div class=" a "></div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div class="a b c"></div>
+<div class=" a"></div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div class="a b c"></div>
+<div class=" a"></div>
+
+===================== End =====================

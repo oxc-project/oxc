@@ -2,6 +2,7 @@
 
 mod constants;
 mod driver;
+mod esbuild;
 mod exec;
 mod test_case;
 
@@ -31,6 +32,12 @@ pub struct TestRunnerOptions {
     /// If it's true, will override the output of mismatch test cases,
     /// and write it down to `overrides` folder
     pub r#override: bool,
+}
+
+impl TestRunnerOptions {
+    fn should_update_snapshots(&self) -> bool {
+        self.filter.is_none()
+    }
 }
 
 /// The test runner which walks the babel repository and searches for transformation tests.
@@ -67,6 +74,10 @@ fn fixture_root() -> PathBuf {
     conformance_root().join("fixtures")
 }
 
+fn expanded_test_root() -> PathBuf {
+    fixture_root().join("sources")
+}
+
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
         let snapshot = Snapshot::new(&babel_root(), /* show_commit */ true);
@@ -86,6 +97,9 @@ impl TestRunner {
             let transform_paths = Self::generate_test_cases(root, &self.options);
             self.generate_snapshot(root, &snap_root().join(snapshot), transform_paths);
             if self.options.exec {
+                if *name == "oxc" {
+                    esbuild::run(&self.options);
+                }
                 self.run_vitest(&format!("./fixtures/{name}"), &snap_root().join(exec_snapshot));
             }
         }
@@ -184,7 +198,7 @@ impl TestRunner {
             }
         }
 
-        if self.options.filter.is_none() {
+        if self.options.should_update_snapshots() {
             let all_passed =
                 all_passed.into_iter().map(|s| format!("* {s}")).collect::<Vec<_>>().join("\n");
             let snapshot = format!(

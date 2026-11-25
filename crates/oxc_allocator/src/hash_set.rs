@@ -119,15 +119,17 @@ impl<'alloc, T, S> HashSet<'alloc, T, S> {
     }
 }
 
-/// Methods that use the default [`FxBuildHasher`].
-impl<'alloc, T> HashSet<'alloc, T> {
+/// Methods for any hasher that implements [`Default`].
+///
+/// This includes [`FxBuildHasher`] and any custom hasher (e.g. `IdentBuildHasher`).
+impl<'alloc, T, S: Default> HashSet<'alloc, T, S> {
     /// Creates an empty [`HashSet`]. It will be allocated with the given allocator.
     ///
     /// The hash set is initially created with a capacity of 0, so it will not allocate
     /// until it is first inserted into.
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self::with_hasher_in(FxBuildHasher, allocator)
+        Self::with_hasher_in(S::default(), allocator)
     }
 
     /// Creates an empty [`HashSet`] with the specified capacity. It will be allocated with the given allocator.
@@ -136,7 +138,7 @@ impl<'alloc, T> HashSet<'alloc, T> {
     /// If capacity is 0, the hash set will not allocate.
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator)
+        Self::with_capacity_and_hasher_in(capacity, S::default(), allocator)
     }
 
     /// Create a new [`HashSet`] whose elements are taken from an iterator and allocated in the given `allocator`.
@@ -146,6 +148,7 @@ impl<'alloc, T> HashSet<'alloc, T> {
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self
     where
         T: Eq + Hash,
+        S: BuildHasher,
     {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
@@ -160,7 +163,7 @@ impl<'alloc, T> HashSet<'alloc, T> {
         //   e.g. filter iterators.
         let capacity = iter.size_hint().0;
         let set =
-            InnerHashSet::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.arena());
+            InnerHashSet::with_capacity_and_hasher_in(capacity, S::default(), allocator.arena());
         // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
         // to drop the `FxHashSet` in case of a panic in iterator's `next` method
         let mut set = ManuallyDrop::new(set);

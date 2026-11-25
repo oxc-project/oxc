@@ -15,6 +15,7 @@ mod declare_oxc_lint;
 ///
 /// And optionally, a 5th part for defining configuration if there are any config options.
 /// The config value may be a local type or a type path such as `shared::rule::RuleConfig`.
+/// Declaring a config type sets `RuleFlags::HAS_CONFIG` in `RuleMeta::FLAGS`.
 ///
 /// ## Documentation
 /// Lint rule documentation added here will be used to build documentation pages
@@ -26,6 +27,24 @@ mod declare_oxc_lint;
 /// Please see the [rule category
 /// documentation](https://oxc.rs/docs/contribute/linter.html#rule-category) for
 /// a full list of categories and their descriptions.
+///
+/// ## Recommended rules
+///
+/// Add the standalone `recommended` keyword among the options after the category
+/// to set `RuleFlags::IS_RECOMMENDED` in `RuleMeta::FLAGS`. It can appear before
+/// or after a fix kind or other options.
+///
+/// ```rust,ignore
+/// declare_oxc_lint!(
+///     /// Docs...
+///     MyRule,
+///     eslint,
+///     restriction,
+///     recommended,
+///     conditional_fix,
+///     version = "next",
+/// );
+/// ```
 ///
 /// ## Auto-fixes
 ///
@@ -63,9 +82,9 @@ mod declare_oxc_lint;
 /// );
 /// ```
 ///
-/// Adding `(tsgolint)` sets an internal `IS_TSGOLINT_RULE` flag to `true`, which
+/// Adding `(tsgolint)` sets `RuleFlags::IS_TSGOLINT_RULE` in `RuleMeta::FLAGS`, which
 /// allows the `oxlint` CLI to surface this rule to the external `tsgolint`
-/// executable. Rules without the marker keep the default `false` value and are
+/// executable. Rules without the marker leave this flag unset and are
 /// ignored by that integration. Only one marker is allowed and any other value
 /// will result in a compile error.
 ///

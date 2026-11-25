@@ -13,7 +13,11 @@ pub struct StylishOutputFormatter;
 
 impl InternalFormatter for StylishOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        Box::new(StylishReporter::default())
+        let reporter = StylishReporter::default();
+        // Keep CLI snapshots readable and independent of the test process's NO_COLOR setting.
+        #[cfg(test)]
+        let reporter = reporter.with_no_color(true);
+        Box::new(reporter)
     }
 }
 
@@ -67,10 +71,12 @@ impl StylishReporter {
             grouped.entry(info.filename.clone()).or_default().push((info, diagnostic));
         }
 
+        let cwd = std::env::current_dir().ok();
+
         for diagnostics in grouped.values() {
             let filename = &diagnostics[0].0.filename;
             let filename = if let Some(path) =
-                std::env::current_dir().ok().and_then(|d| d.join(filename).canonicalize().ok())
+                cwd.as_ref().and_then(|d| d.join(filename).canonicalize().ok())
             {
                 path.display().to_string()
             } else {

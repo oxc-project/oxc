@@ -177,7 +177,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let calls = self.registrations.iter().map(|(binding, persistent_id)| {
             variable_declarator_items.push(VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 binding.create_binding_pattern(ctx),
                 None,
                 None,
@@ -482,6 +481,8 @@ impl<'a> ReactRefresh<'a> {
         is_variable_declarator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
+        // This search runs in `enter_program`, before TypeScript wrappers in descendants are erased.
+        let expr = expr.get_inner_expression_mut();
         match expr {
             Expression::Identifier(ident) => {
                 // For case like:

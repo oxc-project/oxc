@@ -160,7 +160,7 @@ pub fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>
     }
     if let Some(member) = callee.get_member_expr()
         && let Expression::Identifier(obj) = &member.object().get_inner_expression()
-        && member.static_property_name() == Some("RegExp")
+        && member.static_property_name().is_some_and(|name| name == "RegExp")
         && (obj.is_global_reference_name(static_ident!("globalThis"), ctx.semantic().scoping())
             || obj.is_global_reference_name(static_ident!("window"), ctx.semantic().scoping())
             || obj.is_global_reference_name(static_ident!("global"), ctx.semantic().scoping()))

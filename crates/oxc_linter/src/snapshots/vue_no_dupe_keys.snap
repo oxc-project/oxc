@@ -2,6 +2,14 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ vue(no-dupe-keys): Duplicate key '/a/gi'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:6:14]
+ 5 │           computed: {
+ 6 │             [/a/gi] () {
+   ·              ─────
+ 7 │             }
+   ╰────
+
   ⚠ vue(no-dupe-keys): Duplicate key 'foo'. May cause name collision in script or template tag.
    ╭─[no_dupe_keys.tsx:6:13]
  5 │           computed: {
@@ -448,5 +456,21 @@ source: crates/oxc_linter/src/tester.rs
  2 │ <script>
  3 │ export default { props: { [true]: String }, data () { return { 'true': 1 } } }
    ·                                                                ──────
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key '\ud800'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:66]
+ 2 │ <script>
+ 3 │ export default { props: { "\uD800": String }, data () { return { "\uD800": 1 } } }
+   ·                                                                  ────────
+ 4 │ </script>
+   ╰────
+
+  ⚠ vue(no-dupe-keys): Duplicate key 'a\ud800b'. May cause name collision in script or template tag.
+   ╭─[no_dupe_keys.tsx:3:52]
+ 2 │ <script>
+ 3 │ export default { props: ["a\uD800b"], computed: { [`a\uD800b`] () { return 1 } } }
+   ·                                                    ──────────
  4 │ </script>
    ╰────

@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# DIVERGENCE: a comment indented deeper than the value it follows never
+# DIVERGENCE (DIVERGENCES.md#comment-over-indented): a comment indented deeper than the value it follows never
 # rewrites that value's layout; Prettier breaks `key: value` onto two lines
 # (`key:\n  value`) when such a comment follows it.
 Properties:
@@ -14,7 +14,7 @@ Properties:
 ------------------
 { printWidth: 80 }
 ------------------
-# DIVERGENCE: a comment indented deeper than the value it follows never
+# DIVERGENCE (DIVERGENCES.md#comment-over-indented): a comment indented deeper than the value it follows never
 # rewrites that value's layout; Prettier breaks `key: value` onto two lines
 # (`key:\n  value`) when such a comment follows it.
 Properties:
@@ -25,7 +25,7 @@ Properties:
 -------------------
 { printWidth: 100 }
 -------------------
-# DIVERGENCE: a comment indented deeper than the value it follows never
+# DIVERGENCE (DIVERGENCES.md#comment-over-indented): a comment indented deeper than the value it follows never
 # rewrites that value's layout; Prettier breaks `key: value` onto two lines
 # (`key:\n  value`) when such a comment follows it.
 Properties:

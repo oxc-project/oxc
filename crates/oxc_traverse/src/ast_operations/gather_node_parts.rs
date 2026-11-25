@@ -533,6 +533,9 @@ impl<'a> GatherNodeParts<'a> for PropertyKey<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {
             PropertyKey::StaticIdentifier(ident) => ident.gather(f),
+            PropertyKey::StaticStringLiteral(lit) => lit.gather(f),
+            PropertyKey::StaticNumericLiteral(lit) => lit.gather(f),
+            PropertyKey::StaticBigIntLiteral(lit) => lit.gather(f),
             PropertyKey::PrivateIdentifier(ident) => ident.gather(f),
             match_expression!(Self) => self.to_expression().gather(f),
         }
@@ -575,7 +578,10 @@ impl<'a> GatherNodeParts<'a> for PrivateIdentifier<'a> {
 
 impl<'a> GatherNodeParts<'a> for StringLiteral<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        f(self.value.as_str());
+        // Only UTF-8 text can contribute to a generated identifier name.
+        if let Some(value) = self.value.as_str() {
+            f(value);
+        }
     }
 }
 

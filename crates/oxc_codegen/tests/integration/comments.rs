@@ -30,10 +30,55 @@ fn test_comment_inside_pife_function_alternate_of_conditional() {
 // `? consequent : // comment\nalternate` (e.g. lowered optional chaining).
 #[test]
 fn test_line_comment_after_conditional_colon() {
-    test("x = cond ? a : // c\nb;", "x = cond ? a : // c\nb;\n");
+    test("x = cond ? a : // c\nb;", "x = cond ? a : \n// c\nb;\n");
     test_idempotency("x = cond ? a : // c\nb;");
     // Real-world shape: `a?.b() ?? c` with a leading comment, after lowering.
     test_idempotency("x = (_a = a) === null || _a === void 0 ? void 0 : // c1\n// c2\n_a.b();");
+}
+
+// A comment at the end of a line after code is a trailing comment on reparse, and dropped.
+// So a comment group that would break the line after such a comment starts on a new line.
+#[test]
+fn test_comments_not_stranded_at_line_end() {
+    // A break before a legal comment.
+    test("x = a ? b : /* c */ /*! L */ d;", "x = a ? b : \n/* c */\n/*! L */ d;\n");
+    test_idempotency("x = a ? b : /* c */ /*! L */ d;");
+    // Indented, as the next pass sees the legal comment at a line start.
+    test("x = { a: /* c */ /*! L */ b, c };", "x = {\n\ta: \n\t/* c */\n\t/*! L */ b,\n\tc\n};\n");
+    test_idempotency("x = { a: /* c */ /*! L */ b, c };");
+    // A line comment, which ends its line.
+    test("x = `a${( // c\nb)}c`;", "x = `a${\n// c\nb}c`;\n");
+    test_idempotency("x = `a${( // c\nb)}c`;");
+}
+
+// The groups on nested parentheses print back to back, so they are laid out as one group.
+// Caught on webpack's `BasicEvaluatedExpression.js`.
+#[test]
+fn test_comments_on_nested_parenthesized_operand() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    let source =
+        "x = a ? undefined : /** @type {A} */ (\n\t/** @type {B} */ (expression).range\n);";
+    test(source, "x = a ? undefined : \n/** @type {A} */\n/** @type {B} */ expression.range;\n");
+    test_idempotency(source);
+    // The conditional consequent prints only annotation comments, via a separate paren walk.
+    test_idempotency(
+        "x = a ? /* istanbul ignore next */ (\n\t/* istanbul ignore next */ (expression).range\n) : b;",
+    );
+    test_idempotency("a ? /* istanbul ignore next */ (\n  /* istanbul ignore next */\n  b\n) : c;");
+    test_idempotency("a ? /* istanbul ignore next */ (\n  // istanbul ignore next\n  b\n) : c;");
+    test_idempotency("x = a ? undefined : /*! A */ (\n  /** @type {B} */\n  /*! C */\n  expr\n);");
+    test_idempotency("x = a ? b : /* c1 */ (\n  /* c2 */ (\n    /*! L */\n    d\n  )\n);");
+    test_idempotency("x = a ? b : /* c1 */ (\n  /* c2 */ (\n    // c3\n    d\n  )\n);");
+    // A comment that ended its line still ends it when the next group started on the same line.
+    test("x = a ? b : // c1\n(/* c2 */ d);", "x = a ? b : \n// c1\n/* c2 */ d;\n");
+    test("x = a ? b :\n/* c1 */\n(/* c2 */ d);", "x = a ? b : \n/* c1 */\n/* c2 */ d;\n");
+    // Indented like a comment that started a line.
+    test_idempotency("x = { a:\n/* c1 */\n(/*! L */ b), c };");
+    // Minified, with comments kept.
+    let options =
+        CodegenOptions { comments: CommentOptions::default(), ..CodegenOptions::minify() };
+    test_idempotency_options("x = a ? b : /* c1 */ (\n  /* c2 */ /*! L */\n  d\n);", &options);
 }
 
 #[test]
@@ -69,6 +114,53 @@ fn test_comments_before_expression_operands_idempotency() {
     test_idempotency("const value = a ? /* istanbul ignore next */ first : second;");
     test_idempotency("condition ?\n  /* v8 ignore next */ uncovered() :\n  coveredAlternate();");
     test_idempotency("const value = { aFunction: /* istanbul ignore next */ () => {} };");
+}
+
+#[test]
+fn test_property_key_annotations_before_literals() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    let annotation_only = CodegenOptions {
+        comments: CommentOptions { normal: false, ..CommentOptions::default() },
+        ..CodegenOptions::default()
+    };
+    let source = r#"const key = /* @__KEY__ */ "_field";
+const lineKey = // #__KEY__
+"_field";
+object[/* #__KEY__ */ `_field`];"#;
+    crate::tester::test_options(
+        source,
+        r#"const key = /* @__KEY__ */ "_field";
+const lineKey = // #__KEY__
+"_field";
+object[/* #__KEY__ */ `_field`];
+"#,
+        annotation_only.clone(),
+    );
+    crate::tester::test_options(
+        "use(/* @__KEY__ */ \"_field\");",
+        "use(\n\t/* @__KEY__ */\n\t\"_field\"\n);\n",
+        annotation_only.clone(),
+    );
+
+    let minify_with_annotations = CodegenOptions { minify: true, ..annotation_only.clone() };
+    crate::tester::test_options(
+        "(/* @__KEY__ */ \"_field\");",
+        "/* @__KEY__ */`_field`;",
+        minify_with_annotations.clone(),
+    );
+
+    test_idempotency_options(source, &annotation_only);
+    test_idempotency_options("(/* @__KEY__ */ \"_field\");", &minify_with_annotations);
+
+    crate::tester::test_options(
+        "const key = /* @__KEY__ */ \"_field\";",
+        "const key = \"_field\";\n",
+        CodegenOptions {
+            comments: CommentOptions { annotation: false, ..CommentOptions::default() },
+            ..CodegenOptions::default()
+        },
+    );
 }
 
 // A mid-line comment group must not receive a full indent: `print_comments`
@@ -192,6 +284,38 @@ fn test_comment_at_top_of_file() {
     ret.program.comments[0].position = CommentPosition::Leading;
     let code = Codegen::new().build(&ret.program).code;
     assert_eq!(code, "/** comment */ export {};\n");
+}
+
+#[test]
+fn test_html_closing_annotation_after_code() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::{Codegen, CodegenOptions};
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source_type = SourceType::script();
+    for (source, pretty_delimiter, minified_delimiter) in [
+        ("foo();\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "//"),
+        ("if (true)\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("label:\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
+        ("{\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}\n}", "-->", "//"),
+    ] {
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.diagnostics.is_empty(), "Invalid source: {source}");
+
+        for minify in [false, true] {
+            let options = CodegenOptions { minify, ..CodegenOptions::default() };
+            let code = Codegen::new().with_options(options.clone()).build(&ret.program).code;
+            let reparsed = Parser::new(&allocator, &code, source_type).parse();
+            assert!(reparsed.diagnostics.is_empty(), "Invalid output: {code}");
+            let expected_comment = if minify { minified_delimiter } else { pretty_delimiter };
+            assert!(code.contains(&format!("{expected_comment} @__NO_SIDE_EFFECTS__\n")));
+            let second = Codegen::new().with_options(options).build(&reparsed.program).code;
+            assert_eq!(code, second);
+        }
+    }
 }
 
 #[test]
@@ -955,4 +1079,29 @@ fn test_comment_inside_parenthesized_expression_with_pife_arrow() {
 #[test]
 fn test_comment_inside_double_parenthesized_pife_arrow() {
     test_idempotency("const x = foo ? bar : ( ( ( a ) => a ) );");
+}
+
+// A leading comment on the statement which closes the directive prologue was dropped, because the
+// paren-protecting path prints that statement itself instead of going through its printer.
+#[test]
+fn test_comment_on_paren_protected_prologue_boundary() {
+    test_same("// leading comment\n(\"use strict\");\nfoo();\n");
+    test_same("\"use asm\";\n// leading comment\n(\"use strict\");\nfoo();\n");
+}
+
+#[test]
+fn test_block_comment_line_terminators() {
+    for separator in ["\u{2028}", "\u{2029}", "\n", "\r", "\r\n"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(&source, "function f() {\n\treturn (/* first\n\tsecond */ {});\n}\n");
+        test_idempotency(&source);
+    }
+    for separator in ["", "\u{2027}", "\u{202a}", "\u{00a0}"] {
+        let source = format!("function f(){{return (/* first{separator}second */ {{}});}}");
+        test(
+            &source,
+            &format!("function f() {{\n\treturn (/* first{separator}second */ {{}});\n}}\n"),
+        );
+        test_idempotency(&source);
+    }
 }

@@ -21,7 +21,7 @@ impl IsTerminated for Statement<'_> {
 
 impl IsTerminated for IfStatement<'_> {
     fn is_terminated(&self) -> bool {
-        self.consequent.is_terminated() && self.alternate.is_terminated()
+        self.alternate.is_terminated() && self.consequent.is_terminated()
     }
 }
 
@@ -32,7 +32,7 @@ impl IsTerminated for TryStatement<'_> {
         // present (an exception thrown before the try block's jump lands there).
         self.finalizer.as_ref().is_some_and(|f| f.is_terminated())
             || (self.block.is_terminated()
-                && self.handler.as_ref().is_none_or(|h| h.body.is_terminated()))
+                && self.handler.as_ref().is_some_and(|h| h.body.is_terminated()))
     }
 }
 

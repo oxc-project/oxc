@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -69,7 +69,8 @@ declare_oxc_lint!(
     style,
     config = PreferAwaitToThenConfig,
     version = "0.7.1",
-    short_description = "Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.",
+    short_description =
+        "Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.",
 );
 
 fn is_inside_yield_or_await(node: &AstNode) -> bool {
@@ -78,7 +79,7 @@ fn is_inside_yield_or_await(node: &AstNode) -> bool {
 
 impl Rule for PreferAwaitToThen {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -108,7 +109,7 @@ impl Rule for PreferAwaitToThen {
         let span = call_expr
             .callee
             .as_member_expression()
-            .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+            .and_then(MemberExpression::static_property_info)
             .map_or(call_expr.span, |(span, _)| span);
         ctx.diagnostic(prefer_wait_to_then_diagnostic(span));
     }

@@ -1,4 +1,5 @@
-// prettier-ignore on class property should not add extra semicolon
+// prettier-ignore on class property: the value prints verbatim, the `;` is the formatter's
+// (never doubled, added per `semi` when the source has none)
 export class Counter {
 	// prettier-ignore
 	'count' = $state(0);

@@ -59,10 +59,10 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            "before hook:\n" +
-            `createOnce call count: ${createOnceCallCount}\n` +
-            `this === rule: ${topLevelThis === createOnceRule}\n` +
-            `filename: ${context.filename}`,
+            "before hook:\n"
+            + `createOnce call count: ${createOnceCallCount}\n`
+            + `this === rule: ${topLevelThis === createOnceRule}\n`
+            + `filename: ${context.filename}`,
           node: SPAN,
         });
       },
@@ -72,9 +72,9 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            `ident visit fn "${node.name}":\n` +
-            `identNum: ${identNum}\n` +
-            `filename: ${context.filename}`,
+            `ident visit fn "${node.name}":\n`
+            + `identNum: ${identNum}\n`
+            + `filename: ${context.filename}`,
           node,
         });
       },
@@ -95,11 +95,11 @@ const createOnceRule: Rule = {
           ];
 
           if (
-            visits.length !== expectedVisits.length ||
-            visits.some(
+            visits.length !== expectedVisits.length
+            || visits.some(
               (v, i) =>
-                v.fileNum !== expectedVisits[i].fileNum ||
-                v.identNum !== expectedVisits[i].identNum,
+                v.fileNum !== expectedVisits[i].fileNum
+                || v.identNum !== expectedVisits[i].identNum,
             )
           ) {
             context.report({ message: `Unexpected visits: ${JSON.stringify(visits)}`, node: SPAN });
@@ -182,11 +182,11 @@ const createOnceSelectorRule: Rule = {
           ];
 
           if (
-            visits.length !== expectedVisits.length ||
-            visits.some(
+            visits.length !== expectedVisits.length
+            || visits.some(
               (v, i) =>
-                v.fileNum !== expectedVisits[i].fileNum ||
-                v.selector !== expectedVisits[i].selector,
+                v.fileNum !== expectedVisits[i].fileNum
+                || v.selector !== expectedVisits[i].selector,
             )
           ) {
             context.report({
@@ -287,12 +287,12 @@ function createCfgRule(ruleNum: number): Rule {
           ];
 
           if (
-            visits.length !== expectedVisits.length ||
-            visits.some(
+            visits.length !== expectedVisits.length
+            || visits.some(
               (v, i) =>
-                v.ruleNum !== expectedVisits[i].ruleNum ||
-                v.event !== expectedVisits[i].event ||
-                v.nodeType !== expectedVisits[i].nodeType,
+                v.ruleNum !== expectedVisits[i].ruleNum
+                || v.event !== expectedVisits[i].event
+                || v.nodeType !== expectedVisits[i].nodeType,
             )
           ) {
             context.report({

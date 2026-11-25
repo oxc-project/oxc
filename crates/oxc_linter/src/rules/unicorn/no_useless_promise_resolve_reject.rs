@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -69,6 +70,7 @@ declare_oxc_lint!(
     NoUselessPromiseResolveReject,
     unicorn,
     pedantic,
+    recommended,
     fix,
     config = NoUselessPromiseResolveRejectOptions,
     version = "0.0.18",
@@ -77,7 +79,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessPromiseResolveReject {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -96,9 +98,11 @@ impl Rule for NoUselessPromiseResolveReject {
             return;
         };
 
-        if !matches!(static_member_expr.property.name.as_str(), "resolve" | "reject") {
-            return;
-        }
+        let is_reject = match static_member_expr.property.name.as_str() {
+            "resolve" => false,
+            "reject" => true,
+            _ => return,
+        };
 
         let Some(parent) = outermost_paren_parent(node, ctx) else {
             return;
@@ -137,44 +141,19 @@ impl Rule for NoUselessPromiseResolveReject {
             return;
         }
 
-        match static_member_expr.property.name.as_str() {
-            "resolve" => {
-                ctx.diagnostic_with_fix(
-                    resolve(node.kind().span(), if is_yield { "yield" } else { "return" }),
-                    |fixer| {
-                        generate_fix(
-                            call_expr,
-                            false,
-                            is_yield,
-                            is_in_try_statement,
-                            fixer,
-                            ctx,
-                            node,
-                        )
-                    },
-                );
-            }
-            "reject" => {
-                if self.0.allow_reject {
-                    return;
-                }
-                ctx.diagnostic_with_fix(
-                    reject(node.kind().span(), if is_yield { "yield" } else { "return" }),
-                    |fixer| {
-                        generate_fix(
-                            call_expr,
-                            true,
-                            is_yield,
-                            is_in_try_statement,
-                            fixer,
-                            ctx,
-                            node,
-                        )
-                    },
-                );
-            }
-            _ => unreachable!(),
+        if is_reject && self.0.allow_reject {
+            return;
         }
+
+        let preferred = if is_yield { "yield" } else { "return" };
+        let diagnostic = if is_reject {
+            reject(node.kind().span(), preferred)
+        } else {
+            resolve(node.kind().span(), preferred)
+        };
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            generate_fix(call_expr, is_reject, is_yield, is_in_try_statement, fixer, ctx, node)
+        });
     }
 }
 
@@ -224,7 +203,7 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
     if member_expr.is_computed() {
         return false;
     }
-    let Some(static_prop_name) = member_expr.static_property_name() else {
+    let Some(static_prop_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
         return false;
     };
 

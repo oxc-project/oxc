@@ -36,6 +36,7 @@ declare_oxc_lint!(
     NoDeprecatedVueConfigKeycodes,
     vue,
     correctness,
+    recommended,
     version = "1.62.0",
     short_description = "Disallow using deprecated `Vue.config.keyCodes` (in Vue.js 3.0.0+).",
 );
@@ -57,7 +58,7 @@ impl Rule for NoDeprecatedVueConfigKeycodes {
         };
         let Some(middle) = middle else { return };
 
-        if middle.static_property_name() != Some("config") {
+        if middle.static_property_name().is_none_or(|name| name != "config") {
             return;
         }
 

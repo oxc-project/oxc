@@ -203,7 +203,6 @@ impl ContentEq for ObjectProperty<'_> {
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.method, &other.method)
             && ContentEq::content_eq(&self.shorthand, &other.shorthand)
-            && ContentEq::content_eq(&self.computed, &other.computed)
     }
 }
 
@@ -211,6 +210,9 @@ impl ContentEq for PropertyKey<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::StaticIdentifier(a), Self::StaticIdentifier(b)) => a.content_eq(b),
+            (Self::StaticStringLiteral(a), Self::StaticStringLiteral(b)) => a.content_eq(b),
+            (Self::StaticNumericLiteral(a), Self::StaticNumericLiteral(b)) => a.content_eq(b),
+            (Self::StaticBigIntLiteral(a), Self::StaticBigIntLiteral(b)) => a.content_eq(b),
             (Self::PrivateIdentifier(a), Self::PrivateIdentifier(b)) => a.content_eq(b),
             (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
             (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
@@ -292,7 +294,6 @@ impl ContentEq for TemplateElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.tail, &other.tail)
-            && ContentEq::content_eq(&self.lone_surrogates, &other.lone_surrogates)
     }
 }
 
@@ -621,7 +622,6 @@ impl ContentEq for AssignmentTargetPropertyProperty<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.binding, &other.binding)
-            && ContentEq::content_eq(&self.computed, &other.computed)
     }
 }
 
@@ -697,7 +697,10 @@ impl ContentEq for Statement<'_> {
             (Self::TSTypeAliasDeclaration(a), Self::TSTypeAliasDeclaration(b)) => a.content_eq(b),
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
-            (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSExternalModuleDeclaration(a), Self::TSExternalModuleDeclaration(b)) => {
+                a.content_eq(b)
+            }
+            (Self::TSNamespaceDeclaration(a), Self::TSNamespaceDeclaration(b)) => a.content_eq(b),
             (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
@@ -747,7 +750,10 @@ impl ContentEq for Declaration<'_> {
             (Self::TSTypeAliasDeclaration(a), Self::TSTypeAliasDeclaration(b)) => a.content_eq(b),
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
-            (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSExternalModuleDeclaration(a), Self::TSExternalModuleDeclaration(b)) => {
+                a.content_eq(b)
+            }
+            (Self::TSNamespaceDeclaration(a), Self::TSNamespaceDeclaration(b)) => a.content_eq(b),
             (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
@@ -773,8 +779,7 @@ impl ContentEq for VariableDeclarationKind {
 
 impl ContentEq for VariableDeclarator<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.kind, &other.kind)
-            && ContentEq::content_eq(&self.id, &other.id)
+        ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.init, &other.init)
             && ContentEq::content_eq(&self.definite, &other.definite)
@@ -1034,7 +1039,6 @@ impl ContentEq for BindingProperty<'_> {
         ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.shorthand, &other.shorthand)
-            && ContentEq::content_eq(&self.computed, &other.computed)
     }
 }
 
@@ -1200,12 +1204,18 @@ impl ContentEq for Class<'_> {
             && ContentEq::content_eq(&self.decorators, &other.decorators)
             && ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
-            && ContentEq::content_eq(&self.super_class, &other.super_class)
-            && ContentEq::content_eq(&self.super_type_arguments, &other.super_type_arguments)
+            && ContentEq::content_eq(&self.heritage, &other.heritage)
             && ContentEq::content_eq(&self.implements, &other.implements)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
             && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
+impl ContentEq for ClassHeritage<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.expression, &other.expression)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -1241,7 +1251,6 @@ impl ContentEq for MethodDefinition<'_> {
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.kind, &other.kind)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.optional, &other.optional)
@@ -1262,7 +1271,6 @@ impl ContentEq for PropertyDefinition<'_> {
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.declare, &other.declare)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
@@ -1330,7 +1338,6 @@ impl ContentEq for AccessorProperty<'_> {
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.definite, &other.definite)
@@ -1570,7 +1577,6 @@ impl ContentEq for NumericLiteral<'_> {
 impl ContentEq for StringLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.lone_surrogates, &other.lone_surrogates)
     }
 }
 
@@ -1596,6 +1602,12 @@ impl ContentEq for RegExp<'_> {
 impl ContentEq for RegExpPattern<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.text, &other.text)
+    }
+}
+
+impl ContentEq for RegExpFlags {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 
@@ -2235,8 +2247,7 @@ impl ContentEq for TSInterfaceBody<'_> {
 
 impl ContentEq for TSPropertySignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.computed, &other.computed)
-            && ContentEq::content_eq(&self.optional, &other.optional)
+        ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
@@ -2288,7 +2299,6 @@ impl ContentEq for TSMethodSignatureKind {
 impl ContentEq for TSMethodSignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.key, &other.key)
-            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
@@ -2315,7 +2325,7 @@ impl ContentEq for TSIndexSignatureName<'_> {
 
 impl ContentEq for TSInterfaceHeritage<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
+        ContentEq::content_eq(&self.type_name, &other.type_name)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
@@ -2338,7 +2348,15 @@ impl ContentEq for TSTypePredicateName<'_> {
     }
 }
 
-impl ContentEq for TSModuleDeclaration<'_> {
+impl ContentEq for TSExternalModuleDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.id, &other.id)
+            && ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
+impl ContentEq for TSNamespaceDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.body, &other.body)
@@ -2347,26 +2365,16 @@ impl ContentEq for TSModuleDeclaration<'_> {
     }
 }
 
-impl ContentEq for TSModuleDeclarationKind {
+impl ContentEq for TSNamespaceDeclarationKind {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }
 }
 
-impl ContentEq for TSModuleDeclarationName<'_> {
+impl ContentEq for TSNamespaceDeclarationBody<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for TSModuleDeclarationBody<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSNamespaceDeclaration(a), Self::TSNamespaceDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleBlock(a), Self::TSModuleBlock(b)) => a.content_eq(b),
             _ => false,
         }
@@ -2607,9 +2615,22 @@ impl ContentEq for CommentContent {
     }
 }
 
+impl ContentEq for CommentNewlines {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for CommentPlacement {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 impl ContentEq for Comment {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.attached_to, &other.attached_to)
+            && ContentEq::content_eq(&self.placement, &other.placement)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.position, &other.position)
             && ContentEq::content_eq(&self.newlines, &other.newlines)

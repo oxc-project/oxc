@@ -54,7 +54,7 @@ impl PreferTagOverRole {
         if let JSXAttributeItem::Attribute(attr) = role_prop
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
-            let roles = role_values.value.split_whitespace();
+            let roles = role_values.value.as_str().into_iter().flat_map(str::split_whitespace);
             for role in roles {
                 Self::check_role(role, jsx_name, attr.span, ctx);
             }
@@ -62,6 +62,10 @@ impl PreferTagOverRole {
     }
 
     fn check_role(role: &str, jsx_name: &str, span: Span, ctx: &LintContext) {
+        // An <img> cannot preserve an inline SVG's contents.
+        if role == "img" && jsx_name == "svg" {
+            return;
+        }
         let tags = get_tags_for_role(role);
         if !tags.is_empty() && !tags.contains(&jsx_name) {
             let tag = tags.join(", ");
@@ -140,6 +144,7 @@ fn test() {
         "<th role=\"columnheader\" />",
         "<input role=\"searchbox\" />",
         "<input role=\"spinbutton\" />",
+        r##"<svg role="img" aria-label="Logo"><use href="#l" /></svg>"##,
     ];
     let fail: Vec<&str> = vec![
         r#"<div role="checkbox" />"#,

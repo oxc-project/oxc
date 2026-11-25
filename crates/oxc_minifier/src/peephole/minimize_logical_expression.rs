@@ -236,7 +236,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Expression::SequenceExpression(sequence_expr) = &e.right {
             let Some(Expression::AssignmentExpression(assignment_expr)) =
-                sequence_expr.expressions.last()
+                Self::last_expression_in_sequence(sequence_expr)
             else {
                 return;
             };
@@ -248,20 +248,20 @@ impl<'a> PeepholeOptimizations {
             }
 
             let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
-            let Some(Expression::AssignmentExpression(mut assignment_expr)) =
-                sequence_expr.expressions.pop()
+            let Some(Expression::AssignmentExpression(assignment_expr)) =
+                Self::pop_expression_from_sequence(sequence_expr)
             else {
                 unreachable!()
             };
 
-            Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+            let AssignmentExpression { left, right, .. } = assignment_expr.unbox();
+            Self::mark_assignment_target_as_read(&left, ctx);
 
-            let assign_value = assignment_expr.right.take_in(ctx);
-            sequence_expr.expressions.push(assign_value);
+            sequence_expr.expressions.push(right);
             let new_expr = Expression::new_assignment_expression(
                 e.span,
                 e.operator.to_assignment_operator(),
-                assignment_expr.left.take_in(ctx),
+                left,
                 e.right.take_in(ctx),
                 ctx,
             );
@@ -320,7 +320,7 @@ impl<'a> PeepholeOptimizations {
             AssignmentTarget::PrivateFieldExpression(e) => &e.object,
             _ => return,
         };
-        if let Expression::Identifier(ident) = object.get_inner_expression()
+        if let Expression::Identifier(ident) = object
             && let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id()
         {
             ctx.state.symbols.record_member_write_effect(symbol_id, MemberWriteEffect::Hazard);

@@ -190,3 +190,17 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
   help: Remove this property access, or remove `set` from the method
+
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+   ╭─[no_accessor_recursion.tsx:1:37]
+ 1 │ const o = { get "\uD800"() { return this["\uD800"]; } };
+   ·                                     ──────────────
+   ╰────
+  help: Remove this property access, or remove `get` from the method
+
+  ⚠ unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
+   ╭─[no_accessor_recursion.tsx:1:37]
+ 1 │ class Foo { get "\uD800"() { return this["\uD800"]; } }
+   ·                                     ──────────────
+   ╰────
+  help: Remove this property access, or remove `get` from the method

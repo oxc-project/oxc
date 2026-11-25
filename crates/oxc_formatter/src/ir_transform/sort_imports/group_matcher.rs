@@ -10,24 +10,39 @@ pub struct ImportMetadata<'a> {
     pub modifiers: Vec<ImportModifier>,
 }
 
+/// `(group index, subgroup index)`.
+/// The subgroup index is the position of the matched entry within its group,
+/// e.g. in `[["type-external", "value-external"]]`, `value-external` is `(0, 1)`.
+pub type GroupIndex = (usize, u32);
+
 pub struct GroupMatcher {
     // Custom groups that are used in `options.groups`
-    custom_groups: Vec<(CustomGroupDefinition, usize)>,
+    custom_groups: Vec<(CustomGroupDefinition, GroupIndex)>,
     // Predefined groups sorted by priority,
     // so that we don't need to enumerate all possible group names of a given import.
-    predefined_groups: Vec<(GroupName, usize)>,
-    // The index of "unknown" in groups or `groups.len()` if absent
-    unknown_group_index: usize,
+    predefined_groups: Vec<(GroupName, GroupIndex)>,
+    // The index of "unknown" in groups or `(groups.len(), 0)` if absent
+    unknown_group_index: GroupIndex,
+    // Whether a catch-all `side_effect(_style)` group is in use:
+    // the explicit opt-in for regrouping side-effect imports even with `sort_side_effects: false`.
+    // Either the predefined group, or a used custom group with the bare selector;
+    // a custom group that merely happens to match (by pattern or modifiers) is NOT an opt-in.
+    // Config-only facts, computed once here and queried per import.
+    regroup_side_effect: bool,
+    regroup_side_effect_style: bool,
 }
 
 impl GroupMatcher {
     pub fn new(groups: &[Vec<GroupEntry>], custom_groups: &[CustomGroupDefinition]) -> Self {
-        let mut unknown_group_index: Option<usize> = None;
+        let mut unknown_group_index: Option<GroupIndex> = None;
 
         let mut used_custom_group_index_map = FxHashMap::default();
         let mut predefined_groups = Vec::new();
         for (index, group_union) in groups.iter().enumerate() {
-            for entry in group_union {
+            for (sub_index, entry) in group_union.iter().enumerate() {
+                // A group never has anywhere near `u32::MAX` entries
+                #[expect(clippy::cast_possible_truncation)]
+                let index = (index, sub_index as u32);
                 match entry {
                     GroupEntry::Unknown => {
                         unknown_group_index = Some(index);
@@ -42,7 +57,7 @@ impl GroupMatcher {
             }
         }
 
-        let mut used_custom_groups: Vec<(CustomGroupDefinition, usize)> =
+        let mut used_custom_groups: Vec<(CustomGroupDefinition, GroupIndex)> =
             Vec::with_capacity(used_custom_group_index_map.len());
         for custom_group in custom_groups {
             if let Some(index) = used_custom_group_index_map.get(custom_group.group_name.as_str()) {
@@ -52,14 +67,23 @@ impl GroupMatcher {
 
         predefined_groups.sort_by(|a, b| a.0.cmp(&b.0));
 
+        let has_catch_all_group_for = |selector: ImportSelector| {
+            predefined_groups.iter().any(|(group, _)| group.is_plain_selector(selector))
+                || used_custom_groups.iter().any(|(group, _)| group.is_plain_selector(selector))
+        };
+        let regroup_side_effect = has_catch_all_group_for(ImportSelector::SideEffect);
+        let regroup_side_effect_style = has_catch_all_group_for(ImportSelector::SideEffectStyle);
+
         Self {
             custom_groups: used_custom_groups,
             predefined_groups,
-            unknown_group_index: unknown_group_index.unwrap_or(groups.len()),
+            unknown_group_index: unknown_group_index.unwrap_or((groups.len(), 0)),
+            regroup_side_effect,
+            regroup_side_effect_style,
         }
     }
 
-    pub fn compute_group_index(&self, import_metadata: &ImportMetadata) -> usize {
+    pub fn compute_group_index(&self, import_metadata: &ImportMetadata) -> GroupIndex {
         for (custom_group, index) in &self.custom_groups {
             let is_match = {
                 let name_matches = custom_group.element_name_pattern.is_empty()
@@ -93,13 +117,9 @@ impl GroupMatcher {
     }
 
     pub fn should_regroup_side_effect(&self) -> bool {
-        self.predefined_groups
-            .iter()
-            .any(|(group, _)| group.is_plain_selector(ImportSelector::SideEffect))
+        self.regroup_side_effect
     }
     pub fn should_regroup_side_effect_style(&self) -> bool {
-        self.predefined_groups
-            .iter()
-            .any(|(group, _)| group.is_plain_selector(ImportSelector::SideEffectStyle))
+        self.regroup_side_effect_style
     }
 }

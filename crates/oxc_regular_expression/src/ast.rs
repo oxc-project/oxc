@@ -55,7 +55,7 @@ pub enum Term<'a> {
 }
 
 /// Simple form of assertion.
-/// e.g. `^`, `$`, `\b`, `\B`
+/// e.g. `^`, `$`, `\b`, `\B`, `\A`, `\z`, `\Z`
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq)]
@@ -72,6 +72,13 @@ pub enum BoundaryAssertionKind {
     End = 1,
     Boundary = 2,
     NegativeBoundary = 3,
+    /// `\A`: start of input, regardless of multiline mode. Unicode mode only.
+    StartBuffer = 4,
+    /// `\z`: end of input, regardless of multiline mode. Unicode mode only.
+    EndBuffer = 5,
+    /// `\Z`: end of input or before a final line terminator or CRLF sequence,
+    /// regardless of multiline mode. Unicode mode only.
+    EndBufferOptionalNewline = 6,
 }
 
 /// Lookaround assertion.
@@ -292,7 +299,9 @@ pub struct Modifiers {
 
 bitflags! {
     /// Each part of modifier in [`Modifiers`].
+    #[ast]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[generate_derive(CloneIn, ContentEq)]
     pub struct Modifier: u8 {
         /// Ignore case flag
         const I = 1 << 0;
@@ -302,10 +311,6 @@ bitflags! {
         const S = 1 << 2;
     }
 }
-/// Dummy type to communicate the content of `Modifier` to `oxc_ast_tools`.
-#[ast(foreign = Modifier)]
-#[expect(dead_code)]
-struct ModifierAlias(u8);
 
 /// Backreference by index.
 /// e.g. `\1`, `\2`, `\3`

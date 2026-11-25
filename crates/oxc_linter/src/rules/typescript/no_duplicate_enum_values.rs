@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -24,7 +25,7 @@ fn no_duplicate_enum_values_diagnostic(
     let second_init_span = second_member.initializer.as_ref().map(GetSpan::span).unwrap();
 
     OxcDiagnostic::warn(format!("Duplicate enum value `{value}`"))
-        .with_help(format!("Give {second_name} a unique value"))
+        .with_help(format!("Give {} a unique value", second_name.display()))
         .with_labels([
             first_init_span.label(format!("{value} is first used as an initializer here")),
             second_init_span.label("and is re-used here"),
@@ -86,6 +87,7 @@ declare_oxc_lint!(
     NoDuplicateEnumValues,
     typescript,
     correctness,
+    recommended,
     version = "0.0.8",
     short_description = "Disallow duplicate enum member values.",
 );
@@ -97,12 +99,12 @@ impl Rule for NoDuplicateEnumValues {
             return;
         };
         let mut seen_number_values: Vec<(f64, Span)> = vec![];
-        let mut seen_string_values: FxHashMap<&str, Span> = FxHashMap::default();
+        let mut seen_string_values: FxHashMap<JSStr, Span> = FxHashMap::default();
         for enum_member in &enum_body.members {
             let Some(initializer) = &enum_member.initializer else {
                 continue;
             };
-            match initializer {
+            let value = match initializer {
                 Expression::NumericLiteral(num) => {
                     if let Some((_, old_span)) =
                         seen_number_values.iter().find(|(v, _)| *v == num.value)
@@ -115,20 +117,24 @@ impl Rule for NoDuplicateEnumValues {
                     } else {
                         seen_number_values.push((num.value, num.span));
                     }
+                    continue;
                 }
-                Expression::StringLiteral(s) => {
-                    if let Some(old_span) = seen_string_values.insert(s.value.as_str(), s.span) {
-                        // Formatting here for prettier messages. This makes it
-                        // look like "Duplicate enum value 'A'"
-                        let v = format!("'{}'", s.value);
-                        ctx.diagnostic(no_duplicate_enum_values_diagnostic(
-                            old_span,
-                            enum_member,
-                            &v,
-                        ));
-                    }
+                Expression::StringLiteral(string) => string.value,
+                Expression::TemplateLiteral(template) => {
+                    let Some(value) = template.single_quasi() else { continue };
+                    value
                 }
-                _ => {}
+                _ => continue,
+            };
+            if let Some(old_span) = seen_string_values.insert(value, initializer.span()) {
+                let display_value = value
+                    .as_str()
+                    .map_or_else(|| format!("{value:?}"), |value| format!("'{value}'"));
+                ctx.diagnostic(no_duplicate_enum_values_diagnostic(
+                    old_span,
+                    enum_member,
+                    &display_value,
+                ));
             }
         }
     }
@@ -384,19 +390,24 @@ fn test() {
               D = 1,
             }
         ",
-        // TODO: Fix the following cases where there is a raw template literal.
-        // "
-        //     enum E {
-        //       A = 'A',
-        //       B = `A`,
-        //     }
-        // ",
-        // "
-        //     enum E {
-        //       A = `A`,
-        //       B = `A`,
-        //     }
-        // ",
+        "
+            enum E {
+              A = 'A',
+              B = `A`,
+            }
+        ",
+        "
+            enum E {
+              A = `A`,
+              B = `A`,
+            }
+        ",
+        r"
+            enum E {
+              A = `\u0041`,
+              B = 'A',
+            }
+        ",
     ];
 
     Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::PLUGIN, pass, fail)

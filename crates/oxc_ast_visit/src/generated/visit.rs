@@ -522,6 +522,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_heritage(&mut self, it: &ClassHeritage<'a>) {
+        walk_class_heritage(self, it);
+    }
+
+    #[inline]
     fn visit_class_body(&mut self, it: &ClassBody<'a>) {
         walk_class_body(self, it);
     }
@@ -1070,18 +1075,18 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
-        walk_ts_module_declaration(self, it);
+    fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
+        walk_ts_external_module_declaration(self, it);
     }
 
     #[inline]
-    fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
-        walk_ts_module_declaration_name(self, it);
+    fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
+        walk_ts_namespace_declaration(self, it);
     }
 
     #[inline]
-    fn visit_ts_module_declaration_body(&mut self, it: &TSModuleDeclarationBody<'a>) {
-        walk_ts_module_declaration_body(self, it);
+    fn visit_ts_namespace_declaration_body(&mut self, it: &TSNamespaceDeclarationBody<'a>) {
+        walk_ts_namespace_declaration_body(self, it);
     }
 
     #[inline]
@@ -1556,11 +1561,13 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_property_key<'a, V: Visit<'a>>(visitor: &mut V, it: &PropertyKey<'a>) {
         // No `AstKind` for this type
         match it {
             PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
+            PropertyKey::StaticStringLiteral(it) => visitor.visit_string_literal(it),
+            PropertyKey::StaticNumericLiteral(it) => visitor.visit_numeric_literal(it),
+            PropertyKey::StaticBigIntLiteral(it) => visitor.visit_big_int_literal(it),
             PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
             match_expression!(PropertyKey) => visitor.visit_expression(it.to_expression()),
         }
@@ -2092,7 +2099,10 @@ pub mod walk {
             Declaration::TSTypeAliasDeclaration(it) => visitor.visit_ts_type_alias_declaration(it),
             Declaration::TSInterfaceDeclaration(it) => visitor.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => visitor.visit_ts_enum_declaration(it),
-            Declaration::TSModuleDeclaration(it) => visitor.visit_ts_module_declaration(it),
+            Declaration::TSExternalModuleDeclaration(it) => {
+                visitor.visit_ts_external_module_declaration(it)
+            }
+            Declaration::TSNamespaceDeclaration(it) => visitor.visit_ts_namespace_declaration(it),
             Declaration::TSGlobalDeclaration(it) => visitor.visit_ts_global_declaration(it),
             Declaration::TSImportEqualsDeclaration(it) => {
                 visitor.visit_ts_import_equals_declaration(it)
@@ -2605,16 +2615,22 @@ pub mod walk {
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_class) = &it.super_class {
-            visitor.visit_expression(super_class);
-        }
-        if let Some(super_type_arguments) = &it.super_type_arguments {
-            visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
+        if let Some(heritage) = &it.heritage {
+            visitor.visit_class_heritage(heritage);
         }
         visitor.visit_ts_class_implements_list(&it.implements);
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_heritage<'a, V: Visit<'a>>(visitor: &mut V, it: &ClassHeritage<'a>) {
+        // No `AstKind` for this type
+        visitor.visit_expression(&it.expression);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
+        }
     }
 
     #[inline]
@@ -2646,12 +2662,7 @@ pub mod walk {
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
         {
-            let flags = match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::Function,
-            };
+            let flags = it.kind.scope_flags();
             visitor.visit_function(&it.value, flags);
         }
         visitor.leave_node(kind);
@@ -3811,9 +3822,9 @@ pub mod walk {
     pub fn walk_ts_method_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSMethodSignature<'a>) {
         let kind = AstKind::TSMethodSignature(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.key);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
@@ -3868,7 +3879,7 @@ pub mod walk {
         let kind = AstKind::TSInterfaceHeritage(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
+        visitor.visit_ts_type_name(&it.type_name);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
@@ -3900,18 +3911,18 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_ts_module_declaration<'a, V: Visit<'a>>(
+    pub fn walk_ts_external_module_declaration<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &TSModuleDeclaration<'a>,
+        it: &TSExternalModuleDeclaration<'a>,
     ) {
-        let kind = AstKind::TSModuleDeclaration(visitor.alloc(it));
+        let kind = AstKind::TSExternalModuleDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_module_declaration_name(&it.id);
+        visitor.visit_string_literal(&it.id);
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
-                if it.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive) {
+                if it.body.as_ref().is_some_and(|body| body.has_use_strict_directive()) {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags
@@ -3919,35 +3930,47 @@ pub mod walk {
             &it.scope_id,
         );
         if let Some(body) = &it.body {
-            visitor.visit_ts_module_declaration_body(body);
+            visitor.visit_ts_module_block(body);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_ts_module_declaration_name<'a, V: Visit<'a>>(
+    pub fn walk_ts_namespace_declaration<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &TSModuleDeclarationName<'a>,
+        it: &TSNamespaceDeclaration<'a>,
     ) {
-        // No `AstKind` for this type
-        match it {
-            TSModuleDeclarationName::Identifier(it) => visitor.visit_binding_identifier(it),
-            TSModuleDeclarationName::StringLiteral(it) => visitor.visit_string_literal(it),
-        }
+        let kind = AstKind::TSNamespaceDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_binding_identifier(&it.id);
+        visitor.enter_scope(
+            {
+                let mut flags = ScopeFlags::TsModuleBlock;
+                if it.body.has_use_strict_directive() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &it.scope_id,
+        );
+        visitor.visit_ts_namespace_declaration_body(&it.body);
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_ts_module_declaration_body<'a, V: Visit<'a>>(
+    pub fn walk_ts_namespace_declaration_body<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &TSModuleDeclarationBody<'a>,
+        it: &TSNamespaceDeclarationBody<'a>,
     ) {
         // No `AstKind` for this type
         match it {
-            TSModuleDeclarationBody::TSModuleDeclaration(it) => {
-                visitor.visit_ts_module_declaration(it)
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(it) => {
+                visitor.visit_ts_namespace_declaration(it)
             }
-            TSModuleDeclarationBody::TSModuleBlock(it) => visitor.visit_ts_module_block(it),
+            TSNamespaceDeclarationBody::TSModuleBlock(it) => visitor.visit_ts_module_block(it),
         }
     }
 

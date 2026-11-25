@@ -32,20 +32,20 @@ function useFoo(t0) {
 	}
 	const y = t2;
 	let t3;
-	if ($[4] !== prop3 || $[5] !== prop4?.inner) {
+	if ($[4] !== prop3 || $[5] !== prop4) {
 		t3 = prop3?.fn(prop4?.inner.value).toString();
 		$[4] = prop3;
-		$[5] = prop4?.inner;
+		$[5] = prop4;
 		$[6] = t3;
 	} else {
 		t3 = $[6];
 	}
 	const z = t3;
 	let t4;
-	if ($[7] !== prop5 || $[8] !== prop6?.inner) {
+	if ($[7] !== prop5 || $[8] !== prop6) {
 		t4 = prop5?.fn(prop6?.inner.value)?.toString();
 		$[7] = prop5;
-		$[8] = prop6?.inner;
+		$[8] = prop6;
 		$[9] = t4;
 	} else {
 		t4 = $[9];

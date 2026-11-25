@@ -68,7 +68,7 @@ impl Rule for SymbolDescription {
 
         if ident.name == "Symbol"
             && call_expr.arguments.is_empty()
-            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic(symbol_description_diagnostic(call_expr.span));
         }
@@ -86,6 +86,7 @@ fn test() {
         "Symbol(); var Symbol = function () {};",
         "function bar() { var Symbol = function () {}; Symbol(); }",
         "function bar(Symbol) { Symbol(); }",
+        r#"function f(FakeSymbol) { const Symbol = FakeSymbol; Symbol(); }; Symbol("Foo");"#,
     ];
 
     let fail = vec!["Symbol();", "Symbol(); Symbol = function () {};"];

@@ -1,29 +1,29 @@
-a.`PLACEHOLDER-0`:focus,a.`PLACEHOLDER-1`:hover {
+a.`oxfmt_css_0`:focus,a.`oxfmt_css_1`:hover {
   color: red;
 }
-.foo,   .bar    `PLACEHOLDER-2` {
+.foo,   .bar    `oxfmt_css_2` {
   color: blue;
 }
-& > :not(.`PLACEHOLDER-3`):not(`PLACEHOLDER-4`) {
+& > :not(.`oxfmt_css_3`):not(`oxfmt_css_4`) {
   display: flex;
 }
-#`PLACEHOLDER-5` {
+#`oxfmt_css_5` {
   color: red;
 }
-a[data-x=`PLACEHOLDER-6`] {
+a[data-x=`oxfmt_css_6`] {
   color: blue;
 }
 /* A placeholder immediately glued to selector content (no space) is a
    compound-selector piece: commas + newlines to the next placeholder
    must NOT split the run into a bare-placeholder statement + separate rule. */
-`PLACEHOLDER-7`:hover &,
-  `PLACEHOLDER-8`:focus-within &,
-  `PLACEHOLDER-9`:after {
+`oxfmt_css_7`:hover &,
+  `oxfmt_css_8`:focus-within &,
+  `oxfmt_css_9`:after {
   color: red;
 }
 /* But space-separated placeholders (styled-components' `${sanitize} ${fonts}`
    mixin idiom) stay standalone; the `html` on the next line is a separate rule. */
-`PLACEHOLDER-10` `PLACEHOLDER-11`
+`oxfmt_css_10` `oxfmt_css_11`
 html {
   margin: 0;
 }

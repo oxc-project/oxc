@@ -19,6 +19,9 @@ const { a: x, /** @type {object} */ ...rest2 } = obj;
 // Nested patterns
 const [{ a, /** @type {number} */ ...inner }, /** @type {any[]} */ ...outer] = nested;
 
+// FormalParameters (issue #18589)
+(/** @type {string} */ param, /** @type {string[]} */ ...rest) => {};
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -41,6 +44,9 @@ const { a: x, /** @type {object} */ ...rest2 } = obj;
 const [{ a, /** @type {number} */ ...inner }, /** @type {any[]} */ ...outer] =
   nested;
 
+// FormalParameters (issue #18589)
+(/** @type {string} */ param, /** @type {string[]} */ ...rest) => {};
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -60,5 +66,8 @@ const { a: x, /** @type {object} */ ...rest2 } = obj;
 
 // Nested patterns
 const [{ a, /** @type {number} */ ...inner }, /** @type {any[]} */ ...outer] = nested;
+
+// FormalParameters (issue #18589)
+(/** @type {string} */ param, /** @type {string[]} */ ...rest) => {};
 
 ===================== End =====================

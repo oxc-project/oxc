@@ -8,17 +8,16 @@ mod babel;
 mod test262;
 mod typescript;
 
+mod full_eq;
 mod tools;
+mod unambiguous_diff;
 
-// Mirrors `oxc_lexer`'s crate gate: the lexer compiles to an empty stub without
-// static AVX2/BMI2 x86_64, so the differential harness only exists where the
-// lexer does (`--all-features` builds must pass on every target).
-#[cfg(all(
-    feature = "lexer",
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-))]
+mod generated {
+    mod derive_full_eq;
+}
+
+// `oxc_lexer` only supports little endian at present
+#[cfg(target_endian = "little")]
 mod lexer_diff;
 
 use std::{
@@ -128,8 +127,8 @@ impl CoverageResult {
 
     fn parsed(&self) -> bool {
         match &self.result {
-            TestResult::ParseError(_, panicked) | TestResult::CorrectError(_, panicked) => {
-                !panicked
+            TestResult::ParseError(_, is_fatal) | TestResult::CorrectError(_, is_fatal) => {
+                !is_fatal
             }
             _ => true,
         }
@@ -267,8 +266,8 @@ pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]
     for r in &failed_positives {
         let path = normalize_path(Path::new("tasks/coverage").join(&r.path));
         match &r.result {
-            TestResult::ParseError(error, panicked) => {
-                let label = if *panicked { "Panicked" } else { "Expect to Parse" };
+            TestResult::ParseError(error, is_fatal) => {
+                let label = if *is_fatal { "Fatal error" } else { "Expect to Parse" };
                 writeln!(out, "{label}: {path}").unwrap();
                 out.push_str(error);
                 out.push('\n'); // Blank line after error content
@@ -314,7 +313,7 @@ pub struct AppArgs {
 
 const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
-const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
+const TYPESCRIPT_PATH: &str = typescript::CASES_PATH;
 const MISC_PATH: &str = "misc";
 const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 
@@ -334,6 +333,10 @@ impl AppArgs {
 
     fn run_conformance_suites(&self, data: &TestData) {
         self.run_parser(data);
+        self.run_unambiguous(data);
+        // `oxc_lexer` only supports little endian at present
+        #[cfg(target_endian = "little")]
+        self.run_lexer(data);
         self.run_semantic(data);
         self.run_codegen(data);
         self.run_formatter(data);
@@ -373,26 +376,69 @@ impl AppArgs {
         }
     }
 
-    /// Differential lexer conformance: compare `oxc_lexer`'s significant-token
-    /// spans against the parser's token stream over the corpora. Opt-in (kept out
-    /// of `run_all`) — requires the `lexer` feature and a static AVX2/BMI2 x86_64
-    /// build of `oxc_lexer`.
-    #[cfg(all(
-        feature = "lexer",
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-    ))]
-    pub fn run_lexer(&self, data: &TestData) {
-        self.run_tool("lexer_test262", TEST262_PATH, &data.test262, lexer_diff::run_lexer_test262);
-        self.run_tool("lexer_babel", BABEL_PATH, &data.babel, lexer_diff::run_lexer_babel);
+    /// Differential unambiguous parsing conformance.
+    ///
+    /// Parse each fixture as unambiguous, and again as the module or script it resolved to.
+    /// Both parses must produce the same AST, trivia, tokens, diagnostics and module record.
+    pub fn run_unambiguous(&self, data: &TestData) {
         self.run_tool(
-            "lexer_typescript",
+            "parser_unambiguous_test262",
+            TEST262_PATH,
+            &data.test262,
+            unambiguous_diff::run_unambiguous_test262,
+        );
+        self.run_tool(
+            "parser_unambiguous_babel",
+            BABEL_PATH,
+            &data.babel,
+            unambiguous_diff::run_unambiguous_babel,
+        );
+        self.run_tool(
+            "parser_unambiguous_typescript",
             TYPESCRIPT_PATH,
             &data.typescript,
-            lexer_diff::run_lexer_typescript,
+            unambiguous_diff::run_unambiguous_typescript,
         );
-        self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
+        self.run_tool(
+            "parser_unambiguous_misc",
+            MISC_PATH,
+            &data.misc,
+            unambiguous_diff::run_unambiguous_misc,
+        );
+    }
+
+    /// Differential lexer conformance.
+    ///
+    /// Compare `oxc_lexer`'s token spans and comments against the parser's over the corpora.
+    /// Lexes each fixture with every CPU feature set the CPU supports, and checks their outputs match.
+    /// `oxc_lexer` only supports little endian at present.
+    ///
+    /// # Panics
+    /// Panics on a big endian machine.
+    pub fn run_lexer(&self, data: &TestData) {
+        #[cfg(target_endian = "little")]
+        {
+            self.run_tool(
+                "lexer_test262",
+                TEST262_PATH,
+                &data.test262,
+                lexer_diff::run_lexer_test262,
+            );
+            self.run_tool("lexer_babel", BABEL_PATH, &data.babel, lexer_diff::run_lexer_babel);
+            self.run_tool(
+                "lexer_typescript",
+                TYPESCRIPT_PATH,
+                &data.typescript,
+                lexer_diff::run_lexer_typescript,
+            );
+            self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
+        }
+
+        #[cfg(not(target_endian = "little"))]
+        {
+            let _ = (self, data);
+            panic!("`lexer` conformance requires a little-endian system");
+        }
     }
 
     pub fn run_semantic(&self, data: &TestData) {
@@ -505,7 +551,11 @@ impl AppArgs {
     /// Loads only test262 (not the other fixture suites), so it works in a checkout
     /// that has only the test262 submodule — load-bearing for monitor-oxc CI.
     pub fn run_runtime(&self) {
-        let files = load::load_test262(self.filter.as_deref());
+        let filter = self.filter.as_deref();
+        if filter.is_none() {
+            load::ensure_submodules(&[TEST262_PATH]);
+        }
+        let files = load::load_test262(filter);
         self.run_tool("runtime", TEST262_PATH, &files, runtime::run);
     }
 

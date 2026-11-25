@@ -1,6 +1,11 @@
 use std::fmt::Write;
 
-use crate::{test, test_same};
+use oxc_span::SourceType;
+
+use crate::{
+    CompressOptions, CompressOptionsUnused, default_options, test, test_options_source_type,
+    test_same, test_same_options_source_type, test_smallest,
+};
 
 #[test]
 fn test_for_variable_declaration() {
@@ -21,6 +26,89 @@ fn test_for_variable_declaration() {
     test(
         "function _() { var x = j; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
         "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+    );
+}
+
+// https://github.com/oxc-project/oxc/issues/22222
+#[test]
+fn test_for_break_preserves_block_function_scope_in_module() {
+    test(
+        "let n = 0;
+        for (; n < 2; n++) {
+            if (typeof f === 'function') break;
+            function f() {}
+        }
+        console.log(n);",
+        "let n = 0;
+        for (; n < 2; n++) {
+            if (typeof f == 'function') break;
+            function f() {}
+        }
+        console.log(n);",
+    );
+    test(
+        "for (;;) { if (x) break; var y = foo(); bar(y); bar(y); }",
+        "for (; !x;) { var y = foo(); bar(y), bar(y); }",
+    );
+    test(
+        "for (;;) { if (x) break; let y = foo(); bar(y); bar(y); }",
+        "for (; !x;) { let y = foo(); bar(y), bar(y); }",
+    );
+}
+
+#[test]
+fn test_for_break_preserves_annex_b_function_scope() {
+    let options = default_options();
+    test_options_source_type(
+        "for (var i = 0; i++ < 1;) {
+            if (x) break;
+            else function f() {}
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        "for (var i = 0; i++ < 1;) {
+            if (x) break;
+            else function f() {}
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        SourceType::script(),
+        &options,
+    );
+    test_options_source_type(
+        "for (var i = 0; i++ < 1;) {
+            if (x) function f() {}
+            else break;
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        "for (var i = 0; i++ < 1;) {
+            if (x) function f() {}
+            else break;
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        SourceType::script(),
+        &options,
+    );
+
+    test_options_source_type(
+        "for (;;) {
+            if (x) break;
+            else { function f() {} }
+        }",
+        "for (; !x;) { function f() {} }",
+        SourceType::mjs(),
+        &options,
+    );
+    test_options_source_type(
+        "for (;;) {
+            if (x) { function f() {} }
+            else break;
+        }",
+        "for (; x;) { function f() {} }",
+        SourceType::mjs(),
+        &options,
     );
 }
 
@@ -115,6 +203,29 @@ fn test_merge_adjacent_ifs_with_shorthand_object_property() {
     );
 }
 
+#[test]
+fn test_merge_adjacent_ifs_with_same_content() {
+    test("if (a) { b; return d } if (c) { b; return d }", "if (a || c) return b, d;");
+    test(
+        "if (a) if (x) return b; else throw c; if (d) if (x) return b; else throw c;",
+        "if (a || d) { if (x) return b; throw c; }",
+    );
+    test(
+        "if (a) { if (x) return b; else return c; } if (d) { if (x) return b; else return c; }",
+        "if (a || d) return x ? b : c;",
+    );
+    test(
+        "if (a) { return c; var z; } if (d) { return c; var z; }",
+        "if (a || d) { return c; var z; }",
+    );
+    test("if (a) { f; return b } if (c) { f; b }", "if (a) return f, b; c && (f, b);");
+    test_same("if (a) { for(;;)f; return b } if (c) { for(;;)f; throw b }");
+    test(
+        "if (a) { b; return d } if (c) { b; return d } if (e) { b; return d }",
+        "if (a || c || e) return b, d;",
+    );
+}
+
 // `{ __proto__: __proto__ }` sets `[[Prototype]]` via the Annex B.3.1 proto
 // setter, while `{ __proto__ }` is a plain shorthand that creates a regular
 // own data property. Normalising the former into the latter would change
@@ -156,14 +267,8 @@ fn test_handle_switch_statement() {
     test("switch (a) { case 1: case 2: default: b(); break;}", "a, b();");
 
     test("switch (a) { default: break; case 1: break;}", "a;");
-    test(
-        "switch (a) { default: b();break;case 1: c();break;}",
-        "switch (a) { default: b();break;case 1: c();}",
-    ); // a === 1 ? c() : b();
-    test(
-        "switch (a) { default: {b();break;} case 1: {c();break;}}",
-        "switch (a) { default: b();break;case 1: c(); }",
-    ); // a === 1 ? c() : b();
+    test("switch (a) { default: b();break;case 1: c();break;}", "a === 1 ? c() : b();");
+    test("switch (a) { default: {b();break;} case 1: {c();break;}}", "a === 1 ? c() : b();");
 
     test("switch (a) { case b(): default:}", "switch (a) { case b(): }"); // a, b();
     test("switch (a) { case 2: case 1: break; default: break;}", "a;");
@@ -205,64 +310,185 @@ fn test_handle_switch_statement() {
     test("switch (a) { case 1: if(a) {b();}c();}", "a === 1 && (a && b(), c());");
     test("switch ('\\v') { case '\\u000B': foo();}", "foo();");
 
-    test("x: switch (a) { case 1: break x;}", "x: if (a === 1) break x;");
-    test_same("x: switch (a) { case 2: break x; case 1: break x;}"); // x: { a; break x; }
-    test("x: switch (2) { case 2: f(); break outer; }", "x: { f(); break outer; }");
+    test("x: switch (a) { case 1: break x;}", "a;");
+    test("x: switch (a) { case 2: break x; case 1: break x;}", "a;");
+    test_same("x: switch (a) { case 1: for (;;) break x; }"); // if (a === 1) x: for (;;) break x;
+    test("x: switch (2) { case 2: f(); break outer; }", "f(); break outer;");
     test(
         "x: switch (x) { case 2: f(); for (;;){break outer;}}",
-        "x: if (x === 2) for (f();;) break outer;",
+        "if (x === 2) for (f();;) break outer;",
     );
-    test("x: switch (a) { case 2: if(b) { break outer; } }", "x: if (a === 2 && b) break outer;");
+    test("x: switch (a) { case 2: if(b) { break outer; } }", "if (a === 2 && b) break outer;");
 
     test(
         "switch ('r') { case 'r': a();break; case 'r': var x=0;break;}",
-        "switch ('r') { case 'r': a();break; case 'r': var x=0;}",
-    ); // a();
-    test_same("switch (2) { default: a; case 1: b()}"); // a, b();
-    test_same("switch (1) { case 1: a();break; default: b();}"); // a();
-    test_same("switch ('e') { case 'e': case 'f': a();}"); // a();
+        "switch ('r') { case 'r': a();break; var x;}",
+    );
+    test("switch (2) { default: a; case 1: b()}", "a, b();");
+    test("switch (1) { case 1: a();break; default: b();}", "a();");
+    test("switch ('e') { case 'e': case 'f': a();}", "a();");
+    test("switch ('a') { case 'a': a();break; case 'b': b();break;}", "a();");
+    test("switch ('c') { case 'a': a();break; case 'b': b();break;}", "");
+    test("switch (1) { case 1: a();break; case 2: bar();break;}", "a();");
+    test("switch ('f') { case 'f': a(); case 'b': b();}", "a(),b();");
     test(
-        "switch ('a') { case 'a': a();break; case 'b': b();break;}",
-        "switch ('a') { case 'a': a();break; case 'b': b();}",
-    ); // a();
+        "switch ('f') { case 'b': bar();break; case x: x();break; case 'f': f();break; }",
+        "switch ('f') { case 'b': bar();break; case x: x();break; case 'f': f();}",
+    );
+    test("switch (1) { case 1: foo(); case x: bar(); case 2: baz(); }", "foo(), bar(), baz();");
+    test("switch (1) { case 1: foo(); break; case x: bar(); case 2: baz(); }", "foo();");
+    test("switch ('c') { case 'a': a();break; case 'b': b(); }", "");
+    test("switch (1) { case 1: foo(); case 2: bar(); break; case 3: baz(); }", "foo(), bar();");
     test(
-        "switch ('c') { case 'a': a();break; case 'b': b();break;}",
-        "switch ('c') { case 'a': a();break; case 'b': b();}",
-    ); // ;
+        "switch ('f') { case 'b': bar();break; case x: x();break; case 'f': f();break; case 'g': g();break; }",
+        "switch ('f') { case 'b': bar();break; case x: x();break; case 'f': f();break; case 'g': g(); }",
+    );
+    test("switch (NaN) { case NaN: a(); case 'b': b();}", "");
     test(
-        "switch (1) { case 1: a();break; case 2: bar();break;}",
-        "switch (1) { case 1: a();break; case 2: bar();}",
-    ); // a();
-    test_same("switch ('f') { case 'f': a(); case 'b': b();}");
-    test_same("switch ('f') { case 'f': if (a() > 0) {b();break;} c(); case 'd': f();}");
+        "switch ('f') { case 'f': if (a() > 0) {b();break;} c(); case 'd': f();}",
+        "switch ('f') { case 'f': if (a() > 0) {b();break;} c(), f();}",
+    );
+    test("switch (1) { case 1: case 2: var a }", "var a;");
     test(
         "switch ('f') { case 'b': bar();break; case x: x();break; case 'f': f();break;}",
         "switch ('f') { case 'b': bar();break; case x: x();break; case 'f': f(); }",
     );
-    test(
-        "switch (1) { case 1: case 2: {break;} case 3: case 4: default: b(); break;}",
-        "switch (1) { case 1: case 2: break; default: b(); }",
-    );
-    test(
-        "switch ('d') { case 'foo': foo();break; default: bar();break;}",
-        "switch ('d') { case 'foo': foo();break; default: bar();}",
-    ); // bar()
+    test("switch (1) { case 1: case 2: {break;} case 3: case 4: default: b(); break;}", "");
+    test("switch ('d') { case 'foo': foo();break; default: bar();break;}", "bar();");
+    test("switch (NaN) { case NaN: a(); break; default: b(); break; }", "b();");
     test(
         "switch (0) { case NaN: foobar();break;case -0: foo();break; case 2: bar();break;}",
-        "switch (0) { case NaN: foobar();break;case -0: foo();break; case 2: bar();}",
-    ); // foo()
+        "foo();",
+    );
     test("let x = 1; switch ('x') { case 'x': let x = 2; break;}", "let x = 1; { let x = 2; }");
     test("switch (1) { case 2: var x=0;}", "if (0) var x;");
     test(
         "switch (b) { case 2: switch (a) { case 2: a();break;case 3: foo();break;}}",
         "if (b === 2) switch (a) { case 2: a();break;case 3: foo();}",
-    ); // ;
+    );
     test("switch (b) { case 2: switch (a) { case 2: foo()}}", "b === 2 && a === 2 && foo();");
 
-    // TODO: expected TDZ issue, when folding if without body https://github.com/oxc-project/oxc/issues/24589
+    test(
+        "if (a) { b(); if (c) switch (d) { case 1: case 2: break; } c(); }",
+        "a && (b(), c && d, c());",
+    );
+    test(
+        "if (a) { if (c) switch (b) { case 2: switch (a) { case 2: foo()}}; b() }",
+        "if (a) { if (c) switch (b) { case 2: a===2 && foo() } b() }",
+    );
     test(
         "function f(){ switch (0) { case x: break; } let x = 1; }",
         "function f(){ switch (0) { case x: } let x = 1; }",
     ); // TDZ; function f() { x; let x = 1; }
     test_same("function f(){ switch (0) { case x: case y: } let x = 1; }"); // TDZ; function f() { x, y; let x = 1; }
+}
+
+#[test]
+fn test_inline_single_use_function_declaration() {
+    test(
+        "function o() { function filter() {} r.filter = (filter); }",
+        "function o() { r.filter = function() {}; }",
+    );
+    test(
+        "function c() { function b() { return 1; } function e() { return b(); } r.e = e; }",
+        "function c() { function b() { return 1; } r.e = function() { return b(); }; }",
+    );
+    test(
+        "function c() { function f() {} r.a = f; r.b = f; }",
+        "function c() { function f() {} r.a = f, r.b = f; }",
+    );
+    test(
+        "function c() { function a() { g() } function b() { h() } r.a = a; r.b = b; }",
+        "function c() { r.a = function() { g(); }, r.b = function() { h(); }; }",
+    );
+    test(
+        "function c() { function a() { g() } function b() { h() } r.b = b; r.a = a; }",
+        "function c() { r.b = function() { h(); }, r.a = function() { g(); }; }",
+    );
+    test(
+        "function c() { function f() { g() } k(); r.f = f; }",
+        "function c() { k(), r.f = function() { g(); }; }",
+    );
+    test(
+        "function c() { function f() {} r.a = r.b = f; }",
+        "function c() { r.a = r.b = function() {}; }",
+    );
+    test(
+        "function c() { function a() { g() } function b() { a() } r.b = b; }",
+        "function c() { function a() { g(); } r.b = function() { a(); }; }",
+    );
+    test(
+        "function c() { function f() { g() } for (const x of k()) h(x); r.f = f; }",
+        "function c() { for (let x of k()) h(x); r.f = function() { g(); }; }",
+    );
+    test_same("function c() { r.f = f; function f() {} }");
+    test_same("function c() { function f() {} r.f += f; }");
+    test_same("function c(o) { function f() {} with (o) r.f = f; }");
+    test_same("function c() { function f() {} function n() { eval('f'); } r.f = f; }");
+    test("function c() { { function f() {} r.f = f; } }", "function c() { r.f = function() {}; }");
+    test("function f() {} r.f = f;", "r.f = function() {};");
+    test_smallest(
+        "(function(a) { var b = function() { return 1; }; function moved() { return b(); } a.moved = moved; })(a);",
+        "(function(a) { var b = function() { return 1; }; a.moved = function() { return b(); }; })(a);",
+    );
+    // regression test for symbol liveliness
+    test_options_source_type(
+        "(function (f) { function a(p) { return {}; } function b(p) { return c(p); } f['a'] = b; })(); (function() { function r() { return r(); } })()",
+        "(function(f) { f.a = function(p) { return c(p); }; })();",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    // regression test script mode
+    test_same_options_source_type(
+        "function f() {} r.f = f;",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
+    test_options_source_type(
+        "function c() { { function f() {} r.f = f; } }",
+        "function c() { r.f = function() {}; }",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
+    // Sloppy block functions with another name, or inside a nested function body,
+    // do not write this var binding.
+    test_options_source_type(
+        "function main(x) { function f() { return 1; } if (x) { function g() { return 2; } } r.f = f; }",
+        "function main(x) { r.f = function() { return 1; }; }",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
+    test_options_source_type(
+        "function main() { function f() { return 1; } function h() { { function f() { return 2; } } } r.h = h; r.f = f; }",
+        "function main() { r.h = function() {}, r.f = function() { return 1; }; }",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
+}
+
+#[test]
+fn test_inline_function_declaration_preserves_annex_b_aliases() {
+    let cases = [
+        "function main() { var f; { function f() { return 1; } r.f = f; } return f(); } main();",
+        "function main() { { function f() { return 1; } r.a = f; } { function f() { return 2; } r.b = f; } return f(); } main();",
+        // The block declaration overwrites the outer `f` before the assignment reads it.
+        "function main() { function f() { return 1; } { function f() { return 2; } } r.f = f; } main();",
+        "function main(x) { function f() { return 1; } if (x) { function f() { return 2; } } r.f = f; } main(1);",
+        "function main(x) { function f() { return 1; } for (;;) { if (x === 1) { function f() { return 2; } } break; } r.f = f; } main(1);",
+        "function main(x) { function f() { return 1; } l: for (; x;) { try { function f() { return 2; } } catch {} for (; x;) break l; } r.f = f; } main(1);",
+        // A direct eval outside the block can read the hoisted var binding.
+        "function main() { { function f() { return 1; } r.f = f; } return eval('typeof f'); } main();",
+    ];
+    for unused in [
+        CompressOptionsUnused::Keep,
+        CompressOptionsUnused::KeepAssign,
+        CompressOptionsUnused::Remove,
+    ] {
+        let options = CompressOptions { unused, ..CompressOptions::smallest() };
+        for source_type in [SourceType::script(), SourceType::cjs()] {
+            for source in cases {
+                test_same_options_source_type(source, source_type, &options);
+            }
+        }
+    }
 }

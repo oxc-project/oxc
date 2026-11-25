@@ -86,9 +86,6 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             match rule_run_info.iter().next().map(String::as_str) {
                 Some("run") => "RuleRunFunctionsImplemented::Run".to_string(),
                 Some("run_once") => "RuleRunFunctionsImplemented::RunOnce".to_string(),
-                Some("run_on_jest_node") => {
-                    "RuleRunFunctionsImplemented::RunOnJestNode".to_string()
-                }
                 _ => "RuleRunFunctionsImplemented::Unknown".to_string(),
             }
         } else {
@@ -113,7 +110,9 @@ impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} 
     let formatted_out = rust_fmt(&out);
 
     let target_path = root.join("crates/oxc_linter/src/generated/rule_runner_impls.rs");
-    fs::write(&target_path, formatted_out)?;
+    if !fs::read(&target_path).is_ok_and(|existing| existing == formatted_out.as_bytes()) {
+        fs::write(&target_path, formatted_out)?;
+    }
     println!("Generated {} impls into {}", rule_entries.len(), target_path.display());
 
     Ok(())
@@ -128,13 +127,28 @@ pub fn generate_rules_enum_file() -> io::Result<()> {
         .map_err(|e| std::io::Error::other(format!("could not find project root: {e}")))?;
 
     let rules_file_contents = fs::read_to_string(root.join("crates/oxc_linter/src/rules.rs"))?;
-    let rule_entries = get_all_rules(&rules_file_contents);
+    let mut rule_entries = get_all_rules(&rules_file_contents);
+
+    for rule in &mut rule_entries {
+        let Some(path) = find_rule_source_file(&root, rule) else { continue };
+        let Ok(source) = fs::read_to_string(path) else { continue };
+        let Ok(file) = syn::parse_file(&source) else { continue };
+        let Some(rule_impl) = find_rule_impl_block(&file, &rule.rule_struct_name()) else {
+            continue;
+        };
+        rule.has_custom_from_configuration =
+            find_impl_function(rule_impl, "from_configuration").is_some();
+        rule.has_custom_to_configuration =
+            find_impl_function(rule_impl, "to_configuration").is_some();
+    }
 
     let out = rules_enum::generate_rules_enum(&rule_entries);
     let formatted_out = rust_fmt(&out);
 
     let target_path = root.join("crates/oxc_linter/src/generated/rules_enum.rs");
-    fs::write(&target_path, &formatted_out)?;
+    if !fs::read(&target_path).is_ok_and(|existing| existing == formatted_out.as_bytes()) {
+        fs::write(&target_path, &formatted_out)?;
+    }
     println!(
         "Generated RuleEnum with {} variants into {}",
         rule_entries.len(),

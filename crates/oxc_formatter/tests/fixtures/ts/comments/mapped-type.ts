@@ -4,3 +4,26 @@ type _Test = {
   // BinaryOperatorToText, then this line will error with "Type 'T' cannot
   // be used to index type 'BinaryOperatorToText'."
 };
+
+// issue #25286 (sibling): a leading comment on the key breaks the bracket
+// group and stays inside the brackets, above the key
+type _Key = {
+  [
+    // comment on the key
+    K in keyof T
+  ]: T[K];
+};
+
+// dangling comments hoist before `readonly` (matches Prettier, which treats
+// everything between `{` and `[` as dangling on the mapped type)
+type _Readonly = { readonly /* c */ [K in T]: X };
+
+// adjacent multiline JSDoc comments stay nestled, like Prettier
+type _Nestled = {
+  /**
+   * a
+   *//**
+   * b
+   */
+  [K in T]: X;
+};

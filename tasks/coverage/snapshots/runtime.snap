@@ -1,20 +1,8 @@
-commit: d1d583db
+commit: ebf6ae62
 
 runtime Summary:
-AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17306/18277 (94.69%)
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/getter-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/method-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/setter-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
+AST Parsed     : 18403/18403 (100.00%)
+Positive Passed: 17430/18403 (94.71%)
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: f descriptor should be enumerable; f descriptor should be writable
 
@@ -87,9 +75,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -98,12 +83,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-let.js
-Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-yield-expr.js
-Test262Error: Expected SameValue(«true», «false») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -377,6 +356,30 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-sync-throw.js
 throw-arg-1
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
 
 minify Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -901,12 +904,6 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-throw.js
 throw-arg-1
 
-transform Error: tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-anonymous.js
-Test262Error: Expected SameValue(«"_Class"», «"C"») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-default-export.js
-Test262Error: Expected SameValue(«"_Class"», «"default"») to be true
-
 minify Error: tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-expr.js
 Test262Error: Expected SameValue(«"expr"», «"C"») to be true
 
@@ -1032,47 +1029,50 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
 
+transform Error: tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
+SyntaxError: Unexpected identifier '$'
+
 transform Error: tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/expressions/class/name.js
 Test262Error: name descriptor value should be cls; name value should be cls
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-add.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «3») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-add.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-bitand.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «0») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-bitand.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-bitor.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «15») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-bitor.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-bitxor.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «257») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-bitxor.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-div.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «0.5») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-div.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-exp.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1000») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-exp.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-lshift.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «96») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-lshift.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-mod.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-mod.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-mult.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «6») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-mult.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-rshift.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «3») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-rshift.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-srshift.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «3») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-srshift.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-sub.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-property-reference-topropertykey-once-sub.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/S11.9.2_A7.8.js
 Test262Error: #7: (1 != {valueOf: function() {throw "error"}, toString: function() {return 1}}) throw "error"
@@ -1182,23 +1182,14 @@ Test262Error: 3n < Symbol("2") throws TypeError Expected a TypeError to be throw
 minify Error: tasks/coverage/test262/test/language/expressions/less-than-or-equal/S11.8.3_A2.3_T1.js
 Test262Error: #1.3: Failed with: Test262Error: #1.1: Should have thrown
 
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-accessor-property-and.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «false») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/logical-assignment/lgcl-and-assignment-operator-topropertykey-once.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-accessor-property-nullish.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
+codegen Error: tasks/coverage/test262/test/language/expressions/logical-assignment/lgcl-nullish-assignment-operator-topropertykey-once.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-accessor-property-or.js
-Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «true») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-method-and.js
-Test262Error: PutValue throws when storing the result in a method private reference Expected a TypeError to be thrown but no exception was thrown at all
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-method-short-circuit-nullish.js
-Test262Error: The right-hand side should not be evaluated
-
-transform Error: tasks/coverage/test262/test/language/expressions/logical-assignment/left-hand-side-private-reference-method-short-circuit-or.js
-Test262Error: The right-hand side should not be evaluated
+codegen Error: tasks/coverage/test262/test/language/expressions/logical-assignment/lgcl-or-assignment-operator-topropertykey-once.js
+Test262Error: ToPropertyKey(prop) is performed once Expected SameValue(«2», «1») to be true
 
 codegen Error: tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 Test262Error: Expected SameValue(«[object Object]», «2») to be true
@@ -1367,6 +1358,9 @@ TypeError: Cannot read properties of undefined (reading 'enumerable')
 
 minify Error: tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 Test262Error: Expected SameValue(«"a"», «""») to be true
+
+codegen Error: tasks/coverage/test262/test/language/expressions/subtraction/S11.6.2_A3_T1.1.js
+timeout: global
 
 minify Error: tasks/coverage/test262/test/language/function-code/block-decl-onlystrict.js
 TypeError: Cannot read properties of undefined (reading 'constructor')
@@ -1569,13 +1563,43 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 transform Error: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 throw-arg-1
 
-minify Error: tasks/coverage/test262/test/language/statements/class/definition/getters-non-configurable-err.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-call-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-decorator-member-expr.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-parenthesized-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js
+SyntaxError: Invalid or unexpected token
+
+transform Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js
+SyntaxError: Invalid or unexpected token
 
 minify Error: tasks/coverage/test262/test/language/statements/class/definition/invalid-extends.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/class/definition/setters-non-configurable-err.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
@@ -2010,6 +2034,9 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
+codegen Error: tasks/coverage/test262/test/language/statements/class/elements/arrow-body-arguments-label.js
+SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block
+
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
 Test262Error: Expected a SyntaxError but got a ReferenceError
 
@@ -2144,9 +2171,6 @@ Test262Error: Expected a Test262Error to be thrown but no exception was thrown a
 minify Error: tasks/coverage/test262/test/language/statements/class/elements/fields-computed-name-static-computed-var-propname-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
-minify Error: tasks/coverage/test262/test/language/statements/class/elements/fields-computed-name-static-propname-prototype.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
 Test262Error: Expected a SyntaxError but got a ReferenceError
 
@@ -2259,11 +2283,11 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
 
-minify Error: tasks/coverage/test262/test/language/statements/class/static-method-gen-non-configurable-err.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+transform Error: tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
+SyntaxError: Unexpected identifier '$'
 
-minify Error: tasks/coverage/test262/test/language/statements/class/static-method-non-configurable-err.js
-Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+codegen Error: tasks/coverage/test262/test/language/statements/class/static-init-arguments-label.js
+SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block
 
 minify Error: tasks/coverage/test262/test/language/statements/class/subclass/builtin-objects/Proxy/no-prototype-throws.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
@@ -2412,9 +2436,6 @@ Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 transform Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-yield-ident-valid.js
 Test262Error: Expected SameValue(«undefined», «3») to be true
 
-minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2562,9 +2583,6 @@ Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2573,9 +2591,6 @@ Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-yield-expr.js
-Timed out.
 
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -2757,9 +2772,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2768,12 +2780,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-let.js
-Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-yield-expr.js
-Test262Error: Expected SameValue(«true», «false») to be true
 
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/var-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false

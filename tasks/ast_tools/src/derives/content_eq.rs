@@ -76,6 +76,10 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         // Struct has `#[content_eq(skip)]` attr. So `content_eq` always returns true.
         uses_other = false;
         quote!(true)
+    } else if struct_def.is_bitflags {
+        // `bitflags!` types' field is private, so can't compare it.
+        // We assume `bitflags!` types implement `PartialEq`.
+        quote!(self == other)
     } else {
         let fields = struct_def
             .fields

@@ -1,0 +1,18 @@
+// DIVERGENCES.md#array-hole-comments
+{
+  "block": [, /* keep */ ,],
+  "afterValue": [1, /* keep */, 2],
+  "afterHole": [1, , /* keep */ ],
+  "eachHole": [/* a */ , /* b */ ,],
+  "ownLine": [,
+    // keep
+  ,],
+  "endOfLine": [, // keep
+  ,],
+  "ownLineAfterValue": [1,
+    // keep
+  ,],
+  "ownLineBlock": [1,
+    /* keep */
+  , 2]
+}

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::BindingPattern};
+use oxc_ast::{
+    AstKind,
+    ast::{BindingPattern, VariableDeclarator},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -86,7 +89,7 @@ declare_oxc_lint!(
 
 impl Rule for DefinePropsDestructuring {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -139,7 +142,7 @@ fn get_parent_with_defaults_call_expression_span(parent: &AstNode<'_>) -> Option
 fn get_parent_variable_declarator<'a>(
     parent: &AstNode<'a>,
     ctx: &LintContext<'a>,
-) -> Option<&'a oxc_ast::ast::VariableDeclarator<'a>> {
+) -> Option<&'a VariableDeclarator<'a>> {
     match parent.kind() {
         AstKind::VariableDeclarator(var_decl) => Some(var_decl),
         _ => ctx.nodes().ancestor_kinds(parent.id()).find_map(|kind| {

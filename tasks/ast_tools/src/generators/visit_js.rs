@@ -78,9 +78,9 @@ const VISITED_TS_NODES: &[&str] = &[
     "TSEnumMember",
     "TSEnumMemberName",
     // Namespaces / modules — `body: Vec<Statement>` + directives
-    "TSModuleDeclaration",
-    "TSModuleDeclarationName",
-    "TSModuleDeclarationBody",
+    "TSExternalModuleDeclaration",
+    "TSNamespaceDeclaration",
+    "TSNamespaceDeclarationBody",
     "TSModuleBlock",
     "TSGlobalDeclaration",
 ];

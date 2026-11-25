@@ -5,9 +5,8 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
+use oxc_allocator::Allocator;
 use oxc_data_structures::inline_string::InlineString;
-use oxc_span::ContentEq;
 
 use crate::ast::*;
 
@@ -79,36 +78,11 @@ impl Display for NumericLiteral<'_> {
 
 impl StringLiteral<'_> {
     /// Static Semantics: `IsStringWellFormedUnicode`
-    /// test for \uD800-\uDFFF
     ///
     /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
+    #[inline]
     pub fn is_string_well_formed_unicode(&self) -> bool {
-        let mut chars = self.value.chars();
-        while let Some(c) = chars.next() {
-            if c == '\\' && chars.next() == Some('u') {
-                let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16)
-                    && (0xd800..=0xdfff).contains(&hex)
-                {
-                    return false;
-                }
-            }
-        }
-        true
-    }
-}
-
-impl AsRef<str> for StringLiteral<'_> {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
-    }
-}
-
-impl Display for StringLiteral<'_> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.value.fmt(f)
+        !self.value.has_lone_surrogate()
     }
 }
 
@@ -160,35 +134,6 @@ impl<'a> RegExpLiteral<'a> {
 impl Display for RegExp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern.text, self.flags)
-    }
-}
-
-impl ContentEq for RegExpFlags {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for RegExpFlags {
-    type Cloned = Self;
-
-    fn clone_in_impl(
-        &self,
-        _with_semantic_ids: CloneInSemanticIds,
-        _: &'alloc Allocator,
-    ) -> Self::Cloned {
-        *self
-    }
-}
-
-impl<'a> Dummy<'a> for RegExpFlags {
-    /// Create a dummy [`RegExpFlags`].
-    ///
-    /// Does not allocate any data into arena.
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn dummy(_: &'a Allocator) -> Self {
-        RegExpFlags::empty()
     }
 }
 

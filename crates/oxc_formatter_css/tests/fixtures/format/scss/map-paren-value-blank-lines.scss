@@ -1,0 +1,14 @@
+// A blank line after a map item is preserved per the shared blank-line rule
+// regardless of the value's shape.
+$colors: (
+  a: rgba(#fff, 0.1),
+
+  b: #111,
+);
+
+// Plain values keep the blank in both formatters (matching Prettier).
+$plain: (
+  a: #fff,
+
+  b: #111,
+);

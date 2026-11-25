@@ -12,7 +12,6 @@ pub struct LexOptions {
     pub validate_utf8: bool,
     pub max_oracle_depth: u32,
     pub max_token_count: u32,
-    pub max_diagnostic_count: u32,
 }
 
 impl Default for LexOptions {
@@ -30,11 +29,6 @@ impl Default for LexOptions {
             validate_utf8: false,
             max_oracle_depth: 65536,
             max_token_count: 0,
-            max_diagnostic_count: 1024,
         }
     }
-}
-
-pub fn default_options() -> LexOptions {
-    LexOptions::default()
 }

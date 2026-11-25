@@ -1,11 +1,13 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
-use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, Statement};
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_index::IndexVec;
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
+use oxc_str::CompactStr;
+use rustc_hash::FxHashMap;
 
 use crate::tester::default_options;
 
@@ -182,17 +184,17 @@ fn indented_statement_mappings_start_after_generated_indent() {
 // gen col 0 (whitespace) instead of the start of the keyword.
 #[test]
 fn top_level_decl_mappings_start_after_generated_indent() {
-    // Wrap the imports/exports in `if (true) { ... }` so the body is
+    // Wrap the imports/exports in an ambient module so the body is
     // indented, exposing the order of `add_source_mapping` vs `print_indent`.
     let tokens = sourcemap_tokens(
-        r#"if (true) {
+        r#"declare module "m" {
 "use strict";
 import { x } from "x";
 export { x } from "x";
 export * from "x";
 export default 1;
 }"#,
-        SourceType::mjs(),
+        SourceType::ts(),
     );
 
     // Directive `"use strict"` source col 0 of line 1 → gen col 1 (after tab),
@@ -272,6 +274,70 @@ fn synthesized_block_closing_braces_are_mapped() {
     );
 }
 
+/// Print `source_text`, whose second statement is `x = <call>`, after `generate` clears the spans
+/// of the call's callee, as a transform does for the callee it generates.
+fn tokens_with_generated_callee(
+    source_text: &str,
+    generate: impl FnOnce(&mut Expression<'_>),
+) -> Vec<Mapping> {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+
+    let mut program = ret.program;
+    let Statement::ExpressionStatement(stmt) = &mut program.body[1] else {
+        panic!("expected expression statement");
+    };
+    let Expression::AssignmentExpression(assign) = &mut stmt.expression else {
+        panic!("expected assignment expression");
+    };
+    let Expression::CallExpression(call) = &mut assign.right else {
+        panic!("expected call expression");
+    };
+    generate(&mut call.callee);
+
+    let ret = Codegen::new().with_options(default_options()).build(&program);
+    assert_eq!(ret.code, format!("{source_text}\n"));
+    ret.map
+        .expect("sourcemap should be generated")
+        .get_tokens()
+        .map(|token| Mapping {
+            dst: pos(token.get_dst_line(), token.get_dst_col()),
+            src: pos(token.get_src_line(), token.get_src_col()),
+        })
+        .collect()
+}
+
+// A call to a generated callee, such as a transformer's helper, maps at the callee to the
+// call's own span, so a stack trace through the call points at the source of the call.
+#[test]
+fn call_with_generated_callee_maps_to_call_span() {
+    let tokens = tokens_with_generated_callee("foo();\nx = bar(1);", |callee| {
+        let Expression::Identifier(callee) = callee else {
+            panic!("expected identifier callee");
+        };
+        callee.span = Span::default();
+    });
+    assert!(has_mapping(&tokens, pos(1, 4), pos(1, 4)), "generated callee maps to the call");
+}
+
+// A member callee can keep a span while the object it prints first is generated, as in
+// `Math.pow(a, b)` lowered from `a ** b`. The call maps at its start all the same.
+#[test]
+fn call_with_generated_member_callee_object_maps_to_call_span() {
+    let tokens = tokens_with_generated_callee("foo();\nx = Math.pow(a, b);", |callee| {
+        let Expression::StaticMemberExpression(member) = callee else {
+            panic!("expected static member callee");
+        };
+        let Expression::Identifier(object) = &mut member.object else {
+            panic!("expected identifier object");
+        };
+        object.span = Span::default();
+        member.property.span = Span::default();
+    });
+    assert!(has_mapping(&tokens, pos(1, 4), pos(1, 4)), "generated object maps to the call");
+}
+
 // Both `)` of `factory()()` should map to their own source position
 // at the gen position of the `)`, not one past it.
 #[test]
@@ -348,6 +414,18 @@ fn call_after_computed_member_resolves_to_source() {
 fn tagged_template_after_call_resolves_to_source() {
     let tokens = sourcemap_tokens("f()`x`", SourceType::mjs());
     assert!(has_mapping(&tokens, pos(0, 3), pos(0, 3)), "backtick after `f()`");
+}
+
+// Codegen prints `(c).pos;` in a block as `c.pos;`. The statement starts at the `(`, but the
+// printed `c` must map to the source `c`. Source map consumers use the first mapping at a
+// generated position, so there must be only one mapping at the start of `c.pos;`.
+#[test]
+fn removed_paren_maps_to_inner_token() {
+    let tokens = sourcemap_tokens("function g(c) { (c).pos; }", SourceType::mjs());
+    let at_start: Vec<_> =
+        tokens.iter().filter(|token| token.dst.line == 1 && token.dst.col == 1).collect();
+    assert_eq!(at_start.len(), 1, "only one mapping at the start of `c.pos;`");
+    assert_eq!((at_start[0].src.line, at_start[0].src.col), (0, 17), "`c` maps to the source `c`");
 }
 
 #[test]
@@ -437,6 +515,22 @@ const make = () => ({
 make().prop",
     ];
 
+    // The identifier is first mapped by its enclosing AssignmentExpression. The map must retain
+    // the later identifier mapping's original name so Node can restore the inferred function name.
+    // `export {}` makes this a module, allowing the enclosing function to be mangled as well.
+    let mangled_case = r"
+export {};
+function longFunctionName(longName) {
+    (longName = () => {
+        Error.stackTraceLimit = 2;
+        throw new Error();
+    })();
+}
+longFunctionName(0);
+";
+    let (mangled_output, mangled_sourcemap_url, mangled_names) = codegen_mangled(mangled_case);
+    assert_eq!(mangled_names, ["longFunctionName", "longName"]);
+
     let node_version = std::process::Command::new("node").arg("--version").output().map_or_else(
         |_| "unknown".to_string(),
         |output| String::from_utf8_lossy(&output.stdout).trim().to_string(),
@@ -451,12 +545,19 @@ make().prop",
                 cases.iter().map(|s| {
                     let (output, sourcemap_url) = codegen(s);
                     format!("## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}", s, output, execute_with_node(&output, &sourcemap_url))
-                }).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
+                }).chain(std::iter::once(format!(
+                    "## Mangled identifier source-map names\n{:?}\n\n## Input\n{}\n\n## Output\n{}\n\n## Stderr\n{}",
+                    mangled_names,
+                    mangled_case.trim(),
+                    mangled_output,
+                    execute_with_node(&mangled_output, &mangled_sourcemap_url),
+                ))).collect::<Vec<_>>().join("\n------------------------------------------------------\n")
             )
         );
     });
 }
 
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
@@ -470,8 +571,73 @@ fn codegen(code: &str) -> (String, String) {
     (ret.code, ret.map.unwrap().to_data_url())
 }
 
+/// Print `source_text` with every private member of the first class renamed as `mappings` says,
+/// and return the names its source map records.
+fn mangled_private_names(source_text: &str, mappings: &[(&str, &str)]) -> Vec<String> {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+
+    let mut class_mappings = IndexVec::new();
+    class_mappings.push(
+        mappings
+            .iter()
+            .map(|(from, to)| ((*from).to_string(), CompactStr::from(*to)))
+            .collect::<FxHashMap<_, _>>(),
+    );
+
+    Codegen::new()
+        .with_options(default_options())
+        .with_private_member_mappings(Some(class_mappings))
+        .build(&ret.program)
+        .map
+        .expect("sourcemap should be generated")
+        .get_names()
+        .map(ToString::to_string)
+        .collect()
+}
+
+#[test]
+fn private_identifier_is_named_only_when_mangled() {
+    let source_text = "class C { #ab; m() { return this.#ab; } }";
+
+    // Printed as spelled, so nothing to name
+    assert_eq!(mangled_private_names(source_text, &[]), Vec::<String>::new());
+
+    // The token is `#ab`, so that is the name recorded - not `ab`, which would describe a region
+    // of the output which includes the `#`
+    assert_eq!(mangled_private_names(source_text, &[("ab", "a")]), vec!["#ab".to_string()]);
+}
+
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
+fn codegen_mangled(code: &str) -> (String, String, Vec<String>) {
+    use oxc_mangler::{MangleOptions, Mangler};
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let program = ret.program;
+    let mangler = Mangler::new()
+        .with_options(MangleOptions { top_level: Some(true), ..MangleOptions::default() })
+        .build(&program);
+    let ret = Codegen::new()
+        .with_options(CodegenOptions {
+            source_map_path: Some(PathBuf::from("input.js")),
+            ..Default::default()
+        })
+        .with_scoping(Some(mangler.scoping))
+        .with_private_member_mappings(Some(mangler.class_private_mappings))
+        .build(&program);
+    let map = ret.map.unwrap();
+    let names = map.get_names().map(str::to_owned).collect();
+    (ret.code, map.to_data_url(), names)
+}
+
+#[cfg(all(not(target_endian = "big"), target_pointer_width = "64"))]
 fn execute_with_node(code: &str, sourcemap_url: &str) -> String {
-    let cwd = env::current_dir().unwrap().join("input.js");
+    use cow_utils::CowUtils;
+
+    let cwd = std::env::current_dir().unwrap().join("input.js");
     let cwd = cwd.to_str().unwrap();
 
     let code = format!("{code}\n//# sourceMappingURL={sourcemap_url}\n");
@@ -488,4 +654,56 @@ fn execute_with_node(code: &str, sourcemap_url: &str) -> String {
         .filter(|line| !line.starts_with("Node.js v"))
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+#[test]
+fn minified_template_dollar_escapes() {
+    let source = r"`\$${first}\$${second}\$`;after();";
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let result = Codegen::new()
+        .with_options(CodegenOptions { minify: true, ..default_options() })
+        .build(&ret.program);
+    assert_eq!(result.code, r"`$${first}$${second}$`;after();");
+    let map = result.map.unwrap();
+    for name in ["first", "second", "after"] {
+        assert!(
+            map.get_tokens().any(|token| {
+                token.get_src_line() == 0
+                    && token.get_dst_line() == 0
+                    && token.get_src_col() == u32::try_from(source.find(name).unwrap()).unwrap()
+                    && token.get_dst_col()
+                        == u32::try_from(result.code.find(name).unwrap()).unwrap()
+            }),
+            "missing mapping for {name}"
+        );
+    }
+}
+
+#[test]
+fn renamed_label_records_original_name() {
+    use oxc_semantic::{LabelId, SemanticBuilder};
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, "outer: { break outer; }", SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+    let program = ret.program;
+    let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    scoping.set_label_name(LabelId::from_usize(0), "e".into());
+
+    let ret = Codegen::new()
+        .with_options(CodegenOptions { minify: true, ..default_options() })
+        .with_scoping(Some(scoping))
+        .build(&program);
+    assert_eq!(ret.code, "e:{break e}");
+    let map = ret.map.expect("sourcemap should be generated");
+    let names = map
+        .get_tokens()
+        .filter_map(|token| {
+            let name = map.get_name(token.get_name_id()?)?;
+            Some((token.get_dst_col(), token.get_src_col(), name))
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(names, [(0, 0, "outer"), (9, 15, "outer")]);
 }

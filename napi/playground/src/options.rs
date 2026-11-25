@@ -18,6 +18,7 @@ pub struct OxcOptions {
     pub codegen: Option<OxcCodegenOptions>,
     pub compress: Option<OxcCompressOptions>,
     pub mangle: Option<OxcMangleOptions>,
+    pub mangle_props: Option<OxcManglePropertiesOptions>,
     pub control_flow: Option<OxcControlFlowOptions>,
     pub inject: Option<OxcInjectOptions>,
     pub define: Option<OxcDefineOptions>,
@@ -33,6 +34,7 @@ pub struct OxcRunOptions {
     pub whitespace: bool,
     pub compress: bool,
     pub mangle: bool,
+    pub mangle_props: Option<bool>,
     pub scope: bool,
     pub symbol: bool,
     pub cfg: bool,
@@ -42,6 +44,9 @@ pub struct OxcRunOptions {
 #[derive(Default, Clone)]
 pub struct OxcParserOptions {
     pub extension: String,
+    /// Overrides the module kind inferred from the extension.
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
     pub allow_return_outside_function: bool,
     pub preserve_parens: bool,
     pub allow_v8_intrinsics: bool,
@@ -58,6 +63,8 @@ pub struct OxcLinterOptions {
 #[derive(Default, Clone)]
 pub struct OxcTransformerOptions {
     pub target: Option<String>,
+    /// Overrides the runtime helper import prefix, passed to `TransformOptions.helper_loader.module_name`.
+    pub helper_module_name: Option<String>,
     pub use_define_for_class_fields: bool,
     pub experimental_decorators: bool,
     pub emit_decorator_metadata: bool,
@@ -116,8 +123,93 @@ pub struct OxcMangleOptions {
 }
 
 #[napi(object)]
-#[derive(Clone, Copy, Default)]
-pub struct OxcCompressOptions;
+#[derive(Default, Clone)]
+pub struct OxcManglePropertiesOptions {
+    /// Property names to mangle, using Rust regex syntax (for example, "_$").
+    pub include: String,
+    /// Exclude matching property names, using Rust regex syntax.
+    pub exclude: Option<String>,
+    /// Exact property names to preserve.
+    pub reserved: Option<Vec<String>>,
+    /// Also mangle quoted property occurrences (default: false).
+    pub quoted: Option<bool>,
+    /// Generate readable property names (default: false).
+    pub debug: Option<bool>,
+}
+
+impl TryFrom<&OxcManglePropertiesOptions> for oxc::minifier::ManglePropertiesOptions {
+    type Error = String;
+
+    fn try_from(options: &OxcManglePropertiesOptions) -> Result<Self, Self::Error> {
+        let mut result = Self::from_pattern(&options.include)
+            .map_err(|error| format!("Invalid mangleProps.include regex: {error}"))?;
+        result.exclude = options
+            .exclude
+            .as_ref()
+            .map(|pattern| {
+                lazy_regex::Regex::new(pattern)
+                    .map_err(|error| format!("Invalid mangleProps.exclude regex: {error}"))
+            })
+            .transpose()?;
+        if let Some(reserved) = &options.reserved {
+            result.reserved = reserved.iter().map(|name| name.as_str().into()).collect();
+        }
+        result.mangle_quoted = options.quoted.unwrap_or_default();
+        result.debug = options.debug.unwrap_or_default();
+        Ok(result)
+    }
+}
+
+#[napi(object)]
+#[derive(Clone, Default)]
+pub struct OxcCompressOptions {
+    /// Remove debugger statements (default: true).
+    pub drop_debugger: Option<bool>,
+    /// Remove console calls, including evaluation of their arguments (default: false).
+    pub drop_console: Option<bool>,
+    /// Join consecutive variable declarations (default: true).
+    pub join_vars: Option<bool>,
+    /// Combine simple statements using the comma operator (default: true).
+    pub sequences: Option<bool>,
+    /// Remove unused bindings. Use `keep_assign` to retain assigned bindings (default: true).
+    #[napi(ts_type = "boolean | 'keep_assign'")]
+    pub unused: Option<Either<bool, String>>,
+    /// Preserve function and class names during compression (default: false).
+    pub keep_names: Option<bool>,
+}
+
+impl TryFrom<&OxcCompressOptions> for oxc::minifier::CompressOptions {
+    type Error = String;
+
+    fn try_from(options: &OxcCompressOptions) -> Result<Self, Self::Error> {
+        use oxc::minifier::{CompressOptionsKeepNames, CompressOptionsUnused};
+
+        let defaults = Self::smallest();
+        Ok(Self {
+            drop_debugger: options.drop_debugger.unwrap_or(defaults.drop_debugger),
+            drop_console: options.drop_console.unwrap_or(defaults.drop_console),
+            join_vars: options.join_vars.unwrap_or(defaults.join_vars),
+            sequences: options.sequences.unwrap_or(defaults.sequences),
+            unused: match &options.unused {
+                Some(Either::A(true)) => CompressOptionsUnused::Remove,
+                Some(Either::A(false)) => CompressOptionsUnused::Keep,
+                Some(Either::B(value)) if value == "keep_assign" => {
+                    CompressOptionsUnused::KeepAssign
+                }
+                Some(Either::B(value)) => {
+                    return Err(format!("Invalid compress.unused option: `{value}`."));
+                }
+                None => defaults.unused,
+            },
+            keep_names: if options.keep_names.unwrap_or_default() {
+                CompressOptionsKeepNames::all_true()
+            } else {
+                defaults.keep_names
+            },
+            ..defaults
+        })
+    }
+}
 
 #[napi(object)]
 #[derive(Default, Clone)]
@@ -150,6 +242,8 @@ pub struct OxcFormatterOptions {
     pub object_wrap: Option<String>,
     /// Put each attribute on its own line (default: false)
     pub single_attribute_per_line: Option<bool>,
+    /// Where to print operators when binary expressions wrap lines: "start" | "end" (default: "end")
+    pub experimental_operator_position: Option<String>,
     /// Sort imports configuration (default: None)
     pub sort_imports: Option<OxcSortImportsOptions>,
 }

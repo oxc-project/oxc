@@ -1,5 +1,5 @@
 //! Generator for ID getter/setter methods on all structs with semantic ID fields
-//! (`scope_id`, `symbol_id`, `reference_id`) and `node_id`.
+//! (`scope_id`, `symbol_id`, `reference_id`, `label_id`) and `node_id`.
 //!
 //! e.g. Generates `scope_id` and `set_scope_id` methods on all types with a `scope_id` field.
 //! Also generates `node_id` and `set_node_id` methods on all types with a `node_id` field.
@@ -16,7 +16,7 @@ use crate::{
 use super::define_generator;
 
 /// Semantic ID types.
-const SEMANTIC_ID_TYPES: [&str; 4] = ["NodeId", "ScopeId", "SymbolId", "ReferenceId"];
+const SEMANTIC_ID_TYPES: [&str; 5] = ["NodeId", "ScopeId", "SymbolId", "ReferenceId", "LabelId"];
 
 /// Generator for methods to get/set semantic IDs on structs which have them.
 pub struct GetIdGenerator;
@@ -41,7 +41,7 @@ impl Generator for GetIdGenerator {
             #![expect(clippy::inline_always)]
             #![expect(clippy::match_same_arms)]
 
-            use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
+            use oxc_syntax::{label::LabelId, node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
             ///@@line_break
             use crate::ast::*;
@@ -62,7 +62,7 @@ fn generate_for_struct(
 ) -> Option<TokenStream> {
     let struct_name = struct_def.name();
 
-    // Generate semantic ID getters/setters (`node_id`, `scope_id`, `symbol_id`, `reference_id`)
+    // Generate semantic ID getters/setters (`node_id`, `scope_id`, `symbol_id`, `reference_id`, `label_id`)
     let methods = struct_def
         .fields
         .iter()
@@ -80,6 +80,11 @@ fn generate_for_struct(
                 return None;
             }
 
+            // Comment attachments store an owner ID, rather than identifying an AST node
+            if inner_type.name() == "NodeId" && !struct_def.kind.has_kind {
+                return None;
+            }
+
             let field_name = field.name();
             let field_ident = field.ident();
             let inner_type_ident = inner_type.ident();
@@ -87,27 +92,46 @@ fn generate_for_struct(
             // Generate getter + setter methods
             let inner_type_name = inner_type.name();
             let get_doc1 = format!(" Get [`{inner_type_name}`] of [`{struct_name}`].");
-            let get_doc2 = format!(" Only use this method on a post-semantic AST where [`{inner_type_name}`]s are always defined.");
-            let mut get_doc = quote! {
-                #[doc = #get_doc1]
-                ///
-                #[doc = #get_doc2]
-            };
+            let mut get_doc = quote!( #[doc = #get_doc1] );
 
-            let (get_body, set_body) = if is_option {
+            // Unresolved `break` and `continue` labels have no `LabelId` after semantic analysis
+            let (get_return_type, get_body, set_body) = if is_option && inner_type_name == "LabelId" {
+                get_doc.extend(quote! {
+                    ///
+                    /// Returns [`None`] before semantic analysis, and for a `break` or `continue` label
+                    /// that does not resolve to an enclosing label.
+                });
+
+                (
+                    quote!( Option<#inner_type_ident> ),
+                    quote!( self.#field_ident.get() ),
+                    quote!( self.#field_ident.set(Some(#field_ident)); ),
+                )
+            } else if is_option {
+                let get_doc2 = format!(" Only use this method on a post-semantic AST where [`{inner_type_name}`]s are always defined.");
                 let get_doc3 = format!(" Panics if `{field_name}` is [`None`].");
                 get_doc.extend(quote! {
+                    ///
+                    #[doc = #get_doc2]
                     ///
                     /// # Panics
                     #[doc = #get_doc3]
                 });
 
                 (
+                    quote!( #inner_type_ident ),
                     quote!( self.#field_ident.get().unwrap() ),
                     quote!( self.#field_ident.set(Some(#field_ident)); ),
                 )
             } else {
+                let get_doc2 = format!(" Only use this method on a post-semantic AST where [`{inner_type_name}`]s are always defined.");
+                get_doc.extend(quote! {
+                    ///
+                    #[doc = #get_doc2]
+                });
+
                 (
+                    quote!( #inner_type_ident ),
                     quote!( self.#field_ident.get() ),
                     quote!( self.#field_ident.set(#field_ident); ),
                 )
@@ -121,7 +145,7 @@ fn generate_for_struct(
                 ///@@line_break
                 #get_doc
                 #[inline]
-                pub fn #field_ident(&self) -> #inner_type_ident {
+                pub fn #field_ident(&self) -> #get_return_type {
                     #get_body
                 }
 
@@ -188,6 +212,11 @@ fn generate_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<TokenStream>
 
     let enum_ty = enum_def.ty_anon(schema);
     let get_doc = format!(" Get [`NodeId`] of [`{}`].", enum_def.name());
+    let set_doc = format!(" Set [`NodeId`] of [`{}`].", enum_def.name());
+    let setters = enum_def.all_variants(schema).map(|variant| {
+        let variant_ident = variant.ident();
+        quote!( Self::#variant_ident(it) => it.set_node_id(node_id) )
+    });
 
     Some(quote! {
         ///@@line_break
@@ -197,6 +226,14 @@ fn generate_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<TokenStream>
             pub fn node_id(&self) -> NodeId {
                 match self {
                     #(#matches),*
+                }
+            }
+
+            #[doc = #set_doc]
+            #maybe_inline
+            pub fn set_node_id(&self, node_id: NodeId) {
+                match self {
+                    #(#setters),*
                 }
             }
         }

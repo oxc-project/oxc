@@ -1,0 +1,84 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+1. Enable images:
+
+    ```json
+    {}
+    ```
+
+    <p align="center">
+      <img alt="example">
+    </p>
+
+2. Continue.
+
+- item
+
+    <div>
+      html at the content column plus one
+    </div>
+
+- [ ] task item
+
+    <textarea>
+    stays in the item
+    </textarea>
+
+==================== Output ====================
+-------------------------------
+{ printWidth: 80, tabWidth: 4 }
+-------------------------------
+1. Enable images:
+
+    ```json
+    {}
+    ```
+
+    <p align="center">
+      <img alt="example">
+    </p>
+
+2. Continue.
+
+- item
+
+    <div>
+      html at the content column plus one
+    </div>
+
+- [ ] task item
+
+    <textarea>
+    stays in the item
+    </textarea>
+
+--------------------------------
+{ printWidth: 100, tabWidth: 4 }
+--------------------------------
+1. Enable images:
+
+    ```json
+    {}
+    ```
+
+    <p align="center">
+      <img alt="example">
+    </p>
+
+2. Continue.
+
+- item
+
+    <div>
+      html at the content column plus one
+    </div>
+
+- [ ] task item
+
+    <textarea>
+    stays in the item
+    </textarea>
+
+===================== End =====================

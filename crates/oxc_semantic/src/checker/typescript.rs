@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::hash_map::Entry};
 
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
@@ -6,38 +6,94 @@ use rustc_hash::FxHashMap;
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
-pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
-    let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
-        TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
-        TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
-        _ => {
-            return;
+pub fn check_jsdoc_nullable_type(ty: &JSDocNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    let mut union = SuggestedUnion::default();
+    union.add(&ty.type_annotation);
+    if !union.is_never_or_void() {
+        union.null |= !ty.postfix;
+        union.undefined = true;
+    }
+    let suggestion = union.to_source(ctx.source_text);
+    ctx.error(diagnostics::jsdoc_type_modifier('?', !ty.postfix, ty.span, &suggestion));
+}
+
+pub fn check_jsdoc_non_nullable_type(ty: &JSDocNonNullableType<'_>, ctx: &SemanticBuilder<'_>) {
+    let mut union = SuggestedUnion::default();
+    union.add(&ty.type_annotation);
+    let suggestion = union.to_source(ctx.source_text);
+    ctx.error(diagnostics::jsdoc_type_modifier('!', !ty.postfix, ty.span, &suggestion));
+}
+
+/// Approximates the type which TypeScript suggests for a JSDoc type modifier with
+/// `strictNullChecks`: `T?` is `T | undefined`, `?T` is `T | null | undefined`, and `T!` is `T`.
+#[derive(Default)]
+struct SuggestedUnion<'a, 'b> {
+    types: Vec<&'b TSType<'a>>,
+    null: bool,
+    undefined: bool,
+    any: bool,
+    unknown: bool,
+}
+
+impl<'a, 'b> SuggestedUnion<'a, 'b> {
+    fn add(&mut self, ty: &'b TSType<'a>) {
+        match ty {
+            TSType::TSParenthesizedType(ty) => self.add(&ty.type_annotation),
+            TSType::JSDocNonNullableType(ty) => self.add(&ty.type_annotation),
+            TSType::JSDocNullableType(ty) => {
+                self.add(&ty.type_annotation);
+                self.null = true;
+            }
+            TSType::TSUnionType(ty) => ty.types.iter().for_each(|ty| self.add(ty)),
+            TSType::TSNullKeyword(_) => self.null = true,
+            TSType::TSUndefinedKeyword(_) => self.undefined = true,
+            TSType::TSAnyKeyword(_) => self.any = true,
+            TSType::TSUnknownKeyword(_) => self.unknown = true,
+            TSType::TSNeverKeyword(_) => {}
+            _ => self.types.push(ty),
         }
-    };
+    }
 
-    let valid_type_span = if is_start {
-        span_with_illegal_modifier.shrink_left(1)
-    } else {
-        span_with_illegal_modifier.shrink_right(1)
-    };
+    fn is_never_or_void(&self) -> bool {
+        !(self.null || self.undefined || self.any || self.unknown)
+            && matches!(self.types.as_slice(), [] | [TSType::TSVoidKeyword(_)])
+    }
 
-    let suggestion = &ctx.source_text[valid_type_span];
-    let suggestion = if modifier == '?' {
-        Cow::Owned(format!("{suggestion} | null | undefined"))
-    } else {
-        Cow::Borrowed(suggestion)
-    };
+    fn to_source(&self, source_text: &str) -> String {
+        if self.any {
+            return "any".to_string();
+        }
+        if self.unknown {
+            return "unknown".to_string();
+        }
+        let is_union = self.types.len() + usize::from(self.null) + usize::from(self.undefined) > 1;
+        let types = self.types.iter().map(|ty| {
+            let text = &source_text[ty.span()];
+            let needs_parens = is_union
+                && matches!(
+                    ty,
+                    TSType::TSFunctionType(_)
+                        | TSType::TSConstructorType(_)
+                        | TSType::TSConditionalType(_)
+                        | TSType::TSIntersectionType(_)
+                );
+            if needs_parens { Cow::Owned(format!("({text})")) } else { Cow::Borrowed(text) }
+        });
+        let nullish = [self.null.then_some("null"), self.undefined.then_some("undefined")]
+            .into_iter()
+            .flatten()
+            .map(Cow::Borrowed);
+        let suggestion = types.chain(nullish).join(" | ");
+        if suggestion.is_empty() { "never".to_string() } else { suggestion }
+    }
+}
 
-    ctx.error(diagnostics::jsdoc_type_in_annotation(
-        modifier,
-        is_start,
-        span_with_illegal_modifier,
-        &suggestion,
-    ));
+pub fn check_jsdoc_unknown_type(ty: &JSDocUnknownType, ctx: &SemanticBuilder<'_>) {
+    ctx.error(diagnostics::jsdoc_type(ty.span));
 }
 
 pub fn check_ts_type_predicate(predicate: &TSTypePredicate<'_>, ctx: &SemanticBuilder<'_>) {
@@ -98,9 +154,22 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
-pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_external_module_declaration<'a>(
+    decl: &TSExternalModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    check_ambient_module_declaration(decl.span, ctx);
+    if let Some(body) = &decl.body {
+        check_ts_export_assignment_in_statements(&body.body, ctx);
+    }
+}
+
+pub fn check_ts_namespace_declaration<'a>(
+    decl: &TSNamespaceDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     check_ts_module_or_global_declaration(decl.span, ctx);
-    check_ts_export_assignment_in_module_decl(decl, ctx);
+    check_ts_export_assignment_in_namespace_decl(decl, ctx);
 }
 
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
@@ -119,7 +188,8 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
         match kind {
             AstKind::Program(_)
             | AstKind::TSModuleBlock(_)
-            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSExternalModuleDeclaration(_)
+            | AstKind::TSNamespaceDeclaration(_)
             | AstKind::TSGlobalDeclaration(_) => {
                 break;
             }
@@ -128,15 +198,73 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
             }
             _ => {
                 ctx.error(diagnostics::not_allowed_namespace_declaration(span));
+                break;
             }
         }
     }
 }
 
+fn check_ambient_module_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
+    let mut ancestors =
+        ctx.ancestry().ancestor_kinds().filter(|kind| !kind.is_module_declaration());
+
+    match ancestors.next() {
+        Some(AstKind::Program(_)) => {}
+        Some(AstKind::TSModuleBlock(_)) => match ancestors.next() {
+            Some(AstKind::TSExternalModuleDeclaration(_))
+                if ctx.source_type.is_script()
+                    && matches!(ancestors.next(), Some(AstKind::Program(_))) =>
+            {
+                // Module augmentations may be nested directly in a top-level ambient module.
+            }
+            Some(
+                AstKind::TSExternalModuleDeclaration(_)
+                | AstKind::TSNamespaceDeclaration(_)
+                | AstKind::TSGlobalDeclaration(_),
+            ) => {
+                ctx.error(diagnostics::nested_ambient_module_declaration(span));
+            }
+            _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
+        },
+        Some(
+            AstKind::TSExternalModuleDeclaration(_)
+            | AstKind::TSNamespaceDeclaration(_)
+            | AstKind::TSGlobalDeclaration(_),
+        ) => {
+            ctx.error(diagnostics::nested_ambient_module_declaration(span));
+        }
+        _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
+    }
+}
+
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     let mut need_initializer = false;
+    // Enum member symbols store UTF-8 names, so the binder declares no symbol for a name with a
+    // lone surrogate and cannot report its redeclaration.
+    let mut lone_surrogate_names = FxHashMap::<JSStr<'a>, Span>::default();
 
     decl.body.members.iter().for_each(|member| {
+        let name = match &member.id {
+            TSEnumMemberName::Identifier(_) => None,
+            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => {
+                Some(lit.value)
+            }
+            TSEnumMemberName::ComputedTemplateString(template) => template.single_quasi(),
+        };
+        if let Some(name) = name.filter(|name| name.as_str().is_none()) {
+            let span = member.id.span();
+            match lone_surrogate_names.entry(name) {
+                Entry::Occupied(first) => ctx.error(diagnostics::redeclaration(
+                    &name.display().to_string(),
+                    *first.get(),
+                    span,
+                )),
+                Entry::Vacant(entry) => {
+                    entry.insert(span);
+                }
+            }
+        }
+
         #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(
@@ -152,7 +280,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
                     // E = -1
                     | Expression::UnaryExpression(_)
             );
-        } else if need_initializer {
+        } else if need_initializer && (decl.r#const || !ctx.in_ambient_context()) {
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
     });
@@ -170,7 +298,8 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 
     if !ctx.in_ambient_context() {
         let mut is_in_overload_group = false;
-        for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
+        for (a, b) in class.body.body.iter().map(Some).chain(std::iter::once(None)).tuple_windows()
+        {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
@@ -243,18 +372,15 @@ pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &Se
     check_ts_export_assignment_in_statements(&program.body, ctx);
 }
 
-fn check_ts_export_assignment_in_module_decl<'a>(
-    module_decl: &TSModuleDeclaration<'a>,
+fn check_ts_export_assignment_in_namespace_decl<'a>(
+    namespace_decl: &TSNamespaceDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    let Some(body) = &module_decl.body else {
-        return;
-    };
-    match body {
-        TSModuleDeclarationBody::TSModuleDeclaration(nested) => {
-            check_ts_export_assignment_in_module_decl(nested, ctx);
+    match &namespace_decl.body {
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(nested) => {
+            check_ts_export_assignment_in_namespace_decl(nested, ctx);
         }
-        TSModuleDeclarationBody::TSModuleBlock(block) => {
+        TSNamespaceDeclarationBody::TSModuleBlock(block) => {
             check_ts_export_assignment_in_statements(&block.body, ctx);
         }
     }

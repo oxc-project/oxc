@@ -132,13 +132,13 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+        let (decl_type, span) = match node.kind() {
             AstKind::VariableDeclaration(decl) => {
                 if self.0 == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
                     return;
                 }
 
-                check_rule(node, ctx, self.1.namespaces == Some(Namespaces::Allow));
+                ("variable", Span::sized(decl.span.start, 3))
             }
             AstKind::Function(func) => {
                 if !func.is_function_declaration() {
@@ -162,14 +162,22 @@ impl Rule for NoInnerDeclarations {
                     }
                 }
 
-                check_rule(node, ctx, self.1.namespaces == Some(Namespaces::Allow));
+                ("function", Span::sized(func.span.start, 8))
             }
-            _ => {}
-        }
+            _ => return,
+        };
+
+        check_rule(node, ctx, self.1.namespaces == Some(Namespaces::Allow), decl_type, span);
     }
 }
 
-fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, allow_namespaces: bool) {
+fn check_rule<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    allow_namespaces: bool,
+    decl_type: &str,
+    span: Span,
+) {
     let parent_node = ctx.nodes().parent_node(node.id());
     let parent_kind = parent_node.kind();
 
@@ -216,18 +224,6 @@ fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, allow_namespaces: b
             _ => parent = ctx.nodes().parent_node(parent.id()),
         }
     }
-
-    let (decl_type, span) = match node.kind() {
-        AstKind::VariableDeclaration(decl) => {
-            let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
-            ("variable", span)
-        }
-        AstKind::Function(func) => {
-            let span = Span::sized(func.span.start, 8); // 8 for "function".len()
-            ("function", span)
-        }
-        _ => unreachable!(),
-    };
 
     ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
 }

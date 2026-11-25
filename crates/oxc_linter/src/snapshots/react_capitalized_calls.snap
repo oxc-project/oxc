@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(capitalized-calls): Capitalized function called without JSX
+   ╭─[capitalized_calls.tsx:5:6]
+ 4 │   return <>
+ 5 │     {Child()}
+   ·      ──┬──
+   ·        ╰── `Child` may be a component
+ 6 │   </>;
+   ╰────
+  help: Render `Child` with JSX if it is a component; otherwise rename it to start with a lowercase letter or allowlist it in the compiler configuration
+  note: `Child` is treated as a component because it begins with an uppercase letter; React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components
+
+  ⚠ react(capitalized-calls): Capitalized function called without JSX
+   ╭─[capitalized_calls.tsx:5:15]
+ 4 │   return <>
+ 5 │     {myModule.Child()}
+   ·               ──┬──
+   ·                 ╰── `Child` may be a component
+ 6 │   </>;
+   ╰────
+  help: Render `Child` with JSX if it is a component; otherwise rename it to start with a lowercase letter or allowlist it in the compiler configuration
+  note: `Child` is treated as a component because it begins with an uppercase letter; React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components
+
+  ⚠ react(capitalized-calls): Capitalized function called without JSX
+   ╭─[capitalized_calls.tsx:6:6]
+ 5 │   return <>
+ 6 │     {Child1()}
+   ·      ───┬──
+   ·         ╰── `Child1` may be a component
+ 7 │     {MyModule.Child2()}
+   ╰────
+  help: Render `Child1` with JSX if it is a component; otherwise rename it to start with a lowercase letter or allowlist it in the compiler configuration
+  note: `Child1` is treated as a component because it begins with an uppercase letter; React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components
+
+  ⚠ react(capitalized-calls): Capitalized function called without JSX
+   ╭─[capitalized_calls.tsx:7:15]
+ 6 │     {Child1()}
+ 7 │     {MyModule.Child2()}
+   ·               ───┬──
+   ·                  ╰── `Child2` may be a component
+ 8 │   </>;
+   ╰────
+  help: Render `Child2` with JSX if it is a component; otherwise rename it to start with a lowercase letter or allowlist it in the compiler configuration
+  note: `Child2` is treated as a component because it begins with an uppercase letter; React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components

@@ -55,7 +55,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
-use oxc_str::{Ident, static_ident};
+use oxc_str::{Ident, JSStr, static_ident};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
 
@@ -71,8 +71,8 @@ pub struct ModuleRunnerTransform<'a> {
     import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Str<'a>>)>,
 
     // Collect deps and dynamic deps for Vite
-    deps: FxHashSet<String>,
-    dynamic_deps: FxHashSet<String>,
+    deps: FxHashSet<JSStr<'a>>,
+    dynamic_deps: FxHashSet<JSStr<'a>>,
 }
 
 impl<'a> ModuleRunnerTransform<'a> {
@@ -91,7 +91,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         scoping: Scoping,
-    ) -> (FxHashSet<String>, FxHashSet<String>) {
+    ) -> (FxHashSet<JSStr<'a>>, FxHashSet<JSStr<'a>>) {
         traverse_mut(&mut self, allocator, program, scoping, ());
         (self.deps, self.dynamic_deps)
     }
@@ -240,8 +240,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
                 // wrap with (0, ...) to avoid method binding `this`
                 // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
-                let zero =
-                    Expression::new_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal, ctx);
+                let zero = Expression::new_numeric_literal(SPAN, 0f64, None, ctx);
                 Expression::new_sequence_expression(ident.span, [zero, expr], ctx)
             } else {
                 expr
@@ -262,7 +261,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             let ImportExpression { span, source, options, .. } = import_expr.unbox();
 
             if let Expression::StringLiteral(source) = &source {
-                self.dynamic_deps.insert(source.value.to_string());
+                self.dynamic_deps.insert(source.value);
             }
 
             let flags = ReferenceFlags::Read;
@@ -321,7 +320,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        self.deps.insert(source.value.to_string());
+        self.deps.insert(source.value);
 
         // ['vue', { importedNames: ['foo'] }]`
         let mut arguments = ArenaVec::with_capacity_in(1 + usize::from(specifiers.is_some()), ctx);
@@ -464,7 +463,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let import_binding = source.map(|source| {
-            self.deps.insert(source.value.to_string());
+            self.deps.insert(source.value);
             let binding = self.generate_import_binding(ctx);
             let pattern = binding.create_binding_pattern(ctx);
             let imported_names = ArenaVec::from_iter_in(
@@ -532,7 +531,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let ExportAllDeclaration { span, source, exported, .. } = export.unbox();
-        self.deps.insert(source.value.to_string());
+        self.deps.insert(source.value);
         let binding = self.generate_import_binding(ctx);
         let pattern = binding.create_binding_pattern(ctx);
         let arguments = ArenaVec::from_value_in(
@@ -741,7 +740,6 @@ impl<'a> ModuleRunnerTransform<'a> {
             value,
             false,
             false,
-            false,
             ctx,
         );
         Argument::new_object_expression(SPAN, [imported_names], ctx)
@@ -763,7 +761,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let init = Expression::new_await_expression(SPAN, call, ctx);
 
         let kind = VariableDeclarationKind::Const;
-        let declarator = VariableDeclarator::new(SPAN, kind, pattern, None, Some(init), false, ctx);
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(init), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
@@ -793,7 +791,6 @@ impl<'a> ModuleRunnerTransform<'a> {
             PropertyKey::new_static_identifier(SPAN, key, ctx),
             value.unwrap_or_else(|| Expression::new_boolean_literal(SPAN, true, ctx)),
             is_method,
-            false,
             false,
             ctx,
         )
@@ -888,8 +885,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         );
         let pattern = binding.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Const;
-        let declarator =
-            VariableDeclarator::new(SPAN, kind, pattern, None, Some(right), false, ctx);
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(right), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
@@ -980,7 +976,17 @@ mod test {
             .build(&program)
             .code;
 
-        Ok(TransformReturn { code, deps, dynamic_deps })
+        Ok(TransformReturn {
+            code,
+            deps: deps
+                .into_iter()
+                .map(|value| value.as_str().expect("test dependency is UTF-8").to_owned())
+                .collect(),
+            dynamic_deps: dynamic_deps
+                .into_iter()
+                .map(|value| value.as_str().expect("test dependency is UTF-8").to_owned())
+                .collect(),
+        })
     }
 
     fn format_expected_code(source_text: &str) -> String {

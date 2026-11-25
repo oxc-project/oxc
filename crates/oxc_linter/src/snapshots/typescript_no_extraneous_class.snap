@@ -3,6 +3,13 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ typescript(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:1:14]
+ 1 │ @dec /* c */ class Foo {}
+   ·              ────────────
+   ╰────
+  help: Set "allowWithDecorator": true in your config to allow empty decorated classes
+
+  ⚠ typescript(no-extraneous-class): Unexpected empty class.
    ╭─[no_extraneous_class.tsx:1:1]
  1 │ class Foo {}
    · ────────────

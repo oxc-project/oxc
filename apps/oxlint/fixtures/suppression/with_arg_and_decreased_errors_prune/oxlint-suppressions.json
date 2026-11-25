@@ -1,0 +1,16 @@
+{
+  "folder_a/test.ts": {
+    "no-console": {
+      "count": 3
+    },
+    "no-unused-vars": {
+      "count": 1
+    },
+    "typescript/array-type": {
+      "count": 3
+    },
+    "typescript/await-thenable": {
+      "count": 2
+    }
+  }
+}

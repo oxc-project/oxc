@@ -134,7 +134,19 @@ pub fn snake_case(s: &str) -> String {
 /// Get the correct article ("a" / "an") that should precede a word in a doc comment.
 pub fn article_for(word: &str) -> &'static str {
     match word.as_bytes().first().map(u8::to_ascii_uppercase) {
-        Some(b'A' | b'E' | b'I' | b'O' | b'U') => "an",
+        Some(b'A' | b'E' | b'I' | b'O') => "an",
+        Some(b'U') => {
+            // The article follows the *sound* a word starts with, not the letter.
+            // "U" goes both ways - "a unary expression" (/ju:/) but "an update expression" (/^/).
+            if let Some(next2) = word.as_bytes().get(1..3) {
+                match next2 {
+                    b"na" | b"ni" | b"sa" | b"se" | b"si" | b"ti" => "a",
+                    _ => "an",
+                }
+            } else {
+                "a"
+            }
+        }
         _ => "a",
     }
 }

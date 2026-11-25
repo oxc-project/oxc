@@ -4,6 +4,27 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-static-only-class): Use an object instead of a `class` with only `static` members.
    ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A { static "\uD800"() {} }
+   · ────────────────────────────────
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ unicorn(no-static-only-class): Use an object instead of a `class` with only `static` members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A { static "\uDC00" = 1; }
+   · ────────────────────────────────
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ unicorn(no-static-only-class): Use an object instead of a `class` with only `static` members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A { static a() {}; static "\uD800"() {} }
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ unicorn(no-static-only-class): Use an object instead of a `class` with only `static` members.
+   ╭─[no_static_only_class.tsx:1:1]
  1 │ class A { static a() {}; }
    · ──────────────────────────
    ╰────

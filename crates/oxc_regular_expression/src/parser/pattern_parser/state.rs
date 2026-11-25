@@ -1,7 +1,10 @@
-use oxc_str::Str;
-use rustc_hash::FxHashSet;
+use std::collections::hash_map::Entry;
 
-use crate::parser::reader::Reader;
+use oxc_allocator::Allocator;
+use oxc_str::Str;
+use rustc_hash::{FxHashMap, FxHashSet};
+
+use crate::parser::{pattern_parser::group_name::capturing_group_name, reader::Reader};
 
 /// NOTE: Currently all of properties are read-only from outside of this module.
 /// Even inside of this module, it is not changed after initialized.
@@ -32,6 +35,7 @@ impl<'a> State<'a> {
     pub fn initialize_with_parsing(
         &mut self,
         reader: &mut Reader<'a>,
+        allocator: &'a Allocator,
     ) -> Result<(), DuplicatedNamedCapturingGroupOffsets> {
         // PERF: Fast path, no `(` in the decoded units.
         // Provably no capturing group (named or unnamed) and no duplicate name.
@@ -48,7 +52,8 @@ impl<'a> State<'a> {
         }
 
         let checkpoint = reader.checkpoint();
-        let (num_of_left_capturing_parens, capturing_group_names) = parse_capturing_groups(reader)?;
+        let (num_of_left_capturing_parens, capturing_group_names) =
+            parse_capturing_groups(reader, self.unicode_mode, self.unicode_sets_mode, allocator)?;
         reader.rewind(checkpoint);
 
         // In Annex B, this is `false` by default.
@@ -70,6 +75,9 @@ impl<'a> State<'a> {
 /// Returns: Result<(num_of_left_parens, capturing_group_names), duplicated_named_capturing_group_offsets>
 fn parse_capturing_groups<'a>(
     reader: &mut Reader<'a>,
+    unicode_mode: bool,
+    unicode_sets_mode: bool,
+    allocator: &'a Allocator,
 ) -> Result<(u32, FxHashSet<Str<'a>>), DuplicatedNamedCapturingGroupOffsets> {
     // Count only normal CapturingGroup(named, unnamed)
     //   (?<name>...), (...)
@@ -78,29 +86,34 @@ fn parse_capturing_groups<'a>(
     //   (?=...), (?!...), (?<=...), (?<!...)
     let mut num_of_left_capturing_parens = 0;
 
-    // Track all named groups with their depth and alternative path
-    let mut named_groups: Vec<NamedGroupInfo<'a>> = Vec::new();
+    // The latest named group for each name.
+    // Earlier groups sharing a name are pairwise exclusive (or we already errored),
+    // so a new group conflicts with one of them only if it conflicts with the latest.
+    let mut named_groups: FxHashMap<Str<'a>, NamedGroupInfo> = FxHashMap::default();
     let mut group_names: FxHashSet<Str<'a>> = FxHashSet::default();
 
     // Track alternatives and depth
     let mut tracker = AlternativeTracker::new();
 
     let mut in_escape = false;
-    let mut in_character_class = false;
+    let mut character_class_depth = 0_u32;
     while let Some(cp) = reader.peek() {
         if in_escape {
             in_escape = false;
         } else if cp == '\\' as u32 {
             in_escape = true;
         } else if cp == '[' as u32 {
-            in_character_class = true;
+            // Unicode sets allow nested classes; their string alternatives are not group alternatives.
+            if unicode_sets_mode || character_class_depth == 0 {
+                character_class_depth += 1;
+            }
         } else if cp == ']' as u32 {
-            in_character_class = false;
-        } else if !in_character_class && cp == '|' as u32 {
+            character_class_depth = character_class_depth.saturating_sub(1);
+        } else if character_class_depth == 0 && cp == '|' as u32 {
             tracker.mark_alternative();
-        } else if !in_character_class && cp == ')' as u32 {
+        } else if character_class_depth == 0 && cp == ')' as u32 {
             tracker.exit_group();
-        } else if !in_character_class && cp == '(' as u32 {
+        } else if character_class_depth == 0 && cp == '(' as u32 {
             reader.advance();
             tracker.enter_group();
 
@@ -111,8 +124,13 @@ fn parse_capturing_groups<'a>(
                 || reader.eat2('?', '!')
                 || reader.eat3('?', '<', '=')
                 || reader.eat3('?', '<', '!')
+                || reader.eat2('?', 'i')
+                || reader.eat2('?', 'm')
+                || reader.eat2('?', 's')
+                || reader.eat2('?', '-')
             {
-                // Non-capturing group or lookaround - depth already incremented
+                // Non-capturing group, modifier group, or lookaround.
+                // Full parsing validates the rest of the modifier prefix.
                 continue;
             }
 
@@ -122,6 +140,7 @@ fn parse_capturing_groups<'a>(
             // Collect capturing group names
             if reader.eat2('?', '<') {
                 let span_start = reader.offset();
+                let name_start = reader.checkpoint();
                 while let Some(ch) = reader.peek() {
                     if ch == '>' as u32 {
                         break;
@@ -130,31 +149,37 @@ fn parse_capturing_groups<'a>(
                 }
                 let span_end = reader.offset();
 
-                if reader.eat('>') {
-                    let group_name = reader.str(span_start, span_end);
-                    let alternative_path = tracker.get_alternative_path();
-
-                    // Check for duplicates with existing groups
-                    for existing in &named_groups {
-                        if existing.name == group_name {
-                            // Check if they can participate together
-                            if !AlternativeTracker::can_participate(
+                if reader.peek() == Some('>' as u32) {
+                    let group_name = capturing_group_name(
+                        reader.str(span_start, span_end).as_str(),
+                        reader.code_points_since(name_start),
+                        unicode_mode,
+                        allocator,
+                    );
+                    reader.advance();
+                    let Some(group_name) = group_name else {
+                        continue;
+                    };
+                    let info = NamedGroupInfo {
+                        span: (span_start, span_end),
+                        alternative_path: tracker.get_alternative_path(),
+                    };
+                    match named_groups.entry(group_name) {
+                        Entry::Occupied(mut entry) => {
+                            let existing = entry.get();
+                            if AlternativeTracker::can_participate(
                                 &existing.alternative_path,
-                                &alternative_path,
+                                &info.alternative_path,
                             ) {
-                                // True duplicate - return error
-                                return Err(vec![existing.span, (span_start, span_end)]);
+                                return Err(vec![existing.span, info.span]);
                             }
+                            entry.insert(info);
+                        }
+                        Entry::Vacant(entry) => {
+                            group_names.insert(group_name);
+                            entry.insert(info);
                         }
                     }
-
-                    named_groups.push(NamedGroupInfo {
-                        name: group_name,
-                        span: (span_start, span_end),
-                        alternative_path,
-                    });
-                    group_names.insert(group_name);
-
                     continue;
                 }
             }
@@ -169,65 +194,62 @@ fn parse_capturing_groups<'a>(
     Ok((num_of_left_capturing_parens, group_names))
 }
 
-/// Tracks which alternatives at each depth level have been seen.
-/// Used to determine if duplicate named groups are in different alternatives.
+/// A position in each enclosing disjunction: (disjunction ID, alternative index).
+type AlternativePath = Vec<(usize, usize)>;
+
+/// Tracks alternatives within distinct disjunctions.
+/// Different alternatives exclude each other only if they belong to the same disjunction.
 #[derive(Debug)]
 struct AlternativeTracker {
-    /// Current nesting depth
-    depth: u32,
-    /// Current alternative index at each depth level (stack-based)
-    /// Each level represents the alternative index at that nesting depth
-    current_alternative: Vec<u32>,
+    next_disjunction_id: usize,
+    current_alternative: AlternativePath,
 }
 
 impl AlternativeTracker {
     fn new() -> Self {
-        Self { depth: 0, current_alternative: vec![0] }
+        Self { next_disjunction_id: 1, current_alternative: vec![(0, 0)] }
     }
 
     fn enter_group(&mut self) {
-        self.depth += 1;
-        while self.current_alternative.len() <= self.depth as usize {
-            self.current_alternative.push(0);
-        }
+        self.current_alternative.push((self.next_disjunction_id, 0));
+        self.next_disjunction_id += 1;
     }
 
     fn exit_group(&mut self) {
-        if let Some(alt) = self.current_alternative.get_mut(self.depth as usize) {
-            *alt = 0;
+        if self.current_alternative.len() > 1 {
+            self.current_alternative.pop();
         }
-        self.depth = self.depth.saturating_sub(1);
     }
 
     fn mark_alternative(&mut self) {
-        if let Some(alt) = self.current_alternative.get_mut(self.depth as usize) {
-            *alt += 1;
-        }
+        self.current_alternative.last_mut().unwrap().1 += 1;
     }
 
-    fn get_alternative_path(&self) -> Vec<u32> {
-        self.current_alternative.iter().take((self.depth + 1) as usize).copied().collect()
+    fn get_alternative_path(&self) -> AlternativePath {
+        // A GroupSpecifier is outside its own group's Disjunction, so only
+        // enclosing groups can put it in a mutually exclusive alternative.
+        self.current_alternative[..self.current_alternative.len() - 1].to_vec()
     }
 
-    fn can_participate(alt1: &[u32], alt2: &[u32]) -> bool {
-        let min_len = alt1.len().min(alt2.len());
-        // Check as prefixes, if they differ at any level,
-        // it means they are in different alternatives, so they can participate together.
-        for i in 0..min_len {
-            if alt1[i] != alt2[i] {
-                return true;
+    fn can_participate(alt1: &[(usize, usize)], alt2: &[(usize, usize)]) -> bool {
+        for ((disjunction1, alternative1), (disjunction2, alternative2)) in alt1.iter().zip(alt2) {
+            if disjunction1 != disjunction2 {
+                // The paths diverged into separate groups, not alternative branches.
+                break;
+            }
+            if alternative1 != alternative2 {
+                return false;
             }
         }
-        false
+        true
     }
 }
 
 /// Tracks information about a named capturing group
-#[derive(Debug, Clone)]
-struct NamedGroupInfo<'a> {
-    name: Str<'a>,
+#[derive(Debug)]
+struct NamedGroupInfo {
     span: (u32, u32),
-    alternative_path: Vec<u32>,
+    alternative_path: AlternativePath,
 }
 
 // ---
@@ -257,11 +279,15 @@ mod tests {
             // Nested groups with alternatives
             ("((?<a>x)|((?<a>y)))", (4, 1)), // 1 outer + 1 named + 1 inner + 1 named = 4 total
             ("(((?<a>x))|((?<b>y)))|(((?<a>z))|((?<b>w)))", (10, 2)), // Complex nesting
+            // Repeats in alternatives of a nested disjunction
+            ("(?:(?:(?<a>x))|(?:(?<a>y))|(?:(?<a>z)))", (3, 1)),
+            ("(?:(?<a>x)|(?<a>y))|(?<a>z)", (3, 1)),
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
+            let allocator = Allocator::default();
             let (num_of_left_capturing_parens, capturing_group_names) =
-                parse_capturing_groups(&mut reader).unwrap();
+                parse_capturing_groups(&mut reader, true, false, &allocator).unwrap();
 
             let actual = (num_of_left_capturing_parens, capturing_group_names.len());
             assert_eq!(expected, actual, "{source_text}");
@@ -278,10 +304,25 @@ mod tests {
             // Test consecutive groups with same name in same alternative (should be error)
             "((?<a>x))((?<a>y))((?<a>z))",
             "(?<n>a)((?<n>b))",
+            // Exclusive with each other, but not with a later group outside their disjunction
+            "(?:(?<a>x)|(?<a>y))(?<a>z)",
+            "(?:(?<a>x)|(?<b>y)|(?<a>z))(?<a>w)",
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
-            assert!(parse_capturing_groups(&mut reader).is_err(), "{source_text}");
+            let allocator = Allocator::default();
+            assert!(
+                parse_capturing_groups(&mut reader, true, false, &allocator).is_err(),
+                "{source_text}"
+            );
         }
+
+        // Reports the latest earlier group with the same name, not the first one.
+        let mut reader = Reader::initialize("(?:(?<a>x)|(?<a>y))(?<a>z)", true, false).unwrap();
+        let allocator = Allocator::default();
+        assert_eq!(
+            parse_capturing_groups(&mut reader, true, false, &allocator).unwrap_err(),
+            vec![(14, 15), (22, 23)]
+        );
     }
 }

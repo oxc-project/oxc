@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{ChainElement, Expression},
@@ -58,140 +60,108 @@ declare_oxc_lint!(
     PreferIncludes,
     unicorn,
     style,
+    recommended,
     suggestion,
     version = "0.0.18",
-    short_description = "Prefer `includes()` over `indexOf()` when checking for existence/non-existence.",
+    short_description =
+        "Prefer `includes()` over `indexOf()` when checking for existence/non-existence.",
 );
 
 impl Rule for PreferIncludes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(bin_expr) = node.kind() else {
-            return;
-        };
+        if let AstKind::BinaryExpression(bin_expr) = node.kind()
+            && let Some(left_call_expr) = (match bin_expr.left.without_parentheses() {
+                Expression::CallExpression(call_expr) => Some(call_expr),
+                Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+                    ChainElement::CallExpression(call_expr) => Some(call_expr),
+                    _ => None,
+                },
+                _ => None,
+            })
+            && is_method_call(left_call_expr, None, Some(&["indexOf"]), None, Some(2))
+        {
+            let comparison_kind = match bin_expr.operator {
+                BinaryOperator::StrictInequality | BinaryOperator::Inequality
+                    if is_negative_one(bin_expr.right.without_parentheses()) =>
+                {
+                    Some(ComparisonKind::ExistsOrUndefined)
+                }
+                BinaryOperator::GreaterThan
+                    if is_negative_one(bin_expr.right.without_parentheses()) =>
+                {
+                    Some(ComparisonKind::ExistsOnly)
+                }
+                BinaryOperator::StrictEquality | BinaryOperator::Equality
+                    if is_negative_one(bin_expr.right.without_parentheses()) =>
+                {
+                    Some(ComparisonKind::NotExistsOnly)
+                }
+                BinaryOperator::GreaterEqualThan
+                    if bin_expr.right.without_parentheses().is_specific_raw_number_literal("0") =>
+                {
+                    Some(ComparisonKind::ExistsOnly)
+                }
+                BinaryOperator::LessThan
+                    if bin_expr.right.without_parentheses().is_specific_raw_number_literal("0") =>
+                {
+                    Some(ComparisonKind::NotExistsOnly)
+                }
+                _ => None,
+            };
 
-        let left_call_expr = match bin_expr.left.without_parentheses() {
-            Expression::CallExpression(call_expr) => call_expr,
-            Expression::ChainExpression(chain_expr) => {
-                let ChainElement::CallExpression(call_expr) = &chain_expr.expression else {
-                    return;
-                };
-                call_expr
+            if let Some(comparison_kind) = comparison_kind
+                && let Some((callee_span, _)) = call_expr_method_callee_info(left_call_expr)
+                && let Some(member_expr) =
+                    left_call_expr.callee.get_inner_expression().as_member_expression()
+            {
+                let object_text = ctx.source_range(member_expr.object().span());
+                let member_operator = if member_expr.optional() { "?." } else { "." };
+                let call_operator = if left_call_expr.optional { "?.(" } else { "(" };
+                let has_optional_chain = left_call_expr.optional || member_expr.optional();
+
+                let fix_span = bin_expr.span;
+                ctx.diagnostic_with_suggestion(prefer_includes_diagnostic(callee_span), |fixer| {
+                    let args_text = left_call_expr
+                        .arguments
+                        .iter()
+                        .map(|arg| ctx.source_range(arg.span()))
+                        .join(", ");
+
+                    let includes_call = format!(
+                        "{object_text}{member_operator}includes{call_operator}{args_text})"
+                    );
+
+                    let replacement = if has_optional_chain {
+                        match comparison_kind {
+                            ComparisonKind::ExistsOrUndefined => {
+                                format!("{includes_call} !== false")
+                            }
+                            ComparisonKind::ExistsOnly => format!("{includes_call} === true"),
+                            ComparisonKind::NotExistsOnly => format!("{includes_call} === false"),
+                        }
+                    } else {
+                        match comparison_kind {
+                            ComparisonKind::NotExistsOnly => format!("!{includes_call}"),
+                            ComparisonKind::ExistsOrUndefined | ComparisonKind::ExistsOnly => {
+                                includes_call
+                            }
+                        }
+                    };
+                    fixer.replace(fix_span, replacement)
+                });
             }
-            _ => return,
-        };
-
-        if !is_method_call(left_call_expr, None, Some(&["indexOf"]), None, Some(2)) {
-            return;
         }
-
-        let comparison_kind: Option<ComparisonKind> = if matches!(
-            bin_expr.operator,
-            BinaryOperator::StrictInequality | BinaryOperator::Inequality
-        ) {
-            if is_negative_one(bin_expr.right.without_parentheses()) {
-                Some(ComparisonKind::ExistsOrUndefined)
-            } else {
-                None
-            }
-        } else if bin_expr.operator == BinaryOperator::GreaterThan {
-            if is_negative_one(bin_expr.right.without_parentheses()) {
-                Some(ComparisonKind::ExistsOnly)
-            } else {
-                None
-            }
-        } else if matches!(
-            bin_expr.operator,
-            BinaryOperator::StrictEquality | BinaryOperator::Equality
-        ) {
-            if is_negative_one(bin_expr.right.without_parentheses()) {
-                Some(ComparisonKind::NotExistsOnly)
-            } else {
-                None
-            }
-        } else if bin_expr.operator == BinaryOperator::GreaterEqualThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
-                return;
-            };
-            if num_lit.raw.as_ref().unwrap() == "0" {
-                Some(ComparisonKind::ExistsOnly)
-            } else {
-                None
-            }
-        } else if bin_expr.operator == BinaryOperator::LessThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
-                return;
-            };
-            if num_lit.raw.as_ref().unwrap() == "0" {
-                Some(ComparisonKind::NotExistsOnly)
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-
-        let Some(comparison_kind) = comparison_kind else {
-            return;
-        };
-
-        let callee_info = call_expr_method_callee_info(left_call_expr).unwrap();
-        let callee_span = callee_info.0;
-
-        // Get the object (receiver) text.
-        let Some(member_expr) = left_call_expr.callee.get_inner_expression().as_member_expression()
-        else {
-            return;
-        };
-
-        let object_text = ctx.source_range(member_expr.object().span()).to_string();
-        let member_operator = if member_expr.optional() { "?." } else { "." };
-        let call_operator = if left_call_expr.optional { "?.(" } else { "(" };
-        let has_optional_chain = left_call_expr.optional || member_expr.optional();
-
-        // Get arguments text
-        let args_text = left_call_expr
-            .arguments
-            .iter()
-            .map(|arg| ctx.source_range(arg.span()))
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let fix_span = bin_expr.span;
-        ctx.diagnostic_with_suggestion(prefer_includes_diagnostic(callee_span), |fixer| {
-            let includes_call =
-                format!("{object_text}{member_operator}includes{call_operator}{args_text})");
-
-            let replacement = if has_optional_chain {
-                match comparison_kind {
-                    ComparisonKind::ExistsOrUndefined => format!("{includes_call} !== false"),
-                    ComparisonKind::ExistsOnly => format!("{includes_call} === true"),
-                    ComparisonKind::NotExistsOnly => format!("{includes_call} === false"),
-                }
-            } else {
-                match comparison_kind {
-                    ComparisonKind::NotExistsOnly => format!("!{includes_call}"),
-                    ComparisonKind::ExistsOrUndefined | ComparisonKind::ExistsOnly => includes_call,
-                }
-            };
-            fixer.replace(fix_span, replacement)
-        });
     }
 }
 
 fn is_negative_one(expr: &Expression) -> bool {
-    let Expression::UnaryExpression(unary_expr) = expr else {
-        return false;
-    };
-
-    if unary_expr.operator != UnaryOperator::UnaryNegation {
-        return false;
+    if let Expression::UnaryExpression(unary_expr) = expr
+        && unary_expr.operator == UnaryOperator::UnaryNegation
+    {
+        unary_expr.argument.without_parentheses().is_specific_raw_number_literal("1")
+    } else {
+        false
     }
-
-    let Expression::NumericLiteral(num_lit) = unary_expr.argument.without_parentheses() else {
-        return false;
-    };
-
-    num_lit.raw.as_ref().unwrap() == "1"
 }
 
 #[test]
@@ -210,6 +180,10 @@ fn test() {
         r"null.indexOf('foo') !== 1",
         r"f(0) < 0",
         r"something.indexOf(foo, 0, another) !== -1",
+        r"(obj?.indexOf)('x') !== -1;",
+        r"((obj?.['indexOf']))('x') === -1;",
+        r"(obj?.indexOf)?.('x') >= 0;",
+        r"((obj?.indexOf)!)('x') < 0;",
     ];
 
     let fail = vec![
@@ -249,6 +223,9 @@ fn test() {
         (r"foo?.indexOf('x') > -1", r"foo?.includes('x') === true"),
         (r"foo?.indexOf('x') >= 0", r"foo?.includes('x') === true"),
         (r"foo?.indexOf('x') < 0", r"foo?.includes('x') === false"),
+        (r"(str.indexOf)('foo') !== -1", r"str.includes('foo')"),
+        (r"((str['indexOf']))('foo') === -1", r"!str.includes('foo')"),
+        (r"(foo.indexOf)?.('x') === -1", r"foo.includes?.('x') === false"),
     ];
 
     Tester::new(PreferIncludes::NAME, PreferIncludes::PLUGIN, pass, fail)

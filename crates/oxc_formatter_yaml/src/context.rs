@@ -28,7 +28,7 @@ impl<'a> YamlFormatContext<'a> {
         last_descendant_end: u32,
     ) -> Self {
         Self {
-            options,
+            options: options.normalized(),
             source_text: SourceText::new(source_code),
             comments: Comments::new(comments),
             collection_depth: Cell::new(0),

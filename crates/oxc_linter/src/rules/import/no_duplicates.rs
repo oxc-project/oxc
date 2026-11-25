@@ -12,6 +12,7 @@ use oxc_ast::{
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     context::LintContext,
@@ -73,6 +74,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Reports if a resolved path is imported more than once in the same module.
+    /// Imports with different import attributes are treated as distinct modules.
     /// This helps avoid unnecessary duplicate imports and keeps the code clean.
     ///
     /// ### Why is this bad?
@@ -105,6 +107,7 @@ declare_oxc_lint!(
     NoDuplicates,
     import,
     style,
+    recommended,
     conditional_fix,
     config = NoDuplicates,
     version = "0.2.11",
@@ -113,7 +116,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicates {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'a>) {
@@ -151,88 +154,117 @@ impl Rule for NoDuplicates {
                 .into_iter()
                 .flat_map(|(_path, requested_modules)| requested_modules)
                 .filter(|requested_module| requested_module.is_import);
-            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
-            // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
-            let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
-                FxHashMap::default();
-            // Side-effect and top-level type-only imports cannot be merged directly. A runtime
-            // import with specifiers (including inline type specifiers) can absorb either.
-            let mut key0_side_effect_imports = Vec::new();
-            let mut key0_type_only_imports = Vec::new();
-            let mut key0_has_runtime_specifiers = false;
-            for requested_module in requested_modules {
-                let import_entries = module_record
-                    .import_entries
-                    .iter()
-                    .filter(|entry| entry.module_request.span == requested_module.span)
+            let requested_modules = requested_modules.collect::<Vec<_>>();
+            if requested_modules.len() <= 1 {
+                continue;
+            }
+
+            let declarations =
+                import_declarations.get_or_insert_with(|| build_import_declarations(ctx));
+            // Attribute order and key spelling do not affect module identity. An empty
+            // clause is equivalent to having no attributes.
+            let mut attribute_groups = FxHashMap::<_, Vec<_>>::default();
+            for module in requested_modules {
+                let mut attributes = declarations
+                    .get(&module.statement_span)
+                    .and_then(|decl| decl.with_clause.as_ref())
+                    .into_iter()
+                    .flat_map(|clause| &clause.with_entries)
+                    // The canonical bytes identify the value and give a stable order.
+                    .map(|attribute| {
+                        (attribute.key.as_js_str().as_bytes(), attribute.value.value.as_bytes())
+                    })
                     .collect::<Vec<_>>();
-                if import_entries.is_empty() {
-                    let key = u8::from(requested_module.is_type && !self.prefer_inline);
-                    import_entries_maps.entry(key).or_default().push(requested_module);
-                    if key == 0 {
+                attributes.sort_unstable();
+                attribute_groups.entry(attributes).or_default().push(module);
+            }
+
+            for (_, requested_modules) in
+                attribute_groups.into_iter().sorted_by(|(a, _), (b, _)| a.cmp(b))
+            {
+                // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
+                // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
+                let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
+                    FxHashMap::default();
+                // Side-effect and top-level type-only imports cannot be merged directly. A runtime
+                // import with specifiers (including inline type specifiers) can absorb either.
+                let mut key0_side_effect_imports = Vec::new();
+                let mut key0_type_only_imports = Vec::new();
+                let mut key0_has_runtime_specifiers = false;
+                for requested_module in requested_modules {
+                    let import_entries = module_record
+                        .import_entries
+                        .iter()
+                        .filter(|entry| entry.module_request.span == requested_module.span)
+                        .collect::<Vec<_>>();
+                    if import_entries.is_empty() {
+                        let key = u8::from(requested_module.is_type && !self.prefer_inline);
+                        import_entries_maps.entry(key).or_default().push(requested_module);
+                        if key == 0 {
+                            if requested_module.is_type {
+                                key0_type_only_imports.push(requested_module);
+                            } else {
+                                key0_side_effect_imports.push(requested_module);
+                            }
+                        }
+                        continue;
+                    }
+                    let mut flags = [true; 4];
+                    let mut pushed_to_key0 = false;
+                    for import_entry in import_entries {
+                        let key = if import_entry.is_type {
+                            match import_entry.import_name {
+                                ImportImportName::Name(_) => u8::from(!self.prefer_inline),
+                                ImportImportName::NamespaceObject => 2,
+                                ImportImportName::Default(_) | ImportImportName::Source(_) => 3,
+                            }
+                        } else {
+                            match import_entry.import_name {
+                                ImportImportName::NamespaceObject => 2,
+                                _ => 0,
+                            }
+                        };
+
+                        if flags[key as usize] {
+                            flags[key as usize] = false;
+                            import_entries_maps.entry(key).or_default().push(requested_module);
+                            if key == 0 {
+                                pushed_to_key0 = true;
+                            }
+                        }
+                    }
+                    if pushed_to_key0 {
                         if requested_module.is_type {
                             key0_type_only_imports.push(requested_module);
                         } else {
-                            key0_side_effect_imports.push(requested_module);
+                            key0_has_runtime_specifiers = true;
                         }
                     }
-                    continue;
                 }
-                let mut flags = [true; 4];
-                let mut pushed_to_key0 = false;
-                for import_entry in import_entries {
-                    let key = if import_entry.is_type {
-                        match import_entry.import_name {
-                            ImportImportName::Name(_) => u8::from(!self.prefer_inline),
-                            ImportImportName::NamespaceObject => 2,
-                            ImportImportName::Default(_) => 3,
-                        }
-                    } else {
-                        match import_entry.import_name {
-                            ImportImportName::NamespaceObject => 2,
-                            _ => 0,
-                        }
-                    };
 
-                    if flags[key as usize] {
-                        flags[key as usize] = false;
-                        import_entries_maps.entry(key).or_default().push(requested_module);
-                        if key == 0 {
-                            pushed_to_key0 = true;
-                        }
+                for i in 0..4 {
+                    if i == 0 && !key0_has_runtime_specifiers {
+                        check_duplicates(
+                            ctx,
+                            &mut import_declarations,
+                            self.prefer_inline,
+                            Some(&key0_side_effect_imports),
+                        );
+                        check_duplicates(
+                            ctx,
+                            &mut import_declarations,
+                            self.prefer_inline,
+                            Some(&key0_type_only_imports),
+                        );
+                        continue;
                     }
-                }
-                if pushed_to_key0 {
-                    if requested_module.is_type {
-                        key0_type_only_imports.push(requested_module);
-                    } else {
-                        key0_has_runtime_specifiers = true;
-                    }
-                }
-            }
-
-            for i in 0..4 {
-                if i == 0 && !key0_has_runtime_specifiers {
                     check_duplicates(
                         ctx,
                         &mut import_declarations,
                         self.prefer_inline,
-                        Some(&key0_side_effect_imports),
+                        import_entries_maps.get(&i),
                     );
-                    check_duplicates(
-                        ctx,
-                        &mut import_declarations,
-                        self.prefer_inline,
-                        Some(&key0_type_only_imports),
-                    );
-                    continue;
                 }
-                check_duplicates(
-                    ctx,
-                    &mut import_declarations,
-                    self.prefer_inline,
-                    import_entries_maps.get(&i),
-                );
             }
         }
     }
@@ -335,19 +367,21 @@ fn has_problematic_comments(ctx: &LintContext, decl: &ImportDeclaration) -> bool
         return true;
     }
 
-    let open_brace = brace_position(ctx, decl, "{");
-    let close_brace = brace_position(ctx, decl, "}");
+    let braces = specifier_braces(ctx, decl);
     comments.iter().filter(|c| c.span.start > span.start && c.span.end < span.end).any(|c| {
-        match (open_brace, close_brace) {
-            (Some(open), Some(close)) => c.span.end <= open || c.span.start >= close,
-            _ => true,
+        match braces {
+            Some((open, close)) => c.span.end <= open || c.span.start >= close,
+            None => true,
         }
     })
 }
 
-fn brace_position(ctx: &LintContext, decl: &ImportDeclaration, brace: &str) -> Option<u32> {
-    ctx.find_next_token_within(decl.span.start, decl.span.end, brace)
-        .map(|offset| decl.span.start + offset)
+fn specifier_braces(ctx: &LintContext, decl: &ImportDeclaration) -> Option<(u32, u32)> {
+    let start = decl.span.start;
+    let end = decl.source.span.start;
+    let open = start + ctx.find_next_token_within(start, end, "{")?;
+    let close = start + ctx.find_prev_token_within(start, end, "}")?;
+    (open < close).then_some((open, close))
 }
 
 struct MergeSpecifier<'a> {
@@ -394,8 +428,7 @@ fn merge_imports_fix<'a>(
         .iter()
         .copied()
         .filter_map(|decl| {
-            let open = brace_position(ctx, decl, "{")?;
-            let close = brace_position(ctx, decl, "}")?;
+            let (open, close) = specifier_braces(ctx, decl)?;
             let identifiers =
                 ctx.source_range(Span::new(open + 1, close)).split(',').collect::<Vec<_>>();
             Some(MergeSpecifier {
@@ -426,18 +459,18 @@ fn merge_imports_fix<'a>(
         return fixer.noop();
     }
 
-    let open_brace = brace_position(ctx, first, "{");
-    let close_brace = open_brace.and_then(|open| {
-        ctx.find_next_token_within(open + 1, first.span.end, "}").map(|o| open + 1 + o)
-    });
+    let braces = specifier_braces(ctx, first);
     let import_keyword_end = first.span.start + u32::try_from("import".len()).unwrap();
 
     let first_is_empty = !has_named_specifiers(first);
-    let first_brace_content = match (open_brace, close_brace) {
-        (Some(open), Some(close)) => ctx.source_range(Span::new(open + 1, close)),
-        _ => "",
+    let first_brace_content = match braces {
+        Some((open, close)) => ctx.source_range(Span::new(open + 1, close)),
+        None => "",
     };
-    let first_has_trailing_comma = !first_is_empty && first_brace_content.trim_end().ends_with(',');
+    let first_has_trailing_comma = !first_is_empty
+        && braces.is_some_and(|(open, close)| {
+            ctx.source_range(Span::new(open + 1, last_token_end(ctx, open, close))).ends_with(',')
+        });
 
     let mut existing: FxHashSet<&str> = FxHashSet::default();
     if !first_is_empty {
@@ -461,7 +494,7 @@ fn merge_imports_fix<'a>(
     let mut fixes = fixer.new_fix_with_capacity(decls.len() + 1);
 
     if should_add_specifiers && should_inline_type_imports && first.import_kind.is_type() {
-        if let Some(offset) = ctx.find_next_token_from(first.span.start, "type") {
+        if let Some(offset) = ctx.find_next_token_within(first.span.start, first.span.end, "type") {
             let type_start = first.span.start + offset;
             let mut type_end = type_start + u32::try_from("type".len()).unwrap();
             if ctx.semantic().source_text().as_bytes().get(type_end as usize) == Some(&b' ') {
@@ -479,17 +512,17 @@ fn merge_imports_fix<'a>(
     }
 
     let default_name = default_import_names.first().copied().unwrap_or("");
-    if should_add_default && open_brace.is_none() && should_add_specifiers {
+    if should_add_default && braces.is_none() && should_add_specifiers {
         fixes.push(fixer.insert_text_before_range(
             Span::empty(import_keyword_end),
             format!(" {default_name}, {{{specifiers_text}}} from"),
         ));
-    } else if should_add_default && open_brace.is_none() {
+    } else if should_add_default && braces.is_none() {
         fixes.push(fixer.insert_text_before_range(
             Span::empty(import_keyword_end),
             format!(" {default_name} from"),
         ));
-    } else if should_add_default && let (Some(open), Some(close)) = (open_brace, close_brace) {
+    } else if should_add_default && let Some((open, close)) = braces {
         fixes.push(fixer.insert_text_before_range(
             Span::empty(import_keyword_end),
             format!(" {default_name},"),
@@ -497,7 +530,7 @@ fn merge_imports_fix<'a>(
         if should_add_specifiers {
             fixes.push(merge_into_braces(&fixer, ctx, open, close, &specifiers_text));
         }
-    } else if !should_add_default && open_brace.is_none() && should_add_specifiers {
+    } else if !should_add_default && braces.is_none() && should_add_specifiers {
         if first.specifiers.as_ref().is_none_or(|s| s.is_empty()) {
             fixes.push(fixer.insert_text_before_range(
                 Span::empty(import_keyword_end),
@@ -506,7 +539,7 @@ fn merge_imports_fix<'a>(
         } else if let Some(first_default) = first.specifiers.as_ref().and_then(|s| s.first()) {
             fixes.push(fixer.insert_text_after(first_default, format!(", {{{specifiers_text}}}")));
         }
-    } else if !should_add_default && let (Some(open), Some(close)) = (open_brace, close_brace) {
+    } else if !should_add_default && let Some((open, close)) = braces {
         fixes.push(merge_into_braces(&fixer, ctx, open, close, &specifiers_text));
     }
 
@@ -535,6 +568,15 @@ fn build_specifiers_text<'a>(
         for cur in &specifier.identifiers {
             let trimmed = cur.trim();
             if trimmed.is_empty() {
+                continue;
+            }
+            if is_only_comments(trimmed) {
+                if existing.insert(trimmed) {
+                    specifier_text.push_str(trimmed);
+                    if ends_with_line_comment(trimmed) {
+                        specifier_text.push('\n');
+                    }
+                }
                 continue;
             }
             let with_type: Cow<str> = if inline_type_imports && specifier.is_type {
@@ -578,6 +620,38 @@ fn ends_with_line_comment(text: &str) -> bool {
     text.rsplit('\n').next().unwrap_or(text).contains("//")
 }
 
+/// The end of the last token before `close`, skipping whitespace and comments, like
+/// `getTokenBefore(closeBrace)` in eslint-plugin-import. E.g. the `,` in `{ a, /* b */ }`.
+fn last_token_end(ctx: &LintContext, open: u32, close: u32) -> u32 {
+    let mut end = close;
+    loop {
+        let text = ctx.source_range(Span::new(open + 1, end)).trim_end();
+        let text_end = open + 1 + u32::try_from(text.len()).unwrap();
+        match ctx.semantic().comments_range(open + 1..text_end).next_back() {
+            Some(comment) if comment.span.end >= text_end => end = comment.span.start,
+            _ => return text_end,
+        }
+    }
+}
+
+/// Whether `text` is only comments, e.g. after the trailing comma in `{ a, /* b */ }`.
+fn is_only_comments(text: &str) -> bool {
+    let mut rest = text.trim_start();
+    while !rest.is_empty() {
+        if let Some(after) = rest.strip_prefix("/*") {
+            let Some(end) = after.find("*/") else {
+                return false;
+            };
+            rest = after[end + 2..].trim_start();
+        } else if let Some(after) = rest.strip_prefix("//") {
+            rest = after.find(is_line_terminator).map_or("", |i| &after[i..]).trim_start();
+        } else {
+            return false;
+        }
+    }
+    true
+}
+
 fn strip_leading_inline_whitespace(text: &str) -> &str {
     text.trim_start_matches(|c: char| c.is_whitespace() && c != '\n')
 }
@@ -595,9 +669,23 @@ fn merge_into_braces<'a>(
         fixer.replace(Span::new(open + 1, close), specifiers_text.to_string())
     } else if trailing_whitespace_len > 0 {
         let trailing = &content[content.len() - trailing_whitespace_len..];
+        let content_end = close - u32::try_from(trailing_whitespace_len).unwrap();
+        let after_line_comment = ctx
+            .semantic()
+            .comments_range(open + 1..content_end)
+            .next_back()
+            .is_some_and(|comment| comment.is_line() && comment.span.end >= content_end);
+        let separator = if after_line_comment
+            && !specifiers_text.is_empty()
+            && !specifiers_text.starts_with('\n')
+        {
+            "\n"
+        } else {
+            ""
+        };
         fixer.replace(
-            Span::new(close - u32::try_from(trailing_whitespace_len).unwrap(), close + 1),
-            format!("{specifiers_text}{trailing}}}"),
+            Span::new(content_end, close + 1),
+            format!("{separator}{specifiers_text}{trailing}}}"),
         )
     } else {
         fixer.insert_text_before_range(Span::empty(close), specifiers_text.to_string())
@@ -690,6 +778,33 @@ fn test() {
         (r"import type {} from './foo'; import './foo';", None),
         (r"import type {} from './foo'; import './foo';", Some(json!([{ "preferInline": true }]))),
         (r"import { RouterModule, Routes } from '@angular/router';", None),
+        (
+            r#"import { compile } from "../src/macro.ts" with { type: "macro" };
+import { compile as compileNoMacro } from "../src/macro.ts";"#,
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { mode: 'one' }; import {y} from './foo' with { mode: 'two' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { mode: 'one' }; import {y} from './foo' with { other: 'one' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json', mode: 'one' };",
+            None,
+        ),
+        (r"import './foo' with { type: 'json' }; import './foo';", None),
+        (r"import * as x from './foo' with { type: 'json' }; import * as y from './foo';", None),
+        (
+            r"import './foo'; import type { Foo } from './foo'; import { Bar } from './foo' with { type: 'macro' };",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -932,6 +1047,25 @@ fn test() {
             r"import { type Foo } from './foo'; import './foo'",
             Some(json!([{ "preferInline": true }])),
         ),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { type: 'json', mode: 'one' }; import {y} from './foo' with { 'mode': 'one', 'type': 'json' };",
+            None,
+        ),
+        (r"import {x} from './foo' with {}; import {y} from './foo';", None),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }; import {z} from './foo' with { type: 'json' };",
+            None,
+        ),
+        (r"import './foo' with { mode: 'one' }; import './foo' with { mode: 'one' };", None),
+        (
+            r"import * as x from './foo' with { mode: 'one' }; import * as y from './foo' with { mode: 'one' };",
+            None,
+        ),
+        (r"import '}{'; import '}{';", None),
     ];
 
     let fix = vec![
@@ -1042,8 +1176,96 @@ import type {Bar // comment
         ),
         // Import attributes can change module semantics and must not be discarded by a merge.
         (
-            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }",
-            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }",
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' }",
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' }",
+            None,
+        ),
+        (r"import '}{'; import '}{';", r"import '}{'; ", None),
+        (r"import '{}'; import '{}';", r"import '{}'; ", None),
+        (r"import '{'; import '{';", r"import '{'; ", None),
+        (r"import '}'; import '}';", r"import '}'; ", None),
+        (r"import '{}'; import {x} from '{}';", r"import {x} from '{}'; ", None),
+        (r"import '}{'; import def from '}{';", r"import def from '}{'; ", None),
+        (r"import def from '}{'; import '}{';", r"import def from '}{'; ", None),
+        (r"import def from '{}'; import {x} from '{}';", r"import def, {x} from '{}'; ", None),
+        (r"import {x} from '}{'; import '}{';", r"import {x} from '}{'; ", None),
+        (r"import {} from '}{'; import {x} from '}{';", r"import {x} from '}{'; ", None),
+        (r"import def, {} from '}{'; import {x} from '}{';", r"import def, {x} from '}{'; ", None),
+        (
+            r"import {x} from 'foo'; import {'}{' as y} from 'foo';",
+            r"import {x,'}{' as y} from 'foo'; ",
+            None,
+        ),
+        (
+            r"import {'}' as x} from 'foo'; import {y} from 'foo';",
+            r"import {'}' as x,y} from 'foo'; ",
+            None,
+        ),
+        (
+            r"import {x} from '}{';
+import { /* }{ */ y } from '}{';",
+            r"import {x,/* }{ */ y} from '}{';
+",
+            None,
+        ),
+        (
+            "import {\n  a, // comment\n} from 'foo';\nimport { b } from 'foo';",
+            "import {\n  a, // comment\nb\n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import {\n  a, /* comment */\n} from 'foo';\nimport { b } from 'foo';",
+            "import {\n  a, /* comment */b\n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, // comment  \n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, // comment\nb  \n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, //   \n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, //\nb   \n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, /* first */ // comment \t\n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, /* first */ // comment\nb \t\n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\n} from 'foo';\nimport { c } from 'foo';",
+            "import { a,b// note\n,c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, /* note */ } from 'foo';\n\nimport { c } from 'foo';",
+            "import { a,b/* note */,c } from 'foo';\n\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\n c } from 'foo';",
+            "import { a,b,// note\n c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\r c } from 'foo';",
+            "import { a,b,// note\r c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\r\n c } from 'foo';",
+            "import { a,b,// note\r\n c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\u{2028} c } from 'foo';",
+            "import { a,b,// note\u{2028} c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\u{2029} c } from 'foo';",
+            "import { a,b,// note\u{2029} c\n } from 'foo';\n",
             None,
         ),
     ];

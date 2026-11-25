@@ -21,15 +21,33 @@ If you need all ASTs in the same with-TS-properties format, use the `astType: 't
 The only differences between Oxc's AST and ESTree / TS-ESTree are:
 
 - Support for Stage 3 [decorators](https://github.com/tc39/proposal-decorators).
-- Support for Stage 3 ECMA features [`import defer`](https://github.com/tc39/proposal-defer-import-eval)
-  and [`import source`](https://github.com/tc39/proposal-source-phase-imports).
-- In TS-ESTree AST, `import.defer(...)` and `import.source(...)` are represented as an `ImportExpression`
-  with `'defer'` or `'source'` in `phase` field (as in ESTree spec), where TS-ESLint represents these
-  as a `CallExpression` with `MetaProperty` as its `callee`.
+- Support for the Stage 3 ECMA feature [`import source`](https://github.com/tc39/proposal-source-phase-imports).
 - Addition of a non-standard `hashbang` field to `Program`.
+- Non-standard `ParenthesizedExpression` and `TSParenthesizedType` nodes when
+  `preserveParens` is enabled (the default). Set `preserveParens: false` to omit them.
 
 That aside, the AST should completely align with Acorn's ESTree AST or TS-ESLint's TS-ESTree.
 Any deviation would be considered a bug.
+
+#### Property order
+
+ESTree and TS-ESTree do not define an order for node properties. `oxc-parser` emits them in this
+order:
+
+1. `type`.
+2. Node-specific fields in Oxc's defined serialization order. Properties containing child nodes
+   have the same relative order as the entries in `visitorKeys[node.type]`.
+3. `start`, then `end`.
+4. `range`, when the `range` option is enabled.
+
+`visitorKeys` is an exported map from a node type to the properties containing that node's children,
+in traversal order. For example, `visitorKeys.ConditionalExpression` is
+`['test', 'consequent', 'alternate']`. This is not alphabetical order: walking `alternate` before
+`test` would not match the syntax or evaluation order of a conditional expression.
+
+Fields omitted by the selected `astType` do not change the relative order of the remaining fields.
+A generic walker which recursively inspects `Object.keys(node)` therefore visits standard ESTree
+children in the same relative order as Oxc's `Visitor` and the exported `visitorKeys`.
 
 ### AST Types
 
@@ -66,7 +84,7 @@ Does not produce any errors when `showSemanticErrors` is `false`, which is the d
 
 Fast mode is best suited for parser plugins, where other parts of your build pipeline has already checked for errors.
 
-Please note that turning off fast mode ​incurs​ a small performance overhead.
+Please note that turning off fast mode incurs a small performance overhead.
 
 ### Returns ESM information.
 
@@ -110,7 +128,9 @@ parseSync(filename: string, sourceText: string, options?: ParserOptions): ParseR
 parse(filename: string, sourceText: string, options?: ParserOptions): Promise<ParseResult>
 ```
 
-Use `parseSync` for synchronous parsing. Use `parse` for asynchronous parsing, which can be beneficial in I/O-bound or concurrent scenarios, though it adds async overhead.
+Prefer `parseSync` for most workloads. `parse` moves Rust parsing to a worker-pool thread,
+but AST deserialization still runs synchronously on the calling thread and usually accounts
+for most of the work. To parse multiple files in parallel, use `parseSync` in worker threads.
 
 ### Example
 
@@ -159,8 +179,8 @@ console.log(visitations);
 
 All options are optional.
 
-- `lang`: `'js'` | `'jsx'` | `'ts'` | `'tsx'`. Set language of source. If omitted, language is deduced from file extension.
-- `sourceType`: `'script'` | `'module'` | `'unambiguous'`. Set source type. Defaults to `'module'`.
+- `lang`: `'js'` | `'jsx'` | `'ts'` | `'tsx'` | `'dts'`. Set language of source. If omitted, language is deduced from file extension.
+- `sourceType`: `'script'` | `'module'` | `'commonjs'` | `'unambiguous'`. Override the module kind. When both `sourceType` and `lang` are omitted, `.mjs` / `.mts` use module mode, `.cjs` / `.cts` use CommonJS mode, and `.js` / `.jsx` / `.ts` / `.tsx` use unambiguous mode. An explicit `lang` uses unambiguous mode, except `'dts'`, which uses module mode. An explicit `sourceType` takes precedence.
 - `astType`: `'js'` | `'ts'`. Set to `'ts'` if you want ASTs of plain JS/JSX files to contain TypeScript-specific properties.
 - `range`: `true` | `false`. If `true`, AST nodes contain a `range` field. Defaults to `false`.
 - `preserveParens`: `true` | `false`. If `true`, parenthesized expressions are represented by (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` AST nodes. Defaults to `true`.

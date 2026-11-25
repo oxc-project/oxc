@@ -1,12 +1,14 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
+    fixer::{RuleFix, RuleFixer},
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
@@ -38,58 +40,81 @@ test.todo('i need to write this test');
 ```
 ";
 
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-    if let AstKind::CallExpression(call_expr) = node.kind() {
-        let counts = call_expr.arguments.len();
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
 
-        if counts < 1
-            || should_filter_case(call_expr)
-            || !is_string_type(&call_expr.arguments[0])
-            || !is_type_of_jest_fn_call(
-                call_expr,
-                possible_jest_node,
-                ctx,
-                &[JestFnKind::General(JestGeneralFnKind::Test)],
-            )
-        {
+    let counts = call_expr.arguments.len();
+
+    if counts < 1 || should_filter_case(call_expr) || !is_string_type(&call_expr.arguments[0]) {
+        return;
+    }
+
+    let is_empty = counts > 1 && is_empty_function(call_expr);
+    if (counts == 1 && !filter_todo_case(call_expr)) || is_empty {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        if !is_type_of_jest_fn_call(
+            call_expr,
+            &possible_jest_node,
+            ctx,
+            &[JestFnKind::General(JestGeneralFnKind::Test)],
+        ) {
             return;
         }
 
-        if (counts == 1 && !filter_todo_case(call_expr))
-            || (counts > 1 && is_empty_function(call_expr))
-        {
-            let span = call_expr.callee.span();
-            ctx.diagnostic_with_fix(prefer_todo_diagnostic(span), |fixer| {
-                let fix = if let Expression::Identifier(ident) = &call_expr.callee {
-                    fixer.insert_text_after_range(ident.span, ".todo")
-                } else {
-                    match &call_expr.callee {
-                        Expression::StaticMemberExpression(mem_expr) => {
-                            fixer.replace(mem_expr.property.span, "todo")
-                        }
-                        Expression::ComputedMemberExpression(mem_expr) => {
-                            fixer.replace(mem_expr.expression.span(), "'todo'")
-                        }
-                        _ => return fixer.delete_range(call_expr.span),
-                    }
-                };
+        let span = call_expr.callee.span();
+        let diagnostic = prefer_todo_diagnostic(span);
 
-                if counts == 1 {
-                    return fix;
-                }
-
-                let multi_fixer = fixer.for_multifix();
-                let mut multi_fix = multi_fixer.new_fix_with_capacity(2);
-                multi_fix.push(fix);
-                multi_fix.push(multi_fixer.delete_range(Span::new(
-                    call_expr.arguments[0].span().end,
-                    call_expr.span.end - 1,
-                )));
-                multi_fix.with_message("Replace with `test.todo` or `it.todo`.")
-            });
+        if is_safe_fix_target(call_expr) {
+            ctx.diagnostic_with_fix(diagnostic, |fixer| build_fix(fixer, call_expr));
+        } else {
+            ctx.diagnostic(diagnostic);
         }
     }
+}
+
+fn is_safe_fix_target(call_expr: &CallExpression) -> bool {
+    if call_expr.arguments.len() > 2 {
+        return false;
+    }
+
+    if let Some(name) =
+        call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name)
+    {
+        return name == "skip";
+    }
+
+    matches!(&call_expr.callee, Expression::Identifier(_)) && call_expr.arguments.len() == 1
+}
+
+fn build_fix<'a>(fixer: RuleFixer<'_, 'a>, call_expr: &CallExpression<'a>) -> RuleFix {
+    let fix = match &call_expr.callee {
+        Expression::Identifier(ident) => fixer.insert_text_after_range(ident.span, ".todo"),
+        Expression::StaticMemberExpression(mem_expr) => {
+            fixer.replace(mem_expr.property.span, "todo")
+        }
+        Expression::ComputedMemberExpression(mem_expr) => {
+            fixer.replace(mem_expr.expression.span(), "'todo'")
+        }
+        _ => return fixer.noop(),
+    };
+
+    if call_expr.arguments.len() == 1 {
+        return fix;
+    }
+
+    let multi_fixer = fixer.for_multifix();
+    let mut multi_fix = multi_fixer.new_fix_with_capacity(2);
+    multi_fix.push(fix);
+    multi_fix.push(
+        multi_fixer
+            .delete_range(Span::new(call_expr.arguments[0].span().end, call_expr.span.end - 1)),
+    );
+    multi_fix.with_message("Replace with `test.todo` or `it.todo`.")
 }
 
 fn filter_todo_case(expr: &CallExpression) -> bool {
@@ -102,11 +127,15 @@ fn filter_todo_case(expr: &CallExpression) -> bool {
 }
 
 fn should_filter_case(expr: &CallExpression) -> bool {
-    let result = match &expr.callee {
-        Expression::Identifier(ident) => ident.name.starts_with('x') || ident.name.starts_with('f'),
-        _ => false,
+    if let Expression::Identifier(ident) = &expr.callee {
+        return ident.name.starts_with('x') || ident.name.starts_with('f');
+    }
+
+    let Some(mem_expr) = expr.callee.as_member_expression() else {
+        return true;
     };
-    result || filter_todo_case(expr)
+    !matches!(mem_expr.object(), Expression::Identifier(_))
+        || mem_expr.static_property_name().is_none_or(|name| name != "skip")
 }
 
 fn is_string_type(arg: &Argument) -> bool {

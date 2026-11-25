@@ -3,7 +3,7 @@ use oxc_ast::AstKind;
 use oxc_ast::ast::{IfStatement, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 fn no_lonely_if_diagnostic(lonely_if: &IfStatement) -> OxcDiagnostic {
     let span = Span::sized(lonely_if.span.start, 2);
@@ -101,8 +101,15 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        if let AstKind::IfStatement(_) = ctx.nodes().parent_kind(node.id()) {
-            return;
+        let mut current_if = if_stmt;
+        for ancestor in ctx.nodes().ancestor_kinds(node.id()) {
+            let AstKind::IfStatement(parent_if) = ancestor else {
+                break;
+            };
+            if parent_if.consequent.span() == current_if.span {
+                return;
+            }
+            current_if = parent_if;
         }
 
         match only_stmt {
@@ -133,6 +140,7 @@ fn test() {
            if (c) {  }
            if (d) {  }
           }",
+        "if (a) if (c) {} else if (d) {} else { if (b) {} } else {}",
     ];
 
     let fail = vec![
@@ -178,6 +186,10 @@ fn test() {
            if (b) bar();
          }
          `template literal`;",
+        "if (a) {} else { if (b) {} }",
+        "if (a) {} else if (d) {} else { if (b) {} }",
+        "if (a) {} else if (c) {} else if (d) {} else { if (b) {} }",
+        "if (a) {} else if (d) {} else { if (b) {} else {} }",
     ];
 
     /* Pending

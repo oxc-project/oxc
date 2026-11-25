@@ -175,7 +175,8 @@ declare_oxc_lint!(
     restriction,
     config = NoRestrictedGlobalsConfigValue,
     version = "0.4.0",
-    short_description = "Specify global variable names that should not be used in your application.",
+    short_description =
+        "Specify global variable names that should not be used in your application.",
 );
 
 impl Rule for NoRestrictedGlobals {
@@ -189,7 +190,7 @@ impl Rule for NoRestrictedGlobals {
             match item {
                 // "no-restricted-globals": ["error", "event"]
                 Value::String(name) => {
-                    config.globals.insert(name.clone(), String::new());
+                    config.globals.insert(name, String::new());
                 }
                 Value::Object(obj) => {
                     match obj.get("globals") {
@@ -350,6 +351,9 @@ impl NoRestrictedGlobals {
                         cooked.as_str()
                     }
                     _ => return,
+                };
+                let Some(property_name) = property_name else {
+                    return;
                 };
                 let Some(message) = self.globals.get(property_name) else {
                     return;

@@ -57,7 +57,7 @@
       "markdownDescription": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error."
     },
     "jsPlugins": {
-      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
+      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
       "anyOf": [
         {
           "type": "null"
@@ -70,7 +70,7 @@
           "uniqueItems": true
         }
       ],
-      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
+      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
     },
     "options": {
       "description": "Oxlint config options.",
@@ -672,6 +672,21 @@
       },
       "additionalProperties": false
     },
+    "AnchorHasContentConfig": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "Additional custom component names to treat as anchor elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional custom component names to treat as anchor elements."
+        }
+      },
+      "additionalProperties": false
+    },
     "AnchorIsValidAspect": {
       "type": "string",
       "enum": [
@@ -974,6 +989,18 @@
       },
       "additionalProperties": false
     },
+    "AwaitThenableConfig": {
+      "type": "object",
+      "properties": {
+        "allowMixedPromiseArrays": {
+          "description": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported."
+        }
+      },
+      "additionalProperties": false
+    },
     "BanConfigValue": {
       "description": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`",
       "anyOf": [
@@ -1146,6 +1173,26 @@
       },
       "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
     },
+    "CapitalizedCallsConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option."
+        },
+        "allowPattern": {
+          "description": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`).",
+          "type": "string",
+          "markdownDescription": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`)."
+        }
+      },
+      "additionalProperties": false
+    },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
       "type": "array",
@@ -1310,6 +1357,40 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Ignore the requirement to provide either `onChange` or `readOnly` when the `checked` prop is present."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChecksConditionals": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/ChecksConditionalsOptions"
+        }
+      ]
+    },
+    "ChecksConditionalsFlagUnions": {
+      "type": "string",
+      "enum": [
+        "none",
+        "strict",
+        "all"
+      ]
+    },
+    "ChecksConditionalsOptions": {
+      "type": "object",
+      "properties": {
+        "flagUnions": {
+          "description": "Controls which union types are reported in conditionals.\n- `\"none\"` only reports values that are always Promise-like.\n- `\"strict\"` also reports unions where the non-Promise types match the awaited Promise types,\nsuch as `Promise<number> | number`.\n- `\"all\"` reports any union containing a Promise-like type.",
+          "default": "none",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ChecksConditionalsFlagUnions"
+            }
+          ],
+          "markdownDescription": "Controls which union types are reported in conditionals.\n- `\"none\"` only reports values that are always Promise-like.\n- `\"strict\"` also reports unions where the non-Promise types match the awaited Promise types,\nsuch as `Promise<number> | number`.\n- `\"all\"` reports any union containing a Promise-like type."
         }
       },
       "additionalProperties": false
@@ -2034,6 +2115,15 @@
       },
       "additionalProperties": false
     },
+    "DescriptionFormatConfig": {
+      "type": "object",
+      "properties": {
+        "descriptionFormat": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "Destructure": {
       "oneOf": [
         {
@@ -2091,13 +2181,7 @@
           "$ref": "#/definitions/RequireDescription"
         },
         {
-          "type": "object",
-          "properties": {
-            "descriptionFormat": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
+          "$ref": "#/definitions/DescriptionFormatConfig"
         }
       ]
     },
@@ -2545,15 +2629,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "additionalItems": {
                 "type": "string"
               },
-              "minItems": 2,
+              "minItems": 1,
               "uniqueItems": true
             }
           ]
@@ -3285,6 +3366,24 @@
         "jest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-all": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-before-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-before-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-describe-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-expect-groups": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jest/padding-around-test-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -3563,6 +3662,26 @@
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/no-blank-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoBlankBlocks"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/no-defaults": {
           "anyOf": [
             {
@@ -3684,6 +3803,9 @@
         "jsdoc/require-returns-type": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/require-template-description": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jsdoc/require-throws-description": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -3757,7 +3879,24 @@
           ]
         },
         "jsx-a11y/anchor-has-content": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AnchorHasContentConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/anchor-is-valid": {
           "anyOf": [
@@ -5163,15 +5302,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -5184,15 +5320,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -5205,15 +5338,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/PropertyDetails"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/PropertyDetails"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -5391,7 +5521,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-unmodified-loop-condition": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnmodifiedLoopCondition"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-unneeded-ternary": {
           "anyOf": [
@@ -5661,7 +5808,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoWarningCommentsConfigJson"
+                  "$ref": "#/definitions/NoWarningCommentsConfig"
                 }
               ],
               "maxItems": 2,
@@ -5846,6 +5993,26 @@
                 }
               ],
               "maxItems": 3,
+              "minItems": 2
+            }
+          ]
+        },
+        "one-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/OneVar"
+                }
+              ],
+              "maxItems": 2,
               "minItems": 2
             }
           ]
@@ -6487,6 +6654,26 @@
             }
           ]
         },
+        "react/capitalized-calls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CapitalizedCallsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/checked-requires-onchange-or-readonly": {
           "anyOf": [
             {
@@ -6527,6 +6714,9 @@
             }
           ]
         },
+        "react/error-boundaries": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/exhaustive-deps": {
           "anyOf": [
             {
@@ -6546,6 +6736,9 @@
               "minItems": 2
             }
           ]
+        },
+        "react/exhaustive-effect-dependencies": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/forbid-component-props": {
           "anyOf": [
@@ -6630,6 +6823,9 @@
             }
           ]
         },
+        "react/globals": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/hook-use-state": {
           "anyOf": [
             {
@@ -6650,7 +6846,19 @@
             }
           ]
         },
+        "react/hooks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/iframe-missing-sandbox": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/immutability": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/incompatible-library": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/invariant": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/jsx-boolean-value": {
@@ -6954,6 +7162,9 @@
             }
           ]
         },
+        "react/memo-dependencies": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/no-array-index-key": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -6967,6 +7178,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-danger-with-children": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/no-deriving-state-in-effects": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-did-mount-set-state": {
@@ -7222,30 +7436,22 @@
             }
           ]
         },
-        "react/react-compiler": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/RuleNoConfig"
-            },
-            {
-              "type": "array",
-              "items": [
-                {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/ReactCompilerConfig"
-                }
-              ],
-              "maxItems": 2,
-              "minItems": 2
-            }
-          ]
+        "react/preserve-manual-memoization": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/purity": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/react-in-jsx-scope": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/refs": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/require-render-return": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/rule-suppression": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/rules-of-hooks": {
@@ -7271,6 +7477,12 @@
             }
           ]
         },
+        "react/set-state-in-effect": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/set-state-in-render": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/state-in-constructor": {
           "anyOf": [
             {
@@ -7290,6 +7502,9 @@
               "minItems": 2
             }
           ]
+        },
+        "react/static-components": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/style-prop-object": {
           "anyOf": [
@@ -7311,7 +7526,22 @@
             }
           ]
         },
+        "react/syntax": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/todo": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/unsupported-syntax": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/use-memo": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/void-dom-elements-no-children": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/void-use-memo": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "require-await": {
@@ -7430,7 +7660,24 @@
           ]
         },
         "typescript/await-thenable": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AwaitThenableConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "typescript/ban-ts-comment": {
           "anyOf": [
@@ -7916,6 +8163,9 @@
         "typescript/no-for-in-array": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-generated-empty-object-type": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-implied-eval": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -8210,7 +8460,13 @@
         "typescript/no-unsafe-call": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-unsafe-class-instance-assignment": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-unsafe-declaration-merging": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "typescript/no-unsafe-enum-assignment": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-unsafe-enum-comparison": {
@@ -9382,7 +9638,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-query-selector": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferQuerySelector"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-reflect-apply": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -9899,6 +10172,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-after-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-all": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-before-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-before-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-describe-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-expect-groups": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-test-blocks": {
@@ -12678,10 +12969,23 @@
       }
     },
     "Location": {
-      "type": "string",
-      "enum": [
-        "start",
-        "anywhere"
+      "oneOf": [
+        {
+          "description": "Terms must appear at the start of the comment, after any decoration.",
+          "type": "string",
+          "enum": [
+            "start"
+          ],
+          "markdownDescription": "Terms must appear at the start of the comment, after any decoration."
+        },
+        {
+          "description": "Terms can appear anywhere in the comment.",
+          "type": "string",
+          "enum": [
+            "anywhere"
+          ],
+          "markdownDescription": "Terms can appear anywhere in the comment."
+        }
       ]
     },
     "LogicalAssignmentOperators": {
@@ -13702,6 +14006,18 @@
       },
       "additionalProperties": false
     },
+    "NoBlankBlocks": {
+      "type": "object",
+      "properties": {
+        "enableFixer": {
+          "description": "Whether to automatically remove blank JSDoc blocks.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to automatically remove blank JSDoc blocks."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoCallbackInPromiseConfig": {
       "type": "object",
       "properties": {
@@ -14117,7 +14433,7 @@
       "properties": {
         "allowIndirect": {
           "description": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain."
         }
@@ -14548,7 +14864,7 @@
       "properties": {
         "skipComments": {
           "description": "Whether to skip irregular whitespace in comments.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to skip irregular whitespace in comments."
         },
@@ -14601,7 +14917,7 @@
       "type": "object",
       "properties": {
         "allowedSnapshots": {
-          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions.",
+          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead.",
           "default": {},
           "type": "object",
           "additionalProperties": {
@@ -14610,11 +14926,11 @@
               "type": "string"
             }
           },
-          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions."
+          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead."
         },
         "inlineMaxSize": {
           "description": "Maximum number of lines allowed for inline snapshots.",
-          "default": 50,
+          "default": null,
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0,
@@ -14757,10 +15073,14 @@
       "type": "object",
       "properties": {
         "checksConditionals": {
-          "description": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected.",
+          "description": "Whether to check if Promises are used in conditionals.\nCan be a boolean to enable/disable the check, or an object to control union types.",
           "default": true,
-          "type": "boolean",
-          "markdownDescription": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected."
+          "allOf": [
+            {
+              "$ref": "#/definitions/ChecksConditionals"
+            }
+          ],
+          "markdownDescription": "Whether to check if Promises are used in conditionals.\nCan be a boolean to enable/disable the check, or an object to control union types."
         },
         "checksSpreads": {
           "description": "Whether to check if Promises are used in spread syntax.\nWhen true, disallows spreading Promise values.",
@@ -15109,6 +15429,12 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "When set `true`, it flags redeclaring built-in globals (e.g., `let Object = 1;`)."
+        },
+        "ignoreDeclarationMerge": {
+          "description": "When `true`, automatically merged declarations like namespace, class, etc. will be\nignored when checking for redeclarations.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "When `true`, automatically merged declarations like namespace, class, etc. will be\nignored when checking for redeclarations."
         }
       },
       "additionalProperties": false
@@ -15741,6 +16067,18 @@
       },
       "additionalProperties": false
     },
+    "NoUnmodifiedLoopCondition": {
+      "type": "object",
+      "properties": {
+        "checkConditionalExpressions": {
+          "description": "Whether references in each branch of a conditional expression should be checked\nindependently instead of checking the result of the entire expression.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether references in each branch of a conditional expression should be checked\nindependently instead of checking the result of the entire expression."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoUnnecessaryBooleanLiteralCompareConfig": {
       "type": "object",
       "properties": {
@@ -16028,13 +16366,13 @@
           "markdownDescription": "Controls how unused arguments are checked."
         },
         "argsIgnorePattern": {
-          "description": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```",
+          "description": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, names starting with `_` are ignored, except for the bare `_`\nparameter. If options are configured with an object, this will default\nto [`None`]. Note that this behavior deviates from both ESLint and\nTypeScript-ESLint, which never provide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```",
           "allOf": [
             {
               "$ref": "#/definitions/IgnorePattern_for_String"
             }
           ],
-          "markdownDescription": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```"
+          "markdownDescription": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, names starting with `_` are ignored, except for the bare `_`\nparameter. If options are configured with an object, this will default\nto [`None`]. Note that this behavior deviates from both ESLint and\nTypeScript-ESLint, which never provide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```"
         },
         "caughtErrors": {
           "description": "Used for `catch` block validation.",
@@ -16281,23 +16619,41 @@
       },
       "additionalProperties": false
     },
-    "NoWarningCommentsConfigJson": {
+    "NoWarningCommentsConfig": {
       "type": "object",
       "properties": {
         "decoration": {
+          "description": "An array of characters to ignore at the start of comments when `location` is `\"start\"`.\n\nUseful for ignoring common comment decorations like `*` in JSDoc-style comments.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "uniqueItems": true,
+          "markdownDescription": "An array of characters to ignore at the start of comments when `location` is `\"start\"`.\n\nUseful for ignoring common comment decorations like `*` in JSDoc-style comments."
         },
         "location": {
-          "$ref": "#/definitions/Location"
+          "description": "Where to check for the terms.",
+          "default": "start",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Location"
+            }
+          ],
+          "markdownDescription": "Where to check for the terms."
         },
         "terms": {
+          "description": "An array of terms to match. The matching is case-insensitive.",
+          "default": [
+            "todo",
+            "fixme",
+            "xxx"
+          ],
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "An array of terms to match. The matching is case-insensitive."
         }
       },
       "additionalProperties": false
@@ -16356,33 +16712,6 @@
         }
       ]
     },
-    "NumericBaseConfig": {
-      "type": "object",
-      "properties": {
-        "groupLength": {
-          "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
-          "default": 0,
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0,
-          "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
-        },
-        "minimumDigits": {
-          "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
-          "default": 0,
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0,
-          "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
-        },
-        "onlyIfContainsSeparator": {
-          "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
-          "type": "boolean",
-          "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
-        }
-      },
-      "additionalProperties": false
-    },
     "NumericNumberConfig": {
       "type": "object",
       "properties": {
@@ -16396,7 +16725,7 @@
         },
         "groupLength": {
           "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
-          "default": 0,
+          "default": 3,
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0,
@@ -16404,7 +16733,7 @@
         },
         "minimumDigits": {
           "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
-          "default": 0,
+          "default": 5,
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0,
@@ -16427,11 +16756,31 @@
             "groupLength": 4,
             "minimumDigits": 0
           },
-          "allOf": [
-            {
-              "$ref": "#/definitions/NumericBaseConfig"
+          "type": "object",
+          "properties": {
+            "groupLength": {
+              "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+              "default": 4,
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0,
+              "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+            },
+            "minimumDigits": {
+              "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+              "default": 0,
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0,
+              "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+            },
+            "onlyIfContainsSeparator": {
+              "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+              "type": "boolean",
+              "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
             }
-          ],
+          },
+          "additionalProperties": false,
           "markdownDescription": "Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).\nControls how digits are grouped and when separators are applied."
         },
         "hexadecimal": {
@@ -16440,11 +16789,31 @@
             "groupLength": 2,
             "minimumDigits": 0
           },
-          "allOf": [
-            {
-              "$ref": "#/definitions/NumericBaseConfig"
+          "type": "object",
+          "properties": {
+            "groupLength": {
+              "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+              "default": 2,
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0,
+              "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+            },
+            "minimumDigits": {
+              "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+              "default": 0,
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0,
+              "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+            },
+            "onlyIfContainsSeparator": {
+              "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+              "type": "boolean",
+              "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
             }
-          ],
+          },
+          "additionalProperties": false,
           "markdownDescription": "Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).\nControls how digits are grouped and when separators are applied."
         },
         "number": {
@@ -16462,11 +16831,31 @@
             "groupLength": 4,
             "minimumDigits": 0
           },
-          "allOf": [
-            {
-              "$ref": "#/definitions/NumericBaseConfig"
+          "type": "object",
+          "properties": {
+            "groupLength": {
+              "description": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`.",
+              "default": 4,
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0,
+              "markdownDescription": "The number of digits per group when inserting numeric separators.\nFor example, a `groupLength` of 3 formats `1234567` as `1_234_567`."
+            },
+            "minimumDigits": {
+              "description": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped.",
+              "default": 0,
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0,
+              "markdownDescription": "The minimum number of digits required before grouping is applied.\nValues with fewer digits than this threshold will not be grouped."
+            },
+            "onlyIfContainsSeparator": {
+              "description": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet.",
+              "type": "boolean",
+              "markdownDescription": "Only enforce the rule when the numeric literal already contains a separator (`_`).\n\nWhen `true`, numbers without separators are left as-is; when `false` (default),\ngrouping will be enforced for eligible numbers even if they don't include separators yet."
             }
-          ],
+          },
+          "additionalProperties": false,
           "markdownDescription": "Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).\nControls how digits are grouped and when separators are applied."
         },
         "onlyIfContainsSeparator": {
@@ -16553,9 +16942,162 @@
         }
       ]
     },
+    "OneVar": {
+      "description": "Enforces consistent grouping of variable declarations.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OneVarConfig"
+        }
+      ],
+      "markdownDescription": "Enforces consistent grouping of variable declarations."
+    },
+    "OneVarConfig": {
+      "description": "Configuration accepted by the `one-var` rule.",
+      "anyOf": [
+        {
+          "description": "Applies one grouping mode to every declaration kind and initialization state.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Applies one grouping mode to every declaration kind and initialization state."
+        },
+        {
+          "description": "Configures grouping by declaration kind or initialization state.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarOptions"
+            }
+          ],
+          "markdownDescription": "Configures grouping by declaration kind or initialization state."
+        }
+      ],
+      "markdownDescription": "Configuration accepted by the `one-var` rule."
+    },
+    "OneVarMode": {
+      "description": "Controls how variable declarators are grouped into declarations.",
+      "oneOf": [
+        {
+          "description": "Requires one declaration per variable kind in each applicable scope.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Requires one declaration per variable kind in each applicable scope."
+        },
+        {
+          "description": "Requires each declarator to have its own declaration statement.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Requires each declarator to have its own declaration statement."
+        },
+        {
+          "description": "Requires adjacent declarations of the same kind to be combined.",
+          "type": "string",
+          "enum": [
+            "consecutive"
+          ],
+          "markdownDescription": "Requires adjacent declarations of the same kind to be combined."
+        }
+      ],
+      "markdownDescription": "Controls how variable declarators are grouped into declarations."
+    },
+    "OneVarOptions": {
+      "description": "Options for configuring declaration grouping by kind or initialization state.\n\n`initialized` and `uninitialized` take precedence over the per-kind option for the\ncorresponding declarators.",
+      "type": "object",
+      "properties": {
+        "awaitUsing": {
+          "description": "Controls grouping for `await using` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `await using` declarations."
+        },
+        "const": {
+          "description": "Controls grouping for `const` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `const` declarations."
+        },
+        "initialized": {
+          "description": "Controls grouping for initialized declarators, overriding per-kind options.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for initialized declarators, overriding per-kind options."
+        },
+        "let": {
+          "description": "Controls grouping for `let` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `let` declarations."
+        },
+        "separateRequires": {
+          "description": "Keeps direct `require(...)` initializers separate from other initialized declarations.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Keeps direct `require(...)` initializers separate from other initialized declarations."
+        },
+        "uninitialized": {
+          "description": "Controls grouping for uninitialized declarators, overriding per-kind options.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for uninitialized declarators, overriding per-kind options."
+        },
+        "using": {
+          "description": "Controls grouping for `using` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `using` declarations."
+        },
+        "var": {
+          "description": "Controls grouping for `var` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `var` declarations."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Options for configuring declaration grouping by kind or initialization state.\n\n`initialized` and `uninitialized` take precedence over the per-kind option for the\ncorresponding declarators."
+    },
     "OnlyExportComponentsConfig": {
       "type": "object",
       "properties": {
+        "allowCompoundComponents": {
+          "description": "Allow an exported object when every property is a React component.\nThis matches Vite's compound component support. The object must be non-empty,\ncontain no nested objects, spreads, or accessors, and anonymous functions\nmust use a component name as a static property key.\n\n```jsx\n// Allowed when allowCompoundComponents: true\nconst Root = () => <div />;\nconst Label = () => <span />;\nexport const Tag = { Root, Label };\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow an exported object when every property is a React component.\nThis matches Vite's compound component support. The object must be non-empty,\ncontain no nested objects, spreads, or accessors, and anonymous functions\nmust use a component name as a static property key.\n\n```jsx\n// Allowed when allowCompoundComponents: true\nconst Root = () => <div />;\nconst Label = () => <span />;\nexport const Tag = { Root, Label };\n```"
+        },
         "allowConstantExport": {
           "description": "Allow exporting primitive constants (string/number/boolean/template literal)\nalongside component exports without triggering a violation. Recommended when your\nbundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`\npreset).\n\n```jsx\n// Allowed when allowConstantExport: true\nexport const VERSION = \"3\";\nexport const Foo = () => null;\n```",
           "default": false,
@@ -16757,9 +17299,9 @@
           "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         },
         "typeCheck": {
-          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
+          "description": "Enable type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
           "type": "boolean",
-          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
+          "markdownDescription": "Enable type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         }
       },
       "additionalProperties": false,
@@ -16781,22 +17323,22 @@
           "markdownDescription": "Environments enable and disable collections of global variables."
         },
         "excludeFiles": {
-          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`",
+          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\nExample: `[ \"*.generated.ts\", \"fixtures/**\" ]`",
           "allOf": [
             {
               "$ref": "#/definitions/GlobSet"
             }
           ],
-          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`"
+          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\nExample: `[ \"*.generated.ts\", \"fixtures/**\" ]`"
         },
         "files": {
-          "description": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`",
+          "description": "A list of glob patterns to override.\n\nExample: `[ \"*.test.ts\", \"*.spec.ts\" ]`",
           "allOf": [
             {
               "$ref": "#/definitions/GlobSet"
             }
           ],
-          "markdownDescription": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`"
+          "markdownDescription": "A list of glob patterns to override.\n\nExample: `[ \"*.test.ts\", \"*.spec.ts\" ]`"
         },
         "globals": {
           "description": "Enabled or disabled specific global variables.",
@@ -17669,6 +18211,18 @@
       },
       "additionalProperties": false
     },
+    "PreferQuerySelector": {
+      "type": "object",
+      "properties": {
+        "allowWithVariables": {
+          "description": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable."
+        }
+      },
+      "additionalProperties": false
+    },
     "PreferReadonlyConfig": {
       "type": "object",
       "properties": {
@@ -17802,10 +18356,10 @@
       "type": "object",
       "properties": {
         "requireCatchParameter": {
-          "description": "When set to `true`, requires that catch clauses always have a parameter.",
+          "description": "When set to `true`, requires catch clauses that throw a new error to have a\ncaught error parameter, so the caught error is not discarded when re-throwing.",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "When set to `true`, requires that catch clauses always have a parameter."
+          "markdownDescription": "When set to `true`, requires catch clauses that throw a new error to have a\ncaught error parameter, so the caught error is not discarded when re-throwing."
         }
       },
       "additionalProperties": false
@@ -17958,18 +18512,6 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
-    },
-    "ReactCompilerConfig": {
-      "type": "object",
-      "properties": {
-        "reportAllBailouts": {
-          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
-          "default": false,
-          "type": "boolean",
-          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
-        }
-      },
-      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",
@@ -18960,9 +19502,9 @@
           "markdownDescription": "Whether to consider `default` cases exhaustive for union types.\nWhen true, a switch statement with a `default` case is considered exhaustive\neven if not all union members are handled explicitly."
         },
         "defaultCaseCommentPattern": {
-          "description": "Regular expression pattern that when matched in a default case comment,\nwill suppress the exhaustiveness check.\nExample: `\"@skip-exhaustive-check\"` to allow `default: // @skip-exhaustive-check`",
+          "description": "Regular expression pattern for a comment that acts as an omitted `default` case.\nThe comment must appear after the final case and the switch must not have a `default` case.\nFor union types, it suppresses the exhaustiveness check only when\n`considerDefaultExhaustiveForUnions` is enabled.\nExample: `\"^skip default$\"` to allow a switch ending in `// skip default`.",
           "type": "string",
-          "markdownDescription": "Regular expression pattern that when matched in a default case comment,\nwill suppress the exhaustiveness check.\nExample: `\"@skip-exhaustive-check\"` to allow `default: // @skip-exhaustive-check`"
+          "markdownDescription": "Regular expression pattern for a comment that acts as an omitted `default` case.\nThe comment must appear after the final case and the switch must not have a `default` case.\nFor union types, it suppresses the exhaustiveness check only when\n`considerDefaultExhaustiveForUnions` is enabled.\nExample: `\"^skip default$\"` to allow a switch ending in `// skip default`."
         },
         "requireDefaultForNonUnion": {
           "description": "Whether to require default cases on switches over union types that are not exhaustive.\nWhen true, switches with non-exhaustive union types must have a default case.",

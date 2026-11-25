@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, ReturnStatement},
+    ast::{BindingIdentifier, CallExpression, Expression, ReturnStatement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{AstNode, NodeId};
@@ -101,8 +101,7 @@ fn is_referenced_test_callback<'a>(function_node: &AstNode<'a>, ctx: &LintContex
         return false;
     }
 
-    let Some(symbol_id) = function.id.as_ref().map(oxc_ast::ast::BindingIdentifier::symbol_id)
-    else {
+    let Some(symbol_id) = function.id.as_ref().map(BindingIdentifier::symbol_id) else {
         return false;
     };
 
@@ -145,9 +144,13 @@ fn is_test_call<'a>(
     call_node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
+    let Some(jest_node) = PossibleJestNode::from_call_expression(call_node, call_expr, ctx) else {
+        return false;
+    };
+
     is_type_of_jest_fn_call(
         call_expr,
-        &PossibleJestNode { node: call_node, original: None },
+        &jest_node,
         ctx,
         &[JestFnKind::General(JestGeneralFnKind::Test)],
     )

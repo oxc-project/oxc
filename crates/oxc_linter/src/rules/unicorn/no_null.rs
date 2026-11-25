@@ -69,7 +69,8 @@ declare_oxc_lint!(
     conditional_dangerous_fix,
     config = NoNull,
     version = "0.0.21",
-    short_description = "Disallow the use of the `null` literal, to encourage using `undefined` instead.",
+    short_description =
+        "Disallow the use of the `null` literal, to encourage using `undefined` instead.",
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
@@ -191,7 +192,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
 
 impl Rule for NoNull {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -108,21 +108,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                             true
                         } else {
                             specifiers.retain(|specifier| {
-                                let id = match specifier {
-                                    ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                        if s.import_kind.is_type() {
-                                            Self::remove_binding(&s.local, ctx);
-                                            return false;
-                                        }
-                                        &s.local
-                                    }
-                                    ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                        &s.local
-                                    }
-                                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                        &s.local
-                                    }
-                                };
+                                if let ImportDeclarationSpecifier::ImportSpecifier(s) = specifier
+                                    && s.import_kind.is_type()
+                                {
+                                    Self::remove_binding(&s.local, ctx);
+                                    return false;
+                                }
+                                let id = specifier.local();
                                 // If `only_remove_type_imports` is true, then we can return `true` to keep it because
                                 // it is not a type import, otherwise we need to check if the identifier is referenced
                                 if self.only_remove_type_imports || self.has_value_reference(id, ctx) {
@@ -232,7 +224,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // Remove TypeScript annotations from class declarations
         // Note: declare flag is preserved for exit_statements to handle declaration removal
         class.type_parameters = None;
-        class.super_type_arguments = None;
+        if let Some(heritage) = &mut class.heritage {
+            heritage.type_arguments = None;
+        }
         class.implements.clear();
         class.r#abstract = false;
 
@@ -263,9 +257,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             .retain(|elem| !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare));
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if expr.is_typescript_syntax() {
             expr.replace_with(Expression::into_inner_expression);
+        }
+        match expr {
+            Expression::AssignmentExpression(assignment) => {
+                if let Some(target) = assignment.left.as_simple_assignment_target_mut() {
+                    self.enter_simple_assignment_target(target, ctx);
+                }
+            }
+            Expression::ChainExpression(chain) => {
+                // Other transforms inspect the chain before traversal reaches `enter_chain_element`.
+                self.enter_chain_element(&mut chain.expression, ctx);
+            }
+            _ => {}
         }
     }
 
@@ -518,10 +524,11 @@ impl<'a> TypeScriptAnnotations<'a> {
     #[inline]
     fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match decl {
-            // Remove type aliases, interfaces, and `declare global {}`
+            // Remove type aliases, interfaces, global declarations, and external modules.
             Declaration::TSTypeAliasDeclaration(_)
             | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => false,
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::TSExternalModuleDeclaration(_) => false,
             // Remove `declare var/let/const`
             Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
             // Remove `declare function` and function overload signatures (no body)
@@ -530,16 +537,15 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
             // Remove `declare class`
             Declaration::ClassDeclaration(class_decl) => !class_decl.declare,
-            // Remove `declare module` or uninstantiated namespace declarations.
+            // Remove declared or uninstantiated namespace declarations.
             // Keep instantiated `module` declarations — they have runtime
             // representation and need to be transformed.
-            Declaration::TSModuleDeclaration(module_decl) => {
-                !module_decl.declare
-                    && !matches!(
-                        &module_decl.id,
-                        TSModuleDeclarationName::Identifier(ident)
-                            if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
-                    )
+            Declaration::TSNamespaceDeclaration(namespace_decl) => {
+                !namespace_decl.declare
+                    && !ctx
+                        .scoping()
+                        .symbol_flags(namespace_decl.id.symbol_id())
+                        .is_namespace_module()
             }
             // Remove `declare enum`
             Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
@@ -563,17 +569,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     fn remove_import_declaration_bindings(decl: &ImportDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
-                match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
-                    }
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
-                    }
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        Self::remove_binding(&specifier.local, ctx);
-                    }
-                }
+                Self::remove_binding(specifier.local(), ctx);
             }
         }
     }

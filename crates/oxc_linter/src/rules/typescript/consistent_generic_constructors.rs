@@ -110,7 +110,7 @@ impl Rule for ConsistentGenericConstructors {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
@@ -209,11 +209,9 @@ impl ConsistentGenericConstructors {
         let fixer = fixer.for_multifix();
         let source_text = ctx.source_text();
 
-        // Get the type arguments text
         let type_params_text =
             &source_text[type_params.span.start as usize..type_params.span.end as usize];
 
-        // Find the position where the binding pattern ends (before the colon)
         let binding_end = Self::find_binding_end_position(node);
 
         // Find the colon position by searching only between the binding end and type annotation.
@@ -228,20 +226,13 @@ impl ConsistentGenericConstructors {
         let type_name_start = type_ref.type_name.span().start;
         let type_name_end = type_ref.type_name.span().end;
 
-        // Comments before type name (between colon and type name)
-        let comments_before: String = ctx
+        // Preserve comment order while building the replacement directly.
+        let new_type_args: String = ctx
             .comments_range((colon_pos + 1)..type_name_start)
+            .chain(ctx.comments_range(type_name_end..type_params.span.start))
             .map(|c| c.span.source_text(source_text))
+            .chain(std::iter::once(type_params_text))
             .collect();
-
-        // Comments between type name and type arguments
-        let comments_between: String = ctx
-            .comments_range(type_name_end..type_params.span.start)
-            .map(|c| c.span.source_text(source_text))
-            .collect();
-
-        // Build the new type arguments string to insert after constructor callee
-        let new_type_args = format!("{comments_before}{comments_between}{type_params_text}");
 
         // Delete from before any whitespace preceding the colon to the end of the type annotation
         // This ensures we don't leave extra whitespace when removing ` : Type`
@@ -299,7 +290,6 @@ impl ConsistentGenericConstructors {
         let fixer = fixer.for_multifix();
         let source_text = ctx.source_text();
 
-        // Get the callee name (constructor name)
         let Expression::Identifier(callee_ident) = &new_expression.callee else {
             return fixer.noop();
         };
@@ -312,7 +302,6 @@ impl ConsistentGenericConstructors {
         // Build the type annotation to insert (no comments between name and type args)
         let type_annotation = format!(": {callee_name}{type_args_text}");
 
-        // Find the position to insert the type annotation (after the binding pattern/identifier)
         let Some(insert_pos) = Self::find_type_annotation_insert_position(node, ctx) else {
             return fixer.noop();
         };
@@ -390,20 +379,21 @@ impl ConsistentGenericConstructors {
             AstKind::PropertyDefinition(prop_def) => {
                 // For computed properties like `[a]` or `[a + b]`, we need to insert
                 // after the closing bracket `]`, not after the key expression
-                if prop_def.computed {
+                if prop_def.key.is_computed() {
                     // Find the closing bracket after the key
                     let key_end = prop_def.key.span().end;
-                    // find_next_token_from returns offset from key_end, add 1 for position after ']'
-                    ctx.find_next_token_from(key_end, "]").map(|offset| key_end + offset + 1)
+                    ctx.find_next_token_within(key_end, prop_def.span.end, "]")
+                        .map(|offset| key_end + offset + 1)
                 } else {
                     // Insert after the property key
                     Some(prop_def.key.span().end)
                 }
             }
             AstKind::AccessorProperty(accessor) => {
-                if accessor.computed {
+                if accessor.key.is_computed() {
                     let key_end = accessor.key.span().end;
-                    ctx.find_next_token_from(key_end, "]").map(|offset| key_end + offset + 1)
+                    ctx.find_next_token_within(key_end, accessor.span.end, "]")
+                        .map(|offset| key_end + offset + 1)
                 } else {
                     Some(accessor.key.span().end)
                 }

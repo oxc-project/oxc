@@ -93,13 +93,13 @@ it('throws an error', async () => {
 #[derive(Debug, Clone, Copy)]
 struct InConditional(bool);
 
-pub fn run_on_jest_node<'a, 'c>(
-    possible_jest_node: &PossibleJestNode<'a, 'c>,
-    ctx: &'c LintContext<'a>,
-) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -115,21 +115,27 @@ pub fn run_on_jest_node<'a, 'c>(
     }
 }
 
+fn is_test_call<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let AstKind::CallExpression(call_expr) = node.kind() else { return false };
+    let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+        return false;
+    };
+
+    is_type_of_jest_fn_call(
+        call_expr,
+        &jest_node,
+        ctx,
+        &[JestFnKind::General(JestGeneralFnKind::Test)],
+    )
+}
+
 fn is_in_test_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let mut current = node;
     loop {
         current = ctx.nodes().parent_node(current.id());
 
-        if let AstKind::CallExpression(call_expr) = current.kind() {
-            let jest_node = PossibleJestNode { node: current, original: None };
-            if is_type_of_jest_fn_call(
-                call_expr,
-                &jest_node,
-                ctx,
-                &[JestFnKind::General(JestGeneralFnKind::Test)],
-            ) {
-                return true;
-            }
+        if is_test_call(current, ctx) {
+            return true;
         }
 
         if matches!(current.kind(), AstKind::Program(_)) {
@@ -153,19 +159,12 @@ fn check_parents<'a>(
 
     match parent_node.kind() {
         AstKind::CallExpression(call_expr) => {
-            let jest_node = PossibleJestNode { node: parent_node, original: None };
-
-            if is_type_of_jest_fn_call(
-                call_expr,
-                &jest_node,
-                ctx,
-                &[JestFnKind::General(JestGeneralFnKind::Test)],
-            ) {
+            if is_test_call(parent_node, ctx) {
                 return in_conditional;
             }
 
             if let Some(member_expr) = call_expr.callee.as_member_expression()
-                && member_expr.static_property_name() == Some("catch")
+                && member_expr.static_property_name().is_some_and(|name| name == "catch")
             {
                 return check_parents(parent_node, visited, InConditional(true), ctx);
             }
@@ -177,7 +176,7 @@ fn check_parents<'a>(
         | AstKind::LogicalExpression(_) => {
             return check_parents(parent_node, visited, InConditional(true), ctx);
         }
-        AstKind::Function(function) => {
+        AstKind::Function(function) if function.is_declaration() => {
             let Some(ident) = &function.id else {
                 return InConditional(false);
             };
@@ -190,16 +189,8 @@ fn check_parents<'a>(
                     let parent = ctx.nodes().parent_node(reference.node_id());
 
                     // Check if directly used as test callback
-                    if let AstKind::CallExpression(call_expr) = parent.kind() {
-                        let jest_node = PossibleJestNode { node: parent, original: None };
-                        if is_type_of_jest_fn_call(
-                            call_expr,
-                            &jest_node,
-                            ctx,
-                            &[JestFnKind::General(JestGeneralFnKind::Test)],
-                        ) {
-                            return true;
-                        }
+                    if is_test_call(parent, ctx) {
+                        return true;
                     }
 
                     // Check if called within a test context by traversing from the call site

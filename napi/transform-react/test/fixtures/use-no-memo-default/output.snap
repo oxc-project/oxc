@@ -1,0 +1,16 @@
+## Code
+
+import { jsx as _jsx } from "react/jsx-runtime";
+export function Row({ route }) {
+	"use no memo";
+	const search = route.useSearch();
+	return /* @__PURE__ */ _jsx("div", { children: search });
+}
+
+## Errors
+
+(none)
+
+## Fatal
+
+false

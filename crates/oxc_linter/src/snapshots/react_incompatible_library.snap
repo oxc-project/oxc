@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(incompatible-library): Use of incompatible library
+   ╭─[incompatible_library.tsx:4:17]
+ 3 │ function Component({columns, data}) {
+ 4 │   const table = useReactTable({columns, data});
+   ·                 ──────┬──────
+   ·                       ╰── TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
+ 5 │   return <div>{table.getRowModel().rows.length}</div>;
+   ╰────
+  help: This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/incompatible-library

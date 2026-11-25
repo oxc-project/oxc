@@ -1,8 +1,8 @@
-use memchr::{memchr, memrchr};
 use oxc_ast::{AstKind, ast::BinaryOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -103,6 +103,7 @@ declare_oxc_lint!(
     NoUnexpectedMultiline,
     eslint,
     suspicious,
+    recommended,
     fix_dangerous,
     version = "0.9.7",
     short_description = "Disallow confusing multiline expressions.",
@@ -126,7 +127,7 @@ impl Rule for NoUnexpectedMultiline {
                 };
 
                 let span = Span::new(start, call_expr.span.end);
-                if let Some(open_paren_pos) = has_newline_before(ctx, span, b'(') {
+                if let Some(open_paren_pos) = has_newline_before(ctx, span, "(") {
                     let paren_span = Span::sized(span.start + open_paren_pos, 1);
 
                     ctx.diagnostic_with_dangerous_fix(
@@ -143,7 +144,7 @@ impl Rule for NoUnexpectedMultiline {
                 }
 
                 let span = Span::new(member_expr.object.span().end, member_expr.span().end);
-                if let Some(open_bracket_pos) = has_newline_before(ctx, span, b'[') {
+                if let Some(open_bracket_pos) = has_newline_before(ctx, span, "[") {
                     let bracket_span = Span::sized(span.start + open_bracket_pos, 1);
 
                     ctx.diagnostic_with_dangerous_fix(
@@ -162,7 +163,7 @@ impl Rule for NoUnexpectedMultiline {
                 };
 
                 let span = Span::new(start, tagged_template_expr.span.end);
-                if let Some(backtick_pos) = has_newline_before(ctx, span, b'`') {
+                if let Some(backtick_pos) = has_newline_before(ctx, span, "`") {
                     let backtick_span = Span::sized(span.start + backtick_pos, 1);
 
                     ctx.diagnostic_with_dangerous_fix(
@@ -188,13 +189,11 @@ impl Rule for NoUnexpectedMultiline {
                 let span = Span::new(binary_expr.left.span().end, parent_binary_expr.span().end);
                 let src = ctx.source_range(span);
 
-                let Some(newline) = memchr(b'\n', src.as_bytes()) else {
+                let Some(first_slash) = has_newline_before(ctx, span, "/") else {
                     return;
                 };
-                let Some(first_slash) = memchr(b'/', src.as_bytes()) else {
-                    return;
-                };
-                let Some(second_slash) = memrchr(b'/', src.as_bytes()) else {
+                let Some(second_slash) = ctx.find_prev_token_within(span.start, span.end, "/")
+                else {
                     return;
                 };
                 if first_slash == second_slash {
@@ -204,22 +203,20 @@ impl Rule for NoUnexpectedMultiline {
                 // the "identifier" will be the characters immediately following the second slash
                 // until we reach a non-identifier character
                 let ident_name = src
+                    .get(second_slash as usize + 1..)
+                    .unwrap_or_default()
                     .chars()
-                    .skip(second_slash + 1)
                     // This is a rough approximation of "looks like an identifier"
                     .take_while(|c| {
                         !(c.is_whitespace() || c.is_ascii_punctuation()) || c == &'_' || c == &'$'
                     })
                     .collect::<String>();
 
-                if newline < parent_binary_expr.left.span().start as usize
-					// The identifier name should look like it was an attempt to use a regex
-					&& is_regex_flag(ident_name.as_str())
+                if is_regex_flag(ident_name.as_str())
 					// if it was a regex attempt, the second slash should be before the identifier
-                    && second_slash + (span.start as usize) + 1 == parent_binary_expr.right.span().start as usize
+                    && second_slash + span.start + 1 == parent_binary_expr.right.span().start
                 {
-                    let slash_span =
-                        Span::sized(span.start + u32::try_from(first_slash).unwrap(), 1);
+                    let slash_span = Span::sized(span.start + first_slash, 1);
 
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::Division {
@@ -245,17 +242,16 @@ fn is_regex_flag(str: &str) -> bool {
     true
 }
 
-/// Check if there is a newline proceeding a target character within a snippet of source text.
-/// Returns `None` if the character is not found at all or has no proceeding newline. Otherwise,
-/// returns the byte offset of the target character with respect to the start of the span.
+/// Check if there is a newline preceding a target token within a source span. Returns `None` if
+/// the token is not found or has no preceding newline. Otherwise, returns the byte offset of the
+/// token with respect to the start of the span.
 ///
 /// Newlines do not have to be directly before the target character, but can be anywhere before it.
-fn has_newline_before(ctx: &LintContext, span: Span, c: u8) -> Option<u32> {
-    let src = ctx.source_range(span).as_bytes();
-    let target = memchr(c, src)?;
-    let newline = memchr(b'\n', src)?;
+fn has_newline_before(ctx: &LintContext, span: Span, token: &str) -> Option<u32> {
+    let target = ctx.find_next_token_within(span.start, span.end, token)?;
+    let before_target = Span::new(span.start, span.start + target);
 
-    (newline < target).then(|| u32::try_from(target).unwrap())
+    ctx.source_range(before_target).contains(is_line_terminator).then_some(target)
 }
 
 #[test]
@@ -396,4 +392,36 @@ fn test() {
     Tester::new(NoUnexpectedMultiline::NAME, NoUnexpectedMultiline::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn line_terminators() {
+    use crate::tester::Tester;
+
+    let mut pass = vec![
+        "const a = b(x).foo()".to_string(),
+        "const a = b[0].foo()".to_string(),
+        "const a = b`foo`".to_string(),
+        "foo/bar/g".to_string(),
+    ];
+    let mut fail = Vec::new();
+    let mut fix = Vec::new();
+    for separator in ["\n", "\r", "\r\n", "\u{2028}", "\u{2029}"] {
+        pass.push(format!("const a = foo /{separator}bar/g"));
+        pass.push(format!("const a = foo / bar{separator}/g"));
+        for (prefix, suffix) in [
+            ("const a = b", "(x).foo()"),
+            ("const a = b", "[0].foo()"),
+            ("const a = b", "`foo`"),
+            ("foo", "/bar/g"),
+        ] {
+            let source = format!("{prefix}{separator}{suffix}");
+            fail.push(source.clone());
+            fix.push((source, format!("{prefix}{separator};{suffix}")));
+        }
+    }
+    let fix = fix.iter().map(|(source, expected)| (source.as_str(), expected.as_str())).collect();
+    Tester::new(NoUnexpectedMultiline::NAME, NoUnexpectedMultiline::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
 }

@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoUnusedExpressions,
     eslint,
     correctness,
+    recommended,
     config = NoUnusedExpressionsConfig,
     version = "0.14.0",
     short_description = "This rule disallows unused expressions.",
@@ -84,7 +85,7 @@ impl Rule for NoUnusedExpressions {
     }
 
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 }
 

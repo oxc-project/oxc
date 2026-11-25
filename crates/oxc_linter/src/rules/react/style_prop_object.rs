@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, ObjectPropertyKind, TSType,
+        ObjectPropertyKind, TSType,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -85,7 +85,8 @@ declare_oxc_lint!(
     suspicious,
     config = StylePropObjectConfig,
     version = "0.11.0",
-    short_description = "Require that the value of the prop `style` be an object or a variable that is an object.",
+    short_description =
+        "Require that the value of the prop `style` be an object or a variable that is an object.",
 );
 
 fn is_invalid_type(ty: &TSType) -> bool {
@@ -149,19 +150,17 @@ fn is_invalid_style_attribute<'a>(attribute: &JSXAttribute<'a>, ctx: &LintContex
 
 impl Rule for StylePropObject {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
-                let name = match &jsx_elem.opening_element.name {
-                    JSXElementName::Identifier(id) => id.name.as_str(),
-                    JSXElementName::IdentifierReference(id) => id.name.as_str(),
-                    _ => return,
+                let Some(name) = jsx_elem.opening_element.name.get_identifier_name() else {
+                    return;
                 };
 
-                if self.allow.iter().any(|s| s == name) {
+                if self.allow.iter().any(|s| s == name.as_str()) {
                     return;
                 }
 
@@ -192,11 +191,11 @@ impl Rule for StylePropObject {
 
                 let name = match expr {
                     Expression::StringLiteral(literal) => literal.value.as_str(),
-                    Expression::Identifier(identifier) => identifier.name.as_str(),
+                    Expression::Identifier(identifier) => Some(identifier.name.as_str()),
                     _ => return,
                 };
 
-                if self.allow.iter().any(|s| s == name) {
+                if name.is_some_and(|name| self.allow.iter().any(|s| s == name)) {
                     return;
                 }
 

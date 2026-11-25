@@ -23,4 +23,4 @@ pub use jsx_state::{JSXState, JSXStateJS, JSXStateTS};
 pub use options::{
     ESTreeTokenConfig, ESTreeTokenOptions, ESTreeTokenOptionsJS, ESTreeTokenOptionsTS,
 };
-pub use raw_transfer::update_tokens;
+pub use raw_transfer::{update_tokens, update_tokens_as_js};

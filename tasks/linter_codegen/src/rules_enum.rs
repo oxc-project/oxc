@@ -9,7 +9,6 @@ pub fn generate_rules_enum(rule_entries: &[RuleEntry<'_>]) -> String {
     let header = quote! {
         #![expect(
             clippy::default_constructed_unit_structs,  // Many rules are unit structs
-            clippy::semicolon_if_nothing_returned,     // Match arms in void-returning methods
             clippy::wrong_self_convention,             // from_configuration takes &self
             clippy::missing_errors_doc,                // Generated code
             clippy::match_same_arms,                   // plugin_name() has many same-body arms
@@ -70,19 +69,14 @@ fn make_const_ident(rule: &RuleEntry<'_>) -> Ident {
     Ident::new(&name, Span::call_site())
 }
 
-/// Generate constants for rule IDs, each defined relative to the previous one.
+/// Generate constants for rule IDs as consecutive integer literals.
 fn generate_id_constants(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
     let constants: Vec<TokenStream> = rule_entries
         .iter()
         .enumerate()
         .map(|(idx, rule)| {
             let const_name = make_const_ident(rule);
-            if idx == 0 {
-                quote! { const #const_name: usize = 0usize; }
-            } else {
-                let prev_const_name = make_const_ident(&rule_entries[idx - 1]);
-                quote! { const #const_name: usize = #prev_const_name + 1usize; }
-            }
+            quote! { const #const_name: usize = #idx; }
         })
         .collect();
 
@@ -111,9 +105,8 @@ fn generate_imports() -> TokenStream {
     quote! {
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleFlags, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
             timing::RuleTimingStat,
-            utils::PossibleJestNode,
             AstNode
         };
         #[cfg(feature = "ruledocs")]
@@ -149,13 +142,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    let name_arms: Vec<TokenStream> = rule_entries
+    let rule_names: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::NAME }
+            quote! { #enum_name::NAME }
         })
         .collect();
+    let rule_count = rule_entries.len();
 
     let category_arms: Vec<TokenStream> = rule_entries
         .iter()
@@ -200,6 +194,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
     let from_configuration_arms: Vec<TokenStream> = rule_entries
         .iter()
+        .filter(|rule| rule.has_custom_from_configuration)
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(_) => Ok(Self::#enum_name(#enum_name::from_configuration(value)?)) }
@@ -208,6 +203,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
     let to_configuration_arms: Vec<TokenStream> = rule_entries
         .iter()
+        .filter(|rule| rule.has_custom_to_configuration)
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(rule) => rule.to_configuration() }
@@ -230,14 +226,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    let run_on_jest_node_arms: Vec<TokenStream> = rule_entries
-        .iter()
-        .map(|rule| {
-            let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(rule) => rule.run_on_jest_node(jest_node, ctx) }
-        })
-        .collect();
-
     let should_run_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -246,11 +234,11 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    let is_tsgolint_rule_arms: Vec<TokenStream> = rule_entries
+    let flags_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::IS_TSGOLINT_RULE }
+            quote! { Self::#enum_name(_) => #enum_name::FLAGS }
         })
         .collect();
 
@@ -259,14 +247,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(_) => #enum_name::VERSION }
-        })
-        .collect();
-
-    let has_config_arms: Vec<TokenStream> = rule_entries
-        .iter()
-        .map(|rule| {
-            let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::HAS_CONFIG }
         })
         .collect();
 
@@ -294,9 +274,9 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
-
     quote! {
+        static RULE_NAMES: [&str; #rule_count] = [#(#rule_names),*];
+
         impl RuleEnum {
             pub fn id(&self) -> usize {
                 match self {
@@ -305,9 +285,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             }
 
             pub fn name(&self) -> &'static str {
-                match self {
-                    #(#name_arms),*
-                }
+                RULE_NAMES[self.id()]
             }
 
             pub fn category(&self) -> RuleCategory {
@@ -345,13 +323,15 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
             pub fn from_configuration(&self, value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
                 match self {
-                    #(#from_configuration_arms),*
+                    #(#from_configuration_arms,)*
+                    _ => Ok(RULES[self.id()].clone()),
                 }
             }
 
             pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
                 match self {
-                    #(#to_configuration_arms),*
+                    #(#to_configuration_arms,)*
+                    _ => None,
                 }
             }
 
@@ -401,40 +381,26 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 }
             }
 
-            #[inline(never)]
-            fn run_on_jest_node_dispatch<'a, 'c>(
-                &self,
-                jest_node: &PossibleJestNode<'a, 'c>,
-                ctx: &'c LintContext<'a>,
-            ) {
-                match self {
-                    #(#run_on_jest_node_arms),*
-                }
-            }
-
-            pub(crate) fn run_on_jest_node<'a, 'c, const TIMINGS: bool>(
-                &self,
-                jest_node: &PossibleJestNode<'a, 'c>,
-                ctx: &'c LintContext<'a>,
-                timing_stat: Option<&mut RuleTimingStat>,
-            ) {
-                if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| self.run_on_jest_node_dispatch(jest_node, ctx));
-                } else {
-                    self.run_on_jest_node_dispatch(jest_node, ctx);
-                }
-            }
-
             pub(crate) fn should_run(&self, ctx: &ContextHost) -> bool {
                 match self {
                     #(#should_run_arms),*
                 }
             }
 
-            pub fn is_tsgolint_rule(&self) -> bool {
+            /// Flags describing this rule's capabilities.
+            pub fn flags(&self) -> RuleFlags {
                 match self {
-                    #(#is_tsgolint_rule_arms),*
+                    #(#flags_arms),*
                 }
+            }
+
+            pub fn is_tsgolint_rule(&self) -> bool {
+                self.flags().contains(RuleFlags::IS_TSGOLINT_RULE)
+            }
+
+            /// Whether this rule is recommended.
+            pub fn is_recommended(&self) -> bool {
+                self.flags().contains(RuleFlags::IS_RECOMMENDED)
             }
 
             /// The version of oxlint in which this rule was first available.
@@ -447,9 +413,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
             /// Whether this rule declares a configuration type.
             pub fn has_config(&self) -> bool {
-                match self {
-                    #(#has_config_arms),*
-                }
+                self.flags().contains(RuleFlags::HAS_CONFIG)
             }
 
             /// Additional information about this rule.

@@ -14,7 +14,7 @@ const _: () = {
     assert!(CloneInSemanticIds::Without as u32 == u32::MAX);
 };
 
-/// A semantic ID type - a [`NonMaxU32`]-backed index (`NodeId`, `ScopeId`, `SymbolId`, `ReferenceId`),
+/// A semantic ID type - a [`NonMaxU32`]-backed index (`NodeId`, `ScopeId`, `SymbolId`, `ReferenceId`, `LabelId`),
 /// created by [`define_nonmax_u32_index_type!`].
 ///
 /// Provides methods to clone a semantic ID, keeping it when cloning with semantic IDs
@@ -22,7 +22,7 @@ const _: () = {
 ///
 /// * [`clone_id`] - `CloneIn::clone_in_impl` for ID types delegates to it.
 /// * [`clone_cell_option_id`] - the `CloneIn` derive calls it to clone `Cell<Option<Id>>` fields
-///   (`ScopeId`, `SymbolId`, `ReferenceId`).
+///   (`ScopeId`, `SymbolId`, `ReferenceId`, `LabelId`).
 ///
 /// The [`Idx`] bound provides [`index`] and [`from_usize`], the two operations these methods need.
 ///

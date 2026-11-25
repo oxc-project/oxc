@@ -229,9 +229,7 @@ source: crates/oxc_linter/src/tester.rs
   4 │ │                         const b = function b () {}
   5 │ │                         const c = function () {}
   6 │ │                         const d = () => {}
-  7 │ │                         const obj = {
-  8 │ │                           a: function a () {},
-  9 │ │                           b: function b () {},
+... · │   
  10 │ │                           c () {},
  11 │ │                           d: () => {},
  12 │ │                         }
@@ -249,10 +247,7 @@ source: crates/oxc_linter/src/tester.rs
   4 │ │                         const b = function b () {}
   5 │ │                         const c = function () {}
   6 │ │                         const d = () => {}
-  7 │ │                         const obj = {
-  8 │ │                           a: function a () {},
-  9 │ │                           b: function b () {},
- 10 │ │                           c () {},
+... · │   
  11 │ │                           d: () => {},
  12 │ │                         }
  13 │ │   
@@ -270,11 +265,7 @@ source: crates/oxc_linter/src/tester.rs
   4 │ │                           function a () {}
   5 │ │                           const b = function b () {}
   6 │ │                           const c = function () {}
-  7 │ │                           const d = () => {}
-  8 │ │                           const obj = {
-  9 │ │                             a: function a () {},
- 10 │ │                             b: function b () {},
- 11 │ │                             c () {},
+... · │   
  12 │ │                             d: () => {},
  13 │ │                           }
  14 │ │                           return <div>Hello {this.props.name}</div>;
@@ -297,11 +288,19 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a `displayName` property to the component.
 
   ⚠ react(display-name): Component definition is missing display name.
-   ╭─[display_name.tsx:2:27]
- 1 │ 
- 2 │                     const renderer = a => listItem => (
-   ·                           ────────
- 3 │                       <div>{a} {listItem}</div>
+   ╭─[display_name.tsx:9:23]
+ 8 │                       ({ label }: HOCProps) =>
+ 9 │                       ({ onSubmit }: Props): JSX.Element => <button onClick={onSubmit}>{label}</button>;
+   ·                       ─────────────────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:3:23]
+ 2 │                     const HOC = () =>
+ 3 │                       (props) => {
+   ·                       ───────
+ 4 │                         /* eslint-disable react/display-name */
    ╰────
   help: Add a `displayName` property to the component.
 
@@ -382,5 +381,103 @@ source: crates/oxc_linter/src/tester.rs
  1 │ ╭─▶ export default function Hello() {
  2 │ │     return <div>Hello {this.props.name}</div>;
  3 │ ╰─▶ }
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:37]
+ 1 │ import { memo } from 'react'; const Component = memo(() => <li />);
+   ·                                     ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:43]
+ 1 │ import { forwardRef } from 'react'; const Component = forwardRef(() => <li />);
+   ·                                           ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:42]
+ 1 │ const { memo } = require("react"); const Component = memo(() => <li />);
+   ·                                          ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:37]
+ 1 │ const { forwardRef } = React; const Component = forwardRef(() => <li />);
+   ·                                     ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:32]
+ 1 │ const memo = React.memo; const Component = memo(() => <li />);
+   ·                                ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:55]
+ 1 │ const forwardRef = require("react").forwardRef; const Component = forwardRef(() => <li />);
+   ·                                                       ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:37]
+ 1 │ import { memo } from 'react'; const Component = memo(function () {});
+   ·                                     ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:30]
+ 1 │ const memo = fn => fn; const Component = memo(() => <li />);
+   ·                              ─────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:7]
+ 1 │ const C = React.memo(class extends React.Component { render() { return <div />; } });
+   ·       ─
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:7]
+ 1 │ const C = React.memo(class extends React.Component {});
+   ·       ─
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:7]
+ 1 │ const C = React.memo(class Named extends React.Component { render() { return null; } });
+   ·       ─
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:7]
+ 1 │ const C = React.memo(class Named extends React.Component {});
+   ·       ─
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:7]
+ 1 │ const C = React.memo(class named extends React.Component { render() { return <div />; } });
+   ·       ─
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:22]
+ 1 │ const C = React.memo(class Named extends React.Component { render() { return <div />; } });
+   ·                      ────────────────────────────────────────────────────────────────────
    ╰────
   help: Add a `displayName` property to the component.

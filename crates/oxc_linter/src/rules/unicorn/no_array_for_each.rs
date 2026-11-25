@@ -69,6 +69,7 @@ declare_oxc_lint!(
     NoArrayForEach,
     unicorn,
     restriction,
+    recommended,
     pending,
     version = "0.0.19",
     short_description = "Forbids the use of `Array#forEach` in favor of a for loop.",
@@ -105,7 +106,7 @@ impl Rule for NoArrayForEach {
                 }
                 match_member_expression!(Expression) => {
                     if let Some(name) = object.to_member_expression().static_property_name()
-                        && IGNORED_OBJECTS.contains(&name)
+                        && IGNORED_OBJECTS.iter().any(|object| *object == name)
                     {
                         return;
                     }

@@ -6,7 +6,7 @@ Achieve maximum compression through comprehensive optimizations while maintainin
 
 ### Size Optimization Strategy
 
-- Fixed-point iteration until no more improvements
+- Fixed-point iteration until no more changes or the iteration limit is reached
 - Combine multiple optimization techniques
 - Learn from all major minifiers
 - Apply optimizations exhaustively
@@ -63,7 +63,7 @@ Key responsibilities:
 
 ### Peephole Optimizations (`peephole/`)
 
-17+ transformation passes including:
+Transformation modules dispatched together during a peephole traversal, including:
 
 - Constant folding
 - Dead code elimination
@@ -73,54 +73,56 @@ Key responsibilities:
 
 Each optimization implements transformations in the AST traversal visitor pattern.
 
-### Context (`ctx.rs`)
+### Context (`traverse_context/`)
 
-Shared utilities for optimizations:
+The crate's `TraverseCtx<'a>` alias refers to `MinifierTraverseCtx<'a>`.
+It provides the AST builder, ancestry, scoping, and `MinifierState`.
+ECMAScript evaluation and mutation helpers are in `traverse_context/ecma_context.rs`.
 
-- AST manipulation helpers
-- Constant evaluation
-- Side effect analysis
-- Semantic utilities
+Use typed `replace_*` helpers for replacements and `drop_*` helpers for discarded
+subtrees. They record removed references and dropped direct `eval` calls as well
+as requesting another pass. Use `replace_*_with` when moving an old node into its
+replacement; the closure must report discarded subtrees. `notice_change()` is
+for in-place edits that retain their subtrees.
 
-```rust
-pub struct Ctx<'a, 'b> {
-    // Provides access to:
-    // - AST builder
-    // - Scoping information
-    // - Symbol values
-    // - Optimization options
-}
-```
+### State Management (`state.rs`, `symbol_state.rs`)
 
-### State Management (`state.rs`)
+`MinifierState` stores configuration, per-body state, private-member usage, and
+per-pass changes. `SymbolState` groups symbol values, metadata, and liveness.
 
-Tracks optimization state:
+### Pass Completion (`compression_pass.rs`)
 
-- Symbol values
-- Changed flags
-- Pure functions
-- Source type
+After normalization and each peephole traversal, pass completion prunes removed
+semantic references, refreshes direct-eval scope flags when needed, and updates
+function reachability. Its outcome drives `Compressor::run_in_loop`; debug
+guards check for references that were incorrectly removed or left behind.
 
 ## Optimization Pipeline
 
+```text
+1. Parse JavaScript (caller)
+2. Optional property-name mangling
+   └─> Collect, assign, and rewrite before compression
+3. Compression (if enabled)
+   ├─> Build semantic scoping
+   ├─> Normalize and complete the normalization pass
+   └─> Repeat peephole traversal and pass completion
+        until no revisit is needed or the iteration limit is reached
+4. Optional identifier/private-member mangling
+   └─> Rebuild semantics for the compressed AST
+5. Code generation (caller)
+   └─> Pass scoping and class_private_mappings from MinifierReturn to Codegen
 ```
-1. Parse and Build Semantic Model
-   └─> SemanticBuilder creates scoping and symbols
 
-2. Normalization Pass
-   └─> Convert to canonical form for optimizations
+`Minifier::minify` selects full compression. `Minifier::dce` selects tree-shaking
+compression, which keeps folds needed to expose dead branches but skips transforms
+whose only purpose is shorter syntax. Mangling remains controlled by the supplied
+`MinifierOptions`.
 
-3. Peephole Optimization Loop
-   └─> Apply all optimizations
-   └─> Check if any changes made
-   └─> Repeat until fixed-point (no changes)
-
-4. Optional Mangling
-   └─> Rename variables for size
-
-5. Code Generation
-   └─> Output optimized JavaScript
-```
+Callers of `Compressor::build_with_scoping` or
+`dead_code_elimination_with_scoping` must supply scoping whose resolved-reference
+lists match the current AST. Added references missing from those lists can cause
+incorrect output; stale extra references can prevent optimizations.
 
 ## Memory Management
 
@@ -130,7 +132,7 @@ Tracks optimization state:
 
 ## Traversal Strategy
 
-Using `oxc_traverse` for AST walking:
+Using the crate's generated traversal through `minifier_traverse.rs`:
 
 - Enter/exit hooks for each node type
 - Bottom-up transformations (exit handlers)

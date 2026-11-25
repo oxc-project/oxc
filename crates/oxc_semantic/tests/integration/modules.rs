@@ -3,6 +3,22 @@ use oxc_semantic::SymbolFlags;
 use crate::util::SemanticTester;
 
 #[test]
+fn test_nested_ambient_module_declaration() {
+    for source in [
+        r#"declare module "outer" { module "middle" { module "inner" {} } }"#,
+        r#"export {}; declare module "outer" { module "inner" {} }"#,
+        r#"export {}; declare global { module "inner" {} }"#,
+        r#"declare module "outer" { module "inner" {} } import.meta;"#,
+    ] {
+        let diagnostics = SemanticTester::ts(source).build_with_errors().diagnostics;
+        let codes =
+            diagnostics.iter().map(|diagnostic| diagnostic.code.to_string()).collect::<Vec<_>>();
+
+        assert_eq!(codes, ["TS(2435)"]);
+    }
+}
+
+#[test]
 fn test_import_assignment() {
     SemanticTester::ts("import Foo = require('./foo')")
         .has_root_symbol("Foo")

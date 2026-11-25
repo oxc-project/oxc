@@ -19,6 +19,7 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 convert_case = { workspace = true }

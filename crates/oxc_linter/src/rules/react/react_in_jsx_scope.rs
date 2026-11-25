@@ -55,6 +55,7 @@ declare_oxc_lint!(
     ReactInJsxScope,
     react,
     suspicious,
+    recommended,
     version = "0.0.20",
     short_description = "Enforce that React is in scope when using JSX.",
 );

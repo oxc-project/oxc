@@ -13,10 +13,12 @@ use crate::ExternalLinter;
 
 define_index_type! {
     pub struct ExternalPluginId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 define_index_type! {
     pub struct ExternalRuleId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 impl ExternalRuleId {
@@ -26,6 +28,7 @@ impl ExternalRuleId {
 
 define_index_type! {
     pub struct ExternalOptionsId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 impl ExternalOptionsId {
@@ -142,6 +145,13 @@ impl ExternalPluginStore {
         let external_rule = &self.rules[external_rule_id];
         let plugin = &self.plugins[external_rule.plugin_id];
         (&plugin.name, &external_rule.name)
+    }
+
+    pub(crate) fn resolve_rule_options(
+        &self,
+        options_id: ExternalOptionsId,
+    ) -> &[serde_json::Value] {
+        &self.options[options_id].1
     }
 
     /// Add options to the store and return its [`ExternalOptionsId`].

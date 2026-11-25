@@ -224,15 +224,42 @@ fn test_vars_self_use_js() {
     let pass = vec![
         // https://github.com/oxc-project/oxc/issues/11215
         "export function promisify() { var fn; function fn() {} return fn; }",
+        // https://github.com/VSC-NeuroPilot/neuropilot/blob/5fb53e68ad41fa74c0114e1639473909173279d3/src/rce.ts#L128-L202
+        "const sink = {}; const promise = new Promise(resolve => { sink.callback = async () => { return promise; }; void resolve; }); console.log(sink);",
+        "const value = factory(() => { return value; });",
+        "const value = new Factory(() => { return value; });",
+        "let value; consume(value = () => { return value; });",
+        "let value; consume(value = () => { return value(); });",
     ];
 
     let fail = vec![
         // https://github.com/oxc-project/oxc/issues/11215
         "export function promisify() { var fn; function fn() { fn() } }",
+        "const value = (() => () => { return value; })();",
+        "let value; consume((value = () => value, 0));",
+        "let value; consume((value = () => value(), 0));",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .change_rule_path_extension("js")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn discarded_instance_initializers() {
+    let pass = vec![
+        "let f = () => 0; (class { static field = f() }, 0);",
+        "let f = () => 0; (class { [f()] = 0 }, 0);",
+        "let f = () => 0; (class { static accessor field = f() }, 0);",
+        "let f = () => 0; (class { accessor [f()] = 0 }, 0);",
+    ];
+    let fail = vec![
+        "let C; (C = class { field = new C() }, 0);",
+        "let C; (C = class { accessor field = new C() }, 0);",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .test();
 }
@@ -298,6 +325,18 @@ fn test_vars_discarded_reads() {
                 <button onClick={() => (onDismiss?.(), remove())}>x</button>
             );
         };",
+        "let a = (v) => v; module.exports = (x, y) => (x ? a(y) : 0, y);",
+        "let a = (v) => v; module.exports = (x, y) => (x ? 0 : a(y), y);",
+        "let a = (v) => v; module.exports = (x, y) => (x && a(y), y);",
+        "let a = (v) => v; module.exports = (x, y) => (x || a(y), y);",
+        "let a = (v) => v; module.exports = (x, y) => (x ?? a(y), y);",
+        "module.exports = (x, y, a) => (x ? a(y) : 0, y);",
+        "module.exports = (x, y, a) => (x && a(y), y);",
+        "module.exports = (x, y, a) => (x ? new a(y) : 0, y);",
+        "module.exports = (x, y, a) => (x ? a?.(y) : 0, y);",
+        "module.exports = (x, y, a) => (x ? (0, a)(y) : 0, y);",
+        "module.exports = (x, y, a) => (x ? a((y, 0)) : 0, y);",
+        "module.exports = (x, y, a) => (x ? (a(y), 0) : 0, y);",
     ];
 
     let fail = vec![
@@ -540,6 +579,10 @@ fn test_vars_catch() {
                 json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_", "reportUsedIgnorePattern": true }]),
             ),
         ),
+        // The `var` is unused, but its initializer writes the catch parameter.
+        ("function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();", None),
+        // The catch parameter is unused, but the `var` initializer writes it.
+        ("function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();", None),
     ];
 
     // these suggestion fixes are safe
@@ -582,6 +625,19 @@ fn test_vars_catch() {
             "try {} catch  { }",
             None,
             FixKind::Suggestion,
+        ),
+        // Removing either declaration would retarget the `var` initializer, so no fix applies.
+        (
+            "function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();",
+            "function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();",
+            "function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();",
+            None,
+            FixKind::DangerousSuggestion,
         ),
     ];
 
@@ -865,6 +921,31 @@ fn test_imports() {
         ("import * as foo from './foo';", "", None, FixKind::DangerousSuggestion),
         ("import { Foo } from './foo';", "", None, FixKind::DangerousSuggestion),
         ("import { Foo as Bar } from './foo';", "", None, FixKind::DangerousSuggestion),
+        // The line break after the import is removed with it
+        (
+            "import foo from './foo';\nexport {};\n",
+            "export {};\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\r\nexport {};\r\n",
+            "export {};\r\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\rexport {};\r",
+            "export {};\r",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';\n\r\nexport {};\n",
+            "\r\nexport {};\n",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
         // Some used
         (
             "import foo, { bar } from './foo'; bar();",
@@ -1089,6 +1170,7 @@ fn test_arguments() {
     let pass = vec![
         ("function foo(a) { return a } foo()", None),
         ("function foo(a, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("function foo(_) {} foo()", Some(json!([{ "argsIgnorePattern": "^_" }]))),
         ("let a; a = function(a = a) {}; a();", None),
         ("let ids = arr.map(el => el.id); f(ids)", None),
         (
@@ -1149,9 +1231,26 @@ fn test_arguments() {
             "function foo(a, ...args: unknown[]) { return a } foo()",
             Some(json!([{ "args": "none" }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/26562
+        // `after-used`: params before a used rest parameter are allowed
+        (
+            "function foo(unusedBeforeRest: string, ...usedRest: string[]) { console.log(usedRest); } foo('x', 'y');",
+            Some(json!([{ "args": "after-used" }])),
+        ),
+        (
+            "function foo(a, ...[_used]) { return _used } foo()",
+            Some(json!([{ "args": "after-used", "destructuredArrayIgnorePattern": "^_" }])),
+        ),
+        (
+            "function foo(a, ...{b, ..._ignored}) { return b } foo()",
+            Some(
+                json!([{ "args": "after-used", "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }]),
+            ),
+        ),
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
+        ("window.addEventListener('logModel', function (_) { doSomething() })", None),
         ("function foo(a: number) {} foo()", None),
         ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
         ("function foo(...args: typeof args) {} foo()", None),
@@ -1160,6 +1259,16 @@ fn test_arguments() {
         ("function foo(...args) { return 1 } foo()", Some(json!([{ "args": "after-used" }]))),
         ("function foo(...args: unknown[]) { return 1 } foo()", Some(json!([{ "args": "all" }]))),
         ("let count = 0; function foo(c = (count++, 0)) { console.log(c) } foo()", None),
+        (
+            "function foo(a, ...[_ignored]) {} foo()",
+            Some(json!([{ "args": "after-used", "destructuredArrayIgnorePattern": "^_" }])),
+        ),
+        (
+            "function foo(a, ...{b, ..._ignored}) {} foo()",
+            Some(
+                json!([{ "args": "after-used", "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }]),
+            ),
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
@@ -1293,6 +1402,141 @@ fn test_argument_parameter_rename_fix() {
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
+}
+
+#[test]
+fn test_type_parameter_remove_fix() {
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![];
+    let fix = vec![
+        ("export type Foo<T> = {}", "export type Foo = {}", None, FixKind::DangerousSuggestion),
+        (
+            "export function foo<T>() {}",
+            "export function foo() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export const foo = <T,>() => {}",
+            "export const foo = () => {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export class Foo { bar<T>() {} }",
+            "export class Foo { bar() {} }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U>(u: U) { return u }",
+            "export function foo<U>(u: U) { return u }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U>(t: T) { return t }",
+            "export function foo<T>(t: T) { return t }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export function foo<T, U, V>(t: T, v: V) { return [t, v] }",
+            "export function foo<T, V>(t: T, v: V) { return [t, v] }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type Foo<T, U,> = T",
+            "export type Foo<T,> = T",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "export type Foo<T extends string = 'a'> = {}",
+            "export type Foo = {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // `infer` type parameters can't simply be removed
+        (
+            "export type F<T> = T extends Array<infer R> ? string : never",
+            "export type F<T> = T extends Array<infer R> ? string : never",
+            None,
+            FixKind::None,
+        ),
+        // interfaces and classes can merge with other declarations, which must
+        // all declare identical type parameters
+        ("export interface Foo<T> {}", "export interface Foo<T> {}", None, FixKind::None),
+        ("export class Foo<T> {}", "export class Foo<T> {}", None, FixKind::None),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "fix": { "variables": "off" } }])),
+            FixKind::None,
+        ),
+        // removing a type parameter is dangerous, so it is not applied as a safe fix
+        (
+            "export type Foo<T> = {}",
+            "export type Foo<T> = {}",
+            Some(json!([{ "fix": { "variables": "safe-fix" } }])),
+            FixKind::SafeFix,
+        ),
+        (
+            "export type Foo<T> = {}",
+            "export type Foo = {}",
+            Some(json!([{ "fix": { "variables": "fix" } }])),
+            FixKind::DangerousFix,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .change_rule_path_extension("ts")
+        .test();
+}
+
+#[test]
+fn test_type_parameter_remove_arrow_fix() {
+    for extension in ["ts", "tsx", "mts", "cts"] {
+        let fix = vec![
+            (
+                "export const foo = <T, U>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <U, T>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <T, U,>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <U, T,>(t: T) => t",
+                "export const foo = <T,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+            (
+                "export const foo = <T, U /* , */>(t: T) => t",
+                "export const foo = <T /* , */,>(t: T) => t",
+                None,
+                FixKind::DangerousSuggestion,
+            ),
+        ];
+
+        Tester::new::<&str>(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, vec![], vec![])
+            .expect_fix(fix)
+            .change_rule_path_extension(extension)
+            .test();
+    }
 }
 
 #[test]
@@ -1829,13 +2073,254 @@ fn test_ignore() {
         .test_and_snapshot();
 }
 
-// #[test]
-// fn test_template() {
-//     let pass = vec![];
+#[test]
+fn test_ambient_export_modifiers() {
+    let pass = vec![
+        (
+            r"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export interface ExplicitlyExportedInterface { otherProperty?: string; }
+            }
+            ",
+            None,
+        ),
+        (
+            r"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+            }
+            ",
+            None,
+        ),
+        (
+            r"
+            export {};
+            declare namespace NS {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export interface ExplicitlyExportedInterface { otherProperty?: string; }
+            }
+            ",
+            None,
+        ),
+    ];
+    let fail = vec![
+        (
+            r"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export {};
+            }
+            ",
+            None,
+        ),
+        (
+            r"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export = Assigned;
+            }
+            declare const Assigned: unknown;
+            ",
+            None,
+        ),
+        ("interface LocalUnused {}", None),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .change_rule_path_extension("ts")
+        .test();
+}
 
-//     let fail = vec![];
+#[test]
+fn test_remove_array_element_before_rest() {
+    let fix = vec![(
+        "const [used, unused, ...rest] = [1, 2, 3]; console.log(used, rest);",
+        "const [used, ,...rest] = [1, 2, 3]; console.log(used, rest);",
+        None,
+        FixKind::DangerousSuggestion,
+    )];
 
-//     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
-//         .with_snapshot_suffix("<replace>")
-//         .test_and_snapshot();
-// }
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, Vec::<&str>::new(), vec![])
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn removing_an_import_preserves_comments_before_the_separator() {
+    let fix = vec![
+        (
+            "import {unused /* comment */, used} from \"m\"; console.log(used);",
+            "import { /* comment */ used} from \"m\"; console.log(used);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import {used, unused /* , */, other} from \"m\"; console.log(used, other);",
+            "import {used,  /* , */ other} from \"m\"; console.log(used, other);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import {unused // comment\n, used} from \"m\"; console.log(used);",
+            "import { // comment\n used} from \"m\"; console.log(used);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, Vec::<&str>::new(), Vec::<&str>::new())
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_root_exports_do_not_export_namespace_bindings() {
+    let pass = vec![
+        "export const value = 1; export namespace NS { export const value = 2; }",
+        "const value = 1; export { value as renamed }; export namespace NS { export const value = 2; }",
+        "export const value = 1; export namespace NS { const value = 2; export const used = value; }",
+    ];
+    let fail = vec![
+        "export const value = 1; export namespace NS { const value = 2; }",
+        "const value = 1; export { value as renamed }; export namespace NS { const value = 2; }",
+        "export const value = 1; export namespace NS { export namespace Inner { const value = 2; } }",
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn consumed_update_values_are_usages() {
+    let pass = vec![
+        "let a = 0; new Foo(a++);",
+        "const a = 0; new Foo(a++);",
+        "const a = 0; new Foo((0, a++));",
+        "const a = class {}; new (a ??= Fallback)();",
+        "let a = class {}; new (a ??= Fallback)();",
+        "let a = class {}; (new (a ||= Fallback)(), 0);",
+        "let a = 0; switch (value) { case a++: break; }",
+        "let a = 0; switch (value) { case (a = a + 1): break; }",
+        "let a = 0; (a++).toString();",
+        "let a = 0; ((a++).toString, 0);",
+        "let a = 0; (a = a + 1).toString();",
+        "class C { #value; next = this; static f() { let a = new C(); ((a = a.next).#value, 0); } } C.f();",
+        "let a = 0; (a++ && foo(), 0);",
+        "let a = 0; (a++ || foo(), 0);",
+        "let a = 0; (a++ ?? foo(), 0);",
+        "let a = 0; (object[a++], 0);",
+        "let a = 0; (object[a = a + 1], 0);",
+        "let a = 0; (a++ ? foo() : bar(), 0);",
+        "let a = 0; object[a++];",
+        "let a = 0; switch (a++) {}",
+        "let a = 0; a++ ? foo() : bar();",
+        "let a = 0; a++ && foo();",
+        "let a = 0; a++ || foo();",
+        "let a = 0; a++ ?? foo();",
+        "let a = 0; new Foo(a = a + 1);",
+        "let a = 0; object[a = a + 1];",
+    ];
+    let fail = vec![
+        "let a = 0; a++;",
+        "let a = 0; (a++, 0);",
+        "let a = 0; (a++, 0) && foo();",
+        "let a = 0; flag && a++;",
+        "let a = 0; (a++, 0).toString();",
+        "let a = 0; ((a++, 0).toString, 0);",
+        "let a = 0; a = (a++).toString();",
+        "let a = 0; (flag && a++, 0);",
+        "let a = 0; ((a++, 0) && foo(), 0);",
+        "let a = 0; (object[(a++, 0)], 0);",
+        "let a = 0; flag || a++;",
+        "let a = 0; flag ?? a++;",
+        "let a = 0; flag ? a++ : foo();",
+        "let a = 0; flag ? foo() : a++;",
+        "let a = 0; new Foo((a++, 0));",
+        "const a = 0; new Foo((a++, 0));",
+        "const a = 0; new Foo(((a++, 0), 1));",
+        "const a = class {}; new (a ??= Fallback, Other)();",
+        "let a = class {}; new (a ??= Fallback, Other)();",
+        "let a = 0; switch (value) { case (a++, 0): break; }",
+        "let a = 0; switch (value) { case 0: a++; break; }",
+        "let a = 0; object[(a++, 0)];",
+        "let a = 0; switch ((a++, 0)) {}",
+        // Consuming an intermediate value does not make an outer self-assignment used.
+        "let a = 0; a = a || 1;",
+        "let a = 0; a = a ? 1 : 2;",
+        "let a = 0; a = a++ || 1;",
+        "let a = 0; a = object[a++];",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn ignore_patterns_in_array_rest() {
+    let array_options = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
+    let object_options = Some(json!([{ "ignoreRestSiblings": true }]));
+    let pass = vec![
+        ("const [...[_rest]] = items;", array_options.clone()),
+        ("function f([...[_rest]]) {} f();", array_options.clone()),
+        ("const [...{length, ...rest}] = items; use(rest);", object_options.clone()),
+    ];
+    let fail = vec![
+        // A rest identifier itself is not an array element covered by this option.
+        ("const [..._rest] = items;", array_options.clone()),
+        ("const [...[rest]] = items;", array_options),
+        ("const [...{length}] = items;", object_options),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn disabled_arguments_do_not_report_used_ignore_patterns() {
+    let options = Some(json!([{
+        "args": "none", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+    }]));
+    let pass = vec![
+        ("function f(_a) { return _a; } f();", options.clone()),
+        ("function f(..._args) { return _args; } f();", options.clone()),
+        ("function f({_a}) { return _a; } f();", options.clone()),
+        ("function f([_a]) { return _a; } f();", options),
+    ];
+    let fail = vec![
+        (
+            "function f([_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "destructuredArrayIgnorePattern": "^_",
+                "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(...[_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(_a) { return _a; } f();",
+            Some(json!([{
+                "args": "all", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "const _a = 1; use(_a);",
+            Some(json!([{
+                "args": "none", "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}

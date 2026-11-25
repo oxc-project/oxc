@@ -143,7 +143,7 @@ enum ModuleType {
 
 impl Rule for NoDuplicateImports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -168,6 +168,7 @@ impl Rule for NoDuplicateImports {
                 ImportImportName::Name(_) => ImportType::Named,
                 ImportImportName::NamespaceObject => ImportType::Namespace,
                 ImportImportName::Default(_) => ImportType::Default,
+                ImportImportName::Source(_) => continue,
             };
 
             if previous_span != Some(span) {
@@ -175,7 +176,7 @@ impl Rule for NoDuplicateImports {
 
                 if let Some(existing) = import_map.get(source)
                     && can_merge_imports(
-                        &import_type,
+                        &entry.import_name,
                         existing,
                         self.allow_separate_type_imports,
                         requested_module_is_type_import,
@@ -398,6 +399,14 @@ impl Rule for NoDuplicateImports {
                     if existing.iter().any(|(t, import_span, module_type, _)| {
                         // import { a } from 'foo'; export { a as t };
                         if matches!(t, ImportType::Named) && module_request.span != *import_span {
+                            // Multiple named specifiers in one `export { a, b } from 'mod'` share
+                            // a module request but have distinct specifier spans. That is one
+                            // statement, not a duplicate export (oxc-project/oxc#26857).
+                            if *module_type == ModuleType::Export
+                                && entry.statement_span.contains_inclusive(*import_span)
+                            {
+                                return false;
+                            }
                             return true;
                         }
                         (matches!(
@@ -428,26 +437,18 @@ impl Rule for NoDuplicateImports {
 }
 
 fn can_merge_imports(
-    current_type: &ImportType,
+    current_type: &ImportImportName,
     existing: &[(ImportType, Span, ModuleType, bool)],
     allow_separate_type_imports: bool,
     is_current_statement_type_import: bool,
     is_current_specifier_type: bool,
 ) -> bool {
-    if *current_type == ImportType::AllButDefault {
-        return false;
-    }
-
-    if *current_type == ImportType::SideEffect {
-        return !existing.is_empty();
-    }
-
     // Special case: both are type imports (statement-level)
     // Check if one is default and one is named (cannot be merged per ESLint)
     let all_existing_are_type = existing.iter().all(|(_, _, _, is_stmt_type)| *is_stmt_type);
     if is_current_statement_type_import && is_current_specifier_type && all_existing_are_type {
-        let current_is_default = matches!(current_type, ImportType::Default);
-        let current_is_named = matches!(current_type, ImportType::Named);
+        let current_is_default = matches!(current_type, ImportImportName::Default(_));
+        let current_is_named = matches!(current_type, ImportImportName::Name(_));
         let has_default = existing.iter().any(|(t, _, _, _)| matches!(t, ImportType::Default));
         let has_named = existing.iter().any(|(t, _, _, _)| matches!(t, ImportType::Named));
 
@@ -490,14 +491,14 @@ fn can_merge_imports(
     let has_default = default.is_some();
 
     match current_type {
-        ImportType::Named => {
+        ImportImportName::Name(_) => {
             has_named
                 || (has_default
                     && !namespace.is_some_and(|(_, namespace_span, _, _)| {
                         default.unwrap().1 == *namespace_span
                     }))
         }
-        ImportType::Namespace => {
+        ImportImportName::NamespaceObject => {
             if has_named
                 && has_default
                 && let Some((_, named_span, _, _)) = named
@@ -509,8 +510,8 @@ fn can_merge_imports(
 
             has_namespace || has_default
         }
-        ImportType::Default => has_default || has_namespace || has_named,
-        _ => unreachable!("other ImportType values should be already checked"),
+        ImportImportName::Default(_) => has_default || has_namespace || has_named,
+        ImportImportName::Source(_) => false,
     }
 }
 
@@ -744,6 +745,20 @@ fn test() {
             r#"import { type Foo } from "module";
             export type * as Bar from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
+        ),
+        (
+            r#"export { value1, value2 } from "some-module";"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
+        (
+            r#"import source wasm from "module";
+            import value from "module";"#,
+            None,
+        ),
+        (
+            r#"import source wasm from "module";
+            export * as ns from "module";"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
         ),
     ];
 

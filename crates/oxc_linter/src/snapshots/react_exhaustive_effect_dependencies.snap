@@ -1,0 +1,28 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(exhaustive-effect-dependencies): Found missing effect dependencies
+   ╭─[exhaustive_effect_dependencies.tsx:6:6]
+ 4 │   useEffect(() => {
+ 5 │     log(value);
+   ·         ──┬──
+   ·           ╰── Missing dependency `value`
+ 6 │   }, []);
+   ·      ─┬
+   ·       ╰── This dependency list is missing values used by the callback
+ 7 │ }
+   ╰────
+  help: Missing dependencies can cause an effect to fire less often than it should
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps
+
+  ⚠ react(exhaustive-effect-dependencies): Found extra effect dependencies
+   ╭─[exhaustive_effect_dependencies.tsx:6:14]
+ 5 │     log(value);
+ 6 │   }, [value, extra]);
+   ·              ──┬──
+   ·                ╰── Unnecessary dependency `extra`
+ 7 │ }
+   ╰────
+  help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps

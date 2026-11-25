@@ -18,7 +18,11 @@ pub fn redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
 
 /// TS(2804): Duplicate identifier '#x'. Static and instance elements cannot share the same private name.
 #[cold]
-pub fn static_and_instance_private_identifier(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+pub fn static_and_instance_private_identifier(
+    x0: impl std::fmt::Display,
+    span1: Span,
+    span2: Span,
+) -> OxcDiagnostic {
     ts_error(
         "2804",
         format!("Duplicate identifier `#{x0}`. Static and instance elements cannot share the same private name."),
@@ -175,19 +179,6 @@ pub fn illegal_use_strict(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn top_level(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "'{x0}' declaration can only be used at the top level of a module"
-    ))
-    .with_label(span1)
-}
-
-#[cold]
-pub fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot use {x0} outside a module")).with_label(span1)
-}
-
-#[cold]
 pub fn using_declaration_not_allowed_in_script(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'using' declarations are not allowed at the top level of a script")
         .with_help("Wrap this code in a block or use a module")
@@ -261,14 +252,6 @@ pub fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic 
 }
 
 #[cold]
-pub fn multiple_declaration_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "Only a single declaration is allowed in a `for...{x0}` statement"
-    ))
-    .with_label(span1)
-}
-
-#[cold]
 pub fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{x0} loop variable declaration may not have an initializer"))
         .with_label(span1)
@@ -334,9 +317,9 @@ pub fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
 
 // TypeScript diagnostics
 
-/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
+/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | undefined'?(17019)
 #[cold]
-pub fn jsdoc_type_in_annotation(
+pub fn jsdoc_type_modifier(
     modifier: char,
     is_start: bool,
     span: Span,
@@ -352,6 +335,12 @@ pub fn jsdoc_type_in_annotation(
     .with_help(format!("Did you mean to write '{suggested_type}'?"))
 }
 
+/// JSDoc types can only be used inside documentation comments.(8020)
+#[cold]
+pub fn jsdoc_type(span: Span) -> OxcDiagnostic {
+    ts_error("8020", "JSDoc types can only be used inside documentation comments.").with_label(span)
+}
+
 #[cold]
 pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     ts_error(
@@ -359,6 +348,18 @@ pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
         "A namespace declaration is only allowed at the top level of a namespace or module.",
     )
     .with_label(span)
+}
+
+#[cold]
+pub fn not_allowed_ambient_module_declaration(span: Span) -> OxcDiagnostic {
+    ts_error("1234", "An ambient module declaration is only allowed at the top level in a file.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn nested_ambient_module_declaration(span: Span) -> OxcDiagnostic {
+    ts_error("2435", "Ambient modules cannot be nested in other modules or namespaces.")
+        .with_label(span)
 }
 
 #[cold]

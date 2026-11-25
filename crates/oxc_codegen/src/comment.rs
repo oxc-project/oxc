@@ -1,6 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::hash_map::Entry};
 
 use rustc_hash::{FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 
 use oxc_ast::{
     Comment, CommentKind,
@@ -11,11 +12,43 @@ use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
-pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
+type CommentList = SmallVec<[Comment; 1]>;
+
+pub type CommentsMap = FxHashMap</* attached_to */ u32, CommentList>;
 
 /// Whether a comment remains meaningful if its original AST anchor is removed.
-fn preserve_when_orphaned(comment: Comment) -> bool {
+fn preserve_when_orphaned(comment: &Comment) -> bool {
     comment.is_legal() || comment.is_coverage_ignore_file()
+}
+
+/// Whether [`Codegen::print_comments`] breaks the line between two adjacent comments.
+fn breaks_line_between(prev: &Comment, comment: &Comment) -> bool {
+    breaks_line_after(prev) || comment.preceded_by_newline() || comment.is_legal()
+}
+
+/// Whether [`Codegen::print_comments`] breaks the line after a group ending with `last`.
+fn breaks_line_after(last: &Comment) -> bool {
+    last.is_line() || last.followed_by_newline()
+}
+
+/// Whether [`Codegen::print_comments`] would end a line with a comment the parser does not
+/// always keep leading, in which case the group starts on a new line instead
+/// (a no-op when it already does).
+///
+/// After code on the same line, the parser attaches such a comment to the preceding token
+/// as a trailing comment, which is never printed, so the next pass would drop it:
+/// `a ? b : /* c */ /*! legal */ d` must not print `a ? b : /* c */\n/*! legal */ d`.
+fn would_strand_comments(comments: &[Comment]) -> bool {
+    // The comments before the first line break.
+    let first_line =
+        match comments.windows(2).position(|pair| breaks_line_between(&pair[0], &pair[1])) {
+            Some(i) => &comments[..=i],
+            None if comments.last().is_some_and(breaks_line_after) => comments,
+            None => return false,
+        };
+    // Legal and property-key comments always stay leading.
+    // Pure and no-side-effects comments do too, but never reach `print_comments`.
+    first_line.iter().any(|c| !c.is_legal() && !c.is_property_key_annotation())
 }
 
 /// A `pife`-marked arrow or function expression prints its leading comments
@@ -72,6 +105,9 @@ impl Codegen<'_> {
         if self.options.comments == CommentOptions::disabled() {
             return;
         }
+        // Each retained comment can create at most one map entry. Reserving
+        // this upper bound avoids incremental map growth while preprocessing.
+        self.comments.reserve(comments.len());
         for comment in comments {
             // Stash pure / no-side-effects comments by `attached_to` so the
             // emission site can recover the verbatim source text instead of
@@ -81,32 +117,27 @@ impl Codegen<'_> {
             // back to the canonical literal for the dropped ones.
             if comment.is_pure() || comment.is_no_side_effects() {
                 if comment.is_leading() && self.options.print_annotation_comment() {
-                    self.annotation_comments.insert(comment.attached_to, *comment);
+                    self.annotation_comments.insert(comment.attached_to, comment.clone());
                 }
                 continue;
             }
+
             let mut add = false;
             if comment.is_leading() {
-                if comment.is_legal() && self.options.print_legal_comment() {
-                    add = true;
-                }
-                if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
-                    add = true;
-                }
-                if comment.is_annotation() && self.options.print_annotation_comment() {
-                    add = true;
-                }
-                if comment.is_normal() && self.options.print_normal_comment() {
-                    add = true;
-                }
+                add = (comment.is_legal() && self.options.print_legal_comment())
+                    || (comment.is_jsdoc() && self.options.print_jsdoc_comment())
+                    || (comment.is_annotation() && self.options.print_annotation_comment())
+                    || (comment.is_normal() && self.options.print_normal_comment());
             }
+
             if add {
-                if preserve_when_orphaned(*comment)
+                self.has_property_key_annotations |= comment.is_property_key_annotation();
+                if preserve_when_orphaned(comment)
                     && let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to)
                 {
                     self.orphan_comment_keys.insert(idx, comment.attached_to);
                 }
-                self.comments.entry(comment.attached_to).or_default().push(*comment);
+                self.comments.entry(comment.attached_to).or_default().push(comment.clone());
             }
         }
     }
@@ -139,13 +170,17 @@ impl Codegen<'_> {
         kind: AnnotationKind,
         newline_after: bool,
     ) {
+        // `entry` probes the map once, and the comment is moved out of it rather than cloned.
+        // `entry` reserves capacity when the key is absent, which allocates if the map is empty,
+        // so check for that first. `annotation_comments` being empty is a common case.
         if self.source_text.is_some()
-            && let Some(comment) = self.annotation_comments.get(&start).copied()
-            && kind.matches(&comment)
-            // Inline line comments would swallow the rest of the line.
-            && (!comment.is_line() || newline_after)
+            && !self.annotation_comments.is_empty()
+            && let Entry::Occupied(entry) = self.annotation_comments.entry(start)
+            && kind.matches(entry.get())
+            // Inline line comments would swallow the rest of the line
+            && (!entry.get().is_line() || newline_after)
         {
-            self.annotation_comments.remove(&start);
+            let comment = entry.remove();
             self.print_comment(&comment);
             if newline_after {
                 self.print_hard_newline();
@@ -163,7 +198,7 @@ impl Codegen<'_> {
         }
     }
 
-    pub(crate) fn get_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
+    pub(crate) fn get_comments(&mut self, start: u32) -> Option<CommentList> {
         if self.comments.is_empty() {
             return None;
         }
@@ -186,12 +221,32 @@ impl Codegen<'_> {
     #[inline]
     pub(crate) fn print_leading_comments_anchored_to_self(&mut self, start: u32) {
         if let Some(comments) = self.get_comments(start) {
-            self.print_comments(&comments);
-            if self.last_byte() == Some(b'\n') {
-                self.print_indent();
-            } else {
-                self.consume_pending_indent_space();
-            }
+            self.print_comments_anchored_to_self(&comments);
+        }
+    }
+
+    /// [`Self::print_leading_comments_anchored_to_self`] for comments already taken from the map.
+    fn print_comments_anchored_to_self(&mut self, comments: &[Comment]) {
+        self.print_comments(comments);
+        if self.last_byte() == Some(b'\n') {
+            self.print_indent();
+        } else {
+            self.consume_pending_indent_space();
+        }
+    }
+
+    /// Print a property-key annotation attached directly to a string or template literal.
+    #[inline]
+    pub(crate) fn print_property_key_annotation(&mut self, start: u32) {
+        if !self.has_property_key_annotations {
+            return;
+        }
+        if self
+            .comments
+            .get(&start)
+            .is_some_and(|comments| comments.iter().any(Comment::is_property_key_annotation))
+        {
+            self.print_leading_comments_anchored_to_self(start);
         }
     }
 
@@ -201,13 +256,7 @@ impl Codegen<'_> {
     /// comment at the `(`, `a || (/* c */ x)` at `x` — an operand printer only
     /// sees one node, so the walk happens here for every emission site.
     pub(crate) fn print_leading_comments_before_expression(&mut self, expression: &Expression<'_>) {
-        if self.comments.is_empty() || is_pife_function(expression) {
-            return;
-        }
-        self.print_leading_comments_anchored_to_self(expression.span().start);
-        if let Expression::ParenthesizedExpression(paren) = expression {
-            self.print_leading_comments_before_expression(&paren.expression);
-        }
+        self.print_comments_through_parens(expression, |_| true);
     }
 
     /// Print an expression's comment group only when it contains an annotation
@@ -228,19 +277,41 @@ impl Codegen<'_> {
         &mut self,
         expression: &Expression<'_>,
     ) {
-        if self.comments.is_empty() || is_pife_function(expression) {
+        self.print_comments_through_parens(expression, |comments| {
+            comments.iter().any(Comment::is_annotation)
+        });
+    }
+
+    /// Print the comment groups of `expression` and its parenthesized layers that `keep` accepts,
+    /// as one group.
+    ///
+    /// The layers print back to back (`/* a */ (/* b */ x)` prints `/* a */ /* b */ x`),
+    /// so they need one layout: a line break between two groups would leave the outer one
+    /// at the end of a line after code, see [`would_strand_comments`].
+    fn print_comments_through_parens(
+        &mut self,
+        mut expression: &Expression<'_>,
+        keep: impl Fn(&CommentList) -> bool,
+    ) {
+        if self.comments.is_empty() {
             return;
         }
-        let start = expression.span().start;
-        if self
-            .comments
-            .get(&start)
-            .is_some_and(|comments| comments.iter().any(|comment| comment.is_annotation()))
-        {
-            self.print_leading_comments_anchored_to_self(start);
+        let mut merged = CommentList::new();
+        while !is_pife_function(expression) {
+            let start = expression.span().start;
+            if self.comments.get(&start).is_some_and(&keep) {
+                let group = self.comments.remove(&start).unwrap();
+                if merged.is_empty() {
+                    merged = group;
+                } else {
+                    merged.extend(group);
+                }
+            }
+            let Expression::ParenthesizedExpression(paren) = expression else { break };
+            expression = &paren.expression;
         }
-        if let Expression::ParenthesizedExpression(paren) = expression {
-            self.print_annotation_comments_before_expression(&paren.expression);
+        if !merged.is_empty() {
+            self.print_comments_anchored_to_self(&merged);
         }
     }
 
@@ -274,8 +345,15 @@ impl Codegen<'_> {
         let comments = &mut self.comments;
         for k in self.orphan_comment_keys.drain(..idx) {
             let Some(entry) = comments.get_mut(&k) else { continue };
-            debug_assert!(entry.iter().any(|c| preserve_when_orphaned(*c)));
-            orphans.extend(entry.extract_if(.., |c| preserve_when_orphaned(*c)));
+            debug_assert!(entry.iter().any(preserve_when_orphaned));
+            entry.retain(|comment| {
+                if preserve_when_orphaned(comment) {
+                    orphans.push(comment.clone());
+                    false
+                } else {
+                    true
+                }
+            });
             if entry.is_empty() {
                 comments.remove(&k);
             }
@@ -332,7 +410,7 @@ impl Codegen<'_> {
             return;
         };
 
-        if first.preceded_by_newline() {
+        if first.preceded_by_newline() || would_strand_comments(comments) {
             // Skip printing newline if this comment is already on a newline.
             if let Some(b) = self.last_byte() {
                 match b {
@@ -354,35 +432,18 @@ impl Codegen<'_> {
         }
         self.print_comment(first);
 
-        if let Some((last, middle)) = rest.split_last() {
-            for comment in middle {
-                if comment.preceded_by_newline() {
-                    self.print_hard_newline();
-                    self.print_indent();
-                } else if comment.is_legal() {
-                    self.print_hard_newline();
-                } else {
-                    self.print_soft_space();
-                }
-                self.print_comment(comment);
-            }
-
-            if last.preceded_by_newline() {
+        let mut prev = first;
+        for comment in rest {
+            if breaks_line_between(prev, comment) {
                 self.print_hard_newline();
                 self.print_indent();
-            } else if last.is_legal() {
-                self.print_hard_newline();
             } else {
                 self.print_soft_space();
             }
-            self.print_comment(last);
-
-            if last.is_line() || last.followed_by_newline() {
-                self.print_hard_newline();
-            } else {
-                self.print_next_indent_as_space = true;
-            }
-        } else if first.is_line() || first.followed_by_newline() {
+            self.print_comment(comment);
+            prev = comment;
+        }
+        if breaks_line_after(prev) {
             self.print_hard_newline();
         } else {
             self.print_next_indent_as_space = true;
@@ -395,8 +456,25 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line | CommentKind::SingleLineBlock => {
+            CommentKind::Line | CommentKind::HtmlOpen | CommentKind::SingleLineBlock => {
                 self.print_str_escaping_script_close_tag(comment_source);
+            }
+            CommentKind::HtmlClose => {
+                // `-->` is only a comment at the start of a line, allowing indentation.
+                // Annotation emission can place it after code even without minification.
+                let is_mid_line = self
+                    .code()
+                    .as_bytes()
+                    .iter()
+                    .rfind(|&&byte| !matches!(byte, b' ' | b'\t'))
+                    .is_some_and(|&byte| byte != b'\n');
+                let text = if is_mid_line {
+                    self.print_str("//");
+                    comment.content_span().source_text(source_text)
+                } else {
+                    comment_source
+                };
+                self.print_str_escaping_script_close_tag(text);
             }
             CommentKind::MultiLineBlock => {
                 for line in LineTerminatorSplitter::new(comment_source) {
@@ -445,7 +523,7 @@ impl Codegen<'_> {
                 text = Cow::Owned(buffer);
             }
             if set.insert(text) {
-                comments.push(*comment);
+                comments.push(comment.clone());
             }
         }
 

@@ -20,9 +20,9 @@ Tested against: [stylistic@5c4b512](https://github.com/eslint-stylistic/eslint-s
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 18416 | 100.0% |
-| Passing     | 18309 |  99.4% |
+| Passing     | 18308 |  99.4% |
 | Failing     |     1 |   0.0% |
-| Skipped     |   106 |   0.6% |
+| Skipped     |   107 |   0.6% |
 
 ## Fully Passing Rules
 
@@ -38,7 +38,7 @@ Tested against: [stylistic@5c4b512](https://github.com/eslint-stylistic/eslint-s
 - `comma-dangle` (74 tests)
 - `comma-spacing` (173 tests)
 - `comma-spacing` (13 tests) (2 skipped)
-- `comma-style` (140 tests) (10 skipped)
+- `comma-style` (140 tests) (11 skipped)
 - `computed-property-spacing` (126 tests)
 - `computed-property-spacing` (10 tests)
 - `curly-newline` (111 tests)

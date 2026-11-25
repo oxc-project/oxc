@@ -82,12 +82,13 @@ declare_oxc_lint!(
     pending,
     config = HookUseState,
     version = "1.59.0",
-    short_description = "Ensure destructuring and symmetric naming of useState hook value and setter variables.",
+    short_description =
+        "Ensure destructuring and symmetric naming of useState hook value and setter variables.",
 );
 
 impl Rule for HookUseState {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

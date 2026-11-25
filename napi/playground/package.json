@@ -3,20 +3,34 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
+  "files": [
+    "browser.js",
+    "src-js/wasm.js",
+    "index.d.ts",
+    "index.js",
+    "playground.wasi-browser.js",
+    "playground.wasi.cjs",
+    "playground.wasm32-wasi.debug.wasm",
+    "playground.wasm32-wasi.wasm",
+    "wasi-worker-browser.mjs",
+    "wasi-worker.mjs"
+  ],
   "type": "module",
   "exports": {
     ".": {
       "types": "./index.d.ts",
-      "browser": "./playground.wasi-browser.js",
+      "browser": "./src-js/wasm.js",
       "default": "./index.js"
     },
+    "./playground.wasi-browser.js": "./src-js/wasm.js",
     "./*": "./*"
   },
   "scripts": {
     "build-test": "echo 'Skipped because there are no tests.'",
-    "build-dev": "pnpm run build-wasm-dev && node scripts/patch.js",
-    "build": "pnpm run build-wasm-dev --release && node scripts/patch.js",
-    "build-wasm-dev": "napi build --platform --esm --target wasm32-wasip1-threads",
+    "build-dev": "pnpm run build-wasm-dev",
+    "build": "pnpm run build-wasm-dev --release",
+    "build-wasm-dev": "napi build --platform --esm --target wasm32-wasip1-threads --dts index.d.ts",
+    "postbuild-wasm-dev": "node scripts/patch-wasi-browser.js",
     "postbuild": "publint"
   },
   "dependencies": {

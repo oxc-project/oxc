@@ -5,5 +5,5 @@ space-only-line-kept: >-
   word1
    
   word2
-trailing-spaces-stripped-when-last: >-
+trailing-spaces-kept-when-last: >-
   Lorizzle ipsizzle dolizzle pot amizzle  

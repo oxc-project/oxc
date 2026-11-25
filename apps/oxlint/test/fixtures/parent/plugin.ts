@@ -10,9 +10,9 @@ const plugin: Plugin = {
         function reportAncestry(node: any) {
           context.report({
             message:
-              `${node.type}:\n` +
-              `parent: ${node.parent?.type}\n` +
-              `ancestors: [ ${context.sourceCode
+              `${node.type}:\n`
+              + `parent: ${node.parent?.type}\n`
+              + `ancestors: [ ${context.sourceCode
                 .getAncestors(node)
                 // @ts-expect-error - TODO: Shouldn't be an error. We need to fix our types.
                 .map((node) => node.type)

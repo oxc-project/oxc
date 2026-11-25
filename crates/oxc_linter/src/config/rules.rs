@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, fmt, sync::Arc};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
@@ -15,7 +15,7 @@ use schemars::schema::SingleOrVec;
 use serde::{
     Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
-    ser::SerializeMap,
+    ser::{SerializeMap, SerializeSeq},
 };
 use smallvec::SmallVec;
 
@@ -73,7 +73,20 @@ impl From<ExternalRuleLookupError> for OverrideRulesError {
     }
 }
 
-type RuleSet = FxHashMap<RuleEnum, AllowWarnDeny>;
+pub(super) type RuleSet = FxHashMap<RuleEnum, RuleConfig>;
+
+/// Keeps original JSON options with the compiled rule's severity for config printing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuleConfig {
+    pub severity: AllowWarnDeny,
+    pub options: Option<Arc<[serde_json::Value]>>,
+}
+
+impl RuleConfig {
+    pub fn new(severity: AllowWarnDeny) -> Self {
+        Self { severity, options: None }
+    }
+}
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -89,6 +102,38 @@ pub struct OxlintRules {
 impl OxlintRules {
     pub fn new(rules: Vec<ESLintRule>) -> Self {
         Self { rules }
+    }
+
+    pub(super) fn from_resolved(
+        builtin_rules: &[(RuleEnum, RuleConfig)],
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        external_plugin_store: &ExternalPluginStore,
+    ) -> Self {
+        let builtin_rules = builtin_rules.iter().map(|(rule, config)| ESLintRule {
+            plugin_name: rule.plugin_name().to_string(),
+            rule_name: rule.name().to_string(),
+            severity: config.severity,
+            config: config.options.as_deref().unwrap_or_default().iter().cloned().collect(),
+        });
+        let external_rules = external_rules.iter().map(|(rule_id, options_id, severity)| {
+            let (plugin_name, rule_name) =
+                external_plugin_store.resolve_plugin_rule_names(*rule_id);
+            ESLintRule {
+                plugin_name: plugin_name.to_string(),
+                rule_name: rule_name.to_string(),
+                severity: *severity,
+                config: external_plugin_store
+                    .resolve_rule_options(*options_id)
+                    .iter()
+                    .cloned()
+                    .collect(),
+            }
+        });
+        let mut rules: Vec<_> = builtin_rules.chain(external_rules).collect();
+        rules.sort_unstable_by(|a, b| {
+            (&a.plugin_name, &a.rule_name).cmp(&(&b.plugin_name, &b.rule_name))
+        });
+        Self::new(rules)
     }
 
     /// Returns `true` if there are no rules.
@@ -173,7 +218,14 @@ impl OxlintRules {
                         };
                         match rule.from_configuration(config) {
                             Ok(configured_rule) => {
-                                rules_to_replace.push((configured_rule, severity));
+                                rules_to_replace.push((
+                                    configured_rule,
+                                    RuleConfig {
+                                        severity,
+                                        options: (!rule_config.config.is_empty())
+                                            .then(|| Arc::from(rule_config.config.as_slice())),
+                                    },
+                                ));
                             }
                             Err(e) => {
                                 errors.push(OverrideRulesError::RuleConfiguration {
@@ -201,7 +253,6 @@ impl OxlintRules {
                     if external_plugin_store.is_enabled() {
                         match external_plugin_store.lookup_rule_id(plugin_name, rule_name) {
                             Ok(external_rule_id) => {
-                                // Add options to store and get options ID
                                 let options_id = external_plugin_store
                                     .add_options(external_rule_id, &rule_config.config);
 
@@ -226,14 +277,15 @@ impl OxlintRules {
         }
 
         if !errors.is_empty() {
-            // Sort by the error message so output is stable
-            errors.sort_by_key(std::string::ToString::to_string);
+            // Sort by the error message so output is stable. The key is computed once per error
+            // rather than once per comparison, which also keeps the `Display` impl out of the sort.
+            errors.sort_by_cached_key(std::string::ToString::to_string);
             return Err(errors);
         }
 
-        for (rule, severity) in rules_to_replace {
+        for (rule, config) in rules_to_replace {
             let _ = rules_for_override.remove(&rule);
-            rules_for_override.insert(rule, severity);
+            rules_for_override.insert(rule, config);
         }
 
         Ok(())
@@ -444,12 +496,11 @@ impl JsonSchema for OxlintRules {
                                 array.items.is_none() || array.additional_items.is_none(),
                                 "Expected rule to not contain items and additionalItems at the same time"
                             );
-                            if let Some(ref additional_items) = array.additional_items {
+                            if array.additional_items.is_some() {
                                 array.items = Some(SingleOrVec::Vec(vec![
                                     r#gen.subschema_for::<AllowWarnDeny>(),
-                                    *additional_items.clone(),
                                 ]));
-                                array.min_items = Some(2);
+                                array.min_items = Some(1);
                                 array.max_items = None;
                                 return Schema::Object(obj);
                             }
@@ -545,15 +596,7 @@ impl JsonSchema for OxlintRules {
                     if r.plugin_name() == "eslint" {
                         (r.name().to_string(), schema)
                     } else {
-                        (
-                            format!(
-                                "{}/{}",
-                                // replace `jsx_a11y` with `jsx-a11y`, `react_perf` with `react-perf`.
-                                r.plugin_name().cow_replace('_', "-"),
-                                r.name()
-                            ),
-                            schema,
-                        )
+                        (format!("{}/{}", r.plugin_name().cow_replace('_', "-"), r.name()), schema)
                     }
                 });
 
@@ -587,17 +630,30 @@ impl Serialize for OxlintRules {
 
         for rule in &self.rules {
             let key = rule.full_name();
-            if rule.config.is_empty() {
-                // e.g. unicorn/some-rule: "warn"
-                rules.serialize_entry(&key, rule.severity.as_str())?;
-            } else {
-                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                let value = (rule.severity.as_str(), &rule.config);
-                rules.serialize_entry(&key, &value)?;
-            }
+            rules.serialize_entry(&key, &RuleValueSer(rule))?;
         }
 
         rules.end()
+    }
+}
+
+struct RuleValueSer<'a>(&'a ESLintRule);
+
+impl Serialize for RuleValueSer<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let rule = self.0;
+        if rule.config.is_empty() {
+            // Serialize a rule with no options as a single severity string.
+            return serializer.serialize_str(rule.severity.as_str());
+        }
+
+        // Otherwise: serialize an array with severity and options.
+        let mut seq = serializer.serialize_seq(Some(1 + rule.config.len()))?;
+        seq.serialize_element(rule.severity.as_str())?;
+        for option in &rule.config {
+            seq.serialize_element(option)?;
+        }
+        seq.end()
     }
 }
 
@@ -659,28 +715,32 @@ fn parse_rule_key(name: &str) -> (String, String) {
     unalias_plugin_name(plugin_name, rule_name)
 }
 
-pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
-    // First normalize the plugin name by stripping eslint-plugin- prefix/suffix
-    let normalized = super::plugins::normalize_plugin_name(plugin_name);
-    let plugin_name = normalized.as_ref();
+/// Normalize a rule name to the canonical name used by diagnostics.
+///
+/// This removes the plugin prefix from ESLint rules and resolves plugin aliases such as
+/// `@typescript-eslint` to `typescript`.
+pub fn normalize_rule_name(name: &str) -> String {
+    let (plugin_name, rule_name) = parse_rule_key(name);
+    let plugin_name = super::plugins::plugin_display_name(&plugin_name);
+    if plugin_name == "eslint" { rule_name } else { format!("{plugin_name}/{rule_name}") }
+}
 
-    let (oxlint_plugin_name, rule_name) = match plugin_name {
-        "@typescript-eslint" => ("typescript", rule_name),
-        // import-x has the same rules but better performance
-        "import-x" => ("import", rule_name),
-        // jsx-a11y-x has the same rules but better maintained
-        "jsx-a11y" | "jsx-a11y-x" | "jsx_a11y-x" => ("jsx_a11y", rule_name),
-        "react-perf" => ("react_perf", rule_name),
+pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
+    let normalized = super::plugins::normalize_plugin_name(plugin_name);
+    let plugin_name = match normalized.as_ref() {
         // e.g. "@next/google-font-display", "@next/next/google-font-display"
-        "@next" | "@next/next" => ("nextjs", rule_name),
-        // For backwards compatibility, react hook rules reside in the react plugin.
-        "react-hooks" => ("react", rule_name),
-        // For backwards compatibility, deepscan rules reside in the oxc plugin.
-        "deepscan" => ("oxc", rule_name),
-        _ => (plugin_name, rule_name),
+        "@next" | "@next/next" => "nextjs".to_string(),
+        plugin_name => match LintPlugins::try_from(plugin_name) {
+            Ok(LintPlugins::ESLINT) => "eslint".to_string(),
+            Ok(plugin) => {
+                let plugin_name: &str = plugin.into();
+                plugin_name.cow_replace('-', "_").into_owned()
+            }
+            Err(()) => normalized.into_owned(),
+        },
     };
 
-    (oxlint_plugin_name.to_string(), rule_name.to_string())
+    (plugin_name, rule_name.to_string())
 }
 
 fn parse_rule_value(
@@ -693,24 +753,22 @@ fn parse_rule_value(
         }
 
         serde_json::Value::Array(mut v) => {
-            if v.is_empty() {
+            let Some((severity, config)) = v.split_first_mut() else {
                 return Err(failed_to_parse_rule_value(
                     &serde_json::Value::Array(v).to_string(),
                     "Type should be `[SeverityConf, ...any[]`",
                 )
                 .into());
-            }
+            };
 
-            // The first item should be SeverityConf
-            let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-            let config = match v.len() {
-                0 => unreachable!(),
+            let severity = AllowWarnDeny::try_from(&*severity)?;
+            let config = match config {
                 // e.g. ["warn"], [0]
-                1 => SmallVec::new(),
+                [] => SmallVec::new(),
                 // e.g. ["error", { type: "whatever" }]
                 // Separate branch for this common case which uses the faster `SmallVec::from_buf`,
                 // and avoids shifting the first element off the vector.
-                2 => SmallVec::from_buf([v.pop().unwrap()]),
+                [config] => SmallVec::from_buf([config.take()]),
                 // e.g. ["error", { type: "whatever" }, ["len", "also"]]
                 _ => {
                     v.remove(0);
@@ -761,7 +819,31 @@ mod test {
         rules::{RULES, RuleEnum},
     };
 
-    use super::{OxlintRules, RuleSet};
+    use super::{OxlintRules, RuleConfig, RuleSet};
+
+    #[test]
+    fn test_serialize_rule_options_round_trip() {
+        let rules: OxlintRules = serde_json::from_value(json!({
+            "no-debugger": "off",
+            "no-console": ["warn", { "allow": ["warn"] }],
+            "eqeqeq": ["error", "always", { "null": "ignore" }],
+            "custom/no-options": ["error"],
+            "@scope/custom/options": ["warn", ["first", "second"], null, true, 42]
+        }))
+        .unwrap();
+        let serialized = serde_json::to_value(&rules).unwrap();
+        assert_eq!(
+            serialized,
+            json!({
+                "no-debugger": "allow",
+                "no-console": ["warn", { "allow": ["warn"] }],
+                "eqeqeq": ["deny", "always", { "null": "ignore" }],
+                "custom/no-options": "deny",
+                "@scope/custom/options": ["warn", ["first", "second"], null, true, 42]
+            })
+        );
+        assert_eq!(serde_json::from_value::<OxlintRules>(serialized).unwrap(), rules);
+    }
 
     #[test]
     fn test_parse_rules() {
@@ -853,19 +935,22 @@ mod test {
             r#override(&mut rules, &config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, config) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-console", "{config:?}");
-            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(config.severity, AllowWarnDeny::Deny, "{config:?}");
         }
     }
 
     #[test]
     fn test_override_allow() {
         let mut rules = RuleSet::default();
-        rules.insert(RuleEnum::EslintNoConsole(Default::default()), AllowWarnDeny::Deny);
+        rules.insert(
+            RuleEnum::EslintNoConsole(Default::default()),
+            RuleConfig::new(AllowWarnDeny::Deny),
+        );
         r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
 
-        assert!(!rules.iter().any(|(_, severity)| severity.is_warn_deny()));
+        assert!(!rules.values().any(|config| config.severity.is_warn_deny()));
     }
 
     #[test]
@@ -881,20 +966,23 @@ mod test {
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, config) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(config.severity, AllowWarnDeny::Deny, "{config:?}");
         }
 
         for config in &configs {
             let mut rules = RuleSet::default();
-            rules.insert(RuleEnum::EslintNoUnusedVars(Default::default()), AllowWarnDeny::Warn);
+            rules.insert(
+                RuleEnum::EslintNoUnusedVars(Default::default()),
+                RuleConfig::new(AllowWarnDeny::Warn),
+            );
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, config) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(config.severity, AllowWarnDeny::Deny, "{config:?}");
         }
     }
 
@@ -1004,6 +1092,25 @@ mod test {
         assert_eq!(r3.rule_name, "no-cycle");
         assert_eq!(r3.plugin_name, "import");
         assert!(r3.severity.is_warn_deny());
+    }
+
+    #[test]
+    fn test_normalize_rule_name() {
+        assert_eq!(super::normalize_rule_name("eslint/curly"), "curly");
+        assert_eq!(
+            super::normalize_rule_name("@typescript-eslint/no-unused-vars"),
+            "typescript/no-unused-vars"
+        );
+        assert_eq!(
+            super::normalize_rule_name("eslint-plugin-react/jsx-uses-vars"),
+            "react/jsx-uses-vars"
+        );
+        assert_eq!(super::normalize_rule_name("jsx-a11y/alt-text"), "jsx-a11y/alt-text");
+        assert_eq!(
+            super::normalize_rule_name("react-perf/jsx-no-new-object-as-prop"),
+            "react-perf/jsx-no-new-object-as-prop"
+        );
+        assert_eq!(super::normalize_rule_name("@next/next/no-img-element"), "next/no-img-element");
     }
 
     #[test]

@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@media (aspect-ratio > 16 / 9) {}
+@media (aspect-ratio: 16/9) {}
+@media (16/ 9 < aspect-ratio < 21  /  9) {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@media (aspect-ratio > 16 / 9) {
+}
+@media (aspect-ratio: 16/9) {
+}
+@media (16/ 9 < aspect-ratio < 21 / 9) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@media (aspect-ratio > 16 / 9) {
+}
+@media (aspect-ratio: 16/9) {
+}
+@media (16/ 9 < aspect-ratio < 21 / 9) {
+}
+
+===================== End =====================

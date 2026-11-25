@@ -1,14 +1,17 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{BindingPattern, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::FxHashMap;
 
-use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
+use crate::{
+    ast_util::get_symbol_id_of_variable, context::LintContext, module_record::ImportImportName,
+    rule::Rule,
+};
 
 fn no_named_as_default_member_diagnostic(
     span: Span,
@@ -63,16 +66,10 @@ declare_oxc_lint!(
     NoNamedAsDefaultMember,
     import,
     suspicious,
+    recommended,
     version = "0.2.1",
     short_description = "Forbid using an exported name as a property on a default export.",
 );
-
-fn get_symbol_id_from_ident(
-    ctx: &LintContext<'_>,
-    ident: &IdentifierReference,
-) -> Option<SymbolId> {
-    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-}
 
 impl Rule for NoNamedAsDefaultMember {
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -108,7 +105,7 @@ impl Rule for NoNamedAsDefaultMember {
         }
         let get_external_module_name_if_has_entry =
             |ident: &IdentifierReference, entry_name: &str| {
-                get_symbol_id_from_ident(ctx, ident)
+                get_symbol_id_of_variable(ident, ctx.semantic())
                     .and_then(|symbol_id| has_members_map.get(&symbol_id))
                     .and_then(|it| {
                         if it.0.exported_bindings.contains_key(entry_name) {
@@ -129,7 +126,7 @@ impl Rule for NoNamedAsDefaultMember {
                         continue;
                     };
                     let Some(prop_str) =
-                        member_expr_kind.static_property_name().map(|n| n.as_str())
+                        member_expr_kind.static_property_name().and_then(JSStr::as_str)
                     else {
                         continue;
                     };
@@ -153,7 +150,9 @@ impl Rule for NoNamedAsDefaultMember {
                     };
 
                     for prop in &*object_pattern.properties {
-                        let Some(name) = prop.key.static_name() else {
+                        let name =
+                            prop.key.static_name().and_then(StaticPropertyName::into_cow_str);
+                        let Some(name) = name else {
                             continue;
                         };
                         if let Some(module_name) =

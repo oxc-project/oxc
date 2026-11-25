@@ -46,6 +46,7 @@ declare_oxc_lint!(
     RequireThrowsType,
     jsdoc,
     pedantic,
+    recommended,
     version = "1.65.0",
     short_description = "Requires a type on the `@throws` tag.",
 );

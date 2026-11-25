@@ -1,6 +1,6 @@
 //! <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/harness/harnessIO.ts#L1237>
 
-use std::{fmt::Display, fs, path::Path, sync::Arc};
+use std::{fmt::Display, fs, path::Path};
 
 use itertools::Itertools;
 use lazy_regex::{Lazy, Regex, lazy_regex};
@@ -10,11 +10,11 @@ use oxc::{
     allocator::Allocator,
     codegen::Codegen,
     diagnostics::{Diagnostics, NamedSource},
-    parser::Parser,
+    parser::{ParseOptions, Parser},
     span::{SourceType, Span},
 };
 
-use crate::workspace_root;
+use super::baseline_root;
 
 // Returns a match for a test option. Test options have the form `// @name: value`
 static META_OPTIONS: Lazy<Regex> = lazy_regex!(
@@ -31,7 +31,9 @@ static TS_IGNORE_PATTERN: Lazy<Regex> = lazy_regex!(r"(?://|/\*).*?(@ts-ignore|@
 pub struct CompilerSettings {
     pub modules: Vec<String>,
     pub targets: Vec<String>,
-    pub strict: bool,
+    pub strict: Vec<bool>,
+    pub check_js: Vec<bool>,
+    pub erasable_syntax_only: Vec<bool>,
     pub jsx: Vec<String>, // 'react', 'preserve'
     pub declaration: bool,
     pub emit_declaration_only: bool,
@@ -50,7 +52,12 @@ impl CompilerSettings {
         Self {
             modules: Self::split_value_options(options.get("module")),
             targets: Self::split_value_options(options.get("target")),
-            strict: Self::value_to_boolean(options.get("strict"), false),
+            strict: Self::split_boolean_options(options.get("strict"), false),
+            check_js: Self::split_boolean_options(options.get("checkjs"), false),
+            erasable_syntax_only: Self::split_boolean_options(
+                options.get("erasablesyntaxonly"),
+                false,
+            ),
             jsx: Self::split_value_options(options.get("jsx")),
             declaration: Self::value_to_boolean(options.get("declaration"), false),
             emit_declaration_only: Self::value_to_boolean(
@@ -80,16 +87,13 @@ impl CompilerSettings {
             experimental_decorators: options
                 .get("experimentaldecorators")
                 .filter(|&v| v == "*")
-                .map(|_| vec![true, false])
-                .unwrap_or_default(),
+                .map_or_default(|_| vec![true, false]),
             module_detection: Self::split_value_options(options.get("moduledetection")),
         }
     }
 
     fn split_value_options(value: Option<&String>) -> Vec<String> {
-        value
-            .map(|value| value.split(',').map(|s| s.trim().to_lowercase()).collect())
-            .unwrap_or_default()
+        value.map_or_default(|value| value.split(',').map(|s| s.trim().to_lowercase()).collect())
     }
 
     fn value_to_boolean(value: Option<&String>, default: bool) -> bool {
@@ -104,18 +108,16 @@ impl CompilerSettings {
     /// Returns `[default]` when the directive is absent or yields no valid values
     /// — the latter guards against malformed directives silently skipping the test run.
     fn split_boolean_options(value: Option<&String>, default: bool) -> Vec<bool> {
-        let parsed: Vec<bool> = value
-            .map(|value| {
-                value
-                    .split(',')
-                    .filter_map(|s| match s.trim().to_lowercase().as_str() {
-                        "true" => Some(true),
-                        "false" => Some(false),
-                        _ => None,
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
+        let parsed: Vec<bool> = value.map_or_default(|value| {
+            value
+                .split(',')
+                .filter_map(|s| match s.trim().to_lowercase().as_str() {
+                    "true" => Some(true),
+                    "false" => Some(false),
+                    _ => None,
+                })
+                .collect()
+        });
         if parsed.is_empty() { vec![default] } else { parsed }
     }
 }
@@ -192,8 +194,8 @@ impl TestCaseContent {
         let test_unit_data = test_unit_data
             .into_iter()
             // Some snapshot units contain an invalid file with just a message, not even a comment!
-            // e.g. typescript/tests/cases/compiler/extendsUntypedModule.ts
-            // e.g. typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
+            // e.g. typescript/tsc/testdata/tests/cases/compiler/extendsUntypedModule.ts
+            // e.g. typescript/tsc/testdata/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
             // Based on some config, it's not expected to be read in the first place.
             .filter(|unit| {
                 // `unit.content.trim().starts_with()` is insufficient when dealing with the first unit.
@@ -304,10 +306,8 @@ impl TestCaseContent {
         filename: &str,
         package_json_types: &'a FxHashMap<String, Option<String>>,
     ) -> Option<&'a str> {
-        let mut dir = Path::new(filename)
-            .parent()
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_default();
+        let mut dir =
+            Path::new(filename).parent().map_or_default(|p| p.to_string_lossy().into_owned());
         loop {
             if let Some(type_value) = package_json_types.get(&dir) {
                 return type_value.as_deref();
@@ -330,8 +330,7 @@ impl TestCaseContent {
             .map(|unit| {
                 let dir = Path::new(&unit.name)
                     .parent()
-                    .map(|p| p.to_string_lossy().into_owned())
-                    .unwrap_or_default();
+                    .map_or_default(|p| p.to_string_lossy().into_owned());
                 let type_value: Option<String> =
                     serde_json::from_str::<serde_json::Value>(&unit.content)
                         .ok()
@@ -355,17 +354,27 @@ impl TestCaseContent {
         }
 
         let file_name = path.file_stem().unwrap().to_string_lossy();
-        let root = workspace_root().join("typescript/tests/baselines/reference");
+        let root = baseline_root(path);
         let mut suffixes = vec![];
         // TypeScript writes baseline suffixes in alphabetical key order, e.g.
         // `(alwaysstrict=true,target=es5).errors.txt`. Keep the same ordering here so
         // the lookup matches.
         suffixes.extend(create_suffixes("alwaysstrict", &options.always_strict));
+        // `checkJs` only changes checker diagnostics, not parser diagnostics. When a test
+        // requests both variants, use the enabled baseline as the representative variant.
+        if options.check_js.len() > 1 && options.check_js.contains(&true) {
+            suffixes.push(vec!["checkjs=true".to_string()]);
+        }
+        suffixes.extend(create_suffixes("erasablesyntaxonly", &options.erasable_syntax_only));
         suffixes
             .extend(create_suffixes("experimentaldecorators", &options.experimental_decorators));
         suffixes.extend(create_suffixes("jsx", &options.jsx));
         suffixes.extend(create_suffixes("module", &options.modules));
         suffixes.extend(create_suffixes("preserveconstenums", &options.preserve_const_enums));
+        // As with `checkJs`, use the enabled baseline when both `strict` variants are present.
+        if options.strict.len() > 1 && options.strict.contains(&true) {
+            suffixes.push(vec!["strict=true".to_string()]);
+        }
         suffixes.extend(create_suffixes("target", &options.targets));
         suffixes.extend(create_suffixes(
             "usedefineforclassfields",
@@ -430,17 +439,16 @@ impl Baseline {
     pub fn print_oxc(&mut self) {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new(&self.name)).unwrap_or_default();
-        let ret = Parser::new(&allocator, &self.original, source_type).parse();
+        let ret = Parser::new(&allocator, &self.original, source_type)
+            .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
+            .parse();
         let printed = Codegen::new().build(&ret.program).code;
         self.oxc_printed = printed;
     }
 
     fn get_oxc_diagnostic(&self) -> String {
-        let source = Arc::new(NamedSource::new(&self.name, self.original.clone()));
-        self.oxc_diagnostics
-            .iter()
-            .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .fold(String::new(), |s, error| s + &format!("{error:?}"))
+        let source = NamedSource::new(&self.name, self.original.as_str());
+        self.oxc_diagnostics.iter().map(|d| d.clone().render_with_source_code(&source)).join("")
     }
 }
 

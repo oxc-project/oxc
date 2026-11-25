@@ -1,0 +1,34 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/allow-jsx-ref-destructured-parameter.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @validateRefAccessDuringRender @compilationMode:"infer"
+export function Button(t0) {
+	const $ = _c(2);
+	const { ref } = t0;
+	let t1;
+	if ($[0] !== ref) {
+		t1 = <button ref={ref} />;
+		$[0] = ref;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+const sproutInputs = [[{ ref: null }], [{ ref: { current: null } }]];
+export const FIXTURE_ENTRYPOINT = {
+	fn: (args) => {
+		"use no memo";
+		return Button(...args);
+	},
+	params: [sproutInputs[0]],
+	sequentialRenders: [
+		sproutInputs[0],
+		sproutInputs[0],
+		...sproutInputs.slice(1),
+		sproutInputs.at(-1),
+		sproutInputs[0]
+	]
+};

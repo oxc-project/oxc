@@ -58,13 +58,17 @@ impl Rule for NoConstEnum {
                 // ^
                 let start = span.start;
 
-                // const enum Color { Red, Green, Blue }
-                // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                let text = fixer.source_range(Span::new(start, enum_decl.span.end));
-
                 // const  enum Color { Red, Green, Blue }
                 //  ^^^^^^
-                let offset = u32::try_from(text.find("enum").unwrap_or(1)).unwrap_or(1); // 1 is the default offset
+                let Some(offset) = fixer.find_next_token_within(start, enum_decl.span.end, "enum")
+                else {
+                    return fixer.noop();
+                };
+
+                // the whole range up to `enum` is deleted, so bail rather than eat a comment
+                if ctx.has_comments_between(Span::new(start, start + offset)) {
+                    return fixer.noop();
+                }
 
                 fixer.delete_range(Span::sized(start, offset))
             });
@@ -81,6 +85,9 @@ fn test() {
     let fail = vec!["const enum Color { Red, Green, Blue }"];
 
     let fix = vec![
+        // the `enum` inside the comment is not the keyword; deleting up to the real
+        // one would swallow the comment, so no fix is offered
+        ("const /* enum */ enum Color { Red }", "const /* enum */ enum Color { Red }", None),
         ("const enum Color { Red, Green, Blue }", "enum Color { Red, Green, Blue }", None),
         ("const   enum Color { Red, Green, Blue }", "enum Color { Red, Green, Blue }", None),
     ];

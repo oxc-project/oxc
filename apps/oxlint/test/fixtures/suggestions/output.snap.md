@@ -48,14 +48,14 @@
   x suggestions-plugin(suggestions): Replace "g" with "rage"
    ,-[files/bom_and_unicode.js:3:1]
  2 | // 😀🤪😆😎🤮
- 3 | g = b
+ 3 | g = b+"£"
    : ^
    `----
 
   x suggestions-plugin(suggestions): Replace "b" with "abacus"
    ,-[files/bom_and_unicode.js:3:5]
  2 | // 😀🤪😆😎🤮
- 3 | g = b
+ 3 | g = b+"£"
    :     ^
    `----
 

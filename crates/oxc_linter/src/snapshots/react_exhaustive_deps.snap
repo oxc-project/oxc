@@ -2,6 +2,36 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function MyComponent(props) {
+ 2 │           const value = props.flag ? {} : {};
+   ·                 ──┬──
+   ·                   ╰── `value` is declared here
+ 3 │           useCallback(() => {
+ 4 │             return value;
+ 5 │           }, [value]);
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function MyComponent(props) {
+ 2 │           const value = props.cached || {};
+   ·                 ──┬──
+   ·                   ╰── `value` is declared here
+ 3 │           useCallback(() => {
+ 4 │             return value;
+ 5 │           }, [value]);
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
   ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {
@@ -657,12 +687,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           useCallback(() => {
  3 │             const { foo } = props;
    ·                             ──┬──
-   ·                               ╰── useCallback uses `props.foo` here
+   ·                               ╰── useCallback uses `props` here
  4 │             console.log(foo);
  5 │           }, [props.bar]);
    ·              ───────────
@@ -670,30 +700,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.bar
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(foo);
- 5 │           }, [props.bar]);
-   ·              ───────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           useCallback(() => {
  3 │             const { foo: { bar } } = props;
    ·                                      ──┬──
-   ·                                        ╰── useCallback uses `props.foo` here
- 4 │             console.log(bar);
- 5 │           }, [props.foo.bar]);
-   ·              ───────────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar
-   ╭─[exhaustive_deps.tsx:5:14]
+   ·                                        ╰── useCallback uses `props` here
  4 │             console.log(bar);
  5 │           }, [props.foo.bar]);
    ·              ───────────────
@@ -734,24 +746,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ╰── useCallback uses `local` here
  5 │           }, [local.id]);
    ·              ──────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(local);
- 5 │           }, [local.id]);
-   ·              ──────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(local);
- 5 │           }, [local.id, local]);
-   ·              ─────────────────
  6 │         }
    ╰────
   help: Either include it or remove the dependency array.
@@ -847,15 +841,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
-   ╭─[exhaustive_deps.tsx:4:14]
- 3 │             console.log(props.foo.bar);
- 4 │           }, [props.foo.bar.baz]);
-   ·              ───────────────────
- 5 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
   ⚠ react-hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.hello', and 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           const fn = useCallback(() => {
@@ -863,15 +848,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────
  4 │             console.log(props.hello);
    ·                         ─────
- 5 │           }, [props.foo.bar.baz]);
-   ·              ───────────────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(props.hello);
  5 │           }, [props.foo.bar.baz]);
    ·              ───────────────────
  6 │         }
@@ -1206,7 +1182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.color', and 'props.someOtherRefs.current.innerHTML'
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.someOtherRefs.current.innerHTML', and 'props.color'
     ╭─[exhaustive_deps.tsx:9:14]
   6 │             console.log(ref2.current.textContent);
   7 │             alert(props.someOtherRefs.current.innerHTML);
@@ -1219,86 +1195,86 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.current.
     ╭─[exhaustive_deps.tsx:9:15]
   8 │             fetch(props.color);
   9 │           }, [ref1.current, ref2.current, props.someOtherRefs, props.color]);
     ·               ────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.current.
     ╭─[exhaustive_deps.tsx:9:29]
   8 │             fetch(props.color);
   9 │           }, [ref1.current, ref2.current, props.someOtherRefs, props.color]);
     ·                             ────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.current.
     ╭─[exhaustive_deps.tsx:9:15]
   8 │             fetch(props.color);
   9 │           }, [ref1?.current, ref2?.current, props.someOtherRefs, props.color]);
     ·               ─────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.current.
     ╭─[exhaustive_deps.tsx:9:30]
   8 │             fetch(props.color);
   9 │           }, [ref1?.current, ref2?.current, props.someOtherRefs, props.color]);
     ·                              ─────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.current.
    ╭─[exhaustive_deps.tsx:5:15]
  4 │             console.log(ref.current);
  5 │           }, [ref.current]);
    ·               ───────────
  6 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.current.
    ╭─[exhaustive_deps.tsx:7:15]
  6 │             ref2.current.scrollTop = 0;
  7 │           }, [ref1.current, ref2.current, activeTab]);
    ·               ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.current.
    ╭─[exhaustive_deps.tsx:7:29]
  6 │             ref2.current.scrollTop = 0;
  7 │           }, [ref1.current, ref2.current, activeTab]);
    ·                             ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref1.
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref1.current.
    ╭─[exhaustive_deps.tsx:7:15]
  6 │             ref2.current.scrollTop = initY;
  7 │           }, [ref1.current, ref2.current, activeTab, initY]);
    ·               ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref2.
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref2.current.
    ╭─[exhaustive_deps.tsx:7:29]
  6 │             ref2.current.scrollTop = initY;
  7 │           }, [ref1.current, ref2.current, activeTab, initY]);
    ·                             ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: activeTab
    ╭─[exhaustive_deps.tsx:7:14]
@@ -1309,14 +1285,38 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.current.
    ╭─[exhaustive_deps.tsx:5:15]
  4 │             console.log(ref.current);
  5 │           }, [ref.current, ref]);
    ·               ───────────
  6 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Mutable values aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'ref'. Mutable values like 'ref.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useLayoutEffect(() => {
+ 4 │             ref.current?.setValue(x);
+   ·             ─────┬─────
+   ·                  ╰── useLayoutEffect uses `ref` here
+ 5 │           }, [ref.current, x]);
+   ·              ────────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'ref'. Mutable values like 'ref.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useLayoutEffect(() => {
+ 4 │             ref.current.setValue(x);
+   ·             ─────┬─────
+   ·                  ╰── useLayoutEffect uses `ref` here
+ 5 │           }, [ref.current, x]);
+   ·              ────────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
 
   ⚠ react-hooks(exhaustive-deps): React Hook useImperativeHandle has a missing dependency: 'props.hello'
    ╭─[exhaustive_deps.tsx:6:15]
@@ -1580,7 +1580,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.hello.
    ╭─[exhaustive_deps.tsx:5:15]
  4 │             console.log(MutableStore.hello);
  5 │           }, [MutableStore.hello]);
@@ -1589,7 +1589,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.hello.world.
     ╭─[exhaustive_deps.tsx:10:17]
   9 │               console.log(MutableStore.hello.world, props.foo, x, y, z, global.stuff);
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1607,7 +1607,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.stuff.
     ╭─[exhaustive_deps.tsx:10:63]
   9 │               console.log(MutableStore.hello.world, props.foo, x, y, z, global.stuff);
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1633,7 +1633,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.hello.world.
     ╭─[exhaustive_deps.tsx:10:17]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1651,7 +1651,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.stuff.
     ╭─[exhaustive_deps.tsx:10:63]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1677,7 +1677,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: MutableStore.
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: MutableStore.hello.world.
     ╭─[exhaustive_deps.tsx:10:17]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1695,7 +1695,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.stuff.
     ╭─[exhaustive_deps.tsx:10:63]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1775,7 +1775,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: MutableStore.
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: MutableStore.hello.world.
     ╭─[exhaustive_deps.tsx:10:17]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -1793,7 +1793,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.stuff.
     ╭─[exhaustive_deps.tsx:10:65]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -3135,6 +3135,104 @@ source: crates/oxc_linter/src/tester.rs
  7 │         }
    ╰────
   help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'context'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           return React.useCallback(() => {
+ 4 │             const { paramsLoader } = context;
+   ·                                      ───┬───
+   ·                                         ╰── useCallback uses `context` here
+ 5 │             paramsLoader();
+ 6 │           }, [context.paramsLoader]);
+   ·              ──────────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 2 │           useEffect(() => {
+ 3 │             const { foo, bar } = props;
+   ·                                  ──┬──
+   ·                                    ╰── useEffect uses `props` here
+ 4 │             console.log(foo);
+ 5 │             console.log(bar);
+ 6 │           }, [props.foo, props.bar]);
+   ·              ──────────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useEffect(() => {
+ 3 │             const { bar } = props.foo;
+   ·                             ──┬──
+   ·                               ╰── useEffect uses `props.foo` here
+ 4 │             console.log(bar);
+ 5 │           }, [props.foo.bar]);
+   ·              ───────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useEffect(() => {
+ 3 │             const { foo: { bar } } = props;
+   ·                                      ──┬──
+   ·                                        ╰── useEffect uses `props` here
+ 4 │             console.log(bar);
+ 5 │           }, [props.foo]);
+   ·              ───────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: setState.foo
+   ╭─[exhaustive_deps.tsx:3:42]
+ 2 │           const [, setState] = useState(0);
+ 3 │           useCallback(() => setState(1), [setState.foo]);
+   ·                                          ──────────────
+ 4 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = (useState(0));
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState(1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = useState(0) as [number, (value: number) => void];
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState(1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = (useState(0)) as [number, (value: number) => void];
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState(1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react-hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [, setState] = useState(0);
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState.call(null, 1);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
 
   ⚠ react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]

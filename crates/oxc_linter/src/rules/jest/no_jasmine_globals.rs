@@ -7,6 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -65,6 +66,7 @@ declare_oxc_lint!(
     NoJasmineGlobals,
     jest,
     style,
+    recommended,
     conditional_fix,
     version = "0.0.13",
     short_description = "This rule reports on any usage of Jasmine globals, which are not ported to Jest, and suggests alternatives from Jest's own API.",
@@ -140,7 +142,7 @@ fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
             return;
         };
 
-        JasmineProperty::from_str(property_name).map_or_else(
+        property_name.as_str().and_then(JasmineProperty::from_str).map_or_else(
             || {
                 ctx.diagnostic(no_jasmine_globals_diagnostic(
                     COMMON_ERROR_TEXT,
@@ -163,7 +165,9 @@ fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
     }
 }
 
-fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Option<(Span, &'a str)> {
+fn get_jasmine_property_name<'a>(
+    member_expr: &'a MemberExpression<'a>,
+) -> Option<(Span, JSStr<'a>)> {
     let name = match member_expr.object() {
         Expression::Identifier(ident) => Some(ident.name.as_str()),
         _ => None,
@@ -172,8 +176,7 @@ fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Optio
     if !is_jasmine_object {
         return None;
     }
-    let (span, property_name) = member_expr.static_property_info()?;
-    Some((span, property_name))
+    member_expr.static_property_info()
 }
 
 fn get_non_jasmine_property_messages(name: &str) -> Option<(&'static str, &'static str)> {
@@ -297,6 +300,9 @@ fn test() {
         ("jasmine.arrayWithExactContents()", None),
         ("jasmine.clock()", None),
         ("jasmine.MAX_PRETTY_PRINT_ARRAY_LENGTH = 42", None),
+        // A member name with a lone surrogate is no Jest API, so it gets the common message.
+        (r#"jasmine["\uD800"]()"#, None),
+        (r#"jasmine["x\uDC00"] = 5000"#, None),
     ];
 
     let fix = vec![

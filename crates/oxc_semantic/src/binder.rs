@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
-use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
+use oxc_ecmascript::BoundNames;
 use oxc_span::GetSpan;
 use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, scope::ScopeId, symbol::SymbolFlags};
@@ -17,12 +17,13 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let is_declare = matches!(
-            builder.ancestry().parent_kind(),
-            AstKind::VariableDeclaration(decl) if decl.declare
-        );
+        let AstKind::VariableDeclaration(declaration) = builder.ancestry().parent_kind() else {
+            unreachable!();
+        };
+        let kind = declaration.kind;
+        let is_declare = declaration.declare;
 
-        let (mut includes, excludes) = match self.kind {
+        let (mut includes, excludes) = match kind {
             VariableDeclarationKind::Const
             | VariableDeclarationKind::Using
             | VariableDeclarationKind::AwaitUsing => (
@@ -41,7 +42,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             includes |= SymbolFlags::Ambient;
         }
 
-        if self.kind.is_lexical() {
+        if kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
                 let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
@@ -68,11 +69,35 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let span = ident.span;
                 let name = ident.name;
                 let mut declared_symbol_id = None;
+                let mut catch_symbol_id = None;
 
                 for &scope_id in &var_scope_ids {
-                    if let Some(symbol_id) =
-                        builder.check_redeclaration(scope_id, span, name, excludes)
+                    // Only local bindings matter here, to find catch parameters. An earlier
+                    // `var` cached in `hoisting_variables` is found through the target scope
+                    // instead, so its diagnostics are not repeated for every scope.
+                    // Type-only bindings (type aliases, interfaces) live in a separate
+                    // declaration space, so a hoisted `var` must not merge into them.
+                    if let Some(symbol_id) = builder.scoping.get_binding(scope_id, name)
+                        && let Some(symbol_id) = builder.check_redeclaration_with_binding(
+                            scope_id,
+                            Some(symbol_id),
+                            span,
+                            name,
+                            excludes,
+                        )
+                        && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
+                        && builder.scoping.symbol_flags(symbol_id).is_value()
                     {
+                        // A simple catch parameter can be redeclared by `var`, but the `var`
+                        // also creates a separate binding in the enclosing var scope. Its
+                        // initializer assigns to the nearest catch binding. Destructured catch
+                        // parameters already reported an error above; keep the bindings separate
+                        // during recovery too. The innermost catch parameter wins; keep checking
+                        // the enclosing scopes for conflicts.
+                        if builder.scoping.symbol_flags(symbol_id).is_catch_variable() {
+                            catch_symbol_id.get_or_insert(symbol_id);
+                            continue;
+                        }
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
@@ -95,7 +120,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let symbol_id = declared_symbol_id.unwrap_or_else(|| {
                     builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
                 });
-                ident.symbol_id.set(Some(symbol_id));
+                if let Some(catch_symbol_id) = catch_symbol_id {
+                    // This redeclaration links the catch to `symbol_id`; see
+                    // `Scoping::catch_var_binding`.
+                    builder.add_redeclare_variable(catch_symbol_id, includes, span);
+                    ident.symbol_id.set(Some(catch_symbol_id));
+                } else {
+                    ident.symbol_id.set(Some(symbol_id));
+                }
 
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
@@ -245,30 +277,8 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
 impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.ancestry().parent_kind();
-        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
-
         let includes = SymbolFlags::FunctionScopedVariable;
-
-        let is_not_allowed_duplicate_parameters = matches!(
-                parameters.kind,
-                // ArrowFormalParameters: UniqueFormalParameters
-                FormalParameterKind::ArrowFormalParameters |
-                // UniqueFormalParameters : FormalParameters
-                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
-                FormalParameterKind::UniqueFormalParameters
-            ) ||
-            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
-            builder.strict_mode() ||
-            // FormalParameters : FormalParameterList
-            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
-            !parameters.is_simple_parameter_list();
-
-        let excludes = if is_not_allowed_duplicate_parameters {
-            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
-        } else {
-            SymbolFlags::FunctionScopedVariableExcludes
-        };
+        let excludes = builder.formal_parameter_excludes;
 
         self.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
@@ -280,30 +290,11 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
 impl<'a> Binder<'a> for FormalParameterRest<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.ancestry().parent_kind();
-        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
-
         let includes = SymbolFlags::FunctionScopedVariable;
-
-        let is_not_allowed_duplicate_parameters = matches!(
-                parameters.kind,
-                // ArrowFormalParameters: UniqueFormalParameters
-                FormalParameterKind::ArrowFormalParameters |
-                // UniqueFormalParameters : FormalParameters
-                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
-                FormalParameterKind::UniqueFormalParameters
-            ) ||
-            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
-            builder.strict_mode() ||
-            // FormalParameters : FormalParameterList
-            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
-            !parameters.is_simple_parameter_list();
-
-        let excludes = if is_not_allowed_duplicate_parameters {
-            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
-        } else {
-            SymbolFlags::FunctionScopedVariableExcludes
-        };
+        // A rest parameter makes the parameter list non-simple in every context,
+        // so duplicate bindings are always forbidden.
+        let excludes =
+            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes;
 
         self.rest.argument.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
@@ -434,9 +425,12 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
 impl<'a> Binder<'a> for TSEnumMember<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         // Extract Ident directly from Identifier variant to preserve precomputed hash.
-        let name = match &self.id {
-            TSEnumMemberName::Identifier(ident) => ident.name,
-            _ => Ident::from(self.id.static_name()),
+        let name = if let TSEnumMemberName::Identifier(ident) = &self.id {
+            ident.name
+        } else {
+            // Enum bindings currently store UTF-8 names.
+            let Some(name) = self.id.static_name().as_str() else { return };
+            Ident::from(name)
         };
         builder.declare_symbol(
             self.id.span(),
@@ -447,9 +441,9 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
     }
 }
 
-impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
+impl<'a> Binder<'a> for TSNamespaceDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
+        let id = &self.id;
         let instantiated =
             get_module_instance_state(builder, self, builder.node_store.current_node_id)
                 .is_instantiated();
@@ -486,7 +480,7 @@ impl ModuleInstanceState {
 /// Based on `https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/binder.ts#L342-L474`
 fn get_module_instance_state<'a>(
     builder: &mut SemanticBuilder<'a>,
-    decl: &TSModuleDeclaration<'a>,
+    decl: &TSNamespaceDeclaration<'a>,
     current_node_id: NodeId,
 ) -> ModuleInstanceState {
     get_module_instance_state_impl(builder, decl, current_node_id, &mut Vec::new())
@@ -494,7 +488,7 @@ fn get_module_instance_state<'a>(
 
 fn get_module_instance_state_impl<'a, 'b>(
     builder: &mut SemanticBuilder<'a>,
-    decl: &'b TSModuleDeclaration<'a>,
+    decl: &'b TSNamespaceDeclaration<'a>,
     current_node_id: NodeId,
     module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
 ) -> ModuleInstanceState {
@@ -505,14 +499,9 @@ fn get_module_instance_state_impl<'a, 'b>(
         return *state;
     }
 
-    let Some(body) = &decl.body else {
-        // For modules without a block, we consider them instantiated
-        return ModuleInstanceState::Instantiated;
-    };
-
     // A module is uninstantiated if it contains only specific declarations
-    let state = match body {
-        TSModuleDeclarationBody::TSModuleBlock(block) => {
+    let state = match &decl.body {
+        TSNamespaceDeclarationBody::TSModuleBlock(block) => {
             module_declaration_stmts.extend(block.body.iter());
 
             let mut child_state = ModuleInstanceState::NonInstantiated;
@@ -529,10 +518,44 @@ fn get_module_instance_state_impl<'a, 'b>(
             }
             child_state
         }
-        TSModuleDeclarationBody::TSModuleDeclaration(module) => {
-            get_module_instance_state(builder, module, current_node_id)
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(namespace) => {
+            get_module_instance_state(builder, namespace, current_node_id)
         }
     };
+
+    builder.module_instance_state_cache.insert(address, state);
+    state
+}
+
+fn get_external_module_instance_state_impl<'a, 'b>(
+    builder: &mut SemanticBuilder<'a>,
+    decl: &'b TSExternalModuleDeclaration<'a>,
+    current_node_id: NodeId,
+    module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
+) -> ModuleInstanceState {
+    let address = decl.unstable_address();
+
+    if let Some(state) = builder.module_instance_state_cache.get(&address) {
+        return *state;
+    }
+
+    let Some(block) = &decl.body else {
+        return ModuleInstanceState::Instantiated;
+    };
+
+    module_declaration_stmts.extend(block.body.iter());
+    let mut state = ModuleInstanceState::NonInstantiated;
+    for stmt in &block.body {
+        state = get_module_instance_state_for_statement(
+            builder,
+            stmt,
+            current_node_id,
+            module_declaration_stmts,
+        );
+        if state.is_instantiated() {
+            break;
+        }
+    }
 
     builder.module_instance_state_cache.insert(address, state);
     state
@@ -574,8 +597,11 @@ fn get_module_instance_state_for_statement<'a, 'b>(
             }
             Statement::ExportDeclaration(export_decl) => {
                 match &export_decl.declaration {
-                    Declaration::TSModuleDeclaration(module_decl) => {
-                        get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
+                    Declaration::TSExternalModuleDeclaration(module_decl) => {
+                        get_external_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
+                    }
+                    Declaration::TSNamespaceDeclaration(namespace_decl) => {
+                        get_module_instance_state_impl(builder, namespace_decl, current_node_id, module_declaration_stmts)
                     }
                     decl => if decl.is_type() {
                         ModuleInstanceState::NonInstantiated
@@ -596,8 +622,11 @@ fn get_module_instance_state_for_statement<'a, 'b>(
                 export_state
             }
             // 5. other module declarations
-            Statement::TSModuleDeclaration(module_decl) => {
-                get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
+            Statement::TSNamespaceDeclaration(namespace_decl) => {
+                get_module_instance_state_impl(builder, namespace_decl, current_node_id, module_declaration_stmts)
+            }
+            Statement::TSExternalModuleDeclaration(module_decl) => {
+                get_external_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
             }
             // Any other type of statement means the module is instantiated
             _ => ModuleInstanceState::Instantiated,

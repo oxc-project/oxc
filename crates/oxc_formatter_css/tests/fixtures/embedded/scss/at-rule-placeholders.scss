@@ -1,0 +1,15 @@
+@media `oxfmt_css_0` {
+color: blue;
+}
+@media not `oxfmt_css_1` { color: blue; }
+@media `oxfmt_css_2` and (min-width: 1px) { color: blue; }
+@media `oxfmt_css_3`, `oxfmt_css_4` { color: blue; }
+@media `oxfmt_css_5` /* c */ and (min-width: 1px) { color: blue; }
+@import url(x) `oxfmt_css_6`;
+@import url(x) screen, `oxfmt_css_7`;
+@media screen and `oxfmt_css_8` { color: blue; }
+@media `oxfmt_css_9` and `oxfmt_css_10` { color: blue; }
+@supports `oxfmt_css_11` { color: blue; }
+@supports not `oxfmt_css_12` { color: blue; }
+@media print-`oxfmt_css_13` { color: blue; }
+@media `oxfmt_css_14``oxfmt_css_15` { color: blue; }

@@ -1,0 +1,46 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Comments inside an at-rule prelude are never lost (see the scss twin).
+@import // c
+  "a";
+@import (reference) "a" // c
+;
+// A vendor-prefixed keyframes prelude keeps its comments in place like `@keyframes`
+@-webkit-keyframes /* Safari */ hover /* and Chrome */ {
+  from {
+    a: b;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Comments inside an at-rule prelude are never lost (see the scss twin).
+@import // c
+  "a";
+@import (reference) "a"; // c
+// A vendor-prefixed keyframes prelude keeps its comments in place like `@keyframes`
+@-webkit-keyframes /* Safari */ hover /* and Chrome */ {
+  from {
+    a: b;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Comments inside an at-rule prelude are never lost (see the scss twin).
+@import // c
+  "a";
+@import (reference) "a"; // c
+// A vendor-prefixed keyframes prelude keeps its comments in place like `@keyframes`
+@-webkit-keyframes /* Safari */ hover /* and Chrome */ {
+  from {
+    a: b;
+  }
+}
+
+===================== End =====================

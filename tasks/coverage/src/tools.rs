@@ -4,7 +4,6 @@ use std::{
     borrow::Cow,
     fs,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 use oxc::{
@@ -56,23 +55,20 @@ fn run_parser(
     } else {
         let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
         let mut output = String::new();
-        // Create Arc once and share across all errors to avoid cloning source for each error
-        let source_arc: Arc<String> = Arc::new(source_text.into_owned());
-        // Extract path string before loop to avoid repeated conversions
+        // Create `NamedSource` once, before the loop
         let path_str = path.to_string_lossy();
+        let named_source = NamedSource::new(path_str.as_ref(), source_text.as_ref());
         for error in &errors {
-            let error = error
-                .clone()
-                .with_source_code(NamedSource::new(path_str.clone(), Arc::clone(&source_arc)));
+            let error = error.clone().with_source_code(&named_source);
             handler.render_report(&mut output, error.as_ref()).unwrap();
         }
-        TestResult::ParseError(output, driver.panicked)
+        TestResult::ParseError(output, driver.fatal_error)
     }
 }
 
 fn evaluate_result(result: TestResult, should_fail: bool) -> TestResult {
     match (result, should_fail) {
-        (TestResult::ParseError(err, panicked), true) => TestResult::CorrectError(err, panicked),
+        (TestResult::ParseError(err, is_fatal), true) => TestResult::CorrectError(err, is_fatal),
         (TestResult::Passed, true) => TestResult::IncorrectlyPassed,
         (result, _) => result,
     }
@@ -209,17 +205,14 @@ fn run_parser_typescript_unit(
     // Format errors for output
     let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
     let mut output = String::new();
-    // Create Arc once and share across all errors to avoid cloning source for each error
-    let source_arc: Arc<String> = Arc::new(source_text.into_owned());
-    // Extract path string before loop to avoid repeated conversions
+    // Create `NamedSource` once, before the loop
     let path_str = path.to_string_lossy();
+    let named_source = NamedSource::new(path_str.as_ref(), source_text.as_ref());
     for error in &errors {
-        let error = error
-            .clone()
-            .with_source_code(NamedSource::new(path_str.clone(), Arc::clone(&source_arc)));
+        let error = error.clone().with_source_code(&named_source);
         handler.render_report(&mut output, error.as_ref()).unwrap();
     }
-    TestResult::ParseError(output, driver.panicked)
+    TestResult::ParseError(output, driver.fatal_error)
 }
 
 pub fn run_parser_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
@@ -479,15 +472,14 @@ fn get_formatter_options_list() -> [JsFormatOptions; 3] {
 fn run_formatter(code: &str, source_type: SourceType) -> TestResult {
     for options in get_formatter_options_list() {
         let allocator = Allocator::default();
-        let text1 =
-            match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
-                Ok(formatted) => formatted.print().unwrap().into_code(),
-                Err(_) => return TestResult::Passed, // Skip if parse error
-            };
+        let text1 = match oxc_formatter::format(&allocator, code, source_type, options.clone()) {
+            Ok(formatted) => formatted.print().unwrap().into_code(),
+            Err(_) => return TestResult::Passed, // Skip if parse error
+        };
 
         // Re-format the output: a parse error on the second pass is a real formatter bug.
         let allocator2 = Allocator::default();
-        let text2 = match oxc_formatter::format(&allocator2, &text1, source_type, options, None) {
+        let text2 = match oxc_formatter::format(&allocator2, &text1, source_type, options) {
             Ok(formatted) => formatted.print().unwrap().into_code(),
             Err(err) => return TestResult::ParseError(err.to_string(), false),
         };
@@ -769,10 +761,14 @@ fn run_estree_test262_impl(
 
             let allocator = Allocator::new();
             let ret = Parser::new(&allocator, source_text, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.diagnostics.is_empty() {
+            if ret.fatal_error || !ret.diagnostics.is_empty() {
                 let error = ret
                     .diagnostics
                     .first()
@@ -780,7 +776,7 @@ fn run_estree_test262_impl(
                 return CoverageResult {
                     path: test_file.path.clone(),
                     should_fail: false,
-                    result: TestResult::ParseError(error, ret.panicked),
+                    result: TestResult::ParseError(error, ret.fatal_error),
                 };
             }
 
@@ -843,18 +839,22 @@ fn run_estree_acorn_jsx_impl(
 
             let allocator = Allocator::new();
             let ret = Parser::new(&allocator, source_text, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.diagnostics.is_empty() {
+            if ret.fatal_error || !ret.diagnostics.is_empty() {
                 let error = ret
                     .diagnostics
                     .first()
                     .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                 let result = if test_file.should_fail {
-                    TestResult::CorrectError(error, ret.panicked)
+                    TestResult::CorrectError(error, ret.fatal_error)
                 } else {
-                    TestResult::ParseError(error, ret.panicked)
+                    TestResult::ParseError(error, ret.fatal_error)
                 };
                 return CoverageResult {
                     path: test_file.path.clone(),
@@ -900,13 +900,13 @@ fn run_estree_acorn_jsx_impl(
 // Skip paths for TypeScript ESTree tests
 static TS_SKIP_PATHS: &[&str] = &[
     // Skip cases which are failing in parser conformance tests
-    "typescript/tests/cases/compiler/arrayFromAsync.ts",
-    "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
-    "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-    "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
-    "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/arrayFromAsync.ts",
+    "typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es2019/importMeta/importMeta.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
     // Skip tests where TS-ESLint is incorrect
-    "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
+    "typescript/tsc/testdata/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
 ];
 
 pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
@@ -935,7 +935,7 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
 
 fn run_estree_typescript_impl(
     files: &[TypeScriptFile],
-    section_key: &'static str,
+    section_key: &str,
     parser_config: RuntimeParserConfig,
     get_json: impl for<'a> Fn(ParserReturn<'a>) -> String + Sync,
 ) -> Vec<CoverageResult> {
@@ -978,7 +978,11 @@ fn run_estree_typescript_impl(
             for (unit, &expected_json) in test_file.units.iter().zip(snapshot_units.iter()) {
                 let source_type = unit.source_type;
                 let source_text = unit.content.as_str();
-                let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
+                let parse_options = ParseOptions {
+                    preserve_parens: false,
+                    enable_ident_hashes: false,
+                    ..Default::default()
+                };
 
                 let allocator = Allocator::new();
                 let ret = Parser::new(&allocator, source_text, source_type)
@@ -986,7 +990,7 @@ fn run_estree_typescript_impl(
                     .with_config(parser_config)
                     .parse();
 
-                if ret.panicked || !ret.diagnostics.is_empty() {
+                if ret.fatal_error || !ret.diagnostics.is_empty() {
                     let error = ret
                         .diagnostics
                         .first()
@@ -994,7 +998,7 @@ fn run_estree_typescript_impl(
                     return CoverageResult {
                         path: test_file.path.clone(),
                         should_fail: false,
-                        result: TestResult::ParseError(error, ret.panicked),
+                        result: TestResult::ParseError(error, ret.fatal_error),
                     };
                 }
 

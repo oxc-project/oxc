@@ -2,8 +2,13 @@
 //!
 //! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
 
+// `#[ast]` macro and generated code refer to this crate's items as `::oxc_span::...`,
+// so they work in other crates. This makes those paths work in this crate too.
+extern crate self as oxc_span;
+
 mod cmp;
 mod edit_distance;
+mod labeled_span;
 #[cfg(feature = "serialize")]
 mod serialize;
 mod source_type;
@@ -11,7 +16,7 @@ mod span;
 
 pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
-use oxc_str::{CompactStr, Ident, Str};
+pub use labeled_span::LabeledSpan;
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,
@@ -25,40 +30,9 @@ use span::I32Dummy;
 mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
+    mod derive_clone_in;
+    mod derive_content_eq;
     mod derive_dummy;
     #[cfg(feature = "serialize")]
     mod derive_estree;
-}
-
-#[doc(hidden)]
-pub mod __internal {
-    // Used by `format_compact_str!` macro defined in `oxc_str`
-    pub use compact_str::format_compact;
-    // Used by `format_str!` and `format_ident!` macros defined in `oxc_str`
-    pub use oxc_allocator::ArenaStringBuilder;
-}
-
-// Additional trait implementations for types re-exported from oxc_str
-use std::ops::Index;
-
-impl ContentEq for Str<'_> {
-    #[inline]
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl ContentEq for Ident<'_> {
-    #[inline]
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl Index<Span> for CompactStr {
-    type Output = str;
-
-    fn index(&self, index: Span) -> &Self::Output {
-        &self.as_str()[index.start as usize..index.end as usize]
-    }
 }

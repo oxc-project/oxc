@@ -1,9 +1,10 @@
-use tower_lsp_server::ls_types::{CodeActionContext, Range, Uri};
+use tower_lsp_server::gen_lsp_types::{CodeActionContext, Range, Uri};
 
 /// Code-action request data passed from the language-server backend to a tool.
 pub struct CodeActionParams {
     pub uri: Uri,
     pub range: Range,
     pub context: CodeActionContext,
-    pub is_open_document: bool,
+    /// Version of the open document, `None` when the document is not open.
+    pub document_version: Option<i32>,
 }

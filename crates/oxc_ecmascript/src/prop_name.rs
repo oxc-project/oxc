@@ -20,7 +20,7 @@ impl PropName for ObjectPropertyKind<'_> {
 
 impl PropName for ObjectProperty<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
-        if self.shorthand || self.computed {
+        if self.shorthand || self.key.is_computed() {
             return None;
         }
         self.key.prop_name()
@@ -32,7 +32,9 @@ impl PropName for PropertyKey<'_> {
         match self {
             PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
             PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
-            PropertyKey::StringLiteral(lit) => Some((&lit.value, lit.span)),
+            PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
+                Some((lit.value.as_str()?, lit.span))
+            }
             _ => None,
         }
     }
@@ -50,7 +52,7 @@ impl PropName for ClassElement<'_> {
 
 impl PropName for MethodDefinition<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
-        if self.computed {
+        if self.key.is_computed() {
             return None;
         }
         self.key.prop_name()
@@ -59,7 +61,7 @@ impl PropName for MethodDefinition<'_> {
 
 impl PropName for PropertyDefinition<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
-        if self.computed {
+        if self.key.is_computed() {
             return None;
         }
         self.key.prop_name()

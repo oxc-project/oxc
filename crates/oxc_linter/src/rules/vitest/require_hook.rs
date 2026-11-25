@@ -23,7 +23,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireHook {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -714,7 +714,43 @@ fn tests() {
     ];
 
     pass.extend(vitest_pass);
+    pass.extend([
+        (
+            r"import { describe as suite, test as baseTest } from 'vitest';
+            const extendedTest = baseTest.extend({});
+            const customTest = extendedTest.extend({});
+            customTest('top level', () => { setup(); });
+            suite('suite', () => {
+                customTest.only('nested', () => { setup(); });
+                customTest.each([1])('parameterized', () => {});
+            });",
+            None,
+        ),
+        (
+            r"import { beforeEach as setup, test as customTest } from 'vitest';
+            setup(() => { initialize(); });
+            customTest('foo', () => {});",
+            None,
+        ),
+    ]);
     fail.extend(vitest_fail);
+    fail.extend([
+        (
+            r"import { describe as suite, test as baseTest } from 'vitest';
+            const customTest = baseTest.extend({});
+            suite('suite', () => {
+                setup();
+                customTest('foo', () => {});
+            });",
+            None,
+        ),
+        (
+            r"import { test as baseTest } from 'other';
+            const customTest = baseTest.extend({});
+            customTest('foo', () => {});",
+            None,
+        ),
+    ]);
 
     Tester::new(RequireHook::NAME, RequireHook::PLUGIN, pass, fail)
         .with_vitest_plugin(true)

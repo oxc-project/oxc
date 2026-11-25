@@ -44,8 +44,10 @@ declare_oxc_lint!(
     RoleHasRequiredAriaProps,
     jsx_a11y,
     correctness,
+    recommended,
     version = "0.2.0",
-    short_description = "Enforces that elements with ARIA roles must have all required attributes for that role.",
+    short_description =
+        "Enforces that elements with ARIA roles must have all required attributes for that role.",
 );
 
 static ROLE_TO_REQUIRED_ARIA_PROPS: &[(&str, &[&str])] = &[
@@ -74,7 +76,7 @@ impl Rule for RoleHasRequiredAriaProps {
             let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else {
                 return;
             };
-            let roles = role_values.value.split_whitespace();
+            let roles = role_values.value.as_str().into_iter().flat_map(str::split_whitespace);
             for role in roles {
                 if let Some((_, props)) = ROLE_TO_REQUIRED_ARIA_PROPS.iter().find(|r| r.0 == role) {
                     let formatted_missing = props
@@ -147,7 +149,7 @@ fn test() {
         ("<div role='slider' aria-valuemax aria-valuemin />", None, None),
         ("<div role='checkbox' />", None, None),
         ("<div role='checkbox' checked />", None, None),
-        ("<div role='checkbox' aria-chcked />", None, None), // spellchecker:disable-line
+        ("<div role='checkbox' aria-chcked />", None, None),
         ("<span role='checkbox' aria-labelledby='foo' tabindex='0'></span>", None, None),
         ("<div role='combobox' />", None, None),
         ("<div role='combobox' expanded />", None, None),

@@ -7,7 +7,7 @@
 use oxc_ast::ast::Comment;
 use oxc_diagnostics::Diagnostics;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SuppressionSource {
@@ -21,7 +21,7 @@ pub enum SuppressionSource {
 ///
 /// The enable comment can be missing in the case where only a disable block is present,
 /// ie the rest of the file has potential React violations.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct SuppressionRange {
     pub disable_comment: Comment,
     pub enable_comment: Option<Comment>,
@@ -30,29 +30,32 @@ pub struct SuppressionRange {
 
 /// The comment's text without `//` or `/* */` delimiters, trimmed. Matches how
 /// the former Babel front-end populated comment values.
-fn comment_value(comment: Comment, source_text: &str) -> &str {
+fn comment_value<'s>(comment: &Comment, source_text: &'s str) -> &'s str {
     comment.content_span().source_text(source_text).trim()
 }
 
 /// Check if a comment value matches `eslint-disable-next-line <rule>` for any rule in `rule_names`.
-fn matches_eslint_disable_next_line(value: &str, rule_names: &[String]) -> bool {
+fn matches_eslint_disable_next_line<S: AsRef<str>>(value: &str, rule_names: &[S]) -> bool {
     value
         .strip_prefix("eslint-disable-next-line ")
-        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
+        .or_else(|| value.strip_prefix("oxlint-disable-next-line "))
+        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_ref())))
 }
 
 /// Check if a comment value matches `eslint-disable <rule>` for any rule in `rule_names`.
-fn matches_eslint_disable(value: &str, rule_names: &[String]) -> bool {
+fn matches_eslint_disable<S: AsRef<str>>(value: &str, rule_names: &[S]) -> bool {
     value
         .strip_prefix("eslint-disable ")
-        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
+        .or_else(|| value.strip_prefix("oxlint-disable "))
+        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_ref())))
 }
 
 /// Check if a comment value matches `eslint-enable <rule>` for any rule in `rule_names`.
-fn matches_eslint_enable(value: &str, rule_names: &[String]) -> bool {
+fn matches_eslint_enable<S: AsRef<str>>(value: &str, rule_names: &[S]) -> bool {
     value
         .strip_prefix("eslint-enable ")
-        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
+        .or_else(|| value.strip_prefix("oxlint-enable "))
+        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_ref())))
 }
 
 /// Check if a comment value matches a Flow suppression pattern.
@@ -84,20 +87,20 @@ fn matches_flow_suppression(value: &str) -> bool {
 
 /// Parse eslint-disable/enable and Flow suppression comments from program comments.
 /// Equivalent to findProgramSuppressions in Suppression.ts
-pub fn find_program_suppressions(
+pub fn find_program_suppressions<S: AsRef<str>>(
     comments: &[Comment],
     source_text: &str,
-    rule_names: Option<&[String]>,
+    rule_names: &[S],
     flow_suppressions: bool,
 ) -> Vec<SuppressionRange> {
     let mut suppression_ranges: Vec<SuppressionRange> = Vec::new();
-    let mut disable_comment: Option<Comment> = None;
-    let mut enable_comment: Option<Comment> = None;
+    let mut disable_comment: Option<&Comment> = None;
+    let mut enable_comment: Option<&Comment> = None;
     let mut source: Option<SuppressionSource> = None;
 
-    let rule_names = rule_names.filter(|names| !names.is_empty());
+    let rule_names = (!rule_names.is_empty()).then_some(rule_names);
 
-    for &comment in comments {
+    for comment in comments {
         let value = comment_value(comment, source_text);
 
         // Check for eslint-disable-next-line (only if not already within a block)
@@ -135,8 +138,8 @@ pub fn find_program_suppressions(
         // If we have a complete suppression, push it
         if disable_comment.is_some() && source.is_some() {
             suppression_ranges.push(SuppressionRange {
-                disable_comment: disable_comment.take().unwrap(),
-                enable_comment: enable_comment.take(),
+                disable_comment: disable_comment.take().unwrap().clone(),
+                enable_comment: enable_comment.take().cloned(),
                 source: source.take().unwrap(),
             });
         }
@@ -153,21 +156,21 @@ pub fn filter_suppressions_that_affect_function(
     suppressions: &[SuppressionRange],
     fn_start: u32,
     fn_end: u32,
-) -> Vec<SuppressionRange> {
-    let mut suppressions_in_scope: Vec<SuppressionRange> = Vec::new();
+) -> Vec<&SuppressionRange> {
+    let mut suppressions_in_scope = Vec::new();
 
     for suppression in suppressions {
         let disable_start = suppression.disable_comment.span.start;
-        let enable_end = suppression.enable_comment.map(|c| c.span.end);
+        let enable_end = suppression.enable_comment.as_ref().map(|c| c.span.end);
 
         // The suppression is within the function
         if disable_start > fn_start && enable_end.is_none_or(|end| end < fn_end) {
-            suppressions_in_scope.push(*suppression);
+            suppressions_in_scope.push(suppression);
         }
 
         // The suppression wraps the function
         if disable_start < fn_start && enable_end.is_none_or(|end| end > fn_end) {
-            suppressions_in_scope.push(*suppression);
+            suppressions_in_scope.push(suppression);
         }
     }
 
@@ -176,7 +179,7 @@ pub fn filter_suppressions_that_affect_function(
 
 /// Convert suppression ranges to diagnostics.
 pub fn suppressions_to_diagnostics(
-    suppressions: &[SuppressionRange],
+    suppressions: &[&SuppressionRange],
     source_text: &str,
 ) -> Diagnostics {
     assert!(!suppressions.is_empty(), "Expected at least one suppression comment source range");
@@ -195,15 +198,10 @@ pub fn suppressions_to_diagnostics(
 
         let description = format!(
             "React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression `{}`",
-            comment_value(suppression.disable_comment, source_text)
+            comment_value(&suppression.disable_comment, source_text)
         );
 
-        error.push(
-            ErrorCategory::Suppression
-                .diagnostic(reason)
-                .with_help(description)
-                .with_label(suppression.disable_comment.span.label("Found React rule suppression")),
-        );
+        error.push(diagnostics::suppression(reason, description, suppression.disable_comment.span));
     }
 
     error

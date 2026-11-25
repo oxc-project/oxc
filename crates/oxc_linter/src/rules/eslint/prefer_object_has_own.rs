@@ -82,7 +82,7 @@ impl Rule for PreferObjectHasOwn {
             ctx.scoping().find_binding(node.scope_id(), static_ident!("Object")).is_none();
 
         if is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2))
-            && object_property_name == Some("hasOwnProperty")
+            && object_property_name.is_some_and(|name| name == "hasOwnProperty")
             && is_object
             && is_global_scope
         {
@@ -114,7 +114,7 @@ fn has_left_hand_object(node: &MemberExpression) -> bool {
 
     let object_node_to_check = match object.get_member_expr() {
         Some(member_expr) => {
-            if member_expr.static_property_name() == Some("prototype") {
+            if member_expr.static_property_name().is_some_and(|name| name == "prototype") {
                 member_expr.object()
             } else {
                 object

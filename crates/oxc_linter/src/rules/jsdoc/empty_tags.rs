@@ -63,6 +63,7 @@ declare_oxc_lint!(
     EmptyTags,
     jsdoc,
     restriction,
+    recommended,
     pending,
     config = EmptyTagsConfig,
     version = "0.2.16",
@@ -99,7 +100,7 @@ struct EmptyTagsConfig {
 
 impl Rule for EmptyTags {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {

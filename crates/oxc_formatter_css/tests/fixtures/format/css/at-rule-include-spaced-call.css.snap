@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* only the prelude's first `name (` hugs, nested ones keep the gap */
+@include foo (a (b), c (d));
+@include foo (a), bar (b);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* only the prelude's first `name (` hugs, nested ones keep the gap */
+@include foo(a (b), c (d));
+@include foo(a), bar (b);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* only the prelude's first `name (` hugs, nested ones keep the gap */
+@include foo(a (b), c (d));
+@include foo(a), bar (b);
+
+===================== End =====================

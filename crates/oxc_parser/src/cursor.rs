@@ -1,31 +1,33 @@
-//! Code related to navigating `Token`s from the lexer
+//! Token cursor: reading, consuming, expecting and re-lexing the current token,
+//! and checkpoints for backtracking.
 
-use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::ast::{BindingRestElement, RegExpFlags};
-use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::RegExpFlags;
+use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{
-    Context, ParserConfig as Config, ParserImpl,
-    diagnostics::{self, ParserDiagnostic},
-    error_handler::FatalError,
+    ParserConfig as Config, ParserImpl, diagnostics,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
-    prev_span_end: u32,
+    prev_token_end: u32,
     errors_pos: usize,
-    fatal_error: Option<FatalError<'a>>,
+    cover_parenthesized_len: usize,
+    has_fatal_error: bool,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
+    /// Get current token's span start.
     #[inline]
-    pub(crate) fn start_span(&self) -> u32 {
+    pub(crate) fn cur_start(&self) -> u32 {
         self.token.start()
     }
 
+    /// Create a [`Span`] from provided `start` to end of previous token.
     #[inline]
     pub(crate) fn end_span(&self, start: u32) -> Span {
         Span::new(start, self.prev_token_end)
@@ -74,8 +76,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.lexer.get_string(self.token)
     }
 
+    /// Get the decoded value of the current string literal.
+    pub(crate) fn cur_js_string(&self) -> JSStr<'a> {
+        self.lexer.get_js_string(self.token)
+    }
+
     /// Get current template string
-    pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
+    pub(crate) fn cur_template_string(&self) -> Option<JSStr<'a>> {
         self.lexer.get_template_string(self.token.start())
     }
 
@@ -135,6 +142,36 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn bump_any(&mut self) {
         self.advance(self.cur_kind());
+    }
+
+    /// Advance if `accept` holds for the token after the current one.
+    ///
+    /// Use this instead of [`Lexer::peek_token`] where the answer is nearly always yes, such as
+    /// a modifier keyword, which is nearly always followed by the member it modifies. The token
+    /// after is then lexed once and kept. Peeking lexes it, discards it, and leaves it to be
+    /// lexed again.
+    ///
+    /// [`Lexer::peek_token`]: crate::lexer::Lexer::peek_token
+    #[inline]
+    pub(crate) fn eat_if_next(&mut self, accept: impl FnOnce(Token) -> bool) -> bool {
+        let checkpoint = self.lexer.checkpoint();
+        let next = self.lexer.next_token();
+        if !accept(next) {
+            self.lexer.rewind(checkpoint);
+            return false;
+        }
+        self.advance_to(next);
+        true
+    }
+
+    /// Move to `next`, the token after the current one, which the lexer has already read.
+    #[inline]
+    pub(crate) fn advance_to(&mut self, next: Token) {
+        if self.token.escaped() && self.token.kind().is_any_keyword() {
+            self.report_escaped_keyword(self.token.span());
+        }
+        self.prev_token_end = self.token.end();
+        self.token = next;
     }
 
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
@@ -231,14 +268,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
-        let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind());
+    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags) {
+        let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
-        (pattern_end, flags, flags_error)
+        (pattern_end, flags)
     }
 
     /// Tell lexer to read a template substitution tail
     pub(crate) fn re_lex_template_substitution_tail(&mut self) {
+        if self.fatal_error.is_some() {
+            return;
+        }
         if self.at(Kind::RCurly) {
             self.token = self.lexer.next_template_substitution_tail();
         }
@@ -247,6 +287,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`.
     ///
     /// Returns `true` if was continued.
+    #[inline]
     pub(crate) fn continue_lex_jsx_identifier(&mut self) -> bool {
         if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;
@@ -275,7 +316,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return false;
         }
         let kind = self.cur_kind();
-        if kind == Kind::ShiftLeft || kind == Kind::LtEq {
+        if kind == Kind::ShiftLeft {
             self.token = self.lexer.re_lex_as_typescript_l_angle(2);
             true
         } else if kind == Kind::ShiftLeftEq {
@@ -302,35 +343,47 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
-            prev_span_end: self.prev_token_end,
+            prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
-            fatal_error: self.fatal_error.take(),
-        }
-    }
-
-    pub(crate) fn checkpoint_with_error_recovery(&mut self) -> ParserCheckpoint<'a> {
-        ParserCheckpoint {
-            lexer: self.lexer.checkpoint_with_error_recovery(),
-            cur_token: self.token,
-            prev_span_end: self.prev_token_end,
-            errors_pos: self.errors.len(),
-            fatal_error: self.fatal_error.take(),
+            cover_parenthesized_len: self.state.cover_parenthesized.len(),
+            has_fatal_error: self.fatal_error.is_some(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
-            checkpoint;
+        let ParserCheckpoint {
+            lexer,
+            cur_token,
+            prev_token_end,
+            errors_pos,
+            cover_parenthesized_len,
+            has_fatal_error,
+        } = checkpoint;
 
+        // A fatal error set after the checkpoint is discarded. If it is a lexer error that
+        // `set_unexpected` took from the lexer, give it back.
+        if !has_fatal_error
+            && let Some(fatal_error) = self.fatal_error.take()
+            && self.lexer.errors.len() < lexer.errors_len()
+        {
+            self.lexer.errors.push(fatal_error.error);
+        }
         self.lexer.rewind(lexer);
         self.token = cur_token;
-        self.prev_token_end = prev_span_end;
+        self.prev_token_end = prev_token_end;
         self.errors.truncate(errors_pos);
-        self.fatal_error = fatal_error;
+        self.state.cover_parenthesized.truncate(cover_parenthesized_len);
+    }
+
+    /// Rewind to `checkpoint`, keeping the comments and irregular whitespace lexed after it.
+    /// Only for when the source after `checkpoint` is not all lexed again.
+    pub(crate) fn rewind_keeping_trivia(&mut self, mut checkpoint: ParserCheckpoint<'a>) {
+        self.lexer.keep_trivia(&mut checkpoint.lexer);
+        self.rewind(checkpoint);
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
@@ -338,290 +391,5 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let answer = predicate(self);
         self.rewind(checkpoint);
         answer
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
-    pub(crate) fn context_add<F, T>(&mut self, add_flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let ctx = self.ctx;
-        self.ctx = ctx.union(add_flags);
-        let result = cb(self);
-        self.ctx = ctx;
-        result
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
-    pub(crate) fn context_remove<F, T>(&mut self, remove_flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let ctx = self.ctx;
-        self.ctx = ctx.difference(remove_flags);
-        let result = cb(self);
-        self.ctx = ctx;
-        result
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
-    pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let ctx = self.ctx;
-        self.ctx = ctx.difference(remove_flags).union(add_flags);
-        let result = cb(self);
-        self.ctx = ctx;
-        result
-    }
-
-    pub(crate) fn parse_normal_list<F, T>(
-        &mut self,
-        open: Kind,
-        close: Kind,
-        f: F,
-    ) -> ArenaVec<'a, T>
-    where
-        F: FnMut(&mut Self) -> T,
-    {
-        let opening_span = self.cur_token().span();
-        self.expect(open);
-        let mut list = ArenaVec::new_in(self);
-        self.parse_normal_list_into(&mut list, close, f);
-        self.expect_closing(close, opening_span);
-        list
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_normal_list_into<F, T>(
-        &mut self,
-        list: &mut ArenaVec<'a, T>,
-        close: Kind,
-        mut parse_element: F,
-    ) where
-        F: FnMut(&mut Self) -> T,
-    {
-        loop {
-            let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
-                break;
-            }
-            let element = parse_element(self);
-            list.push(element);
-        }
-    }
-
-    pub(crate) fn parse_normal_list_breakable<F, T>(
-        &mut self,
-        open: Kind,
-        close: Kind,
-        f: F,
-    ) -> ArenaVec<'a, T>
-    where
-        F: Fn(&mut Self) -> Option<T>,
-    {
-        let opening_span = self.cur_token().span();
-        self.expect(open);
-        let mut list = ArenaVec::new_in(self);
-        self.parse_normal_list_breakable_into(&mut list, close, f);
-        self.expect_closing(close, opening_span);
-        list
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_normal_list_breakable_into<F, T>(
-        &mut self,
-        list: &mut ArenaVec<'a, T>,
-        close: Kind,
-        parse_element: F,
-    ) where
-        F: Fn(&mut Self) -> Option<T>,
-    {
-        loop {
-            if self.at(close) || self.has_fatal_error() {
-                break;
-            }
-            if let Some(element) = parse_element(self) {
-                list.push(element);
-            } else {
-                break;
-            }
-        }
-    }
-
-    pub(crate) fn parse_delimited_list<F, T>(
-        &mut self,
-        close: Kind,
-        separator: Kind,
-        opening_span: Span,
-        parse_element: F,
-    ) -> (ArenaVec<'a, T>, Option<u32>)
-    where
-        F: FnMut(&mut Self) -> T,
-    {
-        let mut list = ArenaVec::new_in(self);
-        let trailing_separator = self.parse_delimited_list_into(
-            &mut list,
-            close,
-            separator,
-            opening_span,
-            parse_element,
-        );
-        (list, trailing_separator)
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub(crate) fn parse_delimited_list_into<F, T>(
-        &mut self,
-        list: &mut ArenaVec<'a, T>,
-        close: Kind,
-        separator: Kind,
-        opening_span: Span,
-        mut parse_element: F,
-    ) -> Option<u32>
-    where
-        F: FnMut(&mut Self) -> T,
-    {
-        // Cache cur_kind() to avoid redundant calls in compound checks
-        let kind = self.cur_kind();
-        if kind == close
-            || matches!(kind, Kind::Eof | Kind::Undetermined)
-            || self.fatal_error.is_some()
-        {
-            return None;
-        }
-        let element = parse_element(self);
-        list.push(element);
-        loop {
-            let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
-                return None;
-            }
-            if kind != separator {
-                self.set_fatal_error(diagnostics::expect_closing_or_separator(
-                    close.to_str(),
-                    separator.to_str(),
-                    kind.to_str(),
-                    self.cur_token().span(),
-                    opening_span,
-                ));
-                return None;
-            }
-            self.advance(separator);
-            if self.cur_kind() == close {
-                let trailing_separator = self.prev_token_end - 1;
-                return Some(trailing_separator);
-            }
-            let element = parse_element(self);
-            list.push(element);
-        }
-    }
-
-    pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
-        &mut self,
-        close: Kind,
-        opening_span: Span,
-        parse_element: E,
-        parse_rest: R,
-        rest_last_diagnostic: D,
-    ) -> (ArenaVec<'a, A>, Option<ArenaBox<'a, BindingRestElement<'a>>>)
-    where
-        E: Fn(&mut Self) -> A,
-        R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
-        D: Fn(Span) -> ParserDiagnostic<'a>,
-    {
-        let mut list = ArenaVec::new_in(self);
-        let rest = self.parse_delimited_list_with_rest_into(
-            &mut list,
-            close,
-            opening_span,
-            parse_element,
-            parse_rest,
-            rest_last_diagnostic,
-        );
-        (list, rest)
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_delimited_list_with_rest_into<E, A, R, D>(
-        &mut self,
-        list: &mut ArenaVec<'a, A>,
-        close: Kind,
-        opening_span: Span,
-        parse_element: E,
-        parse_rest: R,
-        rest_last_diagnostic: D,
-    ) -> Option<ArenaBox<'a, BindingRestElement<'a>>>
-    where
-        E: Fn(&mut Self) -> A,
-        R: Fn(&mut Self) -> ArenaBox<'a, BindingRestElement<'a>>,
-        D: Fn(Span) -> ParserDiagnostic<'a>,
-    {
-        let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
-        let mut first = true;
-        loop {
-            let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
-                break;
-            }
-
-            if first {
-                first = false;
-            } else {
-                let comma_span = self.cur_token().span();
-                if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
-                        close.to_str(),
-                        Kind::Comma.to_str(),
-                        kind.to_str(),
-                        comma_span,
-                        opening_span,
-                    );
-                    self.set_fatal_error(error);
-                    break;
-                }
-                self.bump_any();
-                let kind = self.cur_kind();
-                if kind == close {
-                    if rest.is_some() && !self.ctx.has_ambient() {
-                        self.error(diagnostics::rest_element_trailing_comma(comma_span));
-                    }
-                    break;
-                }
-            }
-
-            if let Some(r) = &rest {
-                self.set_fatal_error(rest_last_diagnostic(r.span()));
-                break;
-            }
-
-            // Re-capture kind to get the current token (may have changed after else branch)
-            let kind = self.cur_kind();
-            if kind == Kind::Dot3 {
-                rest.replace(parse_rest(self));
-            } else {
-                let element = parse_element(self);
-                list.push(element);
-            }
-        }
-
-        rest
     }
 }

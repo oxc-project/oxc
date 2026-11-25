@@ -4,6 +4,7 @@ use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::{
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
@@ -95,7 +96,7 @@ impl Gen for Directive<'_> {
             }
         }
         quote.print(p);
-        p.print_str(directive);
+        p.print_directive_raw(directive);
         quote.print(p);
         p.print_ascii_byte(b';');
         p.print_soft_newline();
@@ -160,7 +161,13 @@ impl Gen for Statement<'_> {
             Self::WithStatement(stmt) => stmt.print(p, ctx),
             Self::DebuggerStatement(stmt) => stmt.print(p, ctx),
             // TypeScript-specific (less common)
-            Self::TSModuleDeclaration(decl) => {
+            Self::TSExternalModuleDeclaration(decl) => {
+                p.print_comments_at(decl.span.start);
+                p.print_indent();
+                decl.print(p, ctx);
+                p.print_soft_newline();
+            }
+            Self::TSNamespaceDeclaration(decl) => {
                 p.print_comments_at(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
@@ -366,39 +373,39 @@ impl Gen for ForInStatement<'_> {
 
 /// Whether the leading token a `for...of` head would emit is `let`, which is
 /// forbidden unparenthesized (`for ((let.x) of y)`).
-fn for_of_head_starts_with_let(left: &ForStatementLeft) -> bool {
+fn for_of_head_starts_with_let(left: &ForStatementLeft, p: &Codegen) -> bool {
     match left {
-        ForStatementLeft::AssignmentTargetIdentifier(id) => id.name == "let",
-        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        ForStatementLeft::TSAsExpression(e) => expr_starts_with_let(&e.expression),
-        ForStatementLeft::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
-        ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
+        ForStatementLeft::AssignmentTargetIdentifier(id) => {
+            p.get_identifier_reference_name(id) == "let"
+        }
+        ForStatementLeft::ComputedMemberExpression(m) => computed_object_starts_with_let(m, p),
+        ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object, p),
+        ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object, p),
+        ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
         _ => false,
     }
 }
 
-fn expr_starts_with_let(expr: &Expression) -> bool {
+fn expr_starts_with_let(expr: &Expression, p: &Codegen) -> bool {
     match expr {
-        Expression::Identifier(id) => id.name == "let",
-        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m),
-        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object),
-        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object),
-        Expression::TSAsExpression(e) => expr_starts_with_let(&e.expression),
-        Expression::TSSatisfiesExpression(e) => expr_starts_with_let(&e.expression),
-        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression),
-        // Codegen drops redundant parens around a `let` object (`(let).x` -> `let.x`).
-        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression),
+        Expression::Identifier(id) => p.get_identifier_reference_name(id) == "let",
+        Expression::ComputedMemberExpression(m) => computed_object_starts_with_let(m, p),
+        Expression::StaticMemberExpression(m) => expr_starts_with_let(&m.object, p),
+        Expression::PrivateFieldExpression(m) => expr_starts_with_let(&m.object, p),
+        Expression::CallExpression(e) => expr_starts_with_let(&e.callee, p),
+        Expression::TaggedTemplateExpression(e) => expr_starts_with_let(&e.tag, p),
+        Expression::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
+        // Codegen drops redundant parens (`(let).x` -> `let.x`).
+        Expression::ParenthesizedExpression(e) => expr_starts_with_let(&e.expression, p),
         _ => false,
     }
 }
 
-/// `let[...]` is emitted as `(let)[...]` (the computed member wraps a bare `let`
-/// object), so it no longer starts with `let`.
-fn computed_object_starts_with_let(m: &ComputedMemberExpression) -> bool {
-    !m.object.get_identifier_reference().is_some_and(|r| r.name == "let")
-        && expr_starts_with_let(&m.object)
+/// A computed member whose object is a `let` identifier (ignoring parentheses and
+/// TS wrappers) prints as `(let)[...]`, so it doesn't start with `let`.
+fn computed_object_starts_with_let(m: &ComputedMemberExpression, p: &Codegen) -> bool {
+    m.object.get_identifier_reference().is_none_or(|r| p.get_identifier_reference_name(r) != "let")
+        && expr_starts_with_let(&m.object, p)
 }
 
 impl Gen for ForOfStatement<'_> {
@@ -415,9 +422,9 @@ impl Gen for ForOfStatement<'_> {
         p.print_ascii_byte(b'(');
         // A `for...of` head may not start with the `let` token (`for ((let.x) of y)`),
         // nor be the bare identifier `async` (`for ((async) of y)`, unless `await`).
-        let wrap = for_of_head_starts_with_let(&self.left)
+        let wrap = for_of_head_starts_with_let(&self.left, p)
             || (!self.r#await
-                && matches!(&self.left, ForStatementLeft::AssignmentTargetIdentifier(id) if id.name == "async"));
+                && matches!(&self.left, ForStatementLeft::AssignmentTargetIdentifier(id) if p.get_identifier_reference_name(id) == "async"));
         p.wrap(wrap, |p| self.left.print(p, ctx));
         p.print_soft_space();
         p.print_space_before_identifier();
@@ -477,7 +484,13 @@ impl Gen for DoWhileStatement<'_> {
                 p.print_block_statement(block, ctx);
                 p.print_soft_space();
             }
-            Statement::EmptyStatement(s) => s.print(p, ctx),
+            Statement::EmptyStatement(s) => {
+                p.print_comments_at(s.span.start);
+                p.add_source_mapping(s.span);
+                p.print_semicolon();
+                p.print_soft_newline();
+                p.print_indent();
+            }
             _ => {
                 p.print_soft_newline();
                 p.indent();
@@ -874,7 +887,9 @@ impl Gen for FormalParameterRest<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_decorators(&self.decorators, ctx);
-        self.rest.print(p, ctx);
+        p.add_source_mapping(self.span);
+        p.print_ellipsis();
+        self.rest.argument.print(p, ctx);
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
             p.print_soft_space();
@@ -917,9 +932,7 @@ impl Gen for ImportDeclaration<'_> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                p.print_ascii_byte(b'"');
-                p.print_str(self.source.value.as_str());
-                p.print_ascii_byte(b'"');
+                p.print_string_literal(&self.source, false);
                 if let Some(with_clause) = &self.with_clause {
                     p.print_hard_space();
                     with_clause.print(p, ctx);
@@ -982,9 +995,15 @@ impl Gen for ImportDeclaration<'_> {
                             p.print_str("type ");
                         }
 
-                        spec.imported.print(p, ctx);
                         let local_name = p.get_binding_identifier_name(&spec.local);
                         let imported_name = get_module_export_name(&spec.imported, p);
+                        if matches!(spec.imported, ModuleExportName::StringLiteral(_))
+                            && imported_name == local_name
+                        {
+                            spec.local.print(p, ctx);
+                            continue;
+                        }
+                        spec.imported.print(p, ctx);
                         if imported_name != local_name {
                             p.print_soft_space();
                             p.print_space_before_identifier();
@@ -1032,7 +1051,7 @@ impl Gen for ImportAttribute<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
-                p.print_str(identifier.name.as_str());
+                p.print_name(identifier.name.as_str());
             }
             ImportAttributeKey::StringLiteral(literal) => {
                 p.print_string_literal(literal, false);
@@ -1070,7 +1089,8 @@ impl Gen for ExportDeclaration<'_> {
             Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
             Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
             Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
-            Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSExternalModuleDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSNamespaceDeclaration(decl) => decl.print(p, ctx),
             Declaration::TSGlobalDeclaration(decl) => decl.print(p, ctx),
             Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
             Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
@@ -1143,7 +1163,7 @@ impl Gen for TSExportAssignment<'_> {
         p.print_indent();
         p.print_comments_at(self.span.start);
         p.print_str("export = ");
-        self.expression.print_expr(p, Precedence::Lowest, ctx);
+        self.expression.print_expr(p, Precedence::Comma, ctx);
         p.print_semicolon_after_statement();
     }
 }
@@ -1158,14 +1178,19 @@ impl Gen for TSNamespaceExportDeclaration<'_> {
     }
 }
 
+/// Get a module export name for comparison.
+///
+/// Compares as a [`JSStr`], so a string name never needs conversion to UTF-8.
 fn get_module_export_name<'a>(
     module_export_name: &ModuleExportName<'a>,
     p: &Codegen<'a>,
-) -> &'a str {
+) -> JSStr<'a> {
     match module_export_name {
-        ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-        ModuleExportName::IdentifierReference(ident) => p.get_identifier_reference_name(ident),
-        ModuleExportName::StringLiteral(s) => s.value.as_str(),
+        ModuleExportName::IdentifierName(ident) => JSStr::from(ident.name),
+        ModuleExportName::IdentifierReference(ident) => {
+            JSStr::from(p.get_identifier_reference_name(ident))
+        }
+        ModuleExportName::StringLiteral(literal) => literal.value,
     }
 }
 
@@ -1268,7 +1293,10 @@ impl Gen for ExportDefaultDeclarationKind<'_> {
                 class.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSInterfaceDeclaration(interface) => interface.print(p, ctx),
+            Self::TSInterfaceDeclaration(interface) => {
+                interface.print(p, ctx);
+                p.print_soft_newline();
+            }
             _ => {
                 p.start_of_default_export = p.code_len();
                 self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
@@ -1379,7 +1407,7 @@ impl Gen for IdentifierReference<'_> {
         let name = p.get_identifier_reference_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_name(name);
     }
 }
 
@@ -1387,7 +1415,7 @@ impl Gen for IdentifierName<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_name(self.name.as_str());
     }
 }
 
@@ -1396,15 +1424,16 @@ impl Gen for BindingIdentifier<'_> {
         let name = p.get_binding_identifier_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_name(name);
     }
 }
 
 impl Gen for LabelIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        let name = p.get_label_name(self);
         p.print_space_before_identifier();
-        p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_name(name);
     }
 }
 
@@ -1428,13 +1457,15 @@ impl GenExpr for NumericLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.add_source_mapping(self.span);
         let value = self.value;
-        if ctx.contains(Context::TYPESCRIPT) {
+        let typescript = ctx.contains(Context::TYPESCRIPT);
+        if typescript && (!value.is_infinite() || self.raw.is_some()) {
             p.print_str(&self.raw_str());
         } else if value.is_nan() {
             p.print_space_before_identifier();
             p.print_str("NaN");
         } else if value.is_infinite() {
-            let wrap = (p.options.minify && precedence >= Precedence::Multiply)
+            let minify_as_expression = p.options.minify && !typescript;
+            let wrap = (minify_as_expression && precedence >= Precedence::Multiply)
                 || (value.is_sign_negative() && precedence >= Precedence::Prefix);
             p.wrap(wrap, |p| {
                 if value.is_sign_negative() {
@@ -1443,10 +1474,11 @@ impl GenExpr for NumericLiteral<'_> {
                 } else {
                     p.print_space_before_identifier();
                 }
-                if p.options.minify {
+                // A local binding can shadow `Infinity`, and TypeScript literal types require a literal.
+                if minify_as_expression {
                     p.print_str("1/0");
                 } else {
-                    p.print_str("Infinity");
+                    p.print_str("1e400");
                 }
             });
         } else if value.is_sign_positive() {
@@ -1466,17 +1498,24 @@ impl GenExpr for NumericLiteral<'_> {
 
 impl GenExpr for BigIntLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        p.print_space_before_identifier();
-        p.add_source_mapping(self.span);
         let value = self.value.as_str();
-        if value.starts_with('-') && precedence >= Precedence::Prefix {
-            p.print_ascii_byte(b'(');
-            p.print_str(value);
-            p.print_str("n)");
+        if value.starts_with('-') {
+            if precedence >= Precedence::Prefix {
+                p.add_source_mapping(self.span);
+                p.print_ascii_byte(b'(');
+                p.print_str(value);
+                p.print_str("n)");
+                return;
+            }
+            // Printed as-is, starting with `-`, so it must not run into a `-` or `--` printed before it,
+            // the same as a negative `NumericLiteral`. `- -1n`, not `--1n`.
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
         } else {
-            p.print_str(value);
-            p.print_ascii_byte(b'n');
+            p.print_space_before_identifier();
         }
+        p.add_source_mapping(self.span);
+        p.print_str(value);
+        p.print_ascii_byte(b'n');
     }
 }
 
@@ -1497,10 +1536,10 @@ impl Gen for RegExpLiteral<'_> {
             p.print_hard_space();
         }
         p.print_ascii_byte(b'/');
-        p.print_str(self.regex.pattern.text.as_str());
+        p.print_regex_pattern(self.regex.pattern.text.as_str());
         p.print_ascii_byte(b'/');
         p.print_str(self.regex.flags.to_inline_string().as_str());
-        p.prev_reg_exp_end = p.code().len();
+        p.need_space_before_identifier = p.code().len();
     }
 }
 
@@ -1530,8 +1569,11 @@ impl GenExpr for MemberExpression<'_> {
 
 impl GenExpr for ComputedMemberExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        // `(let[0] = 100);` -> `(let)[0] = 100`;
-        let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
+        // `let [` at the start of a statement or `for` head begins a declaration.
+        let wrap = self
+            .object
+            .get_identifier_reference()
+            .is_some_and(|r| p.get_identifier_reference_name(r) == "let");
         p.wrap(wrap, |p| {
             self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         });
@@ -1569,6 +1611,20 @@ impl GenExpr for PrivateFieldExpression<'_> {
     }
 }
 
+/// The span of the node a callee prints first, which is the node that maps the start of a call.
+///
+/// Member expressions and calls do not map their own span; their first token comes from their
+/// object or callee.
+fn callee_start_span(callee: &Expression<'_>) -> Span {
+    match callee {
+        Expression::StaticMemberExpression(e) => callee_start_span(&e.object),
+        Expression::ComputedMemberExpression(e) => callee_start_span(&e.object),
+        Expression::PrivateFieldExpression(e) => callee_start_span(&e.object),
+        Expression::CallExpression(e) => callee_start_span(&e.callee),
+        _ => callee.span(),
+    }
+}
+
 impl GenExpr for CallExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let is_statement = p.start_of_stmt == p.code_len();
@@ -1583,6 +1639,11 @@ impl GenExpr for CallExpression<'_> {
             if pure {
                 p.add_source_mapping(self.span);
                 p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
+            } else if callee_start_span(&self.callee).is_empty() {
+                // A callee that starts with a generated node, such as a helper reference or
+                // `Math` in `Math.pow(a, b)`, prints no mapping at the start of the call. A stack
+                // trace reports a call at its callee, so map the call's own span there instead.
+                p.add_source_mapping(self.span);
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();
@@ -1634,32 +1695,54 @@ impl Gen for SpreadElement<'_> {
 
 impl Gen for ArrayExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        if is_multi_line {
-            p.indent();
-        }
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
-                p.print_comma();
-            }
-            if is_multi_line {
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
+            if self.elements.len() > 2 {
+                // 3 or more elements, each on its own line
+                p.indent();
                 p.print_soft_newline();
                 p.print_indent();
-            } else if i != 0 {
-                p.print_soft_space();
-            }
-            item.print(p, ctx);
-            if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
-                p.print_comma();
+                item.print(p, ctx);
+
+                for item_ref in others {
+                    item = item_ref;
+
+                    p.print_comma();
+                    p.print_soft_newline();
+                    p.print_indent();
+
+                    item.print(p, ctx);
+                }
+
+                if matches!(item, ArrayExpressionElement::Elision(_)) {
+                    p.print_comma();
+                }
+
+                p.print_soft_newline();
+                p.dedent();
+                p.print_indent();
+            } else {
+                // 1 or 2 elements, on one line
+                item.print(p, ctx);
+
+                if let Some(item_ref) = others.first() {
+                    item = item_ref;
+
+                    p.print_comma();
+                    p.print_soft_space();
+
+                    item.print(p, ctx);
+                }
+
+                if matches!(item, ArrayExpressionElement::Elision(_)) {
+                    p.print_comma();
+                }
             }
         }
-        if is_multi_line {
-            p.print_soft_newline();
-            p.dedent();
-            p.print_indent();
-        }
+
         p.add_source_mapping_end(self.span);
         p.print_ascii_byte(b']');
     }
@@ -1749,13 +1832,7 @@ impl Gen for ObjectProperty<'_> {
                 if func.generator {
                     p.print_ascii_byte(b'*');
                 }
-                if self.computed {
-                    p.print_ascii_byte(b'[');
-                }
                 self.key.print(p, ctx);
-                if self.computed {
-                    p.print_ascii_byte(b']');
-                }
                 if let Some(type_parameters) = &func.type_parameters {
                     type_parameters.print(p, ctx);
                 }
@@ -1783,34 +1860,29 @@ impl Gen for ObjectProperty<'_> {
         }
 
         let mut shorthand = false;
+        let mut computed_proto_key = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
+            let value_matches_key = matches!(
+                self.value.without_parentheses(),
+                Expression::Identifier(ident) if key.name == p.get_identifier_reference_name(ident)
+            );
             if key.name == "__proto__" {
-                shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
-                && key.name == p.get_identifier_reference_name(ident)
-            {
-                shorthand = true;
+                shorthand = self.shorthand && value_matches_key;
+                // `__proto__: value` would set the prototype instead of defining a property.
+                computed_proto_key = self.shorthand && !value_matches_key;
+            } else {
+                shorthand = value_matches_key;
             }
-        }
-
-        let mut computed = self.computed;
-
-        // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
-        // "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
-        if !computed
-            && let Some(Expression::NumericLiteral(n)) = self.key.as_expression()
-            && (n.value.is_sign_negative() || n.value.is_infinite())
-        {
-            computed = true;
         }
 
         if !shorthand {
-            if computed {
+            if computed_proto_key {
                 p.print_ascii_byte(b'[');
-            }
-            self.key.print(p, ctx);
-            if computed {
+                p.add_source_mapping(self.key.span());
+                p.print_string("__proto__");
                 p.print_ascii_byte(b']');
+            } else {
+                self.key.print(p, ctx);
             }
             p.print_colon();
             p.print_soft_space();
@@ -1826,8 +1898,28 @@ impl Gen for PropertyKey<'_> {
         match self {
             Self::StaticIdentifier(ident) => ident.print(p, ctx),
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => p.print_string_literal(s, /* allow_backtick */ false),
-            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
+            Self::StaticStringLiteral(s) => {
+                p.print_string_literal(s, /* allow_backtick */ false);
+            }
+            Self::StaticNumericLiteral(n) => {
+                debug_assert!(
+                    n.value.is_sign_positive() && !n.value.is_nan(),
+                    "a non-computed numeric property key must be non-negative"
+                );
+                if n.value.is_infinite() && !ctx.contains(Context::TYPESCRIPT) {
+                    p.add_source_mapping(n.span);
+                    p.print_space_before_identifier();
+                    p.print_str("1e400");
+                } else {
+                    n.print_expr(p, Precedence::Comma, ctx & Context::TYPESCRIPT);
+                }
+            }
+            Self::StaticBigIntLiteral(n) => n.print_expr(p, Precedence::Comma, Context::empty()),
+            _ => {
+                p.print_ascii_byte(b'[');
+                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
+                p.print_ascii_byte(b']');
+            }
         }
     }
 }
@@ -1894,8 +1986,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
 }
 
 impl GenExpr for YieldExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        p.wrap(precedence >= Precedence::Assign, |p| {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let wrap = precedence >= Precedence::Assign;
+        let argument_ctx = if wrap { Context::empty() } else { ctx & Context::FORBID_IN };
+        p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
             p.print_str("yield");
@@ -1904,7 +1998,7 @@ impl GenExpr for YieldExpression<'_> {
             }
             if let Some(argument) = self.argument.as_ref() {
                 p.print_soft_space();
-                argument.print_expr(p, Precedence::Yield, Context::empty());
+                argument.print_expr(p, Precedence::Yield, argument_ctx);
             }
         });
     }
@@ -1949,18 +2043,7 @@ impl GenExpr for UnaryExpression<'_> {
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
             }
-            // Forbid `delete Infinity`, which is syntax error in strict mode.
-            let is_delete_infinity = self.operator == UnaryOperator::Delete
-                && !p.options.minify
-                && matches!(&self.argument, Expression::NumericLiteral(lit) if lit.value.is_sign_positive() && lit.value.is_infinite());
-            if is_delete_infinity {
-                p.print_str("(0,");
-                p.print_soft_space();
-            }
             self.argument.print_expr(p, Precedence::Exponentiation, ctx);
-            if is_delete_infinity{
-                p.print_ascii_byte(b')');
-            }
         });
     }
 }
@@ -1986,11 +2069,11 @@ impl GenExpr for BinaryExpression<'_> {
 
 impl GenExpr for PrivateInExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Compare, |p| {
+        p.wrap(precedence >= Precedence::Compare || ctx.intersects(Context::FORBID_IN), |p| {
             p.add_source_mapping(self.span);
             self.left.print(p, ctx);
             p.print_str(" in ");
-            self.right.print_expr(p, Precedence::Equals, Context::FORBID_IN);
+            self.right.print_expr(p, Precedence::Compare, Context::FORBID_IN);
         });
     }
 }
@@ -2022,7 +2105,18 @@ impl GenExpr for ConditionalExpression<'_> {
             ctx &= Context::FORBID_IN.not();
         }
         p.wrap(wrap, |p| {
-            self.test.print_expr(p, Precedence::Conditional, ctx & Context::FORBID_IN);
+            // Keep `as` and `satisfies` expressions grouped as the conditional test. Without
+            // parentheses, a regexp consequent such as `(value as Type) ? /x/ : y` fails to
+            // reparse.
+            let test_precedence = if matches!(
+                self.test.without_parentheses(),
+                Expression::TSAsExpression(_) | Expression::TSSatisfiesExpression(_)
+            ) {
+                Precedence::Compare
+            } else {
+                Precedence::Conditional
+            };
+            self.test.print_expr(p, test_precedence, ctx & Context::FORBID_IN);
             p.print_soft_space();
             p.print_ascii_byte(b'?');
             p.print_soft_space();
@@ -2112,24 +2206,35 @@ impl Gen for ArrayAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
-                p.print_comma();
-                p.print_soft_space();
-            }
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-            if i == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+
+            for item_ref in others {
+                item = item_ref;
+
+                p.print_comma();
+                p.print_soft_space();
+
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
+            }
+
+            if let Some(rest) = &self.rest {
+                p.print_comma();
+                p.print_soft_space();
+                rest.print(p, ctx);
+            } else if item.is_none() {
                 p.print_comma();
             }
+        } else if let Some(rest) = &self.rest {
+            rest.print(p, ctx);
         }
-        if let Some(target) = &self.rest {
-            if !self.elements.is_empty() {
-                p.print_soft_space();
-            }
-            target.print(p, ctx);
-        }
+
         p.print_ascii_byte(b']');
     }
 }
@@ -2185,10 +2290,10 @@ impl Gen for AssignmentTargetPropertyIdentifier<'_> {
             self.binding.print(p, ctx);
         } else {
             // `({x: a} = y);`
-            p.print_str(self.binding.name.as_str());
+            p.print_name(self.binding.name.as_str());
             p.print_colon();
             p.print_soft_space();
-            p.print_str(ident_name);
+            p.print_name(ident_name);
         }
         if let Some(expr) = &self.init {
             p.print_soft_space();
@@ -2216,32 +2321,7 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
             false
         };
         if !omit_key {
-            match &self.name {
-                PropertyKey::StaticIdentifier(ident) => {
-                    ident.print(p, ctx);
-                }
-                PropertyKey::PrivateIdentifier(ident) => {
-                    ident.print(p, ctx);
-                }
-                PropertyKey::StringLiteral(s) => {
-                    if self.computed {
-                        p.print_ascii_byte(b'[');
-                    }
-                    p.print_string_literal(s, /* allow_backtick */ false);
-                    if self.computed {
-                        p.print_ascii_byte(b']');
-                    }
-                }
-                key => {
-                    if self.computed {
-                        p.print_ascii_byte(b'[');
-                    }
-                    key.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-                    if self.computed {
-                        p.print_ascii_byte(b']');
-                    }
-                }
-            }
+            self.name.print(p, ctx);
             p.print_colon();
             p.print_soft_space();
         }
@@ -2251,6 +2331,7 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
 
 impl Gen for AssignmentTargetRest<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ellipsis();
         self.target.print(p, ctx);
     }
@@ -2321,19 +2402,24 @@ impl GenExpr for ImportExpression<'_> {
 }
 
 impl Gen for TemplateLiteral<'_> {
-    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.is_no_substitution_template() {
+            p.print_property_key_annotation(self.span.start);
+        }
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'`');
         debug_assert_eq!(self.quasis.len(), self.expressions.len() + 1);
         let (first_quasi, remaining_quasis) = self.quasis.split_first().unwrap();
-        p.print_str_escaping_script_close_tag(first_quasi.value.raw.as_str());
+        let tagged = ctx.contains(Context::TAGGED_TEMPLATE);
+        p.print_template_quasi_raw(first_quasi.value.raw.as_str(), tagged);
         for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
             p.print_str("${");
             p.print_leading_comments_before_expression(expr);
+            // Nested expressions start with an empty context, so they do not inherit the tag.
             p.print_expression(expr);
             p.print_ascii_byte(b'}');
             p.add_source_mapping(quasi.span);
-            p.print_str_escaping_script_close_tag(quasi.value.raw.as_str());
+            p.print_template_quasi_raw(quasi.value.raw.as_str(), tagged);
         }
         p.print_ascii_byte(b'`');
     }
@@ -2347,7 +2433,7 @@ impl GenExpr for TaggedTemplateExpression<'_> {
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
-        self.quasi.print(p, ctx);
+        self.quasi.print(p, ctx | Context::TAGGED_TEMPLATE);
     }
 }
 
@@ -2407,8 +2493,11 @@ impl GenExpr for NewExpression<'_> {
                 type_parameters.print(p, ctx);
             }
 
-            // Omit the "()" when minifying, but only when safe to do so
-            if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
+            // Without `()`, `<`, `>`, `+`, or `-` after `new C<T>` reparses `<T>` as operators.
+            if !p.options.minify
+                || !self.arguments.is_empty()
+                || self.type_arguments.is_some()
+                || precedence >= Precedence::Postfix
             {
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
@@ -2425,12 +2514,15 @@ impl GenExpr for TSAsExpression<'_> {
             p.print_soft_space();
             p.print_space_before_identifier();
             p.print_str("as");
-            if type_starts_with_non_identifier(&self.type_annotation) {
+            let wrap_type = ends_with_asserts_reference(&self.type_annotation);
+            if wrap_type || type_starts_with_non_identifier(&self.type_annotation) {
                 p.print_soft_space();
             } else {
                 p.print_hard_space();
             }
-            self.type_annotation.print(p, ctx);
+            p.wrap(wrap_type, |p| {
+                self.type_annotation.print(p, ctx);
+            });
         });
     }
 }
@@ -2444,12 +2536,15 @@ impl GenExpr for TSSatisfiesExpression<'_> {
             p.print_soft_space();
             p.print_space_before_identifier();
             p.print_str("satisfies");
-            if type_starts_with_non_identifier(&self.type_annotation) {
+            let wrap_type = ends_with_asserts_reference(&self.type_annotation);
+            if wrap_type || type_starts_with_non_identifier(&self.type_annotation) {
                 p.print_soft_space();
             } else {
                 p.print_hard_space();
             }
-            self.type_annotation.print(p, ctx);
+            p.wrap(wrap_type, |p| {
+                self.type_annotation.print(p, ctx);
+            });
         });
     }
 }
@@ -2465,11 +2560,16 @@ impl GenExpr for TSNonNullExpression<'_> {
 }
 
 impl GenExpr for TSInstantiationExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        // Wrap a lower-precedence operand so `(a ?? b)<T>` isn't emitted as `a ?? b<T>`.
-        self.expression.print_expr(p, Precedence::Prefix, ctx);
-        self.type_arguments.print(p, ctx);
-        if p.options.minify {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        // Wrap any operand: a following `<`, `>`, `+`, `-`, call, member access, or template
+        // would stop `f<T>` from reparsing as an instantiation expression.
+        let wrap = precedence > Precedence::Conditional;
+        p.wrap(wrap, |p| {
+            // Wrap a lower-precedence operand so `(a ?? b)<T>` isn't emitted as `a ?? b<T>`.
+            self.expression.print_expr(p, Precedence::Postfix, ctx);
+            self.type_arguments.print(p, ctx);
+        });
+        if p.options.minify && !wrap {
             p.print_hard_space();
         }
     }
@@ -2520,7 +2620,6 @@ impl Gen for Class<'_> {
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         let ctx = ctx.and_forbid_call(false);
         p.wrap(wrap, |p| {
-            p.enter_class();
             p.print_decorators(&self.decorators, ctx);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -2538,12 +2637,12 @@ impl Gen for Class<'_> {
             if let Some(type_parameters) = self.type_parameters.as_ref() {
                 type_parameters.print(p, ctx);
             }
-            if let Some(super_class) = self.super_class.as_ref() {
+            if let Some(heritage) = &self.heritage {
                 p.print_soft_space();
                 p.print_space_before_identifier();
                 p.print_str("extends ");
-                super_class.print_expr(p, Precedence::Postfix, Context::empty());
-                if let Some(super_type_parameters) = &self.super_type_arguments {
+                heritage.expression.print_expr(p, Precedence::Postfix, Context::empty());
+                if let Some(super_type_parameters) = &heritage.type_arguments {
                     super_type_parameters.print(p, ctx);
                 }
             }
@@ -2554,6 +2653,7 @@ impl Gen for Class<'_> {
                 p.print_list(&self.implements, ctx);
             }
             p.print_soft_space();
+            p.enter_class();
             self.body.print(p, ctx);
             p.needs_semicolon = false;
             p.exit_class();
@@ -2611,7 +2711,7 @@ impl Gen for JSXIdentifier<'_> {
 impl Gen for JSXMemberExpressionObject<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::IdentifierReference(ident) => ident.print(p, ctx),
+            Self::IdentifierReference(ident) => p.print_jsx_identifier_reference(ident),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
         }
@@ -2630,7 +2730,7 @@ impl Gen for JSXElementName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(identifier) => identifier.print(p, ctx),
-            Self::IdentifierReference(identifier) => identifier.print(p, ctx),
+            Self::IdentifierReference(identifier) => p.print_jsx_identifier_reference(identifier),
             Self::NamespacedName(namespaced_name) => namespaced_name.print(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
@@ -2684,7 +2784,7 @@ impl Gen for JSXExpression<'_> {
                 p.print_comments_at(start);
                 p.print_indent();
             }
-            p.print_expression(expr);
+            expr.print_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
@@ -2703,10 +2803,25 @@ impl Gen for JSXAttributeValue<'_> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
-                p.print_ascii_byte(quote);
-                p.print_str(&lit.value);
-                p.print_ascii_byte(quote);
+                if let Some(value) = lit.value.as_str() {
+                    let quote = if value.contains('"') { b'\'' } else { b'"' };
+                    p.print_ascii_byte(quote);
+                    // Parsed attributes retain their entity spelling. Generated values may contain
+                    // both quotes, so escape the delimiter without changing existing entities.
+                    let mut parts = value.split(char::from(quote));
+                    p.print_str(parts.next().unwrap());
+                    for part in parts {
+                        p.print_str(if quote == b'\'' { "&apos;" } else { "&quot;" });
+                        p.print_str(part);
+                    }
+                    p.print_ascii_byte(quote);
+                } else {
+                    // JSX strings have no backslash escapes. A JavaScript string expression
+                    // preserves lone surrogates without decoding any literal entity text.
+                    p.print_ascii_byte(b'{');
+                    p.print_string_literal(lit, false);
+                    p.print_ascii_byte(b'}');
+                }
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
         }
@@ -2715,12 +2830,14 @@ impl Gen for JSXAttributeValue<'_> {
 
 impl Gen for JSXSpreadAttribute<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
         if p.print_comments_in_range(self.span.start, self.argument.span().start) {
             p.print_indent();
         }
         p.print_str("...");
         self.argument.print_expr(p, Precedence::Comma, Context::empty());
+        p.add_source_mapping_end(self.span);
         p.print_ascii_byte(b'}');
     }
 }
@@ -2801,7 +2918,7 @@ impl Gen for JSXText<'_> {
 impl Gen for JSXSpreadChild<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("{...");
-        p.print_expression(&self.expression);
+        self.expression.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b'}');
     }
 }
@@ -2886,13 +3003,7 @@ impl Gen for MethodDefinition<'_> {
         if self.value.generator {
             p.print_ascii_byte(b'*');
         }
-        if self.computed {
-            p.print_ascii_byte(b'[');
-        }
         self.key.print(p, ctx);
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
         if self.optional {
             p.print_ascii_byte(b'?');
         }
@@ -2957,13 +3068,7 @@ impl Gen for PropertyDefinition<'_> {
             p.print_str("readonly");
             p.print_soft_space();
         }
-        if self.computed {
-            p.print_ascii_byte(b'[');
-        }
         self.key.print(p, ctx);
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
         if self.optional {
             p.print_ascii_byte(b'?');
         }
@@ -2988,14 +3093,14 @@ impl Gen for AccessorProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_decorators(&self.decorators, ctx);
-        if self.r#type.is_abstract() {
-            p.print_space_before_identifier();
-            p.print_str("abstract");
-            p.print_soft_space();
-        }
         if let Some(accessibility) = self.accessibility {
             p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
+            p.print_soft_space();
+        }
+        if self.r#type.is_abstract() {
+            p.print_space_before_identifier();
+            p.print_str("abstract");
             p.print_soft_space();
         }
         if self.r#static {
@@ -3010,18 +3115,12 @@ impl Gen for AccessorProperty<'_> {
         }
         p.print_space_before_identifier();
         p.print_str("accessor");
-        if self.computed {
-            p.print_soft_space();
-            p.print_ascii_byte(b'[');
-        } else if matches!(self.key, PropertyKey::PrivateIdentifier(_)) {
+        if self.key.is_computed() || matches!(self.key, PropertyKey::PrivateIdentifier(_)) {
             p.print_soft_space();
         } else {
             p.print_hard_space();
         }
         self.key.print(p, ctx);
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
         if self.definite {
             p.print_ascii_byte(b'!');
         }
@@ -3041,18 +3140,18 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_ascii_byte(b'#');
-
-        if let Some(mangled) = p.private_member_mappings.as_ref().and_then(|mappings| {
+        let mangled = p.private_member_mappings.as_ref().and_then(|mappings| {
             p.current_class_ids()
                 .find_map(|class_id| mappings.get(class_id).and_then(|m| m.get(self.name.as_str())))
                 .cloned()
-        }) {
-            p.print_str(mangled.as_str());
-        } else {
-            p.print_str(self.name.as_str());
-        }
+        });
+        // Name the mapping after what is printed, not after what the AST holds, so a mangled name
+        // is recorded as a rename and an unmangled one as no rename at all
+        let name = mangled.as_ref().map_or(self.name.as_str(), |mangled| mangled.as_str());
+
+        p.add_source_mapping_for_private_name(self.span, name);
+        p.print_ascii_byte(b'#');
+        p.print_name(name);
     }
 }
 
@@ -3111,13 +3210,7 @@ impl Gen for BindingProperty<'_> {
         }
 
         if !shorthand {
-            if self.computed {
-                p.print_ascii_byte(b'[');
-            }
             self.key.print(p, ctx);
-            if self.computed {
-                p.print_ascii_byte(b']');
-            }
             p.print_colon();
             p.print_soft_space();
         }
@@ -3138,22 +3231,35 @@ impl Gen for ArrayPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (index, item) in self.elements.iter().enumerate() {
-            if index != 0 {
-                p.print_comma();
-                p.print_soft_space();
-            }
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-            if index == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+
+            for item_ref in others {
+                item = item_ref;
+
+                p.print_comma();
+                p.print_soft_space();
+
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
+            }
+
+            if let Some(rest) = &self.rest {
+                p.print_comma();
+                p.print_soft_space();
+                rest.print(p, ctx);
+            } else if item.is_none() {
                 p.print_comma();
             }
-        }
-        if let Some(rest) = &self.rest {
-            p.print_soft_space();
+        } else if let Some(rest) = &self.rest {
             rest.print(p, ctx);
         }
+
         p.print_ascii_byte(b']');
     }
 }
@@ -3170,25 +3276,12 @@ impl Gen for AssignmentPattern<'_> {
 
 impl Gen for Decorator<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        fn need_wrap(expr: &Expression) -> bool {
-            match expr {
-                // "@foo"
-                // "@foo.bar"
-                // "@foo.#bar"
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => false,
-                Expression::CallExpression(call_expr) => need_wrap(&call_expr.callee),
-                // "@(foo + bar)"
-                // "@(() => {})"
-                // "@(foo['bar'])"
-                _ => true,
-            }
-        }
-
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'@');
-        let wrap = need_wrap(&self.expression);
+        let wrap = match &self.expression {
+            Expression::CallExpression(call) => !call.callee.is_decorator_member_expression(),
+            expr => !expr.is_decorator_member_expression(),
+        };
         p.wrap(wrap, |p| {
             self.expression.print_expr(p, Precedence::Lowest, Context::empty());
         });
@@ -3400,9 +3493,62 @@ fn type_starts_with_non_identifier(ty: &TSType) -> bool {
         TSType::TSLiteralType(lit) => {
             matches!(&lit.literal, TSLiteral::TemplateLiteral(_) | TSLiteral::StringLiteral(_))
         }
-        TSType::TSUnionType(u) => u.types.first().is_some_and(type_starts_with_non_identifier),
-        TSType::TSIntersectionType(i) => {
-            i.types.first().is_some_and(type_starts_with_non_identifier)
+        TSType::TSUnionType(u) => u.types.first().is_some_and(|first| {
+            parenthesize_check_type_of_union_type(first) || type_starts_with_non_identifier(first)
+        }),
+        TSType::TSIntersectionType(i) => i.types.first().is_some_and(|first| {
+            parenthesize_check_type_of_intersection_type(first)
+                || type_starts_with_non_identifier(first)
+        }),
+        _ => false,
+    }
+}
+
+/// Whether `ty` prints ending in a bare reference to a type named `asserts`.
+///
+/// TypeScript reads `asserts` followed by an identifier or keyword on the same line as the start
+/// of an assertion predicate (`asserts x`), so `(asserts) extends T ? A : B` must keep its
+/// parentheses wherever a keyword can follow the type. The type is followed through the nodes
+/// that print a child type last, such as `keyof asserts`, `T | asserts`, `() => asserts`,
+/// `infer U extends asserts`, and `!asserts`.
+/// A child the printer parenthesizes anyway may also count, which only adds redundant parentheses.
+fn ends_with_asserts_reference(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSTypeReference(reference) => {
+            reference.type_arguments.is_none()
+                && matches!(
+                    &reference.type_name,
+                    TSTypeName::IdentifierReference(ident) if ident.name == "asserts"
+                )
+        }
+        TSType::TSUnionType(union) => union.types.last().is_some_and(ends_with_asserts_reference),
+        TSType::TSIntersectionType(intersection) => {
+            intersection.types.last().is_some_and(ends_with_asserts_reference)
+        }
+        TSType::TSTypeOperatorType(operator) => {
+            ends_with_asserts_reference(&operator.type_annotation)
+        }
+        TSType::TSFunctionType(function) => {
+            ends_with_asserts_reference(&function.return_type.type_annotation)
+        }
+        TSType::TSConstructorType(constructor) => {
+            ends_with_asserts_reference(&constructor.return_type.type_annotation)
+        }
+        TSType::TSConditionalType(conditional) => {
+            ends_with_asserts_reference(&conditional.false_type)
+        }
+        TSType::TSTypePredicate(predicate) => predicate
+            .type_annotation
+            .as_ref()
+            .is_some_and(|annotation| ends_with_asserts_reference(&annotation.type_annotation)),
+        TSType::TSInferType(infer) => {
+            infer.type_parameter.constraint.as_ref().is_some_and(ends_with_asserts_reference)
+        }
+        TSType::JSDocNullableType(nullable) => {
+            !nullable.postfix && ends_with_asserts_reference(&nullable.type_annotation)
+        }
+        TSType::JSDocNonNullableType(non_nullable) => {
+            !non_nullable.postfix && ends_with_asserts_reference(&non_nullable.type_annotation)
         }
         _ => false,
     }
@@ -3416,7 +3562,7 @@ impl Gen for TSConditionalType<'_> {
                 TSType::TSFunctionType(_)
                     | TSType::TSConstructorType(_)
                     | TSType::TSConditionalType(_)
-            ),
+            ) || ends_with_asserts_reference(&self.check_type),
             |p| {
                 self.check_type.print(p, ctx);
             },
@@ -3456,7 +3602,20 @@ impl Gen for TSConditionalType<'_> {
 impl Gen for TSInferType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("infer ");
-        self.type_parameter.print(p, ctx);
+        let type_parameter = &self.type_parameter;
+        type_parameter.name.print(p, ctx);
+        if let Some(constraint) = &type_parameter.constraint {
+            p.print_str(" extends");
+            // An `infer` constraint is parsed with conditional types disallowed, so
+            // `infer U extends (A extends B ? C : D)` must keep its parentheses.
+            let wrap = matches!(constraint, TSType::TSConditionalType(_));
+            if wrap || type_starts_with_non_identifier(constraint) {
+                p.print_soft_space();
+            } else {
+                p.print_hard_space();
+            }
+            p.wrap(wrap, |p| constraint.print(p, ctx));
+        }
     }
 }
 
@@ -3487,7 +3646,9 @@ impl Gen for TSMappedType<'_> {
         p.print_ascii_byte(b'[');
         self.key.print(p, ctx);
         p.print_str(" in ");
-        self.constraint.print(p, ctx);
+        p.wrap(self.name_type.is_some() && ends_with_asserts_reference(&self.constraint), |p| {
+            self.constraint.print(p, ctx);
+        });
         if let Some(name_type) = &self.name_type {
             p.print_str(" as ");
             name_type.print(p, ctx);
@@ -3608,7 +3769,7 @@ impl Gen for TSTemplateLiteralType<'_> {
                 types.print(p, ctx);
                 p.print_ascii_byte(b'}');
             }
-            p.print_str(item.value.raw.as_str());
+            p.print_template_quasi_raw(item.value.raw.as_str(), false);
         }
         p.print_ascii_byte(b'`');
     }
@@ -3767,26 +3928,7 @@ impl Gen for TSSignature<'_> {
                     TSMethodSignatureKind::Get => p.print_str("get "),
                     TSMethodSignatureKind::Set => p.print_str("set "),
                 }
-                if signature.computed {
-                    p.print_ascii_byte(b'[');
-                    signature.key.print(p, ctx);
-                    p.print_ascii_byte(b']');
-                } else {
-                    match &signature.key {
-                        PropertyKey::StaticIdentifier(key) => {
-                            key.print(p, ctx);
-                        }
-                        PropertyKey::PrivateIdentifier(key) => {
-                            p.print_str(key.name.as_str());
-                        }
-                        PropertyKey::StringLiteral(key) => {
-                            p.print_string_literal(key, false);
-                        }
-                        key => {
-                            key.to_expression().print_expr(p, Precedence::Comma, ctx);
-                        }
-                    }
-                }
+                signature.key.print(p, ctx);
                 if signature.optional {
                     p.print_ascii_byte(b'?');
                 }
@@ -3818,26 +3960,7 @@ impl Gen for TSPropertySignature<'_> {
         if self.readonly {
             p.print_str("readonly ");
         }
-        if self.computed {
-            p.print_ascii_byte(b'[');
-            self.key.print(p, ctx);
-            p.print_ascii_byte(b']');
-        } else {
-            match &self.key {
-                PropertyKey::StaticIdentifier(key) => {
-                    key.print(p, ctx);
-                }
-                PropertyKey::PrivateIdentifier(key) => {
-                    p.print_str(key.name.as_str());
-                }
-                PropertyKey::StringLiteral(key) => {
-                    p.print_string_literal(key, false);
-                }
-                key => {
-                    key.to_expression().print_expr(p, Precedence::Comma, ctx);
-                }
-            }
-        }
+        self.key.print(p, ctx);
         if self.optional {
             p.print_ascii_byte(b'?');
         }
@@ -3891,7 +4014,7 @@ impl Gen for TSImportTypeQualifier<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             TSImportTypeQualifier::Identifier(ident) => {
-                p.print_str(ident.name.as_str());
+                p.print_name(ident.name.as_str());
             }
             TSImportTypeQualifier::QualifiedName(qualified) => {
                 qualified.print(p, ctx);
@@ -3904,7 +4027,7 @@ impl Gen for TSImportTypeQualifiedName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.left.print(p, ctx);
         p.print_ascii_byte(b'.');
-        p.print_str(self.right.name.as_str());
+        p.print_name(self.right.name.as_str());
     }
 }
 
@@ -3925,7 +4048,7 @@ impl Gen for TSIndexSignature<'_> {
             p.print_str("readonly ");
         }
         p.print_ascii_byte(b'[');
-        p.print_str(self.parameter.name.as_str());
+        p.print_name(self.parameter.name.as_str());
         p.print_colon();
         p.print_soft_space();
         self.parameter.type_annotation.print(p, ctx);
@@ -3966,7 +4089,26 @@ impl Gen for TSNamedTupleMember<'_> {
     }
 }
 
-impl Gen for TSModuleDeclaration<'_> {
+impl Gen for TSExternalModuleDeclaration<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.declare {
+            p.print_str("declare ");
+        }
+        p.print_str("module");
+        p.print_space_before_identifier();
+        p.print_string_literal(&self.id, false);
+
+        if let Some(body) = &self.body {
+            p.print_soft_space();
+            body.print(p, ctx);
+        } else {
+            p.print_semicolon();
+        }
+        p.needs_semicolon = false;
+    }
+}
+
+impl Gen for TSNamespaceDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
             p.print_str("declare ");
@@ -3975,39 +4117,22 @@ impl Gen for TSModuleDeclaration<'_> {
         p.print_space_before_identifier();
         self.id.print(p, ctx);
 
-        if let Some(body) = &self.body {
-            let mut body = body;
-            loop {
-                match body {
-                    TSModuleDeclarationBody::TSModuleDeclaration(b) => {
-                        p.print_ascii_byte(b'.');
-                        b.id.print(p, ctx);
-                        if let Some(b) = &b.body {
-                            body = b;
-                        } else {
-                            break;
-                        }
-                    }
-                    TSModuleDeclarationBody::TSModuleBlock(body) => {
-                        p.print_soft_space();
-                        body.print(p, ctx);
-                        break;
-                    }
+        let mut body = &self.body;
+        loop {
+            match body {
+                TSNamespaceDeclarationBody::TSNamespaceDeclaration(namespace) => {
+                    p.print_ascii_byte(b'.');
+                    namespace.id.print(p, ctx);
+                    body = &namespace.body;
+                }
+                TSNamespaceDeclarationBody::TSModuleBlock(body) => {
+                    p.print_soft_space();
+                    body.print(p, ctx);
+                    break;
                 }
             }
-        } else {
-            p.print_semicolon();
         }
         p.needs_semicolon = false;
-    }
-}
-
-impl Gen for TSModuleDeclarationName<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
-            Self::Identifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => p.print_string_literal(s, false),
-        }
     }
 }
 
@@ -4125,7 +4250,7 @@ impl Gen for TSInterfaceDeclaration<'_> {
 
 impl Gen for TSInterfaceHeritage<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.expression.print_expr(p, Precedence::Call, ctx);
+        self.type_name.print(p, ctx);
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
@@ -4179,7 +4304,7 @@ impl Gen for TSEnumMember<'_> {
                 p.add_source_mapping(quasi.span);
 
                 p.print_str("[`");
-                p.print_str(quasi.value.raw.as_str());
+                p.print_template_quasi_raw(quasi.value.raw.as_str(), false);
                 p.print_str("`]");
             }
         }
@@ -4188,7 +4313,7 @@ impl Gen for TSEnumMember<'_> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.print_expr(p, Precedence::Lowest, ctx);
+            init.print_expr(p, Precedence::Comma, ctx);
         }
     }
 }

@@ -63,6 +63,14 @@ export declare class PrivateFieldsWithConstructorAssignments {
 	private second;
 	constructor(first: number);
 }
+export declare class DefaultedAnyParameterProperty {
+	value: any;
+	constructor(value: any | undefined, required: string);
+}
+export declare class DefaultedArrayParameterProperty {
+	values: unknown;
+	constructor(values: unknown | undefined, required: string);
+}
 export declare class PrivateMethodClass {
 	private good;
 	private get goodGetter();
@@ -145,40 +153,48 @@ export declare class ProtectedConstructorWithPrivateParamPropertyInferredDefault
 
 ==================== Errors ====================
 
+  x TS9017: Only const arrays can be inferred with --isolatedDeclarations.
+    ,-[75:31]
+ 74 | export class DefaultedArrayParameterProperty {
+ 75 |   constructor(public values = [], required: string) {}
+    :                               ^^
+ 76 | }
+    `----
+
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[81:14]
- 80 |   public get badGetter() {
- 81 |     return {[('x')]: 1};
+    ,-[89:14]
+ 88 |   public get badGetter() {
+ 89 |     return {[('x')]: 1};
     :              ^^^^^
- 82 |   }
+ 90 |   }
     `----
 
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
-    ,-[79:14]
- 78 | export class PublicMethodClass {
- 79 |   public bad(a): void {}
+    ,-[87:14]
+ 86 | export class PublicMethodClass {
+ 87 |   public bad(a): void {}
     :              ^
- 80 |   public get badGetter() {
+ 88 |   public get badGetter() {
     `----
 
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
-     ,-[192:3]
- 191 |     private constructor(
- 192 |         public readonly a = new InferredDefault(),
+     ,-[200:3]
+ 199 |     private constructor(
+ 200 |         public readonly a = new InferredDefault(),
      :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 193 |     ) {}
+ 201 |     ) {}
      `----
 
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
-     ,-[201:3]
- 200 |     protected constructor(
- 201 |         private readonly a = new InferredDefault(),
+     ,-[209:3]
+ 208 |     protected constructor(
+ 209 |         private readonly a = new InferredDefault(),
      :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 202 |     ) {}
+ 210 |     ) {}
      `----
 
 

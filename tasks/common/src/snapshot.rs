@@ -22,9 +22,15 @@ impl Snapshot {
             let output = Command::new("git")
                 .args(["-C", path, "rev-parse", "--short=8", "HEAD"])
                 .output()
-                .unwrap()
-                .stdout;
-            String::from_utf8(output).unwrap().trim().to_string()
+                .unwrap_or_else(|err| panic!("failed to run `git`: {err}"));
+            let sha = String::from_utf8(output.stdout).unwrap().trim().to_string();
+            assert!(
+                output.status.success() && !sha.is_empty(),
+                "`git -C {path} rev-parse --short=8 HEAD` failed ({}):\n{}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr).trim()
+            );
+            sha
         });
         Self { git_repo_path: git_repo_path.to_path_buf(), sha }
     }

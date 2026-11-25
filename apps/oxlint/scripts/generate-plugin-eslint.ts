@@ -96,8 +96,8 @@ export default function generatePluginEslint(): void {
     const unexpectedKeys = Object.keys(rule).filter((key) => key !== "meta" && key !== "create");
     if (unexpectedKeys.length > 0) {
       throw new Error(
-        `Unexpected properties on rule \`${ruleName}\`: ${unexpectedKeys.join(", ")}. ` +
-          "Expected only `meta` and `create`.",
+        `Unexpected properties on rule \`${ruleName}\`: ${unexpectedKeys.join(", ")}. `
+          + "Expected only `meta` and `create`.",
       );
     }
 
@@ -158,8 +158,8 @@ export default function generatePluginEslint(): void {
 function assertNoFunctions(value: unknown, rulePath: string, path: string): void {
   if (typeof value === "function") {
     throw new Error(
-      `Unexpected function value in \`${path}\` of rule \`${rulePath}\`. ` +
-        "Rule meta objects must be static data.",
+      `Unexpected function value in \`${path}\` of rule \`${rulePath}\`. `
+        + "Rule meta objects must be static data.",
     );
   }
   if (typeof value === "object" && value !== null) {

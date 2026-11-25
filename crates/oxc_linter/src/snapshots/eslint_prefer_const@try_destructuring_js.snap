@@ -1,0 +1,171 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:11]
+ 1 │ try { let a, b; [a, ...b] = values; use(a, b); } catch {}
+   ·           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:14]
+ 1 │ try { let a, b; [a, ...b] = values; use(a, b); } catch {}
+   ·              ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:11]
+ 1 │ try { let a, b; ({a, ...b} = values); use(a, b); } catch {}
+   ·           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:14]
+ 1 │ try { let a, b; ({a, ...b} = values); use(a, b); } catch {}
+   ·              ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:43]
+ 1 │ export async function inTry() { try { let a; let b; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }
+   ·                                           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:50]
+ 1 │ export async function inTry() { try { let a; let b; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }
+   ·                                                  ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:11]
+ 1 │ try { let a, b; ({a, b} = obj); use(a, b); } catch {}
+   ·           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:14]
+ 1 │ try { let a, b; ({a, b} = obj); use(a, b); } catch {}
+   ·              ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:11]
+ 1 │ try { let a, b; ({value: [a = 1, b]} = obj); use(a, b); } catch {}
+   ·           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:14]
+ 1 │ try { let a, b; ({value: [a = 1, b]} = obj); use(a, b); } catch {}
+   ·              ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:20]
+ 1 │ try {} catch { let a, b; [a, b] = values; use(a, b); }
+   ·                    ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:23]
+ 1 │ try {} catch { let a, b; [a, b] = values; use(a, b); }
+   ·                       ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:22]
+ 1 │ try {} finally { let a, b; ({a, b} = obj); use(a, b); }
+   ·                      ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:25]
+ 1 │ try {} finally { let a, b; ({a, b} = obj); use(a, b); }
+   ·                         ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:7]
+ 1 │ { let a, b; [a, b] = values; use(a, b); }
+   ·       ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:10]
+ 1 │ { let a, b; [a, b] = values; use(a, b); }
+   ·          ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:22]
+ 1 │ if (condition) { let a, b; [a, b] = values; use(a, b); }
+   ·                      ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:25]
+ 1 │ if (condition) { let a, b; [a, b] = values; use(a, b); }
+   ·                         ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:25]
+ 1 │ while (condition) { let a, b; [a, b] = values; use(a, b); }
+   ·                         ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:28]
+ 1 │ while (condition) { let a, b; [a, b] = values; use(a, b); }
+   ·                            ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:11]
+ 1 │ try { let a, b; [a, b] = values; use(a, b); } catch {}
+   ·           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:14]
+ 1 │ try { let a, b; [a, b] = values; use(a, b); } catch {}
+   ·              ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.js:1:11]
+ 1 │ try { let a, b; [a, b] = values; use(a, b); } catch {}
+   ·           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.js:1:14]
+ 1 │ try { let a, b; [a, b] = values; use(a, b); } catch {}
+   ·              ─
+   ╰────
+  help: Use `const` instead.

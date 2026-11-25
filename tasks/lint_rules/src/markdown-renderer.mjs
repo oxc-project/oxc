@@ -32,8 +32,8 @@ const renderCounters = ({ counters: { recommended, notRecommended, deprecated } 
     recommended.isPendingFix > 0 && `  - ${recommended.isPendingFix} of which have pending fixes`,
     recommendedTodos === 0 && `  - All done! 🎉`,
     `- ${notRecommendedTodos}/${notRecommended.total} not recommended rules are remaining as TODO`,
-    notRecommended.isPendingFix > 0 &&
-      `  - ${notRecommended.isPendingFix} of which have pending fixes`,
+    notRecommended.isPendingFix > 0
+      && `  - ${notRecommended.isPendingFix} of which have pending fixes`,
     notRecommendedTodos === 0 && `  - All done! 🎉`,
   ]
     .filter(Boolean)
@@ -145,20 +145,20 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     renderIntroduction({ npm: pluginMeta.npm }),
     renderCounters({ counters }),
     renderGettingStarted({ pluginName }),
-    0 < sortedViews.recommended.length &&
-      renderRulesList({
+    0 < sortedViews.recommended.length
+      && renderRulesList({
         title: "Recommended rules",
         counters: counters.recommended,
         views: sortedViews.recommended,
       }),
-    0 < sortedViews.notRecommended.length &&
-      renderRulesList({
+    0 < sortedViews.notRecommended.length
+      && renderRulesList({
         title: "Not recommended rules",
         counters: counters.notRecommended,
         views: sortedViews.notRecommended,
       }),
-    0 < sortedViews.deprecated.length &&
-      renderRulesList({
+    0 < sortedViews.deprecated.length
+      && renderRulesList({
         title: "Deprecated rules",
         counters: counters.deprecated,
         views: sortedViews.deprecated,

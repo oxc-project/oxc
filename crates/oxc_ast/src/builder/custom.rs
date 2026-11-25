@@ -5,7 +5,7 @@
 //!
 //! Like the generated methods, each first calls [`GetAstBuilder::builder`] to obtain the concrete
 //! [`AstBuild`]er before forwarding it on, so callees are monomorphized over the `AstBuild` type,
-//! rather than over every `B: GetAstBuilder`.
+//! rather than over every [`GetAstBuilder`] type.
 //!
 //! [`AstBuild`]: super::AstBuild
 
@@ -14,7 +14,7 @@ use std::{alloc::Layout, mem::MaybeUninit, slice, str};
 use oxc_allocator::{Allocator, ArenaBox, GetAllocator};
 use oxc_span::{SPAN, Span};
 use oxc_str::Str;
-use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 
@@ -23,9 +23,9 @@ use super::GetAstBuilder;
 impl<'a> Expression<'a> {
     /// Build an [`Expression`] representing the number `0`.
     #[inline]
-    pub fn new_number_0<B: GetAstBuilder<'a>>(builder: &B) -> Self {
+    pub fn new_number_0(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Expression::new_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal, builder)
+        Expression::new_numeric_literal(span, 0.0, None, builder)
     }
 
     /// Build an [`Expression`] representing `void 0`.
@@ -33,9 +33,9 @@ impl<'a> Expression<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn new_void_0<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+    pub fn new_void_0(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        let argument = Expression::new_number_0(builder);
+        let argument = Expression::new_number_0(SPAN, builder);
         Expression::new_unary_expression(span, UnaryOperator::Void, argument, builder)
     }
 
@@ -44,16 +44,16 @@ impl<'a> Expression<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn new_nan<B: GetAstBuilder<'a>>(span: Span, builder: &B) -> Self {
+    pub fn new_nan(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Expression::new_numeric_literal(span, f64::NAN, None, NumberBase::Decimal, builder)
+        Expression::new_numeric_literal(span, f64::NAN, None, builder)
     }
 }
 
 impl<'a> Directive<'a> {
     /// Build a `"use strict"` [`Directive`].
     #[inline]
-    pub fn new_use_strict<B: GetAstBuilder<'a>>(builder: &B) -> Self {
+    pub fn new_use_strict(builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
         let use_strict = Str::from("use strict");
         Directive::new(
@@ -72,10 +72,10 @@ impl<'a> FormalParameter<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `pattern`
     #[inline]
-    pub fn new_plain<B: GetAstBuilder<'a>>(
+    pub fn new_plain(
         span: Span,
         pattern: BindingPattern<'a>,
-        builder: &B,
+        builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
         FormalParameter::new(span, [], pattern, None, None, false, None, false, false, builder)
@@ -95,14 +95,14 @@ impl<'a> Function<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     #[inline]
-    pub fn boxed_plain_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn boxed_plain_with_scope_id(
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
         params: ArenaBox<'a, FormalParameters<'a>>,
         body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
-        builder: &B,
+        builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         Function::boxed_with_scope_id_and_pure_and_pife(
@@ -141,7 +141,7 @@ impl<'a> Function<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
+    pub fn boxed_with_scope_id(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
@@ -154,7 +154,7 @@ impl<'a> Function<'a> {
         return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
-        builder: &B,
+        builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         Function::boxed_with_scope_id_and_pure_and_pife(
@@ -188,38 +188,15 @@ impl<'a> TemplateElement<'a> {
     /// * `value`
     /// * `tail`
     #[inline]
-    pub fn new_escape_raw<B: GetAstBuilder<'a>>(
+    pub fn new_escape_raw(
         span: Span,
         mut value: TemplateElementValue<'a>,
         tail: bool,
-        builder: &B,
+        builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
         value.raw = escape_template_element_raw(value.raw, builder.allocator());
         TemplateElement::new(span, value, tail, builder)
-    }
-
-    /// Build a [`TemplateElement`] with `lone_surrogates`, escaping special characters in the raw value.
-    ///
-    /// Like [`TemplateElement::new_with_lone_surrogates`], but escapes backticks, `${`,
-    /// backslashes, and carriage returns in `value.raw` first.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `value`
-    /// * `tail`
-    /// * `lone_surrogates`: The template element contains lone surrogates.
-    #[inline]
-    pub fn new_escape_raw_with_lone_surrogates<B: GetAstBuilder<'a>>(
-        span: Span,
-        mut value: TemplateElementValue<'a>,
-        tail: bool,
-        lone_surrogates: bool,
-        builder: &B,
-    ) -> Self {
-        let builder = builder.builder();
-        value.raw = escape_template_element_raw(value.raw, builder.allocator());
-        TemplateElement::new_with_lone_surrogates(span, value, tail, lone_surrogates, builder)
     }
 }
 

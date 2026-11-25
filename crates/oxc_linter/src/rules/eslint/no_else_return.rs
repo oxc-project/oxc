@@ -202,17 +202,13 @@ fn is_safe_from_name_collisions(
             let bindings = scopes.get_bindings(block_scope_id);
             let parent_bindings = scopes.get_bindings(parent_scope_id);
 
-            if bindings.iter().any(|(name, symbol_id)| {
+            !bindings.iter().any(|(name, symbol_id)| {
                 let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name)
                 else {
                     return false;
                 };
                 parent_name == name && symbol_id != parent_symbol_id
-            }) {
-                return false;
-            }
-
-            true
+            })
         }
         Statement::FunctionDeclaration(_) => false,
         _ => true,
@@ -382,7 +378,7 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
 
 impl Rule for NoElseReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

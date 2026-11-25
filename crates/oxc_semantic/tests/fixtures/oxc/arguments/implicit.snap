@@ -1,0 +1,344 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/implicit.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function | Arrow)",
+        "id": 2,
+        "node": "ArrowFunctionExpression",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 4,
+            "node": "BlockStatement",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function | Arrow)",
+            "id": 5,
+            "node": "ArrowFunctionExpression",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 6,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 7,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 3,
+        "node": "Function(ordinary)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 3,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "id": 4,
+            "name": "inherited",
+            "node": "VariableDeclarator(inherited)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 5,
+            "name": "T",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 6,
+            "name": "Q",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function | Arrow)",
+            "id": 9,
+            "node": "ArrowFunctionExpression",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 10,
+            "node": "Function(nested)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 11,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 8,
+        "node": "Function(parameter)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 8,
+            "name": "arguments",
+            "node": "FormalParameter(arguments)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 8,
+                "name": "arguments",
+                "node_id": 50,
+                "scope_id": 8
+              },
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 9,
+                "name": "arguments",
+                "node_id": 56,
+                "scope_id": 9
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "id": 9,
+            "name": "inherited",
+            "node": "VariableDeclarator(inherited)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 10,
+            "name": "nested",
+            "node": "Function(nested)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function | Arrow)",
+            "id": 12,
+            "node": "ArrowFunctionExpression",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 13,
+            "node": "Function(nested)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 11,
+        "node": "Function(local)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "id": 13,
+            "name": "arguments",
+            "node": "VariableDeclarator(arguments)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 12,
+                "name": "arguments",
+                "node_id": 75,
+                "scope_id": 11
+              },
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 13,
+                "name": "arguments",
+                "node_id": 81,
+                "scope_id": 12
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "id": 14,
+            "name": "inherited",
+            "node": "VariableDeclarator(inherited)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 15,
+            "name": "nested",
+            "node": "Function(nested)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function | Arrow)",
+            "id": 15,
+            "node": "ArrowFunctionExpression",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(Function)",
+        "id": 14,
+        "node": "Function(defaults)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 17,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "id": 18,
+            "name": "arguments",
+            "node": "VariableDeclarator(arguments)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 16,
+                "name": "arguments",
+                "node_id": 102,
+                "scope_id": 14
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function)",
+        "id": 16,
+        "node": "Function(<anonymous>)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 20,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)",
+        "id": 0,
+        "name": "arguments",
+        "node": "VariableDeclarator(arguments)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "arguments",
+            "node_id": 9,
+            "scope_id": 0
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "arguments",
+            "node_id": 15,
+            "scope_id": 2
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 6,
+            "name": "arguments",
+            "node_id": 37,
+            "scope_id": 6
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "arrow",
+        "node": "VariableDeclarator(arrow)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 2,
+        "name": "ordinary",
+        "node": "Function(ordinary)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 7,
+        "name": "parameter",
+        "node": "Function(parameter)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 12,
+        "name": "local",
+        "node": "Function(local)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 16,
+        "name": "defaults",
+        "node": "Function(defaults)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 19,
+        "name": "object",
+        "node": "VariableDeclarator(object)",
+        "references": []
+      }
+    ]
+  }
+]

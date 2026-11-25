@@ -17,7 +17,7 @@ use crate::{
     globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        get_element_type, get_prop_value, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role,
+        get_element_type, get_prop_value, has_jsx_prop_ignore_case, is_abstract_role,
         is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
         is_non_interactive_element, is_non_interactive_role, is_presentation_role,
     },
@@ -81,14 +81,16 @@ declare_oxc_lint!(
     NoStaticElementInteractions,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoStaticElementInteractionsConfig,
     version = "1.37.0",
-    short_description = "Enforces that static HTML elements with event handlers must have appropriate ARIA roles.",
+    short_description =
+        "Enforces that static HTML elements with event handlers must have appropriate ARIA roles.",
 );
 
 impl Rule for NoStaticElementInteractions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -99,12 +101,12 @@ impl Rule for NoStaticElementInteractions {
         // Note: We skip the handler if it exists with a `null` value, e.g. `<div onClick={null} />`.
         let has_handler = match &self.handlers {
             Some(handlers) => handlers.iter().any(|handler| {
-                has_jsx_prop(jsx_el, handler.as_str())
+                has_jsx_prop_ignore_case(jsx_el, handler.as_str())
                     .and_then(get_prop_value)
                     .is_some_and(|value| !is_null_value(value))
             }),
             None => DEFAULT_HANDLERS.iter().any(|handler| {
-                has_jsx_prop(jsx_el, handler)
+                has_jsx_prop_ignore_case(jsx_el, handler)
                     .and_then(get_prop_value)
                     .is_some_and(|value| !is_null_value(value))
             }),
@@ -151,10 +153,11 @@ impl Rule for NoStaticElementInteractions {
 
         match role_value {
             JSXAttributeValue::StringLiteral(role) => {
-                let role_str = role.value.as_str().cow_to_lowercase();
-                let roles: Vec<&str> = role_str.split_whitespace().collect();
-
-                if let Some(first_role) = roles.first() {
+                let Some(role_str) = role.value.as_str() else {
+                    return;
+                };
+                let role_str = role_str.cow_to_lowercase();
+                if let Some(first_role) = role_str.split_whitespace().next() {
                     if is_interactive_role(first_role) {
                         return;
                     }
@@ -566,6 +569,7 @@ fn test() {
         // (r"<div onMouseMove={() => {}} />;", None),
         // (r"<div onMouseOut={() => {}} />;", None),
         // (r"<div onMouseOver={() => {}} />;", None),
+        (r"<div onclick={() => {}} />;", None),
     ];
 
     Tester::new(NoStaticElementInteractions::NAME, NoStaticElementInteractions::PLUGIN, pass, fail)

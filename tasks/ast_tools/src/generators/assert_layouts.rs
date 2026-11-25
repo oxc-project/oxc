@@ -225,7 +225,7 @@ impl<'s> StructState<'s> {
             layout.size = next_offset;
 
             // Get highest alignment next field can have
-            *current_align = next_offset & next_offset.wrapping_neg();
+            *current_align = next_offset.isolate_lowest_one();
         }
 
         // Return offset of this field
@@ -559,6 +559,12 @@ impl LayoutCalculator<'_> {
             "f64" => Layout::from_type::<f64>(),
             "&str" => str_layout,
             "Str" => str_layout,
+            // `JSStr` is a pointer, a u32 length, and a bool.
+            // `Option<JSStr>` uses the bool's niche, which has more invalid values than the pointer.
+            "JSStr" => Layout {
+                layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(12, 1, 0, 254)),
+                layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(8, 1, 0, 254)),
+            },
             // `Ident` is `NonNull<u8>` + `u64` on 64-bit, `NonNull<u8>` + `u32` + `u32` on 32-bit.
             // Niche for 0 on the pointer field.
             "Ident" => Layout {
@@ -744,7 +750,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
             use nonmax::NonMaxU32;
 
             ///@@line_break
-            use crate::{module_record::*, node::*, number::*, operator::*, reference::*, scope::*, symbol::*};
+            use crate::{label::*, module_record::*, node::*, operator::*, reference::*, scope::*, symbol::*};
         },
         "napi/parser" => quote! {
             use crate::raw_transfer_types::*;

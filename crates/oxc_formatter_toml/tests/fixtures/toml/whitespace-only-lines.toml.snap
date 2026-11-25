@@ -1,0 +1,58 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+a = 1
+  
+b = 2
+#c
+ 	
+c = 3
+ 
+
+d = 4
+e = 5 # trailing spaces after this comment   
+arr = [
+  1, # c
+  
+  2,
+]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+a = 1
+
+b = 2
+#c
+
+c = 3
+
+d = 4
+e = 5 # trailing spaces after this comment
+arr = [
+  1, # c
+
+  2,
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+a = 1
+
+b = 2
+#c
+
+c = 3
+
+d = 4
+e = 5 # trailing spaces after this comment
+arr = [
+  1, # c
+
+  2,
+]
+
+===================== End =====================

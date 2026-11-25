@@ -1,0 +1,31 @@
+// Issue #25911: class decorators before `export` sit outside the statement span;
+// suppression must detect and print from the first decorator, not `span.start`.
+declare function M(o: unknown): ClassDecorator;
+
+// An ignore inside a decorator suppresses only the nearest node (the property),
+// not the whole statement.
+@M({
+  // prettier-ignore
+  a: [1,   2],
+  b:    2,
+})
+export class A {}
+
+// An ignore before the decorators suppresses the whole statement, decorators included.
+// prettier-ignore
+@M({ a: [1,   2] })
+export   class B {}
+
+// prettier-ignore
+@M({ a: [1,   2] })
+export   default   class C {}
+
+// An own-line ignore after `export` also suppresses the decorated class.
+export
+// prettier-ignore
+@M({ a: [1,   2] })
+class D {}
+
+// prettier-ignore
+@M({ a: [1,   2] })
+class E {}

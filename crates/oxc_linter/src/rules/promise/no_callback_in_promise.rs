@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -86,6 +86,7 @@ declare_oxc_lint!(
     NoCallbackInPromise,
     promise,
     correctness,
+    recommended,
     config = NoCallbackInPromiseConfig,
     version = "0.10.0",
     short_description = "Disallows calling a callback function (`cb()`) inside a `Promise.prototype.then()` or `Promise.prototype.catch()`.",
@@ -156,7 +157,6 @@ impl NoCallbackInPromise {
         // Check if the parent is a CallExpression with then/catch
         let parent = ctx.nodes().parent_node(node.id());
         if let Some(call_expr) = parent.kind().as_call_expression() {
-            // Check if this function is one of the arguments
             let is_argument = call_expr
                 .arguments
                 .iter()
@@ -173,7 +173,8 @@ impl NoCallbackInPromise {
             call_expr
                 .callee
                 .as_member_expression()
-                .and_then(MemberExpression::static_property_name),
+                .and_then(MemberExpression::static_property_name)
+                .and_then(JSStr::as_str),
             Some("then" | "catch")
         )
     }

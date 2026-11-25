@@ -20,7 +20,7 @@ declare_oxc_lint!(
 
 impl Rule for NoLargeSnapshots {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        NoLargeSnapshotsConfig::from_configuration(&value).map(|config| Self(Box::new(config)))
+        NoLargeSnapshotsConfig::from_configuration(value).map(|config| Self(Box::new(config)))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -91,6 +91,8 @@ fn test() {
         ("expect(something).toBe(1)", None, None, None),
         ("expect(something).toMatchInlineSnapshot", None, None, None),
         ("expect(something).toMatchInlineSnapshot()", None, None, None),
+        ("expect(0).toMatchInlineSnapshot('x'\u{00a0});", None, None, None),
+        ("expect(0).toThrowErrorMatchingInlineSnapshot(`x`\u{2003});", None, None, None),
         (two_match_inline_cases.as_str(), None, None, None),
         (two_throw_error_match_cases.as_str(), None, None, None),
         (

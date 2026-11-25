@@ -1,4 +1,4 @@
-use oxc_allocator::GetAllocator;
+use oxc_allocator::{GetAllocator, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_compat::{ESFeature, EngineTargets};
 use oxc_ecmascript::{
@@ -24,10 +24,6 @@ use crate::{
 use oxc_ast_visit::Visit;
 
 use super::{TraverseCtx, dropped_subtree_collector::DroppedSubtreeCollector};
-
-pub fn is_exact_int64(num: f64) -> bool {
-    num.fract() == 0.0
-}
 
 impl<'a> GlobalContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
@@ -256,12 +252,11 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// constant must be materialized where its global name is shadowed.
     fn non_finite_to_division_expr(&self, span: Span, n: f64) -> Expression<'a> {
         let numerator = if n.is_nan() { 0.0 } else { 1.0 };
-        let mut left =
-            Expression::new_numeric_literal(span, numerator, None, NumberBase::Decimal, self);
+        let mut left = Expression::new_numeric_literal(span, numerator, None, self);
         if n == f64::NEG_INFINITY {
             left = Expression::new_unary_expression(span, UnaryOperator::UnaryNegation, left, self);
         }
-        let right = Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, self);
+        let right = Expression::new_numeric_literal(span, 0.0, None, self);
         Expression::new_binary_expression(span, left, BinaryOperator::Division, right, self)
     }
 
@@ -271,17 +266,13 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 if !n.is_finite() && self.non_finite_global_shadowed(n) {
                     return self.non_finite_to_division_expr(span, n);
                 }
-                let number_base =
-                    if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
-                Expression::new_numeric_literal(span, n, None, number_base, self)
+                Expression::new_numeric_literal(span, n, None, self)
             }
             ConstantValue::BigInt(bigint) => {
                 let value = format_str!(self.allocator(), "{bigint}");
-                Expression::new_big_int_literal(span, value, None, BigintBase::Decimal, self)
+                Expression::new_big_int_literal(span, value, None, self)
             }
-            ConstantValue::String(s) => {
-                Expression::new_string_literal(span, Str::from_cow_in(&s, self), None, self)
-            }
+            ConstantValue::String(s) => Expression::new_string_literal(span, s, None, self),
             ConstantValue::Boolean(b) => Expression::new_boolean_literal(span, b, self),
             ConstantValue::Undefined => Expression::new_void_0(span, self),
             ConstantValue::Null => Expression::new_null_literal(span, self),
@@ -300,10 +291,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     #[inline]
     pub fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
-        if ident.name == "undefined" && ident.is_global_reference(self.scoping()) {
-            return true;
-        }
-        false
+        ident.name == "undefined" && ident.is_global_reference(self.scoping())
     }
 
     pub fn init_value(
@@ -312,8 +300,8 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         constant: Option<ConstantValue<'a>>,
         kind: FreshValueKind,
         falsy_init: bool,
-        init_absent: bool,
-    ) {
+        implicit_undefined_source: bool,
+    ) -> &mut SymbolValue<'a> {
         let mut references = ReferenceCounts::default();
         for reference in self.scoping().get_resolved_references(symbol_id) {
             references.record(reference.flags());
@@ -358,18 +346,20 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         };
 
         // See `SymbolValue::implicit_undefined` — only meaningful when the
-        // recorded constant is the hoist-produced `undefined` of `let x;`.
-        let implicit_undefined =
-            init_absent && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
+        // recorded constant is the implicit `undefined` of an uninitialized
+        // binding or a direct alias of one.
+        let implicit_undefined = implicit_undefined_source
+            && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
 
         let symbol_value = SymbolValue {
             initialized_constant,
+            allow_constant_inlining: true,
             implicit_undefined,
             references,
             kind: if has_multiple_value_declarations { FreshValueKind::None } else { kind },
             boolean_falsy,
         };
-        self.state.symbols.init_value(symbol_id, symbol_value);
+        self.state.symbols.init_value(symbol_id, symbol_value)
     }
 
     /// If two expressions are equal.
@@ -428,20 +418,20 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         if !expr.is_anonymous_function_definition() {
             return false;
         }
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        let is_class = matches!(expr, Expression::ClassExpression(_));
         (options.class && is_class) || (options.function && !is_class)
     }
 
-    /// Construct a `DroppedSubtreeCollector` borrowing the per-pass change accumulator.
+    /// Construct a [`DroppedSubtreeCollector`] borrowing the per-pass change accumulator.
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
     fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
-        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes, self.scoping.scoping())
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.
     ///
-    /// Prefer this over a direct `*slot = new; ctx.notice_change();` pair —
+    /// Prefer this over a direct `*slot = new;` and [`Self::notice_change`] pair —
     /// the typed helper keeps dropped-subtree bookkeeping, the slot update,
     /// and the pass revisit request together.
     #[inline]
@@ -451,11 +441,60 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.record_ast_change();
     }
 
+    /// Replace an expression slot with a value built from the owned old expression.
+    ///
+    /// Prefer this over `take_in` followed by [`Self::replace_expression`]. It avoids
+    /// leaving a dummy node in the arena. The closure must report any discarded
+    /// subtrees through the `drop_*` helpers; values moved into its result are not dropped.
+    #[inline]
+    pub fn replace_expression_with(
+        &mut self,
+        slot: &mut Expression<'a>,
+        replacer: impl FnOnce(Expression<'a>, &mut Self) -> Expression<'a>,
+    ) {
+        let ctx = &mut *self;
+        slot.replace_with(|old| replacer(old, ctx));
+        self.state.record_ast_change();
+    }
+
     /// Replace a statement slot. Marks the pass as having mutated the AST.
+    ///
+    /// Prefer this over a direct `*slot = new;` and [`Self::notice_change`] pair —
+    /// the typed helper keeps dropped-subtree bookkeeping, the slot update,
+    /// and the pass revisit request together.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
         self.dropped_subtree_collector().visit_statement(slot);
         *slot = new;
+        self.state.record_ast_change();
+    }
+
+    /// Replace a statement slot without requesting another pass.
+    ///
+    /// Only for rewrites the rest of the current pass fully consumes: every
+    /// node that could react to the new shape has not exited yet, and the
+    /// rewrite changes no fact that already-visited nodes read (resolved
+    /// references, symbol values, side effects). Dropped-subtree bookkeeping
+    /// still runs, so the caller must not drop any references.
+    #[inline]
+    pub fn replace_statement_settled(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        self.dropped_subtree_collector().visit_statement(slot);
+        *slot = new;
+    }
+
+    /// Replace a statement slot with a value built from the owned old statement.
+    ///
+    /// Prefer this over `take_in` followed by [`Self::replace_statement`]. It avoids
+    /// leaving a dummy node in the arena. The closure must report any discarded
+    /// subtrees through the `drop_*` helpers; values moved into its result are not dropped.
+    #[inline]
+    pub fn replace_statement_with(
+        &mut self,
+        slot: &mut Statement<'a>,
+        replacer: impl FnOnce(Statement<'a>, &mut Self) -> Statement<'a>,
+    ) {
+        let ctx = &mut *self;
+        slot.replace_with(|old| replacer(old, ctx));
         self.state.record_ast_change();
     }
 

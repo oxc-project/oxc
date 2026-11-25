@@ -178,12 +178,12 @@ export function report(
     // Do type validation checks here, to ensure no error in serialization / deserialization.
     // Range validation happens on Rust side.
     if (
-      typeof start !== "number" ||
-      typeof end !== "number" ||
-      start < 0 ||
-      end < 0 ||
-      (start | 0) !== start ||
-      (end | 0) !== end
+      typeof start !== "number"
+      || typeof end !== "number"
+      || start < 0
+      || end < 0
+      || (start | 0) !== start
+      || (end | 0) !== end
     ) {
       throw new TypeError("`node.range[0]` and `node.range[1]` must be non-negative integers");
     }
@@ -336,10 +336,10 @@ export function replacePlaceholders(message: string, data: DiagnosticData): stri
 function getOffsetFromLineColumn(lineCol: LineColumn): number {
   const { line, column } = lineCol;
   if (
-    typeof line !== "number" ||
-    typeof column !== "number" ||
-    (line | 0) !== line ||
-    (column | 0) !== column
+    typeof line !== "number"
+    || typeof column !== "number"
+    || (line | 0) !== line
+    || (column | 0) !== column
   ) {
     throw new TypeError("Expected an object with integer `line` and `column` properties");
   }
@@ -360,8 +360,8 @@ function getOffsetFromLineColumn(lineCol: LineColumn): number {
     }
 
     throw new RangeError(
-      `Line number out of range (line ${line} requested). ` +
-        `Line numbers should be 1-based, and less than or equal to number of lines in file (${lineStartIndices.length}).`,
+      `Line number out of range (line ${line} requested). `
+        + `Line numbers should be 1-based, and less than or equal to number of lines in file (${lineStartIndices.length}).`,
     );
   }
 

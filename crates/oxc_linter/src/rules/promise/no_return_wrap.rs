@@ -117,7 +117,7 @@ declare_oxc_lint!(
     /// myPromise().then(() => 4)
     /// myPromise().then(function() { return 4 })
     ///
-    /// myPromise().then(() => throw "err")
+    /// myPromise().then(() => { throw "err" })
     /// myPromise().then(function() { throw "err" })
     /// ```
     ///
@@ -134,6 +134,7 @@ declare_oxc_lint!(
     NoReturnWrap,
     promise,
     style,
+    recommended,
     pending,
     config = NoReturnWrap,
     version = "0.15.14",
@@ -142,7 +143,7 @@ declare_oxc_lint!(
 
 impl Rule for NoReturnWrap {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

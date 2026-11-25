@@ -14,7 +14,7 @@ use std::ops::Deref;
 use allowed::FunctionParameterKind;
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
-use oxc_ast::{AstKind, ast::CatchParameter};
+use oxc_ast::{AstKind, AstType, ast::CatchParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
@@ -26,6 +26,7 @@ use crate::{
     context::{ContextHost, LintContext},
     rule::Rule,
     rules::eslint::no_unused_vars::options::VarsOption,
+    utils::declarator_initializes,
 };
 
 #[derive(JsonSchema, Debug)]
@@ -202,10 +203,12 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
+    recommended,
     fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsConfig,
     version = "0.7.0",
-    short_description = "Disallows variable declarations, imports, or type declarations that are not used in code.",
+    short_description =
+        "Disallows variable declarations, imports, or type declarations that are not used in code.",
 );
 
 impl Deref for NoUnusedVars {
@@ -302,7 +305,7 @@ impl NoUnusedVars {
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if self.is_allowed_variable_declaration(symbol, decl) {
+                if self.is_allowed_variable_declaration(symbol, decl, ctx) {
                     return;
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
@@ -318,6 +321,11 @@ impl NoUnusedVars {
                 };
 
                 Self::report_with_fix_mode(self.fix.variables, ctx, report, |fixer| {
+                    // In `catch (e) { var e = 1 }`, the declarator initializes the catch
+                    // parameter. Removing or renaming it would change that binding's value.
+                    if !declarator_initializes(decl, symbol.id()) {
+                        return fixer.noop();
+                    }
                     // NOTE: suggestions produced by this fixer are all flagged
                     // as dangerous
                     self.rename_or_remove_var_declaration(fixer, symbol, decl, declaration.id())
@@ -366,7 +374,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::TSModuleDeclaration(namespace) => {
+            AstKind::TSNamespaceDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
@@ -382,7 +390,12 @@ impl NoUnusedVars {
                 if self.is_allowed_type_parameter(symbol, declaration.id()) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
+                    diagnostic::declared(symbol, &self.vars_ignore_pattern, false),
+                    |fixer| Self::remove_unused_type_parameter(fixer, symbol, declaration.id()),
+                );
             }
             // Mapped type keys are always used within the type definition
             AstKind::TSMappedType(_) => {}
@@ -448,14 +461,9 @@ impl NoUnusedVars {
         // get used in generated code. We don't have a way to detect
         // "jsxPragmas" or whether TSX files are using "jsx": "react-jsx", so we
         // just allow all cases.
-        if symbol.flags().contains(SymbolFlags::Import)
+        symbol.flags().contains(SymbolFlags::Import)
             && symbol.is_in_jsx()
             && symbol.is_possibly_jsx_factory()
-        {
-            return true;
-        }
-
-        false
     }
 }
 
@@ -464,14 +472,28 @@ fn remove_unused_catch_parameter<'a>(
     ctx: &LintContext<'a>,
     catch: &CatchParameter<'a>,
 ) -> crate::fixer::RuleFix {
+    // A redeclaring `var` initializer assigns to this binding even without references.
+    // Removing the parameter would redirect the assignment to the enclosing var binding.
+    if catch
+        .pattern
+        .get_binding_identifier()
+        .is_some_and(|id| ctx.scoping().catch_var_binding(id.symbol_id()).is_some())
+    {
+        return fixer.noop();
+    }
     let Span { start, end, .. } = catch.span();
-
-    let (Some(paren_start), Some(paren_end_offset)) =
-        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
-    else {
+    let AstKind::CatchClause(catch_clause) = ctx.nodes().parent_node(catch.node_id()).kind() else {
         return fixer.noop();
     };
 
+    let (Some(paren_start_offset), Some(paren_end_offset)) = (
+        ctx.find_prev_token_within(catch_clause.span.start, start, "("),
+        ctx.find_next_token_within(end, catch_clause.span.end, ")"),
+    ) else {
+        return fixer.noop();
+    };
+
+    let paren_start = catch_clause.span.start + paren_start_offset;
     let paren_end = end + paren_end_offset;
     let delete_span = Span::new(paren_start, paren_end + 1);
     fixer.delete_range(delete_span)
@@ -485,6 +507,10 @@ impl Symbol<'_, '_> {
     }
 
     fn is_in_declare_global(&self) -> bool {
+        if !self.nodes().contains(AstType::TSGlobalDeclaration) {
+            return false;
+        }
+
         self.scoping()
             .scope_ancestors(self.scope_id())
             .filter(|&scope_id| {
@@ -493,9 +519,7 @@ impl Symbol<'_, '_> {
             })
             .any(|ambient_module_scope_id| {
                 matches!(
-                    self.nodes()
-                        .get_node(self.scoping().get_node_id(ambient_module_scope_id))
-                        .kind(),
+                    self.nodes().kind(self.scoping().get_node_id(ambient_module_scope_id)),
                     AstKind::TSGlobalDeclaration(_)
                 )
             })

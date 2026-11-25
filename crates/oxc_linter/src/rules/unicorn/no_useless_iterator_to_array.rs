@@ -1,13 +1,13 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ForOfStatement, FormalParameters, NewExpression, SpreadElement,
-        YieldExpression,
+        CallExpression, Expression, ForOfStatement, NewExpression, SpreadElement, YieldExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -132,6 +132,7 @@ declare_oxc_lint!(
     NoUselessIteratorToArray,
     unicorn,
     nursery,
+    recommended,
     fix_or_suggestion,
     version = "1.59.0",
     short_description = "Disallow unnecessary `.toArray()` on iterators.",
@@ -271,7 +272,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
         else {
             return;
         };
-        let Some(method_name) = callee_member_expr.static_property_name() else {
+        let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+        else {
             return;
         };
 
@@ -315,7 +317,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
         else {
             return;
         };
-        let Some(method_name) = callee_member_expr.static_property_name() else {
+        let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+        else {
             return;
         };
 
@@ -353,7 +356,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
             return;
         };
 
-        let Some(method_name) = callee_member_expr.static_property_name() else {
+        let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+        else {
             return;
         };
         let is_reduce_call = method_name == "reduce";
@@ -366,10 +370,10 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
             .map(Expression::get_inner_expression)
             .and_then(|callback| match callback {
                 Expression::ArrowFunctionExpression(callback) => {
-                    Some(formal_parameters_len(&callback.params))
+                    Some(callback.params.parameters_count())
                 }
                 Expression::FunctionExpression(callback) => {
-                    Some(formal_parameters_len(&callback.params))
+                    Some(callback.params.parameters_count())
                 }
                 _ => None,
             });
@@ -383,10 +387,6 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
             |fixer| to_array_fix.fix(fixer),
         );
     }
-}
-
-fn formal_parameters_len(params: &FormalParameters) -> usize {
-    params.items.len() + usize::from(params.rest.is_some())
 }
 
 // Case 3: `for (const x of iterator.toArray())`

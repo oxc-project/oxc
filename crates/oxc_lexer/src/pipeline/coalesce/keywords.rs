@@ -1,0 +1,163 @@
+use std::ptr;
+
+use oxc_simd::{Cpu, cpu_multiversion};
+
+use crate::token::TokenKind;
+
+use crate::pipeline::{
+    bitmap::Bitmap,
+    keywords::{kw_match, kw_match_at},
+    kinds::Kinds,
+    source::Source,
+};
+
+pub const KWB: usize = 64;
+
+/// Positions a batch can push: 64 a block, plus the 8 slots push_positions always fills.
+pub const BATCH_SLOTS: usize = KWB * 64 + 8;
+
+/// Dispatch to the key-monomorphized verify without duplicating `coalesce`
+/// itself: one predictable branch per flush, not per candidate.
+#[cpu_multiversion]
+#[inline(always)]
+pub(super) unsafe fn kw_flush(
+    is_ts: bool,
+    src: Source,
+    word: Bitmap,
+    kinds: Kinds,
+    kw_candidates: *const u32,
+    k: usize,
+    cpu: impl Cpu,
+) {
+    if is_ts {
+        kw_verify_batch::<true>(src, word, kinds, kw_candidates, k, cpu);
+    } else {
+        kw_verify_batch::<false>(src, word, kinds, kw_candidates, k, cpu);
+    }
+}
+
+/// Resolve a batch of keyword candidates (positions collected by
+/// `coalesce`): exact match against the perfect-hash tables, patching
+/// `kind` from IDENT to the keyword kind on hit. `IS_TS` selects the
+/// active set's hash key - `(c0, c1, len)` for JS, `(c0, c1, last, len)`
+/// for TS - monomorphized so the JS copy carries none of the wider key.
+/// Kept out of line: inlining would double both variants into each of
+/// coalesce's flush sites, and one call per KWB words is free.
+#[cpu_multiversion]
+#[inline(never)]
+unsafe fn kw_verify_batch<const IS_TS: bool>(
+    src: Source,
+    word: Bitmap,
+    kinds: Kinds,
+    pos: *const u32,
+    k: usize,
+    cpu: impl Cpu,
+) {
+    for ix in 0..k {
+        let p = *pos.add(ix) as usize;
+        let len = word_len(word, p, cpu);
+        // Candidates are code-level identifier starts (carve cleared every
+        // literal interior and JSX start from the masks), so the incumbent
+        // kind is IDENT: select over it instead of a read-modify-write.
+        let window = &*src.as_ptr().add(p).cast::<[u8; 16]>();
+        kinds.as_ptr().add(p).write(kw_match::<IS_TS>(window, len, cpu) as u8);
+    }
+}
+
+/// Check if the word starting at `pos` is a keyword, outside of a batch.
+///
+/// For `glue_number`, which makes a token start of a word directly after a number (`3in`).
+/// That happens after `coalesce` has collected the candidates for the window, so the word is not in a batch.
+///
+/// Returns the keyword's kind, or Ident if it is not a keyword.
+#[cpu_multiversion]
+#[inline]
+pub(super) fn kw_match_word(
+    is_ts: bool,
+    src: Source,
+    word: Bitmap,
+    pos: usize,
+    cpu: impl Cpu,
+) -> TokenKind {
+    let len = word.next0(pos, src.len(), cpu) - pos;
+    kw_match_at(is_ts, src.padded(), pos, len, cpu)
+}
+
+/// The length of the word starting at pos from the word bitmap, capped at 16.
+///
+/// Keyword candidates can be longer than 10 bytes, because `coalesce`'s length filter only sees one word
+/// of the bitmap, so a word which crosses into the next one escapes it. A word of 16 bytes or more
+/// is not a keyword, and with length 16, it doesn't match one either.
+///
+/// Returns 0 if the byte at `pos` is not a word char.
+///
+/// # SAFETY
+///
+/// `word` must be valid for reading 8 bytes from byte `pos / 8`.
+#[cpu_multiversion]
+#[inline(always)]
+unsafe fn word_len(word: Bitmap, pos: usize, _cpu: impl Cpu) -> usize {
+    let x =
+        ptr::read_unaligned((word.as_ptr() as *const u8).add(pos >> 3) as *const u64) >> (pos & 7);
+    (!(x as u16)).trailing_zeros() as usize
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_simd::test_cpus;
+
+    use crate::{PAD, token::tk};
+
+    use super::*;
+
+    /// Check [`kw_flush`] gets each word's length from the word bitmap and sets its kind,
+    /// including for words longer than 16 bytes, and words crossing a 64-byte boundary.
+    #[test_cpus]
+    fn test_kw_flush(cpu: impl Cpu) {
+        let words: [(usize, &str, TokenKind, bool); 6] = [
+            (3, "class", TokenKind::KwClass, false),
+            (20, "interface", TokenKind::KwInterface, true),
+            (40, "instanceof", TokenKind::KwInstanceof, false),
+            (58, "instanceofabcdefghijklmnopqrstuvwxyz", TokenKind::Ident, false),
+            (100, "abcdefghijklmnopq", TokenKind::Ident, false),
+            (125, "typeof", TokenKind::KwTypeof, false),
+        ];
+
+        let mut src = [b' '; 256];
+        let mut kinds = [tk!(Whitespace); 256];
+        let mut word_bitmap = [0u64; 5];
+        let mut positions = vec![];
+        for &(pos, text, _, _) in &words {
+            src[pos..pos + text.len()].copy_from_slice(text.as_bytes());
+            for i in pos..pos + text.len() {
+                kinds[i] = tk!(Ident);
+                word_bitmap[i >> 6] |= 1 << (i & 63);
+            }
+            positions.push(pos as u32);
+        }
+
+        for is_ts in [false, true] {
+            let mut kinds = kinds; // Clone
+            // SAFETY: `src` and `kinds` cover every word plus 16 bytes,
+            // and `word_bitmap` has a spare `u64` after the last word
+            unsafe {
+                kw_flush(
+                    is_ts,
+                    Source::new(&src, src.len() - PAD),
+                    Bitmap::new(&mut word_bitmap),
+                    Kinds::new(&mut kinds),
+                    positions.as_ptr(),
+                    positions.len(),
+                    cpu,
+                );
+            }
+
+            for &(pos, text, mut kind, is_ts_only_keyword) in &words {
+                if is_ts_only_keyword && !is_ts {
+                    kind = TokenKind::Ident;
+                }
+                assert_eq!(kinds[pos], kind as u8, "`{text}` (is_ts = {is_ts})");
+            }
+        }
+    }
+}

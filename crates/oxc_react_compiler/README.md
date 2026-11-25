@@ -9,10 +9,13 @@ Compiler over an oxc AST, memoizing React components and hooks. The compiler _co
 front-end agnostic (they never depend on oxc), so they are consumed from crates.io as a published
 fork; the AST and scope conversion lives here, written against the live oxc AST.
 
+Ambient TypeScript variable declarations are erased from compiled functions. Their references
+remain external values rather than runtime locals, hoisted bindings, or captured context.
+
 ## API
 
-- `transform` — run the compiler and return the compiled oxc `Program` plus diagnostics.
-- `run` — standalone pass that rewrites a program in place and returns the scoping the rest of the
-  pipeline should use.
-- `lint` — report diagnostics only, without emitting code.
-- `default_plugin_options` / `PluginOptions` — configure which functions are compiled and how.
+- `compile` — run the compiler and return a `CompileResult` with the rewrite to apply
+  (via `CompileOutput::transform`) plus diagnostics.
+- `lint` — report diagnostics only, without emitting code; each finding is tagged with its
+  `ErrorCategory`.
+- `PluginOptions` — configure which functions are compiled and how.

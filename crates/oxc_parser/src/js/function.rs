@@ -11,7 +11,7 @@ use crate::{
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {
-        matches!(self, Self::Declaration)
+        matches!(self, Self::Declaration | Self::TSDeclaration)
     }
 
     pub(crate) fn is_expression(self) -> bool {
@@ -29,17 +29,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_function_body(&mut self) -> ArenaBox<'a, FunctionBody<'a>> {
-        let span = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
+
+        if self.at(Kind::RCurly) {
+            // `{}`: there are no directives or statements to parse.
+            self.advance(Kind::RCurly);
+            let (directives, statements) = (ArenaVec::new_in(self), ArenaVec::new_in(self));
+            return FunctionBody::boxed(self.end_span(start), directives, statements, self);
+        }
+
+        // Statements are never part of the binding pattern an enclosing cover list
+        // may become.
+        let cover_depth = std::mem::replace(&mut self.state.cover_depth, 0);
 
         // Add Return context, remove TopLevel context
         let (directives, statements) = self.context(Context::Return, Context::TopLevel, |p| {
             p.parse_directives_and_statements(/* in_ts_namespace_body */ false)
         });
 
+        self.state.cover_depth = cover_depth;
+
         self.expect_closing(Kind::RCurly, opening_span);
-        FunctionBody::boxed(self.end_span(span), directives, statements, self)
+        FunctionBody::boxed(self.end_span(start), directives, statements, self)
     }
 
     pub(crate) fn parse_formal_parameters(
@@ -47,12 +60,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         params_kind: FormalParameterKind,
     ) -> (Option<ArenaBox<'a, TSThisParameter<'a>>>, ArenaBox<'a, FormalParameters<'a>>) {
-        let span = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
-            self.bump(Kind::Comma);
+            if !self.at(Kind::RParen) {
+                self.expect(Kind::Comma);
+            }
             Some(param)
         } else {
             None
@@ -61,121 +76,183 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::RParen);
 
         let formal_parameters =
-            FormalParameters::boxed(self.end_span(span), params_kind, list, rest, self);
+            FormalParameters::boxed(self.end_span(start), params_kind, list, rest, self);
         (this_param, formal_parameters)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_formal_parameters_list(
         &mut self,
         func_kind: FunctionKind,
         opening_span: Span,
     ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut list = ArenaVec::new_in(self);
-        let rest = self.parse_formal_parameters_list_into(&mut list, func_kind, opening_span);
-        (list, rest)
+        self.parse_formal_parameters_list_after::<false>(
+            func_kind,
+            opening_span,
+            true,
+            None,
+            |_| None,
+        )
     }
 
+    /// Parse a parameter list whose leading parameters were already parsed as something else.
+    ///
+    /// When `PARSED` is `true`, `parsed` yields those parameters in order until it returns `None`.
+    /// `at_parameter_start` is `false` if the cursor is after a parameter (or after `rest`)
+    /// instead of at the start of one, so that `,` or `)` comes next.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_formal_parameters_list_into(
+    pub(super) fn parse_formal_parameters_list_after<const PARSED: bool>(
         &mut self,
-        list: &mut ArenaVec<'a, FormalParameter<'a>>,
         func_kind: FunctionKind,
         opening_span: Span,
-    ) -> Option<ArenaBox<'a, FormalParameterRest<'a>>> {
-        let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
-        let mut first = true;
+        at_parameter_start: bool,
+        rest: Option<ArenaBox<'a, FormalParameterRest<'a>>>,
+        mut parsed: impl FnMut(&mut Self) -> Option<FormalParameter<'a>>,
+    ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
+        let mut rest = rest;
+        let mut first = at_parameter_start;
         let mut has_optional = false;
+        let mut has_parsed = PARSED;
 
-        loop {
-            let kind = self.cur_kind();
-            if kind == Kind::RParen
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
-                break;
-            }
-
-            if first {
-                first = false;
-            } else {
-                let comma_span = self.cur_token().span();
-                if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
-                        Kind::RParen.to_str(),
-                        Kind::Comma.to_str(),
-                        kind.to_str(),
-                        comma_span,
-                        opening_span,
-                    );
-                    self.set_fatal_error(error);
-                    break;
+        let list = self.collect_list(|p| {
+            if PARSED && has_parsed {
+                if let Some(param) = parsed(p) {
+                    has_optional |= param.optional;
+                    return Some(param);
                 }
-                self.bump_any();
-                let kind = self.cur_kind();
-                if kind == Kind::RParen {
-                    if rest.is_some() && !self.ctx.has_ambient() {
-                        self.error(diagnostics::rest_element_trailing_comma(comma_span));
+                has_parsed = false;
+            }
+            loop {
+                let kind = p.cur_kind();
+                if kind == Kind::RParen
+                    || matches!(kind, Kind::Eof | Kind::Undetermined)
+                    || p.fatal_error.is_some()
+                {
+                    return None;
+                }
+
+                if first {
+                    first = false;
+                } else {
+                    let comma_span = p.cur_token().span();
+                    if kind != Kind::Comma {
+                        let error = diagnostics::expect_closing_or_separator(
+                            Kind::RParen.to_str(),
+                            Kind::Comma.to_str(),
+                            kind.to_str(),
+                            comma_span,
+                            opening_span,
+                        );
+                        p.set_fatal_error(error);
+                        return None;
                     }
-                    break;
-                }
-            }
-
-            if let Some(r) = &rest {
-                self.set_fatal_error(diagnostics::rest_parameter_last(
-                    r.type_annotation.as_ref().map_or_else(
-                        || r.rest.span,
-                        |type_annotation| r.rest.span.merge(type_annotation.span()),
-                    ),
-                ));
-                break;
-            }
-
-            let span = self.start_span();
-            let decorators = self.parse_decorators();
-
-            if self.at(Kind::Dot3) {
-                let rest_element = self.parse_rest_element_for_formal_parameter();
-                let type_annotation =
-                    if self.is_ts { self.parse_ts_type_annotation() } else { None };
-
-                let are_decorators_allowed =
-                    matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
-                        && self.is_ts;
-                if !are_decorators_allowed {
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                    p.bump_any();
+                    let kind = p.cur_kind();
+                    if kind == Kind::RParen {
+                        if rest.is_some() && !p.ctx.has_ambient() {
+                            p.error(diagnostics::rest_element_trailing_comma(comma_span));
+                        }
+                        return None;
                     }
                 }
 
-                rest = Some(FormalParameterRest::boxed(
-                    self.end_span(span),
-                    decorators,
-                    rest_element,
-                    type_annotation,
-                    self,
-                ));
-            } else {
-                let param =
-                    self.parse_formal_parameter_with_decorators(func_kind, span, decorators);
+                if let Some(r) = &rest {
+                    p.set_fatal_error(diagnostics::rest_parameter_last(
+                        r.type_annotation.as_ref().map_or_else(
+                            || r.rest.span,
+                            |type_annotation| r.rest.span.merge(type_annotation.span()),
+                        ),
+                    ));
+                    return None;
+                }
+
+                let start = p.cur_start();
+                // A parameter that starts with an identifier or a pattern has no decorators
+                // or modifiers, which are all keywords or `@`.
+                let param = if matches!(p.cur_kind(), Kind::Ident | Kind::LCurly | Kind::LBrack) {
+                    p.parse_formal_parameter_without_modifiers(start)
+                } else {
+                    let decorators = p.parse_decorators();
+
+                    if p.at(Kind::Dot3) {
+                        let rest_element = p.parse_rest_element_for_formal_parameter();
+                        let type_annotation =
+                            if p.is_ts { p.parse_ts_type_annotation() } else { None };
+
+                        let are_decorators_allowed = matches!(
+                            func_kind,
+                            FunctionKind::ClassMethod | FunctionKind::Constructor
+                        ) && p.is_ts;
+                        if !are_decorators_allowed {
+                            for decorator in &decorators {
+                                p.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                            }
+                        }
+
+                        rest = Some(FormalParameterRest::boxed(
+                            p.end_span(start),
+                            decorators,
+                            rest_element,
+                            type_annotation,
+                            p,
+                        ));
+                        continue;
+                    }
+                    p.parse_formal_parameter_with_decorators(func_kind, start, decorators)
+                };
                 if param.optional {
                     has_optional = true;
                 } else if has_optional && param.initializer.is_none() {
-                    self.error(diagnostics::required_parameter_after_optional_parameter(
-                        param.span,
-                    ));
+                    p.error(diagnostics::required_parameter_after_optional_parameter(param.span));
                 }
-                list.push(param);
+                return Some(param);
             }
+        });
+
+        (list, rest)
+    }
+
+    /// Parse a parameter that has no decorators or modifiers: `a`, `a: T = b`, `{ a }?: T`.
+    fn parse_formal_parameter_without_modifiers(&mut self, start: u32) -> FormalParameter<'a> {
+        let pattern = self.parse_binding_pattern();
+        if matches!(self.cur_kind(), Kind::Comma | Kind::RParen) {
+            return FormalParameter::new_plain(self.end_span(start), pattern, self);
         }
 
-        rest
+        let optional = self.is_ts && self.eat(Kind::Question);
+        let type_annotation = self.parse_ts_type_annotation();
+        let init = if self.eat(Kind::Eq) {
+            let init =
+                self.context_add(Context::In, ParserImpl::parse_assignment_expression_or_higher);
+            if optional {
+                self.error(diagnostics::a_parameter_cannot_have_question_mark_and_initializer(
+                    pattern.span(),
+                ));
+            }
+            Some(ArenaBox::new_in(init, self))
+        } else {
+            None
+        };
+        FormalParameter::new(
+            self.end_span(start),
+            [],
+            pattern,
+            type_annotation,
+            init,
+            optional,
+            None,
+            false,
+            false,
+            self,
+        )
     }
 
     fn parse_formal_parameter_with_decorators(
         &mut self,
         func_kind: FunctionKind,
-        span: u32,
+        start: u32,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
         let modifiers = self.parse_modifiers(false, false);
@@ -236,7 +313,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             } else {
                 self.error(diagnostics::parameter_property_cannot_be_binding_pattern(Span::new(
-                    span,
+                    start,
                     self.prev_token_end,
                 )));
             }
@@ -251,7 +328,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
         FormalParameter::new(
-            self.end_span(span),
+            self.end_span(start),
             decorators,
             pattern,
             type_annotation,
@@ -266,7 +343,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_function(
         &mut self,
-        span: u32,
+        start: u32,
         id: Option<BindingIdentifier<'a>>,
         r#async: bool,
         generator: Option<u32>,
@@ -276,13 +353,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, Function<'a>> {
         let ctx = self.ctx;
         // `new.target` is allowed in a function's parameters and body (but not arrow
-        // functions, which are parsed via `parse_function_body` directly).
+        // functions, which are parsed via `parse_function_body` directly). Neither is at
+        // the top level, so `await` in them is not top-level `await`.
         self.ctx = self
             .ctx
             .and_in(true)
             .and_await(r#async)
             .and_yield(generator.is_some())
-            .and_new_target(true);
+            .and_new_target(true)
+            .and_top_level(false);
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
@@ -296,9 +375,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .and_in(ctx.has_in())
             .and_await(ctx.has_await())
             .and_yield(ctx.has_yield())
-            .and_new_target(ctx.has_new_target());
+            .and_new_target(ctx.has_new_target())
+            .and_top_level(ctx.has_top_level());
         if (!self.is_ts || matches!(func_kind, FunctionKind::ObjectMethod)) && body.is_none() {
-            return self.fatal_error(diagnostics::expect_function_body(self.end_span(span)));
+            return self.fatal_error(diagnostics::expect_function_body(self.end_span(start)));
         }
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
@@ -348,7 +428,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if ctx.has_ambient() {
                 self.error(diagnostics::generator_in_ambient_context(self.end_span(generator)));
             } else if body.is_none() {
-                self.error(diagnostics::overload_signature_generator(self.end_span(span)));
+                self.error(diagnostics::overload_signature_generator(
+                    self.end_span(start.min(generator)),
+                ));
             }
         }
         self.verify_modifiers(
@@ -359,7 +441,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
 
         Function::boxed(
-            self.end_span(span),
+            self.end_span(start),
             function_type,
             id,
             generator.is_some(),
@@ -377,12 +459,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// [Function Declaration](https://tc39.es/ecma262/#prod-FunctionDeclaration)
     pub(crate) fn parse_function_declaration(
         &mut self,
-        span: u32,
+        start: u32,
         r#async: bool,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
         let func_kind = FunctionKind::Declaration;
-        let decl = self.parse_function_impl(span, r#async, func_kind);
+        let decl = self.parse_function_impl(start, r#async, func_kind);
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
                 self.error(diagnostics::async_function_declaration(Span::new(
@@ -403,7 +485,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// at `function` or `async function`
     pub(crate) fn parse_function_impl(
         &mut self,
-        span: u32,
+        start: u32,
         r#async: bool,
         func_kind: FunctionKind,
     ) -> ArenaBox<'a, Function<'a>> {
@@ -411,7 +493,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
         let id = self.parse_function_id(func_kind, r#async, generator.is_some());
         self.parse_function(
-            span,
+            start,
             id,
             r#async,
             generator,
@@ -425,7 +507,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// at `function`
     pub(crate) fn parse_ts_function_impl(
         &mut self,
-        start_span: u32,
+        start: u32,
         func_kind: FunctionKind,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, Function<'a>> {
@@ -434,7 +516,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
         let id = self.parse_function_id(func_kind, r#async, generator.is_some());
         self.parse_function(
-            start_span,
+            start,
             id,
             r#async,
             generator,
@@ -445,21 +527,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// [Function Expression](https://tc39.es/ecma262/#prod-FunctionExpression)
-    pub(crate) fn parse_function_expression(&mut self, span: u32, r#async: bool) -> Expression<'a> {
-        let func_kind = FunctionKind::Expression;
-        self.expect(Kind::Function);
-
-        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
-        let id = self.parse_function_id(func_kind, r#async, generator.is_some());
-        let function = self.parse_function(
-            span,
-            id,
-            r#async,
-            generator,
-            func_kind,
-            FormalParameterKind::FormalParameter,
-            &Modifiers::empty(),
-        );
+    pub(crate) fn parse_function_expression(
+        &mut self,
+        start: u32,
+        r#async: bool,
+    ) -> Expression<'a> {
+        let function = self.parse_function_impl(start, r#async, FunctionKind::Expression);
         Expression::FunctionExpression(function)
     }
 
@@ -477,9 +550,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         generator: Option<u32>,
         func_kind: FunctionKind,
     ) -> ArenaBox<'a, Function<'a>> {
-        let span = self.start_span();
+        let start = self.cur_start();
         self.parse_function(
-            span,
+            start,
             None,
             r#async,
             generator,
@@ -494,12 +567,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// yield [no `LineTerminator` here] `AssignmentExpression`
     /// yield [no `LineTerminator` here] * `AssignmentExpression`
     pub(crate) fn parse_yield_expression(&mut self) -> Expression<'a> {
-        let span = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `yield`
 
         let has_yield = self.ctx.has_yield();
         if !has_yield {
-            self.error(diagnostics::yield_expression(Span::sized(span, 5)));
+            self.error(diagnostics::yield_expression(Span::sized(start, 5)));
         }
 
         let mut delegate = false;
@@ -524,7 +597,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        Expression::new_yield_expression(self.end_span(span), delegate, argument, self)
+        Expression::new_yield_expression(self.end_span(start), delegate, argument, self)
     }
 
     // id: None - for AnonymousDefaultExportedFunctionDeclaration
@@ -535,6 +608,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         generator: bool,
     ) -> Option<BindingIdentifier<'a>> {
         let kind = self.cur_kind();
+        if kind == Kind::Ident {
+            return Some(self.parse_plain_binding_identifier());
+        }
         if kind.is_binding_identifier() {
             let mut ctx = self.ctx;
             if func_kind.is_expression() {
@@ -546,12 +622,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Some(BindingIdentifier::new(span, name, self))
         } else {
             if func_kind.is_id_required() {
-                match self.cur_kind() {
-                    Kind::LParen => {
-                        self.error(diagnostics::expect_function_name(self.cur_token().span()));
-                    }
-                    kind if kind.is_reserved_keyword() => self.expect_without_advance(Kind::Ident),
-                    _ => {}
+                if kind == Kind::LParen || (kind == Kind::LAngle && self.is_ts) {
+                    self.error(diagnostics::expect_function_name(self.cur_token().span()));
+                } else if kind.is_reserved_keyword() {
+                    self.expect_without_advance(Kind::Ident);
                 }
             }
 

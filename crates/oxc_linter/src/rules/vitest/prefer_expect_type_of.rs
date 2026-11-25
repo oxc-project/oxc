@@ -4,10 +4,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{MemberExpressionElement, PossibleJestNode, parse_expect_jest_fn_call},
 };
@@ -70,24 +71,27 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferExpectTypeOf {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        Self::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        Self::run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 impl PreferExpectTypeOf {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let Some(expect_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(expect_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -120,21 +124,20 @@ impl PreferExpectTypeOf {
             return;
         }
 
-        let modifier_text =
-            expect_call.modifiers().iter().fold(String::new(), |mut acc, modifier| {
-                use std::fmt::Write;
-                match modifier.element {
-                    // `.not`
-                    MemberExpressionElement::IdentName(_) => {
-                        write!(&mut acc, ".{}", ctx.source_range(modifier.span)).unwrap();
-                    }
-                    // `["not"]`, `[not]`, `[`not`]`, etc.
-                    MemberExpressionElement::Expression(_) => {
-                        write!(&mut acc, "[{}]", ctx.source_range(modifier.span)).unwrap();
-                    }
+        let modifier_text = expect_call.modifiers().fold(String::new(), |mut acc, modifier| {
+            use std::fmt::Write;
+            match modifier.element {
+                // `.not`
+                MemberExpressionElement::IdentName(_) => {
+                    write!(&mut acc, ".{}", ctx.source_range(modifier.span)).unwrap();
                 }
-                acc
-            });
+                // `["not"]`, `[not]`, `[`not`]`, etc.
+                MemberExpressionElement::Expression(_) => {
+                    write!(&mut acc, "[{}]", ctx.source_range(modifier.span)).unwrap();
+                }
+            }
+            acc
+        });
 
         let param = ctx.source_range(GetSpan::span(&typeof_expression.argument));
         let type_text = ctx.source_range(type_expected.span());

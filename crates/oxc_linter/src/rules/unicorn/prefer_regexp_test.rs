@@ -1,13 +1,19 @@
-use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
     ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::UnaryOperator;
 
-use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::{get_symbol_id_of_variable, outermost_paren_parent},
+    context::LintContext,
+    rule::Rule,
+    utils::{is_logical_expression, is_regexp_callee},
+};
 
 fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.")
@@ -47,7 +53,8 @@ declare_oxc_lint!(
     PreferRegexpTest,
     unicorn,
     pedantic,
-    fix,
+    recommended,
+    fix_suggestion,
     version = "0.0.16",
     short_description = "Prefers `RegExp#test()` over `String#match()` and `String#exec()`.",
 );
@@ -70,86 +77,84 @@ impl Rule for PreferRegexpTest {
             return;
         }
 
-        let (span, name) = match member_expr {
+        let (span, is_match) = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
-                if !matches!(v.property.name.as_str(), "match" | "exec") {
-                    return;
-                }
-                (v.property.span, &v.property.name)
+                let is_match = match v.property.name.as_str() {
+                    "match" => true,
+                    "exec" => false,
+                    _ => return,
+                };
+                (v.property.span, is_match)
             }
             _ => return,
         };
 
-        let Some(parent) = outermost_paren_parent(node, ctx) else {
-            return;
+        let mut boolean_node = node;
+        let parent = loop {
+            let Some(parent) = outermost_paren_parent(boolean_node, ctx) else {
+                return;
+            };
+            if !is_logical_expression(parent) {
+                break parent;
+            }
+            boolean_node = parent;
         };
 
         match parent.kind() {
             AstKind::ForStatement(for_stmt) => {
                 let Some(test) = &for_stmt.test else { return };
 
-                let Expression::CallExpression(call_expr2) = test else {
-                    return;
-                };
-
-                // Check if the `test` of the for statement is the same node as the call expression.
-                if call_expr2.address() != call_expr.unstable_address() {
+                if test.get_inner_expression().span() != boolean_node.kind().span() {
                     return;
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                let Expression::CallExpression(call_expr2) = &conditional_expr.test else {
-                    return;
-                };
-
-                // Check if the `test` of the conditional expression is the same node as the call expression.
-                if call_expr2.address() != call_expr.unstable_address() {
+                if conditional_expr.test.get_inner_expression().span() != boolean_node.kind().span()
+                {
                     return;
                 }
             }
             AstKind::CallExpression(call_expr) => {
+                if call_expr.optional || call_expr.arguments.len() != 1 {
+                    return;
+                }
+
                 let Expression::Identifier(ident) = &call_expr.callee else {
                     return;
                 };
 
-                if ident.name.as_str() != "Boolean" {
+                if ident.name.as_str() != "Boolean" || !ctx.is_reference_to_global_variable(ident) {
                     return;
                 }
             }
-            AstKind::WhileStatement(_)
-            | AstKind::DoWhileStatement(_)
-            | AstKind::IfStatement(_)
-            | AstKind::UnaryExpression(_) => {}
+            AstKind::UnaryExpression(unary_expr)
+                if unary_expr.operator == UnaryOperator::LogicalNot => {}
+            AstKind::WhileStatement(_) | AstKind::DoWhileStatement(_) | AstKind::IfStatement(_) => {
+            }
             _ => return,
         }
 
-        match name.as_str() {
-            "match" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
-
-                if let Some(expr) = call_expr.arguments[0].as_expression()
-                    && expr.is_literal()
-                    && !matches!(expr, Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
-            }
-            "exec" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
-            }
-            _ => unreachable!("expected match or test, got: {:?}", name),
+        if member_expr.object().is_literal()
+            && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
+        {
+            return;
         }
 
-        ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
-            if name.as_str() == "exec" {
+        if is_match
+            && let Some(expr) = call_expr.arguments[0].as_expression()
+            && expr.is_literal()
+            && !matches!(expr, Expression::RegExpLiteral(_))
+        {
+            return;
+        }
+
+        let fix_kind = if !is_match || is_known_regexp(&call_expr.arguments[0], ctx) {
+            FixKind::Fix
+        } else {
+            FixKind::Suggestion
+        };
+        ctx.diagnostic_with_fix_of_kind(prefer_regexp_test_diagnostic(span), fix_kind, |fixer| {
+            if !is_match {
                 return fixer.replace(span, "test");
             }
             let mut fix = fixer.new_fix_with_capacity(3);
@@ -160,6 +165,38 @@ impl Rule for PreferRegexpTest {
 
             fix.with_message("Replace with `RegExp.test()`")
         });
+    }
+}
+
+fn is_known_regexp<'a>(argument: &oxc_ast::ast::Argument<'a>, ctx: &LintContext<'a>) -> bool {
+    let Some(mut expr) = argument.as_expression().map(Expression::get_inner_expression) else {
+        return false;
+    };
+    if let Expression::Identifier(ident) = expr {
+        let Some(symbol) = get_symbol_id_of_variable(ident, ctx) else { return false };
+        if ctx.scoping().symbol_is_mutated(symbol)
+            || !ctx.scoping().symbol_redeclarations(symbol).is_empty()
+        {
+            return false;
+        }
+        let AstKind::VariableDeclarator(declaration) =
+            ctx.nodes().kind(ctx.scoping().symbol_declaration(symbol))
+        else {
+            return false;
+        };
+        if !declaration.id.is_binding_identifier()
+            || matches!(ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(symbol)), AstKind::VariableDeclaration(declaration) if declaration.kind.is_var())
+        {
+            return false;
+        }
+        let Some(init) = &declaration.init else { return false };
+        expr = init.get_inner_expression();
+    }
+    match expr {
+        Expression::RegExpLiteral(_) => true,
+        Expression::NewExpression(constructor) => is_regexp_callee(&constructor.callee, ctx),
+        Expression::CallExpression(call) => !call.optional && is_regexp_callee(&call.callee, ctx),
+        _ => false,
     }
 }
 
@@ -195,6 +232,23 @@ fn test() {
         "if (foo.match(null)) {}",
         "if (foo.match(1n)) {}",
         "if (foo.match(true)) {}",
+        "const value = a && s.match(/x/);",
+        "const value = s.match(/x/) || a;",
+        "if (s.match(/x/) ?? a) {}",
+        "if (a ?? s.match(/x/)) {}",
+        "for (a && s.match(/x/); ; ) {}",
+        "for (; ; a || /x/.exec(s)) {}",
+        "const value = a ? s.match(/x/) || b : b && /x/.exec(s);",
+        "if (consume(a && s.match(/x/))) {}",
+        "const value = typeof (a && s.match(/x/));",
+        "const value = +(a || /x/.exec(s));",
+        "Boolean(a && s.match(/x/), b);",
+        "Boolean(...(a && s.match(/x/)));",
+        "Boolean?.(a && s.match(/x/));",
+        "function f(Boolean) { return Boolean(a && s.match(/x/)); }",
+        "if ((a && s.match(/x/)) ?? b) {}",
+        "if (a ?? (b || /x/.exec(s))) {}",
+        "if (a && (b ?? s.match(/x/))) {}",
     ];
 
     let fail = vec![
@@ -277,6 +331,16 @@ fn test() {
             if(str.match(re));",
         "!/a/u.exec(foo)",
         "!/a/v.exec(foo)",
+        "export function f(a, s) {\n  if (a && s.match(/x/)) {}\n  if (s.match(/x/) || a) {}\n  if (s.match(/x/)) {}\n}",
+        "if (s.match(/x/) && a) {}",
+        "if (a || s.match(/x/)) {}",
+        "if ((a && (b || (s.match(/x/))))) {}",
+        "while (a && /x/.exec(s)) {}",
+        "do {} while (/x/.exec(s) || a);",
+        "for (; (a && s.match(/x/)); ) {}",
+        "const value = (s.match(/x/) || a) ? 1 : 2;",
+        "const value = Boolean(a && s.match(/x/));",
+        "const value = !(a || /x/.exec(s));",
     ];
 
     let fix = vec![
@@ -309,9 +373,67 @@ fn test() {
         ),
         ("const re = /a/; if (re.exec(foo)) {}", "const re = /a/; if (re.test(foo)) {}"),
         ("const re = /a/; if (someStr.match(re)) {}", "const re = /a/; if (re.test(someStr)) {}"),
+        (
+            "export function f(a, s) {\n  if (a && s.match(/x/)) {}\n  if (s.match(/x/) || a) {}\n  if (s.match(/x/)) {}\n}",
+            "export function f(a, s) {\n  if (a && /x/.test(s)) {}\n  if (/x/.test(s) || a) {}\n  if (/x/.test(s)) {}\n}",
+        ),
+        ("if (s.match(/x/) && a) {}", "if (/x/.test(s) && a) {}"),
+        ("if (a || s.match(/x/)) {}", "if (a || /x/.test(s)) {}"),
+        ("if ((a && (b || (s.match(/x/))))) {}", "if ((a && (b || (/x/.test(s))))) {}"),
+        ("while (a && /x/.exec(s)) {}", "while (a && /x/.test(s)) {}"),
+        ("do {} while (/x/.exec(s) || a);", "do {} while (/x/.test(s) || a);"),
+        ("for (; (a && s.match(/x/)); ) {}", "for (; (a && /x/.test(s)); ) {}"),
+        ("const value = (s.match(/x/) || a) ? 1 : 2;", "const value = (/x/.test(s) || a) ? 1 : 2;"),
+        ("const value = Boolean(a && s.match(/x/));", "const value = Boolean(a && /x/.test(s));"),
+        ("const value = !(a || /x/.exec(s));", "const value = !(a || /x/.test(s));"),
     ];
 
     Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_fix_requires_regexp() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let unchanged = [
+        r#"const query = "a"; if (title.match(query)) {}"#,
+        "if (glob.match(file)) {}",
+        r#"let pattern = /a/; pattern = "a"; if (title.match(pattern)) {}"#,
+        "function f(RegExp) { if (title.match(new RegExp('a'))) {} }",
+        "if (title.match(getPattern())) {}",
+        "if (title.match(RegExp?.('a'))) {}",
+        "const title = 'a'; if (title.match(re)) {} var re = /a/;",
+        "if (false) { var re = /a/; } if (title.match(re)) {}",
+        "var re = /a/; var re = 'a'; if (title.match(re)) {}",
+    ];
+    let mut fixes: Vec<_> =
+        unchanged.into_iter().map(|source| (source, source, None, FixKind::Fix)).collect();
+    fixes.extend([
+        ("if (glob.match(file)) {}", "if (file.test(glob)) {}", None, FixKind::Suggestion),
+        ("if (title.match((/a/))) {}", "if ((/a/).test(title)) {}", None, FixKind::Fix),
+        ("if (title.match(RegExp('a'))) {}", "if (RegExp('a').test(title)) {}", None, FixKind::Fix),
+        (
+            "const re = new RegExp('a'); if (title.match(re)) {}",
+            "const re = new RegExp('a'); if (re.test(title)) {}",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const re = /a/; if (title.match((re))) {}",
+            "const re = /a/; if ((re).test(title)) {}",
+            None,
+            FixKind::Fix,
+        ),
+        ("if (/a/.exec(title)) {}", "if (/a/.test(title)) {}", None, FixKind::Fix),
+    ]);
+    Tester::new(
+        PreferRegexpTest::NAME,
+        PreferRegexpTest::PLUGIN,
+        Vec::<&str>::new(),
+        unchanged.to_vec(),
+    )
+    .expect_fix(fixes)
+    .test();
 }

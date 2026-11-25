@@ -54,17 +54,18 @@ declare_oxc_lint!(
     NoConstAssign,
     eslint,
     correctness,
+    recommended,
     version = "0.0.3",
     short_description = "Disallow reassigning `const` variables.",
 );
 
 impl Rule for NoConstAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::VariableDeclarator(decl) if decl.kind.is_const() || decl.kind.is_using() => {
-                decl.id.bound_names(&mut |ident| check_symbol_id(ident.symbol_id(), ctx));
+        let AstKind::VariableDeclaration(declaration) = node.kind() else { return };
+        if declaration.kind.is_const() || declaration.kind.is_using() {
+            for declarator in &declaration.declarations {
+                declarator.id.bound_names(&mut |ident| check_symbol_id(ident.symbol_id(), ctx));
             }
-            _ => {}
         }
     }
 }
@@ -110,6 +111,7 @@ fn test() {
         "using x = foo(); bar(x);",
         "await using x = foo(); bar(x);",
         "type t = (a, ...b) => void",
+        "let a = 1, b = 2; a = 3; b = 4;",
     ];
 
     let fail = vec![
@@ -140,6 +142,8 @@ fn test() {
         "await using x = foo(); [x = baz, y] = bar();",
         "using x = foo(); ({a: x} = bar());",
         "await using x = foo(); ({a: x = baz} = bar());",
+        "const a = 1, {b} = source; a = 2; b = 3;",
+        "using a = foo(), b = bar(); b = baz();",
     ];
 
     Tester::new(NoConstAssign::NAME, NoConstAssign::PLUGIN, pass, fail).test_and_snapshot();

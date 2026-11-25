@@ -1,0 +1,12 @@
+a {
+  b: f(
+    to top,
+    x 1px /* c,
+    d */
+  );
+}
+
+a {
+  transition: opacity 1s /* aaa
+     bbb */ ease, color 2s;
+}

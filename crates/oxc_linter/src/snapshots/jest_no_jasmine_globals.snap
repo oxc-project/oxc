@@ -141,3 +141,17 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────────────────
    ╰────
   help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine["\uD800"]()
+   ·         ────────
+   ╰────
+  help: "prefer using Jest's own API"
+
+  ⚠ jest(no-jasmine-globals): "Illegal usage of jasmine global"
+   ╭─[no_jasmine_globals.tsx:1:9]
+ 1 │ jasmine["x\uDC00"] = 5000
+   ·         ─────────
+   ╰────
+  help: "prefer using Jest's own API"

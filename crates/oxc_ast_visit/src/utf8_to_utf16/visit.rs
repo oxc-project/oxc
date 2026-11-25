@@ -18,7 +18,16 @@ impl Utf8ToUtf16Converter<'_> {
         // Span of `FormalParameters` itself does not appear in ESTree AST,
         // and its span includes `TSThisParameter` in types like `Function`,
         // which is converted before `FormalParameters`. So skip converting span.
-        walk_mut::walk_formal_parameters(self, params);
+        self.visit_formal_parameter_list(&mut params.items);
+        if let Some(rest) = &mut params.rest {
+            self.convert_offset(&mut rest.span.start);
+            self.visit_decorators(&mut rest.decorators);
+            self.visit_binding_rest_element(&mut rest.rest);
+            if let Some(type_annotation) = &mut rest.type_annotation {
+                self.visit_ts_type_annotation(type_annotation);
+            }
+            self.convert_offset(&mut rest.span.end);
+        }
     }
 
     pub(crate) fn convert_object_property(&mut self, prop: &mut ObjectProperty<'_>) {
@@ -141,11 +150,11 @@ impl Utf8ToUtf16Converter<'_> {
         if let Some(type_parameters) = &mut class.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_class) = &mut class.super_class {
-            self.visit_expression(super_class);
-        }
-        if let Some(super_type_arguments) = &mut class.super_type_arguments {
-            self.visit_ts_type_parameter_instantiation(super_type_arguments);
+        if let Some(heritage) = &mut class.heritage {
+            self.visit_expression(&mut heritage.expression);
+            if let Some(type_arguments) = &mut heritage.type_arguments {
+                self.visit_ts_type_parameter_instantiation(type_arguments);
+            }
         }
         self.visit_ts_class_implements_list(&mut class.implements);
         self.visit_class_body(&mut class.body);

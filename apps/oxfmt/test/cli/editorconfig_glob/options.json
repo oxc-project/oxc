@@ -1,0 +1,1 @@
+[{ "args": ["nested/test.js", "src/test.ts", "src/nested/test.ts", "test.mjs"] }]

@@ -1,9 +1,12 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, IndentWidth, format_element::TextWidth};
+use oxc_formatter_core::{
+    FormatElement, IndentWidth, Placeholder, PlaceholderPiece, dispatch_fragment_ir,
+};
 
 use crate::{
     ast_nodes::AstNode,
+    embed_context::CssInJsTemplate,
     formatter::prelude::*,
     print::template::{
         FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
@@ -11,13 +14,11 @@ use crate::{
     write,
 };
 
-// css-in-js interpolation marker `` `PLACEHOLDER-N` ``.
+// css-in-js interpolation marker `` `oxfmt_css_N` ``.
 // Backtick is invalid SCSS (the variant the dispatcher formats as),
 // so the marker is unmistakably out-of-band.
-// NOTE: Keep these in sync with `oxc_formatter_css`'s.
-// Or pass it from the dispatcher?
-const PLACEHOLDER_PREFIX: &str = "`PLACEHOLDER-";
-const PLACEHOLDER_SUFFIX: &str = "`";
+// NOTE: A copy of `oxc_formatter_css`'s, whose parser reads it (its backticks are oxc-css-parser's): keep them in sync.
+const PLACEHOLDER: Placeholder<'static> = Placeholder { prefix: "`oxfmt_css_", suffix: "`" };
 
 /// Re-emit a (already arena-backed) text slice as a `Text` element.
 /// No-op for an empty slice.
@@ -25,8 +26,14 @@ fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsForm
     if text.is_empty() {
         return;
     }
-    let width = TextWidth::from_text(text, indent_width);
-    f.write_element(FormatElement::Text { text, width });
+    f.write_element(FormatElement::text(text, indent_width));
+}
+
+/// Print `${expr}` like a plain template expression, minus source-indentation preservation.
+/// Default options (zero indention) are exactly that (same as graphql.rs).
+fn write_expression<'a>(expr: AstNode<'_, 'a, Expression<'a>>, f: &mut JsFormatter<'_, 'a>) {
+    let te = TemplateExpression::Expression(expr);
+    FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default()).fmt(f);
 }
 
 /// Format a CSS-in-JS template literal via the Doc→IR path with placeholder replacement.
@@ -34,7 +41,7 @@ fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsForm
 /// Joins quasis with special placeholder markers, formats as SCSS,
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
 pub(super) fn format_css_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
@@ -51,18 +58,7 @@ pub(super) fn format_css_doc<'a>(
             return true;
         }
 
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-            allocator,
-            group_id_builder,
-            "css",
-            &[raw],
-        ) else {
-            return false;
-        };
-        result.remap_tailwind_into(f.context_mut());
-        let Some(ir) = result.docs.into_iter().next() else {
+        let Some(ir) = dispatch_fragment_ir(f, "css", raw, Some(&CssInJsTemplate)) else {
             return false;
         };
 
@@ -71,15 +67,13 @@ pub(super) fn format_css_doc<'a>(
     }
 
     // Phase 1: Build joined text
-    // quasis[0].raw + "`PLACEHOLDER-0`" + quasis[1].raw + ...
+    // quasis[0].raw + "`oxfmt_css_0`" + quasis[1].raw + ...
     let allocator = f.allocator();
     let joined = {
         let mut sb = ArenaStringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {
             if idx > 0 {
-                sb.push_str(PLACEHOLDER_PREFIX);
-                let _ = std::fmt::Write::write_fmt(&mut sb, std::format_args!("{}", idx - 1));
-                sb.push_str(PLACEHOLDER_SUFFIX);
+                PLACEHOLDER.write(&mut sb, idx - 1);
             }
             // Use `.raw` (not `.cooked`), CSS/SCSS needs the original escape sequences
             sb.push_str(quasi_elem.value.raw.as_str());
@@ -88,18 +82,7 @@ pub(super) fn format_css_doc<'a>(
     };
 
     // Phase 2: Format via the dispatcher (IR path)
-    let allocator = f.allocator();
-    let group_id_builder = f.group_id_builder();
-    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-        allocator,
-        group_id_builder,
-        "css",
-        &[joined],
-    ) else {
-        return false;
-    };
-    result.remap_tailwind_into(f.context_mut());
-    let Some(ir) = result.docs.into_iter().next() else {
+    let Some(ir) = dispatch_fragment_ir(f, "css", joined, Some(&CssInJsTemplate)) else {
         return false;
     };
 
@@ -119,9 +102,10 @@ pub(super) fn format_css_doc<'a>(
         .iter()
         .map(|el| match el {
             FormatElement::EmbedPlaceholder(_) => 1,
-            FormatElement::Text { text, .. } => {
-                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
-            }
+            FormatElement::Text { text, .. } => PLACEHOLDER
+                .pieces(text.as_str())
+                .filter(|piece| matches!(piece, PlaceholderPiece::Index(_)))
+                .count(),
             _ => 0,
         })
         .sum();
@@ -131,38 +115,28 @@ pub(super) fn format_css_doc<'a>(
 
     // Phase 3: Replace each `${exprN}` placeholder with the formatted expression.
     // Two kinds survive SCSS formatting:
-    // - the typed `EmbedPlaceholder(N)` marker (the main path) -> a breakable group
-    // - a `` `PLACEHOLDER-N` `` sentinel still embedded in a `Text` run
-    //   because a string / `url()` keeps it opaque to the CSS lexer -> inline.
+    // - the typed `EmbedPlaceholder(N)` marker (the main path)
+    // - a `` `oxfmt_css_N` `` sentinel still embedded in a `Text` run
+    //   because a string / `url()` / comment keeps it opaque to the CSS lexer
+    // Both print the expression the same way.
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
         let indent_width = f.options().indent_width;
         for element in ir {
             match element {
                 FormatElement::EmbedPlaceholder(index) => {
-                    let Some(&expr) = expressions.get(index as usize) else {
-                        continue;
-                    };
-                    // Prettier prints embedded `${expr}` with `printEmbeddedTemplateExpressions()`:
-                    // the plain-template expression logic minus source-indentation preservation.
-                    // Default options (zero indention) are exactly that (same as graphql.rs).
-                    let te = TemplateExpression::Expression(expr);
-                    FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default())
-                        .fmt(f);
+                    if let Some(&expr) = expressions.get(index as usize) {
+                        write_expression(expr, f);
+                    }
                 }
-                // A sentinel inside a string / `url()` is always inline `${expr}`.
-                // Same scan as html.rs: `split_on_placeholders` yields alternating
-                // [literal, index, literal, ...] (invalid matches fold into the literal),
-                // so even parts are text and odd parts are a placeholder.
-                FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts =
-                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
-                    for (i, part) in parts.iter().enumerate() {
-                        if i % 2 == 0 {
-                            write_text_piece(part, indent_width, f);
-                        } else if let Ok(idx) = part.parse::<usize>()
-                            && let Some(&expr) = expressions.get(idx)
-                        {
-                            write!(f, ["${", expr, "}"]);
+                FormatElement::Text { text, .. } if PLACEHOLDER.is_in(text.as_str()) => {
+                    for piece in PLACEHOLDER.pieces(text.as_str()) {
+                        match piece {
+                            PlaceholderPiece::Text(text) => write_text_piece(text, indent_width, f),
+                            PlaceholderPiece::Index(index) => {
+                                if let Some(&expr) = expressions.get(index) {
+                                    write_expression(expr, f);
+                                }
+                            }
                         }
                     }
                 }

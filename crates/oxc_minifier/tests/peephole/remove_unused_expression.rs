@@ -27,8 +27,86 @@ fn test_remove_unused_expression() {
 }
 
 #[test]
+fn preserve_throwing_from_code_point_calls() {
+    test_same("String.fromCodePoint('3.14')");
+    test("String.fromCodePoint(undefined)", "String.fromCodePoint(void 0)");
+    test_same("String.fromCodePoint(65, '0x110000')");
+    test_same("String.fromCodePoint('abc')");
+    test("String.fromCodePoint('65', '-0', null)", "");
+    test("String.fromCharCode('3.14', undefined)", "");
+}
+
+#[test]
 fn test_remove_unused_optional_chain_keeps_base_side_effects() {
     test("let log = []; (log.push('base'), null)?.x;", "[].push('base')");
+}
+
+#[test]
+fn test_de_morgan_for_unused_expr() {
+    test_same("!a || b()"); // a && b()
+    test_same("!a && b()"); // a || b()
+    test_same("!a() || b()"); // a() && b()
+    test_same("!a() && b()"); // a() || b()
+    test_same("a && b()");
+    test_same("a || b()");
+    test_same("a === b && c()");
+    test_same("a !== b || c()");
+    test_same("a && !b && d()");
+    test_same("a || !b && c()");
+    test_same("!a && !b && c()"); // a || b || c()
+    test_same("a && (!b || c())");
+    // complex
+    test("a || (!b || c())", "a || !b || c()");
+    test("(!a || b === c) && b()", "a && b !== c || b()");
+    test("(!a || b === !0) && (c = { d: !!e })", "a && b !== !0 || (c = { d: !!e })");
+    test("a && b !== c || d()", "a && b !== c || d()");
+    test("(!a && !b && !c && !d && !e) || f()", "(a || b || c || d || e) && f()");
+    test("(!a() || b === c) && d()", "a() && b !== c || d()");
+    test("u() || ((!a || b === c) && d())", "u() || a && b !== c || d()");
+    test("u() && ((!a || b === c) && d())", "u() && (!a || b === c) && d()");
+    test("(!a || b === c) && (d(), e())", "a && b !== c || (d(), e())");
+    test("a || (!b || d())", "a || !b || d()");
+    test("(!a || !b) && (c() || d())", "a && b || c() || d()");
+    test("(!a || !b || !c) && (d() || e())", "a && b && c || d() || e()");
+    // folding
+    test("if ((!a || b === c) && d()) e()", "(!a || b === c) && d() && e()");
+    test("if (!a || b === c) d()", "a && b !== c || d()");
+    test("if (a && b !== c); else d()", "a && b !== c || d()");
+    test("if (!a || b()) c()", "(!a || b()) && c()");
+    test("if (!a && b()) c()", "!a && b() && c()");
+    // move to
+    test(
+        "for ((!a || b === c) && d(); e(); (!f || g === h) && i()) j()",
+        "for (a && b !== c || d(); e(); f && g !== h || i()) j()",
+    );
+    // after removal
+    test("(!a || b === c) ?? run()", "!a || (b, c)");
+}
+
+#[test]
+fn test_de_morgan_for_unused_expr_observed() {
+    // call
+    test_same("a(!b || c())");
+    test_same("a(!b && c())");
+    test_same("a((!a || b === c) && d())");
+    test_same("a((b(), !c || d()))");
+    test_same("a((!b || c(), d()))");
+    test("a(((!b || c === d) && e(), f()))", "a((b && c !== d || e(), f()))");
+    // return
+    test_same("function f() { return !a || b() }");
+    test_same("function f() { return !a && b() }");
+    test_same("function f() { return (!a || b === c) && d() }");
+    // assignment
+    test_same("a = !b || c()");
+    test_same("a = (!b || c === d) && e()");
+    // coalesce
+    test_same("(a() || b()) ?? c()");
+    test_same("(!a || b()) ?? c()");
+    test_same("(!a && b()) ?? c()");
+    test_same("(a < b || c < d) && e()");
+    test_same("(a ?? b) && e()");
+    // boolean
+    test_same("for (!a || b(); c(); !d && e()) f()");
 }
 
 #[test]
@@ -255,7 +333,7 @@ fn test_fold_unary_expression_statement() {
 
     test_same("delete x");
     test_same("delete x.y");
-    test_same("delete x.y.z()");
+    test("delete x.y.z()", "x.y.z()");
     test_same("+0n"); // Uncaught TypeError: Cannot convert a BigInt value to a number
     test("-0n", "");
     test("-1n", "");
@@ -279,12 +357,12 @@ fn test_fold_sequence_expr() {
 
 #[test]
 fn test_logical_expression() {
-    test("var a; a != null && a.b()", "var a; a?.b()");
-    test("var a; a == null || a.b()", "var a; a?.b()");
+    test("v = function(a) { a != null && a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { a == null || a.b() }", "v = function(a) { a?.b() }");
     test_same("a != null && a.b()"); // a may have a getter
     test_same("a == null || a.b()"); // a may have a getter
-    test("var a; null != a && a.b()", "var a; a?.b()");
-    test("var a; null == a || a.b()", "var a; a?.b()");
+    test("v = function(a) { null != a && a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { null == a || a.b() }", "v = function(a) { a?.b() }");
 
     test("x == null && y", "x ?? y");
     test("x != null || y", "x ?? y");
@@ -416,26 +494,35 @@ fn test_fold_conditional_expression() {
 
 #[test]
 fn test_fold_binary_expression() {
-    test("var a, b; a === b", "var a, b;");
-    test("var a, b; a() === b", "var a, b; a()");
-    test("var a, b; a === b()", "var a, b; b()");
-    test("var a, b; a() === b()", "var a, b; a(), b()");
+    test("v = function(a, b) { a === b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a() === b }", "v = function(a, b) { a() }");
+    test("v = function(a, b) { a === b() }", "v = function(a, b) { b() }");
+    test("v = function(a, b) { a() === b() }", "v = function(a, b) { a(), b() }");
 
-    test("var a, b; a !== b", "var a, b;");
-    test("var a, b; a == b", "var a, b;");
-    test("var a, b; a != b", "var a, b;");
-    test("var a, b; a < b", "var a, b;");
-    test("var a, b; a > b", "var a, b;");
-    test("var a, b; a <= b", "var a, b;");
-    test("var a, b; a >= b", "var a, b;");
+    test("v = function(a, b) { a !== b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a == b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a != b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a < b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a > b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a <= b }", "v = function(a, b) {}");
+    test("v = function(a, b) { a >= b }", "v = function(a, b) {}");
 
-    test_same("var a, b; a + b");
-    test("var a, b; 'a' + b", "var a, b; '' + b");
-    test_same("var a, b; a + '' + b");
-    test("var a, b, c; 'a' + (b === c)", "var a, b, c;");
-    test("var a, b; 'a' + +b", "var a, b; '' + +b"); // can be improved to "var a, b; +b"
-    test_same("var a, b; a + ('' + b)");
-    test("var a, b, c; a + ('' + (b === c))", "var a, b, c; a + ''");
+    test_same("v = function(a, b) { a + b }");
+    test("v = function(a, b) { 'a' + b }", "v = function(a, b) { '' + b }");
+    test_same("v = function(a, b) { a + '' + b }");
+    test("v = function(a, b, c) { 'a' + (b === c) }", "v = function(a, b, c) {}");
+    test("v = function(a, b) { 'a' + +b }", "v = function(a, b) { '' + +b }"); // can be improved to `+b`
+    test_same("v = function(a, b) { a + ('' + b) }");
+    test("v = function(a, b, c) { a + ('' + (b === c)) }", "v = function(a, b, c) { a + '' }");
+
+    test("0.1 + 0.2", "");
+    test_same("v = function(a) { a + ('' + foo()) }");
+}
+
+#[test]
+fn test_remove_unused_uninitialized_module_var_expression() {
+    test("var a; a != null && a.b()", "var a");
+    test("var a, b; a + b", "var a, b");
 }
 
 #[test]
@@ -480,6 +567,20 @@ fn test_fold_iife() {
     test("a((() => true)());", "a(!0)");
     test("a((() => { return true })());", "a(!0)");
 
+    test("(() => { 'use strict'; return a() })()", "a()");
+    test_same_options_source_type(
+        "(() => { 'use strict'; return a() })()",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    test("(() => { 'use strict'; a() })()", "a()");
+    test_same_options_source_type(
+        "(() => { 'use strict'; a() })()",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    test_same("(() => { 'use cache'; return a() })()");
+
     test_same("var a = (function () { b() })()");
     test_same("var a = (function () { return b() })()");
     test_same("var a = (function () { return this })()");
@@ -497,6 +598,14 @@ fn test_fold_iife() {
     test("(() => x)()", "x;");
     test("(() => { return x })()", "x;");
     test_same("(function () { return x })()");
+
+    test("(() => o.f)()()", "(0, o.f)()");
+    test("(() => { return o.f })()()", "(0, o.f)()");
+    test("(() => o?.f)()``", "(0, o?.f)``");
+    test("(() => eval)()(x)", "(0, eval)(x)");
+    test("delete (() => o.f)()", "o.f");
+    test("v = typeof (() => x)()", "v = typeof (0, x)");
+    test("(() => o.f())()()", "o.f()()");
 
     test("var a = /* @__PURE__ */ (() => x)()", "var a = x");
     test_same("var a = /* @__PURE__ */ (() => x)(y, z)");
@@ -603,6 +712,10 @@ fn no_side_effects() {
     }
     check("/* @__NO_SIDE_EFFECTS__ */ function f() {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export function f() {}");
+    check("export /*@__NO_SIDE_EFFECTS__*/ function f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ async function f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ function* f() { sideEffect() }");
+    check("export /* @__NO_SIDE_EFFECTS__ */ async function* f() { sideEffect() }");
     check("/* @__NO_SIDE_EFFECTS__ */ export default function f() {}");
     check("export default /* @__NO_SIDE_EFFECTS__ */ function f() {}");
     check("const f = /* @__NO_SIDE_EFFECTS__ */ function() {}");
@@ -613,6 +726,43 @@ fn no_side_effects() {
     check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+}
+
+/// The `/* @__NO_SIDE_EFFECTS__ */` annotation applies to the function value
+/// declared at the annotated binding. Reassigning the binding invalidates the
+/// annotation, so calls must not be treated as pure afterwards.
+/// <https://github.com/oxc-project/oxc/issues/29972>
+#[test]
+fn no_side_effects_reassigned() {
+    // `function` declaration (function bindings are mutable, like `var`)
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => console.log('x'); f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>console.log('x'),f()",
+    );
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => {}; f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>{},f()",
+    );
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ function f() {} f = () => {}; new f()",
+        "/* @__NO_SIDE_EFFECTS__ */ function f(){}f=()=>{},new f()",
+    );
+    // `var` initialized with an annotated arrow function
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ var f = () => {}; f = () => console.log('x'); f()",
+        "/* @__NO_SIDE_EFFECTS__ */ var f=()=>{};f=()=>console.log('x'),f()",
+    );
+    // `let` initialized with an annotated function expression
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ let f = function() {}; f = () => console.log('x'); new f()",
+        "/* @__NO_SIDE_EFFECTS__ */ let f=function(){};f=()=>console.log('x'),new f()",
+    );
+    // Reassignment after the call: the conservative guard keeps the earlier
+    // call too, since the annotation no longer proves the binding's value.
+    test(
+        "/* @__NO_SIDE_EFFECTS__ */ var f = () => {}; f(); f = () => console.log('x')",
+        "/* @__NO_SIDE_EFFECTS__ */ var f=()=>{};f(),f=()=>console.log('x')",
+    );
 }
 
 #[test]
@@ -630,6 +780,14 @@ fn treeshake_options_annotations_false() {
     };
     test_options("function test() {} /* @__PURE__ */ test()", "function test() {}", &options);
     test_options("function test() {} /* @__PURE__ */ new test()", "function test() {}", &options);
+}
+
+#[test]
+fn remove_unused_assignment_keeps_eval_visible_catch_writes() {
+    test_smallest(
+        "function f() { try { throw 1 } catch (y) { var y; function set() { y = 2; } set(); console.log(eval('y')); } return y; } console.log(f());",
+        "function f() { try { throw 1 } catch (y) { var y; function set() { y = 2; } set(), console.log(eval('y')); } return y; } console.log(f());",
+    );
 }
 
 #[test]
@@ -660,6 +818,42 @@ fn remove_unused_assignment_expression() {
         &options,
     );
     test_same_options("function foo(t) { return t = x(); } foo();", &options);
+
+    test_options(
+        "function foo() { let t; return (t = o.f)() } foo();",
+        "function foo() { return (0, o.f)() } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return (t = o?.f)`` } foo();",
+        "function foo() { return (0, o?.f)`` } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return (t = eval)(x) } foo();",
+        "function foo() { return (0, eval)(x) } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return delete (t = o.f) } foo();",
+        "function foo() { return o.f, !0 } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t = {}; return (t.x = o.f)() } foo();",
+        "function foo() { return (0, o.f)() } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return (t = o.f) == null ? void 0 : t() } foo();",
+        "function foo() { return (0, o.f)?.() } foo();",
+        &options,
+    );
+    test_options(
+        "function foo() { let t; return t = o.f } foo();",
+        "function foo() { return o.f } foo();",
+        &options,
+    );
 
     // For loops
     test_options("for (let i;;) i = 0", "for (;;);", &options);
@@ -731,6 +925,7 @@ fn remove_unused_class_expression() {
 
     // order
     test_options("(class extends A { [B] = C; [D]() {} })", "A, B, D", &options);
+    test_options("(class extends (A(), B) {})", "A(), B", &options);
 
     // decorators
     test_same_options("(class { @dec foo() {} })", &options);
@@ -738,6 +933,7 @@ fn remove_unused_class_expression() {
 
     // TypeError
     test_same_options("(class extends (() => {}) {})", &options);
+    test_same_options("(class { static ['prototype']() {} })", &options);
 }
 
 #[test]

@@ -1,16 +1,20 @@
 use std::{
     borrow::{Borrow, Cow},
-    fmt, hash,
+    fmt::{self, Debug, Display},
+    hash::{Hash, Hasher},
     ops::Deref,
 };
+
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use oxc_allocator::{
     Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
 };
+use oxc_span::ContentEq;
+
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
-#[cfg(feature = "serialize")]
-use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::CompactStr;
 
@@ -40,7 +44,7 @@ impl Str<'static> {
 impl<'a> Str<'a> {
     /// Allocate provided `&str` into arena, and return a [`Str<'a>`].
     #[inline]
-    pub fn from_str_in<A: GetAllocator<'a>>(s: &str, allocator: &A) -> Self {
+    pub fn from_str_in(s: &str, allocator: &impl GetAllocator<'a>) -> Self {
         Self(allocator.allocator().alloc_str(s))
     }
 
@@ -93,9 +97,9 @@ impl<'a> Str<'a> {
     // are statically known. See `Allocator::alloc_concat_strs_array`.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn from_strs_array_in<const N: usize, A: GetAllocator<'a>>(
+    pub fn from_strs_array_in<const N: usize>(
         strings: [&str; N],
-        allocator: &A,
+        allocator: &impl GetAllocator<'a>,
     ) -> Str<'a> {
         Self::from(allocator.allocator().alloc_concat_strs_array(strings))
     }
@@ -107,7 +111,7 @@ impl<'a> Str<'a> {
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Str`.
     #[inline]
-    pub fn from_cow_in<A: GetAllocator<'a>>(value: &Cow<'a, str>, allocator: &A) -> Str<'a> {
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &impl GetAllocator<'a>) -> Str<'a> {
         match value {
             Cow::Borrowed(s) => Str::from(*s),
             Cow::Owned(s) => Str::from_str_in(s, allocator),
@@ -271,22 +275,29 @@ impl PartialEq<Str<'_>> for Cow<'_, str> {
     }
 }
 
-impl hash::Hash for Str<'_> {
+impl Hash for Str<'_> {
     #[inline]
-    fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);
     }
 }
 
-impl fmt::Debug for Str<'_> {
+impl Debug for Str<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(self.as_str(), f)
+        Debug::fmt(self.as_str(), f)
     }
 }
 
-impl fmt::Display for Str<'_> {
+impl Display for Str<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self.as_str(), f)
+        Display::fmt(self.as_str(), f)
+    }
+}
+
+impl ContentEq for Str<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 
@@ -341,7 +352,8 @@ impl ESTree for Str<'_> {
 #[macro_export]
 macro_rules! static_str {
     ($s:literal) => {
-        $crate::Str::new_const($s)
+        // `const { ... }` block guarantees evaluation at compile time
+        const { $crate::Str::new_const($s) }
     };
 }
 

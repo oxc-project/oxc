@@ -1,7 +1,7 @@
-use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -42,19 +42,33 @@ declare_oxc_lint!(
     short_description = "This rule disallows `tslint:<rule-flag>` comments.",
 );
 
-static ENABLE_DISABLE_REGEX: Lazy<Regex> =
-    lazy_regex!(r"^\s*tslint:(enable|disable)(?:-(line|next-line))?(:|\s|$)");
+/// `^\s*tslint:(enable|disable)(?:-(line|next-line))?(:|\s|$)`
+fn is_tslint_enable_disable_comment(raw: &str) -> bool {
+    let Some(rest) = raw.trim_start().strip_prefix("tslint:") else { return false };
+    let Some(rest) = rest.strip_prefix("enable").or_else(|| rest.strip_prefix("disable")) else {
+        return false;
+    };
+    let rest =
+        rest.strip_prefix("-line").or_else(|| rest.strip_prefix("-next-line")).unwrap_or(rest);
+    rest.is_empty() || rest.starts_with(':') || rest.starts_with(char::is_whitespace)
+}
 
 impl Rule for BanTslintComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.comments();
         for comment in comments {
             let raw = ctx.source_range(comment.content_span());
-            if ENABLE_DISABLE_REGEX.is_match(raw) {
+            if is_tslint_enable_disable_comment(raw) {
                 let comment_span = get_full_comment(ctx, comment.span);
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),
-                    |fixer| fixer.delete_range(comment_span),
+                    |fixer| {
+                        if comment.is_multiline_block() {
+                            fixer.replace(comment_span, "\n")
+                        } else {
+                            fixer.delete_range(comment_span)
+                        }
+                    },
                 );
             }
         }
@@ -67,8 +81,12 @@ fn get_full_comment(ctx: &LintContext, span: Span) -> Span {
     let source_size = u32::try_from(ctx.source_text().len()).unwrap();
     let tokens = ctx.source_range(Span::new(span.end, source_size));
 
-    // Take into account new line at the end of the comment
-    if matches!(tokens.chars().next(), Some('\n')) {
+    let starts_line = ctx.source_text()[..span.start as usize]
+        .chars()
+        .rev()
+        .take_while(|&c| !is_line_terminator(c))
+        .all(char::is_whitespace);
+    if starts_line && tokens.starts_with('\n') {
         span.end += 1;
     }
 
@@ -86,6 +104,8 @@ fn test() {
         "// TODO: this is a comment that mentions tslint",
         "/* another comment that mentions tslint */",
         "someCode(); // This is a comment that just happens to mention tslint",
+        "// tslint:disabled",
+        "// TSLint:disable",
     ];
 
     let fail = vec![
@@ -122,6 +142,49 @@ fn test() {
         ("/* tslint:disable-line */", "", None),
         // Issue: <https://github.com/oxc-project/oxc/issues/8090>
         (r"/*tslint:disable*/É", r"É", None),
+        (
+            "function f() {\n  return /* tslint:disable */\n  7;\n}",
+            "function f() {\n  return \n  7;\n}",
+            None,
+        ),
+        (
+            "const a = 1 // tslint:disable-line\nconst b = 2\nconsole.log(a, b)",
+            "const a = 1 \nconst b = 2\nconsole.log(a, b)",
+            None,
+        ),
+        (
+            "function g() {\n  return /* tslint:disable\n  */ 7\n}",
+            "function g() {\n  return \n 7\n}",
+            None,
+        ),
+        (
+            "function f() { return /* tslint:disable\r\n*/ 7; }",
+            "function f() { return \n 7; }",
+            None,
+        ),
+        ("function f() { return /* tslint:disable\r*/ 7; }", "function f() { return \n 7; }", None),
+        (
+            "function f() { return /* tslint:disable\u{2028}*/ 7; }",
+            "function f() { return \n 7; }",
+            None,
+        ),
+        (
+            "function f() { return /* tslint:disable\u{2029}*/ 7; }",
+            "function f() { return \n 7; }",
+            None,
+        ),
+        ("const a = 1 // tslint:disable-line\r\nconst b = 2", "const a = 1 \r\nconst b = 2", None),
+        ("function f() { return /* tslint:disable */ 7; }", "function f() { return  7; }", None),
+        (
+            "const a = 1 /* tslint:disable */ /* tslint:enable */\nconst b = 2",
+            "const a = 1  \nconst b = 2",
+            None,
+        ),
+        (
+            "const a = 1\u{2028}\t// tslint:disable-line\nconst b = 2",
+            "const a = 1\u{2028}\tconst b = 2",
+            None,
+        ),
     ];
 
     Tester::new(BanTslintComment::NAME, BanTslintComment::PLUGIN, pass, fail)

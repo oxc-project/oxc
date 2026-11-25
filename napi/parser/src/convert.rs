@@ -44,8 +44,6 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
             .chain(record.indirect_export_entries.iter())
             .chain(record.star_export_entries.iter())
             .map(|e| (e.statement_span, StaticExportEntry::from(e)))
-            .collect::<Vec<_>>()
-            .into_iter()
             .fold(FxHashMap::<_, Vec<StaticExportEntry>>::default(), |mut acc, (span, e)| {
                 acc.entry(span).or_default().push(e);
                 acc
@@ -122,6 +120,9 @@ impl From<&module_record::ImportImportName<'_>> for ImportName {
             module_record::ImportImportName::Default(span) => {
                 (ImportNameKind::Default, None, Some(span.start), Some(span.end))
             }
+            module_record::ImportImportName::Source(span) => {
+                (ImportNameKind::Source, None, Some(span.start), Some(span.end))
+            }
         };
         Self { kind, name, start, end }
     }
@@ -151,6 +152,9 @@ impl From<&module_record::ExportImportName<'_>> for ExportImportName {
                 (ExportImportNameKind::AllButDefault, None, None, None)
             }
             module_record::ExportImportName::Null => (ExportImportNameKind::None, None, None, None),
+            module_record::ExportImportName::Source(span) => {
+                (ExportImportNameKind::Source, None, Some(span.start), Some(span.end))
+            }
         };
         Self { kind, name, start, end }
     }

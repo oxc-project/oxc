@@ -114,12 +114,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
 
-  × Unexpected token
-   ╭─[no_explicit_any.tsx:1:52]
- 1 │ interface Greeter { constructor(param: Array<any>) {} }
-   ·                                                    ─
-   ╰────
-
   ⚠ typescript(no-explicit-any): Unexpected `any`. Specify a different type.
    ╭─[no_explicit_any.tsx:1:30]
  1 │ interface Greeter { message: any }
@@ -147,12 +141,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ───
    ╰────
   help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
-
-  × Unexpected token
-   ╭─[no_explicit_any.tsx:1:45]
- 1 │ type obj = { constructor(param: Array<any>) {} }
-   ·                                             ─
-   ╰────
 
   ⚠ typescript(no-explicit-any): Unexpected `any`. Specify a different type.
    ╭─[no_explicit_any.tsx:1:23]

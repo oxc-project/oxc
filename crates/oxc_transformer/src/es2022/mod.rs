@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{common::class_transform::ClassTransform, context::TraverseCtx, state::TransformState};
 
 mod class_properties;
 mod class_static_block;
@@ -14,35 +14,53 @@ use class_static_block::ClassStaticBlock;
 pub use options::ES2022Options;
 
 pub struct ES2022<'a> {
-    options: ES2022Options,
+    top_level_await: bool,
 
     // Plugins
-    class_static_block: Option<ClassStaticBlock>,
+    class_static_block: Option<ClassStaticBlock<'a>>,
     class_properties: Option<ClassProperties<'a>>,
 }
 
 impl ES2022<'_> {
-    pub fn new(options: ES2022Options, remove_class_fields_without_initializer: bool) -> Self {
-        // Class properties transform performs the static block transform differently.
-        // So only enable static block transform if class properties transform is disabled.
-        let (class_static_block, class_properties) =
-            if let Some(properties_options) = options.class_properties {
-                let class_properties = ClassProperties::new(
-                    properties_options,
-                    options.class_static_block,
+    pub fn new(
+        top_level_await: bool,
+        class_transform: ClassTransform,
+        remove_class_fields_without_initializer: bool,
+    ) -> Self {
+        let (class_static_block, class_properties) = match class_transform {
+            ClassTransform::None => (None, None),
+            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
+            ClassTransform::ClassProperties { options, transform_static_blocks, .. } => (
+                None,
+                Some(ClassProperties::new(
+                    options,
+                    transform_static_blocks,
                     remove_class_fields_without_initializer,
-                );
-                (None, Some(class_properties))
-            } else {
-                let class_static_block =
-                    if options.class_static_block { Some(ClassStaticBlock::new()) } else { None };
-                (class_static_block, None)
-            };
-        Self { options, class_static_block, class_properties }
+                )),
+            ),
+        };
+        Self { top_level_await, class_static_block, class_properties }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(
+            stmt,
+            Statement::ClassDeclaration(_)
+                | Statement::ExportDeclaration(_)
+                | Statement::ExportDefaultDeclaration(_)
+        ) {
+            return;
+        }
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_statement(stmt, ctx);
+        }
+        if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_statement(stmt, ctx);
+        }
+    }
+
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
@@ -54,12 +72,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_expression(expr, ctx);
         }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !matches!(expr, Expression::ClassExpression(_)) {
+            return;
+        }
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.exit_expression(expr, ctx);
         }
     }
 
@@ -79,6 +104,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_class(class, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.exit_class(class, ctx);
         }
     }
 
@@ -99,6 +126,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     ) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_property_definition(prop, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_property_definition(prop, ctx);
         }
     }
 
@@ -129,7 +158,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         node: &mut AwaitExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.top_level_await && Self::is_top_level(ctx) {
+        if self.top_level_await && Self::is_top_level(ctx) {
             let warning = OxcDiagnostic::warn(
                 "Top-level await is not available in the configured target environment.",
             )

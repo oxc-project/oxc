@@ -1,7 +1,10 @@
-use super::PeepholeOptimizations;
-use crate::{CompressOptionsUnused, TraverseCtx};
+use super::{PeepholeOptimizations, remove_unused_expression::ClassRemovability};
+use crate::{CompressOptionsUnused, TraverseCtx, traverse_context::redeclared_symbols};
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
+use oxc_ecmascript::{
+    BoundNames,
+    constant_evaluation::{DetermineValueType, ValueType},
+};
 use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
@@ -52,7 +55,8 @@ impl<'a> PeepholeOptimizations {
             return false;
         };
 
-        // Covers exports, Script-root bindings, Annex B aliases, and `using`.
+        // Covers exports, Script-root bindings, mapped arguments, Annex B
+        // aliases, and `using`.
         if ctx.state.symbols.is_implicitly_observable(symbol_id) {
             return false;
         }
@@ -62,6 +66,25 @@ impl<'a> PeepholeOptimizations {
                 .scope_ancestors(reference.scope_id())
                 .any(|scope_id| scope_id == function_scope_id)
         })
+    }
+
+    /// Keep an unused declarator when dropping its class initializer would
+    /// leave an executing anonymous class expression without its inferred
+    /// name. The name can be observed by static blocks and decorators before
+    /// any later use of the binding, so `keep_names` cannot be applied after
+    /// the declarator has been reduced to a bare class expression.
+    fn class_initializer_name_needs_to_be_kept(
+        decl: &VariableDeclarator<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let Some(init) = &decl.init else { return false };
+        if !ctx.is_expression_whose_name_needs_to_be_kept(init) {
+            return false;
+        }
+        let Expression::ClassExpression(class) = init else {
+            return false;
+        };
+        matches!(Self::classify_class_removability(class, ctx), ClassRemovability::Keep)
     }
 
     fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
@@ -86,22 +109,30 @@ impl<'a> PeepholeOptimizations {
 
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         if !Self::can_remove_unused_declarators(ctx) {
             return false;
         }
         // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
-        if decl.kind.is_using() {
+        if kind.is_using() {
             return false;
         }
         match &decl.id {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
-                    return Self::symbol_is_unused_by_count(symbol_id, ctx)
-                        || Self::self_recursive_function_declarator_is_unused(
-                            decl, symbol_id, ctx,
-                        );
+                    // A catch-local `var` also declares the enclosing binding (its identifier
+                    // carries the catch parameter). Keep it while that binding is used.
+                    if kind.is_var()
+                        && let Some(outer) = ctx.scoping().catch_var_binding(symbol_id)
+                        && !Self::symbol_is_unused_by_count(outer, ctx)
+                    {
+                        return false;
+                    }
+                    let is_unused = Self::symbol_is_unused_by_count(symbol_id, ctx)
+                        || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx);
+                    return is_unused && !Self::class_initializer_name_needs_to_be_kept(decl, ctx);
                 }
                 false
             }
@@ -134,22 +165,35 @@ impl<'a> PeepholeOptimizations {
     /// in the live AST changed this pass, and a spurious mutation spins the
     /// fixed-point loop past its iteration guard (bluebird.js, monitor-oxc).
     /// Installing — or declining to install — the filtered statement is the
-    /// caller's mutation event.
+    /// caller's mutation event. Removed declarations still need journaling:
+    /// identity drops may have skipped the original subtree's drop walk.
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
             return Some(stmt);
         }
+        let kind = var_decl.kind;
         var_decl.declarations.retain(|decl| {
             debug_assert!(
                 decl.init.is_none(),
                 "callers must pass KeepVar output (init-less declarators); a declarator \
                  with an init would need a `drop_*` walk for its references"
             );
-            !Self::should_remove_unused_declarator(decl, ctx)
+            if !Self::should_remove_unused_declarator(decl, kind, ctx) {
+                return true;
+            }
+            let scoping = ctx.scoping.scoping();
+            let removed = &mut ctx.state.pass_changes.removed_declarations;
+            decl.id.bound_names(&mut |ident| {
+                let Some(symbol_id) = ident.symbol_id.get() else { return };
+                for symbol_id in redeclared_symbols(symbol_id, scoping, false) {
+                    removed.insert((symbol_id, ident.span));
+                }
+            });
+            false
         });
         if var_decl.declarations.is_empty() {
             return None;
@@ -229,6 +273,18 @@ impl<'a> PeepholeOptimizations {
     /// import 'b'
     /// ```
     pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::ImportDeclaration(import_decl) = stmt else { return };
+
+        // `import {} from 'x'` -> `import 'x'`
+        if import_decl.phase.is_none()
+            && import_decl.import_kind.is_value()
+            && import_decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty())
+        {
+            import_decl.specifiers = None;
+            ctx.notice_change();
+            return;
+        }
+
         if ctx.options().treeshake.invalid_import_side_effects
             || ctx.options().unused == CompressOptionsUnused::Keep
         {
@@ -241,12 +297,10 @@ impl<'a> PeepholeOptimizations {
 
         debug_assert!(!ctx.source_type().is_script(), "imports are not allowed in script mode");
 
-        let Statement::ImportDeclaration(import_decl) = stmt else { return };
-
         if let Some(phase) = import_decl.phase {
             let (ImportPhase::Defer | ImportPhase::Source) = phase;
             if ctx.scoping().symbol_is_unused(
-                import_decl.specifiers.as_ref().unwrap().first().unwrap().local().symbol_id(),
+                import_decl.specifiers.as_ref().unwrap().first().unwrap().symbol_id(),
             ) {
                 let new_stmt = Statement::new_empty_statement(import_decl.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
@@ -261,16 +315,7 @@ impl<'a> PeepholeOptimizations {
 
         let original_len = specifiers.len();
 
-        specifiers.retain(|specifier| {
-            let local = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
-            };
-
-            let symbol_id = local.symbol_id();
-            !ctx.scoping().symbol_is_unused(symbol_id)
-        });
+        specifiers.retain(|specifier| !ctx.scoping().symbol_is_unused(specifier.symbol_id()));
 
         if specifiers.len() != original_len {
             ctx.notice_change();

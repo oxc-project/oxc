@@ -17,6 +17,8 @@ use std::{
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
+use oxc_data_structures::buffered_vec::BufferedVecBacking;
+
 #[cfg(feature = "serialize")]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
@@ -55,6 +57,38 @@ pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 /// be undefined behavior.
 unsafe impl<T: Sync> Sync for Vec<'_, T> {}
 
+impl<T> BufferedVecBacking for Vec<'_, T> {
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[inline]
+    fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
+
+    #[inline]
+    fn reserve(&mut self, additional: usize) {
+        self.0.reserve(additional);
+    }
+
+    #[inline]
+    fn reserve_exact(&mut self, additional: usize) {
+        self.0.reserve_exact(additional);
+    }
+
+    #[inline]
+    fn push(&mut self, value: T) {
+        self.0.push(value);
+    }
+
+    #[inline]
+    fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
+        self.0.extend(iter);
+    }
+}
+
 impl<'alloc, T> Vec<'alloc, T> {
     /// Const assertion that `T` is not `Drop`.
     /// Must be referenced in all methods which create a `Vec`.
@@ -76,7 +110,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// assert!(vec.is_empty());
     /// ```
     #[inline(always)]
-    pub fn new_in<A: GetAllocator<'alloc>>(allocator: &A) -> Self {
+    pub fn new_in(allocator: &impl GetAllocator<'alloc>) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(InnerVec::new_in(allocator.allocator().arena()))
@@ -130,7 +164,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
     #[inline(always)]
-    pub fn with_capacity_in<A: GetAllocator<'alloc>>(capacity: usize, allocator: &A) -> Self {
+    pub fn with_capacity_in(capacity: usize, allocator: &impl GetAllocator<'alloc>) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(InnerVec::with_capacity_in(capacity, allocator.allocator().arena()))
@@ -141,9 +175,9 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
-    pub fn from_iter_in<I: IntoIterator<Item = T>, A: GetAllocator<'alloc>>(
-        iter: I,
-        allocator: &A,
+    pub fn from_iter_in(
+        iter: impl IntoIterator<Item = T>,
+        allocator: &impl GetAllocator<'alloc>,
     ) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
@@ -169,7 +203,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// assert_eq!(vec, [123]);
     /// ```
     #[inline]
-    pub fn from_value_in<A: GetAllocator<'alloc>>(value: T, allocator: &A) -> Self {
+    pub fn from_value_in(value: T, allocator: &impl GetAllocator<'alloc>) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         let boxed = Box::new_in(value, allocator);
@@ -197,9 +231,9 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let vec = Vec::from_array_in(array, &allocator);
     /// ```
     #[inline]
-    pub fn from_array_in<const N: usize, A: GetAllocator<'alloc>>(
+    pub fn from_array_in<const N: usize>(
         array: [T; N],
-        allocator: &A,
+        allocator: &impl GetAllocator<'alloc>,
     ) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
@@ -270,11 +304,11 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// assert_eq!(rebuilt, [4, 5, 6]);
     /// ```
     #[inline(always)]
-    pub unsafe fn from_raw_parts_in<A: GetAllocator<'alloc>>(
+    pub unsafe fn from_raw_parts_in(
         ptr: NonNull<T>,
         length: usize,
         capacity: usize,
-        allocator: &A,
+        allocator: &impl GetAllocator<'alloc>,
     ) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 

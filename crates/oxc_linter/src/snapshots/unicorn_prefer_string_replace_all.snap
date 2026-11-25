@@ -288,3 +288,83 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───────
    ╰────
   help: Replace `/foo/gv` with `'foo'`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:2:22]
+ 1 │ const RE = /a/g;
+ 2 │ export const out = s.replace(RE, "b");
+   ·                      ───────
+ 3 │ export const out2 = s.replace(/a/g, "b");
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:3:23]
+ 2 │ export const out = s.replace(RE, "b");
+ 3 │ export const out2 = s.replace(/a/g, "b");
+   ·                       ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:45]
+ 1 │ const pattern = new RegExp("foo", "g"); foo.replace(pattern, bar)
+   ·                                             ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:25]
+ 1 │ let pattern = /a/g; foo.replace(pattern, bar)
+   ·                         ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:25]
+ 1 │ var pattern = /a/g; foo.replace(pattern, bar)
+   ·                         ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:29]
+ 1 │ const pattern = (/a/g); foo.replace((pattern), bar)
+   ·                             ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:50]
+ 1 │ const pattern = /a/g; const alias = pattern; foo.replace(alias, bar)
+   ·                                                  ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:49]
+ 1 │ const pattern = /a/g; obj[pattern] = value; foo.replace(pattern, bar)
+   ·                                                 ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:115]
+ 1 │ const RE = /a/g; const first = RE; const second = (first); foo.replace(first, bar); foo.replace(second, bar); foo.replace(RE, bar)
+   ·                                                                                                                   ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:64]
+ 1 │ const RE = /a/g; const first = RE; const second = (first); foo.replace(first, bar); foo.replace(second, bar); foo.replace(RE, bar)
+   ·                                                                ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
+   ╭─[prefer_string_replace_all.tsx:1:89]
+ 1 │ const RE = /a/g; const first = RE; const second = (first); foo.replace(first, bar); foo.replace(second, bar); foo.replace(RE, bar)
+   ·                                                                                         ───────
+   ╰────
+  help: Replace `replace` with `replaceAll`.

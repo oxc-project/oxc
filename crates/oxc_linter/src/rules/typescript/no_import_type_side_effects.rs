@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{ImportDeclarationSpecifier, ImportOrExportKind},
-};
+use oxc_ast::{AstKind, ast::ImportDeclarationSpecifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -74,7 +71,7 @@ declare_oxc_lint!(
     NoImportTypeSideEffects,
     typescript,
     restriction,
-    fix,
+    suggestion,
     version = "0.5.0",
     short_description = "Enforce the use of top-level `import type` qualifier when an import only has specifiers with inline type qualifiers.",
 );
@@ -85,7 +82,7 @@ impl Rule for NoImportTypeSideEffects {
             return;
         };
 
-        if matches!(import_decl.import_kind, ImportOrExportKind::Type) {
+        if import_decl.import_kind.is_type() {
             return;
         }
 
@@ -99,17 +96,17 @@ impl Rule for NoImportTypeSideEffects {
             let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier else {
                 return;
             };
-            if matches!(specifier.import_kind, ImportOrExportKind::Value) {
+            if specifier.import_kind.is_value() {
                 return;
             }
             type_specifiers.push(specifier);
         }
         // Can report and fix only if all specifiers are inline `type` qualifier:
         // `import { type A, type B } from 'foo.js'`
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             no_import_type_side_effects_diagnostic(import_decl.span),
             |fixer| {
-                let mut fix = fixer.new_fix_with_capacity(type_specifiers.len() + 1);
+                let mut fix = fixer.new_fix_with_capacity(type_specifiers.len() + 2);
                 let raw = ctx.source_range(import_decl.span);
 
                 // import type A from 'foo.js'
@@ -127,6 +124,8 @@ impl Rule for NoImportTypeSideEffects {
                     )));
                 }
 
+                fix.push(Fix::new("", Span::empty(import_decl.span.end)));
+
                 fix.with_message("Convert to top-level type import")
             },
         );
@@ -139,6 +138,7 @@ impl Rule for NoImportTypeSideEffects {
 
 #[test]
 fn test() {
+    use crate::FixKind;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -163,12 +163,29 @@ fn test() {
     ];
 
     let fix = vec![
-        ("import { type A } from 'mod';", "import type { A } from 'mod';"),
-        ("import { type A as AA } from 'mod';", "import type { A as AA } from 'mod';"),
-        ("import { type A, type B } from 'mod';", "import type { A, B } from 'mod';"),
+        (
+            "import { type A } from 'mod';",
+            "import type { A } from 'mod';",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "import { type A as AA } from 'mod';",
+            "import type { A as AA } from 'mod';",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "import { type A, type B } from 'mod';",
+            "import type { A, B } from 'mod';",
+            None,
+            FixKind::Suggestion,
+        ),
         (
             "import { type A as AA, type B as BB } from 'mod';",
             "import type { A as AA, B as BB } from 'mod';",
+            None,
+            FixKind::Suggestion,
         ),
     ];
 

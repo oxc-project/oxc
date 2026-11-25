@@ -17,6 +17,7 @@ declare_oxc_lint!(
     NoNegatedCondition,
     unicorn,
     pedantic,
+    recommended,
     fix,
     docs = DOCUMENTATION,
     version = "0.0.18",

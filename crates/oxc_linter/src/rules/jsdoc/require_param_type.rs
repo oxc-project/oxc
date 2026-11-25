@@ -83,7 +83,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireParamType {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<RequireParamTypeConfig>>(value)
+        DefaultRuleConfig::<RequireParamTypeConfig>::from_value(value)
             .map(|config| Self(Box::new(config.into_inner())))
     }
 

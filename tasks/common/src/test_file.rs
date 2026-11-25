@@ -38,7 +38,7 @@ impl TestFiles {
         Self {
             files: [
                 // Small JSX (61L / 2.46KB)
-                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/RadixUIAdoptionSection.jsx",
                 // Small TS (191L / 8.23KB)
                 "https://cdn.jsdelivr.net/gh/vuejs/core@v3.5.24/packages/compiler-core/src/errors.ts",
                 // Medium TSX (389L / 11.7KB)
@@ -62,7 +62,7 @@ impl TestFiles {
     pub fn minimal() -> Self {
         Self {
             files: [
-                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/RadixUIAdoptionSection.jsx",
                 "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
                 // Real world app tsx (415KB) — excalidraw App.tsx (master @ f6d85bc8)
                 "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
@@ -72,7 +72,7 @@ impl TestFiles {
                 // bench results are reproducible. To bump, update both call sites and re-run
                 // `cargo allocs`.
                 // <https://github.com/oxc-project/benchmark-files/blob/main/kitchen-sink.tsx>
-                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@ac5609a8fe9ae8d1a1de0f2ef251d562630c77e0/kitchen-sink.tsx",
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/kitchen-sink.tsx",
             ].into_iter().map(TestFile::new).collect(),
         }
     }
@@ -85,7 +85,7 @@ impl TestFiles {
                 // Real world app tsx (415KB) — excalidraw App.tsx (master @ f6d85bc8)
                 "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
                 // Real world content-heavy app jsx (3K)
-                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/RadixUIAdoptionSection.jsx",
                 // Heavy with classes (554K)
                 "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
                 // ES5 (6.7M)
@@ -95,7 +95,7 @@ impl TestFiles {
                 // Hand-written synthetic fixture covering every AST node, transformer plugin,
                 // minifier optimization, and semantic step (~733K, ~21k lines, ~133k AST nodes)
                 // — pinned for reproducibility.
-                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@ac5609a8fe9ae8d1a1de0f2ef251d562630c77e0/kitchen-sink.tsx",
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/kitchen-sink.tsx",
             ].into_iter().map(TestFile::new).collect(),
         }
     }

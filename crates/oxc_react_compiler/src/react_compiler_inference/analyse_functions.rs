@@ -16,7 +16,7 @@ use oxc_allocator::CloneIn;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects;
 use crate::react_compiler_inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges;
@@ -174,9 +174,7 @@ where
                 // no-op
             }
             AliasingEffect::Apply { .. } => {
-                return Err(ErrorCategory::Invariant.diagnostic(
-                    "[AnalyzeFunctions] Expected Apply effects to be replaced with more precise effects",
-                ));
+                return Err(diagnostics::invariant_analyze_functions_expected_apply_effects_replaced_more_precise_effects());
             }
         }
     }

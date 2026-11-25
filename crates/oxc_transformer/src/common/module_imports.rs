@@ -192,7 +192,7 @@ impl<'a> ModuleImportsStore<'a> {
         let var_kind = VariableDeclarationKind::Var;
         let decl = {
             let init = Expression::new_call_expression(SPAN, callee, None, args, false, ctx);
-            let decl = VariableDeclarator::new(SPAN, var_kind, id, None, Some(init), false, ctx);
+            let decl = VariableDeclarator::new(SPAN, id, None, Some(init), false, ctx);
             [decl]
         };
         Statement::new_variable_declaration(SPAN, var_kind, decl, false, ctx)

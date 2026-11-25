@@ -11,7 +11,25 @@ use oxc_regular_expression::{
     has_unsupported_regular_expression_flags, has_unsupported_regular_expression_pattern,
 };
 
+use crate::{
+    DetermineValueType, GlobalContext, ToBigInt, ToJsString, ToNumber, ValueType,
+    to_primitive::{ToPrimitive, ToPrimitiveResult},
+};
+
 use super::context::MayHaveSideEffectsContext;
+
+/// Whether ToIndex succeeds for a known length, with no options argument.
+/// Backing-store allocation failures are ignored under the minifier's allocation assumption.
+fn is_valid_array_buffer<'a>(args: &[Argument<'a>], ctx: &impl GlobalContext<'a>) -> bool {
+    let value = match args {
+        [] => return true,
+        [arg] => arg.as_expression().and_then(|expr| expr.to_number(ctx)),
+        _ => return false,
+    };
+    value.is_some_and(|value| {
+        value.is_nan() || (0.0..=9_007_199_254_740_991.0).contains(&value.trunc())
+    })
+}
 
 /// Validate that a RegExp constructor call cannot throw on the target engines.
 ///
@@ -35,7 +53,10 @@ pub fn is_valid_regexp<'a>(
             // validated below because support for that constructor form varies by target.
             Some(Expression::RegExpLiteral(_)) => ("", true),
             // String literal: extract the pattern to validate
-            Some(Expression::StringLiteral(s)) if !s.lone_surrogates => (s.value.as_str(), false),
+            Some(Expression::StringLiteral(s)) => {
+                let Some(pattern) = s.value.as_str() else { return false };
+                (pattern, false)
+            }
             // Non-literal argument: can't statically determine, assume side effects
             _ => return false,
         },
@@ -45,7 +66,10 @@ pub fn is_valid_regexp<'a>(
     let flags = match args.get(1) {
         None => None,
         Some(arg) => match arg.as_expression() {
-            Some(Expression::StringLiteral(s)) => Some(s.value.as_str()),
+            Some(Expression::StringLiteral(s)) => {
+                let Some(flags) = s.value.as_str() else { return false };
+                Some(flags)
+            }
             // Non-literal flags: can't statically determine, assume side effects
             _ => return false,
         },
@@ -108,48 +132,118 @@ fn supports_es_feature<'a>(ctx: &impl MayHaveSideEffectsContext<'a>, feature: ES
     ctx.engine_targets().is_some_and(|target| target.supports_es_feature(feature))
 }
 
-#[rustfmt::skip]
-pub(super) fn is_pure_global_function(name: &str) -> bool {
-    matches!(name, "decodeURI" | "decodeURIComponent" | "encodeURI" | "encodeURIComponent"
-            | "escape" | "isFinite" | "isNaN" | "parseFloat" | "parseInt")
+/// Whether invoking a known global as a function is side-effect-free for these arguments.
+/// The caller must establish that the callee is this global and check argument evaluation separately.
+pub(super) fn is_pure_global_function<'a>(
+    name: &str,
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    match name {
+        // Number(Symbol()), Symbol(Symbol()), and Error(Symbol()) throw on coercion.
+        "Number" | "Symbol" => !first_arg_may_be_symbol(args, ctx),
+        name if is_error_constructor(name) => !first_arg_may_be_symbol(args, ctx),
+        "BigInt" => {
+            // BigInt requires a valid value and can execute user code during ToPrimitive.
+            let Some(expr) = args.first().and_then(Argument::as_expression) else { return false };
+            !matches!(
+                expr.to_primitive(ctx),
+                ToPrimitiveResult::Undetermined
+                    | ToPrimitiveResult::Undefined
+                    | ToPrimitiveResult::Null
+                    | ToPrimitiveResult::Symbol
+            ) && expr.to_big_int(ctx).is_some()
+        }
+        "decodeURI" | "decodeURIComponent" => is_pure_uri_call(args, true, ctx),
+        "encodeURI" | "encodeURIComponent" => is_pure_uri_call(args, false, ctx),
+        // ToNumber throws on a BigInt; ToString-coercing globals accept it.
+        "isNaN" | "isFinite" => !any_arg_throws_to_number(args, ctx),
+        "RegExp" => is_valid_regexp(args, ctx),
+        // String() accepts Symbols, Date() ignores its arguments, and the other
+        // coercions are pure under the existing coercion-method assumptions.
+        "Date" | "Boolean" | "Object" | "String" | "escape" | "parseFloat" | "parseInt" => true,
+        _ => false,
+    }
 }
 
-/// Constructors that are side-effect-free when called as functions (not `new`),
-/// provided all arguments are side-effect-free.
-///
-/// Note: `Number`, `Symbol`, `BigInt`, and Error types are NOT included here because
-/// they require special-case argument validation in `CallExpression`:
-/// - `Number(Symbol())` throws TypeError (`ToNumeric` on Symbol)
-/// - `Symbol(Symbol())` throws TypeError (`ToString` on Symbol)
-/// - `Error(Symbol())` throws TypeError (`ToString` on Symbol)
-/// - `BigInt(1.5)`, `BigInt(undefined)`, etc. throw for invalid values
-///
-/// `String` IS included because `String()` has special Symbol handling
-/// (`String(Symbol())` returns `"Symbol()"` without throwing), and per the
-/// "Coercion Methods Are Pure" assumption, `ToPrimitive` on objects is safe.
-///
-/// `Date` IS included because `Date()` as a function ignores all arguments
-/// and just returns the current date as a string.
-#[rustfmt::skip]
-pub(super) fn is_pure_callable_constructor(name: &str) -> bool {
-    matches!(name, "Date" | "Boolean" | "Object" | "String")
+fn is_pure_uri_call<'a>(args: &[Argument<'a>], decode: bool, ctx: &impl GlobalContext<'a>) -> bool {
+    args.first().is_none_or(|arg| {
+        arg.as_expression().and_then(|expr| expr.to_js_string(ctx)).is_some_and(|value| {
+            // ToJsString returns UTF-8, so success excludes the lone surrogates
+            // that make encoding throw. Decoding percent escapes additionally
+            // needs UTF-8 validation; leave it to constant folding.
+            !decode || !value.contains('%')
+        })
+    })
 }
 
-/// Constructors that are unconditionally side-effect-free with any arguments.
+/// Whether invoking a known global with `new` is side-effect-free for these arguments.
 ///
-/// - `Object`: wraps/returns any argument, no coercion
-/// - `Boolean`: `ToBoolean` is a purely internal operation, no user code
+/// The caller must establish that the callee is this global. This excludes argument
+/// evaluation: callers must preserve its effects separately.
+/// Returns false for unknown constructors and arguments that cannot be proven safe,
+/// subject to the existing coercion and allocation assumptions.
+pub fn is_pure_global_constructor<'a>(
+    name: &str,
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    match name {
+        // ToString(Symbol) and ToNumeric(Symbol) throw. Both constructors accept BigInt.
+        "String" | "Number" => !first_arg_may_be_symbol(args, ctx),
+        "ArrayBuffer" => is_valid_array_buffer(args, ctx),
+        // Date's ToNumber conversion also throws on BigInt.
+        "Date" => args.first().is_none_or(|arg| {
+            arg.as_expression()
+                .is_some_and(|expr| expr.to_primitive(ctx).is_symbol_or_bigint() == Some(false))
+        }),
+        name if is_error_constructor(name) => !first_arg_may_be_symbol(args, ctx),
+        name if is_typed_array_constructor(name) => {
+            // Object arguments can call @@iterator; BigInt throws during ToNumber.
+            args.first().is_none_or(|arg| {
+                arg.as_expression().is_some_and(|expr| {
+                    matches!(
+                        expr.value_type(ctx),
+                        ValueType::Number
+                            | ValueType::String
+                            | ValueType::Boolean
+                            | ValueType::Null
+                            | ValueType::Undefined
+                    )
+                })
+            })
+        }
+        "RegExp" => is_valid_regexp(args, ctx),
+        "Object" | "Boolean" => true,
+        _ => is_pure_collection_constructor(name, args, ctx),
+    }
+}
+
+/// Whether the first argument can produce a Symbol from ToPrimitive.
+/// Object coercions are governed by the existing coercion-method assumptions.
+fn first_arg_may_be_symbol<'a>(args: &[Argument<'a>], ctx: &impl GlobalContext<'a>) -> bool {
+    args.first().is_some_and(|arg| {
+        arg.as_expression().is_none_or(|expr| expr.to_primitive(ctx).is_symbol() != Some(false))
+    })
+}
+
+/// Whether any argument is provably a BigInt, for which `ToNumber` throws a `TypeError`.
 ///
-/// Note: Error types call `ToString(msg)` which throws on Symbol. They need argument
-/// validation (Symbol check). `String`, `Number`, `Date`, `ArrayBuffer` also need checks.
-#[rustfmt::skip]
-pub(super) fn is_unconditionally_pure_constructor(name: &str) -> bool {
-    matches!(name, "Object" | "Boolean")
+/// A Symbol argument also throws, but oxc can never prove a value is a Symbol (there is
+/// no `ValueType::Symbol`), so — like esbuild — that case is left droppable to avoid
+/// keeping every `Math.abs(x)` / `isNaN(x)` on an undetermined argument.
+pub(super) fn any_arg_throws_to_number<'a>(
+    args: &[Argument<'a>],
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    args.iter().any(|arg| arg.as_expression().is_some_and(|e| e.value_type(ctx).is_bigint()))
 }
 
 /// Whether the name is an Error constructor.
+///
+/// See <https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-native-error-types-used-in-this-standard> for the list of native errors.
 #[rustfmt::skip]
-pub(super) fn is_error_constructor(name: &str) -> bool {
+pub fn is_error_constructor(name: &str) -> bool {
     matches!(name, "Error" | "EvalError" | "RangeError" | "ReferenceError"
             | "SyntaxError" | "TypeError" | "URIError")
 }
@@ -263,176 +357,144 @@ pub(super) fn is_known_global_constructor(name: &str) -> bool {
 /// It includes browser/host-specific APIs (e.g. `document`, `window`, DOM classes) intentionally,
 /// matching Rollup's behavior of assuming these globals exist in the target environment.
 /// `NaN`, `Infinity`, `undefined` are excluded since they are already handled as special cases.
-#[rustfmt::skip]
 pub(super) fn is_known_global_identifier(name: &str) -> bool {
-    matches!(name,
-        // Core JS globals
-        "Array" | "Boolean" | "Function" | "Math" | "Number" | "Object" | "RegExp" | "String"
-        // Other globals present in both the browser and node
-        | "AbortController" | "AbortSignal" | "AggregateError" | "ArrayBuffer" | "BigInt"
-        | "DataView" | "Date" | "Error" | "EvalError" | "Event" | "EventTarget"
-        | "Float32Array" | "Float64Array" | "Int16Array" | "Int32Array" | "Int8Array" | "Intl"
-        | "JSON" | "Map" | "MessageChannel" | "MessageEvent" | "MessagePort" | "Promise"
-        | "Proxy" | "RangeError" | "ReferenceError" | "Reflect" | "Set" | "Symbol"
-        | "SyntaxError" | "TextDecoder" | "TextEncoder" | "TypeError" | "URIError" | "URL"
-        | "URLSearchParams" | "Uint16Array" | "Uint32Array" | "Uint8Array"
-        | "Uint8ClampedArray" | "WeakMap" | "WeakSet" | "WebAssembly"
-        | "clearInterval" | "clearTimeout" | "console" | "decodeURI" | "decodeURIComponent"
-        | "encodeURI" | "encodeURIComponent" | "escape" | "globalThis" | "isFinite" | "isNaN"
-        | "parseFloat" | "parseInt" | "queueMicrotask" | "setInterval" | "setTimeout"
-        | "unescape"
-        // CSSOM APIs
-        | "CSSAnimation" | "CSSFontFaceRule" | "CSSImportRule" | "CSSKeyframeRule"
-        | "CSSKeyframesRule" | "CSSMediaRule" | "CSSNamespaceRule" | "CSSPageRule" | "CSSRule"
-        | "CSSRuleList" | "CSSStyleDeclaration" | "CSSStyleRule" | "CSSStyleSheet"
-        | "CSSSupportsRule" | "CSSTransition"
-        // SVG DOM
-        | "SVGAElement" | "SVGAngle" | "SVGAnimateElement" | "SVGAnimateMotionElement"
-        | "SVGAnimateTransformElement" | "SVGAnimatedAngle" | "SVGAnimatedBoolean"
-        | "SVGAnimatedEnumeration" | "SVGAnimatedInteger" | "SVGAnimatedLength"
-        | "SVGAnimatedLengthList" | "SVGAnimatedNumber" | "SVGAnimatedNumberList"
-        | "SVGAnimatedPreserveAspectRatio" | "SVGAnimatedRect" | "SVGAnimatedString"
-        | "SVGAnimatedTransformList" | "SVGAnimationElement" | "SVGCircleElement"
-        | "SVGClipPathElement" | "SVGComponentTransferFunctionElement" | "SVGDefsElement"
-        | "SVGDescElement" | "SVGElement" | "SVGEllipseElement" | "SVGFEBlendElement"
-        | "SVGFEColorMatrixElement" | "SVGFEComponentTransferElement"
-        | "SVGFECompositeElement" | "SVGFEConvolveMatrixElement"
-        | "SVGFEDiffuseLightingElement" | "SVGFEDisplacementMapElement"
-        | "SVGFEDistantLightElement" | "SVGFEDropShadowElement" | "SVGFEFloodElement"
-        | "SVGFEFuncAElement" | "SVGFEFuncBElement" | "SVGFEFuncGElement"
-        | "SVGFEFuncRElement" | "SVGFEGaussianBlurElement" | "SVGFEImageElement"
-        | "SVGFEMergeElement" | "SVGFEMergeNodeElement" | "SVGFEMorphologyElement"
-        | "SVGFEOffsetElement" | "SVGFEPointLightElement" | "SVGFESpecularLightingElement"
-        | "SVGFESpotLightElement" | "SVGFETileElement" | "SVGFETurbulenceElement"
-        | "SVGFilterElement" | "SVGForeignObjectElement" | "SVGGElement"
-        | "SVGGeometryElement" | "SVGGradientElement" | "SVGGraphicsElement"
-        | "SVGImageElement" | "SVGLength" | "SVGLengthList" | "SVGLineElement"
-        | "SVGLinearGradientElement" | "SVGMPathElement" | "SVGMarkerElement"
-        | "SVGMaskElement" | "SVGMatrix" | "SVGMetadataElement" | "SVGNumber"
-        | "SVGNumberList" | "SVGPathElement" | "SVGPatternElement" | "SVGPoint"
-        | "SVGPointList" | "SVGPolygonElement" | "SVGPolylineElement"
-        | "SVGPreserveAspectRatio" | "SVGRadialGradientElement" | "SVGRect"
-        | "SVGRectElement" | "SVGSVGElement" | "SVGScriptElement" | "SVGSetElement"
-        | "SVGStopElement" | "SVGStringList" | "SVGStyleElement" | "SVGSwitchElement"
-        | "SVGSymbolElement" | "SVGTSpanElement" | "SVGTextContentElement"
-        | "SVGTextElement" | "SVGTextPathElement" | "SVGTextPositioningElement"
-        | "SVGTitleElement" | "SVGTransform" | "SVGTransformList" | "SVGUnitTypes"
-        | "SVGUseElement" | "SVGViewElement"
-        // Other browser APIs
-        | "AnalyserNode" | "Animation" | "AnimationEffect" | "AnimationEvent"
-        | "AnimationPlaybackEvent" | "AnimationTimeline" | "Attr" | "Audio" | "AudioBuffer"
-        | "AudioBufferSourceNode" | "AudioDestinationNode" | "AudioListener" | "AudioNode"
-        | "AudioParam" | "AudioProcessingEvent" | "AudioScheduledSourceNode" | "BarProp"
-        | "BeforeUnloadEvent" | "BiquadFilterNode" | "Blob" | "BlobEvent"
-        | "ByteLengthQueuingStrategy" | "CDATASection" | "CSS" | "CanvasGradient"
-        | "CanvasPattern" | "CanvasRenderingContext2D" | "ChannelMergerNode"
-        | "ChannelSplitterNode" | "CharacterData" | "ClipboardEvent" | "CloseEvent"
-        | "Comment" | "CompositionEvent" | "ConvolverNode" | "CountQueuingStrategy"
-        | "Crypto" | "CustomElementRegistry" | "CustomEvent" | "DOMException"
-        | "DOMImplementation" | "DOMMatrix" | "DOMMatrixReadOnly" | "DOMParser" | "DOMPoint"
-        | "DOMPointReadOnly" | "DOMQuad" | "DOMRect" | "DOMRectList" | "DOMRectReadOnly"
-        | "DOMStringList" | "DOMStringMap" | "DOMTokenList" | "DataTransfer"
-        | "DataTransferItem" | "DataTransferItemList" | "DelayNode" | "Document"
-        | "DocumentFragment" | "DocumentTimeline" | "DocumentType" | "DragEvent"
-        | "DynamicsCompressorNode" | "Element" | "ErrorEvent" | "EventSource" | "File"
-        | "FileList" | "FileReader" | "FocusEvent" | "FontFace" | "FormData" | "GainNode"
-        | "Gamepad" | "GamepadButton" | "GamepadEvent" | "Geolocation"
-        | "GeolocationPositionError" | "HTMLAllCollection" | "HTMLAnchorElement"
-        | "HTMLAreaElement" | "HTMLAudioElement" | "HTMLBRElement" | "HTMLBaseElement"
-        | "HTMLBodyElement" | "HTMLButtonElement" | "HTMLCanvasElement" | "HTMLCollection"
-        | "HTMLDListElement" | "HTMLDataElement" | "HTMLDataListElement"
-        | "HTMLDetailsElement" | "HTMLDirectoryElement" | "HTMLDivElement" | "HTMLDocument"
-        | "HTMLElement" | "HTMLEmbedElement" | "HTMLFieldSetElement" | "HTMLFontElement"
-        | "HTMLFormControlsCollection" | "HTMLFormElement" | "HTMLFrameElement"
-        | "HTMLFrameSetElement" | "HTMLHRElement" | "HTMLHeadElement"
-        | "HTMLHeadingElement" | "HTMLHtmlElement" | "HTMLIFrameElement"
-        | "HTMLImageElement" | "HTMLInputElement" | "HTMLLIElement" | "HTMLLabelElement"
-        | "HTMLLegendElement" | "HTMLLinkElement" | "HTMLMapElement" | "HTMLMarqueeElement"
-        | "HTMLMediaElement" | "HTMLMenuElement" | "HTMLMetaElement" | "HTMLMeterElement"
-        | "HTMLModElement" | "HTMLOListElement" | "HTMLObjectElement"
-        | "HTMLOptGroupElement" | "HTMLOptionElement" | "HTMLOptionsCollection"
-        | "HTMLOutputElement" | "HTMLParagraphElement" | "HTMLParamElement"
-        | "HTMLPictureElement" | "HTMLPreElement" | "HTMLProgressElement"
-        | "HTMLQuoteElement" | "HTMLScriptElement" | "HTMLSelectElement"
-        | "HTMLSlotElement" | "HTMLSourceElement" | "HTMLSpanElement" | "HTMLStyleElement"
-        | "HTMLTableCaptionElement" | "HTMLTableCellElement" | "HTMLTableColElement"
-        | "HTMLTableElement" | "HTMLTableRowElement" | "HTMLTableSectionElement"
-        | "HTMLTemplateElement" | "HTMLTextAreaElement" | "HTMLTimeElement"
-        | "HTMLTitleElement" | "HTMLTrackElement" | "HTMLUListElement"
-        | "HTMLUnknownElement" | "HTMLVideoElement" | "HashChangeEvent" | "Headers"
-        | "History" | "IDBCursor" | "IDBCursorWithValue" | "IDBDatabase" | "IDBFactory"
-        | "IDBIndex" | "IDBKeyRange" | "IDBObjectStore" | "IDBOpenDBRequest" | "IDBRequest"
-        | "IDBTransaction" | "IDBVersionChangeEvent" | "Image" | "ImageData" | "InputEvent"
-        | "IntersectionObserver" | "IntersectionObserverEntry" | "KeyboardEvent"
-        | "KeyframeEffect" | "Location" | "MediaCapabilities"
-        | "MediaElementAudioSourceNode" | "MediaEncryptedEvent" | "MediaError"
-        | "MediaList" | "MediaQueryList" | "MediaQueryListEvent" | "MediaRecorder"
-        | "MediaSource" | "MediaStream" | "MediaStreamAudioDestinationNode"
-        | "MediaStreamAudioSourceNode" | "MediaStreamTrack" | "MediaStreamTrackEvent"
-        | "MimeType" | "MimeTypeArray" | "MouseEvent" | "MutationEvent"
-        | "MutationObserver" | "MutationRecord" | "NamedNodeMap" | "Navigator" | "Node"
-        | "NodeFilter" | "NodeIterator" | "NodeList" | "Notification"
-        | "OfflineAudioCompletionEvent" | "Option" | "OscillatorNode"
-        | "PageTransitionEvent" | "Path2D" | "Performance" | "PerformanceEntry"
-        | "PerformanceMark" | "PerformanceMeasure" | "PerformanceNavigation"
-        | "PerformanceObserver" | "PerformanceObserverEntryList"
-        | "PerformanceResourceTiming" | "PerformanceTiming" | "PeriodicWave" | "Plugin"
-        | "PluginArray" | "PointerEvent" | "PopStateEvent" | "ProcessingInstruction"
-        | "ProgressEvent" | "PromiseRejectionEvent" | "RTCCertificate" | "RTCDTMFSender"
-        | "RTCDTMFToneChangeEvent" | "RTCDataChannel" | "RTCDataChannelEvent"
-        | "RTCIceCandidate" | "RTCPeerConnection" | "RTCPeerConnectionIceEvent"
-        | "RTCRtpReceiver" | "RTCRtpSender" | "RTCRtpTransceiver"
-        | "RTCSessionDescription" | "RTCStatsReport" | "RTCTrackEvent" | "RadioNodeList"
-        | "Range" | "ReadableStream" | "Request" | "ResizeObserver"
-        | "ResizeObserverEntry" | "Response" | "Screen" | "ScriptProcessorNode"
-        | "SecurityPolicyViolationEvent" | "Selection" | "ShadowRoot" | "SourceBuffer"
-        | "SourceBufferList" | "SpeechSynthesisEvent" | "SpeechSynthesisUtterance"
-        | "StaticRange" | "Storage" | "StorageEvent" | "StyleSheet" | "StyleSheetList"
-        | "Text" | "TextMetrics" | "TextTrack" | "TextTrackCue" | "TextTrackCueList"
-        | "TextTrackList" | "TimeRanges" | "TrackEvent" | "TransitionEvent" | "TreeWalker"
-        | "UIEvent" | "VTTCue" | "ValidityState" | "VisualViewport" | "WaveShaperNode"
-        | "WebGLActiveInfo" | "WebGLBuffer" | "WebGLContextEvent" | "WebGLFramebuffer"
-        | "WebGLProgram" | "WebGLQuery" | "WebGLRenderbuffer" | "WebGLRenderingContext"
-        | "WebGLSampler" | "WebGLShader" | "WebGLShaderPrecisionFormat" | "WebGLSync"
-        | "WebGLTexture" | "WebGLUniformLocation" | "WebKitCSSMatrix" | "WebSocket"
-        | "WheelEvent" | "Window" | "Worker" | "XMLDocument" | "XMLHttpRequest"
-        | "XMLHttpRequestEventTarget" | "XMLHttpRequestUpload" | "XMLSerializer"
-        | "XPathEvaluator" | "XPathExpression" | "XPathResult" | "XSLTProcessor"
-        | "alert" | "atob" | "blur" | "btoa" | "cancelAnimationFrame" | "captureEvents"
-        | "close" | "closed" | "confirm" | "customElements" | "devicePixelRatio"
-        | "document" | "event" | "fetch" | "find" | "focus" | "frameElement" | "frames"
-        | "getComputedStyle" | "getSelection" | "history" | "indexedDB" | "isSecureContext"
-        | "length" | "location" | "locationbar" | "matchMedia" | "menubar" | "moveBy"
-        | "moveTo" | "name" | "navigator"
-        | "onabort" | "onafterprint" | "onanimationend" | "onanimationiteration"
-        | "onanimationstart" | "onbeforeprint" | "onbeforeunload" | "onblur" | "oncanplay"
-        | "oncanplaythrough" | "onchange" | "onclick" | "oncontextmenu" | "oncuechange"
-        | "ondblclick" | "ondrag" | "ondragend" | "ondragenter" | "ondragleave"
-        | "ondragover" | "ondragstart" | "ondrop" | "ondurationchange" | "onemptied"
-        | "onended" | "onerror" | "onfocus" | "ongotpointercapture" | "onhashchange"
-        | "oninput" | "oninvalid" | "onkeydown" | "onkeypress" | "onkeyup"
-        | "onlanguagechange" | "onload" | "onloadeddata" | "onloadedmetadata"
-        | "onloadstart" | "onlostpointercapture" | "onmessage" | "onmousedown"
-        | "onmouseenter" | "onmouseleave" | "onmousemove" | "onmouseout" | "onmouseover"
-        | "onmouseup" | "onoffline" | "ononline" | "onpagehide" | "onpageshow" | "onpause"
-        | "onplay" | "onplaying" | "onpointercancel" | "onpointerdown" | "onpointerenter"
-        | "onpointerleave" | "onpointermove" | "onpointerout" | "onpointerover"
-        | "onpointerup" | "onpopstate" | "onprogress" | "onratechange"
-        | "onrejectionhandled" | "onreset" | "onresize" | "onscroll" | "onseeked"
-        | "onseeking" | "onselect" | "onstalled" | "onstorage" | "onsubmit" | "onsuspend"
-        | "ontimeupdate" | "ontoggle" | "ontransitioncancel" | "ontransitionend"
-        | "ontransitionrun" | "ontransitionstart" | "onunhandledrejection" | "onunload"
-        | "onvolumechange" | "onwaiting" | "onwebkitanimationend"
-        | "onwebkitanimationiteration" | "onwebkitanimationstart"
-        | "onwebkittransitionend" | "onwheel"
-        | "open" | "opener" | "origin" | "outerHeight" | "outerWidth" | "parent"
-        | "performance" | "personalbar" | "postMessage" | "print" | "prompt"
-        | "releaseEvents" | "requestAnimationFrame" | "resizeBy" | "resizeTo" | "screen"
-        | "screenLeft" | "screenTop" | "screenX" | "screenY" | "scroll" | "scrollBy"
-        | "scrollTo" | "scrollbars" | "self" | "speechSynthesis" | "status" | "statusbar"
-        | "stop" | "toolbar" | "top" | "webkitURL" | "window"
-    )
+    KNOWN_GLOBAL_IDENTIFIERS.binary_search(&name).is_ok()
 }
+
+/// Sorted table backing [`is_known_global_identifier`].
+///
+/// A binary search over a static table compiles to a fraction of the code a `matches!` over
+/// hundreds of string literals expands to while keeping lookups logarithmic. Keep the entries
+/// sorted (byte order) and unique; the table is checked in a test.
+#[rustfmt::skip]
+static KNOWN_GLOBAL_IDENTIFIERS: &[&str] = &[
+    "AbortController", "AbortSignal", "AggregateError", "AnalyserNode", "Animation",
+    "AnimationEffect", "AnimationEvent", "AnimationPlaybackEvent", "AnimationTimeline", "Array",
+    "ArrayBuffer", "Attr", "Audio", "AudioBuffer", "AudioBufferSourceNode", "AudioDestinationNode",
+    "AudioListener", "AudioNode", "AudioParam", "AudioProcessingEvent", "AudioScheduledSourceNode",
+    "BarProp", "BeforeUnloadEvent", "BigInt", "BiquadFilterNode", "Blob", "BlobEvent", "Boolean",
+    "ByteLengthQueuingStrategy", "CDATASection", "CSS", "CSSAnimation", "CSSFontFaceRule",
+    "CSSImportRule", "CSSKeyframeRule", "CSSKeyframesRule", "CSSMediaRule", "CSSNamespaceRule",
+    "CSSPageRule", "CSSRule", "CSSRuleList", "CSSStyleDeclaration", "CSSStyleRule",
+    "CSSStyleSheet", "CSSSupportsRule", "CSSTransition", "CanvasGradient", "CanvasPattern",
+    "CanvasRenderingContext2D", "ChannelMergerNode", "ChannelSplitterNode", "CharacterData",
+    "ClipboardEvent", "CloseEvent", "Comment", "CompositionEvent", "ConvolverNode",
+    "CountQueuingStrategy", "Crypto", "CustomElementRegistry", "CustomEvent", "DOMException",
+    "DOMImplementation", "DOMMatrix", "DOMMatrixReadOnly", "DOMParser", "DOMPoint",
+    "DOMPointReadOnly", "DOMQuad", "DOMRect", "DOMRectList", "DOMRectReadOnly", "DOMStringList",
+    "DOMStringMap", "DOMTokenList", "DataTransfer", "DataTransferItem", "DataTransferItemList",
+    "DataView", "Date", "DelayNode", "Document", "DocumentFragment", "DocumentTimeline",
+    "DocumentType", "DragEvent", "DynamicsCompressorNode", "Element", "Error", "ErrorEvent",
+    "EvalError", "Event", "EventSource", "EventTarget", "File", "FileList", "FileReader",
+    "Float32Array", "Float64Array", "FocusEvent", "FontFace", "FormData", "Function", "GainNode",
+    "Gamepad", "GamepadButton", "GamepadEvent", "Geolocation", "GeolocationPositionError",
+    "HTMLAllCollection", "HTMLAnchorElement", "HTMLAreaElement", "HTMLAudioElement",
+    "HTMLBRElement", "HTMLBaseElement", "HTMLBodyElement", "HTMLButtonElement",
+    "HTMLCanvasElement", "HTMLCollection", "HTMLDListElement", "HTMLDataElement",
+    "HTMLDataListElement", "HTMLDetailsElement", "HTMLDirectoryElement", "HTMLDivElement",
+    "HTMLDocument", "HTMLElement", "HTMLEmbedElement", "HTMLFieldSetElement", "HTMLFontElement",
+    "HTMLFormControlsCollection", "HTMLFormElement", "HTMLFrameElement", "HTMLFrameSetElement",
+    "HTMLHRElement", "HTMLHeadElement", "HTMLHeadingElement", "HTMLHtmlElement",
+    "HTMLIFrameElement", "HTMLImageElement", "HTMLInputElement", "HTMLLIElement",
+    "HTMLLabelElement", "HTMLLegendElement", "HTMLLinkElement", "HTMLMapElement",
+    "HTMLMarqueeElement", "HTMLMediaElement", "HTMLMenuElement", "HTMLMetaElement",
+    "HTMLMeterElement", "HTMLModElement", "HTMLOListElement", "HTMLObjectElement",
+    "HTMLOptGroupElement", "HTMLOptionElement", "HTMLOptionsCollection", "HTMLOutputElement",
+    "HTMLParagraphElement", "HTMLParamElement", "HTMLPictureElement", "HTMLPreElement",
+    "HTMLProgressElement", "HTMLQuoteElement", "HTMLScriptElement", "HTMLSelectElement",
+    "HTMLSlotElement", "HTMLSourceElement", "HTMLSpanElement", "HTMLStyleElement",
+    "HTMLTableCaptionElement", "HTMLTableCellElement", "HTMLTableColElement", "HTMLTableElement",
+    "HTMLTableRowElement", "HTMLTableSectionElement", "HTMLTemplateElement", "HTMLTextAreaElement",
+    "HTMLTimeElement", "HTMLTitleElement", "HTMLTrackElement", "HTMLUListElement",
+    "HTMLUnknownElement", "HTMLVideoElement", "HashChangeEvent", "Headers", "History", "IDBCursor",
+    "IDBCursorWithValue", "IDBDatabase", "IDBFactory", "IDBIndex", "IDBKeyRange", "IDBObjectStore",
+    "IDBOpenDBRequest", "IDBRequest", "IDBTransaction", "IDBVersionChangeEvent", "Image",
+    "ImageData", "InputEvent", "Int16Array", "Int32Array", "Int8Array", "IntersectionObserver",
+    "IntersectionObserverEntry", "Intl", "JSON", "KeyboardEvent", "KeyframeEffect", "Location",
+    "Map", "Math", "MediaCapabilities", "MediaElementAudioSourceNode", "MediaEncryptedEvent",
+    "MediaError", "MediaList", "MediaQueryList", "MediaQueryListEvent", "MediaRecorder",
+    "MediaSource", "MediaStream", "MediaStreamAudioDestinationNode", "MediaStreamAudioSourceNode",
+    "MediaStreamTrack", "MediaStreamTrackEvent", "MessageChannel", "MessageEvent", "MessagePort",
+    "MimeType", "MimeTypeArray", "MouseEvent", "MutationEvent", "MutationObserver",
+    "MutationRecord", "NamedNodeMap", "Navigator", "Node", "NodeFilter", "NodeIterator",
+    "NodeList", "Notification", "Number", "Object", "OfflineAudioCompletionEvent", "Option",
+    "OscillatorNode", "PageTransitionEvent", "Path2D", "Performance", "PerformanceEntry",
+    "PerformanceMark", "PerformanceMeasure", "PerformanceNavigation", "PerformanceObserver",
+    "PerformanceObserverEntryList", "PerformanceResourceTiming", "PerformanceTiming",
+    "PeriodicWave", "Plugin", "PluginArray", "PointerEvent", "PopStateEvent",
+    "ProcessingInstruction", "ProgressEvent", "Promise", "PromiseRejectionEvent", "Proxy",
+    "RTCCertificate", "RTCDTMFSender", "RTCDTMFToneChangeEvent", "RTCDataChannel",
+    "RTCDataChannelEvent", "RTCIceCandidate", "RTCPeerConnection", "RTCPeerConnectionIceEvent",
+    "RTCRtpReceiver", "RTCRtpSender", "RTCRtpTransceiver", "RTCSessionDescription",
+    "RTCStatsReport", "RTCTrackEvent", "RadioNodeList", "Range", "RangeError", "ReadableStream",
+    "ReferenceError", "Reflect", "RegExp", "Request", "ResizeObserver", "ResizeObserverEntry",
+    "Response", "SVGAElement", "SVGAngle", "SVGAnimateElement", "SVGAnimateMotionElement",
+    "SVGAnimateTransformElement", "SVGAnimatedAngle", "SVGAnimatedBoolean",
+    "SVGAnimatedEnumeration", "SVGAnimatedInteger", "SVGAnimatedLength", "SVGAnimatedLengthList",
+    "SVGAnimatedNumber", "SVGAnimatedNumberList", "SVGAnimatedPreserveAspectRatio",
+    "SVGAnimatedRect", "SVGAnimatedString", "SVGAnimatedTransformList", "SVGAnimationElement",
+    "SVGCircleElement", "SVGClipPathElement", "SVGComponentTransferFunctionElement",
+    "SVGDefsElement", "SVGDescElement", "SVGElement", "SVGEllipseElement", "SVGFEBlendElement",
+    "SVGFEColorMatrixElement", "SVGFEComponentTransferElement", "SVGFECompositeElement",
+    "SVGFEConvolveMatrixElement", "SVGFEDiffuseLightingElement", "SVGFEDisplacementMapElement",
+    "SVGFEDistantLightElement", "SVGFEDropShadowElement", "SVGFEFloodElement", "SVGFEFuncAElement",
+    "SVGFEFuncBElement", "SVGFEFuncGElement", "SVGFEFuncRElement", "SVGFEGaussianBlurElement",
+    "SVGFEImageElement", "SVGFEMergeElement", "SVGFEMergeNodeElement", "SVGFEMorphologyElement",
+    "SVGFEOffsetElement", "SVGFEPointLightElement", "SVGFESpecularLightingElement",
+    "SVGFESpotLightElement", "SVGFETileElement", "SVGFETurbulenceElement", "SVGFilterElement",
+    "SVGForeignObjectElement", "SVGGElement", "SVGGeometryElement", "SVGGradientElement",
+    "SVGGraphicsElement", "SVGImageElement", "SVGLength", "SVGLengthList", "SVGLineElement",
+    "SVGLinearGradientElement", "SVGMPathElement", "SVGMarkerElement", "SVGMaskElement",
+    "SVGMatrix", "SVGMetadataElement", "SVGNumber", "SVGNumberList", "SVGPathElement",
+    "SVGPatternElement", "SVGPoint", "SVGPointList", "SVGPolygonElement", "SVGPolylineElement",
+    "SVGPreserveAspectRatio", "SVGRadialGradientElement", "SVGRect", "SVGRectElement",
+    "SVGSVGElement", "SVGScriptElement", "SVGSetElement", "SVGStopElement", "SVGStringList",
+    "SVGStyleElement", "SVGSwitchElement", "SVGSymbolElement", "SVGTSpanElement",
+    "SVGTextContentElement", "SVGTextElement", "SVGTextPathElement", "SVGTextPositioningElement",
+    "SVGTitleElement", "SVGTransform", "SVGTransformList", "SVGUnitTypes", "SVGUseElement",
+    "SVGViewElement", "Screen", "ScriptProcessorNode", "SecurityPolicyViolationEvent", "Selection",
+    "Set", "ShadowRoot", "SourceBuffer", "SourceBufferList", "SpeechSynthesisEvent",
+    "SpeechSynthesisUtterance", "StaticRange", "Storage", "StorageEvent", "String", "StyleSheet",
+    "StyleSheetList", "Symbol", "SyntaxError", "Text", "TextDecoder", "TextEncoder", "TextMetrics",
+    "TextTrack", "TextTrackCue", "TextTrackCueList", "TextTrackList", "TimeRanges", "TrackEvent",
+    "TransitionEvent", "TreeWalker", "TypeError", "UIEvent", "URIError", "URL", "URLSearchParams",
+    "Uint16Array", "Uint32Array", "Uint8Array", "Uint8ClampedArray", "VTTCue", "ValidityState",
+    "VisualViewport", "WaveShaperNode", "WeakMap", "WeakSet", "WebAssembly", "WebGLActiveInfo",
+    "WebGLBuffer", "WebGLContextEvent", "WebGLFramebuffer", "WebGLProgram", "WebGLQuery",
+    "WebGLRenderbuffer", "WebGLRenderingContext", "WebGLSampler", "WebGLShader",
+    "WebGLShaderPrecisionFormat", "WebGLSync", "WebGLTexture", "WebGLUniformLocation",
+    "WebKitCSSMatrix", "WebSocket", "WheelEvent", "Window", "Worker", "XMLDocument",
+    "XMLHttpRequest", "XMLHttpRequestEventTarget", "XMLHttpRequestUpload", "XMLSerializer",
+    "XPathEvaluator", "XPathExpression", "XPathResult", "XSLTProcessor", "alert", "atob", "blur",
+    "btoa", "cancelAnimationFrame", "captureEvents", "clearInterval", "clearTimeout", "close",
+    "closed", "confirm", "console", "customElements", "decodeURI", "decodeURIComponent",
+    "devicePixelRatio", "document", "encodeURI", "encodeURIComponent", "escape", "event", "fetch",
+    "find", "focus", "frameElement", "frames", "getComputedStyle", "getSelection", "globalThis",
+    "history", "indexedDB", "isFinite", "isNaN", "isSecureContext", "length", "location",
+    "locationbar", "matchMedia", "menubar", "moveBy", "moveTo", "name", "navigator", "onabort",
+    "onafterprint", "onanimationend", "onanimationiteration", "onanimationstart", "onbeforeprint",
+    "onbeforeunload", "onblur", "oncanplay", "oncanplaythrough", "onchange", "onclick",
+    "oncontextmenu", "oncuechange", "ondblclick", "ondrag", "ondragend", "ondragenter",
+    "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied",
+    "onended", "onerror", "onfocus", "ongotpointercapture", "onhashchange", "oninput", "oninvalid",
+    "onkeydown", "onkeypress", "onkeyup", "onlanguagechange", "onload", "onloadeddata",
+    "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmessage", "onmousedown",
+    "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup",
+    "onoffline", "ononline", "onpagehide", "onpageshow", "onpause", "onplay", "onplaying",
+    "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove",
+    "onpointerout", "onpointerover", "onpointerup", "onpopstate", "onprogress", "onratechange",
+    "onrejectionhandled", "onreset", "onresize", "onscroll", "onseeked", "onseeking", "onselect",
+    "onstalled", "onstorage", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle",
+    "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart",
+    "onunhandledrejection", "onunload", "onvolumechange", "onwaiting", "onwebkitanimationend",
+    "onwebkitanimationiteration", "onwebkitanimationstart", "onwebkittransitionend", "onwheel",
+    "open", "opener", "origin", "outerHeight", "outerWidth", "parent", "parseFloat", "parseInt",
+    "performance", "personalbar", "postMessage", "print", "prompt", "queueMicrotask",
+    "releaseEvents", "requestAnimationFrame", "resizeBy", "resizeTo", "screen", "screenLeft",
+    "screenTop", "screenX", "screenY", "scroll", "scrollBy", "scrollTo", "scrollbars", "self",
+    "setInterval", "setTimeout", "speechSynthesis", "status", "statusbar", "stop", "toolbar",
+    "top", "unescape", "webkitURL", "window",
+];
 
 #[rustfmt::skip]
 fn is_pure_math_method(method: &str) -> bool {
@@ -487,6 +549,9 @@ pub(super) fn is_known_global_property(global: &str, property: &str) -> bool {
     match global {
         "Math" => matches!(property, "E" | "LN10" | "LN2" | "LOG10E" | "LOG2E" | "PI" | "SQRT1_2" | "SQRT2")
             || is_pure_math_method(property),
+        "Number" => matches!(property,
+            "POSITIVE_INFINITY" | "NEGATIVE_INFINITY"  | "EPSILON" | "NaN"
+            | "MAX_VALUE" | "MIN_VALUE" | "MAX_SAFE_INTEGER" | "MIN_SAFE_INTEGER"),
         "console" => matches!(property,
             "assert" | "clear" | "count" | "countReset" | "debug" | "dir" | "dirxml"
             | "error" | "group" | "groupCollapsed" | "groupEnd" | "info" | "log"
@@ -527,4 +592,28 @@ pub(super) fn is_known_global_property_deep(global: &str, middle: &str, property
         | "hasOwnProperty" | "isPrototypeOf" | "propertyIsEnumerable" | "toLocaleString"
         | "toString" | "unwatch" | "valueOf" | "watch"
     )
+}
+
+#[cfg(test)]
+mod test {
+    use super::{KNOWN_GLOBAL_IDENTIFIERS, is_known_global_identifier};
+
+    #[test]
+    fn known_global_identifiers_table_is_sorted_and_unique() {
+        // `binary_search` relies on byte-order sorting and duplicates are pointless.
+        for pair in KNOWN_GLOBAL_IDENTIFIERS.windows(2) {
+            assert!(pair[0] < pair[1], "`{}` must sort before `{}`", pair[0], pair[1]);
+        }
+    }
+
+    #[test]
+    fn known_global_identifiers_lookup() {
+        assert!(is_known_global_identifier("Array"));
+        assert!(is_known_global_identifier("window"));
+        assert!(is_known_global_identifier("AbortController"));
+        assert!(is_known_global_identifier("webkitURL"));
+        assert!(!is_known_global_identifier("NaN"));
+        assert!(!is_known_global_identifier("foo"));
+        assert!(!is_known_global_identifier(""));
+    }
 }

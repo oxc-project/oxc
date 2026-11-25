@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { parseSync } from "../src-js/index.js";
+import { ImportNameKind, type ImportName } from "../src-js/index.js";
+import { parseSync } from "./parser.ts";
 
 describe("esm", () => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax
@@ -110,3 +111,53 @@ describe("export type", () => {
     expect(ret.module.staticExports[0].entries[0].isType).toBe(isType);
   });
 });
+
+describe.each([false, true])(
+  "re-exported default imports (raw transfer: %s)",
+  (experimentalRawTransfer) => {
+    test.each([
+      ["import x from 'y'; export { x as z };", 1],
+      ["export { x as z }; import x from 'y';", 1],
+      ["import x from 'y'; export { x as default };", 1],
+      ["import x from 'y'; export { x, x as z };", 2],
+    ] as const)("%s", (source, expectedCount) => {
+      const ret = parseSync("test.js", source, { experimentalRawTransfer });
+      expect(ret.errors).toEqual([]);
+      const entries = ret.module.staticExports.flatMap((declaration) => declaration.entries);
+      expect(entries).toHaveLength(expectedCount);
+      for (const entry of entries) {
+        expect(entry.importName.name).toBe("default");
+      }
+      expect(ret.module).toEqual(parseSync("test.js", source).module);
+    });
+  },
+);
+
+describe.each([false, true])(
+  "re-exported source imports (raw transfer: %s)",
+  (experimentalRawTransfer) => {
+    test.each([
+      ["import source x from 'y'; export { x };", 1],
+      ["export { x as z }; import source x from 'y';", 1],
+      ["import source x from 'y'; export { x as default };", 1],
+      ["import source x from 'y'; export { x, x as z };", 2],
+    ] as const)("%s", (source, expectedCount) => {
+      const ret = parseSync("test.js", source, { experimentalRawTransfer });
+      expect(ret.errors).toEqual([]);
+      const start = source.indexOf("source x") + "source ".length;
+      const importName: ImportName = {
+        kind: ImportNameKind.Source,
+        name: null,
+        start,
+        end: start + 1,
+      };
+      expect(ret.module.staticImports[0].entries[0].importName).toEqual(importName);
+      const entries = ret.module.staticExports.flatMap((declaration) => declaration.entries);
+      expect(entries).toHaveLength(expectedCount);
+      for (const entry of entries) {
+        expect(entry.importName).toEqual(importName);
+      }
+      expect(ret.module).toEqual(parseSync("test.js", source).module);
+    });
+  },
+);

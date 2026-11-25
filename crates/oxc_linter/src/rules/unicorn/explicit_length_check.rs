@@ -13,7 +13,10 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node, pad_fix_with_token_boundary},
+    utils::{
+        expression_uses_optional_chain, get_boolean_ancestor, is_boolean_call, is_boolean_node,
+        pad_fix_with_token_boundary,
+    },
 };
 
 fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
@@ -71,9 +74,11 @@ declare_oxc_lint!(
     /// ```javascript
     /// const isEmpty = foo.length == 0;
     /// const isEmpty = foo.length < 1;
+    /// const isEmpty = foo.length <= 0;
     /// const isEmpty = 0 === foo.length;
     /// const isEmpty = 0 == foo.length;
     /// const isEmpty = 1 > foo.length;
+    /// const isEmpty = 0 >= foo.length;
     ///
     /// const isEmpty = !foo.length;
     /// const isEmpty = !(foo.length > 0);
@@ -97,10 +102,6 @@ declare_oxc_lint!(
     short_description = "Enforce explicitly comparing the `length` or `size` property of a value.",
 );
 
-fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
-}
-
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
     matches!(
         expr,
@@ -108,7 +109,7 @@ fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> b
             operator,
             left,
             ..
-        } if is_literal(left, value) && op == *operator
+        } if left.is_number_value(value) && op == *operator
     )
 }
 
@@ -119,26 +120,8 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
             operator,
             right,
             ..
-        } if is_literal(right, value) && op == *operator
+        } if right.is_number_value(value) && op == *operator
     )
-}
-
-fn expression_uses_optional_chain(expr: &Expression) -> bool {
-    let expr = expr.get_inner_expression();
-
-    if matches!(expr, Expression::ChainExpression(_)) {
-        return true;
-    }
-
-    if let Some(member_expr) = expr.as_member_expression() {
-        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
-    }
-
-    if let Expression::CallExpression(call_expr) = expr {
-        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
-    }
-
-    false
 }
 
 fn get_length_check_node<'a, 'b>(
@@ -156,12 +139,14 @@ fn get_length_check_node<'a, 'b>(
                 || is_compare_right(binary_expr, BinaryOperator::Equality, 0.0)
                 // `foo.length < 1`
                 || is_compare_right(binary_expr, BinaryOperator::LessThan, 1.0)
+                || is_compare_right(binary_expr, BinaryOperator::LessEqualThan, 0.0)
                 // `0 === foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::StrictEquality, 0.0)
                 // `0 == foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::Equality, 0.0)
                 // `1 > foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::GreaterThan, 1.0)
+                || is_compare_left(binary_expr, BinaryOperator::GreaterEqualThan, 0.0)
         {
             return Some((true, parent));
         }
@@ -278,7 +263,7 @@ impl ExplicitLengthCheck {
 
 impl Rule for ExplicitLengthCheck {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -379,6 +364,17 @@ fn test() {
         ("const hasList = Boolean(foo.list?.length)", None),
         ("const hasList = Boolean(foo?.list.length)", None),
         ("const hasList = Boolean(foo?.list?.length)", None),
+        ("if (foo.length <= 1) {}", None),
+        ("if (foo.length >= 0) {}", None),
+        ("if (0 <= foo.length) {}", None),
+        ("if (1 >= foo.length) {}", None),
+        ("if (foo.length <= -1) {}", None),
+        (r#"if (foo.length <= "0") {}"#, None),
+        ("if (foo.length <= 0n) {}", None),
+        ("if (foo.length <= bar.length) {}", None),
+        ("if (foo?.length <= 0) {}", None),
+        ("if (0 >= foo?.length) {}", None),
+        ("class A { a() { if (this.length <= 0) {} } }", None),
     ];
 
     let fail = vec![
@@ -442,6 +438,23 @@ fn test() {
         ("switch(foo){case!foo.length:{}}", "switch(foo){case foo.length === 0:{}}", None),
         ("for(const a of!foo.length);", "for(const a of foo.length === 0);", None),
         ("for(const a in!foo.length);", "for(const a in foo.length === 0);", None),
+        ("const isEmpty = foo.length <= 0;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = 0 >= foo.length;", "const isEmpty = foo.length === 0;", None),
+        ("const isEmpty = foo.size <= 0;", "const isEmpty = foo.size === 0;", None),
+        ("const isEmpty = 0 >= foo.size;", "const isEmpty = foo.size === 0;", None),
+        ("if (!(foo.length <= 0)) {}", "if (foo.length > 0) {}", None),
+        ("if (!(0 >= foo.length)) {}", "if (foo.length > 0) {}", None),
+        (
+            "if (!(foo.length <= 0)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        (
+            "if (!(0 >= foo.length)) {}",
+            "if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}])),
+        ),
+        ("const isEmpty = Boolean(foo.length <= 0);", "const isEmpty = foo.length === 0;", None),
     ];
     Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::PLUGIN, pass, fail)
         .expect_fix(fixes)

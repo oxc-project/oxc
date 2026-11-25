@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.ts:1:43]
+ 1 │ export async function inTry() { try { let a: number; let b: number; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }
+   ·                                           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.ts:1:58]
+ 1 │ export async function inTry() { try { let a: number; let b: number; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }
+   ·                                                          ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `a` is never reassigned.
+   ╭─[prefer_const.ts:1:11]
+ 1 │ try { let a: number; let b: number; ({a, b} = obj); use(a, b); } catch {}
+   ·           ─
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `b` is never reassigned.
+   ╭─[prefer_const.ts:1:26]
+ 1 │ try { let a: number; let b: number; ({a, b} = obj); use(a, b); } catch {}
+   ·                          ─
+   ╰────
+  help: Use `const` instead.

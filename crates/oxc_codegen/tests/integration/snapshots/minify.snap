@@ -84,9 +84,9 @@ let foo: { new <T>(t: T): void }
 ----------
 let foo:{new <T>(t:T):void;};
 ########## 19
-function <const T>(){}
+function f<const T>(){}
 ----------
-function<const T>(){}
+function f<const T>(){}
 ########## 20
 class A {m?(): void}
 ----------
@@ -112,9 +112,9 @@ enum A { a, 'b' }
 ----------
 enum A{a,"b"}
 ########## 26
-module 'a'
+module a {}
 ----------
-module "a";
+module a{}
 ########## 27
 declare module 'a'
 ----------
@@ -134,7 +134,7 @@ c=foo<string> ;
 ########## 31
 new Map<string, number>();
 ----------
-new Map<string,number>;
+new Map<string,number>();
 ########## 32
 d = x satisfies y;
 ----------

@@ -1,0 +1,194 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/types.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function)",
+        "id": 1,
+        "node": "Function(ambient)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function)",
+        "id": 2,
+        "node": "Function(overload)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 4,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(Function)",
+        "id": 3,
+        "node": "Function(overload)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(FunctionScopedVariable)",
+            "id": 5,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 5,
+            "node": "TSFunctionType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 7,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 4,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 7,
+            "node": "TSMethodSignature",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 9,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 6,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(Function)",
+            "id": 9,
+            "node": "Function(inner)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 12,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(TsModuleBlock)",
+        "id": 8,
+        "node": "TSNamespaceDeclaration(Namespace)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Function)",
+            "id": 11,
+            "name": "inner",
+            "node": "Function(inner)",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "arguments",
+        "node": "VariableDeclarator(arguments)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 2,
+            "name": "arguments",
+            "node_id": 41,
+            "scope_id": 5
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 3,
+            "name": "arguments",
+            "node_id": 54,
+            "scope_id": 7
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function | Ambient)",
+        "id": 1,
+        "name": "ambient",
+        "node": "Function(ambient)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 3,
+        "name": "overload",
+        "node": "Function(overload)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 6,
+        "name": "FunctionType",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Interface)",
+        "id": 8,
+        "name": "Signatures",
+        "node": "TSInterfaceDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(ValueModule)",
+        "id": 10,
+        "name": "Namespace",
+        "node": "TSNamespaceDeclaration(Namespace)",
+        "references": []
+      }
+    ]
+  }
+]

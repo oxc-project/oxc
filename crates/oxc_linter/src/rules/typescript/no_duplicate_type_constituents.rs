@@ -63,15 +63,17 @@ declare_oxc_lint!(
     NoDuplicateTypeConstituents(tsgolint),
     typescript,
     correctness,
+    recommended,
     fix,
     config = NoDuplicateTypeConstituentsConfig,
     version = "1.12.0",
-    short_description = "This rule disallows duplicate constituents of union or intersection types.",
+    short_description =
+        "This rule disallows duplicate constituents of union or intersection types.",
 );
 
 impl Rule for NoDuplicateTypeConstituents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

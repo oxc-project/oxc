@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, BindingPattern, TSModuleDeclarationName},
+    ast::{BindingIdentifier, BindingPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
@@ -80,7 +80,16 @@ impl ConformanceTest for SymbolDeclarationTest {
         let span = semantic.scoping().symbol_span(symbol_id);
 
         match declaration.kind() {
-            AstKind::VariableDeclarator(decl) => check_binding_pattern(symbol_id, &decl.id),
+            AstKind::VariableDeclarator(decl) => {
+                // A catch-local `var` also declares a separate binding in the enclosing var scope.
+                if decl.id.get_binding_identifier().is_some_and(|id| {
+                    semantic.scoping().catch_var_binding(id.symbol_id()) == Some(symbol_id)
+                }) {
+                    TestResult::Pass
+                } else {
+                    check_binding_pattern(symbol_id, &decl.id)
+                }
+            }
             AstKind::CatchParameter(caught) => check_binding_pattern(symbol_id, &caught.pattern),
             AstKind::Function(func) => match func.id.as_ref() {
                 Some(id) => check_binding(symbol_id, id),
@@ -102,16 +111,7 @@ impl ConformanceTest for SymbolDeclarationTest {
             AstKind::TSImportEqualsDeclaration(import) => check_binding(symbol_id, &import.id),
             AstKind::TSTypeParameter(decl) => check_binding(symbol_id, &decl.name),
             AstKind::TSMappedType(decl) => check_binding(symbol_id, &decl.key),
-            AstKind::TSModuleDeclaration(decl) => match &decl.id {
-                TSModuleDeclarationName::Identifier(id) => check_binding(symbol_id, id),
-                TSModuleDeclarationName::StringLiteral(_) => {
-                    bound_to_statement_with_no_binding_identifier(
-                        symbol_id,
-                        span,
-                        "TSModuleDeclaration",
-                    )
-                }
-            },
+            AstKind::TSNamespaceDeclaration(decl) => check_binding(symbol_id, &decl.id),
             AstKind::TSTypeAliasDeclaration(decl) => check_binding(symbol_id, &decl.id),
             AstKind::TSInterfaceDeclaration(decl) => check_binding(symbol_id, &decl.id),
             AstKind::TSEnumDeclaration(decl) => check_binding(symbol_id, &decl.id),

@@ -1,7 +1,7 @@
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSModuleReference},
+    ast::{CallExpression, Expression, StringLiteral, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -34,18 +34,22 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// import fs from "fs";
+    /// const fsPromises = process.getBuiltinModule("fs/promises");
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// import fs from "node:fs";
+    /// const fsPromises = process.getBuiltinModule("node:fs/promises");
     /// ```
     PreferNodeProtocol,
     unicorn,
     restriction,
+    recommended,
     fix,
     version = "0.0.19",
-    short_description = "Prefer using the `node:` protocol when importing Node.js built-in modules.",
+    short_description =
+        "Prefer using the `node:` protocol when importing Node.js built-in modules.",
 );
 
 impl Rule for PreferNodeProtocol {
@@ -61,9 +65,11 @@ impl Rule for PreferNodeProtocol {
                 }
                 _ => None,
             },
-            AstKind::CallExpression(call) if !call.optional => {
-                call.common_js_require().map(|s| (s.value, s.span))
-            }
+            AstKind::TSImportType(import) => Some((import.source.value, import.source.span)),
+            AstKind::CallExpression(call) if !call.optional => call
+                .common_js_require()
+                .or_else(|| get_builtin_module_call(call))
+                .map(|s| (s.value, s.span)),
             AstKind::ImportDeclaration(import) => Some((import.source.value, import.source.span)),
             AstKind::ExportFromDeclaration(export) => {
                 Some((export.source.value, export.source.span))
@@ -73,29 +79,39 @@ impl Rule for PreferNodeProtocol {
         let Some((string_lit_value, span)) = string_lit_value_with_span else {
             return;
         };
-        let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
-            // `e.g. ignore "assert/"`
-            if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
-        } else {
-            string_lit_value.as_str()
+        let Some(module_name) = string_lit_value.as_str() else {
+            return;
         };
         if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
             return;
         }
 
-        ctx.diagnostic_with_fix(
-            prefer_node_protocol_diagnostic(span, &string_lit_value),
-            |fixer| {
-                // Smallest module name is 2 chars, plus 2 for quotes = 4.
-                debug_assert!(
-                    span.size() >= 4,
-                    "node stdlib module name should be at least 4 chars long"
-                );
-                // We're replacing inside the string literal, shift to account for quotes.
-                let span = span.shrink_left(1).shrink_right(1);
-                fixer.replace(span, format!("node:{string_lit_value}"))
-            },
-        );
+        ctx.diagnostic_with_fix(prefer_node_protocol_diagnostic(span, module_name), |fixer| {
+            // Smallest module name is 2 chars, plus 2 for quotes = 4.
+            debug_assert!(
+                span.size() >= 4,
+                "node stdlib module name should be at least 4 chars long"
+            );
+            // We're replacing inside the string literal, shift to account for quotes.
+            let span = span.shrink_left(1).shrink_right(1);
+            fixer.replace(span, format!("node:{module_name}"))
+        });
+    }
+}
+
+fn get_builtin_module_call<'a>(call: &'a CallExpression<'a>) -> Option<&'a StringLiteral<'a>> {
+    if call.arguments.len() == 1
+        && let Expression::StaticMemberExpression(member_expr) = call.callee.without_parentheses()
+        && !member_expr.optional
+        && member_expr.property.name == "getBuiltinModule"
+        && let Expression::Identifier(obj) = member_expr.object.without_parentheses()
+        && obj.name == "process"
+        && let Some(Expression::StringLiteral(str_lit)) =
+            call.arguments[0].as_expression().map(Expression::without_parentheses)
+    {
+        Some(str_lit)
+    } else {
+        None
     }
 }
 
@@ -107,6 +123,7 @@ fn test() {
         r#"import unicorn from "unicorn";"#,
         r#"import fs from "./fs";"#,
         r#"import fs from "unknown-builtin-module";"#,
+        r#"import { ADMIN_PATH } from "constants/url";"#,
         r#"import fs from "node:fs";"#,
         r#"import * as fs from "node:fs";"#,
         r#"import "punycode / ";"#,
@@ -141,6 +158,13 @@ fn test() {
         r#"type fs = typeof import("node:fs");"#,
         r#"type fs = typeof SomeType<"fs">;"#,
         "type fs = typeof fs;",
+        r#"const fs = process["getBuiltinModule"]("fs")"#,
+        r#"const fs = foo.process.getBuiltinModule("fs")"#,
+        "const fs = process.getBuiltinModule(fs)",
+        r#"const fs = (process?.getBuiltinModule)("fs")"#,
+        r#"type fs = import("node:fs");"#,
+        r#"type fs = import("./fs");"#,
+        r#"type fs = import("unicorn");"#,
     ];
 
     let fail = vec![
@@ -171,9 +195,19 @@ fn test() {
         r#"import "timers/promises";"#,
         r#"const {promises} = require("fs")"#,
         "const fs = require('fs/promises')",
-        // r#"const fs = process.getBuiltinModule("fs")"#,
+        r#"const fs = process.getBuiltinModule("fs")"#,
         r#"export fs from "fs";"#,
         "await import('assert/strict')",
+        "const fs = process.getBuiltinModule('fs/promises')",
+        r#"const fs = (process).getBuiltinModule(("fs"))"#,
+        r#"const fs = (process.getBuiltinModule)("fs")"#,
+        r#"import process from "node:process"; const fs = process.getBuiltinModule("fs");"#,
+        r#"type Fs = import("fs");"#,
+        "type Fs = import('fs/promises');",
+        r#"type Fs = import("fs").fs<"fs">;"#,
+        r#"type Fs = import("fs", { with: { "resolution-mode": "import" } });"#,
+        r#"const fs = require("fs") as typeof import("fs");"#,
+        r#"const fs = someFunc() as SomeType<typeof import("fs")>;"#,
     ];
 
     let fix = vec![
@@ -184,6 +218,37 @@ fn test() {
         ("import fs = require('fs');", "import fs = require('node:fs');"),
         (r#"import "child_process";"#, r#"import "node:child_process";"#),
         (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#),
+        (
+            r#"const fs = process.getBuiltinModule("fs")"#,
+            r#"const fs = process.getBuiltinModule("node:fs")"#,
+        ),
+        (
+            "const fs = process.getBuiltinModule('fs/promises')",
+            "const fs = process.getBuiltinModule('node:fs/promises')",
+        ),
+        (
+            r#"const fs = (process).getBuiltinModule(("fs"))"#,
+            r#"const fs = (process).getBuiltinModule(("node:fs"))"#,
+        ),
+        (
+            r#"const fs = (process.getBuiltinModule)("fs")"#,
+            r#"const fs = (process.getBuiltinModule)("node:fs")"#,
+        ),
+        (r#"type Fs = import("fs");"#, r#"type Fs = import("node:fs");"#),
+        ("type Fs = import('fs/promises');", "type Fs = import('node:fs/promises');"),
+        (r#"type Fs = import("fs").fs<"fs">;"#, r#"type Fs = import("node:fs").fs<"fs">;"#),
+        (
+            r#"type Fs = import("fs", { with: { "resolution-mode": "import" } });"#,
+            r#"type Fs = import("node:fs", { with: { "resolution-mode": "import" } });"#,
+        ),
+        (
+            r#"const fs = require("fs") as typeof import("fs");"#,
+            r#"const fs = require("node:fs") as typeof import("node:fs");"#,
+        ),
+        (
+            r#"const fs = someFunc() as SomeType<typeof import("fs")>;"#,
+            r#"const fs = someFunc() as SomeType<typeof import("node:fs")>;"#,
+        ),
     ];
 
     Tester::new(PreferNodeProtocol::NAME, PreferNodeProtocol::PLUGIN, pass, fail)

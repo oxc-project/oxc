@@ -20,8 +20,9 @@ use oxc_ast::ast::{
     TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType, Span};
+use oxc_str::JSStr;
 use oxc_tasks_common::project_root;
 
 mod json;
@@ -128,38 +129,35 @@ impl TestCase {
     }
 
     fn code(&self, need_config: bool, need_settings: bool, need_filename: bool) -> String {
-        self.code
-            .as_ref()
-            .map(|code| {
-                let code_str = format_code_snippet(code);
-                let config = self.config.as_ref().map_or_else(
-                    || "None".to_string(),
-                    |config| format!("Some(serde_json::json!({config}))"),
-                );
-                let settings = self.settings.as_ref().map_or_else(
-                    || "None".to_string(),
-                    |settings| format!(r#"Some(serde_json::json!({{ "settings": {settings} }}))"#),
-                );
-                let filename = self.filename.as_ref().map_or_else(
-                    || "None".to_string(),
-                    |filename| format!(r#"Some(PathBuf::from("{filename}"))"#),
-                );
-                let code_str = if need_filename {
-                    format!("({code_str}, {config}, {settings}, {filename})")
-                } else if need_settings {
-                    format!("({code_str}, {config}, {settings})")
-                } else if need_config {
-                    format!("({code_str}, {config})")
-                } else {
-                    code_str
-                };
-                if let Some(language_options) = &self.language_options {
-                    format!("{code_str}, // {language_options}")
-                } else {
-                    code_str
-                }
-            })
-            .unwrap_or_default()
+        self.code.as_ref().map_or_default(|code| {
+            let code_str = format_code_snippet(code);
+            let config = self.config.as_ref().map_or_else(
+                || "None".to_string(),
+                |config| format!("Some(serde_json::json!({config}))"),
+            );
+            let settings = self.settings.as_ref().map_or_else(
+                || "None".to_string(),
+                |settings| format!(r#"Some(serde_json::json!({{ "settings": {settings} }}))"#),
+            );
+            let filename = self.filename.as_ref().map_or_else(
+                || "None".to_string(),
+                |filename| format!(r#"Some(PathBuf::from("{filename}"))"#),
+            );
+            let code_str = if need_filename {
+                format!("({code_str}, {config}, {settings}, {filename})")
+            } else if need_settings {
+                format!("({code_str}, {config}, {settings})")
+            } else if need_config {
+                format!("({code_str}, {config})")
+            } else {
+                code_str
+            };
+            if let Some(language_options) = &self.language_options {
+                format!("{code_str}, // {language_options}")
+            } else {
+                code_str
+            }
+        })
     }
 
     fn group_comment(&self) -> Option<&str> {
@@ -246,7 +244,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
         tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
-        tag_expr.quasi.single_quasi().map(|quasi| quasi.to_string())
+        tag_expr.quasi.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
     }
 }
 
@@ -274,7 +272,7 @@ impl<'a> VisitJs<'a> for TestCase {
                 let ArrayExpressionElement::StringLiteral(lit) = arg else {
                     continue;
                 };
-                code.push_str(lit.value.as_str());
+                code.push_str(lit.value.as_str().expect("test source must be UTF-8"));
                 code.push('\n');
             }
             self.code = Some(code);
@@ -288,12 +286,12 @@ impl<'a> VisitJs<'a> for TestCase {
                 ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
+                            Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
+                                tag_expr.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
@@ -315,9 +313,10 @@ impl<'a> VisitJs<'a> for TestCase {
                                         .elements
                                         .iter()
                                         .map(|arg| match arg {
-                                            ArrayExpressionElement::StringLiteral(string) => {
-                                                string.value.as_str()
-                                            }
+                                            ArrayExpressionElement::StringLiteral(string) => string
+                                                .value
+                                                .as_str()
+                                                .expect("test source must be UTF-8"),
                                             _ => "",
                                         })
                                         .collect::<Vec<_>>()
@@ -329,12 +328,12 @@ impl<'a> VisitJs<'a> for TestCase {
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "output" => {
                         self.output = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
+                            Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
+                                tag_expr.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
                             }
                             _ => None,
                         }
@@ -374,13 +373,15 @@ impl<'a> VisitJs<'a> for TestCase {
         self.code = Some(
             lit.single_quasi()
                 .expect("Expected template literal to have a single quasi")
-                .to_string(),
+                .as_str()
+                .expect("test source must be UTF-8")
+                .to_owned(),
         );
         self.config = None;
     }
 
     fn visit_string_literal(&mut self, lit: &StringLiteral) {
-        self.code = Some(lit.value.to_string());
+        self.code = lit.value.as_str().map(str::to_owned);
         self.config = None;
     }
 
@@ -557,7 +558,10 @@ impl<'a> VisitJs<'a> for State<'a> {
                 && let Some(Argument::StringLiteral(lit)) = expr.arguments.first()
             {
                 pushed = true;
-                self.group_comment_stack.push(lit.value.to_string());
+                // Escape lone surrogates in generated comments.
+                self.group_comment_stack.push(
+                    lit.value.as_str().map_or_else(|| format!("{:?}", lit.value), str::to_owned),
+                );
             }
         }
         for arg in &expr.arguments {
@@ -983,14 +987,14 @@ impl<'a> RuleConfig<'a> {
 
     // Helper function to parse type string literals
     fn parse_type_string_literal(&mut self, lit: &StringLiteral) -> Option<RuleConfigElement> {
-        match lit.value.as_str() {
+        match lit.value.as_str()? {
             "string" => Some(RuleConfigElement::String),
             "boolean" => Some(RuleConfigElement::Boolean),
             "number" => Some(RuleConfigElement::Number),
             "integer" => Some(RuleConfigElement::Integer),
             "array" | "object" => None,
-            _ => {
-                self.log_error(&format!("Unhandled `type` value: {}", lit.value));
+            value => {
+                self.log_error(&format!("Unhandled `type` value: {value}"));
                 None
             }
         }
@@ -1096,9 +1100,10 @@ impl<'a> RuleConfig<'a> {
             .elements
             .iter()
             .filter_map(|arg| match arg {
-                ArrayExpressionElement::StringLiteral(string_literal) => {
-                    Some(RuleConfigElement::StringLiteral(string_literal.value.into()))
-                }
+                ArrayExpressionElement::StringLiteral(string_literal) => string_literal
+                    .value
+                    .as_str()
+                    .map(|value| RuleConfigElement::StringLiteral(value.into())),
                 ArrayExpressionElement::BooleanLiteral(boolean_literal) => {
                     if boolean_literal.value {
                         Some(RuleConfigElement::True)
@@ -1516,7 +1521,12 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
+            let ret = Parser::new(&allocator, &body, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
+                .parse();
             if !ret.diagnostics.is_empty() {
                 let first_error = ret.diagnostics.first().map_or_else(
                     || "unknown parse error".to_string(),
@@ -1616,7 +1626,12 @@ fn main() {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_src_path).unwrap();
-            let ret = Parser::new(&allocator, &body, source_type).parse();
+            let ret = Parser::new(&allocator, &body, source_type)
+                .with_options(ParseOptions {
+                    enable_ident_hashes: false,
+                    ..ParseOptions::default()
+                })
+                .parse();
             if !ret.diagnostics.is_empty() {
                 eprintln!(
                     "Warning: {} parse error(s) in rule source file (possibly due to Flow types). Attempting to extract rule config anyway.",
@@ -2016,7 +2031,7 @@ mod tests {
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
         assert_eq!(key, "eslint/no-dupe-args");
-        assert!(!reason.is_empty());
+        assert_ne!(reason, "");
     }
 
     #[test]
@@ -2032,7 +2047,7 @@ mod tests {
         assert!(res.is_some());
         let (key, reason) = res.unwrap();
         assert_eq!(key, "n/no-hide-core-modules");
-        assert!(!reason.is_empty());
+        assert_ne!(reason, "");
     }
 
     #[test]

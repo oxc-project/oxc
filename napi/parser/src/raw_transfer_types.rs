@@ -1,7 +1,5 @@
 #![cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
 
-use std::sync::Arc;
-
 use rustc_hash::FxHashMap;
 
 use oxc::{
@@ -13,7 +11,7 @@ use oxc::{
 };
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_str::{Str, format_str};
+use oxc_str::Str;
 
 /// The main struct containing all deserializable data in raw transfer.
 #[ast]
@@ -77,7 +75,7 @@ impl<'a> Error<'a> {
         filename: &str,
         allocator: &'a Allocator,
     ) -> ArenaVec<'a, Self> {
-        let named_source = Arc::new(NamedSource::new(filename, source_text.to_string()));
+        let named_source = NamedSource::new(filename, source_text);
 
         ArenaVec::from_iter_in(
             diagnostics
@@ -89,7 +87,7 @@ impl<'a> Error<'a> {
 
     fn from_diagnostic_in(
         diagnostic: OxcDiagnostic,
-        named_source: &Arc<NamedSource<String>>,
+        named_source: &NamedSource<&str, &str>,
         allocator: &'a Allocator,
     ) -> Self {
         let labels = ArenaVec::from_iter_in(
@@ -101,8 +99,8 @@ impl<'a> Error<'a> {
         let message = Str::from_in(diagnostic.message.as_ref(), allocator);
         let help_message =
             diagnostic.help.as_ref().map(|help| Str::from_in(help.as_ref(), allocator));
-        let report = diagnostic.with_source_code(Arc::clone(named_source));
-        let codeframe = format_str!(allocator, "{report:?}");
+        let rendered = diagnostic.render_with_source_code(named_source);
+        let codeframe = Str::from_in(rendered.as_str(), allocator);
 
         #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro re-orders struct fields
         Self { severity, message, labels, help_message, codeframe }

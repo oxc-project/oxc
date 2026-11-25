@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, FunctionBody, Statement},
+    ast::{ArrowFunctionExpression, Expression, Function, FunctionBody, Statement, SwitchCase},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -35,7 +35,7 @@ fn guess_missing_return_hint(
     let last_statement = function_body.statements.last()?;
     match last_statement {
         Statement::SwitchStatement(stmt) => {
-            let has_default = stmt.cases.iter().any(oxc_ast::ast::SwitchCase::is_default_case);
+            let has_default = stmt.cases.iter().any(SwitchCase::is_default_case);
             (!has_default).then_some((stmt.span, MissingReturnHint::SwitchWithoutDefault))
         }
         Statement::IfStatement(stmt) => {
@@ -45,14 +45,34 @@ fn guess_missing_return_hint(
     }
 }
 
+#[derive(Clone, Copy)]
+enum CallbackFunction<'a> {
+    Arrow(&'a ArrowFunctionExpression<'a>),
+    Function(&'a Function<'a>),
+}
+
+fn get_function_head_span(function: CallbackFunction<'_>, ctx: &LintContext<'_>) -> Span {
+    match function {
+        CallbackFunction::Arrow(arrow) => ctx
+            .find_prev_token_within(arrow.span.start, arrow.body.span().start, "=>")
+            .map_or(arrow.span, |offset| Span::sized(arrow.span.start + offset, 2)),
+        CallbackFunction::Function(function) => {
+            Span::new(function.span.start, function.params.span.start)
+        }
+    }
+}
+
 fn expect_return(
     method_name: &str,
     array_method_span: Span,
+    function: CallbackFunction<'_>,
     function_body: &FunctionBody<'_>,
     allow_implicit: bool,
+    ctx: &LintContext<'_>,
 ) -> OxcDiagnostic {
-    let (span, hint) = guess_missing_return_hint(function_body)
-        .map_or((function_body.span, None), |(span, hint)| (span, Some(hint)));
+    let hint = guess_missing_return_hint(function_body);
+    let diagnostic_span =
+        hint.map_or(function_body.span, |_| get_function_head_span(function, ctx));
 
     let value_requirement = if allow_implicit {
         ""
@@ -60,7 +80,7 @@ fn expect_return(
         "\nReturn a value on each path (or enable `allowImplicit` to allow `return;`)."
     };
 
-    let (message, help) = match hint {
+    let (message, help) = match hint.map(|(_, hint)| hint) {
         Some(MissingReturnHint::SwitchWithoutDefault) => (
             format!(
                 "Callback for array method {method_name:?} may fall through a `switch` without returning"
@@ -85,12 +105,13 @@ fn expect_return(
         ),
     };
 
-    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(span);
+    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(diagnostic_span);
     if allow_implicit {
         diagnostic = diagnostic.with_note("With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.");
     }
-    if hint.is_some() {
+    if let Some((hint_span, _)) = hint {
         diagnostic = diagnostic
+            .and_label(hint_span.label("This path may reach the end of the callback."))
             .and_label(array_method_span.label(format!("{method_name:?} is called here.")));
     }
 
@@ -171,38 +192,40 @@ declare_oxc_lint!(
 
 impl Rule for ArrayCallbackReturn {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, concise_expression, always_explicit_return, is_async_empty) = match node
-            .kind()
-        {
-            // Async, generator, and single expression arrow functions
-            // always have explicit return value
-            AstKind::ArrowFunctionExpression(arrow) => {
-                let function_body = arrow.get_function_body();
-                (
-                    function_body,
-                    arrow.get_expression(),
-                    arrow.r#async || arrow.is_expression(),
-                    arrow.r#async && function_body.is_some_and(|body| body.statements.is_empty()),
-                )
-            }
-            AstKind::Function(function) => {
-                if let Some(body) = &function.body {
+        let (function, function_body, concise_expression, always_explicit_return, is_async_empty) =
+            match node.kind() {
+                // Async, generator, and single expression arrow functions
+                // always have explicit return value
+                AstKind::ArrowFunctionExpression(arrow) => {
+                    let function_body = arrow.get_function_body();
                     (
-                        Some(body.as_ref()),
-                        None,
-                        function.r#async || function.generator,
-                        function.r#async && body.statements.is_empty(),
+                        CallbackFunction::Arrow(arrow),
+                        function_body,
+                        arrow.get_expression(),
+                        arrow.r#async || arrow.is_expression(),
+                        arrow.r#async
+                            && function_body.is_some_and(|body| body.statements.is_empty()),
                     )
-                } else {
-                    return;
                 }
-            }
-            _ => return,
-        };
+                AstKind::Function(function) => {
+                    if let Some(body) = &function.body {
+                        (
+                            CallbackFunction::Function(function),
+                            Some(body.as_ref()),
+                            None,
+                            function.r#async || function.generator,
+                            function.r#async && body.statements.is_empty(),
+                        )
+                    } else {
+                        return;
+                    }
+                }
+                _ => return,
+            };
 
         // Filter on target methods on Arrays
         if let Some((array_method_span, array_method)) = get_array_method_info(node, ctx) {
@@ -277,8 +300,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
+                            function,
                             function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -287,8 +312,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
+                            function,
                             function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -297,8 +324,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
+                            function,
                             function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -360,37 +389,34 @@ pub fn get_array_method_info<'a>(
                 };
 
                 // Array.from
-                if callee.is_specific_member_access("Array", "from") {
-                    // Check that current node is parent's second argument
-                    if call.arguments.len() == 2
-                        && let Some(call_arg) = call.arguments[1].as_expression()
-                        && call_arg.span() == current_node.kind().span()
-                    {
-                        return Some((callee.span(), "from"));
-                    }
+                if callee.is_specific_member_access("Array", "from")
+                    && call.arguments.len() >= 2
+                    && let Some(call_arg) = call.arguments[1].as_expression()
+                    && call_arg.span() == current_node.kind().span()
+                {
+                    return Some((callee.span(), "from"));
                 }
 
                 // Array.fromAsync
-                if callee.is_specific_member_access("Array", "fromAsync") {
-                    // Check that current node is parent's second argument
-                    if call.arguments.len() == 2
-                        && let Some(call_arg) = call.arguments[1].as_expression()
-                        && call_arg.span() == current_node.kind().span()
-                    {
-                        return Some((callee.span(), "fromAsync"));
-                    }
+                if callee.is_specific_member_access("Array", "fromAsync")
+                    && call.arguments.len() >= 2
+                    && let Some(call_arg) = call.arguments[1].as_expression()
+                    && call_arg.span() == current_node.kind().span()
+                {
+                    return Some((callee.span(), "fromAsync"));
                 }
 
                 // "methods",
                 let (array_method_span, array_method) = callee.static_property_info()?;
+                let array_method = array_method.as_str()?;
 
+                // The callback is the first argument; any further arguments (an initial
+                // value for `reduce`/`reduceRight`, or a `thisArg`) don't change that.
                 if TARGET_METHODS.contains(&array_method)
-                    // Check that current node is parent's first argument
-                    && call.arguments.len() == 1
                     && let Some(call_arg) = call.arguments.first()
-                        && call_arg
-                            .as_expression()
-                            .is_some_and(|arg| arg.span() == current_node.kind().span())
+                    && call_arg
+                        .as_expression()
+                        .is_some_and(|arg| arg.span() == current_node.kind().span())
                 {
                     return Some((array_method_span, array_method));
                 }
@@ -650,6 +676,22 @@ fn test() {
 }",
             None,
         ),
+        (
+            r#"const out = parts
+  // eslint-disable-next-line array-callback-return
+  .map(p => {
+    switch (p.type) {
+      case "a":
+        return p.value;
+    }
+  });"#,
+            Some(serde_json::json!([{"allowImplicit": true}])),
+        ),
+        ("[1, 2].reduce((total, x) => total + x, 0)", None),
+        ("[1, 2].reduceRight((total, x) => { return total + x; }, 0)", None),
+        ("foo.map(function() { return 1; }, thisArg)", None),
+        ("Array.from(x, function() { return 1; }, thisArg)", None),
+        ("foo.reduce(bar, function() {})", None),
     ];
 
     let fail = vec![
@@ -688,6 +730,15 @@ const _test = fruits.map((fruit) => {
   }
 });"#,
             None,
+        ),
+        (
+            r#"const out = parts.map(p => {
+  switch (p.type) {
+    case "a":
+      return p.value;
+  }
+});"#,
+            Some(serde_json::json!([{"allowImplicit": true}])),
         ),
         ("foo.reduce(function() {})", None),
         ("foo.reduce(function foo() {})", None),
@@ -931,6 +982,11 @@ const _test = fruits.map((fruit) => {
             "foo.forEach(x => { if (a === b) { return (x + a); } });",
             Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
         ),
+        ("[1, 2].reduce((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
+        ("[1, 2].reduceRight((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
+        ("foo.reduce(function() {}, 0)", None),
+        ("foo.map(function() {}, thisArg)", None),
+        ("Array.from(x, function() {}, thisArg)", None),
     ];
 
     Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)

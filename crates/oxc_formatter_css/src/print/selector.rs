@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+
 use oxc_css_parser::ast::{
     AttributeSelector, AttributeSelectorMatcherKind, AttributeSelectorValue, Combinator,
     CombinatorKind, ComplexSelector, ComplexSelectorChild, CompoundSelector, CompoundSelectorList,
@@ -11,15 +12,15 @@ use oxc_css_parser::ast::{
     PseudoClassSelector, PseudoClassSelectorArgKind, PseudoElementSelector,
     PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
-
 use oxc_formatter_core::{
-    Buffer, FormatElement, arena_cow_str,
+    FormatElement, PlaceholderPiece, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
     write,
 };
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX, comments,
+    TEMPLATE_PLACEHOLDER,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
 };
@@ -73,7 +74,7 @@ pub(super) fn write_selector_list<'a>(
     let placeholder_idx = if f.context().template_placeholders() {
         let source = f.context().source_text();
         list.selectors.iter().position(|complex| {
-            source.text_for(&to_span(complex.span())).contains(TEMPLATE_PLACEHOLDER_PREFIX)
+            TEMPLATE_PLACEHOLDER.is_in(source.text_for(&to_span(complex.span())))
         })
     } else {
         None
@@ -83,19 +84,25 @@ pub(super) fn write_selector_list<'a>(
         for (i, complex) in list.selectors.iter().enumerate() {
             if i > 0 {
                 write!(f, ",");
-                // A comment trailing the comma stays on the same line
-                let next_start = to_span(complex.span()).start;
+                // A comment trailing the comma stays on the same line:
+                // a lone block comment (`a, /* b */ c`), or a run ending in a `//` (`a, /* b */ // c`).
+                // A `//` ends the line itself; the separator below then merges into its break.
+                let next_start = complex.span().start;
                 if let Some(comment) = f.context().comments().peek()
                     && comment.span.end <= next_start
                 {
                     let source = f.context().source_text();
-                    let prev_end = to_span(list.selectors[i - 1].span()).end;
+                    let prev_end = list.selectors[i - 1].span().end;
                     if comments::classify_gap(source.bytes_range(prev_end, comment.span.start))
                         == comments::Gap::None
                     {
-                        f.context().comments().take_before(comment.span.end);
-                        write!(f, " ");
-                        comments::write_single_comment(comment, f);
+                        let run_end = value::line_comment_run_end(
+                            comment.span.start,
+                            f.context().comments().iter_remaining(),
+                            source,
+                        );
+                        let upper_bound = run_end.unwrap_or(comment.span.end);
+                        value::flush_same_line_comments(comment.span.start, upper_bound, f);
                     }
                 }
                 match style {
@@ -104,14 +111,13 @@ pub(super) fn write_selector_list<'a>(
                 }
             }
             // Comments on their own line between selectors
-            let start = to_span(complex.span()).start;
+            let start = complex.span().start;
             for &comment in f.context().comments().take_before(start) {
-                comments::write_single_comment(comment, f);
-                write!(f, hard_line_break());
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
             if placeholder_idx == Some(i) {
                 let source = f.context().source_text();
-                let end = to_span(list.selectors[list.selectors.len() - 1].span()).end;
+                let end = list.selectors[list.selectors.len() - 1].span().end;
                 let raw = source.slice_range(start, end);
                 // Comments inside the chunk are part of the verbatim text
                 let _ = f.context().comments().take_before(end);
@@ -146,7 +152,7 @@ pub(super) fn write_selector_list<'a>(
 ///
 /// NOTE: That extra indent on combinator-less compounds is arguably a Prettier bug, not a design:
 /// upstream keeps removing it one threshold at a time (prettier/prettier#16572 for a lone pseudo, #17541 for 2 nodes),
-/// and this `> 2` is what remains as of 3.9.6.
+/// and this `> 2` is what remains.
 /// The principled condition would be "has a combinator" (indent only wrapped continuation lines),
 /// keeping pseudo args at +2 and `)` at +0.
 pub(super) fn write_complex_selector<'a>(
@@ -204,9 +210,12 @@ fn write_combinator(
                 CombinatorKind::NextSibling => write!(f, "+"),
                 CombinatorKind::LaterSibling => write!(f, "~"),
                 CombinatorKind::Column => write!(f, "||"),
-                // Deprecated shadow-DOM combinators;
-                // Prettier's `selector-combinator` fallback keeps them spaced like any other combinator.
-                CombinatorKind::Deep => write!(f, "/deep/"),
+                // Deprecated shadow-DOM combinators (`/deep/` and less.js's `/name/` (`/shadow/`));
+                // print as written: the tools give a meaning match it case-sensitively
+                CombinatorKind::Deep | CombinatorKind::Slashed => {
+                    let span = to_span(combinator.span);
+                    write!(f, text(f.context().source_text().text_for(&span)));
+                }
                 CombinatorKind::ShadowChild => write!(f, "^"),
                 CombinatorKind::ShadowDescendant => write!(f, "^^"),
                 CombinatorKind::Descendant => unreachable!(),
@@ -255,8 +264,9 @@ fn write_simple_selector<'a>(selector: &SimpleSelector<'a>, f: &mut CssFormatter
                 write_interpolable_ident(suffix, f);
             }
         }
-        SimpleSelector::SassPlaceholder(placeholder) => {
-            let span = to_span(placeholder.span());
+        // Sass `%placeholder` and Less `50%` (outside `@keyframes`): print as written, like Prettier
+        SimpleSelector::LessPercentage(_) | SimpleSelector::SassPlaceholder(_) => {
+            let span = to_span(selector.span());
             write!(f, text(source.text_for(&span)));
         }
     }
@@ -301,29 +311,21 @@ pub(super) fn write_interpolable_ident<'a>(
 ///
 /// Unlike the structurally-parsed positions, garbage mode prints degraded source verbatim,
 /// so the markers are recovered from the text here.
-fn write_text_with_placeholders<'a>(mut rest: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    while let Some(start) = rest.find(TEMPLATE_PLACEHOLDER_PREFIX) {
-        let after_prefix = &rest[start + TEMPLATE_PLACEHOLDER_PREFIX.len()..];
-        let digits_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-        if digits_end > 0
-            && let Some(tail) = after_prefix[digits_end..].strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
-            && let Ok(index) = after_prefix[..digits_end].parse::<u32>()
-        {
-            if start > 0 {
-                write!(f, text(&rest[..start]));
+fn write_text_with_placeholders<'a>(source: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    for piece in TEMPLATE_PLACEHOLDER.pieces(source) {
+        match piece {
+            PlaceholderPiece::Text(run) => write!(f, text(run)),
+            PlaceholderPiece::Index(index) => {
+                if let Ok(index) = u32::try_from(index) {
+                    f.write_element(FormatElement::EmbedPlaceholder(index));
+                } else {
+                    // No index of the host's: verbatim, as any other text
+                    let mut placeholder = String::new();
+                    TEMPLATE_PLACEHOLDER.write(&mut placeholder, index);
+                    write!(f, text(f.allocator().alloc_str(&placeholder)));
+                }
             }
-            f.write_element(FormatElement::EmbedPlaceholder(index));
-            rest = tail;
-        } else {
-            // Not a valid marker: emit up to and including the prefix verbatim.
-            let consumed = start + TEMPLATE_PLACEHOLDER_PREFIX.len();
-            write!(f, text(&rest[..consumed]));
-            rest = &rest[consumed..];
         }
-    }
-    if !rest.is_empty() {
-        write!(f, text(rest));
     }
 }
 
@@ -393,9 +395,8 @@ fn write_attribute_selector<'a>(attribute: &AttributeSelector<'a>, f: &mut CssFo
                 let span = to_span(istr.span());
                 value::write_requoted_verbatim(source.text_for(&span), f);
             }
-            // `[class^=~'...']`:
-            // postcss sees a plain string after the `~`,
-            // so it re-quotes per `singleQuote` like the value-position handler.
+            // `[class^=~'...']`: hugs and re-quotes like `value::write_less_escaped_str`
+            // (a comment in a selector takes the raw path, so none reaches here)
             AttributeSelectorValue::LessEscapedStr(escaped) => {
                 write!(f, "~");
                 value::write_attribute_str(&escaped.str, f);
@@ -483,12 +484,10 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
         PseudoClassSelectorArgKind::LessExtendList(list) => {
             less::write_less_extend_list(list, f);
         }
-        // Number, LanguageRangeList, TokenSeq:
-        // print the source verbatim (normalized below where needed).
-        // They are kept verbatim because `postcss-selector-parser` tokenizes them as opaque strings
-        // and Prettier emits them raw (matching that keeps `:lang(...)` etc.)
-        // byte-identical to Prettier output.
-        // Real-world usage is rare enough that the consistency cost is negligible.
+        // Number, LanguageRangeList, TokenSeq: print the source verbatim.
+        // An unknown name's arg is `<any-value>` per spec, so it is raw (AGENTS.md "Printing raw vs typed").
+        // NOTE: Prettier differs, `postcss-selector-parser` reparses every pseudo arg as selectors
+        // and normalizes them (`:lang('de')` -> `:lang("de")`, `:foo(.a [x='y'])` -> `[x="y"]`).
         _ => {
             let span = to_span(kind.span());
             write!(f, text(source.text_for(&span)));
@@ -517,10 +516,10 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
     }
     if let Some(matcher) = &nth.matcher {
         write!(f, " ");
-        let matcher_span = to_span(&matcher.span);
+        let matcher_span = to_span(matcher.span);
         if let Some(selector) = &matcher.selector {
             // The `of` keyword as written, then the selector list
-            let keyword_end = to_span(selector.span()).start;
+            let keyword_end = selector.span().start;
             let keyword = source.slice_range(matcher_span.start, keyword_end).trim_ascii_end();
             write!(f, [text(keyword), " "]);
             write_selector_list_inline(selector, f);
@@ -534,8 +533,7 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
 /// exactly one space around each `+` between terms,
 /// digit-led segments lowercased, all other whitespace kept as-is (a glued `-` stays glued).
 ///
-/// NOTE: We keep a leading sign stays glued, since the An+B grammar forbids whitespace after it.
-/// But Prettier formats as `+ 3n`, output is a semantics-breaking artifact.
+/// A leading sign stays glued, since the An+B grammar forbids whitespace after it.
 fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     if !bytes.iter().any(|&b| b == b'+' || b.is_ascii_uppercase()) {

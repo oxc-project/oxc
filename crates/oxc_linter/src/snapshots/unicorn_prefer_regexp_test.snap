@@ -421,3 +421,93 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────
    ╰────
   help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:2:14]
+ 1 │ export function f(a, s) {
+ 2 │   if (a && s.match(/x/)) {}
+   ·              ─────
+ 3 │   if (s.match(/x/) || a) {}
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:3:9]
+ 2 │   if (a && s.match(/x/)) {}
+ 3 │   if (s.match(/x/) || a) {}
+   ·         ─────
+ 4 │   if (s.match(/x/)) {}
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:4:9]
+ 3 │   if (s.match(/x/) || a) {}
+ 4 │   if (s.match(/x/)) {}
+   ·         ─────
+ 5 │ }
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:7]
+ 1 │ if (s.match(/x/) && a) {}
+   ·       ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:12]
+ 1 │ if (a || s.match(/x/)) {}
+   ·            ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:20]
+ 1 │ if ((a && (b || (s.match(/x/))))) {}
+   ·                    ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:17]
+ 1 │ while (a && /x/.exec(s)) {}
+   ·                 ────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:18]
+ 1 │ do {} while (/x/.exec(s) || a);
+   ·                  ────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:16]
+ 1 │ for (; (a && s.match(/x/)); ) {}
+   ·                ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:18]
+ 1 │ const value = (s.match(/x/) || a) ? 1 : 2;
+   ·                  ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:30]
+ 1 │ const value = Boolean(a && s.match(/x/));
+   ·                              ─────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.
+
+  ⚠ unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
+   ╭─[prefer_regexp_test.tsx:1:26]
+ 1 │ const value = !(a || /x/.exec(s));
+   ·                          ────
+   ╰────
+  help: `RegExp#test()` exclusively returns a boolean and therefore is more efficient.

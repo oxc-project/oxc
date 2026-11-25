@@ -1,10 +1,10 @@
 use std::ops::Deref;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
-        ClassElement, Expression, Function, MethodDefinitionKind, PropertyDefinition, PropertyKey,
+        ClassElement, Expression, Function, MethodDefinition, PropertyDefinition, PropertyKey,
         Statement, TSAccessibility,
     },
 };
@@ -13,7 +13,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
-use oxc_str::Str;
+use oxc_str::JSStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -133,7 +133,7 @@ declare_oxc_lint!(
 
 impl Rule for ClassLiteralPropertyStyle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -155,7 +155,7 @@ impl Rule for ClassLiteralPropertyStyle {
 fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Get
+            && method.kind.is_get()
             && !method.r#override
             && let Some(body) = &method.value.body
             && let Some(Statement::ReturnStatement(return_statement)) = body.statements.first()
@@ -163,7 +163,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)
         {
-            if !method.decorators.is_empty() {
+            if !method.decorators.is_empty() || !ctx.source_type().is_typescript() {
                 ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
                 continue;
             }
@@ -176,7 +176,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                     push_member_key(
                         &mut replacement,
                         fixer.source_range(method.key.span()),
-                        method.computed,
+                        method.key.is_computed(),
                     );
                     if let Some(return_type) = &method.value.return_type {
                         replacement.push_str(fixer.source_range(return_type.span));
@@ -195,10 +195,10 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
 }
 
 fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
-    let mut excluded_properties: FxHashSet<Str<'a>> = FxHashSet::default();
+    let mut excluded_properties: FxHashSet<StaticPropertyName<'a>> = FxHashSet::default();
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Constructor
+            && method.kind.is_constructor()
             && let Some(body) = &method.value.body
         {
             let mut collector =
@@ -212,7 +212,7 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && let Some(value) = literal_readonly_property_value(property)
         {
             if let Some(name) = property.key.name()
-                && excluded_properties.contains(&*name)
+                && excluded_properties.contains(&name)
             {
                 continue;
             }
@@ -230,7 +230,7 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                     push_member_key(
                         &mut replacement,
                         fixer.source_range(property.key.span()),
-                        property.computed,
+                        property.key.is_computed(),
                     );
                     replacement.push_str("()");
                     if let Some(type_annotation) = &property.type_annotation {
@@ -277,15 +277,12 @@ fn push_member_key(text: &mut String, key: &str, computed: bool) {
     }
 }
 
-fn has_duplicate_setter<'a>(
-    class_body: &ClassBody<'a>,
-    getter: &oxc_ast::ast::MethodDefinition<'a>,
-) -> bool {
+fn has_duplicate_setter<'a>(class_body: &ClassBody<'a>, getter: &MethodDefinition<'a>) -> bool {
     class_body.body.iter().any(|element| {
         let ClassElement::MethodDefinition(method) = element else {
             return false;
         };
-        if method.kind != MethodDefinitionKind::Set || method.r#static != getter.r#static {
+        if !method.kind.is_set() || method.r#static != getter.r#static {
             return false;
         }
         property_keys_match(&method.key, &getter.key)
@@ -330,32 +327,32 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     }
 }
 
-fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Str<'a>> {
+fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<JSStr<'a>> {
     let is_this_object =
         |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
 
     match left {
         AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.property.name.as_arena_str())
+            Some(expr.property.name.as_js_str())
         }
         AssignmentTarget::ComputedMemberExpression(expr) if is_this_object(&expr.object) => {
             expr.static_property_name()
         }
         AssignmentTarget::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.field.name.as_arena_str())
+            Some(expr.field.name.as_js_str())
         }
         _ => None,
     }
 }
 
 struct ConstructorAssignmentCollector<'set, 'a> {
-    excluded_properties: &'set mut FxHashSet<Str<'a>>,
+    excluded_properties: &'set mut FxHashSet<StaticPropertyName<'a>>,
 }
 
 impl<'a> VisitJs<'a> for ConstructorAssignmentCollector<'_, 'a> {
     fn visit_assignment_expression(&mut self, assignment: &AssignmentExpression<'a>) {
         if let Some(name) = assigned_this_property_name(&assignment.left) {
-            self.excluded_properties.insert(name);
+            self.excluded_properties.insert(StaticPropertyName::from(name));
         }
     }
 
@@ -370,7 +367,9 @@ impl<'a> VisitJs<'a> for ConstructorAssignmentCollector<'_, 'a> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         (
@@ -550,6 +549,11 @@ fn test() {
                     }
                   ",
             Some(serde_json::json!(["fields"])),
+        ),
+        // The constructor writes the field, so a getter would throw.
+        (
+            r#"class C { readonly "\uD800": number = 1; constructor() { this["\uD800"] = 2; } }"#,
+            Some(serde_json::json!(["getters"])),
         ),
         (
             "
@@ -1297,6 +1301,10 @@ fn test() {
             Some(serde_json::json!(["getters"])),
         ),
     ];
+
+    let js = "class Mx { get p1() { return 'hello world'; } }";
+    let mut fix: Vec<ExpectFixTestCase> = fix.into_iter().map(Into::into).collect();
+    fix.push((js, js, None, Some(PathBuf::from("class_literal_property_style.js"))).into());
 
     Tester::new(ClassLiteralPropertyStyle::NAME, ClassLiteralPropertyStyle::PLUGIN, pass, fail)
         .expect_fix(fix)

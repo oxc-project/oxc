@@ -61,7 +61,8 @@ declare_oxc_lint!(
     react,
     correctness,
     version = "0.2.11",
-    short_description = "Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.",
+    short_description =
+        "Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.",
 );
 
 const VOID_DOM_ELEMENTS: [&str; 16] = [
@@ -118,7 +119,10 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 };
 
-                if !is_void_dom_element(element_name.value.as_str()) {
+                let Some(element_value) = element_name.value.as_str() else {
+                    return;
+                };
+                if !is_void_dom_element(element_value) {
                     return;
                 }
 
@@ -143,7 +147,7 @@ impl Rule for VoidDomElementsNoChildren {
 
                 if call_expr.arguments.get(2).is_some() || has_children_prop_or_danger {
                     ctx.diagnostic(void_dom_elements_no_children_diagnostic(
-                        &element_name.value,
+                        element_value,
                         element_name.span,
                     ));
                 }

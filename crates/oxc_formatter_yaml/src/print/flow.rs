@@ -1,8 +1,7 @@
 use oxc_formatter_core::{
-    Buffer,
     builders::{
-        align, group, hard_line_break, if_group_breaks, soft_line_break, soft_line_break_or_space,
-        text,
+        align, empty_line, group, hard_line_break, if_group_breaks, soft_line_break,
+        soft_line_break_or_space,
     },
     write,
 };
@@ -11,8 +10,8 @@ use oxc_yaml_parser::ast::{FlowMapping, FlowSequence, FlowSequenceEntry};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, gap_upper_bound, is_suppressed_last_before,
-        write_single_comment, write_suppressed_node, write_trailing_same_line_comment,
+        FormatCommentBeforeContent, Gap, classify_gap, flush_leading_comments, gap_upper_bound,
+        is_suppressed_last_before, write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{YamlFormatter, format_with, mapping_item, write_node},
 };
@@ -121,17 +120,14 @@ fn write_bracket_spacing(spaced: bool, f: &mut YamlFormatter<'_, '_>) {
 /// `line` between entries, plus an extra newline when the source had a blank line
 /// (Prettier's `printNextEmptyLine` inside flow children).
 ///
-/// The blank line must appear only when the collection breaks and must not force it to break,
-/// so it is a raw `\n` behind `if_group_breaks` with expand-propagation suppressed
-/// (the following `line` re-arms indentation: after the raw newline the printer sees an empty line and emits none itself).
+/// The blank line must appear only when the collection breaks and must not force it to break
+/// (see [`Line::without_expand_parent`](oxc_formatter_core::builders::Line::without_expand_parent)).
 fn write_entry_separator(prev_end: u32, next_start: u32, f: &mut YamlFormatter<'_, '_>) {
     let anchor = gap_upper_bound(next_start, f);
     if anchor > prev_end {
         let gap = f.context().source_text().bytes_range(prev_end, anchor);
         if classify_gap(gap) == Gap::Blank {
-            // The raw text supplies BOTH newlines;
-            // the following `line` then finds itself at a fresh line and only re-arms indentation.
-            write!(f, if_group_breaks(&text("\n\n").without_expand_parent()));
+            write!(f, if_group_breaks(&empty_line().without_expand_parent()));
         }
     }
     write!(f, soft_line_break_or_space());
@@ -149,8 +145,10 @@ fn write_trailing_comma_and_end_comments(close_end: u32, f: &mut YamlFormatter<'
     // Comments inside the brackets after the last entry
     let close_start = close_end.saturating_sub(1);
     let comments = f.context().comments().take_before(close_start);
-    for comment in comments {
+    if !comments.is_empty() {
         write!(f, hard_line_break());
-        write_single_comment(comment.span, f);
+    }
+    for comment in comments {
+        write!(f, FormatCommentBeforeContent::new(comment.span));
     }
 }

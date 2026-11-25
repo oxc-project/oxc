@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoUnwantedPolyfillio,
     nextjs,
     correctness,
+    recommended,
     version = "0.2.7",
     short_description = "Prevent use of unsafe polyfill.io domains and duplicate polyfills.",
 );
@@ -110,7 +111,9 @@ impl Rule for NoUnwantedPolyfillio {
             return;
         };
 
-        let src_str = src_value.value.as_str();
+        let Some(src_str) = src_value.value.as_str() else {
+            return;
+        };
 
         // Check for unsafe polyfill.io domains first
         // These domains were compromised in a supply chain attack in 2024

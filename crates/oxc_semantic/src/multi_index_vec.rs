@@ -286,12 +286,13 @@ macro_rules! multi_index_vec {
                 let len = self.len as usize;
                 $(
                     if ::core::mem::needs_drop::<$fty>() {
-                        for i in 0..len {
-                            // SAFETY: `i < len <= cap`, so the pointer is within the allocation.
-                            // Each element is only dropped once.
-                            unsafe {
-                                ::core::ptr::drop_in_place(self.$fname.as_ptr().add(i));
-                            }
+                        // SAFETY: `len <= cap`, so the first `len` elements are initialized and within the allocation.
+                        // Each element is only dropped once.
+                        unsafe {
+                            ::core::ptr::drop_in_place(::core::ptr::slice_from_raw_parts_mut(
+                                self.$fname.as_ptr(),
+                                len,
+                            ));
                         }
                     }
                 )*
@@ -326,6 +327,7 @@ pub(crate) use multi_index_vec;
 mod tests {
     oxc_index::define_index_type! {
         struct TestId = usize;
+        MAX_INDEX = usize::MAX;
     }
 
     multi_index_vec! {
@@ -347,6 +349,7 @@ mod tests {
 
     oxc_index::define_index_type! {
         struct StringId = usize;
+        MAX_INDEX = usize::MAX;
     }
 
     multi_index_vec! {

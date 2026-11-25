@@ -2,8 +2,6 @@
 # Do not append `--` or it will break IDEs
 ck = "check --all-features --all-targets --locked"
 lint = "clippy --all-targets --all-features"
-# Skip `tasks/website` due to linker errors with `oxlint`
-codecov = "llvm-cov --workspace --ignore-filename-regex tasks --exclude website"
 coverage = "run -p oxc_coverage --profile coverage --"
 benchmark = "bench -p oxc_benchmark"
 minsize = "run -p oxc_minsize --profile coverage --"
@@ -20,6 +18,12 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.wasm32-wasip1]
+rustflags = ["-C", "target-feature=+simd128"]
+
+[target.wasm32-wasip1-threads]
+rustflags = ["-C", "target-feature=+simd128"]
 
 [target.'cfg(target_os = "windows")']
 rustflags = [

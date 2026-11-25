@@ -84,12 +84,12 @@ impl Rule for NoUselessConcat {
 }
 
 fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
-    let mut left = &expr.left;
+    let mut left = expr.left.without_parentheses();
     loop {
         if let Expression::BinaryExpression(binary_expr) = left
             && binary_expr.operator == BinaryOperator::Addition
         {
-            left = &binary_expr.right;
+            left = binary_expr.right.without_parentheses();
             continue;
         }
         break;
@@ -98,12 +98,12 @@ fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
 }
 
 fn get_right<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
-    let mut right = &expr.right;
+    let mut right = expr.right.without_parentheses();
     loop {
         if let Expression::BinaryExpression(binary_expr) = right
             && binary_expr.operator == BinaryOperator::Addition
         {
-            right = &binary_expr.left;
+            right = binary_expr.left.without_parentheses();
             continue;
         }
         break;
@@ -147,6 +147,7 @@ fn test() {
         "foo['a'] + foo['b']",
         "`${1 + 1}`",
         "`${'1' + 1}`",
+        "'a' +\n('b')",
     ];
 
     let fail = vec![
@@ -167,6 +168,15 @@ fn test() {
         "'a' + 'b' + 'c' + 'd' + 'e' + foo",
         "`${'a' + 'b'}` + 'c'",
         "foo['a' + 'b']",
+        "var a = 'a' + ('b');\nvar b = ('a') + 'b';\nvar c = (foo + 'a') + ('b' + 'c');",
+        "'a' + ('b')",
+        "('a') + 'b'",
+        "('a') + ('b')",
+        "((('a'))) + 'b'",
+        "(foo + 'a') + 'b'",
+        "'a' + ('b' + 'c')",
+        "foo + ('a' + 'b')",
+        "'a' + ('b' + foo)",
     ];
 
     // TODO: Implement a suggestion for this rule.

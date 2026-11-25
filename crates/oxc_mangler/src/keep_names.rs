@@ -71,6 +71,19 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
                     || self.has_name_set_reference_node(*symbol_id)
             })
             .for_each(|symbol_id| symbol_ids.set_bit(symbol_id.index()));
+        // A redeclaration can also name the function: `var foo; var foo = function () {}`.
+        // Few symbols are redeclared, so check them here instead of looking up redeclarations
+        // for every symbol above. The first entry is the declaration already checked above.
+        for (symbol_id, redeclarations) in self.scoping.redeclared_symbols() {
+            if !symbol_ids.has_bit(symbol_id.index())
+                && redeclarations.iter().skip(1).any(|redeclaration| {
+                    let decl_node = self.ast_nodes.get_node(redeclaration.declaration);
+                    self.is_name_set_declare_node(decl_node, symbol_id)
+                })
+            {
+                symbol_ids.set_bit(symbol_id.index());
+            }
+        }
         symbol_ids
     }
 
@@ -172,27 +185,17 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
         match kind {
             BindingPattern::BindingIdentifier(_) => None,
             BindingPattern::ObjectPattern(object_pattern) => {
-                for property in &object_pattern.properties {
-                    if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
+                object_pattern.properties.iter().find_map(|property| {
+                    Self::find_assign_binding_pattern_kind_of_specific_symbol(
                         &property.value,
                         symbol_id,
-                    ) {
-                        return Some(value);
-                    }
-                }
-                None
+                    )
+                })
             }
             BindingPattern::ArrayPattern(array_pattern) => {
-                for element in &array_pattern.elements {
-                    let Some(binding) = element else { continue };
-
-                    if let Some(value) = Self::find_assign_binding_pattern_kind_of_specific_symbol(
-                        binding, symbol_id,
-                    ) {
-                        return Some(value);
-                    }
-                }
-                None
+                array_pattern.elements.iter().flatten().find_map(|binding| {
+                    Self::find_assign_binding_pattern_kind_of_specific_symbol(binding, symbol_id)
+                })
             }
             BindingPattern::AssignmentPattern(assign_pattern) => {
                 if Self::is_binding_id_of_specific_symbol(&assign_pattern.left, symbol_id) {
@@ -256,7 +259,7 @@ mod test {
     fn collect(opts: MangleOptionsKeepNames, source_text: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-        assert!(!ret.panicked, "{source_text}");
+        assert!(!ret.fatal_error, "{source_text}");
         assert!(ret.diagnostics.is_empty(), "{source_text}");
         let ret = SemanticBuilder::new().with_build_nodes(true).build(&ret.program);
         assert!(ret.diagnostics.is_empty(), "{source_text}");

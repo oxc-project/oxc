@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, ChainElement, Expression, StaticMemberExpression},
+    ast::{AssignmentTarget, Expression, MemberExpression, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,6 +60,7 @@ declare_oxc_lint!(
     RequireSlotsAsFunctions,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Enforce properties of `$slots` to be used as functions.",
 );
@@ -93,12 +94,8 @@ impl Rule for RequireSlotsAsFunctions {
 fn inner_static_member_expression<'a, 'b>(
     expr: &'b Expression<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
-    match expr.get_inner_expression() {
-        Expression::StaticMemberExpression(m) => Some(m),
-        Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::StaticMemberExpression(m) => Some(m),
-            _ => None,
-        },
+    match expr.get_member_expr()? {
+        MemberExpression::StaticMemberExpression(m) => Some(m),
         _ => None,
     }
 }

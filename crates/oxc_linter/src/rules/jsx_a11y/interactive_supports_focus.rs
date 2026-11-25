@@ -14,7 +14,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::{
         KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS, get_element_type,
-        get_string_literal_prop_value, has_jsx_prop, has_jsx_prop_ignore_case, is_disabled_element,
+        get_string_literal_prop_value, has_jsx_prop_ignore_case, is_disabled_element,
         is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
         is_non_interactive_element, is_non_interactive_role, is_presentation_role,
     },
@@ -92,6 +92,7 @@ declare_oxc_lint!(
     InteractiveSupportsFocus,
     jsx_a11y,
     correctness,
+    recommended,
     suggestion,
     config = InteractiveSupportsFocusConfig,
     version = "1.63.0",
@@ -100,7 +101,7 @@ declare_oxc_lint!(
 
 impl Rule for InteractiveSupportsFocus {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -111,7 +112,7 @@ impl Rule for InteractiveSupportsFocus {
         let has_interactive_handler = EVENT_HANDLERS
             .iter()
             .flat_map(|handlers| handlers.iter())
-            .any(|handler| has_jsx_prop(jsx_el, handler).is_some());
+            .any(|handler| has_jsx_prop_ignore_case(jsx_el, handler).is_some());
         if !has_interactive_handler {
             return;
         }
@@ -305,6 +306,7 @@ fn test() {
         (r#"<div role="slider" onClick={() => void 0} />"#, None, None),
         (r#"<div role="tab" onClick={() => void 0} />"#, None, None),
         (r#"<div role="treeitem" onClick={() => void 0} />"#, None, None),
+        (r#"<div role="button" onclick={() => void 0} />"#, None, None),
     ];
 
     let fix_tabbable = vec![(

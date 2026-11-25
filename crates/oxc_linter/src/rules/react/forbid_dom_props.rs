@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -168,7 +168,7 @@ declare_oxc_lint!(
 
 impl Rule for ForbidDomProps {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,11 +227,11 @@ impl Rule for ForbidDomProps {
 
 fn static_jsx_string_value<'a>(value: &'a JSXAttributeValue<'a>) -> Option<&'a str> {
     match value {
-        JSXAttributeValue::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
+        JSXAttributeValue::StringLiteral(str_lit) => str_lit.value.as_str(),
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-            JSXExpression::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
+            JSXExpression::StringLiteral(str_lit) => str_lit.value.as_str(),
             JSXExpression::TemplateLiteral(template_lit) => {
-                template_lit.single_quasi().map(|quasi| quasi.as_str())
+                template_lit.single_quasi().and_then(JSStr::as_str)
             }
             _ => None,
         },

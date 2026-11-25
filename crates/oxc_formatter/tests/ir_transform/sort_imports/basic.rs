@@ -1367,6 +1367,105 @@ import c from "c";
     );
 }
 
+#[test]
+fn should_keep_comments_after_last_import_at_the_end() {
+    // Comments after the last statement are not attached to any import: they stay at the end
+    assert_format(
+        r#"
+import b from "b";
+import a from "a";
+// directly after
+
+// loose
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import a from "a";
+import b from "b";
+// directly after
+
+// loose
+"#,
+    );
+
+    // Comments on one line stay on one line
+    assert_format(
+        r#"
+import b from "b";
+import a from "a";
+/* x */ /* y */
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import a from "a";
+import b from "b";
+/* x */ /* y */
+"#,
+    );
+
+    // A trailing comment of a specifier stays inside its import
+    assert_format(
+        r#"
+import {
+  s2,
+  s1,
+  // last
+} from "z";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import a from "a";
+import {
+  s2,
+  s1,
+  // last
+} from "z";
+"#,
+    );
+}
+
+#[test]
+fn should_ignore_comments_in_import_head() {
+    // A comment after `from` is not the source: "a" -> "b" -> "z"
+    assert_format(
+        r#"
+import b from "b";
+import { x } from /* c */ "z";
+import a from "a";
+"#,
+        r#"{ "sortImports": {} }"#,
+        r#"
+import a from "a";
+import b from "b";
+import { x } from /* c */ "z";
+"#,
+    );
+
+    // A comment before `{` is not a default binding
+    assert_format(
+        r#"
+import /* c */ { x } from "a";
+import b from "b";
+"#,
+        r#"
+{
+    "sortImports": {
+        "groups": ["defaults", "unknown"],
+        "customGroups": [
+            { "groupName": "defaults", "modifiers": ["default"] }
+        ]
+    }
+}
+"#,
+        r#"
+import b from "b";
+
+import { /* c */ x } from "a";
+"#,
+    );
+}
+
 // ---
 
 #[test]

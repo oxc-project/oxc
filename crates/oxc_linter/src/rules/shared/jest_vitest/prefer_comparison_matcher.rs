@@ -3,16 +3,14 @@ use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
     context::LintContext,
     fixer::RuleFixer,
-    utils::{
-        KnownMemberExpressionProperty, PossibleJestNode, is_equality_matcher,
-        parse_expect_jest_fn_call,
-    },
+    utils::{ParsedExpectFnCall, PossibleJestNode, is_equality_matcher, parse_expect_jest_fn_call},
 };
 
 fn use_to_be_comparison(preferred_method: &str, span: Span) -> OxcDiagnostic {
@@ -56,15 +54,15 @@ expect(x < 'Carl').toBe(true);
 ```
 ";
 
-pub fn run_on_jest_node<'a, 'c>(
-    possible_jest_node: &PossibleJestNode<'a, 'c>,
-    ctx: &'c LintContext<'a>,
-) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
-    let Some(parse_expect_jest_fn) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(parse_expect_jest_fn) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx)
     else {
         return;
     };
@@ -91,7 +89,7 @@ pub fn run_on_jest_node<'a, 'c>(
     }
 
     let has_not_modifier =
-        parse_expect_jest_fn.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+        parse_expect_jest_fn.modifiers().any(|modifier| modifier.is_name_equal("not"));
     let Expression::BooleanLiteral(matcher_arg_value) = first_matcher_arg.get_inner_expression()
     else {
         return;
@@ -116,8 +114,7 @@ pub fn run_on_jest_node<'a, 'c>(
             binary_expr,
             call_span_end,
             arg_span_end,
-            &parse_expect_jest_fn.local,
-            &parse_expect_jest_fn.modifiers(),
+            &parse_expect_jest_fn,
             prefer_matcher_name,
             fixer,
         );
@@ -156,18 +153,17 @@ fn building_code<'a>(
     binary_expr: &BinaryExpression<'a>,
     call_span_end: &str,
     arg_span_end: &str,
-    local_name: &str,
-    modifiers: &[&KnownMemberExpressionProperty<'a>],
+    expect_call: &ParsedExpectFnCall<'a>,
     prefer_matcher_name: &str,
     fixer: RuleFixer<'_, 'a>,
 ) -> String {
     let mut content = fixer.codegen();
-    content.print_str(local_name);
+    content.print_str(&expect_call.local);
     content.print_ascii_byte(b'(');
     content.print_expression(&binary_expr.left);
     content.print_str(call_span_end);
     content.print_ascii_byte(b'.');
-    for modifier in modifiers {
+    for modifier in expect_call.modifiers() {
         let Some(modifier_name) = modifier.name() else {
             continue;
         };

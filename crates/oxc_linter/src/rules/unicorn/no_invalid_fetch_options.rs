@@ -2,18 +2,17 @@ use std::borrow::Cow;
 
 use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
-use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey,
-        TSLiteral, TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
+        Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey, TSLiteral,
+        TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
@@ -55,36 +54,32 @@ declare_oxc_lint!(
     NoInvalidFetchOptions,
     unicorn,
     correctness,
+    recommended,
     version = "0.15.12",
     short_description = "Disallow invalid options in `fetch()` and `new Request()`.",
 );
 
 impl Rule for NoInvalidFetchOptions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::CallExpression(call_expr) => {
-                if !call_expr.callee.is_specific_id("fetch") || call_expr.arguments.len() < 2 {
-                    return;
-                }
-
-                if let Argument::ObjectExpression(expr) = &call_expr.arguments[1]
-                    && let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx)
-                {
-                    ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
-                }
+        let AstKind::ObjectExpression(expr) = node.kind() else {
+            return;
+        };
+        let arguments = match ctx.nodes().parent_kind(node.id()) {
+            AstKind::CallExpression(call_expr) if call_expr.callee.is_specific_id("fetch") => {
+                &call_expr.arguments
             }
-            AstKind::NewExpression(new_expr) => {
-                if !is_new_expression(new_expr, &["Request"], Some(2), None) {
-                    return;
-                }
-
-                if let Argument::ObjectExpression(expr) = &new_expr.arguments[1]
-                    && let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx)
-                {
-                    ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
-                }
+            AstKind::NewExpression(new_expr)
+                if is_new_expression(new_expr, &["Request"], Some(2), None) =>
+            {
+                &new_expr.arguments
             }
-            _ => {}
+            _ => return,
+        };
+        if arguments.get(1).is_none_or(|argument| argument.span() != expr.span) {
+            return;
+        }
+        if let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx) {
+            ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
         }
     }
 }
@@ -93,7 +88,7 @@ impl Rule for NoInvalidFetchOptions {
 const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
 
 fn is_invalid_fetch_options<'a>(
-    obj_expr: &'a ArenaBox<'_, ObjectExpression<'_>>,
+    obj_expr: &'a ObjectExpression<'_>,
     ctx: &'a LintContext<'_>,
 ) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"
@@ -144,7 +139,13 @@ fn is_invalid_fetch_options<'a>(
                                         if let Some(Expression::StringLiteral(str_lit)) =
                                             &m.initializer
                                         {
-                                            Some(str_lit.value.to_compact_str())
+                                            // A value with a lone surrogate is not a known method.
+                                            Some(CompactStr::from(
+                                                str_lit
+                                                    .value
+                                                    .as_str()
+                                                    .unwrap_or(&UNKNOWN_METHOD_NAME),
+                                            ))
                                         } else {
                                             None
                                         }
@@ -162,7 +163,10 @@ fn is_invalid_fetch_options<'a>(
                     }
                 }
                 Expression::StringLiteral(value_ident) => {
-                    method_name = value_ident.value.cow_to_ascii_uppercase();
+                    method_name = value_ident
+                        .value
+                        .as_str()
+                        .map_or(UNKNOWN_METHOD_NAME, cow_utils::CowUtils::cow_to_ascii_uppercase);
                 }
                 Expression::TemplateLiteral(template_lit) => {
                     method_name = extract_method_name_from_template_literal(template_lit);
@@ -181,7 +185,10 @@ fn is_invalid_fetch_options<'a>(
                     match decl.kind() {
                         AstKind::VariableDeclarator(declarator) => match &declarator.init {
                             Some(Expression::StringLiteral(str_lit)) => {
-                                method_name = str_lit.value.cow_to_ascii_uppercase();
+                                method_name =
+                                    str_lit.value.as_str().map_or(UNKNOWN_METHOD_NAME, |value| {
+                                        value.cow_to_ascii_uppercase()
+                                    });
                             }
                             Some(Expression::TemplateLiteral(template_lit)) => {
                                 method_name =
@@ -202,10 +209,13 @@ fn is_invalid_fetch_options<'a>(
                                         if let TSType::TSLiteralType(ty) = ty {
                                             let TSLiteralType { literal, .. } = &**ty;
                                             if let TSLiteral::StringLiteral(str_lit) = literal {
-                                                return str_lit.value.cow_to_ascii_uppercase()
-                                                    == "GET"
-                                                    || str_lit.value.cow_to_ascii_uppercase()
-                                                        == "HEAD";
+                                                let method = str_lit
+                                                    .value
+                                                    .as_str()
+                                                    .map_or(UNKNOWN_METHOD_NAME, |value| {
+                                                        value.cow_to_ascii_uppercase()
+                                                    });
+                                                return method == "GET" || method == "HEAD";
                                             }
                                         }
                                         false
@@ -216,7 +226,12 @@ fn is_invalid_fetch_options<'a>(
                                 TSType::TSLiteralType(literal_type) => {
                                     let TSLiteralType { literal, .. } = &**literal_type;
                                     if let TSLiteral::StringLiteral(str_lit) = literal {
-                                        method_name = str_lit.value.cow_to_ascii_uppercase();
+                                        method_name = str_lit
+                                            .value
+                                            .as_str()
+                                            .map_or(UNKNOWN_METHOD_NAME, |value| {
+                                                value.cow_to_ascii_uppercase()
+                                            });
                                     }
                                 }
                                 _ => {
@@ -224,7 +239,9 @@ fn is_invalid_fetch_options<'a>(
                                 }
                             }
                         }
-                        _ => {}
+                        _ => {
+                            method_name = UNKNOWN_METHOD_NAME;
+                        }
                     }
                 }
                 _ => {
@@ -278,6 +295,12 @@ fn test() {
         "new not_Request(url, {body})",
         "fetch({body}, url)",
         "new Request({body}, url)",
+        "fetch(url, {}, {body})",
+        "new Request(url, {}, {body})",
+        "fetch(url, ({body}))",
+        "new Request(url, ({body}))",
+        "fetch(url, {body} as RequestInit)",
+        "fetch(url, {options: {body}})",
         r#"fetch(url, {[body]: "foo=bar"})"#,
         r#"new Request(url, {[body]: "foo=bar"})"#,
         r#"fetch(url, {body: "foo=bar", body: undefined});"#,
@@ -314,6 +337,16 @@ fn test() {
         (r#"new Request("/url", { method: getOptions().method, body: "some body" });"#),
         (r#"fetch("/url", { method: (options).method, body: "some body" });"#),
         (r#"new Request("/url", { method: (options).method, body: "some body" });"#),
+        r#"enum M { A = "\uD800" } fetch(u, {method: M.A, body: "x"})"#,
+        r#"enum M { A = "\uD800", B = "GET" } fetch(u, {method: M.A, body: "x"})"#,
+        r#"type Handler = (input: { body?: string; method: string }) => Promise<Response>;
+        export const contextual: Handler = ({ body, method }) => fetch("/", { body, method });"#,
+        r#"type Handler = (input: { body?: string; method: string }) => Request;
+        export const contextual: Handler = ({ body, method }) => new Request("/", { body, method });"#,
+        r#"function request({ body, method }) { return fetch("/", { body, method }); }"#,
+        r#"function request({ body, method }) { return new Request("/", { body, method }); }"#,
+        r#"function request(method) { return fetch("/", { method, body: "foo=bar" }); }"#,
+        r#"function request(method) { return new Request("/", { method, body: "foo=bar" }); }"#,
     ];
 
     let fail = vec![

@@ -1,0 +1,44 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/accessor-surrogate-name.ts
+---
+```
+==================== .D.TS ====================
+
+export declare class Lead {
+	get "\ud800"(): number;
+	set "\ud800"(v: number);
+}
+export declare class Trail {
+	get "\udc00"(): string;
+	set ["\udc00"](v: string);
+}
+export declare class Text {
+	get "a\ud800b"(): string;
+	set [`a\uD800b`](v: string);
+}
+export declare class Different {
+	get "\ud800"(): number;
+	set "\udc00"(v);
+}
+export interface Signatures {
+	get "\ud800"(): number;
+	set "\ud800"(v: number);
+	get "\udc00"(): string;
+	set "\udc00"(v: string);
+}
+
+
+==================== Errors ====================
+
+  x TS9009: At least one accessor must have an explicit return type annotation
+  | with --isolatedDeclarations.
+    ,-[28:7]
+ 27 |   }
+ 28 |   set "\uDC00"(v) {}
+    :       ^^^^^^^^
+ 29 | }
+    `----
+
+
+```

@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/no_js_runtime
+----------
+Failed to parse oxlint configuration file.
+
+  x JavaScript/TypeScript config file (<cwd>/fixtures/cli/no_js_runtime/oxlint.config.ts) found but JS runtime not available.
+  help: Run oxlint via the npm package, or use JSON config files (.oxlintrc.json or .oxlintrc.jsonc).
+
+----------
+CLI result: InvalidOptionConfig
+----------

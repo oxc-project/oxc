@@ -1,0 +1,138 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ['meta.nonce']: 2 };
+a = { 'color': 1, ['meta.nonce']: 2 };
+a = { [1]: 1, 'a-b': 2 };
+const { color, ['meta.nonce']: nonce } = props;
+
+class A {
+  color = 1;
+  ['meta.nonce'] = 2;
+  ['a-b']() {}
+}
+
+==================== Output ====================
+-------------------------------------------
+{ printWidth: 80, quoteProps: "as-needed" }
+-------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { [1]: 1, "a-b": 2 };
+const { color, ["meta.nonce"]: nonce } = props;
+
+class A {
+  color = 1;
+  ["meta.nonce"] = 2;
+  ["a-b"]() {}
+}
+
+--------------------------------------------
+{ printWidth: 100, quoteProps: "as-needed" }
+--------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { [1]: 1, "a-b": 2 };
+const { color, ["meta.nonce"]: nonce } = props;
+
+class A {
+  color = 1;
+  ["meta.nonce"] = 2;
+  ["a-b"]() {}
+}
+
+------------------------------------------
+{ printWidth: 80, quoteProps: "preserve" }
+------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { "color": 1, ["meta.nonce"]: 2 };
+a = { [1]: 1, "a-b": 2 };
+const { color, ["meta.nonce"]: nonce } = props;
+
+class A {
+  color = 1;
+  ["meta.nonce"] = 2;
+  ["a-b"]() {}
+}
+
+-------------------------------------------
+{ printWidth: 100, quoteProps: "preserve" }
+-------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { "color": 1, ["meta.nonce"]: 2 };
+a = { [1]: 1, "a-b": 2 };
+const { color, ["meta.nonce"]: nonce } = props;
+
+class A {
+  color = 1;
+  ["meta.nonce"] = 2;
+  ["a-b"]() {}
+}
+
+--------------------------------------------
+{ printWidth: 80, quoteProps: "consistent" }
+--------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { [1]: 1, "a-b": 2 };
+const { color, ["meta.nonce"]: nonce } = props;
+
+class A {
+  color = 1;
+  ["meta.nonce"] = 2;
+  ["a-b"]() {}
+}
+
+---------------------------------------------
+{ printWidth: 100, quoteProps: "consistent" }
+---------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { color: 1, ["meta.nonce"]: 2 };
+a = { [1]: 1, "a-b": 2 };
+const { color, ["meta.nonce"]: nonce } = props;
+
+class A {
+  color = 1;
+  ["meta.nonce"] = 2;
+  ["a-b"]() {}
+}
+
+---------------------------------------------------------------
+{ printWidth: 80, quoteProps: "consistent", singleQuote: true }
+---------------------------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ['meta.nonce']: 2 };
+a = { color: 1, ['meta.nonce']: 2 };
+a = { [1]: 1, 'a-b': 2 };
+const { color, ['meta.nonce']: nonce } = props;
+
+class A {
+  color = 1;
+  ['meta.nonce'] = 2;
+  ['a-b']() {}
+}
+
+----------------------------------------------------------------
+{ printWidth: 100, quoteProps: "consistent", singleQuote: true }
+----------------------------------------------------------------
+// Computed keys are ignored when deciding whether quotes are needed
+a = { color: 1, ['meta.nonce']: 2 };
+a = { color: 1, ['meta.nonce']: 2 };
+a = { [1]: 1, 'a-b': 2 };
+const { color, ['meta.nonce']: nonce } = props;
+
+class A {
+  color = 1;
+  ['meta.nonce'] = 2;
+  ['a-b']() {}
+}
+
+===================== End =====================

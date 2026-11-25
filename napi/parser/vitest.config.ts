@@ -5,10 +5,10 @@ const isEnabled = (envValue: string | undefined) => envValue === "true" || envVa
 
 const runLazyTests = isEnabled(env.RUN_LAZY_TESTS);
 let runRawTests =
-  runLazyTests ||
-  isEnabled(env.RUN_RAW_TESTS) ||
-  isEnabled(env.RUN_RAW_RANGE_TESTS) ||
-  isEnabled(env.RUN_RAW_TOKENS_TESTS);
+  runLazyTests
+  || isEnabled(env.RUN_RAW_TESTS)
+  || isEnabled(env.RUN_RAW_RANGE_TESTS)
+  || isEnabled(env.RUN_RAW_TOKENS_TESTS);
 
 // Raw tests use `tinypool`, which doesn't seem to work on Windows with Vitest
 // Ref: https://github.com/vitest-dev/vitest/issues/8201

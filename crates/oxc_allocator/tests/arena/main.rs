@@ -6,7 +6,6 @@
     clippy::items_after_statements,
     clippy::large_enum_variant,
     clippy::large_stack_arrays,
-    clippy::legacy_numeric_constants,
     clippy::match_like_matches_macro,
     clippy::match_same_arms,
     clippy::needless_pass_by_value,

@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use oxc_ast::StaticPropertyName;
 
 use rustc_hash::FxHashMap;
 
@@ -12,7 +12,7 @@ use oxc_syntax::{
 
 #[derive(Debug)]
 pub struct Element<'a> {
-    pub name: Cow<'a, str>,
+    pub name: StaticPropertyName<'a>,
     pub span: Span,
     pub is_private: bool,
     pub r#static: bool,
@@ -21,7 +21,7 @@ pub struct Element<'a> {
 
 impl<'a> Element<'a> {
     pub fn new(
-        name: Cow<'a, str>,
+        name: StaticPropertyName<'a>,
         span: Span,
         r#static: bool,
         is_private: bool,

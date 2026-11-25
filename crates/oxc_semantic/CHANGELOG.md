@@ -4,6 +4,161 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- 2bc8e89 diagnostics: [**BREAKING**] `NamedSource` support `&str` as name (#29851) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 41dbc08 mangler: Keep names set by redeclarations with keepNames (#30055) (Dunqing)
+- 0167451 parser: Treat `import x = require()` as module syntax (#29908) (camc314)
+- e27f727 semantic: Align JSDoc nullable type suggestions with TypeScript (#29947) (camc314)
+- e4e2ac4 parser,semantic: Reject invalid types in type arguments (#29945) (camc314)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- f860f1b semantic: Resolve a private name to the enclosing class that declares it (#29714) (Nadir Ali)
+
+### ⚡ Performance
+
+- 27777a9 diagnostics: Loosen lifetime bound on `OxcDiagnostic::with_source_code` (#29849) (overlookmotel)
+- ec4090d semantic: Size the `Scoping` arena from symbol, reference and scope counts (#29809) (Boshen)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
+## [0.159.0] - 2026-11-16
+
+### 🚀 Features
+
+- 750033a semantic: Resolve labels to label IDs (#29612) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1dc0ee9 semantic: Preserve catch and var binding identities (#28739) (Dunqing)
+
+## [0.158.0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- a791a5b cfg: Resolve continues through stacked loop labels (#29016) (camc314)
+- ec327aa semantic: Keep block type bindings separate from hoisted vars (#28601) (YT)
+
+## [0.157.0] - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- 128c67d semantic: Check strict eval and arguments writes by reference flags (#28445) (Boshen)
+- fc0eed3 semantic: Stop let-binding scans at arrow functions (#28444) (Boshen)
+
+### ⚡ Performance
+
+- d85ee3d semantic: Skip arguments ancestry checks outside classes (#28510) (Boshen)
+- cf81d07 semantic: Reuse private reference resolution (#28509) (Boshen)
+- a79eebc semantic: Avoid duplicate maps for public JavaScript members (#28508) (Boshen)
+- 235ca3b semantic: Skip escape checks for unescaped strings (#28507) (Boshen)
+- 04b20c0 semantic: Compute duplicate parameter policy once per list (#28446) (Boshen)
+
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- f4dac9e semantic: Separate hoisted vars from block type bindings (#27936) (limadog9)
+- 5c84098 semantic,linter: Report names with lone surrogates in enum and lint checks (#27991) (Dunqing)
+
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- f8e9a50 semantic: Stop arguments resolution at ordinary functions (#26929) (camc314)
+- 72bf06f crates/oxc_semantic: Decline to evaluate unary ops on strings in enum initializers (#27447) (Brooooooklyn)
+- 558a890 semantic: Mark delete of optional members as MemberWriteTarget (#27430) (Bartok)
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+
+## [0.151.0] - 2026-09-21
+
+### ⚡ Performance
+
+- bd3f69e semantic: Reuse identifier hashes in enum member lookups (#26773) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- a091fc4 parser: Validate await context for await using declarations (#26495) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- 8b35abd semantic: Detect duplicate private class elements (#26361) (camc314)
+- 457ed57 semantic: Reject await and yield in rest parameter defaults (#26359) (camc314)
+- 4b89c7b semantic: Reject jumps across arrow functions (#26357) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- 4adfb4c semantic: Validate chained continue labels (#26157) (camc314)
+- c3dedc9 semantic: Skip function body bindings in parameters (#26099) (Dunqing)
+- 8531b9b linter/plugins: Alter method for obtaining mutable `Program` when sending AST to JS plugins (#26077) (overlookmotel)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- fca2e0c parser: Reject initialized lexical declarations in for-in (#25700) (Boshen)
+- 059784d semantic: Respect shadowed `Infinity` and `NaN` in enum evaluation (#25604) (camc314)
+- 509931b semantic: Classify global references per identifier (#25608) (camc314)
+- cdf1846 semantic: Allow legacy escapes in JSX attributes (#25576) (Boshen)
+
+### ⚡ Performance
+
+- 757f3d4 mangler: Share allocated names across reused slots (#25605) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0c9b980 semantic: Report module declaration diagnostics (#25285) (camc314)
+
+### ⚡ Performance
+
+- dd1430b semantic: Avoid allocation in class overload check (#25440) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 4120da0 semantic: [**BREAKING**] Return borrowed JSDoc so the parse cache works (#25186) (Connor Shea)
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
 ## [0.141.0] - 2026-07-20
 
 ### ⚡ Performance

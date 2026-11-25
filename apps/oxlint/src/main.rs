@@ -1,12 +1,11 @@
 use std::io::BufWriter;
 
 use oxlint::{
-    cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command},
+    cli::{CliRunResult, CliRunner, init_tracing, lint_command},
     lsp::run_lsp,
 };
 
 fn main() -> CliRunResult {
-    // Parse command line arguments from std::env::args()
     let command = lint_command().run();
 
     // Both LSP and CLI use `tracing` for logging
@@ -32,14 +31,13 @@ fn main() -> CliRunResult {
         });
     }
 
-    init_miette();
-
     command.handle_threads();
 
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
+    let mut stderr = BufWriter::new(std::io::stderr());
 
     // Run without external linter (no JS plugins)
-    CliRunner::new(command, None).run(&mut stdout)
+    CliRunner::new(command, None).run(&mut stdout, &mut stderr)
 }

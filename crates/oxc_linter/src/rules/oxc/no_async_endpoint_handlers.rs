@@ -189,8 +189,9 @@ impl Rule for NoAsyncEndpointHandlers {
             .and_then(Value::as_object)
             .and_then(|config| config.get("allowedNames"))
             .and_then(Value::as_array)
-            .map(|names| names.iter().filter_map(Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
+            .map_or_default(|names| {
+                names.iter().filter_map(Value::as_str).map(CompactStr::from).collect()
+            });
         allowed_names.sort_unstable();
         allowed_names.dedup();
 
@@ -280,17 +281,12 @@ impl NoAsyncEndpointHandlers {
                     _ => {}
                 }
             }
-            func if utils::is_endpoint_handler(func) => {
-                match func {
-                    // `app.get('/', (async?) function (req, res) {}`
-                    Expression::FunctionExpression(f) => {
-                        self.check_function(ctx, endpoint, registered_at, id_name, f);
-                    }
-                    Expression::ArrowFunctionExpression(f) => {
-                        self.check_arrow(ctx, endpoint, registered_at, id_name, f);
-                    }
-                    _ => unreachable!(),
-                }
+            // `app.get('/', (async?) function (req, res) {}`
+            Expression::FunctionExpression(f) if utils::is_endpoint_handler(arg) => {
+                self.check_function(ctx, endpoint, registered_at, id_name, f);
+            }
+            Expression::ArrowFunctionExpression(f) if utils::is_endpoint_handler(arg) => {
+                self.check_arrow(ctx, endpoint, registered_at, id_name, f);
             }
             _ => {}
         }

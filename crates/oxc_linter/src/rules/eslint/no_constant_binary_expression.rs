@@ -73,6 +73,7 @@ declare_oxc_lint!(
     NoConstantBinaryExpression,
     eslint,
     correctness,
+    recommended,
     config = NoConstantBinaryExpressionConfig,
     version = "0.0.3",
     short_description = "Disallow expressions where the operation doesn't affect the value.",
@@ -114,7 +115,7 @@ fn constant_relational_comparison(operator: &str, span: Span) -> OxcDiagnostic {
 
 impl Rule for NoConstantBinaryExpression {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -202,7 +203,7 @@ impl NoConstantBinaryExpression {
                 unary_expr.argument.get_inner_expression().is_literal()
             }
             Expression::Identifier(ident) => {
-                ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
+                ident.is_undefined() && ctx.is_reference_to_global_variable(ident)
             }
             expr => expr.is_literal() || expr.is_no_substitution_template(),
         }
@@ -235,7 +236,7 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
-                        && ctx.scoping().root_unresolved_references().contains_key(&ident.name);
+                        && ctx.is_reference_to_global_variable(ident);
                 }
                 false
             }
@@ -358,14 +359,13 @@ impl NoConstantBinaryExpression {
             },
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    let unresolved_references = ctx.scoping().root_unresolved_references();
                     if (ident.name == "String" || ident.name == "Number")
-                        && unresolved_references.contains_key(&ident.name)
+                        && ctx.is_reference_to_global_variable(ident)
                     {
                         return true;
                     }
 
-                    if ident.name == "Boolean" && unresolved_references.contains_key(&ident.name) {
+                    if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident) {
                         return call_expr
                             .arguments
                             .iter()
@@ -463,14 +463,17 @@ fn test() {
         "[n] == true",
         "delete bar.baz === true",
         "foo.Boolean(true) && foo",
-        // "function Boolean(n) { return n; }; Boolean(x) ?? foo",
-        // "function String(n) { return n; }; String(x) ?? foo",
-        // "function Number(n) { return n; }; Number(x) ?? foo",
-        // "function Boolean(n) { return Math.random(); }; Boolean(x) === 1",
-        // "function Boolean(n) { return Math.random(); }; Boolean(1) == true",
+        "function Boolean(n) { return n; }; Boolean(x) ?? foo",
+        "function String(n) { return n; }; String(x) ?? foo",
+        "function Number(n) { return n; }; Number(x) ?? foo",
+        "function f(MyString, x, y) { const String = MyString; return String(x) ?? y; }; String(1)",
+        "function Boolean(n) { return Math.random(); }; Boolean(x) === 1",
+        "function Boolean(n) { return Math.random(); }; Boolean(1) == true",
         "new Foo() === x",
         "x === new someObj.Promise()",
         "Boolean(foo) === true",
+        // TODO: `undefined` is matched by name, so a shadowed binding is still treated as
+        // the global. See `Expression::is_undefined` usage in this rule.
         // "function foo(undefined) { undefined ?? bar;}",
         // "function foo(undefined) { undefined == true;}",
         // "function foo(undefined) { undefined === true;}",

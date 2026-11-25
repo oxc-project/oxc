@@ -15,6 +15,27 @@ source: crates/oxc_linter/src/tester.rs
   help: Rewrite this `if`/`else` as a ternary expression.
 
   ⚠ unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ if (test) { obj["\uD800"] = a; } else { obj["\uD800"] = b; }
+   · ────────────────────────────────────────────────────────────
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ if (test) { obj["\uD800" + "x"] = a; } else { obj[`\uD800x`] = b; }
+   · ───────────────────────────────────────────────────────────────────
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ if (test) { obj["\uD83D" + "\uDE00"] = a; } else { obj["\uD83D\uDE00"] = b; }
+   · ─────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
    ╭─[prefer_ternary.tsx:2:17]
  1 │     async function unicorn() {
  2 │ ╭─▶                 if(test){

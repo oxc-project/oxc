@@ -56,38 +56,20 @@ export function resetBuffer() {
 }
 
 function deserializeProgram(pos) {
-  let end = deserializeI32(pos + 4),
+  let start = deserializeI32(pos),
+    end = deserializeI32(pos + 4),
     program = (parent = {
       type: "Program",
       body: null,
       sourceType: deserializeModuleKind(pos + 137),
       hashbang: null,
-      start: 0,
+      start,
       end,
       parent: null,
     });
   program.hashbang = deserializeOptionHashbang(pos + 56);
   let body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
-  {
-    let start;
-    if (body.length > 0) {
-      let first = body[0];
-      start = first.start;
-      if (first.type === "ExportNamedDeclaration" || first.type === "ExportDefaultDeclaration") {
-        let { declaration } = first;
-        if (
-          declaration !== null &&
-          declaration.type === "ClassDeclaration" &&
-          declaration.decorators.length > 0
-        ) {
-          let decoratorStart = declaration.decorators[0].start;
-          decoratorStart < start && (start = decoratorStart);
-        }
-      }
-    } else start = end;
-    program.start = start;
-  }
+  deserializeVecStatement(pos + 112, body);
   parent = null;
   return program;
 }
@@ -399,7 +381,7 @@ function deserializeObjectProperty(pos) {
       value: null,
       method: deserializeBool(pos + 13),
       shorthand: deserializeBool(pos + 14),
-      computed: deserializeBool(pos + 15),
+      computed: uint8[pos + 16] < 64,
       optional: false,
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
@@ -504,6 +486,12 @@ function deserializePropertyKey(pos) {
     case 64:
       return deserializeBoxIdentifierName(pos + 8);
     case 65:
+      return deserializeBoxStringLiteral(pos + 8);
+    case 66:
+      return deserializeBoxNumericLiteral(pos + 8);
+    case 67:
+      return deserializeBoxBigIntLiteral(pos + 8);
+    case 68:
       return deserializeBoxPrivateIdentifier(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKey`);
@@ -560,16 +548,10 @@ function deserializeTaggedTemplateExpression(pos) {
 function deserializeTemplateElement(pos) {
   let tail = deserializeBool(pos + 12),
     start = deserializeI32(pos) - 1,
-    end = deserializeI32(pos + 4) + 2 - tail,
-    value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null &&
-    deserializeBool(pos + 13) &&
-    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
-      String.fromCodePoint(parseInt(hex, 16)),
-    ));
+    end = deserializeI32(pos + 4) + 2 - tail;
   return {
     type: "TemplateElement",
-    value,
+    value: deserializeTemplateElementValue(pos + 16),
     tail,
     start,
     end,
@@ -580,7 +562,7 @@ function deserializeTemplateElement(pos) {
 function deserializeTemplateElementValue(pos) {
   return {
     raw: deserializeStr(pos),
-    cooked: deserializeOptionStr(pos + 16),
+    cooked: deserializeOptionJSStr(pos + 16),
   };
 }
 
@@ -1207,7 +1189,7 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
       value: null,
       method: false,
       shorthand: false,
-      computed: deserializeBool(pos + 12),
+      computed: uint8[pos + 16] < 64,
       optional: false,
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
@@ -1355,10 +1337,12 @@ function deserializeStatement(pos) {
     case 37:
       return deserializeBoxTSEnumDeclaration(pos + 8);
     case 38:
-      return deserializeBoxTSModuleDeclaration(pos + 8);
+      return deserializeBoxTSExternalModuleDeclaration(pos + 8);
     case 39:
-      return deserializeBoxTSGlobalDeclaration(pos + 8);
+      return deserializeBoxTSNamespaceDeclaration(pos + 8);
     case 40:
+      return deserializeBoxTSGlobalDeclaration(pos + 8);
+    case 41:
       return deserializeBoxTSImportEqualsDeclaration(pos + 8);
     case 64:
       return deserializeBoxImportDeclaration(pos + 8);
@@ -1435,10 +1419,12 @@ function deserializeDeclaration(pos) {
     case 37:
       return deserializeBoxTSEnumDeclaration(pos + 8);
     case 38:
-      return deserializeBoxTSModuleDeclaration(pos + 8);
+      return deserializeBoxTSExternalModuleDeclaration(pos + 8);
     case 39:
-      return deserializeBoxTSGlobalDeclaration(pos + 8);
+      return deserializeBoxTSNamespaceDeclaration(pos + 8);
     case 40:
+      return deserializeBoxTSGlobalDeclaration(pos + 8);
+    case 41:
       return deserializeBoxTSImportEqualsDeclaration(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for Declaration`);
@@ -1484,7 +1470,7 @@ function deserializeVariableDeclarator(pos) {
       type: "VariableDeclarator",
       id: null,
       init: null,
-      definite: deserializeBool(pos + 13),
+      definite: deserializeBool(pos + 12),
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
       parent,
@@ -2002,7 +1988,7 @@ function deserializeBindingProperty(pos) {
       value: null,
       method: false,
       shorthand: deserializeBool(pos + 12),
-      computed: deserializeBool(pos + 13),
+      computed: uint8[pos + 16] < 64,
       optional: false,
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
@@ -2103,7 +2089,8 @@ function deserializeFormalParameters(pos) {
     restFieldPos32 = (pos >> 2) + 10;
   if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
     pos = int32[restFieldPos32];
-    let end,
+    let start,
+      end,
       previousParent = parent,
       rest = (parent = {
         type: "RestElement",
@@ -2112,16 +2099,17 @@ function deserializeFormalParameters(pos) {
         optional: false,
         typeAnnotation: null,
         value: null,
-        start: deserializeI32(pos + 40),
+        start: (start = deserializeI32(pos + 40)),
         end: (end = deserializeI32(pos + 44)),
         parent: previousParent,
       });
     rest.argument = deserializeBindingPattern(pos + 56);
+    rest.decorators = deserializeVecDecorator(pos + 16);
+    rest.decorators.length !== 0 && (start = rest.decorators[0].start);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
-    if (rest.typeAnnotation !== null) {
-      end = rest.typeAnnotation.end;
-      rest.end = end;
-    }
+    rest.typeAnnotation !== null && (end = rest.typeAnnotation.end);
+    rest.start = start;
+    rest.end = end;
     params.push(rest);
     parent = previousParent;
   }
@@ -2245,7 +2233,7 @@ function deserializeFunctionBody(pos) {
       parent,
     }),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  deserializeVecStatement(pos + 40, body);
   node.body = body;
   parent = previousParent;
   return node;
@@ -2403,12 +2391,16 @@ function deserializeClass(pos) {
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
       parent,
-    });
+    }),
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 72);
-  node.superClass = deserializeOptionExpression(pos + 80);
-  node.superTypeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 96);
+  node.superClass = superClass;
+  node.superTypeArguments =
+    superClass === null
+      ? null
+      : deserializeOptionBoxTSTypeParameterInstantiation(pos + 80 + (pos + 16 - pos));
   node.implements = deserializeVecTSClassImplements(pos + 104);
   node.body = deserializeBoxClassBody(pos + 128);
   parent = previousParent;
@@ -2465,11 +2457,11 @@ function deserializeMethodDefinition(pos) {
       key: null,
       value: null,
       kind: deserializeMethodDefinitionKind(pos + 13),
-      computed: deserializeBool(pos + 14),
-      static: deserializeBool(pos + 15),
-      override: deserializeBool(pos + 64),
-      optional: deserializeBool(pos + 65),
-      accessibility: deserializeOptionTSAccessibility(pos + 66),
+      computed: uint8[pos + 40] < 64,
+      static: deserializeBool(pos + 14),
+      override: deserializeBool(pos + 15),
+      optional: deserializeBool(pos + 64),
+      accessibility: deserializeOptionTSAccessibility(pos + 65),
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
       parent,
@@ -2500,14 +2492,14 @@ function deserializePropertyDefinition(pos) {
       key: null,
       typeAnnotation: null,
       value: null,
-      computed: deserializeBool(pos + 13),
-      static: deserializeBool(pos + 14),
-      declare: deserializeBool(pos + 15),
-      override: deserializeBool(pos + 80),
-      optional: deserializeBool(pos + 81),
-      definite: deserializeBool(pos + 82),
-      readonly: deserializeBool(pos + 83),
-      accessibility: deserializeOptionTSAccessibility(pos + 84),
+      computed: uint8[pos + 40] < 64,
+      static: deserializeBool(pos + 13),
+      declare: deserializeBool(pos + 14),
+      override: deserializeBool(pos + 15),
+      optional: deserializeBool(pos + 80),
+      definite: deserializeBool(pos + 81),
+      readonly: deserializeBool(pos + 82),
+      accessibility: deserializeOptionTSAccessibility(pos + 83),
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
       parent,
@@ -2589,11 +2581,11 @@ function deserializeAccessorProperty(pos) {
       key: null,
       typeAnnotation: null,
       value: null,
-      computed: deserializeBool(pos + 13),
-      static: deserializeBool(pos + 14),
-      override: deserializeBool(pos + 15),
-      definite: deserializeBool(pos + 80),
-      accessibility: deserializeOptionTSAccessibility(pos + 81),
+      computed: uint8[pos + 40] < 64,
+      static: deserializeBool(pos + 13),
+      override: deserializeBool(pos + 14),
+      definite: deserializeBool(pos + 15),
+      accessibility: deserializeOptionTSAccessibility(pos + 80),
       declare: false,
       optional: false,
       readonly: false,
@@ -2765,9 +2757,9 @@ function deserializeExportDeclaration(pos) {
     declaration = deserializeDeclaration(pos + 16);
   node.declaration = declaration;
   node.exportKind =
-    declaration.declare === true ||
-    declaration.type === "TSTypeAliasDeclaration" ||
-    declaration.type === "TSInterfaceDeclaration"
+    declaration.declare === true
+    || declaration.type === "TSTypeAliasDeclaration"
+    || declaration.type === "TSInterfaceDeclaration"
       ? "type"
       : "value";
   parent = previousParent;
@@ -3044,25 +3036,18 @@ function deserializeNumericLiteral(pos) {
 
 function deserializeStringLiteral(pos) {
   let start = deserializeI32(pos),
-    end = deserializeI32(pos + 4),
-    previousParent = parent,
-    node = (parent = {
-      type: "Literal",
-      value: null,
-      raw:
-        int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
-          ? null
-          : sourceText.slice(start, end),
-      start,
-      end,
-      parent,
-    }),
-    value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12) &&
-    (value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
-  node.value = value;
-  parent = previousParent;
-  return node;
+    end = deserializeI32(pos + 4);
+  return {
+    type: "Literal",
+    value: deserializeJSStr(pos + 16),
+    raw:
+      int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
+        ? null
+        : sourceText.slice(start, end),
+    start,
+    end,
+    parent,
+  };
 }
 
 function deserializeBigIntLiteral(pos) {
@@ -3627,7 +3612,6 @@ function deserializeTSEnumMemberName(pos) {
     case 0:
       return deserializeBoxIdentifierName(pos + 8);
     case 1:
-      return deserializeBoxStringLiteral(pos + 8);
     case 2:
       return deserializeBoxStringLiteral(pos + 8);
     case 3:
@@ -4374,9 +4358,9 @@ function deserializeTSPropertySignature(pos) {
   let previousParent = parent,
     node = (parent = {
       type: "TSPropertySignature",
-      computed: deserializeBool(pos + 12),
-      optional: deserializeBool(pos + 13),
-      readonly: deserializeBool(pos + 14),
+      computed: uint8[pos + 16] < 64,
+      optional: deserializeBool(pos + 12),
+      readonly: deserializeBool(pos + 13),
       key: null,
       typeAnnotation: null,
       accessibility: null,
@@ -4466,9 +4450,9 @@ function deserializeTSMethodSignature(pos) {
     node = (parent = {
       type: "TSMethodSignature",
       key: null,
-      computed: deserializeBool(pos + 64),
-      optional: deserializeBool(pos + 65),
-      kind: deserializeTSMethodSignatureKind(pos + 66),
+      computed: uint8[pos + 16] < 64,
+      optional: deserializeBool(pos + 64),
+      kind: deserializeTSMethodSignatureKind(pos + 65),
       typeParameters: null,
       params: null,
       returnType: null,
@@ -4534,8 +4518,43 @@ function deserializeTSInterfaceHeritage(pos) {
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
       parent,
-    });
-  node.expression = deserializeExpression(pos + 16);
+    }),
+    expression = deserializeTSTypeName(pos + 16);
+  if (expression.type === "TSQualifiedName") {
+    let object = expression.left,
+      { right } = expression,
+      previous = (expression = {
+        type: "MemberExpression",
+        object,
+        property: right,
+        optional: false,
+        computed: false,
+        start: expression.start,
+        end: expression.end,
+        parent,
+      });
+    right.parent = previous;
+    for (;;) {
+      if (object.type !== "TSQualifiedName") {
+        object.parent = previous;
+        break;
+      }
+      let { left, right } = object;
+      previous = previous.object = {
+        type: "MemberExpression",
+        object: left,
+        property: right,
+        optional: false,
+        computed: false,
+        start: object.start,
+        end: object.end,
+        parent: previous,
+      };
+      right.parent = previous;
+      object = left;
+    }
+  }
+  node.expression = expression;
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   parent = previousParent;
   return node;
@@ -4569,29 +4588,37 @@ function deserializeTSTypePredicateName(pos) {
   }
 }
 
-function deserializeTSModuleDeclaration(pos) {
-  let kind = deserializeTSModuleDeclarationKind(pos + 88),
-    start = deserializeI32(pos),
+function deserializeTSExternalModuleDeclaration(pos) {
+  let start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    declare = deserializeBool(pos + 89),
-    node,
+    declare = deserializeBool(pos + 72),
     previousParent = parent,
-    body = deserializeOptionTSModuleDeclarationBody(pos + 72);
-  if (body === null) {
-    node = parent = {
+    body = deserializeOptionBoxTSModuleBlock(pos + 64),
+    node = (parent = {
       type: "TSModuleDeclaration",
       id: null,
-      // No `body` field
-      kind,
+      ...(body !== null && { body }),
+      kind: "module",
       declare,
       global: false,
       start,
       end,
       parent,
-    };
-    node.id = deserializeTSModuleDeclarationName(pos + 16);
-  } else {
-    node = parent = {
+    });
+  node.id = deserializeStringLiteral(pos + 16);
+  body !== null && (body.parent = node);
+  parent = previousParent;
+  return node;
+}
+
+function deserializeTSNamespaceDeclaration(pos) {
+  let kind = deserializeTSNamespaceDeclarationKind(pos + 64),
+    start = deserializeI32(pos),
+    end = deserializeI32(pos + 4),
+    declare = deserializeBool(pos + 65),
+    previousParent = parent,
+    body = deserializeTSNamespaceDeclarationBody(pos + 48),
+    node = (parent = {
       type: "TSModuleDeclaration",
       id: null,
       body,
@@ -4601,91 +4628,77 @@ function deserializeTSModuleDeclaration(pos) {
       start,
       end,
       parent,
-    };
-    let id = deserializeTSModuleDeclarationName(pos + 16);
-    if (body.type === "TSModuleBlock") {
-      node.id = id;
-      body.parent = node;
+    }),
+    id = deserializeBindingIdentifier(pos + 16);
+  if (body.type === "TSModuleBlock") {
+    node.id = id;
+    body.parent = node;
+  } else {
+    let innerId = body.id;
+    if (innerId.type === "Identifier") {
+      let outerId =
+        (node.id =
+        parent =
+          {
+            type: "TSQualifiedName",
+            left: id,
+            right: innerId,
+            start: id.start,
+            end: innerId.end,
+            parent: node,
+          });
+      id.parent = innerId.parent = outerId;
     } else {
-      let innerId = body.id;
-      if (innerId.type === "Identifier") {
-        let outerId =
-          (node.id =
-          parent =
-            {
-              type: "TSQualifiedName",
-              left: id,
-              right: innerId,
-              start: id.start,
-              end: innerId.end,
-              parent: node,
-            });
-        id.parent = innerId.parent = outerId;
-      } else {
-        // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
-        // this module on left, and previous `left` of innermost `TSQualifiedName` on right
-        node.id = innerId;
-        innerId.parent = node;
-        let { start } = id;
-        for (;;) {
-          innerId.start = start;
-          if (innerId.left.type === "Identifier") break;
-          innerId = innerId.left;
-        }
-        let right = innerId.left;
-        id.parent =
-          right.parent =
-          innerId.left =
-            {
-              type: "TSQualifiedName",
-              left: id,
-              right,
-              start,
-              end: right.end,
-              parent: innerId,
-            };
+      // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with
+      // `id` of this namespace on left, and previous `left` on right.
+      node.id = innerId;
+      innerId.parent = node;
+      let { start } = id;
+      for (;;) {
+        innerId.start = start;
+        if (innerId.left.type === "Identifier") break;
+        innerId = innerId.left;
       }
-      if (Object.hasOwn(body, "body")) {
-        body = body.body;
-        node.body = body;
-        body.parent = node;
-      } else body = null;
+      let right = innerId.left;
+      id.parent =
+        right.parent =
+        innerId.left =
+          {
+            type: "TSQualifiedName",
+            left: id,
+            right,
+            start,
+            end: right.end,
+            parent: innerId,
+          };
     }
+    body = body.body;
+    node.body = body;
+    body.parent = node;
   }
   parent = previousParent;
   return node;
 }
 
-function deserializeTSModuleDeclarationKind(pos) {
+function deserializeTSNamespaceDeclarationKind(pos) {
   switch (uint8[pos]) {
     case 0:
       return "module";
     case 1:
       return "namespace";
     default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationKind`);
+      throw Error(`Unexpected discriminant ${uint8[pos]} for TSNamespaceDeclarationKind`);
   }
 }
 
-function deserializeTSModuleDeclarationName(pos) {
+function deserializeTSNamespaceDeclarationBody(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBindingIdentifier(pos + 8);
-    case 1:
-      return deserializeStringLiteral(pos + 8);
-    default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationName`);
-  }
-}
-
-function deserializeTSModuleDeclarationBody(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return deserializeBoxTSModuleDeclaration(pos + 8);
+      return deserializeBoxTSNamespaceDeclaration(pos + 8);
     case 1:
       return deserializeBoxTSModuleBlock(pos + 8);
     default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationBody`);
+      throw Error(`Unexpected discriminant ${uint8[pos]} for TSNamespaceDeclarationBody`);
   }
 }
 
@@ -4727,7 +4740,7 @@ function deserializeTSModuleBlock(pos) {
       parent,
     }),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  deserializeVecStatement(pos + 40, body);
   node.body = body;
   parent = previousParent;
   return node;
@@ -5152,21 +5165,24 @@ function deserializeCommentKind(pos) {
     case 0:
       return "Line";
     case 1:
-      return "Block";
     case 2:
       return "Block";
+    case 3:
+    case 4:
+      return "Line";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for CommentKind`);
   }
 }
 
 function deserializeComment(pos) {
-  let type = deserializeCommentKind(pos + 12),
+  let type = deserializeCommentKind(pos + 17),
     start = deserializeI32(pos),
-    end = deserializeI32(pos + 4);
+    end = deserializeI32(pos + 4),
+    kind = deserializeU8(pos + 17);
   return {
     type,
-    value: sourceText.slice(start + 2, end - (type === "Line" ? 0 : 2)),
+    value: sourceText.slice(start + (kind < 3 ? 2 : kind), end - (type === "Line" ? 0 : 2)),
     start,
     end,
   };
@@ -5233,6 +5249,14 @@ function deserializeImportImportName(pos) {
         start,
         end,
       };
+    case 3:
+      var { start, end } = deserializeSpan(pos + 8);
+      return {
+        kind: "Source",
+        name: null,
+        start,
+        end,
+      };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ImportImportName`);
   }
@@ -5280,6 +5304,14 @@ function deserializeExportImportName(pos) {
         name: null,
         start: null,
         end: null,
+      };
+    case 4:
+      var { start, end } = deserializeSpan(pos + 8);
+      return {
+        kind: "Source",
+        name: null,
+        start,
+        end,
       };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ExportImportName`);
@@ -5587,14 +5619,13 @@ function deserializeStr(pos) {
   return fromCharCode.apply(null, arr);
 }
 
-function deserializeVecComment(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecComment(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + (int32[pos32 + 2] << 4);
+  let endPos = pos + int32[pos32 + 2] * 24;
   for (; pos !== endPos;) {
     arr.push(deserializeComment(pos));
-    pos += 16;
+    pos += 24;
   }
   return arr;
 }
@@ -5605,9 +5636,8 @@ function deserializeOptionHashbang(pos) {
     : deserializeHashbang(pos);
 }
 
-function deserializeVecDirective(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecDirective(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 80;
   for (; pos !== endPos;) {
@@ -5617,9 +5647,8 @@ function deserializeVecDirective(pos) {
   return arr;
 }
 
-function deserializeVecStatement(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecStatement(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -5793,9 +5822,8 @@ function deserializeBoxV8IntrinsicExpression(pos) {
   return deserializeV8IntrinsicExpression(int32[pos >> 2]);
 }
 
-function deserializeVecArrayExpressionElement(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecArrayExpressionElement(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -5813,9 +5841,8 @@ function deserializeBoxElision(pos) {
   return deserializeElision(int32[pos >> 2]);
 }
 
-function deserializeVecObjectPropertyKind(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecObjectPropertyKind(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -5841,9 +5868,8 @@ function deserializeBoxPrivateIdentifier(pos) {
   return deserializePrivateIdentifier(int32[pos >> 2]);
 }
 
-function deserializeVecTemplateElement(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTemplateElement(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 48;
   for (; pos !== endPos;) {
@@ -5853,9 +5879,8 @@ function deserializeVecTemplateElement(pos) {
   return arr;
 }
 
-function deserializeVecExpression(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecExpression(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -5875,8 +5900,36 @@ function deserializeOptionBoxTSTypeParameterInstantiation(pos) {
     : deserializeBoxTSTypeParameterInstantiation(pos);
 }
 
-function deserializeOptionStr(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0 ? null : deserializeStr(pos);
+function deserializeJSStr(pos) {
+  if (uint8[pos + 12] === 0) return deserializeStr(pos);
+  let buffer = uint8,
+    pos32 = pos >> 2,
+    len = int32[pos32 + 2];
+  pos = int32[pos32];
+  let end = pos + len,
+    out = "";
+  for (; pos < end;) {
+    let first = buffer[pos++],
+      codePoint;
+    codePoint =
+      first < 128
+        ? first
+        : first < 224
+          ? ((first & 31) << 6) | (buffer[pos++] & 63)
+          : first < 240
+            ? ((first & 15) << 12) | ((buffer[pos++] & 63) << 6) | (buffer[pos++] & 63)
+            : ((first & 7) << 18)
+              | ((buffer[pos++] & 63) << 12)
+              | ((buffer[pos++] & 63) << 6)
+              | (buffer[pos++] & 63);
+    // Unlike UTF-8 decoders, `fromCodePoint` preserves surrogate code points
+    out += String.fromCodePoint(codePoint);
+  }
+  return out;
+}
+
+function deserializeOptionJSStr(pos) {
+  return uint8[pos + 12] === 2 ? null : deserializeJSStr(pos);
 }
 
 function deserializeBoxComputedMemberExpression(pos) {
@@ -5891,9 +5944,8 @@ function deserializeBoxPrivateFieldExpression(pos) {
   return deserializePrivateFieldExpression(int32[pos >> 2]);
 }
 
-function deserializeVecArgument(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecArgument(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -5915,9 +5967,8 @@ function deserializeOptionAssignmentTargetMaybeDefault(pos) {
   return uint8[pos] === 255 ? null : deserializeAssignmentTargetMaybeDefault(pos);
 }
 
-function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecOptionAssignmentTargetMaybeDefault(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -5937,9 +5988,8 @@ function deserializeOptionBoxAssignmentTargetRest(pos) {
     : deserializeBoxAssignmentTargetRest(pos);
 }
 
-function deserializeVecAssignmentTargetProperty(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecAssignmentTargetProperty(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6053,8 +6103,12 @@ function deserializeBoxTSEnumDeclaration(pos) {
   return deserializeTSEnumDeclaration(int32[pos >> 2]);
 }
 
-function deserializeBoxTSModuleDeclaration(pos) {
-  return deserializeTSModuleDeclaration(int32[pos >> 2]);
+function deserializeBoxTSExternalModuleDeclaration(pos) {
+  return deserializeTSExternalModuleDeclaration(int32[pos >> 2]);
+}
+
+function deserializeBoxTSNamespaceDeclaration(pos) {
+  return deserializeTSNamespaceDeclaration(int32[pos >> 2]);
 }
 
 function deserializeBoxTSGlobalDeclaration(pos) {
@@ -6065,9 +6119,8 @@ function deserializeBoxTSImportEqualsDeclaration(pos) {
   return deserializeTSImportEqualsDeclaration(int32[pos >> 2]);
 }
 
-function deserializeVecVariableDeclarator(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecVariableDeclarator(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 56;
   for (; pos !== endPos;) {
@@ -6101,9 +6154,8 @@ function deserializeOptionLabelIdentifier(pos) {
     : deserializeLabelIdentifier(pos);
 }
 
-function deserializeVecSwitchCase(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecSwitchCase(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 56;
   for (; pos !== endPos;) {
@@ -6149,9 +6201,8 @@ function deserializeBoxAssignmentPattern(pos) {
   return deserializeAssignmentPattern(int32[pos >> 2]);
 }
 
-function deserializeVecBindingProperty(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecBindingProperty(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 48;
   for (; pos !== endPos;) {
@@ -6175,9 +6226,8 @@ function deserializeOptionBindingPattern(pos) {
   return uint8[pos] === 255 ? null : deserializeBindingPattern(pos);
 }
 
-function deserializeVecOptionBindingPattern(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecOptionBindingPattern(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6227,9 +6277,8 @@ function deserializeOptionBoxFunctionBody(pos) {
     : deserializeBoxFunctionBody(pos);
 }
 
-function deserializeVecFormalParameter(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecFormalParameter(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 72;
   for (; pos !== endPos;) {
@@ -6239,9 +6288,8 @@ function deserializeVecFormalParameter(pos) {
   return arr;
 }
 
-function deserializeVecDecorator(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecDecorator(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos;) {
@@ -6265,9 +6313,8 @@ function deserializeOptionTSAccessibility(pos) {
   return uint8[pos] === 255 ? null : deserializeTSAccessibility(pos);
 }
 
-function deserializeVecTSClassImplements(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTSClassImplements(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 40;
   for (; pos !== endPos;) {
@@ -6281,9 +6328,8 @@ function deserializeBoxClassBody(pos) {
   return deserializeClassBody(int32[pos >> 2]);
 }
 
-function deserializeVecClassElement(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecClassElement(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6349,9 +6395,8 @@ function deserializeOptionImportPhase(pos) {
   return uint8[pos] === 2 ? null : deserializeImportPhase(pos);
 }
 
-function deserializeVecImportDeclarationSpecifier(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecImportDeclarationSpecifier(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6389,9 +6434,8 @@ function deserializeBoxImportNamespaceSpecifier(pos) {
   return deserializeImportNamespaceSpecifier(int32[pos >> 2]);
 }
 
-function deserializeVecImportAttribute(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecImportAttribute(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 120;
   for (; pos !== endPos;) {
@@ -6401,9 +6445,8 @@ function deserializeVecImportAttribute(pos) {
   return arr;
 }
 
-function deserializeVecExportSpecifier(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecExportSpecifier(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 7);
   for (; pos !== endPos;) {
@@ -6421,6 +6464,10 @@ function deserializeF64(pos) {
   return float64[pos >> 3];
 }
 
+function deserializeOptionStr(pos) {
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0 ? null : deserializeStr(pos);
+}
+
 function deserializeU8(pos) {
   return uint8[pos];
 }
@@ -6429,9 +6476,8 @@ function deserializeBoxJSXOpeningElement(pos) {
   return deserializeJSXOpeningElement(int32[pos >> 2]);
 }
 
-function deserializeVecJSXChild(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecJSXChild(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6451,9 +6497,8 @@ function deserializeOptionBoxJSXClosingElement(pos) {
     : deserializeBoxJSXClosingElement(pos);
 }
 
-function deserializeVecJSXAttributeItem(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecJSXAttributeItem(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6503,9 +6548,8 @@ function deserializeBoxJSXSpreadChild(pos) {
   return deserializeJSXSpreadChild(int32[pos >> 2]);
 }
 
-function deserializeVecTSEnumMember(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTSEnumMember(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 48;
   for (; pos !== endPos;) {
@@ -6663,9 +6707,8 @@ function deserializeBoxJSDocUnknownType(pos) {
   return deserializeJSDocUnknownType(int32[pos >> 2]);
 }
 
-function deserializeVecTSType(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTSType(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6675,9 +6718,8 @@ function deserializeVecTSType(pos) {
   return arr;
 }
 
-function deserializeVecTSTupleElement(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTSTupleElement(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6703,9 +6745,8 @@ function deserializeOptionTSType(pos) {
   return uint8[pos] === 255 ? null : deserializeTSType(pos);
 }
 
-function deserializeVecTSTypeParameter(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTSTypeParameter(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 80;
   for (; pos !== endPos;) {
@@ -6715,9 +6756,8 @@ function deserializeVecTSTypeParameter(pos) {
   return arr;
 }
 
-function deserializeVecTSInterfaceHeritage(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTSInterfaceHeritage(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 40;
   for (; pos !== endPos;) {
@@ -6731,9 +6771,8 @@ function deserializeBoxTSInterfaceBody(pos) {
   return deserializeTSInterfaceBody(int32[pos >> 2]);
 }
 
-function deserializeVecTSSignature(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecTSSignature(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6759,12 +6798,14 @@ function deserializeBoxTSMethodSignature(pos) {
   return deserializeTSMethodSignature(int32[pos >> 2]);
 }
 
-function deserializeOptionTSModuleDeclarationBody(pos) {
-  return uint8[pos] === 2 ? null : deserializeTSModuleDeclarationBody(pos);
-}
-
 function deserializeBoxTSModuleBlock(pos) {
   return deserializeTSModuleBlock(int32[pos >> 2]);
+}
+
+function deserializeOptionBoxTSModuleBlock(pos) {
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
+    ? null
+    : deserializeBoxTSModuleBlock(pos);
 }
 
 function deserializeBoxTSTypeParameter(pos) {
@@ -6803,9 +6844,8 @@ function deserializeOptionNameSpan(pos) {
     : deserializeNameSpan(pos);
 }
 
-function deserializeVecError(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecError(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 80;
   for (; pos !== endPos;) {
@@ -6815,9 +6855,8 @@ function deserializeVecError(pos) {
   return arr;
 }
 
-function deserializeVecErrorLabel(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecErrorLabel(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 24;
   for (; pos !== endPos;) {
@@ -6827,9 +6866,8 @@ function deserializeVecErrorLabel(pos) {
   return arr;
 }
 
-function deserializeVecStaticImport(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecStaticImport(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 56;
   for (; pos !== endPos;) {
@@ -6839,9 +6877,8 @@ function deserializeVecStaticImport(pos) {
   return arr;
 }
 
-function deserializeVecStaticExport(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecStaticExport(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos;) {
@@ -6851,9 +6888,8 @@ function deserializeVecStaticExport(pos) {
   return arr;
 }
 
-function deserializeVecDynamicImport(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecDynamicImport(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
@@ -6863,9 +6899,8 @@ function deserializeVecDynamicImport(pos) {
   return arr;
 }
 
-function deserializeVecSpan(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecSpan(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + (int32[pos32 + 2] << 3);
   for (; pos !== endPos;) {
@@ -6875,9 +6910,8 @@ function deserializeVecSpan(pos) {
   return arr;
 }
 
-function deserializeVecImportEntry(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecImportEntry(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 96;
   for (; pos !== endPos;) {
@@ -6887,9 +6921,8 @@ function deserializeVecImportEntry(pos) {
   return arr;
 }
 
-function deserializeVecExportEntry(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
+function deserializeVecExportEntry(pos, arr = []) {
+  let pos32 = pos >> 2;
   pos = int32[pos32];
   let endPos = pos + int32[pos32 + 2] * 144;
   for (; pos !== endPos;) {

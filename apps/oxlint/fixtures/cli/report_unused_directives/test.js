@@ -13,8 +13,8 @@ debugger;
 const unusedVariable2 = 100;
 
 function testFunction() {
-    // eslint-disable-next-line no-console
-    console.log('Inside test function');
+    // eslint-disable-next-line no-console, no-irregular-whitespace
+    console.log('Inside test function'); // '​'
 }
 
 // eslint-disable-next-line no-console, no-debugger

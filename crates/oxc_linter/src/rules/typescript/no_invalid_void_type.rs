@@ -131,12 +131,13 @@ declare_oxc_lint!(
     none,
     config = NoInvalidVoidTypeConfig,
     version = "1.47.0",
-    short_description = "Disallow `void` type usage outside return types and configured generic contexts.",
+    short_description =
+        "Disallow `void` type usage outside return types and configured generic contexts.",
 );
 
 impl Rule for NoInvalidVoidType {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -280,14 +281,13 @@ fn get_generic_type_argument_name<'a>(
             Some(ctx.source_range(class_implements.expression.span()))
         }
         AstKind::TSInterfaceHeritage(interface_heritage) => {
-            Some(ctx.source_range(interface_heritage.expression.span()))
+            Some(ctx.source_range(interface_heritage.type_name.span()))
         }
         AstKind::Class(class) => class
-            .super_type_arguments
-            .as_ref()
+            .heritage_type_arguments()
             .filter(|type_arguments| type_arguments.span == type_arguments_span)
             .and_then(|_| {
-                class.super_class.as_ref().map(|super_class| ctx.source_range(super_class.span()))
+                class.heritage_expression().map(|super_class| ctx.source_range(super_class.span()))
             }),
         _ => None,
     }
@@ -412,7 +412,7 @@ fn has_function_overload_signatures(
         AstKind::ExportDefaultDeclaration(_) => FunctionStatementWrapper::ExportDefault,
         _ => FunctionStatementWrapper::Plain,
     };
-    let impl_name = function.id.as_ref().map(|id| id.name.as_str());
+    let impl_name = function.name().map(|name| name.as_str());
 
     for ancestor in ctx.nodes().ancestors(function_node.id()) {
         let has_match = match ancestor.kind() {
@@ -455,9 +455,9 @@ fn has_overload_in_statements(
             return false;
         }
 
-        match (impl_wrapper, impl_name, candidate.id.as_ref()) {
+        match (impl_wrapper, impl_name, candidate.name()) {
             (FunctionStatementWrapper::ExportDefault, None, None) => true,
-            (_, Some(name), Some(candidate_name)) => candidate_name.name == name,
+            (_, Some(name), Some(candidate_name)) => candidate_name == name,
             _ => false,
         }
     })

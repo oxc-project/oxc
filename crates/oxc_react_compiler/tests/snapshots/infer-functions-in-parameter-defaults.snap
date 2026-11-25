@@ -1,0 +1,68 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/infer-functions-in-parameter-defaults.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer"
+import { memo } from "react";
+function createWrapper(Wrapper = memo((t0) => {
+	const $ = _c(2);
+	const { value } = t0;
+	let t1;
+	if ($[0] !== value) {
+		t1 = <div>{value}</div>;
+		$[0] = value;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+})) {
+	return Wrapper;
+}
+function createDestructuredWrapper({ Wrapper = memo((t0) => {
+	const $ = _c(2);
+	const { value } = t0;
+	let t1;
+	if ($[0] !== value) {
+		t1 = <span>{value}</span>;
+		$[0] = value;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}) } = {}) {
+	return Wrapper;
+}
+const factory = { create(Wrapper = memo((t0) => {
+	const $ = _c(2);
+	const { value } = t0;
+	let t1;
+	if ($[0] !== value) {
+		t1 = <p>{value}</p>;
+		$[0] = value;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+})) {
+	return Wrapper;
+} };
+export { createWrapper, createDestructuredWrapper, factory };
+const sproutInputs = [[{ value: "first" }], [{ value: "second" }]];
+export const FIXTURE_ENTRYPOINT = {
+	fn: (args) => {
+		"use no memo";
+		return <>{React.createElement(createWrapper(), args[0])}{React.createElement(createDestructuredWrapper(), args[0])}{React.createElement(factory.create(), args[0])}</>;
+	},
+	params: [sproutInputs[0]],
+	sequentialRenders: [
+		sproutInputs[0],
+		sproutInputs[0],
+		...sproutInputs.slice(1),
+		sproutInputs.at(-1),
+		sproutInputs[0]
+	]
+};

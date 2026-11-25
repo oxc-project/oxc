@@ -96,12 +96,18 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         if self.state == StructState::Empty {
             self.state = StructState::HasFields;
             formatter.before_first_element(buffer);
+            buffer.print_strs_array(["\"", key, "\":"]);
+        } else if F::IS_COMPACT {
+            // Compact formatter: `before_later_element` is a no-op, so write the comma
+            // separator, key, and colon in a single combined operation. This avoids a
+            // separate capacity check for the comma byte on every field.
+            buffer.print_strs_array([",\"", key, "\":"]);
         } else {
             buffer.print_ascii_byte(b',');
             formatter.before_later_element(buffer);
+            buffer.print_strs_array(["\"", key, "\":"]);
         }
 
-        buffer.print_strs_array(["\"", key, "\":"]);
         formatter.before_field_value(buffer);
         value.serialize(&mut *self.serializer);
     }

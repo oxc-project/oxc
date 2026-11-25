@@ -4,7 +4,10 @@ use oxc_ast::ast::REGEXP_FLAGS_LIST;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::modifiers::{Modifier, ModifierKind, ModifierKinds};
+use crate::{
+    MAX_LEN_ERROR,
+    modifiers::{Modifier, ModifierKind, ModifierKinds},
+};
 
 trait DiagnosticExt {
     fn with_allowed_modifier_help(self, allowed: Option<ModifierKinds>) -> Self;
@@ -87,15 +90,8 @@ macro_rules! parser_diagnostics {
 }
 
 parser_diagnostics! {
-    redeclaration(name: &'a str, declare_span: Span, redeclare_span: Span) => {
-        OxcDiagnostic::error(format!("Identifier `{name}` has already been declared")).with_labels([
-            declare_span.label(format!("`{name}` has already been declared here")),
-            redeclare_span.label("It can not be redeclared here"),
-        ])
-    };
-
     overlong_source() => {
-        OxcDiagnostic::error("Source length exceeds 4 GiB limit")
+        OxcDiagnostic::error(MAX_LEN_ERROR)
     };
 
     file_appears_to_be_binary() => {
@@ -216,6 +212,12 @@ parser_diagnostics! {
         OxcDiagnostic::error("Invalid Unicode escape sequence").with_label(span)
     };
 
+    invalid_numeric_separator(span: Span) => {
+        OxcDiagnostic::error("Numeric separators must appear between digits")
+            .with_label(span)
+            .with_help("Remove the separator or place it between two digits")
+    };
+
     invalid_character(c: char, span: Span) => {
         OxcDiagnostic::error(format!("Invalid Character `{c}`")).with_label(span)
     };
@@ -328,6 +330,10 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    quoted_module_name_only_allowed_in_ambient_module(span: Span) => {
+        ts_error("1035", "Only ambient modules can use quoted names.").with_label(span)
+    };
+
     declaration_single_statement(span: Span) => {
         OxcDiagnostic::error("Declaration cannot appear in a single-statement context")
             .with_help("Wrap this declaration in a block statement")
@@ -424,20 +430,6 @@ parser_diagnostics! {
         ])
     };
 
-    // A rest element cannot follow another rest element. ts(1265)
-    rest_element_cannot_follow_another_rest_element(seen_span: Span, span: Span) => {
-        ts_error("1265", "A rest element cannot follow another rest element.")
-            .with_labels([span.label("Second rest element here"), seen_span.label("First seen here")])
-    };
-
-    // An optional element cannot follow a rest element. ts(1266)
-    optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) => {
-        ts_error("1266", "An optional element cannot follow a rest element.").with_labels([
-            span.label("Optional element here"),
-            rest_span.label("Rest element seen here"),
-        ])
-    };
-
     // A type-only import can specify a default import or named bindings, but not both. ts(1363)
     type_only_import_default_and_named(specifier_span: Span) => {
         ts_error(
@@ -465,6 +457,12 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    invalid_arrow_function_parameter(span: Span) => {
+        OxcDiagnostic::error("Invalid arrow function parameter")
+            .with_help("Expected an identifier or a destructuring pattern.")
+            .with_label(span)
+    };
+
     a_rest_parameter_cannot_be_optional(span: Span) => {
         ts_error("1047", "A rest parameter cannot be optional")
             .with_label(span)
@@ -486,17 +484,17 @@ parser_diagnostics! {
         .with_label(span)
     };
 
-    new_optional_chain(span: Span) => {
-        OxcDiagnostic::error("Optional chaining cannot appear in the callee of new expressions")
-            .with_label(span)
-    };
-
     invalid_new_optional_chain(span: Span) => {
         OxcDiagnostic::error("Invalid optional chain from new expression.").with_label(span)
     };
 
-    decorator_optional(span: Span) => {
+    decorator_expression_not_parenthesized(span: Span) => {
         OxcDiagnostic::error("Expression must be enclosed in parentheses to be used as a decorator.")
+            .with_label(span)
+    };
+
+    decorator_arguments_outside_parentheses(span: Span) => {
+        OxcDiagnostic::error("Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'")
             .with_label(span)
     };
 
@@ -747,6 +745,19 @@ parser_diagnostics! {
         .with_help("Did you mean to use a for...of statement?")
     };
 
+    multiple_declarations_in_for_loop_head(is_for_in: bool, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "Only a single declaration is allowed in a `for...{}` statement",
+            if is_for_in { "in" } else { "of" },
+        ))
+        .with_label(span)
+    };
+
+    initializer_in_for_in_lexical_declaration(span: Span) => {
+        OxcDiagnostic::error("for-in loop variable declaration may not have an initializer")
+            .with_label(span)
+    };
+
     using_declarations_must_be_initialized(span: Span) => {
         OxcDiagnostic::error("Using declarations must have an initializer.")
             .with_label(span)
@@ -840,10 +851,6 @@ parser_diagnostics! {
             .with_label(span)
     };
 
-    private_in_private(span: Span) => {
-        OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
-    };
-
     unexpected_private_identifier(span: Span) => {
         OxcDiagnostic::error("Unexpected private identifier").with_label(span)
     };
@@ -868,12 +875,34 @@ parser_diagnostics! {
         OxcDiagnostic::error("A rest parameter cannot have an initializer.").with_label(span)
     };
 
+    top_level(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "'{statement}' declaration can only be used at the top level of a module"
+        ))
+        .with_label(span)
+    };
+
+    module_code(statement: &'static str, span: Span) => {
+        OxcDiagnostic::error(format!("Cannot use {statement} outside a module")).with_label(span)
+    };
+
     import_requires_a_specifier(span: Span) => {
         OxcDiagnostic::error("import() requires a specifier.").with_label(span)
     };
 
+    declare_modifier_on_import(span: Span) => {
+        ts_error("1079", "A 'declare' modifier cannot be used with an import declaration.")
+            .with_label(span)
+    };
+
     modifier_cannot_be_used_here(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
+            .with_label(modifier.span())
+            .with_allowed_modifier_help(allowed)
+    };
+
+    accessor_only_on_property_declaration(modifier: Modifier, allowed: Option<ModifierKinds>) => {
+        ts_error("1275", "'accessor' modifier can only appear on a property declaration.")
             .with_label(modifier.span())
             .with_allowed_modifier_help(allowed)
     };
@@ -1172,6 +1201,16 @@ parser_diagnostics! {
         ts_error("5087", "A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.").with_label(span)
     };
 
+    modifier_in_ts(kind: ModifierKind, span: Span) => {
+        ts_error("8009", format!("The '{kind}' modifier can only be used in TypeScript files."))
+            .with_label(span)
+    };
+
+    optional_class_member_in_ts(span: Span) => {
+        OxcDiagnostic::error("Optional class members can only be used in TypeScript files.")
+            .with_label(span)
+    };
+
     parameter_modifiers_in_ts(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
             .with_label(modifier.span())
@@ -1208,6 +1247,14 @@ parser_diagnostics! {
             "An interface can only extend an identifier/qualified-name with optional type arguments.",
         )
         .with_label(span)
+    };
+
+    empty_extends_clause(span: Span) => {
+        ts_error("1097", "'extends' list cannot be empty.").with_label(span)
+    };
+
+    trailing_comma_not_allowed(span: Span) => {
+        ts_error("1009", "Trailing comma not allowed.").with_label(span)
     };
 
     reg_exp_flag_u_and_v(span: Span) => {
@@ -1319,6 +1366,15 @@ parser_diagnostics! {
         OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
             .with_label(span)
             .with_help("Wrap this with quotes")
+    };
+
+    duplicate_import_attribute_key(name: &'a str, previous_span: Span, duplicate_span: Span) => {
+        OxcDiagnostic::error(format!("Duplicate import attribute key `{name}`"))
+            .with_labels([
+                previous_span.label(format!("`{name}` was already specified here")),
+                duplicate_span.label("This key is repeated"),
+            ])
+            .with_help("Each import attribute key must be unique")
     };
 
     // TS18058

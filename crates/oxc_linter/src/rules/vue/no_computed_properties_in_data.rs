@@ -1,9 +1,7 @@
-use std::borrow::Cow;
-
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{Expression, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -70,6 +68,7 @@ declare_oxc_lint!(
     NoComputedPropertiesInData,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Disallow accessing computed properties inside `data()`.",
 );
@@ -140,15 +139,11 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
     computed_obj
         .properties
         .iter()
-        .filter_map(|entry| match entry {
-            ObjectPropertyKind::ObjectProperty(prop) if !prop.computed => Some(prop),
-            _ => None,
-        })
-        .filter_map(|prop| match prop.key.static_name()? {
-            Cow::Borrowed(name) => Some(name),
-            // Computed keys backed by literals (e.g. `0: foo`) produce an owned
-            // string; they are not valid identifiers to reference via `this`, so skip.
-            Cow::Owned(_) => None,
+        .filter_map(ObjectPropertyKind::as_property)
+        // Numeric keys are not valid identifiers to reference via `this`.
+        .filter_map(|prop| match prop.key.literal_name()? {
+            StaticPropertyName::Borrowed(name) => name.as_str(),
+            StaticPropertyName::Owned(_) => None,
         })
         .collect()
 }

@@ -75,6 +75,15 @@ impl<'a> Reader<'a> {
         (self.index, self.offset)
     }
 
+    /// Return the cooked code points consumed since `checkpoint`.
+    pub fn code_points_since(&self, checkpoint: (usize, u32)) -> &[CodePoint] {
+        &self.units[checkpoint.0..self.index]
+    }
+
+    pub fn remaining_code_points(&self) -> &[CodePoint] {
+        &self.units[self.index..]
+    }
+
     pub fn rewind(&mut self, checkpoint: (usize, u32)) {
         self.index = checkpoint.0;
         self.offset = checkpoint.1;
@@ -84,6 +93,15 @@ impl<'a> Reader<'a> {
         if let Some(unit) = self.units.get(self.index) {
             self.offset = unit.span.end;
             self.index += 1;
+        }
+    }
+
+    /// Advance over units whose presence the caller has already checked.
+    pub fn advance_by(&mut self, count: usize) {
+        if count != 0 {
+            let index = self.index + count;
+            self.offset = self.units[index - 1].span.end;
+            self.index = index;
         }
     }
 

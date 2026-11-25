@@ -48,7 +48,6 @@ pub enum ToIntegerOrInfinityResult {
 mod test {
     use super::*;
 
-    #[expect(clippy::float_cmp)]
     #[test]
     fn test_to_integer_or_infinity() {
         assert_eq!(f64::NAN.to_integer_or_infinity(), 0.0);

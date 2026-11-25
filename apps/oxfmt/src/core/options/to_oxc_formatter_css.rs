@@ -1,26 +1,22 @@
-use oxc_formatter_core::FormatOptions;
+use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 use oxc_formatter_css::{CssFormatOptions, CssVariant, SingleQuote, TrailingCommas};
 
-use super::{
-    super::oxfmtrc::{FormatConfig, TrailingCommaConfig},
-    to_core_options::to_core_options,
-};
+use super::super::oxfmtrc::{FormatConfig, TrailingCommaConfig};
 
-/// Convert `FormatConfig` into validated `CssFormatOptions` for `oxc_formatter_css`.
+/// Convert `FormatConfig` into `CssFormatOptions` for `oxc_formatter_css`.
 ///
 /// Prettier's CSS languages consume the shared layout options plus
 /// `singleQuote` and `trailingComma` (SCSS maps only).
 ///
-/// # Errors
-/// Returns error if any option value is invalid.
+/// NOTE: Pure field translation:
+/// `core` comes pre-validated from the config-resolution gate (`validate()`), so this cannot fail.
 pub fn to_oxc_formatter_css(
     config: &FormatConfig,
+    core_options: CoreFormatOptions,
     variant: CssVariant,
-) -> Result<CssFormatOptions, String> {
-    let core = to_core_options(config)?;
-
+) -> CssFormatOptions {
     let mut options = CssFormatOptions { variant, ..CssFormatOptions::default() };
-    options.apply_core(core);
+    options.apply_core(core_options);
 
     // [Prettier] singleQuote: boolean
     if let Some(single_quote) = config.single_quote {
@@ -42,5 +38,5 @@ pub fn to_oxc_formatter_css(
         options.sort_tailwindcss = config.is_tailwind_enabled();
     }
 
-    Ok(options)
+    options
 }
