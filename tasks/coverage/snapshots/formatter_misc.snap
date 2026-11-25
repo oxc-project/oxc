@@ -1,5 +1,5 @@
 formatter_misc Summary:
-AST Parsed     : 171/171 (100.00%)
-Positive Passed: 170/171 (99.42%)
+AST Parsed     : 172/172 (100.00%)
+Positive Passed: 171/172 (99.42%)
 Mismatch: tasks/coverage/misc/pass/for-using-escaped-of.js
 
