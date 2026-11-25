@@ -59,6 +59,8 @@ impl Tokens {
         &self.lanes.templates
     }
 
+    /// Escaped identifier values in token order, in the cooked bytes (private names without `#`).
+    /// An invalid escape adds nothing, so a value is UTF-8 whenever the source is.
     pub fn atoms(&self) -> &[StringSpan] {
         &self.lanes.atoms
     }

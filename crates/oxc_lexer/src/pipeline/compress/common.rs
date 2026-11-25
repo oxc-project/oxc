@@ -45,9 +45,9 @@ pub(super) fn emit_value(
     } else if k == tk!(BigInt) {
         lanes.push_bigint(src, s, e);
     } else if k == tk!(IdentEscaped) {
-        lanes.push_atom(src, s, e, cpu);
+        lanes.push_atom(src, s, e);
     } else {
-        lanes.push_atom(src, s + 1, e, cpu);
+        lanes.push_atom(src, s + 1, e);
     }
 }
 

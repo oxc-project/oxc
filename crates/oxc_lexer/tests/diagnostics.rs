@@ -535,6 +535,35 @@ fn invalid_identifier_escape_payload(cpu: DynCpu) {
 }
 
 #[test_cpus]
+fn invalid_identifier_escapes_add_nothing_to_the_value(cpu: DynCpu) {
+    for (code, want) in [
+        // a lone surrogate, either form, adds nothing
+        (r"x\uD800y;", "xy"),
+        (r"x\u{DC00}y;", "xy"),
+        (r"class C { #p\u{D800} }", "p"),
+        // a well-formed pair is still invalid
+        (r"\uD800\uDC00x;", "x"),
+        // a char no identifier can have
+        (r"x\u0020y;", "xy"),
+        // ID_Continue only, at the start
+        (r"\u0030a;", "a"),
+        // the rest of the escape goes with it
+        (r"a\u{1100000}b;", "ab"),
+        (r"a\u{}b;", "ab"),
+        (r"a\u12xy;", "axy"),
+        // valid escapes still decode
+        (r"a\u0041\u{20BB7};", "aA\u{20BB7}"),
+    ] {
+        let res = lex_with_cpu(code, LexOptions::default(), cpu);
+        let cooked = res.cooked_bytes();
+        let [atom] = res.atoms() else { panic!("{code:?}") };
+        assert!(!atom.lone_surrogates(), "{code:?}");
+        let value = &cooked[atom.start() as usize..atom.end() as usize];
+        assert_eq!(str::from_utf8(value), Ok(want), "{code:?}");
+    }
+}
+
+#[test_cpus]
 fn invalid_identifier_escape_jsx_path(cpu: DynCpu) {
     assert!(codes_jsx(r"const \u{110000} = 1", cpu).contains(&DiagCode::InvalidIdentifierEscape));
     assert_eq!(codes_jsx(r"const el = <div>a\b</div>;", cpu), []); // JSX text
