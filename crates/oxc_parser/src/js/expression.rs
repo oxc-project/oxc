@@ -2063,6 +2063,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///
     /// Unambiguous cases (returns `true`):
     /// - Next token is identifier, keyword, or literal on same line, except the cases below
+    /// - Next token is `~`, or `!` in JavaScript, on same line
     ///
     /// Ambiguous cases (returns `false`):
     /// - Line break after `await` (could be ASI)
@@ -2091,6 +2092,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Only reserve `await using` for a declaration when a binding identifier follows.
         if kind == Kind::Using && self.is_using_statement() {
             return false;
+        }
+
+        // `!` and `~` cannot follow an identifier, except a TypeScript non-null assertion `await!`.
+        if kind == Kind::Tilde || (kind == Kind::Bang && !self.is_ts) {
+            return true;
         }
 
         // Returns true for identifiers, keywords, and literals (not binary operators)
