@@ -120,3 +120,94 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────
    ╰────
   help: Replace `foo?.indexOf('x') < 0` with `foo?.includes('x') === false`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:7]
+ 1 │ array.indexOf('foo') <= -1
+   ·       ───────
+   ╰────
+  help: Replace `array.indexOf('foo') <= -1` with `!array.includes('foo')`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `lastIndexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:7]
+ 1 │ array.lastIndexOf('foo') !== -1
+   ·       ───────────
+   ╰────
+  help: Replace `array.lastIndexOf('foo') !== -1` with `array.includes('foo')`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `lastIndexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:7]
+ 1 │ array.lastIndexOf('foo') <= -1
+   ·       ───────────
+   ╰────
+  help: Replace `array.lastIndexOf('foo') <= -1` with `!array.includes('foo')`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `lastIndexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:8]
+ 1 │ array?.lastIndexOf('foo') === -1
+   ·        ───────────
+   ╰────
+  help: Replace `array?.lastIndexOf('foo') === -1` with `array?.includes('foo') === false`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:10]
+ 1 │ foo?.bar.indexOf('x') <= -1
+   ·          ───────
+   ╰────
+  help: Replace `foo?.bar.indexOf('x') <= -1` with `foo?.bar.includes('x') === false`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:12]
+ 1 │ a === foo?.indexOf('x') <= -1
+   ·            ───────
+   ╰────
+  help: Replace `foo?.indexOf('x') <= -1` with `(foo?.includes('x') === false)`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:12]
+ 1 │ a === foo?.indexOf('x') <= -1 as boolean
+   ·            ───────
+   ╰────
+  help: Replace `foo?.indexOf('x') <= -1` with `(foo?.includes('x') === false)`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:6]
+ 1 │ foo?.indexOf('x') <= -1 in obj
+   ·      ───────
+   ╰────
+  help: Replace `foo?.indexOf('x') <= -1` with `(foo?.includes('x') === false)`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `lastIndexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:7]
+ 1 │ array.lastIndexOf() !== -1
+   ·       ───────────
+   ╰────
+  help: Replace `array.lastIndexOf() !== -1` with `array.includes()`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:11]
+ 1 │ [pattern].indexOf(/a/) !== -1
+   ·           ───────
+   ╰────
+  help: Replace `[pattern].indexOf(/a/) !== -1` with `[pattern].includes(/a/)`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `lastIndexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:22]
+ 1 │ (values as RegExp[]).lastIndexOf((pattern as RegExp)) !== -1
+   ·                      ───────────
+   ╰────
+  help: Replace `(values as RegExp[]).lastIndexOf((pattern as RegExp)) !== -1` with `(values as RegExp[]).includes((pattern as RegExp))`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `lastIndexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:29]
+ 1 │ (values satisfies RegExp[]).lastIndexOf(/a/) !== -1
+   ·                             ───────────
+   ╰────
+  help: Replace `(values satisfies RegExp[]).lastIndexOf(/a/) !== -1` with `(values satisfies RegExp[]).includes(/a/)`.
+
+  ⚠ unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
+   ╭─[prefer_includes.tsx:1:40]
+ 1 │ function f(NaN: number) { return array.indexOf(NaN) !== -1; }
+   ·                                        ───────
+   ╰────
+  help: Replace `array.indexOf(NaN) !== -1` with `array.includes(NaN)`.
