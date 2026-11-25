@@ -145,23 +145,44 @@ impl<'a> TraverseScoping<'a> {
         for stmt in stmts {
             collector.visit_statement(stmt);
         }
+        if self.reparent_scopes(&collector.scope_ids, parent_id) {
+            let mut updater = StrictModeUpdater { scoping: &mut self.scoping };
+            for stmt in stmts {
+                updater.visit_statement(stmt);
+            }
+        }
+    }
 
+    /// Move the scopes of expressions which have been moved to a new location in the AST.
+    ///
+    /// Same as [`TraverseScoping::move_scopes_of_statements`], but for expressions.
+    pub fn move_scopes_of_expressions(&mut self, exprs: &[Expression], parent_id: ScopeId) {
+        let mut collector = ChildScopeCollector::new();
+        for expr in exprs {
+            collector.visit_expression(expr);
+        }
+        if self.reparent_scopes(&collector.scope_ids, parent_id) {
+            let mut updater = StrictModeUpdater { scoping: &mut self.scoping };
+            for expr in exprs {
+                updater.visit_expression(expr);
+            }
+        }
+    }
+
+    /// Reassign `scope_ids` to be children of `parent_id`.
+    ///
+    /// Returns `true` if that changes whether any of them are in strict mode.
+    fn reparent_scopes(&mut self, scope_ids: &[ScopeId], parent_id: ScopeId) -> bool {
         let is_strict_mode = self.scoping.scope_flags(parent_id).is_strict_mode();
         let mut strict_mode_changed = false;
-        for &scope_id in &collector.scope_ids {
+        for &scope_id in scope_ids {
             if let Some(old_parent_id) = self.scoping.scope_parent_id(scope_id) {
                 strict_mode_changed |=
                     self.scoping.scope_flags(old_parent_id).is_strict_mode() != is_strict_mode;
             }
             self.scoping.change_scope_parent_id(scope_id, Some(parent_id));
         }
-
-        if strict_mode_changed {
-            let mut updater = StrictModeUpdater { scoping: &mut self.scoping };
-            for stmt in stmts {
-                updater.visit_statement(stmt);
-            }
-        }
+        strict_mode_changed
     }
 
     /// Insert a scope into scope tree below a `Vec` of statements.
@@ -469,7 +490,8 @@ impl TraverseScoping<'_> {
 }
 
 /// Visitor which sets the `StrictMode` flag of each scope it visits from its parent scope's,
-/// for [`TraverseScoping::move_scopes_of_statements`].
+/// for [`TraverseScoping::move_scopes_of_statements`] and
+/// [`TraverseScoping::move_scopes_of_expressions`].
 ///
 /// Parent scopes are visited before their children, so each parent's flag is already up to date.
 struct StrictModeUpdater<'s> {
