@@ -34,28 +34,7 @@
   3 | |   const topLevelVariable2 = 2; /* Block comment 1 */
   4 | |   
   5 | |   /**
-  6 | |    * JSDoc comment
-  7 | |    */
-  8 | |   export function topLevelFunction() {
-  9 | |     // Line comment 2
- 10 | |     /* Block comment 2 */
- 11 | |     let functionScopedVariable = topLevelVariable;
- 12 | |     /**
- 13 | |      * JSDoc comment 2
- 14 | |      */
- 15 | |     function nestedFunction() {
- 16 | |       // Line comment 3
- 17 | |       return functionScopedVariable;
- 18 | |     }
- 19 | |     return nestedFunction(); // Line comment 4
- 20 | |   }
- 21 | |   
- 22 | |   /* Block comment 3 */
- 23 | |   const topLevelVariable3 = /* Block comment 4 */ 3;
- 24 | |   
- 25 | |   const topLevelVariable4 = 4;
- 26 | |   const topLevelVariable5 = 5;
- 27 | |   
+... : |   
  28 | |   // Line comment 5
  29 | |   // Line comment 6
  30 | |   
@@ -131,9 +110,7 @@
  10 | |     /* Block comment 2 */
  11 | |     let functionScopedVariable = topLevelVariable;
  12 | |     /**
- 13 | |      * JSDoc comment 2
- 14 | |      */
- 15 | |     function nestedFunction() {
+... : |   
  16 | |       // Line comment 3
  17 | |       return functionScopedVariable;
  18 | |     }
@@ -150,9 +127,7 @@
  10 | |     /* Block comment 2 */
  11 | |     let functionScopedVariable = topLevelVariable;
  12 | |     /**
- 13 | |      * JSDoc comment 2
- 14 | |      */
- 15 | |     function nestedFunction() {
+... : |   
  16 | |       // Line comment 3
  17 | |       return functionScopedVariable;
  18 | |     }
@@ -367,12 +342,7 @@
   3 | |   
   4 | |   export function topLevelFunction() {
   5 | |     let functionScopedVariable = topLevelVariable;
-  6 | |     function nestedFunction() {
-  7 | |       return functionScopedVariable;
-  8 | |     }
-  9 | |     return nestedFunction();
- 10 | |   }
- 11 | |   
+... : |   
  12 | |   const topLevelVariable3 = 3;
  13 | |   const topLevelVariable4 = 4;
  14 | |   const topLevelVariable5 = 5;
