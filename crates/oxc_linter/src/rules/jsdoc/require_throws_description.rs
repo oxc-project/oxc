@@ -11,7 +11,7 @@ use crate::{
 };
 
 fn require_throws_description_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing JSDoc `@throws` description.")
+    OxcDiagnostic::warn("@throws should have a description")
         .with_help("Add description comment to `@throws` tag.")
         .with_label(span)
 }
@@ -81,12 +81,12 @@ impl Rule for RequireThrowsDescription {
                 continue;
             }
 
-            if let Some(tag) = jsdoc.tags().iter().find(|tag| {
+            if jsdoc.tags().iter().any(|tag| {
                 matches!(tag.kind.parsed(), "throws" | "exception")
                     && !ctx.source_range(tag.comment().span).starts_with('{')
                     && tag.parsed_type_comment_preserving_lines().trim().is_empty()
             }) {
-                ctx.diagnostic(require_throws_description_diagnostic(tag.kind.span));
+                ctx.diagnostic(require_throws_description_diagnostic(comment.span));
             }
         }
     }
@@ -103,11 +103,7 @@ fn test() {
         "function example() {} /**@throws {Error} */",
         "function example() {} /** @throws{Error} */",
         "/**\n * @throws\n * {Error} On failure.\n */",
-        "
-                    /**
-                     * @throws {SomeType} Has a description
-                     */
-                  ",
+        "\n        /**\n         * @throws {SomeType} Has a description\n         */\n      ",
         "
                     /**
                      * @throws Has a description
@@ -140,11 +136,7 @@ fn test() {
                      * @exception
                      */
                   ",
-        "
-                    /**
-                     * @throws {SomeType}
-                     */
-                  ",
+        "\n        /**\n         * @throws {SomeType}\n         */\n      ",
         "
                     /**
                      * @exception {SomeType}
