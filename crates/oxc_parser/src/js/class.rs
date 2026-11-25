@@ -301,7 +301,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             MethodDefinitionType::MethodDefinition
         };
 
-        if self.parse_contextual_modifier(Kind::Get) {
+        // In JavaScript, the name of an auto-accessor follows `accessor`, so a `get` or `set`
+        // before a line break is that name, and the line break ends the element.
+        // TypeScript reads them as a getter or setter, which cannot be an `accessor`.
+        let get_or_set_is_accessor_name = modifiers.contains(ModifierKind::Accessor)
+            && !self.is_ts
+            && matches!(self.cur_kind(), Kind::Get | Kind::Set)
+            && self.lexer.peek_token().is_on_new_line();
+
+        if !get_or_set_is_accessor_name && self.parse_contextual_modifier(Kind::Get) {
             verify_class_element_modifiers(self, &modifiers);
             return self.parse_accessor_declaration(
                 start,
@@ -312,7 +320,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        if self.parse_contextual_modifier(Kind::Set) {
+        if !get_or_set_is_accessor_name && self.parse_contextual_modifier(Kind::Set) {
             verify_class_element_modifiers(self, &modifiers);
             return self.parse_accessor_declaration(
                 start,
