@@ -768,9 +768,8 @@ impl TsrsLintServer {
             let stopping = Arc::clone(&stopping);
             let last_frame = Arc::clone(&last_frame);
             let last_exit = Arc::clone(&self.last_exit);
-            std::thread::Builder::new()
-                .name("tsrs-lint-reader".into())
-                .spawn(move || {
+            let reader =
+                std::thread::Builder::new().name("tsrs-lint-reader".into()).spawn(move || {
                     let exit_error =
                         read_loop(stdout, &pending, &alive, &stopping, &last_frame, &hello_sender);
                     if stopping.load(Ordering::Acquire) {
@@ -780,10 +779,15 @@ impl TsrsLintServer {
                     }
                     *last_exit.lock().expect("tsrs-lint last exit mutex poisoned") =
                         Some(exit_error);
-                })
-                .map_err(|e| {
-                    SpawnError::Failed(format!("Failed to start the tsrs-lint reader thread: {e}"))
-                })?;
+                });
+            if let Err(error) = reader {
+                // Nothing would read the process's output: do not leave it running.
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(SpawnError::Failed(format!(
+                    "Failed to start the tsrs-lint reader thread: {error}"
+                )));
+            }
         }
         let connection = Connection {
             child: Mutex::new(child),
