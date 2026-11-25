@@ -105,7 +105,13 @@ pub fn is_tsrs_lint_executable(path: &Path) -> bool {
 pub struct TsrsLintServer {
     executable_path: PathBuf,
     cwd: PathBuf,
+    /// The running process. Its lock orders the frames sent to it, and is never held while a
+    /// process starts: document updates from the editor do not wait for a handshake.
     connection: Mutex<Option<Arc<Connection>>>,
+    /// Held while a process starts, so only one starts at a time.
+    start: Mutex<()>,
+    /// Set while a process starts, so the changes on disk from then on are sent to it.
+    starting: AtomicBool,
     /// Why the server is not started again, once it cannot be used.
     disabled: Mutex<Option<String>>,
     /// When the recent processes were started, oldest first.
@@ -332,6 +338,8 @@ impl TsrsLintServer {
             executable_path,
             cwd,
             connection: Mutex::new(None),
+            start: Mutex::new(()),
+            starting: AtomicBool::new(false),
             disabled: Mutex::new(None),
             starts: Mutex::new(VecDeque::new()),
             last_exit: Arc::default(),
@@ -435,7 +443,9 @@ impl TsrsLintServer {
             return;
         }
         let connection = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
-        if connection.as_ref().is_some_and(|connection| connection.is_alive()) {
+        if connection.as_ref().is_some_and(|connection| connection.is_alive())
+            || self.starting.load(Ordering::Acquire)
+        {
             self.file_changes
                 .lock()
                 .expect("tsrs-lint file changes mutex poisoned")
@@ -480,10 +490,17 @@ impl TsrsLintServer {
         let (sender, events) = mpsc::channel();
         let file_paths =
             configs.iter().flat_map(|config| config.file_paths.iter().cloned()).collect();
-        let connection = {
-            let mut connection =
-                self.connection.lock().expect("tsrs-lint connection mutex poisoned");
-            let connection = self.ensure_connection(&mut connection)?;
+        let connection = self.ensure_connection()?;
+        {
+            let slot = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
+            // The server may have been stopped, or its process replaced, since it was ensured.
+            let disabled = self.disabled.lock().expect("tsrs-lint disabled mutex poisoned").clone();
+            if let Some(reason) = disabled {
+                return Err(LintError::Failed(reason));
+            }
+            if !slot.as_ref().is_some_and(|current| Arc::ptr_eq(current, &connection)) {
+                return Err(LintError::Failed("tsrs-lint server exited".to_string()));
+            }
             // The connection lock orders this check with the document updates.
             if let Some(path) = self.stale_document(sources) {
                 debug!(
@@ -507,8 +524,7 @@ impl TsrsLintServer {
                 connection.pending.lock().expect("tsrs-lint pending mutex poisoned").remove(&id);
                 return Err(LintError::Failed(error));
             }
-            connection
-        };
+        }
 
         let started = Instant::now();
         let mut diagnostics = vec![];
@@ -562,38 +578,54 @@ impl TsrsLintServer {
 
     /// Returns the running process, spawning it (and sending it the open documents) when there is
     /// none or it exited.
-    fn ensure_connection(
-        &self,
-        slot: &mut Option<Arc<Connection>>,
-    ) -> Result<Arc<Connection>, String> {
-        if let Some(connection) = slot.as_ref().filter(|connection| connection.is_alive()) {
-            return Ok(Arc::clone(connection));
+    ///
+    /// The connection lock is not held while a process starts, which can take up to
+    /// [`HANDSHAKE_TIMEOUT`]: document updates meanwhile are recorded, and sent with the open
+    /// documents once the process runs.
+    fn ensure_connection(&self) -> Result<Arc<Connection>, String> {
+        if let Some(connection) = self.live_connection() {
+            return Ok(connection);
         }
-        let mut disabled = self.disabled.lock().expect("tsrs-lint disabled mutex poisoned");
-        if let Some(reason) = disabled.as_ref() {
-            return Err(reason.clone());
+        let _start = self.start.lock().expect("tsrs-lint start mutex poisoned");
+        // Another request may have started one meanwhile.
+        if let Some(connection) = self.live_connection() {
+            return Ok(connection);
         }
-        // Drop an exited process before starting the next one. The next one reads the disk afresh.
-        *slot = None;
+        // Drop an exited process before starting the next one, outside the connection lock: it
+        // may take up to `SHUTDOWN_TIMEOUT` to exit.
+        let exited = self.connection.lock().expect("tsrs-lint connection mutex poisoned").take();
+        drop(exited);
+        {
+            let mut disabled = self.disabled.lock().expect("tsrs-lint disabled mutex poisoned");
+            if let Some(reason) = disabled.as_ref() {
+                return Err(reason.clone());
+            }
+            if !self.record_start() {
+                let last_exit = self.last_exit.lock().expect("tsrs-lint last exit mutex poisoned");
+                let reason = format!(
+                    "tsrs-lint server stopped {MAX_STARTS} times within {} seconds, so type-aware \
+                     linting is off for this workspace until its configuration changes or the \
+                     language server restarts. Last error: {}",
+                    START_WINDOW.as_secs(),
+                    last_exit.as_deref().unwrap_or("unknown")
+                );
+                error!("{reason}");
+                *disabled = Some(reason.clone());
+                return Err(reason);
+            }
+        }
+        // The next process reads the disk afresh: only the changes from now on are sent to it.
         self.file_changes.lock().expect("tsrs-lint file changes mutex poisoned").clear();
-        if !self.record_start() {
-            let last_exit = self.last_exit.lock().expect("tsrs-lint last exit mutex poisoned");
-            let reason = format!(
-                "tsrs-lint server stopped {MAX_STARTS} times within {} seconds, so type-aware \
-                 linting is off for this workspace until its configuration changes or the \
-                 language server restarts. Last error: {}",
-                START_WINDOW.as_secs(),
-                last_exit.as_deref().unwrap_or("unknown")
-            );
-            error!("{reason}");
-            *disabled = Some(reason.clone());
-            return Err(reason);
-        }
-        let connection = match self.spawn() {
+        self.starting.store(true, Ordering::Release);
+        let spawned = self.spawn();
+        let mut slot = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
+        self.starting.store(false, Ordering::Release);
+        let connection = match spawned {
             Ok(connection) => Arc::new(connection),
             Err(SpawnError::Incompatible(reason)) => {
                 error!("{reason}");
-                *disabled = Some(reason.clone());
+                *self.disabled.lock().expect("tsrs-lint disabled mutex poisoned") =
+                    Some(reason.clone());
                 return Err(reason);
             }
             Err(SpawnError::Failed(error)) => {
@@ -603,7 +635,35 @@ impl TsrsLintServer {
                 return Err(error);
             }
         };
-        drop(disabled);
+        // The server may have been stopped while the process started.
+        let stopped = self.disabled.lock().expect("tsrs-lint disabled mutex poisoned").clone();
+        let sent = match stopped {
+            Some(reason) => Err(reason),
+            None => self.send_open_documents(&connection),
+        };
+        if let Err(error) = sent {
+            // Dropping the connection shuts the process down: not with the lock held.
+            drop(slot);
+            drop(connection);
+            return Err(error);
+        }
+        *slot = Some(Arc::clone(&connection));
+        Ok(connection)
+    }
+
+    /// The running process, if it is alive.
+    fn live_connection(&self) -> Option<Arc<Connection>> {
+        self.connection
+            .lock()
+            .expect("tsrs-lint connection mutex poisoned")
+            .as_ref()
+            .filter(|connection| connection.is_alive())
+            .map(Arc::clone)
+    }
+
+    /// Sends the open documents to a new process. Called with the connection lock held, so no
+    /// document update is missed.
+    fn send_open_documents(&self, connection: &Connection) -> Result<(), String> {
         let documents =
             self.open_documents.lock().expect("tsrs-lint open documents mutex poisoned");
         for (path, document) in documents.iter() {
@@ -616,9 +676,7 @@ impl TsrsLintServer {
                 },
             )?;
         }
-        drop(documents);
-        *slot = Some(Arc::clone(&connection));
-        Ok(connection)
+        Ok(())
     }
 
     /// Records a process start, unless [`MAX_STARTS`] processes were started within
