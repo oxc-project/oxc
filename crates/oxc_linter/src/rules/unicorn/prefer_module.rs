@@ -98,8 +98,9 @@ fn is_top_level_return(return_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (r#"const foo = "use strict";"#, None, None, None),

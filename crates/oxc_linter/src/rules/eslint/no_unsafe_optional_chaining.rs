@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{AssignmentTarget, match_assignment_target_pattern},
@@ -7,8 +10,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

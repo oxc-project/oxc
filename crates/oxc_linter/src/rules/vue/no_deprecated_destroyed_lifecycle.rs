@@ -1,3 +1,5 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
@@ -9,7 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::JSStr;
-use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -203,8 +204,9 @@ fn get_property_key_info(prop: &ObjectProperty) -> Option<(String, Span, bool, K
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

@@ -1,14 +1,16 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use crate::{
     ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile},
     rule::{DefaultRuleConfig, Rule},
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 fn no_barrel_file(total: u32, threshold: u32, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(

@@ -5,13 +5,14 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     ModuleRecord,

@@ -1,12 +1,13 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
 
 use crate::{
     AstNode,

@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{AssignmentTarget, BigIntLiteral, Expression, NumericLiteral},
@@ -7,8 +10,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodes;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 

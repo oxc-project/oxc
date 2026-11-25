@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{ChainElement, Expression},
@@ -6,10 +9,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{CompactStr, Ident, static_ident};
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
-use oxc_syntax::scope::ScopeId;
-use schemars::JsonSchema;
-use serde::Deserialize;
+use oxc_syntax::{
+    operator::{AssignmentOperator, BinaryOperator, UnaryOperator},
+    scope::ScopeId,
+};
 
 use crate::{
     AstNode,

@@ -1,6 +1,11 @@
 use std::borrow::Cow;
 
 use nodejs_built_in_modules::is_nodejs_builtin_module;
+use rustc_hash::{FxBuildHasher, FxHashMap};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -8,11 +13,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::{FxBuildHasher, FxHashMap};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -863,8 +863,9 @@ fn get_resolved_extension(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         // A `require()` specifier with a lone surrogate is not checked.

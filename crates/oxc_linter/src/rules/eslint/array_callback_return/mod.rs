@@ -1,5 +1,8 @@
+pub mod return_checker;
+
 use std::borrow::Cow;
 
+use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -10,18 +13,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
 
+use self::return_checker::{StatementReturnStatus, check_function_body};
 use crate::{
     AstNode,
     ast_util::{get_enclosing_function, outermost_paren},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
-
-pub mod return_checker;
-
-use self::return_checker::{StatementReturnStatus, check_function_body};
 
 #[derive(Debug, Clone, Copy)]
 enum MissingReturnHint {

@@ -1,10 +1,11 @@
 use std::ffi::OsStr;
 
 use lazy_regex::{Regex, RegexBuilder};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::Deserialize;
+
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
 
 use crate::{
     context::LintContext,
@@ -157,8 +158,9 @@ impl Rule for ConsistentTestFilename {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("export {}", None, None, Some(PathBuf::from("1.test.ts"))),

@@ -1,11 +1,13 @@
+use std::borrow::Cow;
+
+use serde::Deserialize;
+
 use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeId;
-use serde::Deserialize;
-use std::borrow::Cow;
 
 use crate::{
     context::LintContext,

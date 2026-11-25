@@ -1,15 +1,17 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use oxc_ast::{AstKind, ast::BindingPattern};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
+
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::is_react_function_call,
 };
-use oxc_ast::{AstKind, ast::BindingPattern};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 fn require_to_destruct(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("useState call is not destructured into value + setter pair")

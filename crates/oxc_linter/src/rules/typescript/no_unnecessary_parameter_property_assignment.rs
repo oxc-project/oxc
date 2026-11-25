@@ -1,3 +1,5 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -11,7 +13,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, ScopeFlags};
 use oxc_span::Span;
 use oxc_str::Str;
-use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

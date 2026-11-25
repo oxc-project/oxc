@@ -1,9 +1,9 @@
 use std::cmp::max;
 
 use oxc_allocator::ArenaBox;
-use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    CallExpression, Expression, ObjectExpression, ObjectPropertyKind, PropertyKind,
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression, ObjectExpression, ObjectPropertyKind, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -411,8 +411,7 @@ fn get_delete_span_start_of_right(
 
 #[test]
 fn test() {
-    use crate::fixer::FixKind;
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "Object.assign()",

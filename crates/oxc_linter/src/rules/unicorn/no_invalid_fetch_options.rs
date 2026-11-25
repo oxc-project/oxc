@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
-use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -14,6 +14,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
+
+use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);

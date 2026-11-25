@@ -13,8 +13,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
 
-use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    module_record::{ImportEntry, ImportImportName},
+    rule::Rule,
+};
 
 fn no_watch_after_await_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{name}` is forbidden after an `await` expression."))

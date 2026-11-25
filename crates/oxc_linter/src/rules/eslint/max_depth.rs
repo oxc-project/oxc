@@ -1,15 +1,19 @@
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodes;
-use oxc_span::GetSpan;
-use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::rule::DefaultRuleConfig;
-use crate::{AstNode, ast_util::is_function_node, context::LintContext, rule::Rule};
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodes;
+use oxc_span::{GetSpan, Span};
+
+use crate::{
+    AstNode,
+    ast_util::is_function_node,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn max_depth_diagnostic(num: u32, max: u32, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Blocks are nested too deeply ({num}). Maximum allowed is {max}."))

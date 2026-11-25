@@ -2,6 +2,7 @@
 //! [`Symbol`] are considered a usage.
 
 use itertools::Itertools;
+
 use oxc_ast::{AstKind, AstType, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};

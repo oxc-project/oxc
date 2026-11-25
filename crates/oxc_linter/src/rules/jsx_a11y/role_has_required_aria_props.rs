@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue},
@@ -5,8 +7,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-
-use itertools::Itertools;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case};
 

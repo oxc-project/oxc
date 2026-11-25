@@ -1,14 +1,15 @@
 use std::cell::OnceCell;
 
+use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, ReferenceId, ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

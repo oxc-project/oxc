@@ -1,3 +1,10 @@
+use std::ops::Deref;
+
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue},
@@ -6,11 +13,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
-use std::ops::Deref;
 
 use crate::{
     AstNode,

@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils as _;
 use lazy_regex::Regex;
-use oxc_syntax::module_record::RequestedModule;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{
     JsonSchema, SchemaGenerator,
@@ -21,6 +20,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use oxc_syntax::module_record::RequestedModule;
 
 use crate::{
     ModuleRecord,

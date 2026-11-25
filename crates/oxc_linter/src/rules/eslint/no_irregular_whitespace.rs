@@ -1,5 +1,8 @@
 use std::ops::Deref;
 
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -7,8 +10,6 @@ use oxc_span::Span;
 use oxc_syntax::{
     identifier::is_irregular_whitespace, line_terminator::is_irregular_line_terminator,
 };
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
