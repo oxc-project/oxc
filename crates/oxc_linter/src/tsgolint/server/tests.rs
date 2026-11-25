@@ -424,8 +424,10 @@ fn stop_cancels_a_pending_request() {
 /// process ignores the cancellation and answers before it is given up.
 #[test]
 fn busy_process_is_not_killed() {
-    let Some(fixture) = Fixture::new(&json!({ "lint": "slow", "slow_ms": 300 })) else { return };
-    let server = fixture.server().with_request_timeout(Duration::from_millis(200));
+    // Frames every 50 ms against a 1 s timeout; the answer comes 500 ms after the cancellation at
+    // 1 s, and 500 ms before the request is given up at 2 s.
+    let Some(fixture) = Fixture::new(&json!({ "lint": "slow", "slow_ms": 1500 })) else { return };
+    let server = fixture.server().with_request_timeout(Duration::from_secs(1));
     let file = fixture.file("index.ts");
 
     let diagnostics = lint(&server, &file).expect("lint failed");
