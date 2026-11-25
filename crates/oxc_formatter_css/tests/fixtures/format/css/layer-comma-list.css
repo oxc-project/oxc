@@ -1,0 +1,17 @@
+/* DIVERGENCES.md#layer-comma-list */
+@layer a,b;
+@layer a ,  b;
+@layer reset, base,
+  components;
+@layer /* c */ a,b;
+@layer /* c */
+  a,
+  b;
+
+/* A comment stays where it is */
+@layer a, b /* c */;
+@layer /* c */ a {
+  b {
+    color: red;
+  }
+}

@@ -65,6 +65,35 @@ Prettier keeps a COMMENTED keyframe selector list verbatim, interior spacing inc
 ours prints commented and uncommented lists with the same structural layout (one selector per line, comments per the separator rule).
 Same rule as `comment-preceded-map-indent`.
 
+## layer-comma-list
+
+- Why: uniform-rule (same construct, same output: a comma list in `@media` / `@custom-selector`)
+- Pin: `tests/fixtures/format/css/layer-comma-list.css`
+
+```css
+/* input */
+@layer a,b;
+@layer reset, base,
+  components;
+@layer /* c */ a ,  b;
+
+/* ours */
+@layer a, b;
+@layer reset, base, components;
+@layer /* c */ a, b;
+
+/* prettier */
+@layer a,b;
+@layer reset, base,
+  components;
+@layer /* c */ a ,  b;
+```
+
+A `@layer` name list prints `, `-separated on one line, with or without a comment in it,
+as Prettier prints a `@media` query list or a `@custom-selector` list (`screen,print` -> `screen, print`).
+Prettier has no `@layer` case and keeps its params as written.
+A `//` still breaks the list (`tests/fixtures/format/scss/at-rule-prelude-comments.scss`).
+
 ## nest-params-indent
 
 - Why: uniform-rule (same construct, same output: selector-list continuation outside `@nest`)

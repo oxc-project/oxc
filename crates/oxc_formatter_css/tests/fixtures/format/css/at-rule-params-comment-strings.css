@@ -49,9 +49,5 @@
   syntax: "*";
   inherits: false;
 }
-a {
-  @layer /* c */  x,
-      y;
-}
 @namespace /* c */  svg
   "x";
