@@ -947,8 +947,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !self.ctx.has_await())
         .then(|| self.checkpoint());
         let mut decorators = self.parse_decorators();
-        // `export` commits to the Module goal, which applies to the decorators before it too.
-        // e.g. `@dec(await (x)) export class C {}`
+        // `export` commits to the Module goal, which also covers the decorators before it.
+        // Parse them again if they read `await` as an identifier, because the statement-level
+        // reparse skips exports. e.g. `@dec(await (x)) export class C {}`
         if self.at(Kind::Export)
             && let Some(checkpoint) = checkpoint
             && self.state.encountered_await_identifier
@@ -958,8 +959,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let ctx = self.ctx;
             self.ctx = ctx.and_await(true);
             decorators = self.parse_decorators();
-            // As module code, the `export` may be part of a decorator, as in
-            // `@dec(await /"(")export /) class C {}`. Keep the Script parse then.
+            // Module code can read that `export` as part of a decorator, as in
+            // `@dec(await /"(")export /) class C {}`. Keep the Script parse then. Keep a module
+            // parse that fails, as in `@dec(await) export class C {}`: the file is still a module.
             if !self.at(Kind::Export) && !self.has_fatal_error() {
                 self.rewind(checkpoint);
                 self.ctx = ctx;
