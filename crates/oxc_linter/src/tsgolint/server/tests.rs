@@ -185,18 +185,28 @@ fn other_protocol_version_disables_the_server() {
 }
 
 #[test]
-fn executable_without_server_mode_disables_the_server() {
+fn executable_without_server_mode_is_not_started_again_after_restarts() {
     let Some(fixture) = Fixture::new(&json!({ "start": "exit" })) else { return };
     let server = fixture.server();
     let file = fixture.file("index.ts");
 
-    let error = failure(lint(&server, &file));
-    assert!(error.contains("exited before the server handshake"), "{error}");
-    assert!(server.is_disabled());
+    // An exit before the handshake is a failed start: it may be a crash, so it is retried.
+    for attempt in 1..=3 {
+        let error = failure(lint(&server, &file));
+        assert!(
+            error.contains("exited with exit status: 0 before the server handshake"),
+            "{error}"
+        );
+        assert!(error.contains("without `tsrs-lint server`"), "{error}");
+        assert!(!server.is_disabled(), "attempt {attempt}");
+        assert_eq!(fixture.starts(), attempt);
+    }
 
-    let second = failure(lint(&server, &file));
-    assert_eq!(second, error);
-    assert_eq!(fixture.starts(), 1);
+    let error = failure(lint(&server, &file));
+    assert!(error.contains("stopped 3 times within 60 seconds"), "{error}");
+    assert!(error.contains("before the server handshake"), "{error}");
+    assert!(server.is_disabled());
+    assert_eq!(fixture.starts(), 3);
 }
 
 #[test]

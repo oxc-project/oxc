@@ -5,11 +5,12 @@
 //! directions: `u32 LE JSON length | u8 message type | UTF-8 JSON`.
 //!
 //! A new process first answers a handshake with the protocol version it speaks. oxlint and
-//! `tsrs-lint` are installed separately, so a process that speaks another version, or a
-//! `tsrs-lint` without server mode, is reported once and not started again.
+//! `tsrs-lint` are installed separately, so a process that speaks another version is reported once
+//! and not started again.
 //!
 //! A process that exits is started again on the next request, but at most [`MAX_STARTS`] times
-//! within [`START_WINDOW`]: a process that keeps exiting is not started again either.
+//! within [`START_WINDOW`]: a process that keeps exiting is not started again either. That
+//! includes one that exits before the handshake, such as a `tsrs-lint` without server mode.
 //!
 //! A process that sends no frame for a request within [`REQUEST_TIMEOUT`] is killed, so a stuck
 //! process does not block the language server forever.
@@ -28,7 +29,7 @@ use std::{
     ffi::OsStr,
     io::{BufReader, Write},
     path::{Path, PathBuf},
-    process::{Child, ChildStdin, ChildStdout},
+    process::{Child, ChildStdin, ChildStdout, ExitStatus},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -261,6 +262,23 @@ impl Connection {
         );
         let _ = child.kill();
         let _ = child.wait();
+    }
+}
+
+impl Connection {
+    /// Waits up to `timeout` for the process to exit, and returns its exit status.
+    fn wait_for_exit(&self, timeout: Duration) -> Option<ExitStatus> {
+        let mut child = self.child.lock().expect("tsrs-lint child mutex poisoned");
+        let deadline = Instant::now() + timeout;
+        loop {
+            match child.try_wait() {
+                Ok(Some(status)) => return Some(status),
+                Ok(None) if Instant::now() < deadline => {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                _ => return None,
+            }
+        }
     }
 }
 
@@ -772,11 +790,25 @@ impl TsrsLintServer {
                  protocol {PROTOCOL_VERSION}. Install matching versions of oxlint and tsrs-lint.",
                 hello.version, hello.protocol_version
             ))),
-            Err(RecvTimeoutError::Disconnected) => Err(SpawnError::Incompatible(format!(
-                "`{path}` exited before the server handshake. It may be a tsrs-lint without \
-                 `tsrs-lint server`: this oxlint needs one that speaks server protocol \
-                 {PROTOCOL_VERSION}."
-            ))),
+            // An exit before the handshake is a failed start, and not started again only after
+            // `MAX_STARTS`: it may be a `tsrs-lint` without server mode, or a server that crashed.
+            Err(RecvTimeoutError::Disconnected) => {
+                let status = connection
+                    .wait_for_exit(SHUTDOWN_TIMEOUT)
+                    .map_or_else(String::new, |status| format!(" with {status}"));
+                // The reader records why it stopped before the handshake channel closes.
+                let reason = self
+                    .last_exit
+                    .lock()
+                    .expect("tsrs-lint last exit mutex poisoned")
+                    .clone()
+                    .unwrap_or_else(|| "unknown".to_string());
+                Err(SpawnError::Failed(format!(
+                    "`{path}` exited{status} before the server handshake ({reason}). It may be a \
+                     tsrs-lint without `tsrs-lint server`: this oxlint needs one that speaks \
+                     server protocol {PROTOCOL_VERSION}."
+                )))
+            }
             Err(RecvTimeoutError::Timeout) => Err(SpawnError::Failed(format!(
                 "`{path}` did not answer the server handshake within {} seconds",
                 HANDSHAKE_TIMEOUT.as_secs()

@@ -2203,8 +2203,8 @@ mod test_tsrs_lint {
         assert!(linter.runner.has_tsrs_server());
         let uri = tester.get_file_uri("index.ts");
 
-        // The server is not started again after the first failure, which is reported each time.
-        for _ in 0..2 {
+        // The failure is reported each time, and the server is not started again after three.
+        for attempt in 1..=4 {
             let diagnostics = linter
                 .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
                 .expect("lint failed");
@@ -2215,8 +2215,14 @@ mod test_tsrs_lint {
                 panic!("expected a string message");
             };
             assert!(failure.starts_with("Type-aware linting failed"), "{failure}");
-            assert!(failure.contains("exited before the server handshake"), "{failure}");
+            assert!(
+                failure.contains("with exit status: 2 before the server handshake"),
+                "{failure}"
+            );
+            assert_eq!(
+                linter.workspace.server().expect("no tsrs-lint server").is_disabled(),
+                attempt == 4
+            );
         }
-        assert!(linter.workspace.server().expect("no tsrs-lint server").is_disabled());
     }
 }
