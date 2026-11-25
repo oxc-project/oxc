@@ -2273,11 +2273,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return true;
             }
             // Outside a generator, `yield` is an `IdentifierReference` unless the next token (on the
-            // same line) can start the operand of a `YieldExpression`. That is a single-token
-            // decision, so peek instead of running a full `lookahead` checkpoint/rewind. With
-            // `is_await = false` the worker reduces to exactly this (mirrors `is_unambiguous_await`).
+            // same line) can start the operand of a `YieldExpression`. `of` is excluded so that
+            // `yield` can be the target of `for (yield of xs)`.
             let token = self.lexer.peek_token();
-            return !token.is_on_new_line() && token.kind().is_after_await_or_yield();
+            return !token.is_on_new_line()
+                && token.kind() != Kind::Of
+                && token.kind().is_after_await_or_yield();
         }
         false
     }
