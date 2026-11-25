@@ -2093,6 +2093,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return false;
         }
 
+        // `!` and `~` cannot follow an identifier, except for a TypeScript non-null assertion.
+        if kind == Kind::Tilde || (kind == Kind::Bang && !self.is_ts) {
+            return true;
+        }
+
         // Returns true for identifiers, keywords, and literals (not binary operators)
         kind.is_after_await_or_yield()
     }
