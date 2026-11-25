@@ -24458,7 +24458,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ export @dec default class C3 {}
    ·             ───────
    ╰────
-  help: Allowed modifiers are: declare, abstract
+  help: No modifiers are allowed here.
 
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAmbient.ts:6:37]

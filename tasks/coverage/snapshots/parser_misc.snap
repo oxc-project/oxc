@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 168/168 (100.00%)
 Positive Passed: 168/168 (100.00%)
-Negative Passed: 300/300 (100.00%)
+Negative Passed: 301/301 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -1628,6 +1628,36 @@ Negative Passed: 300/300 (100.00%)
    ╭─[misc/fail/infer-reserved-type-name.ts:1:29]
  1 │ type T<X> = X extends infer string ? string : never;
    ·                             ──────
+   ╰────
+
+  × TS(8009): The 'abstract' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/js-decorated-class-ts-modifiers.js:1:6]
+ 1 │ @dec abstract class A {}
+   ·      ────────
+ 2 │ @dec declare class B {}
+   ╰────
+
+  × TS(8009): The 'declare' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/js-decorated-class-ts-modifiers.js:2:6]
+ 1 │ @dec abstract class A {}
+ 2 │ @dec declare class B {}
+   ·      ───────
+ 3 │ export @dec abstract class C {}
+   ╰────
+
+  × TS(8009): The 'abstract' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/js-decorated-class-ts-modifiers.js:3:13]
+ 2 │ @dec declare class B {}
+ 3 │ export @dec abstract class C {}
+   ·             ────────
+ 4 │ (@dec abstract class {});
+   ╰────
+
+  × TS(8009): The 'abstract' modifier can only be used in TypeScript files.
+   ╭─[misc/fail/js-decorated-class-ts-modifiers.js:4:7]
+ 3 │ export @dec abstract class C {}
+ 4 │ (@dec abstract class {});
+   ·       ────────
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
