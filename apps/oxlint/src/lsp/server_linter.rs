@@ -891,6 +891,7 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     fn run_diagnostic(&self, document: TextDocument) -> DiagnosticResult {
+        self.sync_document(&document);
         Ok(vec![(document.uri.clone(), self.run_file(document.uri, document.text.as_deref())?)])
     }
 
@@ -964,22 +965,50 @@ impl ServerLinter {
             return;
         }
         let version = document.version.unwrap_or(0);
-        let was_open = self
-            .workspace
-            .open_documents
-            .lock()
-            .expect("open documents mutex poisoned")
+        let mut documents =
+            self.workspace.open_documents.lock().expect("open documents mutex poisoned");
+        // A change the server already has, sent before a lint of it (see `sync_document`), or an
+        // older one, is not sent again.
+        if !open
+            && document.version.is_some()
+            && documents.get(document.uri).is_some_and(|known| known.version >= version)
+        {
+            return;
+        }
+        let was_open = documents
             .insert(
                 document.uri.clone(),
                 OpenDocument { path: path.to_path_buf(), version, text: Arc::clone(text) },
             )
             .is_some();
+        drop(documents);
         if let Some(server) = self.workspace.server() {
             if open || !was_open {
                 server.did_open(&path, version, Arc::clone(text));
             } else {
                 server.did_change(&path, version, Arc::clone(text));
             }
+        }
+    }
+
+    /// Sends a newer version of an open document to the `tsrs-lint server` before it is linted.
+    ///
+    /// The backend stores an edit before it passes it to the tool, and a diagnostic request can
+    /// run in between: it lints the new text, which the server must have, or the request is
+    /// canceled and the client is not told to ask again.
+    fn sync_document(&self, document: &TextDocument) {
+        let Some(version) = document.version else {
+            return;
+        };
+        let newer = self
+            .workspace
+            .open_documents
+            .lock()
+            .expect("open documents mutex poisoned")
+            .get(document.uri)
+            .is_some_and(|known| known.version < version);
+        if newer {
+            self.update_document(document, false);
         }
     }
 
@@ -1489,6 +1518,35 @@ mod test {
         drop((linter, restarted));
         let fresh = builder.build(&root_uri, json!({})).0;
         assert!(fresh.workspace.open_documents.lock().unwrap().is_empty());
+    }
+
+    /// A diagnostic request can run before the tool hears of the edit it lints: the linted
+    /// version becomes the open document's, so a `tsrs-lint server` lints the same text.
+    #[test]
+    fn test_lint_of_a_newer_version_updates_the_open_document() {
+        let tester = Tester::new("fixtures/lsp/no_errors", json!({}));
+        let linter = tester.create_linter();
+        let uri = tester.get_file_uri("hello_world.js");
+        let document = |version: i32, text: &str| TextDocument {
+            uri: &uri,
+            language_id: LanguageId::default(),
+            text: Some(text.into()),
+            version: Some(version),
+        };
+        linter.did_open(&document(1, "let a = 1;"));
+
+        linter.run_diagnostic(document(2, "let a = 2;")).expect("lint failed");
+        let open = |uri| {
+            let documents = linter.workspace.open_documents.lock().unwrap();
+            let document = documents.get(uri).expect("the document is not open");
+            (document.version, document.text.to_string())
+        };
+        assert_eq!(open(&uri), (2, "let a = 2;".to_string()));
+
+        // The change that arrives after it, and an older one, change nothing.
+        linter.did_change(&document(2, "let a = 2;"));
+        linter.did_change(&document(1, "let a = 1;"));
+        assert_eq!(open(&uri), (2, "let a = 2;".to_string()));
     }
 
     #[test]
@@ -2069,6 +2127,16 @@ mod test_tsrs_lint {
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(codes(&diagnostics[0].1), [] as [String; 0]);
         assert!(!server.is_disabled());
+
+        // A request that lints an edit the server has not been sent yet sends it first.
+        let unsent = TextDocument {
+            uri: &uri,
+            language_id: LanguageId::default(),
+            text: Some(unsaved_text("load();").into()),
+            version: Some(3),
+        };
+        let diagnostics = linter.run_diagnostic(unsent).expect("lint failed");
+        assert_eq!(codes(&diagnostics[0].1), ["typescript(no-floating-promises)"]);
     }
 
     /// A change to a file outside the workspace root reaches the server: the workspace's programs
