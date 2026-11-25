@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 159/159 (100.00%)
 Positive Passed: 159/159 (100.00%)
-Negative Passed: 293/293 (100.00%)
+Negative Passed: 294/294 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -258,6 +258,20 @@ Negative Passed: 293/293 (100.00%)
    ╭─[misc/fail/async-field.ts:1:11]
  1 │ class C { async x; }
    ·           ─────
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-get-or-set-same-line.js:1:11]
+ 1 │ class A { accessor get m() {} }
+   ·           ────────
+ 2 │ class B { accessor set m(v) {} }
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-get-or-set-same-line.js:2:11]
+ 1 │ class A { accessor get m() {} }
+ 2 │ class B { accessor set m(v) {} }
+   ·           ────────
    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
