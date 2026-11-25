@@ -8,6 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::{could_be_asi_hazard, could_be_asi_hazard_for_statement},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
@@ -363,7 +364,12 @@ fn fix_if_statement<'a>(
     let test_text = test.span().source_text(ctx.source_text());
     let condition = if is_add_first { test_text.to_string() } else { format!("!({test_text})") };
 
-    let replacement = format!("{classlist_text}.toggle({class_name_text}, {condition});");
+    let mut replacement = format!("{classlist_text}.toggle({class_name_text}, {condition});");
+    if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
+        && could_be_asi_hazard_for_statement(node, ctx)
+    {
+        replacement.insert(0, ';');
+    }
     fixer.replace(node.span(), replacement)
 }
 
@@ -390,7 +396,10 @@ fn fix_conditional_expression<'a>(
     let test_text = test.span().source_text(ctx.source_text());
     let condition = if is_add_first { test_text.to_string() } else { format!("!({test_text})") };
 
-    let replacement = format!("{classlist_text}.toggle({class_name_text}, {condition})");
+    let mut replacement = format!("{classlist_text}.toggle({class_name_text}, {condition})");
+    if replacement.starts_with(['[', '(', '/', '+', '-', '`']) && could_be_asi_hazard(node, ctx) {
+        replacement.insert(0, ';');
+    }
     fixer.replace(node.span(), replacement)
 }
 
@@ -729,6 +738,18 @@ fn test() {
         (
             "if (foo) element.classList.add('bar'); else element.classList.remove('bar');",
             "element.classList.toggle('bar', foo);",
+        ),
+        (
+            "foo\n\nif (condition) {\n\t(( element )).classList.add('className')\n} else {\n\telement.classList.remove('className')\n}",
+            "foo\n\n;(( element )).classList.toggle('className', condition);",
+        ),
+        (
+            "foo\n\ncondition ? (( element )).classList.add(className) : element.classList.remove(className);",
+            "foo\n\n;(( element )).classList.toggle(className, condition);",
+        ),
+        (
+            "if (a) foo(); else if (condition) (( element )).classList.add('c'); else element.classList.remove('c');",
+            "if (a) foo(); else (( element )).classList.toggle('c', condition);",
         ),
     ];
 

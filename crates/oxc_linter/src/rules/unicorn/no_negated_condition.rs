@@ -284,6 +284,8 @@ e();
 d();
 }",
         ),
+        ("foo\n!{} ? a : b", "foo\n;({}) ? b : a"),
+        ("foo\n!function() {} ? a : b", "foo\n;(function() {}) ? b : a"),
     ];
 
     Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::PLUGIN, pass, fail)
