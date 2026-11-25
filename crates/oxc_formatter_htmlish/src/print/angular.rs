@@ -20,7 +20,7 @@ use oxc_htmlish_parser::{
     Span,
     ast::{
         AngularAction, AngularCode, AngularExpression, Attribute, Block, BlockParameterKind,
-        LetDeclaration, NestedPipe, TemplateBinding, ValueInterpolation,
+        LetDeclaration, NestedPipe, NestedPipeParent, TemplateBinding, ValueInterpolation,
     },
 };
 
@@ -483,7 +483,8 @@ struct Code<'a> {
 /// in its parens where Angular needs them.
 struct Replacement<'a> {
     parts: Parts<'a>,
-    in_parens: bool,
+    /// [`NestedPipe::parens`].
+    parens: Option<NestedPipeParent>,
 }
 
 /// What a nested pipe is dispatched as: a name of its own, `oxfmt_ng_{index}_`.
@@ -519,15 +520,16 @@ impl<'a> Code<'a> {
         let mut replaced = String::with_capacity(piece.len());
         let mut replacements = Vec::with_capacity(code.nested.len());
         let mut at = code.span.start as usize;
-        for NestedPipe { span, in_parens, last_value, spread, expression } in &code.nested {
+        for NestedPipe { span, parens, last_value, spread, expression } in &code.nested {
             replaced.push_str(&source[at..span.start as usize]);
             PLACEHOLDER.write(&mut replaced, replacements.len());
             // The last value of an object: its `}` and the pipe's last may meet (`{k: a | p: {x: 1}}`), which ends a `{{ }}`.
             // In parens too, where they cannot, as Prettier parens it (`{k: (a | p: ({x: 1}))}`), but a spread's (`{...(a | p: {x: 1})}`)
             let before_brace = *last_value && !*spread;
             let parts = Parts::dispatch(expression, nested_part.before_brace(before_brace), f)?;
-            // A spread's prints in parens, as Prettier parens it (`[...(a | p)]`); one in parens already is `in_parens`
-            replacements.push(Replacement { parts, in_parens: *in_parens || *spread });
+            // A spread's prints in parens, as Prettier parens it (`[...(a | p)]`)
+            let parens = parens.or(spread.then_some(NestedPipeParent::Other));
+            replacements.push(Replacement { parts, parens });
             at = span.end as usize;
         }
         replaced.push_str(&source[at..code.span.end as usize]);
@@ -549,9 +551,9 @@ impl<'a> Code<'a> {
         let replacements: Vec<_> = self
             .replacements
             .into_iter()
-            .map(|replacement| match replacement {
-                Replacement { parts, in_parens: true } => f.intern(&parts.format_in_parens()),
-                Replacement { parts, in_parens: false } => f.intern(&parts.format()),
+            .map(|Replacement { parts, parens }| match parens {
+                Some(parent) => f.intern(&parts.format_in_parens(parent)),
+                None => f.intern(&parts.format()),
             })
             .collect();
         map_text_in_ir(self.ir, f.allocator(), &mut |text, out| {
@@ -643,11 +645,29 @@ impl<'a> Parts<'a> {
         format_once(move |f| self.write(f))
     }
 
-    /// In parens of its own, which already indent it: its pipes line up with its code (as Prettier prints them).
-    fn format_in_parens(self) -> impl Format<'a, HtmlishFormatContext<'a>> {
-        format_once(move |f| {
-            let parts = format_once(move |f| self.write_with(false, f));
-            write!(f, ["(", group(&soft_block_indent(&parts)), ")"]);
+    /// In parens of its own, as JS prints a binary's in them, by what they are part of (as Prettier prints them):
+    /// - a call's callee, a member's object or a unary's argument: on lines of their own, its pipes lined up with its code
+    /// - a conditional that is no call's argument: hugging it, its pipes lined up with its code
+    /// - anything else: hugging it, its pipes indented
+    ///   (an object's value too, where Prettier lines them up: after a `k:` JS keeps on its line, they indent past it, as Prettier's do)
+    fn format_in_parens(
+        self,
+        parent: NestedPipeParent,
+    ) -> impl Format<'a, HtmlishFormatContext<'a>> {
+        format_once(move |f| match parent {
+            NestedPipeParent::Callee
+            | NestedPipeParent::MemberObject { computed: false }
+            | NestedPipeParent::UnaryArgument => {
+                let parts = format_once(move |f| self.write_with(false, f));
+                write!(f, ["(", group(&soft_block_indent(&parts)), ")"]);
+            }
+            NestedPipeParent::Conditional { call_argument: false } => {
+                write!(f, ["(", format_once(move |f| self.write_with(false, f)), ")"]);
+            }
+            NestedPipeParent::Conditional { call_argument: true }
+            | NestedPipeParent::MemberObject { computed: true }
+            | NestedPipeParent::ObjectValue
+            | NestedPipeParent::Other => write!(f, ["(", self.format(), ")"]),
         })
     }
 

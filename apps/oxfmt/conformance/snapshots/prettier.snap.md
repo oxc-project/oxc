@@ -596,7 +596,7 @@
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
-- externals/prettier/angular/angular/interpolation.component.html (💥💥💥💥💥, 97.73%)
+- externals/prettier/angular/angular/interpolation.component.html (💥💥💥💥💥, 97.87%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
 - externals/prettier/angular/angular/ng-model-options.html (💥💥💥💥💥, 8.00%)

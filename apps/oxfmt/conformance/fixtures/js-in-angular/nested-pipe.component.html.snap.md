@@ -12,6 +12,11 @@
 <p>{{ (aaaaaaaaaaaaaaa | async).bbbbbbbbbbbbbbbbb.cccccccccccccccccc().dddddddddddddddddd().eeeeeeeeeeeeeee() }}</p>
 <p (click)="value = (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | p)"></p>
 <p [x]="fn(aaaaaaaaaaaaaaaa | async, {kkkkkkkkkkkkkkkkkkkkk: vvvvvvvvvvvvvvvvvvvvvv, jjjjjjjjjjjjjjjjj: (w | p)})"></p>
+<p [x]="(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo).level"></p>
+<p [x]="(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo)[0]"></p>
+<p>{{ "x" | i18n: (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo) }}</p>
+<p [x]="c ? (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo) : d"></p>
+<p [x]="f(c ? (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo) : d)"></p>
 
 `````
 
@@ -68,6 +73,46 @@
       kkkkkkkkkkkkkkkkkkkkk: vvvvvvvvvvvvvvvvvvvvvv,
       jjjjjjjjjjjjjjjjj: (w | p),
     })
+  "
+></p>
+<p
+  [x]="
+    (
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo
+    ).level
+  "
+></p>
+<p
+  [x]="
+    (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo)[0]
+  "
+></p>
+<p>
+  {{
+    "x"
+      | i18n
+        : (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo)
+  }}
+</p>
+<p
+  [x]="
+    c
+      ? (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo)
+      : d
+  "
+></p>
+<p
+  [x]="
+    f(
+      c
+        ? (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            | someVeryLongPipeName: argumentNumberOne : argumentNumberTwo)
+        : d
+    )
   "
 ></p>
 
