@@ -339,6 +339,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LParen => self.parse_parenthesized_expression(),
             Kind::Slash | Kind::SlashEq => Expression::RegExpLiteral(self.parse_literal_regexp()),
             Kind::At => self.parse_decorated_expression(),
+            Kind::LAngle if self.source_type.is_jsx() && !self.is_ts => self.parse_jsx_expression(),
             // Literal, RegularExpressionLiteral
             kind if kind.is_literal() => self.parse_literal_expression(),
             _ => self.parse_identifier_expression(),
