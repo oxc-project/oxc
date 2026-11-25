@@ -773,18 +773,26 @@ Negative Passed: 307/307 (100.00%)
 
   × Decorators are not valid here.
     ╭─[misc/fail/decorated-constructor.js:10:3]
-  9 │ (class {
- 10 │   @dec @dec2 constructor() {}
+  9 │ class C {
+ 10 │   @dec \u0063onstructor() {}
     ·   ────
- 11 │ });
+ 11 │ }
     ╰────
 
   × Decorators are not valid here.
-    ╭─[misc/fail/decorated-constructor.js:10:8]
-  9 │ (class {
- 10 │   @dec @dec2 constructor() {}
+    ╭─[misc/fail/decorated-constructor.js:14:3]
+ 13 │ (class {
+ 14 │   @dec @dec2 constructor() {}
+    ·   ────
+ 15 │ });
+    ╰────
+
+  × Decorators are not valid here.
+    ╭─[misc/fail/decorated-constructor.js:14:8]
+ 13 │ (class {
+ 14 │   @dec @dec2 constructor() {}
     ·        ─────
- 11 │ });
+ 15 │ });
     ╰────
 
   × 'export statement' declaration can only be used at the top level of a module
