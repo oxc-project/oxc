@@ -41,6 +41,10 @@ impl TryFrom<BabelTargets> for EngineTargets {
             BabelTargets::Map(map) => {
                 let mut engine_targets = Self::default();
                 for (key, value) in map {
+                    // Explicitly disabling ES module filtering leaves the targets unchanged.
+                    if key == "esmodules" && matches!(value, BabelTargetsValue::Bool(false)) {
+                        continue;
+                    }
                     if matches!(key.as_str(), "esmodules" | "browsers") {
                         return Err(format!("Babel target `{key}` is not supported"));
                     }
@@ -62,6 +66,12 @@ impl TryFrom<BabelTargets> for EngineTargets {
                     let Ok(engine) = Engine::from_str(&key) else {
                         return Err(format!("engine '{key}' is not supported."));
                     };
+                    // Version::parse ignores any components after the patch version.
+                    if v.split('.').count() > 3 {
+                        return Err(format!(
+                            "Failed to parse `{v}` for `{key}`: too many version components"
+                        ));
+                    }
                     match Version::parse(&v) {
                         Ok(version) => {
                             engine_targets.insert(engine, version);
@@ -98,5 +108,36 @@ mod tests {
             ]));
             assert!(EngineTargets::try_from(targets).is_err(), "{key} was silently ignored");
         }
+    }
+
+    #[test]
+    fn malformed_versions_are_not_silently_dropped() {
+        for version in ["latest", "", "120.x", "120.1.2.3", "120.1.2.invalid", "65536"] {
+            let targets = BabelTargets::Map(FxHashMap::from_iter([
+                ("firefox".into(), BabelTargetsValue::String("100".into())),
+                ("chrome".into(), BabelTargetsValue::String(version.into())),
+            ]));
+            let error = EngineTargets::try_from(targets).unwrap_err();
+            assert!(error.contains(&format!("`{version}` for `chrome`")), "{error}");
+        }
+    }
+
+    #[test]
+    fn esmodules_false_preserves_targets() {
+        let targets = BabelTargets::Map(FxHashMap::from_iter([
+            ("esmodules".into(), BabelTargetsValue::Bool(false)),
+            ("chrome".into(), BabelTargetsValue::String("49".into())),
+            ("node".into(), BabelTargetsValue::String("18.2.1".into())),
+        ]));
+        let targets = EngineTargets::try_from(targets).unwrap();
+        assert_eq!(targets.len(), 2);
+        assert_eq!(targets.get(&Engine::Chrome), Some(&Version(49, 0, 0)));
+        assert_eq!(targets.get(&Engine::Node), Some(&Version(18, 2, 1)));
+
+        let targets = BabelTargets::Map(FxHashMap::from_iter([(
+            "esmodules".into(),
+            BabelTargetsValue::Bool(false),
+        )]));
+        assert!(EngineTargets::try_from(targets).unwrap().is_any_target());
     }
 }
