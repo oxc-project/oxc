@@ -1012,6 +1012,45 @@ An empty block's body is in the run too: whitespace there renders only when the 
 so it is kept (`a@if (x) { }b`) unless the run has whitespace outside the block, and none is added (`a@if (x) {}@else {}b`).
 Prettier always breaks around a block, which turns `abc` into `a b c` (and adds spaces inside the `span`).
 
+## angular-time-parameter-before-paren
+
+- Why: semantics (Angular reads the whitespace before the `)` as part of the last parameter, and reports a time with it: `Could not parse time value`)
+- Pin: `tests/fixtures/angular/angular-time-parameter-before-paren.component.html`
+- Drop when: `@angular/compiler`'s `parseDeferredTime` trims its value
+
+```html
+<!-- input (printWidth: 80) -->
+@defer (on viewport) {
+  <p>x</p>
+} @loading (after 100000000000000000000000000000ms; minimum 1000000000000000000000000000000000ms) {
+  <p>loading</p>
+}
+
+<!-- ours -->
+@defer (on viewport) {
+  <p>x</p>
+} @loading (
+  after 100000000000000000000000000000ms;
+  minimum 1000000000000000000000000000000000ms) {
+  <p>loading</p>
+}
+
+<!-- prettier -->
+@defer (on viewport) {
+  <p>x</p>
+} @loading (
+  after 100000000000000000000000000000ms;
+  minimum 1000000000000000000000000000000000ms
+) {
+  <p>loading</p>
+}
+```
+
+The parameters of `@placeholder` and `@loading` break as other blocks' do, but the `)` stays right after the last one.
+Angular's lexer ends the last parameter at the `)`, the whitespace before it included,
+and these two blocks read their times with an anchored pattern (`@angular/compiler` 22.2.5's `parseDeferredTime`), so Prettier's output does not compile.
+Other blocks read their parameters through a lexer that skips the whitespace, and keep the `)` on a line of its own.
+
 ## angular-block-name-with-line-break
 
 - Why: semantics (Angular reads `@else⏎ if` as an unknown block, a compile error, and `@else if` as an else-if branch)

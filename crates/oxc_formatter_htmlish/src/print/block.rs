@@ -1,7 +1,7 @@
 //! Angular control flow blocks: transparent, their markers print no box (`@if (a) {` … `}`).
 
 use oxc_formatter_core::{
-    builders::{group, hard_line_break, indent, soft_block_indent, space, text},
+    builders::{group, hard_line_break, indent, soft_line_break, space, text},
     format_args, write,
 };
 use oxc_htmlish_parser::ast::{Block, BlockKind, NodeId};
@@ -60,7 +60,19 @@ pub fn write_block<'a>(
         if !default_never {
             write!(f, space());
         }
-        write!(f, group(&format_args!("(", soft_block_indent(&parameters), ")")));
+        // `soft_block_indent`, but `@placeholder`'s and `@loading`'s `)`, whose last parameter Angular reads up to it:
+        // a time there rejects the whitespace before it (DIVERGENCES.md#angular-time-parameter-before-paren)
+        let close = (!matches!(block.kind, BlockKind::Placeholder | BlockKind::Loading))
+            .then_some(soft_line_break());
+        write!(
+            f,
+            group(&format_args!(
+                "(",
+                indent(&format_args!(soft_line_break(), &parameters)),
+                close,
+                ")"
+            ))
+        );
     }
     if block.close.is_none() {
         // `@default never;`; a fall-through `@case (a)` has nothing more
