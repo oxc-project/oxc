@@ -418,6 +418,7 @@ impl<'a> SemanticBuilder<'a> {
         self.node_store.ancestry()
     }
 
+    #[inline]
     pub(crate) fn in_ambient_context(&self) -> bool {
         self.ambient_depth > 0
     }
@@ -559,9 +560,25 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
+        let binding_id = self.scoping.get_binding(scope_id, name);
+        self.declare_symbol_with_binding(span, name, scope_id, binding_id, includes, excludes)
+    }
+
+    /// Declare a symbol using a pre-fetched binding on `scope_id`.
+    #[inline]
+    pub(crate) fn declare_symbol_with_binding(
+        &mut self,
+        span: Span,
+        name: Ident<'a>,
+        scope_id: ScopeId,
+        binding_id: Option<SymbolId>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> SymbolId {
         let is_catch_body = self.catch_body_scope_id == Some(scope_id);
         let errors_before = if is_catch_body { self.errors.borrow().len() } else { 0 };
-        let redeclared_symbol_id = self.check_redeclaration(scope_id, span, name, excludes);
+        let redeclared_symbol_id =
+            self.check_redeclaration_with_binding(scope_id, binding_id, span, name, excludes);
         // Report one error per declaration: skip the catch parameter check when this declaration
         // already clashed with something else, e.g. a `var` hoisted through the catch body
         // (`catch (e) { var e; let e }`).
@@ -572,8 +589,7 @@ impl<'a> SemanticBuilder<'a> {
         // A `var` hoisted through this scope is bound in an outer scope. Interfaces and type aliases
         // live in a separate declaration space, so they get their own symbol in this scope.
         if let Some(symbol_id) = redeclared_symbol_id
-            && (includes.intersects(SymbolFlags::Value)
-                || self.scoping.scope_has_binding(scope_id, name))
+            && (includes.intersects(SymbolFlags::Value) || binding_id.is_some())
         {
             self.add_redeclare_variable(symbol_id, includes, span);
             self.scoping.union_symbol_flag(symbol_id, includes);
@@ -588,6 +604,45 @@ impl<'a> SemanticBuilder<'a> {
             scope_id,
             self.node_store.current_node_id,
         )
+    }
+
+    /// Declare a block-level function hoisted onto an enclosing `var` scope using a pre-fetched binding.
+    #[cold]
+    pub(crate) fn declare_hoisted_function(
+        &mut self,
+        span: Span,
+        name: Ident<'a>,
+        var_scope_id: ScopeId,
+        var_binding: Option<SymbolId>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> SymbolId {
+        let block_scope_id = self.current_scope_id;
+        let symbol_id = if let Some(symbol_id) = var_binding {
+            if self.scoping.symbol_flags(symbol_id).intersects(excludes) {
+                let symbol_span = self.scoping.symbol_span(symbol_id);
+                self.error(redeclaration(&name, symbol_span, span));
+            } else if self.catch_body_scope_id == Some(block_scope_id) {
+                self.check_catch_parameter_redeclaration(block_scope_id, span, name, includes);
+            }
+            self.add_redeclare_variable(symbol_id, includes, span);
+            self.scoping.union_symbol_flag(symbol_id, includes);
+            symbol_id
+        } else {
+            if self.catch_body_scope_id == Some(block_scope_id) {
+                self.check_catch_parameter_redeclaration(block_scope_id, span, name, includes);
+            }
+            self.scoping.create_symbol_with_binding(
+                span,
+                name,
+                includes,
+                var_scope_id,
+                var_scope_id,
+                self.node_store.current_node_id,
+            )
+        };
+        self.hoisting_variables.insert((block_scope_id, name), symbol_id);
+        symbol_id
     }
 
     /// It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the
@@ -609,10 +664,14 @@ impl<'a> SemanticBuilder<'a> {
         }
         // Annex B.3.3: `if (x) function e() {}` behaves as if the function were in its own block,
         // so it is not one of the LexicallyDeclaredNames of the catch block. The function is the
-        // current node while it is bound. Annex B is JavaScript-only, as in `Function::bind`.
-        if !self.source_type.is_typescript()
+        // current node while it is bound. Annex B applies in sloppy mode (both JS and TS).
+        if !self.scoping.scope_flags(catch_body_scope_id).is_strict_mode()
+            && !self.in_ambient_context()
             && let AstKind::Function(func) = self.ancestry().current_kind()
             && func.is_declaration()
+            && !func.r#async
+            && !func.generator
+            && !func.is_typescript_syntax()
             && is_function_decl_part_of_if_statement(func, self)
         {
             return;
@@ -635,19 +694,6 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes)
-    }
-
-    /// Check if a symbol with the same name has already been declared in the
-    /// current scope. Returns the symbol ID if it exists and is not excluded by `excludes`.
-    pub(crate) fn check_redeclaration(
-        &self,
-        scope_id: ScopeId,
-        span: Span,
-        name: Ident<'a>,
-        excludes: SymbolFlags,
-    ) -> Option<SymbolId> {
-        let binding_id = self.scoping.get_binding(scope_id, name);
-        self.check_redeclaration_with_binding(scope_id, binding_id, span, name, excludes)
     }
 
     /// Check a local binding that has already been looked up, including conflicts with hoisted vars.

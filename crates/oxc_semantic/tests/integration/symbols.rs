@@ -815,3 +815,97 @@ fn test_implicit_arguments_unresolved_references() {
         assert!(scoping.get_reference(reference_id).symbol_id().is_none());
     }
 }
+
+#[test]
+fn test_sloppy_ts_block_function_hoisting() {
+    let cts = SourceType::from_path("test.cts").unwrap();
+    let mts = SourceType::from_path("test.mts").unwrap();
+
+    SemanticTester::new("{ function f() {} } f();", cts)
+        .has_root_symbol("f")
+        .equal_flags(SymbolFlags::Function)
+        .has_number_of_reads(1)
+        .test();
+    SemanticTester::new("function t() { { function g() {} } return g; }", cts)
+        .has_symbol("g")
+        .in_scope(oxc_semantic::ScopeFlags::Function)
+        .has_number_of_reads(1)
+        .test();
+    SemanticTester::new("{ function f() {} } f();", mts)
+        .expect_errors(false)
+        .has_symbol("f")
+        .not_in_scope(oxc_semantic::ScopeFlags::Top)
+        .has_number_of_reads(0)
+        .test();
+}
+
+#[test]
+fn test_sloppy_ts_block_function_type_and_overload_guards() {
+    let cts = SourceType::from_path("test.cts").unwrap();
+
+    SemanticTester::new("{ type f = number; function f() {} } f();", cts)
+        .has_root_symbol("f")
+        .equal_flags(SymbolFlags::Function)
+        .has_number_of_reads(1)
+        .test();
+    SemanticTester::new("type f = number; { function f() {} } const a: f = 1; f();", cts)
+        .has_root_symbol("f")
+        .equal_flags(SymbolFlags::Function | SymbolFlags::TypeAlias)
+        .has_number_of_references(2)
+        .test();
+    SemanticTester::new("{ function f(a: number): void; function f(a: any) {} } f(1);", cts)
+        .has_root_symbol("f")
+        .equal_flags(SymbolFlags::Function)
+        .has_number_of_reads(1)
+        .test();
+    SemanticTester::new(
+        "{ type f = number; function f(a: number): void; function f(a: any) {} } f(1);",
+        cts,
+    )
+    .has_root_symbol("f")
+    .equal_flags(SymbolFlags::Function)
+    .has_number_of_reads(1)
+    .test();
+    SemanticTester::new(
+        "type f = string; { function f(a: number): void; function f(a: any) {} f(1); } f(2);",
+        cts,
+    )
+    .has_root_symbol("f")
+    .equal_flags(SymbolFlags::Function | SymbolFlags::TypeAlias)
+    .has_number_of_references(2)
+    .test();
+    SemanticTester::new("{ type f = number; function f() {} function f() {} } f();", cts)
+        .has_root_symbol("f")
+        .equal_flags(SymbolFlags::Function)
+        .has_number_of_reads(1)
+        .test();
+    SemanticTester::new("type f = number; { let f = 1; function f() {} }", cts)
+        .has_error("Identifier `f` has already been declared");
+    SemanticTester::new("try {} catch (e) { type e = number; function e() {} }", cts)
+        .has_error("Identifier `e` has already been declared");
+    let tester =
+        SemanticTester::new("try {} catch (e) { type e = 0; var e = 1; function e() {} }", cts);
+    let catch_var_diagnostics = tester.build_with_errors().diagnostics;
+    assert_eq!(catch_var_diagnostics.len(), 1);
+    SemanticTester::new("try {} catch (e) { if (true) function e() {} } e();", cts)
+        .expect_errors(false)
+        .has_root_symbol("e")
+        .has_number_of_reads(1)
+        .test();
+    SemanticTester::new(
+        "var f = 0; { type f = number; { let f = 1; { var f = 2; } } function f() {} } f;",
+        cts,
+    )
+    .expect_errors(true)
+    .has_root_symbol("f")
+    .equal_flags(SymbolFlags::FunctionScopedVariable)
+    .test();
+    SemanticTester::new(
+        "type f = number; { { let f = 1; { var f = 2; } } function f() {} } const x: f = 1;",
+        cts,
+    )
+    .expect_errors(true)
+    .has_root_symbol("f")
+    .equal_flags(SymbolFlags::TypeAlias)
+    .test();
+}

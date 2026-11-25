@@ -4,9 +4,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:3:30]
+ 1 │ function doFoo(foo) {
+   ·          ──┬──
+   ·            ╰── Outer scope where this function is defined
  2 │                 {
  3 │                     function doBar(bar) {
-   ·                              ─────
+   ·                              ──┬──
+   ·                                ╰── This function does not use any variables from the parent function
  4 │                         return bar;
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
@@ -233,7 +237,9 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ unicorn(consistent-function-scoping): Function `doBar` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:1:36]
  1 │ function doFoo(foo) { { { function doBar(bar) { return bar; } } } return foo; }
-   ·                                    ─────
+   ·          ──┬──                     ──┬──
+   ·            │                         ╰── This function does not use any variables from the parent function
+   ·            ╰── Outer scope where this function is defined
    ╰────
   help: Move `doBar` to the outer scope to avoid recreating it on every call.
 
