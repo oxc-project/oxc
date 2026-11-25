@@ -116,6 +116,9 @@ pub struct TsrsLintServer {
     starting: AtomicBool,
     /// Why the server is not started again, once it cannot be used.
     disabled: Mutex<Option<String>>,
+    /// Set by [`Self::stop`]. Requests through a stopped server end as canceled: the linter that
+    /// sent them was replaced or removed, so their results are not shown.
+    stopped: AtomicBool,
     /// When the recent processes were started, oldest first.
     starts: Mutex<VecDeque<Instant>>,
     /// Why the last process exited.
@@ -378,6 +381,7 @@ impl TsrsLintServer {
             start: Mutex::new(()),
             starting: AtomicBool::new(false),
             disabled: Mutex::new(None),
+            stopped: AtomicBool::new(false),
             starts: Mutex::new(VecDeque::new()),
             last_exit: Arc::default(),
             file_changes: Mutex::default(),
@@ -399,7 +403,7 @@ impl TsrsLintServer {
         &self.executable_path
     }
 
-    /// Shuts the process down, and does not start another one. Pending requests end as
+    /// Shuts the process down, and does not start another one. Pending and later requests end as
     /// canceled: their results are no longer shown.
     ///
     /// # Panics
@@ -409,6 +413,7 @@ impl TsrsLintServer {
             let mut connection =
                 self.connection.lock().expect("tsrs-lint connection mutex poisoned");
             info!("stopping tsrs-lint server for `{}`", self.cwd.display());
+            self.stopped.store(true, Ordering::Release);
             *self.disabled.lock().expect("tsrs-lint disabled mutex poisoned") =
                 Some("tsrs-lint server was stopped".to_string());
             connection.take()
@@ -534,10 +539,17 @@ impl TsrsLintServer {
         let (sender, events) = mpsc::channel();
         let file_paths =
             configs.iter().flat_map(|config| config.file_paths.iter().cloned()).collect();
-        let connection = self.ensure_connection()?;
+        let connection = match self.ensure_connection() {
+            Ok(connection) => connection,
+            Err(_) if self.stopped.load(Ordering::Acquire) => return Err(LintError::Canceled),
+            Err(error) => return Err(LintError::Failed(error)),
+        };
         {
             let slot = self.connection.lock().expect("tsrs-lint connection mutex poisoned");
             // The server may have been stopped, or its process replaced, since it was ensured.
+            if self.stopped.load(Ordering::Acquire) {
+                return Err(LintError::Canceled);
+            }
             let disabled = self.disabled.lock().expect("tsrs-lint disabled mutex poisoned").clone();
             if let Some(reason) = disabled {
                 return Err(LintError::Failed(reason));

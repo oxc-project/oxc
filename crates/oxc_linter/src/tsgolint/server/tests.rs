@@ -324,9 +324,10 @@ fn stop_shuts_the_process_down() {
     assert_eq!(fixture.events().last().unwrap()["event"], "exit");
     assert!(!is_running(pid), "the process {pid} is still running");
 
+    // A later request, from a linter that was replaced, ends as canceled without a process.
     assert!(server.is_disabled());
-    let error = failure(lint(&server, &file));
-    assert_eq!(error, "tsrs-lint server was stopped");
+    let result = lint(&server, &file);
+    assert!(matches!(result, Err(LintError::Canceled)), "{result:?}");
     assert_eq!(fixture.starts(), 1);
 }
 
