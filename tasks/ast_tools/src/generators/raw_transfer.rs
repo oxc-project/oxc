@@ -707,8 +707,13 @@ impl<'s> StructDeserializerGenerator<'s> {
                             self.assignments_preamble
                                 .push(format!("const {field_name} = {field_fn}({field_pos});"));
                         } else {
-                            self.assignments_preamble
-                                .push(format!("{field_name}.push(...{field_fn}({field_pos}));"));
+                            // Append via a loop, not `push(...vec)`.
+                            // Spread passes every element as a call argument, which exhausts
+                            // the stack for large lists (e.g. >~125k statements).
+                            // https://github.com/oxc-project/oxc/issues/30266
+                            self.assignments_preamble.push(format!(
+                                "for (const item of {field_fn}({field_pos})) {field_name}.push(item);"
+                            ));
                         }
                     }
                     TypeDef::Option(option_def) => {

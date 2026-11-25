@@ -912,6 +912,43 @@ describe("error", () => {
   });
 });
 
+describe("raw transfer", () => {
+  // https://github.com/oxc-project/oxc/issues/30266
+  // Merging directives with statements used `body.push(...statements)`, which exceeds
+  // V8's maximum call argument count for large statement lists.
+  it("does not exhaust the call stack for large statement lists", () => {
+    const count = 200_000;
+    const statements = ";".repeat(count);
+
+    const ret = parseRawSync("test.ts", `"use strict";${statements}`, {
+      experimentalRawTransfer: true,
+    });
+    expect(ret.errors.length).toBe(0);
+    expect(ret.program.body.length).toBe(count + 1);
+    expect(ret.program.body[0].type).toBe("ExpressionStatement");
+    expect(ret.program.body[ret.program.body.length - 1].type).toBe("EmptyStatement");
+  });
+
+  it("does not exhaust the call stack for large function and namespace bodies", () => {
+    const count = 200_000;
+    const statements = ";".repeat(count);
+
+    const functionRet = parseRawSync("test.ts", `function f() {${statements}}`, {
+      experimentalRawTransfer: true,
+    });
+    expect(functionRet.errors.length).toBe(0);
+    const functionBody = functionRet.program.body[0] as { body: { body: unknown[] } };
+    expect(functionBody.body.body.length).toBe(count);
+
+    const namespaceRet = parseRawSync("test.ts", `namespace N {${statements}}`, {
+      experimentalRawTransfer: true,
+    });
+    expect(namespaceRet.errors.length).toBe(0);
+    const namespaceBody = namespaceRet.program.body[0] as { body: { body: unknown[] } };
+    expect(namespaceBody.body.body.length).toBe(count);
+  });
+});
+
 describe("worker", () => {
   it("should run", async () => {
     const code = await new Promise((resolve, reject) => {

@@ -92,8 +92,9 @@ function deserializeProgram(pos) {
       (node$0.end = end),
       (node$0.range = [start, end]),
       (node$0.parent = null),
-      node$0));
-  (program.body = deserializeVecDirective(pos + 88)).push(...deserializeVecStatement(pos + 112));
+      node$0)),
+    body = (program.body = deserializeVecDirective(pos + 88));
+  for (let stmt of deserializeVecStatement(pos + 112)) body.push(stmt);
   parent = null;
   return program;
 }
@@ -2605,7 +2606,7 @@ function deserializeFunctionBody(pos) {
       (node$0.parent = parent),
       node$0)),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  for (let item of deserializeVecStatement(pos + 40)) body.push(item);
   node.body = body;
   parent = previousParent;
   return node;
@@ -5574,7 +5575,7 @@ function deserializeTSModuleBlock(pos) {
       (node$0.parent = parent),
       node$0)),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  for (let item of deserializeVecStatement(pos + 40)) body.push(item);
   node.body = body;
   parent = previousParent;
   return node;

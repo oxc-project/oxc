@@ -68,7 +68,8 @@ function deserializeProgram(pos) {
       parent: null,
     });
   program.hashbang = deserializeOptionHashbang(pos + 56);
-  (program.body = deserializeVecDirective(pos + 88)).push(...deserializeVecStatement(pos + 112));
+  let body = (program.body = deserializeVecDirective(pos + 88));
+  for (let stmt of deserializeVecStatement(pos + 112)) body.push(stmt);
   parent = null;
   return program;
 }
@@ -2035,7 +2036,7 @@ function deserializeFunctionBody(pos) {
       parent,
     }),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  for (let item of deserializeVecStatement(pos + 40)) body.push(item);
   node.body = body;
   parent = previousParent;
   return node;
@@ -4426,7 +4427,7 @@ function deserializeTSModuleBlock(pos) {
       parent,
     }),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  for (let item of deserializeVecStatement(pos + 40)) body.push(item);
   node.body = body;
   parent = previousParent;
   return node;
