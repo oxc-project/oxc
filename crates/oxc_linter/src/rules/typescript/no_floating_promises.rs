@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::{
     rule::{DefaultRuleConfig, Rule},
@@ -125,8 +126,9 @@ impl Rule for NoFloatingPromises {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_default_config() {

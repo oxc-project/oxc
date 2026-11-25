@@ -1,3 +1,8 @@
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression, MemberExpression},
+    match_member_expression,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
@@ -6,11 +11,6 @@ use crate::{
     context::LintContext,
     fixer::RuleFixer,
     utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
-};
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
-    match_member_expression,
 };
 
 fn prefer_to_have_been_called_times_diagnostic(span: Span) -> OxcDiagnostic {

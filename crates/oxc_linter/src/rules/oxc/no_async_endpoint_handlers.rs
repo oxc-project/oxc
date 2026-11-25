@@ -1,5 +1,9 @@
 use std::ops::Deref;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde_json::Value;
+
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{
     AstKind,
@@ -9,9 +13,6 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::{CompactStr, Str};
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils};
 

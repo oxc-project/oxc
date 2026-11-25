@@ -5,14 +5,15 @@ use std::{
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::Ident;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     context::LintContext,

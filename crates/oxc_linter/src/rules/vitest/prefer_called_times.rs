@@ -1,3 +1,4 @@
+use oxc_ast::{AstKind, ast::CallExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
@@ -8,7 +9,6 @@ use crate::{
     rule::Rule,
     utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
 };
-use oxc_ast::{AstKind, ast::CallExpression};
 
 fn prefer_called_times_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`")

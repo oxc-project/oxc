@@ -173,8 +173,9 @@ fn handle_watch_value<'a>(value: &Expression<'a>, ctx: &LintContext<'a>) {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

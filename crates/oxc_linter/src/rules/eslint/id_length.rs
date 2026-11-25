@@ -6,10 +6,12 @@ use serde::Deserialize;
 use serde_json::Value;
 use unicode_segmentation::UnicodeSegmentation;
 
-use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, BindingProperty, Expression, IdentifierName,
-    IdentifierReference, PrivateIdentifier, PropertyKey,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        BindingIdentifier, BindingPattern, BindingProperty, Expression, IdentifierName,
+        IdentifierReference, PrivateIdentifier, PropertyKey,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

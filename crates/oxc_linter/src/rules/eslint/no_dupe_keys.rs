@@ -1,5 +1,8 @@
 use std::borrow::Cow;
 
+use rustc_hash::{FxBuildHasher, FxHashMap};
+use smallvec::SmallVec;
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
@@ -7,8 +10,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxBuildHasher, FxHashMap};
-use smallvec::SmallVec;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

@@ -1,9 +1,6 @@
-use crate::{
-    AstNode,
-    context::LintContext,
-    rule::{DefaultRuleConfig, Rule},
-    utils::is_promise,
-};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -15,8 +12,13 @@ use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
+
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_promise,
+};
 
 fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic {
     let warn_msg = match issue {

@@ -1,9 +1,6 @@
-use crate::{
-    AstNode,
-    context::{ContextHost, LintContext},
-    rule::{DefaultRuleConfig, Rule},
-    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
-};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName},
@@ -11,8 +8,13 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
+
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
+};
 
 fn missing_type_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have an explicit `type` attribute.")

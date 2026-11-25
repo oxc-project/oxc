@@ -1,9 +1,10 @@
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

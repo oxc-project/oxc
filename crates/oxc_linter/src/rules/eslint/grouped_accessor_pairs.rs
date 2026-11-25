@@ -1,3 +1,8 @@
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind, StaticPropertyName,
@@ -10,10 +15,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{
     AstNode,

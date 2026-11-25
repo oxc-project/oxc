@@ -11,16 +11,13 @@ mod usage;
 
 use std::ops::Deref;
 
-use allowed::FunctionParameterKind;
-use ignored::IgnoreReason;
-use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
+use schemars::JsonSchema;
+
 use oxc_ast::{AstKind, AstType, ast::CatchParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use symbol::Symbol;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -28,6 +25,10 @@ use crate::{
     rules::eslint::no_unused_vars::options::VarsOption,
     utils::declarator_initializes,
 };
+use allowed::FunctionParameterKind;
+use ignored::IgnoreReason;
+use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
+use symbol::Symbol;
 
 #[derive(JsonSchema, Debug)]
 #[serde(untagged)]

@@ -1,5 +1,8 @@
 use std::{fmt::Debug, sync::Arc};
 
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingPattern, ObjectPattern},
@@ -8,8 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,

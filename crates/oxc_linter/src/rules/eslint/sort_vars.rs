@@ -1,6 +1,8 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
+use schemars::JsonSchema;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, BindingPattern, Expression, VariableDeclarator},
@@ -8,7 +10,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

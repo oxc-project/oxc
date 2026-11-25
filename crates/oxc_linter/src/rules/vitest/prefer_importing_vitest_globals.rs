@@ -1,4 +1,6 @@
 use itertools::Itertools;
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingPattern, Expression},
@@ -8,7 +10,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,

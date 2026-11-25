@@ -216,8 +216,9 @@ fn exact_convert(s: &str, case_type: CaseType) -> Option<String> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let vue = || Some(PathBuf::from("test.vue"));
     let js = || Some(PathBuf::from("test.js"));

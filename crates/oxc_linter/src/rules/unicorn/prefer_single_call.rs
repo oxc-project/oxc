@@ -1,4 +1,6 @@
 use itertools::Itertools;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
@@ -11,8 +13,6 @@ use oxc_syntax::{
     identifier::{is_identifier_part, is_white_space},
     line_terminator::is_line_terminator,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -416,9 +416,8 @@ fn arg_references_receiver(arg_src: &str, receiver: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::tester::{TestCase, Tester};
-
     use super::*;
+    use crate::tester::{TestCase, Tester};
 
     #[test]
     fn test() {

@@ -1,4 +1,5 @@
 use lazy_regex::Regex;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -463,8 +464,7 @@ impl NoUnusedVars {
 mod test {
     use oxc_str::Str;
 
-    use super::super::NoUnusedVars;
-    use super::{IgnoreReason, Ignored};
+    use super::{super::NoUnusedVars, IgnoreReason, Ignored};
     use crate::rule::Rule as _;
 
     impl std::cmp::PartialEq for super::Ignored {

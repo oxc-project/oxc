@@ -1,11 +1,8 @@
-use crate::{
-    AstNode,
-    context::{ContextHost, LintContext},
-    rule::{DefaultRuleConfig, Rule},
-};
 use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_allocator::ArenaVec;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -19,8 +16,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
 use oxc_str::JSStr;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Curly braces are unnecessary here.").with_label(span)

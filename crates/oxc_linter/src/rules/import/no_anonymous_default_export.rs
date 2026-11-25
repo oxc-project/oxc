@@ -1,3 +1,7 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{ExportDefaultDeclarationKind, Expression},
@@ -5,9 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -202,8 +203,9 @@ impl Rule for NoAnonymousDefaultExport {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("export default function foo() {}", None),

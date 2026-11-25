@@ -1,3 +1,5 @@
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
     AstKind, FunctionKind,
     ast::{
@@ -10,10 +12,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
 
-use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    module_record::{ImportEntry, ImportImportName},
+    rule::Rule,
+};
 
 fn no_lifecycle_after_await_diagnostic(span: Span, hook_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -227,8 +233,9 @@ impl<'a> VisitJs<'a> for LifecycleAfterAwaitVisitor<'a> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
             ("

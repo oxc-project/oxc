@@ -118,8 +118,9 @@ impl Rule for RequireDefaultExport {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

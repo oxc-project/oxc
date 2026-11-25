@@ -1,5 +1,11 @@
 use std::ops::Deref;
 
+use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+use smallvec::SmallVec;
+
 use oxc_allocator::{Address, ArenaVec, UnstableAddress};
 use oxc_ast::{AstKind, StaticPropertyName, ast::*};
 use oxc_ast_visit::{
@@ -11,11 +17,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 use oxc_str::CompactStr;
-use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
-use smallvec::SmallVec;
 
 use crate::{
     AstNode,
@@ -874,10 +875,12 @@ fn is_skippable_typed_expression(expr: &Expression<'_>) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::path::PathBuf;
+
+    use serde_json::{Value, json};
+
     use super::{ExplicitModuleBoundaryTypes, ExplicitModuleBoundaryTypesConfig};
     use crate::{RuleMeta as _, rule::Rule as _, tester::Tester};
-    use serde_json::{Value, json};
-    use std::path::PathBuf;
 
     #[test]
     fn config() {

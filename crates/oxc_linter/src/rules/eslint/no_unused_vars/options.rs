@@ -1,10 +1,11 @@
 use std::{borrow::Cow, ops::Deref};
 
 use lazy_regex::{Regex, RegexBuilder};
-use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
 use serde::Serialize;
 use serde_json::Value;
+
+use oxc_diagnostics::OxcDiagnostic;
 
 // See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
 #[derive(Debug, Clone, JsonSchema)]

@@ -1,5 +1,8 @@
 use std::borrow::Cow;
 
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
@@ -13,9 +16,6 @@ use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Ident;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object};
-
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

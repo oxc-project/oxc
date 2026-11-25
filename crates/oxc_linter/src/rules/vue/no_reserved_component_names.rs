@@ -276,8 +276,9 @@ fn pascal_to_kebab(name: &str) -> Option<String> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("<script>export default {}</script>", None, None, Some(PathBuf::from("test.vue"))),

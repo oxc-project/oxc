@@ -14,8 +14,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
 use crate::{
     AstNode,
-    ast_util::get_declaration_of_variable,
-    ast_util::variable_declaration_kind,
+    ast_util::{get_declaration_of_variable, variable_declaration_kind},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::is_regexp_callee,
