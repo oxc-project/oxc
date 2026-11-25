@@ -1,6 +1,6 @@
 commit: 51225612
 
-Passed: 370/489
+Passed: 377/496
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -35,7 +35,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (40/44)
+# babel-plugin-transform-class-properties (41/45)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -206,7 +206,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (40/120)
+# legacy-decorators (41/121)
 * oxc/accessor/input.ts
 x Output mismatch
 

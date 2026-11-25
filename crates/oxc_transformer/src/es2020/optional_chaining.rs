@@ -56,8 +56,12 @@ use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 
 use crate::{
-    common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
-    utils::ast_builder::wrap_expression_in_arrow_function_iife,
+    common::var_declarations::VarDeclarationsStore,
+    context::TraverseCtx,
+    state::TransformState,
+    utils::ast_builder::{
+        wrap_anonymous_function_or_class, wrap_expression_in_arrow_function_iife,
+    },
 };
 
 #[derive(Debug)]
@@ -290,7 +294,13 @@ impl<'a> OptionalChaining<'a> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        Expression::new_assignment_expression(SPAN, AssignmentOperator::Assign, left, right, ctx)
+        Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            left,
+            wrap_anonymous_function_or_class(right, ctx),
+            ctx,
+        )
     }
 
     /// Transform chain expression

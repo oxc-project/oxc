@@ -1,0 +1,3 @@
+{
+  "plugins": ["transform-typescript", "transform-nullish-coalescing-operator"]
+}

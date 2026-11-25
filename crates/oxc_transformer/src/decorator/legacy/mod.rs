@@ -69,6 +69,7 @@ use crate::{
         ast_builder::{
             create_assignment, create_export_default_class_reference,
             create_export_named_class_reference, create_prototype_member,
+            wrap_anonymous_function_or_class,
         },
         decorated_class::{
             class_body_has_auto_accessors, legacy_decorators_reassign_class_binding,
@@ -1224,7 +1225,13 @@ impl<'a> LegacyDecorator<'a> {
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_write_target(ctx);
                 key.replace_with(|right| {
-                    Expression::new_assignment_expression(SPAN, operator, left, right, ctx)
+                    Expression::new_assignment_expression(
+                        SPAN,
+                        operator,
+                        left,
+                        wrap_anonymous_function_or_class(right, ctx),
+                        ctx,
+                    )
                 });
                 binding.create_read_expression(ctx)
             }

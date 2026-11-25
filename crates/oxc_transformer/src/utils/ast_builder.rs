@@ -443,3 +443,21 @@ pub fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
     let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
     Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }
+
+/// Prevent `NamedEvaluation` from naming an anonymous function/class after a synthetic temp var.
+pub fn wrap_anonymous_function_or_class<'a>(
+    expr: Expression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let is_anonymous = match expr.get_inner_expression() {
+        Expression::ArrowFunctionExpression(_) => true,
+        Expression::FunctionExpression(func) => func.id.is_none(),
+        Expression::ClassExpression(class) => class.id.is_none(),
+        _ => false,
+    };
+    if is_anonymous {
+        Expression::new_sequence_expression(SPAN, [Expression::new_number_0(SPAN, ctx), expr], ctx)
+    } else {
+        expr
+    }
+}
