@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 170/170 (100.00%)
-Positive Passed: 170/170 (100.00%)
-Negative Passed: 303/303 (100.00%)
+AST Parsed     : 171/171 (100.00%)
+Positive Passed: 171/171 (100.00%)
+Negative Passed: 304/304 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -328,6 +328,30 @@ Negative Passed: 303/303 (100.00%)
  3 │ class B { accessor static
    ·                    ──────
  4 │  x }
+   ╰────
+
+  × Classes may not have a static property named 'prototype'
+   ╭─[misc/fail/auto-accessor-static-reserved-names.js:2:19]
+ 1 │ class C {
+ 2 │   static accessor prototype;
+   ·                   ─────────
+ 3 │   static accessor 'prototype';
+   ╰────
+
+  × Classes may not have a static property named 'prototype'
+   ╭─[misc/fail/auto-accessor-static-reserved-names.js:3:19]
+ 2 │   static accessor prototype;
+ 3 │   static accessor 'prototype';
+   ·                   ───────────
+ 4 │   static accessor constructor;
+   ╰────
+
+  × Classes may not have a field named 'constructor'
+   ╭─[misc/fail/auto-accessor-static-reserved-names.js:4:19]
+ 3 │   static accessor 'prototype';
+ 4 │   static accessor constructor;
+   ·                   ───────────
+ 5 │ }
    ╰────
 
   × TS(1029): 'static' modifier must precede 'accessor' modifier.

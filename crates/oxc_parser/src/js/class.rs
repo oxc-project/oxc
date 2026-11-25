@@ -699,9 +699,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if let Some(optional_span) = optional_span {
                 self.error(diagnostics::optional_accessor_property(optional_span));
             }
-            if matches!(&name, PropertyKey::StaticStringLiteral(lit) if lit.value == "constructor")
+            if !name.is_computed()
+                && let Some((name, span)) = name.prop_name()
             {
-                self.error(diagnostics::constructor_accessor(name.span()));
+                if name == "constructor" {
+                    self.error(diagnostics::constructor_accessor(span));
+                }
+                if name == "prototype"
+                    && modifiers.contains(ModifierKind::Static)
+                    && !self.ctx.has_ambient()
+                {
+                    self.error(diagnostics::static_prototype(span));
+                }
             }
             return self
                 .parse_class_accessor_property(start, name, definite, modifiers, decorators);
