@@ -58,8 +58,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse the JSX element or fragment, or the arrow function with type parameters,
     /// that the `<` at the start of an `AssignmentExpression` begins in a TSX file.
     ///
-    /// JSX files have no type parameters, so use [`Self::parse_jsx_expression`] instead.
-    ///
     /// ```text
     /// JSXFragment       : `<` `>` JSXChildren? `<` `/` `>`
     /// JSXOpeningElement : `<` JSXElementName TypeArguments? JSXAttributes? `/`? `>`
