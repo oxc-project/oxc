@@ -87,13 +87,13 @@ class E extends super.foo {}
 class F extends (() => (arg = super.foo) => 123 + super.foo) {}
 
 // `super.foo` in class decorators
-@super.foo
+@(super.foo)
 class G extends Super {
-  @super.foo prop = 1;
-  @super.foo static prop = 2;
-  @super.foo accessor access = 3;
-  @super.foo static accessor access = 4;
-  @super.foo method() {}
+  @(super.foo) prop = 1;
+  @(super.foo) static prop = 2;
+  @(super.foo) accessor access = 3;
+  @(super.foo) static accessor access = 4;
+  @(super.foo) method() {}
 }
 
 // `super.foo` in computed keys in class inside function
@@ -120,13 +120,13 @@ function h() {
 
 // `super.foo` in decorators in class inside function
 function i() {
-  @super.foo
+  @(super.foo)
   class Inner {
-    @super.foo prop = 1;
-    @super.foo static prop = 2;
-    @super.foo accessor access = 3;
-    @super.foo static accessor access = 4;
-    @super.foo method() {}
+    @(super.foo) prop = 1;
+    @(super.foo) static prop = 2;
+    @(super.foo) accessor access = 3;
+    @(super.foo) static accessor access = 4;
+    @(super.foo) method() {}
   }
 }
 

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 155/155 (100.00%)
-Positive Passed: 155/155 (100.00%)
-Negative Passed: 291/291 (100.00%)
+AST Parsed     : 157/157 (100.00%)
+Positive Passed: 157/157 (100.00%)
+Negative Passed: 292/292 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -591,6 +591,213 @@ Negative Passed: 291/291 (100.00%)
    ·           ──┬──
    ·             ╰── `class` expected
    ╰────
+
+  × Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'
+   ╭─[misc/fail/decorator-expression-invalid.js:2:13]
+ 1 │ // Arguments after a parenthesized decorator expression
+ 2 │ class A1 { @(a)(b) m() {} }
+   ·             ──────
+ 3 │ class A2 { @((c) => c)(1) m() {} }
+   ╰────
+
+  × Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'
+   ╭─[misc/fail/decorator-expression-invalid.js:3:13]
+ 2 │ class A1 { @(a)(b) m() {} }
+ 3 │ class A2 { @((c) => c)(1) m() {} }
+   ·             ─────────────
+ 4 │ @((c) => c)(A3) class A3 {}
+   ╰────
+
+  × Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'
+   ╭─[misc/fail/decorator-expression-invalid.js:4:2]
+ 3 │ class A2 { @((c) => c)(1) m() {} }
+ 4 │ @((c) => c)(A3) class A3 {}
+   ·  ──────────────
+ 5 │ @(a)(b) class A4 {}
+   ╰────
+
+  × Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'
+   ╭─[misc/fail/decorator-expression-invalid.js:5:2]
+ 4 │ @((c) => c)(A3) class A3 {}
+ 5 │ @(a)(b) class A4 {}
+   ·  ──────
+ 6 │ 
+   ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+   ╭─[misc/fail/decorator-expression-invalid.js:8:13]
+ 7 │ // Member access or templates after a parenthesized decorator expression
+ 8 │ class B1 { @(a).b m() {} }
+   ·             ─────
+ 9 │ class B2 { @(a).#b m() {} #b; }
+   ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:9:13]
+  8 │ class B1 { @(a).b m() {} }
+  9 │ class B2 { @(a).#b m() {} #b; }
+    ·             ──────
+ 10 │ class B3 { @(a)`` m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:10:13]
+  9 │ class B2 { @(a).#b m() {} #b; }
+ 10 │ class B3 { @(a)`` m() {} }
+    ·             ─────
+ 11 │ @(a).b class B4 {}
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:11:2]
+ 10 │ class B3 { @(a)`` m() {} }
+ 11 │ @(a).b class B4 {}
+    ·  ─────
+ 12 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:14:13]
+ 13 │ // Member access, calls or templates after a call
+ 14 │ class C1 { @a()() m() {} }
+    ·             ─────
+ 15 │ class C2 { @a().b m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:15:13]
+ 14 │ class C1 { @a()() m() {} }
+ 15 │ class C2 { @a().b m() {} }
+    ·             ─────
+ 16 │ class C3 { @a.b.c(1)(2) m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:16:13]
+ 15 │ class C2 { @a().b m() {} }
+ 16 │ class C3 { @a.b.c(1)(2) m() {} }
+    ·             ───────────
+ 17 │ class C4 { @a().b() m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:17:13]
+ 16 │ class C3 { @a.b.c(1)(2) m() {} }
+ 17 │ class C4 { @a().b() m() {} }
+    ·             ───────
+ 18 │ class C5 { @a()`` m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:18:13]
+ 17 │ class C4 { @a().b() m() {} }
+ 18 │ class C5 { @a()`` m() {} }
+    ·             ─────
+ 19 │ @a().b class C6 {}
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:19:2]
+ 18 │ class C5 { @a()`` m() {} }
+ 19 │ @a().b class C6 {}
+    ·  ─────
+ 20 │ @a()() class C7 {}
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:20:2]
+ 19 │ @a().b class C6 {}
+ 20 │ @a()() class C7 {}
+    ·  ─────
+ 21 │ 
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:23:23]
+ 22 │ // Heads other than an `IdentifierReference`
+ 23 │ class D1 extends B { @super.x m() {} }
+    ·                       ───────
+ 24 │ class D2 extends B { @super.x() m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:24:23]
+ 23 │ class D1 extends B { @super.x m() {} }
+ 24 │ class D2 extends B { @super.x() m() {} }
+    ·                       ─────────
+ 25 │ class D3 { @this.x m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:25:13]
+ 24 │ class D2 extends B { @super.x() m() {} }
+ 25 │ class D3 { @this.x m() {} }
+    ·             ──────
+ 26 │ class D4 { @new a m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:26:13]
+ 25 │ class D3 { @this.x m() {} }
+ 26 │ class D4 { @new a m() {} }
+    ·             ─────
+ 27 │ class D5 { @new a() m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:27:13]
+ 26 │ class D4 { @new a m() {} }
+ 27 │ class D5 { @new a() m() {} }
+    ·             ───────
+ 28 │ class D6 { @a`` m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:28:13]
+ 27 │ class D5 { @new a() m() {} }
+ 28 │ class D6 { @a`` m() {} }
+    ·             ───
+ 29 │ class D7 { @a.b`` m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:29:13]
+ 28 │ class D6 { @a`` m() {} }
+ 29 │ class D7 { @a.b`` m() {} }
+    ·             ─────
+ 30 │ class D8 { @import.meta.dec m() {} }
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:30:13]
+ 29 │ class D7 { @a.b`` m() {} }
+ 30 │ class D8 { @import.meta.dec m() {} }
+    ·             ───────────────
+ 31 │ @this.x class D9 {}
+    ╰────
+
+  × Expression must be enclosed in parentheses to be used as a decorator.
+    ╭─[misc/fail/decorator-expression-invalid.js:31:2]
+ 30 │ class D8 { @import.meta.dec m() {} }
+ 31 │ @this.x class D9 {}
+    ·  ──────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/decorator-expression-invalid.js:23:23]
+ 22 │ // Heads other than an `IdentifierReference`
+ 23 │ class D1 extends B { @super.x m() {} }
+    ·                       ─────
+ 24 │ class D2 extends B { @super.x() m() {} }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/decorator-expression-invalid.js:24:23]
+ 23 │ class D1 extends B { @super.x m() {} }
+ 24 │ class D2 extends B { @super.x() m() {} }
+    ·                       ─────
+ 25 │ class D3 { @this.x m() {} }
+    ╰────
 
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
@@ -2816,50 +3023,50 @@ Negative Passed: 291/291 (100.00%)
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:148:2]
+     ╭─[misc/fail/oxc-13284-1.js:148:3]
  147 │ // `super()` in class decorators
- 148 │ @super()
-     ·  ───────
+ 148 │ @(super())
+     ·   ───────
  149 │ class I extends Super {
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:150:4]
+     ╭─[misc/fail/oxc-13284-1.js:150:5]
  149 │ class I extends Super {
- 150 │   @super() prop = 1;
-     ·    ───────
- 151 │   @super() static prop = 2;
+ 150 │   @(super()) prop = 1;
+     ·     ───────
+ 151 │   @(super()) static prop = 2;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:151:4]
- 150 │   @super() prop = 1;
- 151 │   @super() static prop = 2;
-     ·    ───────
- 152 │   @super() accessor access = 3;
+     ╭─[misc/fail/oxc-13284-1.js:151:5]
+ 150 │   @(super()) prop = 1;
+ 151 │   @(super()) static prop = 2;
+     ·     ───────
+ 152 │   @(super()) accessor access = 3;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:152:4]
- 151 │   @super() static prop = 2;
- 152 │   @super() accessor access = 3;
-     ·    ───────
- 153 │   @super() static accessor access = 4;
+     ╭─[misc/fail/oxc-13284-1.js:152:5]
+ 151 │   @(super()) static prop = 2;
+ 152 │   @(super()) accessor access = 3;
+     ·     ───────
+ 153 │   @(super()) static accessor access = 4;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:153:4]
- 152 │   @super() accessor access = 3;
- 153 │   @super() static accessor access = 4;
-     ·    ───────
- 154 │   @super() method() {}
+     ╭─[misc/fail/oxc-13284-1.js:153:5]
+ 152 │   @(super()) accessor access = 3;
+ 153 │   @(super()) static accessor access = 4;
+     ·     ───────
+ 154 │   @(super()) method() {}
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:154:4]
- 153 │   @super() static accessor access = 4;
- 154 │   @super() method() {}
-     ·    ───────
+     ╭─[misc/fail/oxc-13284-1.js:154:5]
+ 153 │   @(super()) static accessor access = 4;
+ 154 │   @(super()) method() {}
+     ·     ───────
  155 │ }
      ╰────
 
@@ -3232,98 +3439,98 @@ Negative Passed: 291/291 (100.00%)
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:226:11]
+     ╭─[misc/fail/oxc-13284-1.js:226:12]
  225 │ class O extends Super {
- 226 │   prop = @super() class Inner extends Super {
-     ·           ───────
- 227 │     @super() prop = 1;
+ 226 │   prop = @(super()) class Inner extends Super {
+     ·            ───────
+ 227 │     @(super()) prop = 1;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:227:6]
- 226 │   prop = @super() class Inner extends Super {
- 227 │     @super() prop = 1;
-     ·      ───────
- 228 │     @super() static prop = 2;
+     ╭─[misc/fail/oxc-13284-1.js:227:7]
+ 226 │   prop = @(super()) class Inner extends Super {
+ 227 │     @(super()) prop = 1;
+     ·       ───────
+ 228 │     @(super()) static prop = 2;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:228:6]
- 227 │     @super() prop = 1;
- 228 │     @super() static prop = 2;
-     ·      ───────
- 229 │     @super() accessor access = 3;
+     ╭─[misc/fail/oxc-13284-1.js:228:7]
+ 227 │     @(super()) prop = 1;
+ 228 │     @(super()) static prop = 2;
+     ·       ───────
+ 229 │     @(super()) accessor access = 3;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:229:6]
- 228 │     @super() static prop = 2;
- 229 │     @super() accessor access = 3;
-     ·      ───────
- 230 │     @super() static accessor access = 4;
+     ╭─[misc/fail/oxc-13284-1.js:229:7]
+ 228 │     @(super()) static prop = 2;
+ 229 │     @(super()) accessor access = 3;
+     ·       ───────
+ 230 │     @(super()) static accessor access = 4;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:230:6]
- 229 │     @super() accessor access = 3;
- 230 │     @super() static accessor access = 4;
-     ·      ───────
- 231 │     @super() method() {}
+     ╭─[misc/fail/oxc-13284-1.js:230:7]
+ 229 │     @(super()) accessor access = 3;
+ 230 │     @(super()) static accessor access = 4;
+     ·       ───────
+ 231 │     @(super()) method() {}
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:231:6]
- 230 │     @super() static accessor access = 4;
- 231 │     @super() method() {}
-     ·      ───────
+     ╭─[misc/fail/oxc-13284-1.js:231:7]
+ 230 │     @(super()) static accessor access = 4;
+ 231 │     @(super()) method() {}
+     ·       ───────
  232 │   };
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:238:6]
+     ╭─[misc/fail/oxc-13284-1.js:238:7]
  237 │   method() {
- 238 │     @super()
-     ·      ───────
+ 238 │     @(super())
+     ·       ───────
  239 │     class Inner extends Super {
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:240:8]
+     ╭─[misc/fail/oxc-13284-1.js:240:9]
  239 │     class Inner extends Super {
- 240 │       @super() prop = 1;
-     ·        ───────
- 241 │       @super() static prop = 2;
+ 240 │       @(super()) prop = 1;
+     ·         ───────
+ 241 │       @(super()) static prop = 2;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:241:8]
- 240 │       @super() prop = 1;
- 241 │       @super() static prop = 2;
-     ·        ───────
- 242 │       @super() accessor access = 3;
+     ╭─[misc/fail/oxc-13284-1.js:241:9]
+ 240 │       @(super()) prop = 1;
+ 241 │       @(super()) static prop = 2;
+     ·         ───────
+ 242 │       @(super()) accessor access = 3;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:242:8]
- 241 │       @super() static prop = 2;
- 242 │       @super() accessor access = 3;
-     ·        ───────
- 243 │       @super() static accessor access = 4;
+     ╭─[misc/fail/oxc-13284-1.js:242:9]
+ 241 │       @(super()) static prop = 2;
+ 242 │       @(super()) accessor access = 3;
+     ·         ───────
+ 243 │       @(super()) static accessor access = 4;
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:243:8]
- 242 │       @super() accessor access = 3;
- 243 │       @super() static accessor access = 4;
-     ·        ───────
- 244 │       @super() method() {}
+     ╭─[misc/fail/oxc-13284-1.js:243:9]
+ 242 │       @(super()) accessor access = 3;
+ 243 │       @(super()) static accessor access = 4;
+     ·         ───────
+ 244 │       @(super()) method() {}
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:244:8]
- 243 │       @super() static accessor access = 4;
- 244 │       @super() method() {}
-     ·        ───────
+     ╭─[misc/fail/oxc-13284-1.js:244:9]
+ 243 │       @(super()) static accessor access = 4;
+ 244 │       @(super()) method() {}
+     ·         ───────
  245 │     }
      ╰────
 
@@ -3344,10 +3551,10 @@ Negative Passed: 291/291 (100.00%)
      ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
-     ╭─[misc/fail/oxc-13284-1.js:271:16]
+     ╭─[misc/fail/oxc-13284-1.js:271:17]
  270 │             class I {
- 271 │               @super()
-     ·                ───────
+ 271 │               @(super())
+     ·                 ───────
  272 │               method() {}
      ╰────
 
@@ -3968,50 +4175,50 @@ Negative Passed: 291/291 (100.00%)
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[misc/fail/oxc-13284-2.js:90:2]
+    ╭─[misc/fail/oxc-13284-2.js:90:3]
  89 │ // `super.foo` in class decorators
- 90 │ @super.foo
-    ·  ─────
+ 90 │ @(super.foo)
+    ·   ─────
  91 │ class G extends Super {
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[misc/fail/oxc-13284-2.js:92:4]
+    ╭─[misc/fail/oxc-13284-2.js:92:5]
  91 │ class G extends Super {
- 92 │   @super.foo prop = 1;
-    ·    ─────
- 93 │   @super.foo static prop = 2;
+ 92 │   @(super.foo) prop = 1;
+    ·     ─────
+ 93 │   @(super.foo) static prop = 2;
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[misc/fail/oxc-13284-2.js:93:4]
- 92 │   @super.foo prop = 1;
- 93 │   @super.foo static prop = 2;
-    ·    ─────
- 94 │   @super.foo accessor access = 3;
+    ╭─[misc/fail/oxc-13284-2.js:93:5]
+ 92 │   @(super.foo) prop = 1;
+ 93 │   @(super.foo) static prop = 2;
+    ·     ─────
+ 94 │   @(super.foo) accessor access = 3;
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[misc/fail/oxc-13284-2.js:94:4]
- 93 │   @super.foo static prop = 2;
- 94 │   @super.foo accessor access = 3;
-    ·    ─────
- 95 │   @super.foo static accessor access = 4;
+    ╭─[misc/fail/oxc-13284-2.js:94:5]
+ 93 │   @(super.foo) static prop = 2;
+ 94 │   @(super.foo) accessor access = 3;
+    ·     ─────
+ 95 │   @(super.foo) static accessor access = 4;
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[misc/fail/oxc-13284-2.js:95:4]
- 94 │   @super.foo accessor access = 3;
- 95 │   @super.foo static accessor access = 4;
-    ·    ─────
- 96 │   @super.foo method() {}
+    ╭─[misc/fail/oxc-13284-2.js:95:5]
+ 94 │   @(super.foo) accessor access = 3;
+ 95 │   @(super.foo) static accessor access = 4;
+    ·     ─────
+ 96 │   @(super.foo) method() {}
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[misc/fail/oxc-13284-2.js:96:4]
- 95 │   @super.foo static accessor access = 4;
- 96 │   @super.foo method() {}
-    ·    ─────
+    ╭─[misc/fail/oxc-13284-2.js:96:5]
+ 95 │   @(super.foo) static accessor access = 4;
+ 96 │   @(super.foo) method() {}
+    ·     ─────
  97 │ }
     ╰────
 
@@ -4136,50 +4343,50 @@ Negative Passed: 291/291 (100.00%)
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-     ╭─[misc/fail/oxc-13284-2.js:123:4]
+     ╭─[misc/fail/oxc-13284-2.js:123:5]
  122 │ function i() {
- 123 │   @super.foo
-     ·    ─────
+ 123 │   @(super.foo)
+     ·     ─────
  124 │   class Inner {
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-     ╭─[misc/fail/oxc-13284-2.js:125:6]
+     ╭─[misc/fail/oxc-13284-2.js:125:7]
  124 │   class Inner {
- 125 │     @super.foo prop = 1;
-     ·      ─────
- 126 │     @super.foo static prop = 2;
+ 125 │     @(super.foo) prop = 1;
+     ·       ─────
+ 126 │     @(super.foo) static prop = 2;
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-     ╭─[misc/fail/oxc-13284-2.js:126:6]
- 125 │     @super.foo prop = 1;
- 126 │     @super.foo static prop = 2;
-     ·      ─────
- 127 │     @super.foo accessor access = 3;
+     ╭─[misc/fail/oxc-13284-2.js:126:7]
+ 125 │     @(super.foo) prop = 1;
+ 126 │     @(super.foo) static prop = 2;
+     ·       ─────
+ 127 │     @(super.foo) accessor access = 3;
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-     ╭─[misc/fail/oxc-13284-2.js:127:6]
- 126 │     @super.foo static prop = 2;
- 127 │     @super.foo accessor access = 3;
-     ·      ─────
- 128 │     @super.foo static accessor access = 4;
+     ╭─[misc/fail/oxc-13284-2.js:127:7]
+ 126 │     @(super.foo) static prop = 2;
+ 127 │     @(super.foo) accessor access = 3;
+     ·       ─────
+ 128 │     @(super.foo) static accessor access = 4;
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-     ╭─[misc/fail/oxc-13284-2.js:128:6]
- 127 │     @super.foo accessor access = 3;
- 128 │     @super.foo static accessor access = 4;
-     ·      ─────
- 129 │     @super.foo method() {}
+     ╭─[misc/fail/oxc-13284-2.js:128:7]
+ 127 │     @(super.foo) accessor access = 3;
+ 128 │     @(super.foo) static accessor access = 4;
+     ·       ─────
+ 129 │     @(super.foo) method() {}
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-     ╭─[misc/fail/oxc-13284-2.js:129:6]
- 128 │     @super.foo static accessor access = 4;
- 129 │     @super.foo method() {}
-     ·      ─────
+     ╭─[misc/fail/oxc-13284-2.js:129:7]
+ 128 │     @(super.foo) static accessor access = 4;
+ 129 │     @(super.foo) method() {}
+     ·       ─────
  130 │   }
      ╰────
 

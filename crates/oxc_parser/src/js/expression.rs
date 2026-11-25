@@ -859,7 +859,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
         if self.ctx.has_decorator() {
-            self.error(diagnostics::decorator_optional(lhs.span()));
+            self.error(diagnostics::decorator_expression_not_parenthesized(lhs.span()));
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
@@ -2167,14 +2167,76 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// `Decorator`[Yield, Await]:
-    ///   `DecoratorMemberExpression`[?Yield, ?Await]
+    ///   @ `DecoratorMemberExpression`[?Yield, ?Await]
+    ///   @ `DecoratorParenthesizedExpression`[?Yield, ?Await]
+    ///   @ `DecoratorCallExpression`[?Yield, ?Await]
+    ///
+    /// `DecoratorMemberExpression`[Yield, Await]:
+    ///   `IdentifierReference`[?Yield, ?Await]
+    ///   `DecoratorMemberExpression`[?Yield, ?Await] . `IdentifierName`
+    ///   `DecoratorMemberExpression`[?Yield, ?Await] . `PrivateIdentifier`
+    ///
+    /// `DecoratorCallExpression`[Yield, Await]:
+    ///   `DecoratorMemberExpression`[?Yield, ?Await] `Arguments`[?Yield, ?Await]
+    ///
+    /// `DecoratorParenthesizedExpression`[Yield, Await]:
     ///   ( `Expression`[+In, ?Yield, ?Await] )
-    ///   `DecoratorCallExpression`
+    ///
+    /// The expression is parsed as a `LeftHandSideExpression` (with `[` excluded by
+    /// [`Context::Decorator`]) and then checked against the grammar above.
     pub(crate) fn parse_decorator(&mut self) -> Decorator<'a> {
         let start = self.cur_start();
         self.bump_any(); // bump @
+        let expr_start = self.cur_start();
+        let is_parenthesized = self.at(Kind::LParen);
         let expr = self.context_add(Context::Decorator, Self::parse_lhs_expression_or_higher);
+        // TypeScript's parser accepts any `LeftHandSideExpression` here and only its type checker
+        // reports TS1497, which `experimentalDecorators` code such as
+        // `@http.controller('hooks').middleware(M)` relies on. The parser cannot tell the two
+        // decorator modes apart, so only enforce the grammar outside TypeScript.
+        if !self.is_ts && !self.has_fatal_error() {
+            self.check_decorator_expression(&expr, expr_start, is_parenthesized);
+        }
         Decorator::new(self.end_span(start), expr, self)
+    }
+
+    /// Report a decorator expression that is not a `DecoratorMemberExpression`,
+    /// `DecoratorCallExpression` or `DecoratorParenthesizedExpression`.
+    fn check_decorator_expression(
+        &mut self,
+        expr: &Expression<'a>,
+        expr_start: u32,
+        is_parenthesized: bool,
+    ) {
+        // Optional chains are already reported while parsing.
+        if matches!(expr, Expression::ChainExpression(_)) {
+            return;
+        }
+        let error = if is_parenthesized {
+            // `@(expr)` is valid only when nothing follows the closing `)`. Without `preserve_parens`,
+            // the parenthesized expression starts after `(`, while a suffixed one such as `(a)(b)`
+            // starts at `(`.
+            let is_parenthesized_head = |e: &Expression<'a>| {
+                matches!(e, Expression::ParenthesizedExpression(_)) || e.span().start != expr_start
+            };
+            match expr {
+                expr if is_parenthesized_head(expr) => return,
+                Expression::CallExpression(call) if is_parenthesized_head(&call.callee) => {
+                    diagnostics::decorator_arguments_outside_parentheses(expr.span())
+                }
+                _ => diagnostics::decorator_expression_not_parenthesized(expr.span()),
+            }
+        } else {
+            let is_valid = match expr {
+                Expression::CallExpression(call) => call.callee.is_decorator_member_expression(),
+                expr => expr.is_decorator_member_expression(),
+            };
+            if is_valid {
+                return;
+            }
+            diagnostics::decorator_expression_not_parenthesized(expr.span())
+        };
+        self.error(error);
     }
 
     fn is_yield_expression(&mut self) -> bool {

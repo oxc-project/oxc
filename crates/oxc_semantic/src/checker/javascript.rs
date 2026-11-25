@@ -1058,15 +1058,15 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                 //
                 // Illegal:
                 // * `class C { [super.foo] = 1 }`
-                // * `class C { @super.foo method() {} }`
+                // * `class C { @(super.foo) method() {} }`
                 // * `class C extends super.foo {}`
                 //
                 // Legal:
                 // * `class Outer { method() { class Inner { [super.foo] = 1 } } }`
-                // * `class Outer { method() { class Inner { @super.foo method() {} } } }`
+                // * `class Outer { method() { class Inner { @(super.foo) method() {} } } }`
                 // * `class Outer { method() { class Inner extends super.foo {} } }`
                 // * `obj = { method() { class Inner { [super.foo] = 1 } } }`
-                // * `obj = { method() { class Inner { @super.foo method() {} } } }`
+                // * `obj = { method() { class Inner { @(super.foo) method() {} } } }`
                 // * `obj = { method() { class Inner extends super.foo {} } }`
                 //
                 // So continue searching up the scope tree.

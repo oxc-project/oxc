@@ -181,33 +181,33 @@ class Outer extends S {
     class Inner3 extends super() {}
     class Inner4 extends super.foo {}
 
-    @super()
-    @super.foo
+    @(super())
+    @(super.foo)
     class Inner5 {}
 
     class Inner6 {
-      @super()
-      @super.foo
+      @(super())
+      @(super.foo)
       prop = 1;
 
-      @super()
-      @super.foo
+      @(super())
+      @(super.foo)
       static prop = 2;
 
-      @super()
-      @super.foo
+      @(super())
+      @(super.foo)
       accessor access = 3;
 
-      @super()
-      @super.foo
+      @(super())
+      @(super.foo)
       static accessor access = 4;
 
-      @super()
-      @super.foo
+      @(super())
+      @(super.foo)
       method() {}
 
-      @super()
-      @super.foo
+      @(super())
+      @(super.foo)
       static method() {}
     }
   }
@@ -221,18 +221,18 @@ class Outer2 {
     [super.foo] = 1;
     accessor [super.foo] = 2;
     [(arg = super.foo) => 123 + super.bar()]() {};
-    @super.qux prop = 3;
-    @super.bing accessor access = 4;
-    @super.doom method() {}
+    @(super.qux) prop = 3;
+    @(super.bing) accessor access = 4;
+    @(super.doom) method() {}
   };
   prop2 = class Inner2 extends super.foo {};
   prop3 = 123 + (() => () => 456 + class Inner3 {
     [super.foo] = 1;
     accessor [super.foo] = 2;
     [(arg = super.foo) => 123 + super.bar()]() {};
-    @super.qux prop = 3;
-    @super.bing accessor access = 4;
-    @super.doom method() {}
+    @(super.qux) prop = 3;
+    @(super.bing) accessor access = 4;
+    @(super.doom) method() {}
   });
   prop4 = 123 + (() => () => 456 + class Inner4 extends super.foo {});
 
@@ -240,18 +240,18 @@ class Outer2 {
     [super.foo] = 1;
     accessor [super.foo] = 2;
     [(arg = super.foo) => 123 + super.bar()]() {};
-    @super.qux prop = 3;
-    @super.bing accessor access = 4;
-    @super.doom method() {}
+    @(super.qux) prop = 3;
+    @(super.bing) accessor access = 4;
+    @(super.doom) method() {}
   };
   static prop2 = class Inner2 extends super.foo {};
   static prop3 = 123 + (() => () => 456 + class Inner3 {
     [super.foo] = 1;
     accessor [super.foo] = 2;
     [(arg = super.foo) => 123 + super.bar()]() {};
-    @super.qux prop = 3;
-    @super.bing accessor access = 4;
-    @super.doom method() {}
+    @(super.qux) prop = 3;
+    @(super.bing) accessor access = 4;
+    @(super.doom) method() {}
   });
   static prop4 = 123 + (() => () => 456 + class Inner4 extends super.foo {});
 
@@ -260,18 +260,18 @@ class Outer2 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [(arg = super.foo) => 123 + super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     }
     class Inner2 extends super.foo {}
     123 + (() => () => 456 + class Inner3 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     });
     123 + (() => () => 456 + class Inner4 extends super.foo {});
   }
@@ -281,18 +281,18 @@ class Outer2 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [(arg = super.foo) => 123 + super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     }
     class Inner2 extends super.foo {}
     123 + (() => () => 456 + class Inner3 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [(arg = super.foo) => 123 + super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     });
     123 + (() => () => 456 + class Inner4 extends super.foo {});
   }
@@ -302,18 +302,18 @@ class Outer2 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [(arg = super.foo) => 123 + super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     }
     class Inner2 extends super.foo {}
     123 + (() => () => 456 + class Inner3 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     });
     123 + (() => () => 456 + class Inner4 extends super.foo {});
   }
@@ -323,18 +323,18 @@ class Outer2 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [(arg = super.foo) => 123 + super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     }
     class Inner2 extends super.foo {}
     123 + (() => () => 456 + class Inner3 {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [(arg = super.foo) => 123 + super.bar()]() {};
-      @super.qux prop = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     });
     123 + (() => () => 456 + class Inner4 extends super.foo {});
   }
@@ -463,23 +463,23 @@ obj = {
       [super.foo] = 1;
       accessor [super.foo] = 2;
       [() => 123 + super.bar()]() {}
-      @super.qux prop5 = 3;
-      @super.bing accessor access = 4;
-      @super.doom method() {}
+      @(super.qux) prop5 = 3;
+      @(super.bing) accessor access = 4;
+      @(super.doom) method() {}
     }
 
     class Inner3 extends super.foo {}
 
-    @super.foo
+    @(super.foo)
     class Inner4 {}
 
     class Inner5 {
-      @super.foo prop = 1;
-      @super.foo accessor access = 1;
-      @super.foo static prop = 2;
-      @super.foo static accessor access = 1;
-      @super.foo method() {}
-      @super.foo static method() {}
+      @(super.foo) prop = 1;
+      @(super.foo) accessor access = 1;
+      @(super.foo) static prop = 2;
+      @(super.foo) static accessor access = 1;
+      @(super.foo) method() {}
+      @(super.foo) static method() {}
     }
   }
 };
@@ -506,7 +506,7 @@ class Outer3 extends Super {
         class H {
           @(
             class I {
-              @super()
+              @(super())
               method() {}
             }
           )
@@ -540,7 +540,7 @@ class Outer4 {
         class H {
           @(
             class I {
-              @super.foo
+              @(super.foo)
               method() {}
             }
           )
@@ -574,7 +574,7 @@ obj = {
         class H {
           @(
             class I {
-              @super.foo
+              @(super.foo)
               method() {}
             }
           )
