@@ -2272,10 +2272,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.ctx.has_yield() {
                 return true;
             }
-            // Outside a generator, `yield` is an `IdentifierReference` unless the next token (on the
-            // same line) can start the operand of a `YieldExpression`. In a `for` head, where `in`
-            // is not an operator, `of` is excluded so that `yield` can be the target of
-            // `for (yield of xs)`.
+            // Outside a generator, `yield` is an identifier, but parse a `YieldExpression` anyway
+            // when an operand follows on the same line, to report it. In a `for` head, where `in`
+            // is not an operator, `of` is the delimiter of `for (yield of xs)` instead.
             let token = self.lexer.peek_token();
             let kind = token.kind();
             return !token.is_on_new_line()
