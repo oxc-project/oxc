@@ -339,7 +339,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_constructor_declaration(start, r#type, name, &modifiers, decorators);
         }
 
-        if self.is_index_signature() {
+        if self.is_ts && self.is_index_signature() {
             for decorator in decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 160/160 (100.00%)
-Positive Passed: 160/160 (100.00%)
-Negative Passed: 296/296 (100.00%)
+AST Parsed     : 161/161 (100.00%)
+Positive Passed: 161/161 (100.00%)
+Negative Passed: 297/297 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -486,6 +486,14 @@ Negative Passed: 296/296 (100.00%)
    ·               ┬        ┬
    ·               │        ╰── It can not be redeclared here
    ·               ╰── `e` has already been declared here
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/class-computed-key-async-arrow.ts:2:10]
+ 1 │ class C {
+ 2 │   [async x => x]() {}
+   ·          ─
+ 3 │ }
    ╰────
 
   × Expected `;` but found `,`
