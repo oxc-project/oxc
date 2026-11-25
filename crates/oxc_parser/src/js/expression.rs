@@ -33,6 +33,7 @@ fn is_import_expression_or_member_access_on_import_expression(callee: &Expressio
             expr = match expr {
                 Expression::TaggedTemplateExpression(tagged_template) => &tagged_template.tag,
                 Expression::TSNonNullExpression(non_null) => &non_null.expression,
+                Expression::TSInstantiationExpression(instantiation) => &instantiation.expression,
                 _ => return false,
             };
             continue;
