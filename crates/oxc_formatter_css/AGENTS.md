@@ -78,7 +78,9 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
     Prettier's CSS moves it below as the next element's leading comment (DIVERGENCES.md#line-comment-after-comma)
   - a `//` before a list `,` rides past it (`a // c\n, b` -> `a, // c`), an own-line comment there leads the next element;
     a `//` glued to a prelude's end stays there and `{` starts the next line (DIVERGENCES.md#line-comment-before-block)
-  - a structured prelude printer places its own comments, word by word (`value::write_with_comments`: own-line ones lead the word, glued ones trail it),
+  - the comments before a structured prelude lead it through one flush (`write_at_rule_prelude`; a `//` breaks, the prelude continues one level in),
+    except `@import`'s, which its path fill places itself (a comment fuses with the path after it)
+  - inside it, the prelude printer places its own comments, word by word (`value::write_with_comments`: own-line ones lead the word, glued ones trail it),
     and `write_at_rule` writes whatever is still pending before the `;` / `{`, so a prelude comment is never lost
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
     - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)

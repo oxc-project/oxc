@@ -63,7 +63,7 @@ Trailing `/* */` comments still count, matching Prettier (self-delimiting commen
 
 Prettier keeps a COMMENTED keyframe selector list verbatim, interior spacing included;
 ours prints commented and uncommented lists with the same structural layout (one selector per line, comments per the separator rule).
-Same rule as `comment-preceded-map-indent`.
+Same rule as DIVERGENCES.md#comment-preceded-map-indent.
 
 ## keyframes-name-comment
 
@@ -360,7 +360,7 @@ Prettier keeps it glued because it reads the placeholder text and the flag as on
 ```
 
 Selector-position Sass interpolation normalizes inner spaces like value-position interpolation does in both formatters;
-Prettier keeps SELECTOR interpolation verbatim.
+Prettier keeps the spaces inside SELECTOR interpolation, only collapsing each run to one as it does across the selector (`#{   $name   }` -> `#{ $name }`).
 
 ## prelude-string-requote
 
@@ -426,7 +426,7 @@ a {
 ```
 
 A Less escape (`LessEscapedStr`) prints as `~` hugging its re-quoted string wherever it is typed (`value.rs` `write_less_escaped_str`);
-Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see prelude-string-requote).
+Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see DIVERGENCES.md#prelude-string-requote).
 The Prettier-compat raw paths keep the source as-is: a selector or at-rule prelude with a comment, and Less mixin call / definition arguments and `when` guards.
 
 ## call-after-line-comment-indent
@@ -463,7 +463,7 @@ width: pow(
 
 Prettier double-indents a function call directly after a `//` comment in nested-args position, a forgotten leftover of the incomplete prettier/prettier#4878 fix (prettier/prettier#7844 covered only the SCSS-map / direct paren-group child case);
 ours sits at the normal +1 / `)` +0 like every comment-free call.
-Same rule as `comment-preceded-map-indent`.
+Same rule as DIVERGENCES.md#comment-preceded-map-indent.
 
 ## nested-map-context-indent
 
@@ -525,7 +525,7 @@ $m: // c
 A map value after a trailing comment on the `$var:` line keeps its shape under the continuation indent;
 Prettier dedents it, the body level with the `(` and the `)` at the declaration's column,
 because its dedent applies only when the pair doc is a plain `group(indent(fill))` and the comment changes the doc shape.
-Same dedent-skip artifact class as `nested-map-context-indent`.
+Same dedent-skip artifact class as DIVERGENCES.md#nested-map-context-indent.
 
 ## map-item-break-comma-lists-only
 
@@ -603,7 +603,7 @@ A bracketed Sass list is a list like `(1, 2)`; we print it with the paren list's
 Prettier's value parser has no bracket node: `[1,` and `2]` are words of the OUTER comma list,
 so a comment, a sibling token or an overflow hard-breaks that outer list around the brackets
 (and `[1, 2, ]` keeps a trailing comma with a space).
-`[1,]` keeps its comma for the same reason as `(1,)` (see `single-item-list-trailing-comma`).
+`[1,]` keeps its comma for the same reason as `(1,)` (see DIVERGENCES.md#single-item-list-trailing-comma).
 
 ## terminator-gap-normalized
 
@@ -784,7 +784,7 @@ A meaningless glitch.
 A `//` inside `selector()` opens the parens and ends its line, the shape Prettier itself prints for a single selector (`selector(a // c\n)`);
 a comma list holding a `//` it keeps verbatim instead, source whitespace included.
 A second `//` indents like the first; Prettier prints it with a stray leading space and no indent,
-the same `join(line)` + deferred `lineSuffix` artifact as "comment-only-map-indent".
+the same `join(line)` + deferred `lineSuffix` artifact as DIVERGENCES.md#comment-only-map-indent.
 
 ## line-comment-after-comma
 
@@ -1184,7 +1184,7 @@ Prettier (postcss) accepts these and prints them, mostly verbatim.
 SCSS arithmetic in a media prelude prints through the structured `SassExpr` printer with spaced operators,
 identical to the same expression in a declaration value; Prettier's postcss-media-query-parser never value-parses the prelude,
 so it cannot space ANY arithmetic op there (`+` and `-` alike).
-For the glued `-` Prettier also diverges in value positions, via a different artifact: see `value-glued-minus`.
+For the glued `-` Prettier also diverges in value positions, via a different artifact: see DIVERGENCES.md#value-glued-minus.
 
 ## value-glued-minus
 
@@ -1551,7 +1551,7 @@ less.js (4.9.1) evaluates both forms the same.
 
 ## less-guard-list-inline
 
-- Why: uniform-rule (same construct, same output: guard alternatives are a list, not selectors; the `less-extend-statement-break` leak again)
+- Why: uniform-rule (same construct, same output: guard alternatives are a list, not selectors; the DIVERGENCES.md#less-extend-statement-break leak again)
 - Pin: `tests/fixtures/format/less/mixin-selector-list.less`
 - Conformance:
   - `externals/prettier/less/less-test-suite/snippet: tests-unit/mixins-guards/mixins-guards.less`
