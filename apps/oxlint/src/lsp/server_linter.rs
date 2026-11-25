@@ -137,6 +137,15 @@ impl Drop for WorkspaceState {
     }
 }
 
+/// Whether `path` matches the `**/tsconfig*.json` watcher of type-aware linting.
+fn is_tsconfig_file(path: &Path) -> bool {
+    path.extension().is_some_and(|extension| extension == "json")
+        && path
+            .file_name()
+            .and_then(std::ffi::OsStr::to_str)
+            .is_some_and(|name| name.starts_with("tsconfig"))
+}
+
 /// Whether type-aware linting with `tsrs-lint` uses a long-lived `tsrs-lint server`: the
 /// `OXLINT_TSRS_LINT_SERVER` environment variable (`true`/`1` or `false`/`0`) when set, else the
 /// `typeAwareServer` option, else `true`.
@@ -657,9 +666,13 @@ impl Tool for ServerLinter {
         watchers
     }
 
-    /// With a `tsrs-lint server`, only changes to lint configuration files restart the linter.
-    /// Other changes (sources, `package.json`, `tsconfig.json`) are sent to the server, so its
-    /// programs match the disk as a one-shot run's would. Open files are not linted again.
+    /// Changes to lint configuration files restart the linter. With a `tsrs-lint server`, other
+    /// changes (sources, `package.json`, `tsconfig.json`) are sent to the server, so its programs
+    /// match the disk as a one-shot run's would. Open files are not linted again.
+    ///
+    /// Without a server, only `tsconfig*.json` changes restart the linter too. The client sends
+    /// the events of every workspace's watchers to every workspace, so the source changes another
+    /// workspace's server watches (or a server turned off since) do not restart this one.
     fn handle_watched_file_event(
         &self,
         builder: &dyn ToolBuilder,
@@ -667,10 +680,13 @@ impl Tool for ServerLinter {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
-        if let Some(server) = self.workspace.server().filter(|_| self.runner.has_tsrs_server())
-            && let Some(path) = uri_to_file_path(&file_event.uri)
-            && !self.is_lint_config_file(&path, &options)
-        {
+        let Some(path) = uri_to_file_path(&file_event.uri) else {
+            return self.handle_watched_file_change(builder, &file_event.uri, root_uri, options);
+        };
+        if self.is_lint_config_file(&path, &options) {
+            return self.handle_watched_file_change(builder, &file_event.uri, root_uri, options);
+        }
+        if let Some(server) = self.workspace.server().filter(|_| self.runner.has_tsrs_server()) {
             // Changes outside the workspace are sent too: its programs can depend on files above
             // the root, such as an extended `tsconfig.json`.
             let kind = match file_event.kind {
@@ -679,13 +695,10 @@ impl Tool for ServerLinter {
                 _ => FileChangeKind::Changed,
             };
             server.files_changed(&[(path.into_owned(), kind)]);
-            return ToolRestartChanges {
-                tool: None,
-                watch_patterns: None,
-                client_messages: vec![],
-            };
+        } else if is_tsconfig_file(&path) {
+            return self.handle_watched_file_change(builder, &file_event.uri, root_uri, options);
         }
-        self.handle_watched_file_change(builder, &file_event.uri, root_uri, options)
+        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: vec![] }
     }
 
     fn did_open(&self, document: &TextDocument) {
@@ -1309,6 +1322,49 @@ mod test_watchers {
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
             assert_eq!(patterns[4], "**/tsconfig*.json".to_string());
+        }
+    }
+
+    mod handle_watched_file_event {
+        use oxc_language_server::{Tool, uri_utils::file_path_to_uri};
+        use serde_json::json;
+        use tower_lsp_server::gen_lsp_types::{FileChangeType, FileEvent};
+
+        use crate::lsp::{
+            server_linter::ServerLinterBuilder,
+            tester::{Tester, get_file_path},
+        };
+
+        /// Whether a change to `relative_file_path` restarts a linter without a `tsrs-lint server`.
+        fn restarts(relative_file_path: &str) -> bool {
+            let root = "fixtures/lsp/watchers/default";
+            let options = json!({ "typeAware": true });
+            let builder = ServerLinterBuilder::default();
+            let root_uri = Tester::get_root_uri(root);
+            let (linter, _) = builder.build(&root_uri, options.clone());
+            assert!(!linter.runner.has_tsrs_server());
+            let event = FileEvent {
+                uri: file_path_to_uri(get_file_path(&format!("{root}/{relative_file_path}")))
+                    .expect("invalid path"),
+                kind: FileChangeType::Changed,
+            };
+            linter.handle_watched_file_event(&builder, &event, &root_uri, options).tool.is_some()
+        }
+
+        #[test]
+        fn test_config_changes_restart() {
+            assert!(restarts(".oxlintrc.json"));
+            assert!(restarts("nested/oxlint.config.ts"));
+            assert!(restarts("tsconfig.json"));
+            assert!(restarts("packages/a/tsconfig.build.json"));
+        }
+
+        /// Sources are watched only for a `tsrs-lint server`, maybe another workspace's.
+        #[test]
+        fn test_source_changes_do_not_restart_without_a_server() {
+            assert!(!restarts("index.ts"));
+            assert!(!restarts("package.json"));
+            assert!(!restarts("data.json"));
         }
     }
 
