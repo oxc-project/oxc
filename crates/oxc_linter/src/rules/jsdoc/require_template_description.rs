@@ -90,14 +90,12 @@ fn has_template_description(body: &str) -> bool {
         return true;
     }
 
-    // A bracketed template name can contain spaces in the default type.
     let first_line = if first_line.starts_with('[') {
         first_line.rfind(']').map_or(first_line, |end| &first_line[end..])
     } else {
         first_line
     };
 
-    // A template name list can also contain whitespace after each comma.
     let mut previous = ' ';
     for (offset, character) in first_line.char_indices() {
         if character.is_whitespace() && previous != ',' && !previous.is_whitespace() {
