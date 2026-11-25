@@ -79,7 +79,6 @@ struct WorkspaceState {
     tsrs_server: Mutex<Option<Arc<TsrsLintServer>>>,
 }
 
-#[derive(Clone)]
 struct OpenDocument {
     path: PathBuf,
     version: i32,

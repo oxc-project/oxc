@@ -171,12 +171,6 @@ pub(super) enum LintError {
     Failed(String),
 }
 
-impl From<String> for LintError {
-    fn from(error: String) -> Self {
-        Self::Failed(error)
-    }
-}
-
 struct Connection {
     child: Mutex<Child>,
     stdin: Mutex<ChildStdin>,
