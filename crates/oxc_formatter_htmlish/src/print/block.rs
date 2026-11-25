@@ -83,8 +83,12 @@ pub fn write_block<'a>(
     }
     write!(f, " {");
     if let (Some(first), Some(last)) = (item.first_child, item.last_child) {
-        let glued_before = t[first].glued_before() && !item.has_leading_spaces;
-        let glued_after = t[last].glued_after() && !item.has_trailing_spaces;
+        // The whitespace outside a marker is in the run only in a text next to it (DIVERGENCES.md#angular-glued-block-markers)
+        let outside = |spaces: bool, sibling: Option<NodeId>| {
+            spaces && sibling.is_some_and(|sibling| t.is_text_content(sibling))
+        };
+        let glued_before = t[first].glued_before() && !outside(item.has_leading_spaces, item.prev);
+        let glued_after = t[last].glued_after() && !outside(item.has_trailing_spaces, item.next);
         write!(
             f,
             indent(&format_with(|f| {

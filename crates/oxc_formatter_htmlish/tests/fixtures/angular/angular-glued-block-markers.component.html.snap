@@ -11,6 +11,10 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 <span>a@if (x) {}@else {}b</span>
 <span>a@if (x) {}@else { }b</span>
 <span>a @if (x) { } b</span>
+<span>
+  @if (test) {text}
+</span>
+<p>a @if (x) {b} c</p>
 
 ==================== Output ====================
 ------------------
@@ -31,6 +35,16 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   @if (x) {}
   b</span
 >
+<span>
+  @if (test) {text}
+</span>
+<p>
+  a
+  @if (x) {
+    b
+  }
+  c
+</p>
 
 -------------------
 { printWidth: 100 }
@@ -50,5 +64,15 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   @if (x) {}
   b</span
 >
+<span>
+  @if (test) {text}
+</span>
+<p>
+  a
+  @if (x) {
+    b
+  }
+  c
+</p>
 
 ===================== End =====================

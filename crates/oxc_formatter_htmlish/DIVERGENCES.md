@@ -979,15 +979,22 @@ Prettier empties it when it holds only JS whitespace (`/^\s*$/`), and drops a ch
 - Pin: `tests/fixtures/angular/angular-glued-block-markers.component.html`
 - Conformance:
   - `externals/prettier/angular/control-flow/chid.html`
+  - `externals/prettier/angular/let-declaration/valid-from-tokenizer-test.html` (`@defer {@let foo = 123 + 456;}`)
 
 ```html
 <!-- input -->
 <p>a@if (x) {b}c</p>
 <span>@if (test) {text}</span>
+<span>
+  @if (test) {text}
+</span>
 
 <!-- ours -->
 <p>a@if (x) {b}c</p>
 <span>@if (test) {text}</span>
+<span>
+  @if (test) {text}
+</span>
 
 <!-- prettier -->
 <p>
@@ -1002,12 +1009,19 @@ Prettier empties it when it holds only JS whitespace (`/^\s*$/`), and drops a ch
     text
   }
 </span>
+<span>
+  @if (test) {
+    text
+  }
+</span>
 ```
 
 An Angular control flow block makes no box: its markers (`@if (x) {`, `}`) render nothing,
 so the whitespace on both sides of a marker is one run between the content around it.
 Where that run is significant and empty, the markers stay glued to their neighbors;
 otherwise a block is laid out on its own lines, as Prettier does.
+The whitespace outside a marker is in the run only in a text next to the block: Angular drops a whitespace-only text (`preserveWhitespaces: false`),
+so `<span>⏎  @if (test) {text}` renders `text` with no space, and its body stays glued; under `preserveWhitespaces: true` (invisible to the formatter) it renders the same.
 An empty block's body is in the run too: whitespace there renders only when the block does,
 so it is kept (`a@if (x) { }b`) unless the run has whitespace outside the block, and none is added (`a@if (x) {}@else {}b`).
 Prettier always breaks around a block, which turns `abc` into `a b c` (and adds spaces inside the `span`).

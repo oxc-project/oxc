@@ -584,7 +584,7 @@
 
 ## angular-html
 
-84/128 (65.63%)
+83/128 (64.84%)
 
 ### Failed
 
@@ -633,6 +633,8 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
 - externals/prettier/angular/icu-expression/combination-01.html (💥, 25.00%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/let-declaration/valid-from-tokenizer-test.html (💥, 95.24%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
 - externals/prettier/angular/template-literal/template-literal.html (💥, 88.89%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
 - externals/prettier/angular/trailing-comma/trailing-comma.html (💥💥💥, 92.78%)
