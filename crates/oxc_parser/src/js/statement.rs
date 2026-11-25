@@ -947,17 +947,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !self.ctx.has_await())
         .then(|| self.checkpoint());
         let mut decorators = self.parse_decorators();
-        let kind = self.cur_kind();
-        if kind == Kind::Export {
-            // `export` commits to the Module goal, which applies to the decorators before it too.
-            // e.g. `@dec(await (x)) export class C {}`
-            if let Some(checkpoint) = checkpoint
-                && self.state.encountered_await_identifier
-            {
+        // `export` commits to the Module goal, which applies to the decorators before it too.
+        // e.g. `@dec(await (x)) export class C {}`
+        if self.at(Kind::Export)
+            && let Some(checkpoint) = checkpoint
+            && self.state.encountered_await_identifier
+        {
+            self.rewind(checkpoint);
+            let checkpoint = self.checkpoint();
+            let ctx = self.ctx;
+            self.ctx = ctx.and_await(true);
+            decorators = self.parse_decorators();
+            // As module code, the `export` may be part of a decorator, as in
+            // `@dec(await /"(")export /) class C {}`. Keep the Script parse then.
+            if !self.at(Kind::Export) && !self.has_fatal_error() {
                 self.rewind(checkpoint);
-                self.ctx = self.ctx.and_await(true);
+                self.ctx = ctx;
                 decorators = self.parse_decorators();
             }
+        }
+        let kind = self.cur_kind();
+        if kind == Kind::Export {
             // Export span.start starts after decorators.
             return self.parse_export_declaration(self.cur_start(), decorators, stmt_ctx);
         }
