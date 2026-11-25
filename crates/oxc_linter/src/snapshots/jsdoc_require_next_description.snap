@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(require-next-description): @next should have a description
+   ╭─[require_next_description.tsx:1:1]
+ 1 │ /** @next */
+   · ────────────
+   ╰────
+  help: Describe the value the caller can pass to the generator's `next()` method.
+
+  ⚠ jsdoc(require-next-description): @next should have a description
+   ╭─[require_next_description.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ │    * @next
+ 3 │ │    * {{ value: number }}
+ 4 │ ╰─▶  */
+   ╰────
+  help: Describe the value the caller can pass to the generator's `next()` method.
+
+  ⚠ jsdoc(require-next-description): @next should have a description
+   ╭─[require_next_description.tsx:1:20]
+ 1 │ function* gen() {} /** @next {number} */
+   ·                    ─────────────────────
+   ╰────
+  help: Describe the value the caller can pass to the generator's `next()` method.
+
+  ⚠ jsdoc(require-next-description): @next should have a description
+   ╭─[require_next_description.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ │    * @next {number}
+ 3 │ │    * @next {string}
+ 4 │ ╰─▶  */
+   ╰────
+  help: Describe the value the caller can pass to the generator's `next()` method.
+
+  ⚠ jsdoc(require-next-description): @next should have a description
+   ╭─[require_next_description.tsx:1:1]
+ 1 │ /** @next */ /** @next */
+   · ────────────
+   ╰────
+  help: Describe the value the caller can pass to the generator's `next()` method.
+
+  ⚠ jsdoc(require-next-description): @next should have a description
+   ╭─[require_next_description.tsx:1:14]
+ 1 │ /** @next */ /** @next */
+   ·              ────────────
+   ╰────
+  help: Describe the value the caller can pass to the generator's `next()` method.
+
+  ⚠ jsdoc(require-next-description): @next should have a description
+   ╭─[require_next_description.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         /**
+ 3 │ │            * @next {SomeType}
+ 4 │ ╰─▶          */
+ 5 │           
+   ╰────
+  help: Describe the value the caller can pass to the generator's `next()` method.
