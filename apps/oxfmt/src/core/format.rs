@@ -2,11 +2,12 @@ use std::{path::Path, sync::Arc};
 
 use tracing::instrument;
 
-use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{FormatContext, FormatSession, Formatted, InputKind, Printed};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_yaml::YamlFormatOptions;
+use oxc_parser::Source;
 
 #[cfg(feature = "napi")]
 use super::options::{
@@ -45,135 +46,27 @@ pub enum FormatResult {
     Error(Vec<OxcDiagnostic>),
 }
 
-pub struct SourceFormatter {
-    allocator_pool: AllocatorPool,
-    #[cfg(feature = "napi")]
-    external_services: Option<super::ExternalServices>,
+/// Return value of [`SourceFormatter::format`].
+pub struct FormatReturn<'a> {
+    /// Source text which was formatted.
+    ///
+    /// Formatting consumes the [`Source`], so this is how the caller gets the source text back,
+    /// e.g. to render errors against.
+    ///
+    /// This is an empty string if the source is not valid UTF-8, or is too long to be parsed.
+    pub source_text: &'a str,
+    /// Formatted code, or errors.
+    pub result: FormatResult,
 }
 
-impl SourceFormatter {
-    pub fn new(num_of_threads: usize) -> Self {
-        Self {
-            allocator_pool: AllocatorPool::new(num_of_threads),
-            #[cfg(feature = "napi")]
-            external_services: None,
-        }
-    }
-
-    /// Format a file following its plan.
-    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %plan.path.display(), strategy = %plan.strategy.trace_label()))]
-    pub fn format(&self, source_text: &str, plan: FormatPlan) -> FormatResult {
-        // > Editors must not insert newlines in empty files when saving those files,
-        // > even if insert_final_newline = true.
-        // https://spec.editorconfig.org/#supported-pairs
-        if source_text.trim().is_empty() {
-            return FormatResult::Success {
-                is_changed: !source_text.is_empty(),
-                code: String::new(),
-            };
-        }
-
-        let FormatPlan { path, strategy, config, validated } = plan;
-        let core = validated.core;
-        // Roots with a session take options from their dispatch config,
-        // others map them directly without building one.
-        let result = match strategy {
-            FormatStrategy::Native(NativeLanguage::Js(source_type)) => {
-                let allocator = self.allocator_pool.get();
-                let dispatch_config =
-                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
-                let session = self.root_session(&allocator, &dispatch_config);
-                let options = dispatch_config.js_options();
-                let result =
-                    oxc_formatter::format_with_session(&session, source_text, source_type, options)
-                        .and_then(|formatted| print(formatted, &path));
-                #[cfg(feature = "detect_code_removal")]
-                if let Ok(code) = &result
-                    && let Some(diff) =
-                        oxc_formatter::detect_code_removal(source_text, code, source_type)
-                {
-                    unreachable!("Code removal detected in `{}`:\n{diff}", path.display());
-                }
-                result
-            }
-            FormatStrategy::Native(NativeLanguage::Json(variant)) => {
-                self.format_json(source_text, &path, to_oxc_formatter_json(&config, core, variant))
-            }
-            FormatStrategy::PackageJson => {
-                // `sort_package_json` only accepts strictly valid JSON,
-                // but the `json-stringify` parser also accepts unquoted keys, trailing commas, etc.
-                // So format without sorting rather than bailing out.
-                let sorted = to_sort_package_json(&config).and_then(|options| {
-                    sort_package_json::sort_package_json_with_options(source_text, &options).ok()
-                });
-                self.format_json(
-                    sorted.as_deref().unwrap_or(source_text),
-                    &path,
-                    to_oxc_formatter_json(&config, core, JsonVariant::JsonStringify),
-                )
-            }
-            FormatStrategy::Native(NativeLanguage::Graphql) => {
-                let options = to_oxc_formatter_graphql(&config, core);
-                let allocator = self.allocator_pool.get();
-                oxc_formatter_graphql::format(&allocator, source_text, options)
-                    .and_then(|formatted| print(formatted, &path))
-            }
-            FormatStrategy::Native(NativeLanguage::Css(variant)) => {
-                let allocator = self.allocator_pool.get();
-                let dispatch_config =
-                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
-                let session = self.root_session(&allocator, &dispatch_config);
-                let options = dispatch_config.css_options(variant);
-                oxc_formatter_css::format_with_session(&session, source_text, options)
-                    .and_then(|formatted| print(formatted, &path))
-            }
-            FormatStrategy::Native(NativeLanguage::Yaml) => {
-                self.format_yaml(source_text, &path, to_oxc_formatter_yaml(&config, core))
-            }
-            // Mirroring Prettier's yaml embed: JSON if the whole text parses as JSON, YAML otherwise
-            FormatStrategy::YamlRc => self
-                .format_json(
-                    source_text,
-                    &path,
-                    to_oxc_formatter_json(&config, core, JsonVariant::Json),
-                )
-                .or_else(|_| {
-                    self.format_yaml(source_text, &path, to_oxc_formatter_yaml(&config, core))
-                }),
-            FormatStrategy::Native(NativeLanguage::Markdown) => {
-                let allocator = self.allocator_pool.get();
-                let dispatch_config =
-                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
-                let session = self.root_session(&allocator, &dispatch_config);
-                let options = dispatch_config.markdown_options();
-                oxc_formatter_markdown::format_with_session(&session, source_text, options)
-                    .and_then(|formatted| print(formatted, &path))
-            }
-            FormatStrategy::Native(NativeLanguage::Html(variant)) => {
-                let allocator = self.allocator_pool.get();
-                let dispatch_config =
-                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
-                let session = self.root_session(&allocator, &dispatch_config);
-                let options = dispatch_config.htmlish_options(variant);
-                oxc_formatter_htmlish::format_with_session(&session, source_text, options)
-                    .and_then(|formatted| print(formatted, &path))
-            }
-            FormatStrategy::Native(NativeLanguage::Toml) => {
-                let allocator = self.allocator_pool.get();
-                oxc_formatter_toml::format(
-                    &allocator,
-                    source_text,
-                    to_oxc_formatter_toml(&config, core),
-                )
-                .and_then(|formatted| print(formatted, &path))
-            }
-            #[cfg(feature = "napi")]
-            FormatStrategy::Prettier(language) => {
-                self.format_by_prettier(source_text, &path, language, &config)
-            }
-        };
-
-        match result {
+impl<'a> FormatReturn<'a> {
+    /// Create a [`FormatReturn`] from the source text, and the formatted code or an error.
+    fn new(
+        source_text: &'a str,
+        result: Result<String, OxcDiagnostic>,
+        config: &FormatConfig,
+    ) -> Self {
+        let result = match result {
             Ok(mut code) => {
                 // Every formatter always ends with a newline (no option to disable it),
                 // so trimming is enough without allocating a new string.
@@ -183,7 +76,166 @@ impl SourceFormatter {
                 FormatResult::Success { is_changed: source_text != code, code }
             }
             Err(err) => FormatResult::Error(vec![err]),
+        };
+        Self { source_text, result }
+    }
+}
+
+#[derive(Default)]
+pub struct SourceFormatter {
+    #[cfg(feature = "napi")]
+    external_services: Option<super::ExternalServices>,
+}
+
+impl SourceFormatter {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Format a file following its plan.
+    ///
+    /// `source` holds the file's source text. Its `SourceType` is not used.
+    /// The plan says what language the file is, and for JS/TS, its `SourceType`.
+    ///
+    /// Everything is allocated in `source`'s allocator.
+    ///
+    /// Formatting consumes `source`. The source text is returned in the [`FormatReturn`].
+    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %plan.path.display(), strategy = %plan.strategy.trace_label()))]
+    pub fn format<'a>(&self, mut source: Source<'a>, plan: FormatPlan) -> FormatReturn<'a> {
+        let allocator = source.allocator();
+        let FormatPlan { path, strategy, config, validated } = plan;
+
+        // JS/TS is parsed directly from the `Source`, without copying the source text.
+        // Parsing consumes the `Source`, and hands the source text back.
+        //
+        // JS/TS source which is blank is not parsed. It's handled below, like blank source
+        // in any other language. So is JS/TS source which is not valid UTF-8.
+        if let FormatStrategy::Native(NativeLanguage::Js(source_type)) = strategy
+            && source.as_str().is_ok_and(|source_text| !is_blank(source_text))
+        {
+            source.set_source_type(source_type);
+            let (source_text, result) = self.format_js(source, &path, &config, validated);
+            return FormatReturn::new(source_text, result, &config);
         }
+
+        // All other formatters take the source text
+        let Ok(source_text) = source.into_str() else {
+            let error = OxcDiagnostic::error("Source is not valid UTF-8");
+            return FormatReturn::new("", Err(error), &config);
+        };
+
+        // > Editors must not insert newlines in empty files when saving those files,
+        // > even if insert_final_newline = true.
+        // https://spec.editorconfig.org/#supported-pairs
+        if is_blank(source_text) {
+            return FormatReturn::new(source_text, Ok(String::new()), &config);
+        }
+
+        let core = validated.core;
+        // Roots with a session take options from their dispatch config,
+        // others map them directly without building one.
+        let result = match strategy {
+            FormatStrategy::Native(NativeLanguage::Js(_)) => {
+                unreachable!("JS/TS is formatted above, unless it's blank, which returned above")
+            }
+            FormatStrategy::Native(NativeLanguage::Json(variant)) => {
+                let options = to_oxc_formatter_json(&config, core, variant);
+                format_json(source_text, &path, options, allocator)
+            }
+            FormatStrategy::PackageJson => {
+                // `sort_package_json` only accepts strictly valid JSON,
+                // but the `json-stringify` parser also accepts unquoted keys, trailing commas, etc.
+                // So format without sorting rather than bailing out.
+                let sorted = to_sort_package_json(&config).and_then(|options| {
+                    sort_package_json::sort_package_json_with_options(source_text, &options).ok()
+                });
+                let options = to_oxc_formatter_json(&config, core, JsonVariant::JsonStringify);
+                format_json(sorted.as_deref().unwrap_or(source_text), &path, options, allocator)
+            }
+            FormatStrategy::Native(NativeLanguage::Graphql) => {
+                let options = to_oxc_formatter_graphql(&config, core);
+                oxc_formatter_graphql::format(allocator, source_text, options)
+                    .and_then(|formatted| print(formatted, &path))
+            }
+            FormatStrategy::Native(NativeLanguage::Css(variant)) => {
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(allocator, &dispatch_config);
+                let options = dispatch_config.css_options(variant);
+                oxc_formatter_css::format_with_session(&session, source_text, options)
+                    .and_then(|formatted| print(formatted, &path))
+            }
+            FormatStrategy::Native(NativeLanguage::Yaml) => {
+                let options = to_oxc_formatter_yaml(&config, core);
+                format_yaml(source_text, &path, options, allocator)
+            }
+            // Mirroring Prettier's yaml embed: JSON if the whole text parses as JSON, YAML otherwise
+            FormatStrategy::YamlRc => {
+                let options = to_oxc_formatter_json(&config, core, JsonVariant::Json);
+                format_json(source_text, &path, options, allocator).or_else(|_| {
+                    let options = to_oxc_formatter_yaml(&config, core);
+                    format_yaml(source_text, &path, options, allocator)
+                })
+            }
+            FormatStrategy::Native(NativeLanguage::Markdown) => {
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(allocator, &dispatch_config);
+                let options = dispatch_config.markdown_options();
+                oxc_formatter_markdown::format_with_session(&session, source_text, options)
+                    .and_then(|formatted| print(formatted, &path))
+            }
+            FormatStrategy::Native(NativeLanguage::Html(variant)) => {
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(allocator, &dispatch_config);
+                let options = dispatch_config.htmlish_options(variant);
+                oxc_formatter_htmlish::format_with_session(&session, source_text, options)
+                    .and_then(|formatted| print(formatted, &path))
+            }
+            FormatStrategy::Native(NativeLanguage::Toml) => {
+                let options = to_oxc_formatter_toml(&config, core);
+                oxc_formatter_toml::format(allocator, source_text, options)
+                    .and_then(|formatted| print(formatted, &path))
+            }
+            #[cfg(feature = "napi")]
+            FormatStrategy::Prettier(language) => {
+                self.format_by_prettier(source_text, &path, language, &config)
+            }
+        };
+
+        FormatReturn::new(source_text, result, &config)
+    }
+
+    /// Format JS/TS source.
+    ///
+    /// `source` is parsed in place. Returns the source text, and the formatted code or an error.
+    fn format_js<'a>(
+        &self,
+        source: Source<'a>,
+        path: &Path,
+        config: &Arc<FormatConfig>,
+        validated: Arc<ValidatedOptions>,
+    ) -> (&'a str, Result<String, OxcDiagnostic>) {
+        #[cfg(feature = "detect_code_removal")]
+        let source_type = source.source_type();
+
+        let dispatch_config = ResolvedDispatchConfig::for_root(Arc::clone(config), validated, path);
+        let session = self.root_session(source.allocator(), &dispatch_config);
+        let options = dispatch_config.js_options();
+        let ret = oxc_formatter::format_source_with_session(&session, source, options);
+
+        let source_text = ret.source_text;
+        let result = ret.result.and_then(|formatted| print(formatted, path));
+
+        #[cfg(feature = "detect_code_removal")]
+        if let Ok(code) = &result
+            && let Some(diff) = oxc_formatter::detect_code_removal(source_text, code, source_type)
+        {
+            unreachable!("Code removal detected in `{}`:\n{diff}", path.display());
+        }
+
+        (source_text, result)
     }
 
     /// A `PhysicalFile` root session carrying the build's default services
@@ -200,28 +252,33 @@ impl SourceFormatter {
         let services = super::embed::services::for_root(dispatch_config);
         FormatSession::with_services(allocator, InputKind::PhysicalFile, services)
     }
+}
 
-    fn format_json(
-        &self,
-        source_text: &str,
-        path: &Path,
-        options: JsonFormatOptions,
-    ) -> Result<String, OxcDiagnostic> {
-        let allocator = self.allocator_pool.get();
-        oxc_formatter_json::format(&allocator, source_text, options)
-            .and_then(|formatted| print(formatted, path))
-    }
+/// Returns `true` if `source_text` contains only whitespace.
+fn is_blank(source_text: &str) -> bool {
+    source_text.trim().is_empty()
+}
 
-    fn format_yaml(
-        &self,
-        source_text: &str,
-        path: &Path,
-        options: YamlFormatOptions,
-    ) -> Result<String, OxcDiagnostic> {
-        let allocator = self.allocator_pool.get();
-        oxc_formatter_yaml::format(&allocator, source_text, options)
-            .and_then(|formatted| print(formatted, path))
-    }
+/// Format `source_text` as JSON.
+fn format_json(
+    source_text: &str,
+    path: &Path,
+    options: JsonFormatOptions,
+    allocator: &Allocator,
+) -> Result<String, OxcDiagnostic> {
+    oxc_formatter_json::format(allocator, source_text, options)
+        .and_then(|formatted| print(formatted, path))
+}
+
+/// Format `source_text` as YAML.
+fn format_yaml<'a>(
+    source_text: &'a str,
+    path: &Path,
+    options: YamlFormatOptions,
+    allocator: &'a Allocator,
+) -> Result<String, OxcDiagnostic> {
+    oxc_formatter_yaml::format(allocator, source_text, options)
+        .and_then(|formatted| print(formatted, path))
 }
 
 fn print<C: FormatContext>(

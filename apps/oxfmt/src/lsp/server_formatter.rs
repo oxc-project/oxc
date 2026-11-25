@@ -10,16 +10,18 @@ use tower_lsp_server::gen_lsp_types::{
 };
 use tracing::{debug, error, warn};
 
+use oxc_allocator::AllocatorPool;
 use oxc_language_server::{
     Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder,
     ToolRestartChanges, offset_to_position, uri_utils::uri_to_file_path,
     utils::normalize_user_config_path_to_watch_pattern,
 };
+use oxc_parser::Source;
 
 use crate::core::{
-    ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, Language, ResolveOutcome,
-    SourceFormatter, build_global_ignore_matchers, config_discovery, is_ignored,
-    resolve_ignore_paths, utils,
+    ConfigScopes, ExternalServices, FormatPlan, FormatResult, FormatReturn, JsConfigLoaderCb,
+    Language, ResolveOutcome, SourceFormatter, build_global_ignore_matchers, config_discovery,
+    is_ignored, resolve_ignore_paths, utils,
 };
 use crate::lsp::create_fake_file_path;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -75,12 +77,13 @@ impl ServerFormatterBuilder {
         {
             error!("Failed to setup external services.\n{err}\n");
         }
-        let source_formatter = SourceFormatter::new(num_of_threads)
-            .with_external_services(Some(self.external_services.clone()));
+        let external_services = Some(self.external_services.clone());
+        let source_formatter = SourceFormatter::new().with_external_services(external_services);
 
         let (formatter, client_message) = ServerFormatter::new(
             root_path.to_path_buf(),
             source_formatter,
+            num_of_threads,
             JsConfigLoaderCb::clone(&self.js_config_loader),
             explicit_config_path,
             use_nested_config,
@@ -110,6 +113,8 @@ impl ToolBuilder for ServerFormatterBuilder {
 pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
+    /// Pool of allocators. Each document is formatted in an allocator from the pool.
+    allocator_pool: AllocatorPool,
     js_config_loader: JsConfigLoaderCb,
     /// Explicit `fmt.configPath` from LSP settings.
     /// When set, all files use this single config.
@@ -216,38 +221,45 @@ impl Tool for ServerFormatter {
     }
 
     fn run_format(&self, document: TextDocument) -> Result<Vec<TextEdit>, String> {
-        let file_content;
-        let (result, source_text) = if document.uri.scheme().as_str() == "file" {
+        let allocator = self.allocator_pool.get();
+
+        // Work out how to format the document first, and only then create the `Source`.
+        // A document which is unsupported or ignored is not copied or read.
+        let (plan, source) = if document.uri.scheme().as_str() == "file" {
             let Some(path) = uri_to_file_path(document.uri) else {
                 return Err("Invalid file URI".to_string());
             };
 
-            let source_text = if let Some(c) = document.text.as_deref() {
-                c
-            } else {
-                file_content = utils::read_to_string(&path)
-                    .map_err(|e| format!("Failed to read file: {e}"))?;
-                &file_content
-            };
-
-            let Some(result) = self.format_file(&path, source_text)? else {
+            let Some(plan) = self.plan_for_file(&path)? else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
-            (result, source_text)
+            let source = if let Some(text) = document.text.as_deref() {
+                Source::from_str(text, utils::PLACEHOLDER_SOURCE_TYPE, &allocator)
+            } else {
+                utils::read_source(&path, &allocator)
+                    .map_err(|e| format!("Failed to read file: {e}"))?
+            };
+
+            (plan, source)
         } else {
-            let source_text = document
+            let text = document
                 .text
                 .as_deref()
                 .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
-            let Some(result) =
-                self.format_in_memory(document.uri, source_text, &document.language_id)?
-            else {
+            let Some(plan) = self.plan_for_in_memory(document.uri, &document.language_id)? else {
                 return Ok(vec![]); // currently not supported
             };
-            (result, source_text)
+
+            let source = Source::from_str(text, utils::PLACEHOLDER_SOURCE_TYPE, &allocator);
+
+            (plan, source)
         };
+
+        // Use `block_in_place()` to avoid nested async runtime access
+        let ret = tokio::task::block_in_place(|| self.source_formatter.format(source, plan));
+        let FormatReturn { source_text, result } = ret;
 
         // Handle result
         match result {
@@ -278,6 +290,7 @@ impl ServerFormatter {
     pub fn new(
         root_path: PathBuf,
         source_formatter: SourceFormatter,
+        num_of_threads: usize,
         js_config_loader: JsConfigLoaderCb,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
@@ -292,6 +305,7 @@ impl ServerFormatter {
             Self {
                 root_path,
                 source_formatter,
+                allocator_pool: AllocatorPool::new(num_of_threads),
                 js_config_loader,
                 explicit_config_path,
                 use_nested_config,
@@ -365,18 +379,16 @@ impl ServerFormatter {
         Arc::clone(&self.state.read().expect("state rwlock poisoned"))
     }
 
-    /// Resolve config and format a file at the given path.
+    /// Resolve config for a file at the given path, and get the plan to format it with.
     /// Returns `None` if the file is unsupported or ignored.
     ///
     /// `language` is given for an in-memory document (from its `languageId`),
     /// which then decides the formatter, see [`crate::core::ConfigResolver::classify`].
-    fn resolve_and_format(
-        &self,
+    fn resolve_plan(
         scopes: &ConfigScopes,
         path: &Path,
-        source_text: &str,
         language: Option<Language>,
-    ) -> Result<Option<FormatResult>, String> {
+    ) -> Result<Option<FormatPlan>, String> {
         let resolver = match scopes.resolve(path) {
             Ok(r) => r,
             Err(err) => {
@@ -411,30 +423,33 @@ impl ServerFormatter {
         };
         debug!("plan = {plan:?}");
 
-        Ok(Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, plan))))
+        Ok(Some(plan))
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
+    /// Get the plan to format the file at `path` with.
+    /// Returns `None` if the file is unsupported or ignored.
+    fn plan_for_file(&self, path: &Path) -> Result<Option<FormatPlan>, String> {
         let state = self.snapshot();
         if is_ignored(&state.ignore_matchers, path, false, true) {
             debug!("File is ignored by .prettierignore: {}", path.display());
             return Ok(None);
         }
-        self.resolve_and_format(&state.scopes, path, source_text, None)
+        Self::resolve_plan(&state.scopes, path, None)
     }
 
-    fn format_in_memory(
+    /// Get the plan to format an in-memory document with.
+    /// Returns `None` if the document's language is unsupported.
+    fn plan_for_in_memory(
         &self,
         uri: &Uri,
-        source_text: &str,
         language_id: &LanguageId,
-    ) -> Result<Option<FormatResult>, String> {
+    ) -> Result<Option<FormatPlan>, String> {
         let Some(language) = Language::from_lsp_id(language_id.as_str()) else {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
             return Ok(None);
         };
         let path = create_fake_file_path(language, &self.root_path, uri);
-        self.resolve_and_format(&self.snapshot().scopes, &path, source_text, Some(language))
+        Self::resolve_plan(&self.snapshot().scopes, &path, Some(language))
     }
 }
 

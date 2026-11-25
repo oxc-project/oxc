@@ -3,8 +3,8 @@ use std::{path::PathBuf, sync::Arc};
 use serde::Deserialize;
 use tracing::{debug, instrument};
 
-use oxc_allocator::Allocator;
 use oxc_formatter_core::{FormatSession, InputKind};
+use oxc_napi::NapiSource;
 use oxc_span::SourceType;
 
 use crate::{
@@ -23,6 +23,9 @@ use crate::{
 /// Prettier's `multiparser.js` silently swallows errors from `textToDoc()` in production,
 /// so detailed error reporting is unnecessary.
 /// Errors are logged via `tracing::debug!` for observability with `OXC_LOG=debug`.
+///
+/// `napi_source` holds the source text, which was copied from the JS string directly
+/// into its arena. The code is parsed in place, and formatted in that arena.
 #[instrument(
     level = "debug",
     name = "oxfmt::text_to_doc",
@@ -31,7 +34,7 @@ use crate::{
 )]
 pub fn run(
     source_ext: &str,
-    source_text: &str,
+    mut napi_source: NapiSource,
     oxfmt_plugin_options_json: &str,
     format_file_cb: JsFormatFileCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
@@ -71,16 +74,16 @@ pub fn run(
 
     let services = embed::services::for_root(&external_services, &dispatch_config);
 
-    let allocator = Allocator::default();
+    let source = napi_source.source(source_type);
     let session = FormatSession::with_services(
-        &allocator,
+        source.allocator(),
         // A Svelte/Astro `<script>` (or Astro frontmatter) block is a complete document the host passes as embedded input,
         // never the owner of file envelopes (BOM / front matter).
         InputKind::VirtualDocument,
         services,
     );
     let formatted = match tokio::task::block_in_place(|| {
-        oxc_formatter::format_with_session(&session, source_text, source_type, format_options)
+        oxc_formatter::format_source_with_session(&session, source, format_options).result
     }) {
         Ok(formatted) => formatted,
         Err(err) => {

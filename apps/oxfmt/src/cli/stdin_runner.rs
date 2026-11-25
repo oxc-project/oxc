@@ -1,14 +1,16 @@
 use std::{
     env,
-    io::{self, BufWriter, Read},
+    io::{self, BufWriter},
     path::PathBuf,
 };
 
+use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+use oxc_parser::Source;
 
 use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
-    ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
+    ConfigScopes, ExternalServices, FormatResult, FormatReturn, JsConfigLoaderCb, ResolveOutcome,
     SourceFormatter, build_global_ignore_matchers, is_ignored, resolve_ignore_paths, utils,
 };
 
@@ -50,11 +52,17 @@ impl StdinRunner {
         // Single threaded for stdin formatting
         let num_of_threads = 1;
 
-        let mut source_text = String::new();
-        if let Err(err) = io::stdin().read_to_string(&mut source_text) {
-            utils::print_and_flush(stderr, &format!("Failed to read from stdin: {err}\n"));
-            return CliRunResult::InvalidOptionConfig;
-        }
+        // Read stdin directly into the arena
+        let allocator = Allocator::default();
+        let stdin = io::stdin().lock();
+        let source = Source::read_from_reader(stdin, utils::PLACEHOLDER_SOURCE_TYPE, &allocator);
+        let source = match source.and_then(utils::ensure_utf8) {
+            Ok(source) => source,
+            Err(err) => {
+                utils::print_and_flush(stderr, &format!("Failed to read from stdin: {err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
         let config_scopes = match ConfigScopes::load(
             &cwd,
@@ -93,7 +101,7 @@ impl StdinRunner {
             }
         };
         if is_ignored(&global_matchers, &filepath, false, true) {
-            utils::print_and_flush(stdout, &source_text);
+            utils::print_bytes_and_flush(stdout, source.as_bytes());
             return CliRunResult::FormatSucceeded;
         }
 
@@ -109,7 +117,7 @@ impl StdinRunner {
         };
         // Then config's `ignorePatterns`
         if config_resolver.is_path_ignored(&filepath, false) {
-            utils::print_and_flush(stdout, &source_text);
+            utils::print_bytes_and_flush(stdout, source.as_bytes());
             return CliRunResult::FormatSucceeded;
         }
 
@@ -120,7 +128,7 @@ impl StdinRunner {
         let plan = match config_resolver.resolve(&filepath, strategy) {
             Ok(ResolveOutcome::Format(plan)) => plan,
             Ok(ResolveOutcome::MissingPlugin(_)) => {
-                utils::print_and_flush(stdout, &source_text);
+                utils::print_bytes_and_flush(stdout, source.as_bytes());
                 return CliRunResult::FormatSucceeded;
             }
             Err(err) => {
@@ -129,11 +137,13 @@ impl StdinRunner {
             }
         };
 
-        let source_formatter = SourceFormatter::new(num_of_threads)
-            .with_external_services(Some(self.external_services));
+        let external_services = Some(self.external_services);
+        let source_formatter = SourceFormatter::new().with_external_services(external_services);
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| source_formatter.format(&source_text, plan)) {
+        let ret = tokio::task::block_in_place(|| source_formatter.format(source, plan));
+        let FormatReturn { source_text, result } = ret;
+        match result {
             FormatResult::Success { code, .. } => {
                 utils::print_and_flush(stdout, &code);
                 CliRunResult::FormatSucceeded
@@ -142,7 +152,7 @@ impl StdinRunner {
                 let handler = GraphicalReportHandler::new();
                 let mut output = String::new();
                 for error in
-                    DiagnosticService::wrap_diagnostics(&cwd, &filepath, &source_text, diagnostics)
+                    DiagnosticService::wrap_diagnostics(&cwd, &filepath, source_text, diagnostics)
                 {
                     // Writing to `String` never fails
                     let _ = handler.render_report(&mut output, error.as_ref());

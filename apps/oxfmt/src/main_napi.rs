@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use napi_derive::napi;
 
-use oxc_napi::OxcError;
+use oxc_napi::{NapiSource, OxcError};
 use serde_json::Value;
 
 use crate::{
@@ -140,7 +140,7 @@ pub struct FormatResult {
 #[napi]
 pub async fn format(
     filename: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] source_text: NapiSource,
     options: Option<Value>,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>"
@@ -176,7 +176,7 @@ pub async fn format(
 #[napi]
 pub async fn js_text_to_doc(
     source_ext: String,
-    source_text: String,
+    #[napi(ts_arg_type = "string")] source_text: NapiSource,
     oxfmt_plugin_options_json: String,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>"
@@ -193,7 +193,7 @@ pub async fn js_text_to_doc(
 
     text_to_doc_api::run(
         &source_ext,
-        &source_text,
+        source_text,
         &oxfmt_plugin_options_json,
         format_file_cb,
         format_embedded_doc_cb,

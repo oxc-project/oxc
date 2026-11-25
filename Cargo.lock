@@ -2968,6 +2968,7 @@ dependencies = [
  "oxc_formatter_yaml",
  "oxc_language_server",
  "oxc_napi",
+ "oxc_parser",
  "oxc_span",
  "phf",
  "rayon",

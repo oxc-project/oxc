@@ -135,7 +135,7 @@ impl WalkRunner {
         }
 
         // Create `SourceFormatter` instance
-        let source_formatter = SourceFormatter::new(num_of_threads);
+        let source_formatter = SourceFormatter::new();
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_services(self.external_services);
 

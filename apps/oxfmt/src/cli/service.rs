@@ -9,10 +9,11 @@ use cow_utils::CowUtils;
 use rayon::prelude::*;
 use tracing::debug_span;
 
+use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputMode;
-use crate::core::{FormatPlan, FormatResult, SourceFormatter, utils};
+use crate::core::{FormatPlan, FormatResult, FormatReturn, SourceFormatter, utils};
 
 pub enum SuccessResult {
     /// Path with elapsed time, only measured in check mode
@@ -24,6 +25,8 @@ pub struct FormatService {
     cwd: Box<Path>,
     format_mode: OutputMode,
     formatter: SourceFormatter,
+    /// Pool of allocators. Each file is read into an allocator from the pool, and formatted in it.
+    allocator_pool: AllocatorPool,
 }
 
 impl FormatService {
@@ -31,7 +34,9 @@ impl FormatService {
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), format_mode, formatter }
+        // Files are formatted on `rayon`'s threads (see `run_streaming`)
+        let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
+        Self { cwd: cwd.into(), format_mode, formatter, allocator_pool }
     }
 
     /// Process entries as they are received from the channel
@@ -45,8 +50,10 @@ impl FormatService {
             let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
             let path = Arc::clone(&plan.path);
-            let Ok(source_text) = debug_span!("oxfmt::read", path = %path.display())
-                .in_scope(|| utils::read_to_string(&path))
+            // Read the file directly into the arena
+            let allocator = self.allocator_pool.get();
+            let Ok(source) = debug_span!("oxfmt::read", path = %path.display())
+                .in_scope(|| utils::read_source(&path, &allocator))
             else {
                 // This happens if binary file is attempted to be formatted
                 // e.g. `.ts` for MPEG-TS video file
@@ -66,13 +73,14 @@ impl FormatService {
                 return;
             };
 
-            let (code, is_changed) = match self.formatter.format(&source_text, plan) {
+            let FormatReturn { source_text, result } = self.formatter.format(source, plan);
+            let (code, is_changed) = match result {
                 FormatResult::Success { code, is_changed } => (code, is_changed),
                 FormatResult::Error(diagnostics) => {
                     let errors = DiagnosticService::wrap_diagnostics(
                         self.cwd.clone(),
                         &path,
-                        &source_text,
+                        source_text,
                         diagnostics,
                     );
                     let _ = tx_error.send(errors);
