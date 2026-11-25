@@ -29,8 +29,10 @@ Angular's own syntax around them (pipes, comment, `;`, microsyntax, block parame
 and the host tells JS what Angular reads of the code (`JsEmbeddedIn::template_expressions_only`).
 The host translates either into JS's `JsRoot` and `JsEmbeddedIn`.
 An attribute's value is laid out by its language, in the layout its marker names (JS's `JsRoot`, CSS's `CssEmbeddedIn`):
-this crate only quotes it (`write_quoted`: the `"`, `&quot;` for a `"` in it, a group), and knows nothing of the language's syntax,
+this crate only quotes it (`write_quoted`: the `"` and a group; a `"` in the value is `&quot;`, by `dispatch_attribute_value`), and knows nothing of the language's syntax,
 but Angular's own (laid out around the pieces of JS in `src/print/angular.rs`).
+A `<script>` body's output gets one HTML fact back, which no source body holds: a `</script` it prints, which would end the element, is `<\/script` (`escape_script_end`),
+the same in a JS string or template and in JSON (an html-in-js template re-cooked from `<\/script>` prints one).
 
 #### What Vue reads
 
@@ -89,4 +91,4 @@ DUMP_IR=1 cargo run -p oxc_formatter_htmlish --example htmlish_formatter [filena
 node apps/oxfmt/node_modules/prettier/bin/prettier.cjs [filename]
 ```
 
-Fixtures and the example read `.vue` as Vue, `.xhtml` / `.xht` as XHTML and `*.component.html` as Angular.
+The example reads `.vue` as Vue, `.xhtml` / `.xht` as XHTML and `*.component.html` as Angular; fixtures do too, of the extensions `build.rs` lists (no `.xht`).

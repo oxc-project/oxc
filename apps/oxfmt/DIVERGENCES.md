@@ -705,6 +705,440 @@ a template literal's substitution's, whatever `bracketSpacing` says, and, under 
 Vue's tokenizer ends the interpolation at the first `}}`, so `{{ {...{a: 1}} }}` no longer compiles (`@vue/compiler-dom` 3.5.45: `Error parsing JavaScript expression`).
 Prettier does it for a property's value only.
 
+## js-in-angular-root-chain-not-indented
+
+- Why: uniform-rule (same construct, same output: Vue's `{{ }}` and Angular's `[x]`, as Prettier prints them)
+- Pin: `conformance/fixtures/js-in-angular/root-chain-not-indented.component.html`
+- Conformance:
+  - `externals/prettier/angular/angular/attributes.component.html`
+  - `externals/prettier/angular/angular/interpolation.component.html`
+  - `externals/prettier/angular/angular/real-world.component.html` (`printWidth: 1`)
+  - `externals/prettier/angular/expression/logical-expressions.html`
+  - `externals/ng-zorro-antd/components/transfer/transfer-list.component.ts`
+
+```html
+<!-- input -->
+<p>{{ firstCondition && secondCondition && thirdCondition && fourthCondition && fifthConditionThatIsLong }}</p>
+<p [title]="firstCondition && secondCondition && thirdCondition && fourthCondition && fifthConditionThatIsLong"></p>
+
+<!-- ours -->
+<p>
+  {{
+    firstCondition &&
+    secondCondition &&
+    thirdCondition &&
+    fourthCondition &&
+    fifthConditionThatIsLong
+  }}
+</p>
+<p
+  [title]="
+    firstCondition &&
+    secondCondition &&
+    thirdCondition &&
+    fourthCondition &&
+    fifthConditionThatIsLong
+  "
+></p>
+
+<!-- prettier -->
+<p>
+  {{
+    firstCondition &&
+      secondCondition &&
+      thirdCondition &&
+      fourthCondition &&
+      fifthConditionThatIsLong
+  }}
+</p>
+<p
+  [title]="
+    firstCondition &&
+    secondCondition &&
+    thirdCondition &&
+    fourthCondition &&
+    fifthConditionThatIsLong
+  "
+></p>
+```
+
+A binary chain at the root of a `{{ }}` or an action (`(click)`) does not indent its operands after the first,
+as Prettier prints it at the root of Vue's `{{ }}` and `@click`, and of a binding (`[title]`):
+the host's delimiters already indent them (as for Vue's `|`: DIVERGENCES.md#js-in-vue-bitwise-or).
+Prettier indents it in Angular's `{{ }}` and actions only (an action's in the parens it adds: DIVERGENCES.md#js-in-angular-action-without-parens).
+
+## js-in-angular-pipe-operand-as-root
+
+- Why: uniform-rule (same construct, same output: the chain without the pipe)
+- Pin: `conformance/fixtures/js-in-angular/pipe-operand-as-root.component.html`
+
+```html
+<!-- input -->
+<p [title]="firstCondition && secondCondition && thirdCondition && fourthCondition && fifthConditionThatIsLong | json"></p>
+<p [title]="firstCondition && secondCondition && thirdCondition && fourthCondition && fifthConditionThatIsLong"></p>
+
+<!-- ours -->
+<p
+  [title]="
+    firstCondition &&
+    secondCondition &&
+    thirdCondition &&
+    fourthCondition &&
+    fifthConditionThatIsLong | json
+  "
+></p>
+<p
+  [title]="
+    firstCondition &&
+    secondCondition &&
+    thirdCondition &&
+    fourthCondition &&
+    fifthConditionThatIsLong
+  "
+></p>
+
+<!-- prettier -->
+<p
+  [title]="
+    firstCondition &&
+      secondCondition &&
+      thirdCondition &&
+      fourthCondition &&
+      fifthConditionThatIsLong | json
+  "
+></p>
+<p
+  [title]="
+    firstCondition &&
+    secondCondition &&
+    thirdCondition &&
+    fourthCondition &&
+    fifthConditionThatIsLong
+  "
+></p>
+```
+
+A pipe's left side lays out as the same code without the pipe: a binary chain at the root does not indent its operands after the first (DIVERGENCES.md#js-in-angular-root-chain-not-indented).
+Prettier indents it when a pipe follows, in a `{{ }}` and a binding (`[title]`) alike.
+
+## js-in-angular-action-without-parens
+
+- Why: uniform-rule (same construct, same output: Vue's `@click`, and Angular's `[x]`, as Prettier prints them; prettier/prettier#5259)
+- Pin: `conformance/fixtures/js-in-angular/action-without-side-effect-parens.component.html`
+- Conformance:
+  - `externals/prettier/angular/angular/attributes.component.html`
+  - `externals/prettier/angular/angular/real-world.component.html`
+  - `externals/prettier/angular/bracket-same-line/angularjs.html`
+  - `externals/prettier/angular/template-literal/template-literal.html`
+  - `externals/prettier/angular/trailing-comma/trailing-comma.html`
+  - `externals/angular-components/dev-app/input/input-demo.component.html`
+
+```html
+<!-- input -->
+<button (click)="a && b" (focus)="0" (blur)="{ a: 1 }" (keyup)="a = 1" (keydown)="a()"></button>
+
+<!-- ours -->
+<button (click)="a && b" (focus)="0" (blur)="{ a: 1 }" (keyup)="a = 1" (keydown)="a()"></button>
+
+<!-- prettier -->
+<button
+  (click)="(a && b)"
+  (focus)="(0)"
+  (blur)="({ a: 1 })"
+  (keyup)="a = 1"
+  (keydown)="a()"
+></button>
+```
+
+An action's statement prints as the expression it is, as Prettier prints a Vue handler's and a binding's value.
+Prettier wraps one without a side effect (neither an assignment nor a call) in parens, which Angular reads alike, to make a possible mistake visible (`foo == $event`).
+
+## js-in-angular-nested-pipe-as-name
+
+- Why: cost
+- Pin: `conformance/fixtures/js-in-angular/nested-pipe.component.html`
+- Conformance:
+  - `externals/prettier/angular/angular/attributes.component.html`
+  - `externals/prettier/angular/angular/interpolation.component.html`
+
+```html
+<!-- input -->
+<p [x]="f(x, {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | pppp})"></p>
+
+<!-- ours -->
+<p
+  [x]="
+    f(x, {
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        | pppp,
+    })
+  "
+></p>
+
+<!-- prettier -->
+<p
+  [x]="
+    f(x, {
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:
+        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb | pppp,
+    })
+  "
+></p>
+```
+
+A pipe below the root (`(x$ | async).level`, `f(a | p)`, `{k: a | p}`) formats, a name of its own standing for it while JS lays the code out:
+where JS decides the layout by a node's kind, it decides for a name, which it does not break after a property's `:` nor before a `.` (`).level`),
+where Prettier breaks a pipe there.
+Doubled parens around one at the root keep one (`((a | p)) | q`).
+Matching would need JS to read Angular's pipe (`NGPipeExpression` in Prettier's estree).
+
+## js-in-angular-nested-pipe-as-written
+
+- Why: cost
+- Pin: `conformance/fixtures/js-in-angular/nested-pipe-as-written.component.html`
+- Drop when: the parser reads these pipes as nested ones (`AngularCode::nested`)
+
+```html
+<!-- input -->
+<p>{{a?b:c|p}}</p>
+<p>{{ f(a ? b : c|p) }}</p>
+<p>{{ `${a|p}` }}</p>
+
+<!-- ours -->
+<p>{{a?b:c|p}}</p>
+<p>{{ f(a ? b : c|p) }}</p>
+<p>{{ `${a|p}` }}</p>
+
+<!-- prettier -->
+<p>{{ a ? b : (c | p) }}</p>
+<p>{{ f(a ? b : (c | p)) }}</p>
+<p>{{ `${(a | p)}` }}</p>
+```
+
+A pipe in a conditional's alternate (at the root too) or in a template literal's `${}` prints as written, as the parser does not split it from the code (the other nested ones format: DIVERGENCES.md#js-in-angular-nested-pipe-as-name):
+TS reads its `|` as a bitwise or, which Angular does not read.
+None was found in about 1400 real templates.
+Matching would need the parser to read the alternate's pipe (after the conditional's last `:`) and a template literal's `${}`, which its lexer skips.
+
+## js-in-angular-reserved-word-as-written
+
+- Why: cost
+- Pin: `conformance/fixtures/js-in-angular/reserved-word-as-written.component.html`
+- Conformance:
+  - `externals/prettier/angular/control-flow/multiple-switch-cases.html`
+
+```html
+<!-- input -->
+<p>{{default()  }}</p>
+<p>{{ delete(x)+class }}</p>
+
+<!-- ours -->
+<p>{{default()  }}</p>
+<p>{{ delete(x)+class }}</p>
+
+<!-- prettier -->
+<p>{{ default() }}</p>
+<p>{{ delete(x) + class }}</p>
+```
+
+Code naming a JS reserved word prints as written: Angular reads it as a name (its keywords are only 14), and the code is formatted as TS, which does not parse it.
+Matching would need the names replaced before the TS parse, as a nested pipe is (DIVERGENCES.md#js-in-angular-nested-pipe-as-name):
+the parser would have to know JS's reserved words to find them, for code real templates rarely hold (a `delete(…)` mostly).
+
+## js-in-angular-for-let-formatted
+
+- Why: uniform-rule (same construct, same output: the other parameters of `@for`)
+- Pin: `conformance/fixtures/js-in-angular/for-let-formatted.component.html`
+
+```html
+<!-- input -->
+@for (item of items;track item.id;let e=$even,o=$odd) {
+  {{ item }}
+}
+
+<!-- ours -->
+@for (item of items; track item.id; let e = $even, o = $odd) {
+  {{ item }}
+}
+
+<!-- prettier -->
+@for (item of items; track item.id; let e=$even,o=$odd) {
+  {{ item }}
+}
+```
+
+`@for`'s `let` aliases format, as its other parameters do.
+Prettier prints them as written.
+
+## js-in-angular-unread-code-as-written
+
+- Why: uniform-rule (code Angular's compiler does not read prints as written)
+- Pin: `conformance/fixtures/js-in-angular/unread-code-as-written.component.html`
+- Conformance:
+  - `externals/prettier/angular/control-flow/for.html`
+
+```html
+<!-- input -->
+<p>{{   a  b   }}</p>
+@if (a   b) {
+  x
+}
+@for (let   item of items;index as i) {
+  x
+}
+@let = 1;
+
+<!-- ours -->
+<p>{{   a  b   }}</p>
+@if (a   b) {
+  x
+}
+@for (let   item of items; index as i) {
+  x
+}
+@let = 1;
+
+<!-- prettier -->
+<p>{{   a  b   }}</p>
+@if (a; b) {
+  x
+}
+@for (let item of items; index as i) {
+  x
+}
+@let  = 1;
+```
+
+A block's parameters Angular's compiler does not read print as written, each trimmed, and a `@let` it does not read (no name), as a `{{ }}` it does not read prints as written, in Prettier too.
+`@for (let item of items)` is an `*ngFor`'s value, not `@for`'s parameters (`item of items`, `track …`, `let a = $index`).
+Prettier reads such a `@for`'s as an `*ngFor`'s value, and an `@if`'s in a way of its own (`a; b`).
+
+## js-in-angular-binding-comment-in-quotes
+
+- Why: invariant
+- Pin: `conformance/fixtures/js-in-angular/binding-comment-in-quotes.component.html`
+
+```html
+<!-- input -->
+<div [y]="{ a: 1 } // c" (z)="a() // c"></div>
+
+<!-- ours -->
+<div
+  [y]="
+    { a: 1 } // c
+  "
+  (z)="
+    a() // c
+  "
+></div>
+
+<!-- prettier -->
+<div
+  [y]="{ a: 1 }" // c
+  (z)="
+    a() // c
+  "
+></div>
+```
+
+A comment in a binding's value stays in the value, its quotes after it.
+Prettier prints an object binding's comment past the closing quote, which moves it out of the value (Angular reads it as a start-tag comment there).
+
+## js-in-angular-angularjs-attributes-as-written
+
+- Why: uniform-rule (same construct, same output: `ng-click`, and these attributes in a `.html` file, as Prettier prints them)
+- Pin: `conformance/fixtures/js-in-angular/angularjs-attributes-as-written.component.html`
+- Conformance:
+  - `externals/prettier/angular/angular/angularjs.html`
+  - `externals/prettier/angular/angular/ng-model-options.html`
+  - `externals/prettier/angular/bracket-same-line/angularjs.html`
+
+```html
+<!-- input -->
+<div ng-if="$ctrl .shouldShowWarning&&!$ctrl.loading" ng-click="a&&b" ng-model-options="{ debounce : 1000 }"></div>
+
+<!-- ours -->
+<div
+  ng-if="$ctrl .shouldShowWarning&&!$ctrl.loading"
+  ng-click="a&&b"
+  ng-model-options="{ debounce : 1000 }"
+></div>
+
+<!-- prettier -->
+<div
+  ng-if="$ctrl.shouldShowWarning && !$ctrl.loading"
+  ng-click="a&&b"
+  ng-model-options="{ debounce: 1000 }"
+></div>
+```
+
+AngularJS's attributes print as written, as any attribute Angular's compiler does not read: AngularJS is not supported, as Vue 2 is not (DIVERGENCES.md#js-in-vue-bitwise-or).
+Prettier formats six of them (`ng-if`, `ng-show`, `ng-hide`, `ng-class`, `ng-style`, `ng-model-options`) as Angular bindings, under `parser: angular` only.
+
+## js-in-angular-microsyntax-keys-as-written
+
+- Why: uniform-rule (names print as written: Angular's keys, aliases, pipe names, as tag and attribute names)
+- Pin: `conformance/fixtures/js-in-angular/microsyntax-keys-as-written.component.html`
+
+```html
+<!-- input -->
+<div *ngIf="cond; els - e other"></div>
+<li *ngFor="let a of b; 'trackBy': f"></li>
+
+<!-- ours -->
+<div *ngIf="cond; els - e: other"></div>
+<li *ngFor="let a of b; 'trackBy': f"></li>
+
+<!-- prettier -->
+<div *ngIf="cond; &quot;els-e&quot;: other"></div>
+<li *ngFor="let a of b; trackBy: f"></li>
+```
+
+A key in a structural directive's value (`*ngIf`, `*ngFor`) keeps its spelling, as Angular's other names do: a pipe's name, an alias, a tag and an attribute name (crates/oxc_formatter_htmlish/DIVERGENCES.md#tag-name-case).
+What follows it prints as Prettier prints it (the `:`).
+Prettier prints the name Angular reads from it, quoted where it is no identifier.
+
+## js-in-angular-let-comment-as-written
+
+- Why: semantics (Angular ends `@let` at its `;`, and reads what follows as text)
+- Pin: `conformance/fixtures/js-in-angular/let-comment-as-written.component.html`
+
+```html
+<!-- input -->
+@let bar = a // c
+;
+
+<!-- ours -->
+@let bar = a // c
+;
+
+<!-- prettier -->
+@let bar =
+  a; // c
+```
+
+A `@let` whose value ends in a comment prints its value as written up to the `;`, the line break that ends the comment too; its name and `=` format.
+Prettier prints the comment after the `;`, outside the declaration, where Angular reads `// c` as text, rendered in the page.
+
+## js-in-angular-tailwind-bind-class
+
+- Why: uniform-rule (same construct, same output: `[class]`)
+- Pin: `conformance/fixtures/js-in-angular/sort-tailwindcss-attributes/bindings.component.html`
+
+```html
+<!-- input (sortTailwindcss: {}) -->
+<div [class]="'p-4 flex'" bind-class="'p-4 flex'"></div>
+
+<!-- ours -->
+<div [class]="'flex p-4'" bind-class="'flex p-4'"></div>
+
+<!-- prettier (prettier-plugin-tailwindcss) -->
+<div [class]="'flex p-4'" bind-class="'p-4 flex'"></div>
+```
+
+`bind-class` is Angular's other spelling of `[class]` and sorts as it does, as `bind-x` does for a listed `[x]`.
+prettier-plugin-tailwindcss reads the names in `[…]` only.
+
 ## styled-extend-tag
 
 - Why: cost
@@ -1187,9 +1621,8 @@ const a = html`<style>
 </style>`;
 ```
 
-An html-in-js placeholder is found in the child's output ASCII case-insensitively (`HTML_PLACEHOLDER_PREFIX` in `oxc_formatter`):
-CSS lowercases a property name, and the placeholder standing in it with it.
-Prettier looks for the placeholder as it wrote it, so the lowercased one stays in the output and `${b}` is lost.
+An html-in-js placeholder is an ASCII lowercase name (`HTML_PLACEHOLDER_PREFIX` in `oxc_formatter`), which CSS prints as written in a property name.
+Prettier's has uppercase letters, which CSS lowercases there: Prettier no longer finds it, so the lowercased one stays in the output and `${b}` is lost.
 
 ## pre-like-template-expression
 

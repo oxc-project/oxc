@@ -117,7 +117,7 @@
 
 ## angular-in-js
 
-### Option 1: 222/240 (92.50%)
+### Option 1: 221/240 (92.08%)
 
 ```json
 {"printWidth":80}
@@ -155,6 +155,8 @@
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/ng-zorro-antd/components/time-picker/time-picker-panel.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__time-picker__time-picker-panel.component.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+- [externals/ng-zorro-antd/components/transfer/transfer-list.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__transfer__transfer-list.component.ts.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
 - [externals/ng-zorro-antd/components/tree-select/tree-select.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__tree-select__tree-select.component.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/ng-zorro-antd/components/upload/upload.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__upload__upload.component.ts.md)
@@ -178,6 +180,34 @@
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/ng-zorro-antd/components/tabs/tab-body.component.ts](diffs/angular-in-js/externals__ng-zorro-antd__components__tabs__tab-body.component.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+
+## angular
+
+### Option 1: 472/477 (98.95%)
+
+```json
+{"printWidth":80}
+```
+
+- [externals/angular-adev/content/examples/i18n/src/app/app.component.html](diffs/angular/externals__angular-adev__content__examples__i18n__src__app__app.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- [externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/profiler/recording-timeline/visualizer-controls/visualizer-controls.component.html](diffs/angular/externals__angular-devtools__projects__ng-devtools__src__lib__devtools-tabs__profiler__recording-timeline__visualizer-controls__visualizer-controls.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/router-tree/router-details-row/route-details-row.component.html](diffs/angular/externals__angular-devtools__projects__ng-devtools__src__lib__devtools-tabs__router-tree__router-details-row__route-details-row.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html](diffs/angular/externals__angular-devtools__src__app__demo-app__todo__home__todos.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+
+### Option 2: 476/477 (99.79%)
+
+```json
+{"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
+```
+
+- [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
 
 ## svelte
 

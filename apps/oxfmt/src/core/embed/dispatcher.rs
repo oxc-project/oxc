@@ -254,18 +254,16 @@ impl ResolvedDispatchConfig {
     }
 }
 
-/// Fallback invoked for [`Route::Prettier`] languages.
-/// Same shape as `FormatDispatcher`, plus the routed language
-/// (the Doc path consumes `parent_context` only for angular-in-js's [`HtmlInJsTemplate`], not `input_kind`;
-/// re-examine if it ever serves envelope-bearing inputs).
+/// Fallback invoked for [`Route::Prettier`] languages, with the routed language and the part's text:
+/// the Doc path reads nothing else of the request.
 ///
 /// Assembled only in napi builds ([`super::prettier_doc`]);
 /// the pure Rust build passes `None` and these languages are deliberately preserved as-is.
 pub type PrettierDocFallback = Arc<
-    dyn for<'a, 'r> Fn(
+    dyn for<'a> Fn(
             &FormatSession<'a>,
             PrettierLanguage,
-            &DispatchRequest<'r>,
+            &str,
         ) -> Result<DispatchResponse<'a>, String>
         + Send
         + Sync,
@@ -384,7 +382,7 @@ pub fn build_dispatcher(
             // deliberate skip otherwise (pure build).
             Route::Prettier(language) => {
                 if let Some(fallback) = &fallback {
-                    fallback(session, language, &request)
+                    fallback(session, language, text)
                 } else {
                     debug!(
                         "No fallback for Prettier language '{}' in this build, part stays as-is",
@@ -411,8 +409,10 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         layout,
         tailwind_classes: false,
         ends_at_double_brace: false,
+        ends_before_brace: false,
         reads_as_statements: false,
         in_parens: false,
+        host_suffix: 0,
     };
     if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
         let root = match part {
@@ -452,11 +452,15 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
     }
     if let Some(&part) = request.parent_context_as::<JsInAngularTemplate>() {
         let root = match part {
-            JsInAngularTemplate::Interpolation | JsInAngularTemplate::ValueInterpolation => {
-                ExpressionRoot { ends_at_double_brace: true, ..expression(ExpressionLayout::Bare) }
-            }
-            JsInAngularTemplate::Binding { tailwind_classes } => ExpressionRoot {
+            JsInAngularTemplate::Interpolation { before_brace }
+            | JsInAngularTemplate::ValueInterpolation { before_brace } => ExpressionRoot {
+                ends_at_double_brace: true,
+                ends_before_brace: before_brace,
+                ..expression(ExpressionLayout::Bare)
+            },
+            JsInAngularTemplate::Binding { tailwind_classes, .. } => ExpressionRoot {
                 tailwind_classes,
+                host_suffix: part.suffix_len(),
                 ..expression(ExpressionLayout::Hug { literals: true })
             },
             JsInAngularTemplate::AttributePiece { tailwind_classes } => {
@@ -565,6 +569,8 @@ mod tests {
             "toml",
             "html",
             "vue",
+            "angular-html",
+            "angular",
         ] {
             let text = match language {
                 "graphql" | "gql" => "{ a }",
@@ -574,6 +580,7 @@ mod tests {
                 "markdown" | "md" => "#  a",
                 "html" => "<p>  a  </p>",
                 "vue" => "<template><p>{{ a }}</p></template>",
+                "angular-html" | "angular" => "<p>{{ a }}</p>",
                 _ => "a  =  1",
             };
             let response = session.dispatch(DispatchRequest {

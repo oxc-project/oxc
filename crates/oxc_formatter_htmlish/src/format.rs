@@ -153,11 +153,11 @@ pub struct HtmlishEmbeddedIn {
     /// a value that is one stays unquoted (`attr=${value}` passes a value, not a string),
     /// a value holding one is no class list to sort,
     /// and a tag named by one is a component (`<${Tag} />`, `<${Tag}>…</${Tag}>`).
-    pub placeholder: Option<Placeholder>,
+    pub placeholder: Option<ParentPlaceholder>,
 }
 
 /// A placeholder's prefix, and the parent's test for a whole one.
-pub type Placeholder = (&'static str, fn(&str) -> bool);
+pub type ParentPlaceholder = (&'static str, fn(&str) -> bool);
 
 impl HtmlishEmbeddedIn {
     /// `value` is the parent's placeholder as a whole.

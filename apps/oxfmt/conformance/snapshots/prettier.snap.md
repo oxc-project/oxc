@@ -136,8 +136,6 @@
   - ❓unclassified
 - externals/prettier/jsx/comments/in-opening-tag-name.js (💥, 42.86%)
   - ❓unclassified
-- externals/prettier/misc/embedded-language-formatting/in-javascript/test.js (💥✨, 98.00%)
-  - ❓unclassified
 - externals/prettier/js/array-exprssion/numbers-with-holes.js (💥, 92.86%)
   - crates/oxc_formatter/DIVERGENCES.md#array-hole-comments
 - externals/prettier/js/class/assignment.js (💥, 76.47%)
@@ -170,6 +168,8 @@
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 - externals/prettier/js/ternaries/indent-after-paren.js (💥💥💥💥, 99.14%)
   - crates/oxc_formatter/DIVERGENCES.md#computed-member-object-paren-break
+- externals/prettier/misc/embedded-language-formatting/in-javascript/test.js (💥✨, 96.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#unclosed-at-end
 
 ### Not idempotent
 
@@ -584,7 +584,61 @@
 
 ## angular-html
 
-128/128 (100.00%)
+84/128 (65.63%)
+
+### Failed
+
+- externals/prettier/angular/angular/angularjs.html (💥💥💥💥💥, 54.99%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/angular/attributes.component.html (💥💥💥💥💥, 79.92%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+  - crates/oxc_formatter/DIVERGENCES.md#single-level-member-no-break
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
+- externals/prettier/angular/angular/interpolation.component.html (💥💥💥💥💥, 97.73%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
+- externals/prettier/angular/angular/ng-model-options.html (💥💥💥💥💥, 8.00%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/angular/real-world.component.html (💥💥💥💥💥, 99.75%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#omitted-end-tag
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- externals/prettier/angular/bracket-same-line/angularjs.html (💥💥, 73.08%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/control-flow/chid.html (💥, 62.50%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
+- externals/prettier/angular/control-flow/for.html (💥, 88.89%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-unread-code-as-written
+- externals/prettier/angular/control-flow/ignore.html (💥, 89.66%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-ignored-block-chain
+- externals/prettier/angular/control-flow/multiple-switch-cases.html (💥, 98.31%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-reserved-word-as-written
+- externals/prettier/angular/expression/logical-expressions.html (💥, 91.43%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+- externals/prettier/angular/icu-expression/basic-plural-01.html (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-plural-02.html (💥, 31.58%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-plural-03.html (💥, 9.52%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-plural-04.html (💥, 20.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-select-01.html (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-select-02.html (💥, 20.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/combination-01.html (💥, 25.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/template-literal/template-literal.html (💥, 88.89%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- externals/prettier/angular/trailing-comma/trailing-comma.html (💥💥💥, 92.78%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- externals/prettier/angular/upper-case/upper-case-html-tag.html (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-upper-case-html-after-doctype
 
 ## vue
 

@@ -45,7 +45,8 @@ pub fn write_block<'a>(
     if let Some(parameters) = super::angular::format_block_parameters(block, f) {
         write!(f, [space(), parameters]);
     } else if !block.parameters.is_empty() {
-        // Each as written: a block whose parameters are no expressions (`@defer`'s), or one that does not format.
+        // Each as written: a block whose parameters are no expressions (`@defer`'s), or one that does not format
+        // (`@for`'s Angular does not read: apps/oxfmt/DIVERGENCES.md#js-in-angular-unread-code-as-written).
         // They break as formatted ones do; one holding a line break measures to it, as Prettier does not break on it
         let parameters = format_with(|f| {
             f.join_with(super::angular::SEPARATOR).entries(

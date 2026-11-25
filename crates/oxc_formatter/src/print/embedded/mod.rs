@@ -36,6 +36,20 @@ pub fn root_wrapper(root: JsRoot) -> (&'static str, &'static str) {
     }
 }
 
+/// The code of `text` and the host's text it ends in, `""` but for an expression's ([`crate::ExpressionRoot::host_suffix`]):
+/// one line, which prints as written after the root.
+pub fn split_host_suffix(text: &str, root: JsRoot) -> Result<(&str, &str), OxcDiagnostic> {
+    let len = match root {
+        JsRoot::Expression(root) => root.host_suffix,
+        _ => 0,
+    };
+    text.len()
+        .checked_sub(len)
+        .and_then(|at| text.split_at_checked(at))
+        .filter(|(_, suffix)| !suffix.contains(['\n', '\r']))
+        .ok_or_else(|| OxcDiagnostic::error("The host's text is not one line at the code's end"))
+}
+
 /// Checks that `program`, the code at `source` of its wrapped text ([`root_wrapper`]),
 /// is the one `root` names and prints without changing what the host reads of it
 /// (`embedded_in`: what the host does with the code, [`crate::JsEmbeddedIn`]).
@@ -72,6 +86,12 @@ pub fn check_root(
             after.chars().all(|c| is_white_space(c) || is_line_terminator(c))
         })
         .any(Comment::is_line);
+    // It would take in the host's text after the code
+    if ends_in_line_comment && matches!(root, JsRoot::Expression(root) if root.host_suffix > 0) {
+        return Err(OxcDiagnostic::error(
+            "A line comment ends the code before the host's text; the code is preserved as-is",
+        ));
+    }
 
     if matches!(root, JsRoot::Program { semicolons: ProgramSemicolons::MarksStatements, .. })
         && !program.body.is_empty()
@@ -119,6 +139,8 @@ pub struct FormatRoot<'a, 'b> {
     /// The comments the code ends in hold a line comment, which a line break closes:
     /// it goes on its own lines, so one closes it again.
     pub ends_in_line_comment: bool,
+    /// The host's text after the root ([`crate::ExpressionRoot::host_suffix`]).
+    pub suffix: &'a str,
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatRoot<'a, '_> {
@@ -136,6 +158,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatRoot<'a, '_> {
                     &statement.inner().expression,
                     root,
                     self.ends_in_line_comment,
+                    self.suffix,
                     f,
                 );
             }

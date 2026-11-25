@@ -92,6 +92,8 @@ A host dispatches a part of its document (`format_to_ir`), its marker translated
 This formatter knows nothing about the host's vocabulary; it wraps the source to parse it as the root says.
 It drives the context-dependent decisions: the layout in the host's delimiters, the quote style, the handler's semicolons.
 The IR goes between the host's delimiters as is: the host names the layout (`ProgramLayout` / `ExpressionLayout`), and this builds it, hugging as the AST says.
+Host text that goes inside that layout ends the dispatched text, its length a marker (`ExpressionRoot::host_suffix`: an Angular alias, ` as x`), and prints as written after the root:
+the host never adds to the IR, which comes back alone.
 
 What the host reads of the code is the contract: the output reads to the host as the input does, code it does not accept included.
 The markers say how it reads (`JsEmbeddedIn`, `ExpressionRoot`'s flags, `ProgramSemicolons`):

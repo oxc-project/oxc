@@ -51,6 +51,7 @@ pub use session::embedded::{
     DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, any_text_in_ir,
     dispatch_fragment_ir, dispatch_ir, map_text_in_ir,
 };
+pub use session::placeholder::{Placeholder, PlaceholderPiece};
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
 pub use source::{SourceText, SpanCursor, rebase_labels, restore_crlf_labels};
 pub use write::Format;

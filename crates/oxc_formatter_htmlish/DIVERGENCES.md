@@ -529,6 +529,7 @@ A tab counts as `tabWidth`, where Prettier counts it as 0, so an attribute value
 - Conformance:
   - `externals/prettier/html/basics/broken-html.html`
   - `externals/prettier/html/prettier_ignore/unclosed2.html`
+  - `externals/prettier/misc/embedded-language-formatting/in-javascript/test.js`
 
 ```html
 <!-- input (header.html, closed by footer.html) -->
@@ -563,6 +564,7 @@ Prettier closes it where the fragment ends, which changes the page it is joined 
 - Why: uniform-rule (a normalization is applied only where it is known safe for every reader: `oxc_formatter_css`'s AGENTS.md "Case")
 - Pin: `tests/fixtures/html/omitted-end-tag.html`
 - Conformance:
+  - `externals/prettier/angular/angular/real-world.component.html`
   - `externals/prettier/html/prettier_ignore/unclosed2.html`
 
 ```html
@@ -664,6 +666,30 @@ Prettier lowercases them in embedded HTML and XHTML too, by the language alone:
 A Vue single-file component and Angular keep every name as written, as Prettier does.
 A Vue file read as HTML (a root `<html>` or `<!doctype html>`) prints them as a `.html` file does, as Prettier does:
 Vue's SFC compiler compiles none of it (`@vue/compiler-sfc` 3.5.45: `At least one <template> or <script> is required`), its reader is an HTML parser.
+
+## angular-upper-case-html-after-doctype
+
+- Why: uniform-rule (same construct, same output: `<!doctype html><html>`)
+- Pin: `tests/fixtures/angular/angular-upper-case-html-after-doctype.component.html`
+- Conformance:
+  - `externals/prettier/angular/upper-case/upper-case-html-tag.html`
+
+```html
+<!-- input -->
+<!doctype html><HTML></HTML>
+
+<!-- ours -->
+<!doctype html>
+<HTML></HTML>
+
+<!-- prettier -->
+<!doctype html><HTML></HTML>
+```
+
+An Angular template's `<HTML>` is the `html` element, and prints as `<html>` does: on a line of its own after the doctype.
+Its name keeps its case (DIVERGENCES.md#tag-name-case).
+Angular's compiler looks a tag up case-insensitively too (`getHtmlTagDefinition`),
+where `angular-html-parser` 10.13.0 changed the lookup to case-sensitive, so Prettier lays `<HTML>` out as an unknown inline element.
 
 ## prefixed-script-style
 
@@ -830,6 +856,10 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 - Pin: `tests/fixtures/vue/interpolation-element-as-text.vue`
 - Conformance:
   - `externals/prettier/vue/interpolation/ng-non-bindable.vue` (`<template><span>{{ }}</span></template>`)
+  - `externals/prettier/angular/control-flow/for.html`
+  - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/profiler/recording-timeline/visualizer-controls/visualizer-controls.component.html`
+  - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/router-tree/router-details-row/route-details-row.component.html`
+  - `externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html`
 
 ```vue
 <!-- input -->
@@ -947,6 +977,8 @@ Prettier empties it when it holds only JS whitespace (`/^\s*$/`), and drops a ch
 
 - Why: semantics (whitespace added around a block marker renders between the content it joins; prettier/prettier#16577, prettier/prettier#19020)
 - Pin: `tests/fixtures/angular/angular-glued-block-markers.component.html`
+- Conformance:
+  - `externals/prettier/angular/control-flow/chid.html`
 
 ```html
 <!-- input -->
@@ -1019,6 +1051,8 @@ Whitespace without a line break (`@else   if`) is collapsed, as Angular reads it
 
 - Why: invariant
 - Pin: `tests/fixtures/angular/angular-ignored-block-chain.component.html`
+- Conformance:
+  - `externals/prettier/angular/control-flow/ignore.html`
 
 ```html
 <!-- input -->
@@ -1047,22 +1081,29 @@ A comment between two of them ends the chain there, and what follows is formatte
 ## angular-start-tag-line-comment-end
 
 - Why: semantics (Angular reads a `//` start-tag comment up to the line break, the tag's `>` in it)
-- Pin: `tests/fixtures/angular/start-tag-comment/start-tag-comment.component.html`
+- Pin: `tests/fixtures/angular/angular-start-tag-line-comment-end/angular-start-tag-line-comment-end.component.html`
 
 ```html
 <!-- input, bracketSameLine: true -->
 <div a // c
 ></div>
+<img // c
+/>
 
 <!-- ours -->
 <div
   a // c
 ></div>
+<img
+  // c
+/>
 
 <!-- prettier -->
 <div
   a
   // c></div>
+<img
+  // c />
 ```
 
 A line break always follows a `//` comment in a start tag, `bracketSameLine` or not.
@@ -1098,26 +1139,50 @@ One right after the tag name (`<div // c`) moves to its own line, as after any o
 
 ## angular-i18n-content-as-written
 
-- Why: semantics (Angular's message ID hashes the content of an `i18n` element as written; angular/angular#13114, prettier/prettier#8338, oxc-project/oxc#29059)
+- Why: semantics (Angular's message ID hashes a message as written: an `i18n` element's content, an `i18n-x` value, an ICU expression; angular/angular#13114, prettier/prettier#8338, oxc-project/oxc#29059)
 - Pin: `tests/fixtures/angular/angular-i18n-content-as-written.component.html`
+- Conformance:
+  - `externals/prettier/angular/angular/attributes.component.html`
+  - `externals/prettier/angular/icu-expression/*`
+  - `externals/angular-adev/content/examples/i18n/src/app/app.component.html`
 
 ```html
 <!-- input -->
 <p i18n>  Hello   <b>world</b>
   {count, plural, =0 {none} other {many}}  </p>
+<p i18n-title title="  a   {{ b }}  " i18n="A description longer than the line, which Prettier fills over lines of its own">x</p>
 
 <!-- ours -->
 <p i18n>  Hello   <b>world</b>
   {count, plural, =0 {none} other {many}}  </p>
+<p
+  i18n-title
+  title="  a   {{ b }}  "
+  i18n="A description longer than the line, which Prettier fills over lines of its own"
+>x</p>
 
 <!-- prettier -->
 <p i18n>Hello <b>world</b> {count, plural, =0 {none} other {many}}</p>
+<p
+  i18n-title
+  title="  a   {{ b }}  "
+  i18n="
+    A description longer than the line, which Prettier fills over lines of its
+    own
+  "
+>
+  x
+</p>
 ```
 
 The content of an element with `i18n` prints as written, a custom ID (`i18n="@@id"`) or not; its start tag is formatted.
 The message's ID is a hash of its text, whitespace included (`@angular/compiler` 22.2.3's `parseTemplate`):
 `<p i18n>Hello <b>world</b></p>` and `<p i18n>⏎  Hello <b>world</b>⏎</p>` are two messages,
 so reformatting the content silently drops its existing translations.
+So does an attribute's value marked by `i18n-x` (`i18n-title` for `title`), its `{{ }}` too,
+and an ICU expression (`{count, plural, …}`), which is a message of its own outside an `i18n` element.
+The `i18n` value itself prints as written: its meaning (`meaning|`) is hashed into the ID too;
+its description is not, but is the text the extraction gives translators, in the same value.
 
 ## angular-non-bindable-attributes-as-written
 

@@ -1,0 +1,175 @@
+# externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/profiler/recording-timeline/visualizer-controls/visualizer-controls.component.html
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -10,11 +10,9 @@
+       Frame rate: <span class="value">{{ frameRate() }} fps</span>
+     </p>
+   }
+   @if (frameRecord.source) {
+-    <p>
+-      Source: <span class="value">{{ frameRecord.source }}</span>
+-    </p>
++    <p>Source: <span class="value">{{ frameRecord.source }}</span></p>
+   }
+ </div>
+ 
+ @let visMode = visualizationMode();
+
+`````
+
+### Actual (oxfmt)
+
+`````html
+@let frameRecord = record();
+
+<div class="details">
+  <p [class.warning-label]="frameRate() <= 15">
+    Time spent:
+    <span class="value">{{ frameRecord.duration | number }} ms</span>
+  </p>
+  @if (frameRate() < 60) {
+    <p [class.warning-label]="frameRate() <= 15">
+      Frame rate: <span class="value">{{ frameRate() }} fps</span>
+    </p>
+  }
+  @if (frameRecord.source) {
+    <p>Source: <span class="value">{{ frameRecord.source }}</span></p>
+  }
+</div>
+
+@let visMode = visualizationMode();
+
+<div class="controls">
+  @if (visMode === VisMode.FlameGraph) {
+    <input
+      id="cd-only-checkbox"
+      type="checkbox"
+      [checked]="changeDetection()"
+      (change)="changeDetection.set($any($event.target).checked)"
+    />
+    <label
+      for="cd-only-checkbox"
+      matTooltip="Highlights the component paths involved in the CD in purple, starting from the root."
+      [matTooltipShowDelay]="500"
+      >Highlight only change detection</label
+    >
+    <div class="ver-ruler"></div>
+  }
+
+  <select
+    #select
+    (change)="onVisualizationChange(select.value)"
+    class="ng-select size-mid"
+  >
+    <option
+      [value]="VisMode.BarGraph"
+      [selected]="visMode === VisMode.BarGraph"
+    >
+      Bar chart
+    </option>
+    <option
+      [value]="VisMode.FlameGraph"
+      [selected]="visMode === VisMode.FlameGraph"
+    >
+      Flame graph
+    </option>
+    <option [value]="VisMode.TreeMap" [selected]="visMode === VisMode.TreeMap">
+      Tree map
+    </option>
+  </select>
+
+  <mat-icon
+    [matTooltip]="VIS_INFO[visMode]"
+    [ariaLabel]="VIS_INFO[visMode]"
+    class="vis-info"
+  >
+    info
+  </mat-icon>
+</div>
+
+`````
+
+### Expected (prettier)
+
+`````html
+@let frameRecord = record();
+
+<div class="details">
+  <p [class.warning-label]="frameRate() <= 15">
+    Time spent:
+    <span class="value">{{ frameRecord.duration | number }} ms</span>
+  </p>
+  @if (frameRate() < 60) {
+    <p [class.warning-label]="frameRate() <= 15">
+      Frame rate: <span class="value">{{ frameRate() }} fps</span>
+    </p>
+  }
+  @if (frameRecord.source) {
+    <p>
+      Source: <span class="value">{{ frameRecord.source }}</span>
+    </p>
+  }
+</div>
+
+@let visMode = visualizationMode();
+
+<div class="controls">
+  @if (visMode === VisMode.FlameGraph) {
+    <input
+      id="cd-only-checkbox"
+      type="checkbox"
+      [checked]="changeDetection()"
+      (change)="changeDetection.set($any($event.target).checked)"
+    />
+    <label
+      for="cd-only-checkbox"
+      matTooltip="Highlights the component paths involved in the CD in purple, starting from the root."
+      [matTooltipShowDelay]="500"
+      >Highlight only change detection</label
+    >
+    <div class="ver-ruler"></div>
+  }
+
+  <select
+    #select
+    (change)="onVisualizationChange(select.value)"
+    class="ng-select size-mid"
+  >
+    <option
+      [value]="VisMode.BarGraph"
+      [selected]="visMode === VisMode.BarGraph"
+    >
+      Bar chart
+    </option>
+    <option
+      [value]="VisMode.FlameGraph"
+      [selected]="visMode === VisMode.FlameGraph"
+    >
+      Flame graph
+    </option>
+    <option [value]="VisMode.TreeMap" [selected]="visMode === VisMode.TreeMap">
+      Tree map
+    </option>
+  </select>
+
+  <mat-icon
+    [matTooltip]="VIS_INFO[visMode]"
+    [ariaLabel]="VIS_INFO[visMode]"
+    class="vis-info"
+  >
+    info
+  </mat-icon>
+</div>
+
+`````

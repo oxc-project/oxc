@@ -126,6 +126,8 @@ fn skip_trivia(program: &Program<'_>, source: &Range<usize>, position: usize) ->
 pub struct FormatName<'a> {
     pub name: &'a str,
     layout: ExpressionLayout,
+    /// The host's text after it ([`crate::ExpressionRoot::host_suffix`]).
+    suffix: &'a str,
 }
 
 impl<'a> FormatName<'a> {
@@ -133,20 +135,32 @@ impl<'a> FormatName<'a> {
     ///
     /// - A reserved word is a name only as a value (`true`, `false`, `null`, `this`)
     /// - Any other reserved word (`if`, and contextual ones like `let`) is left to the parse, which decides
-    pub fn new(allocator: &'a Allocator, code: &str, root: JsRoot) -> Option<Self> {
+    pub fn new(
+        allocator: &'a Allocator,
+        code: &str,
+        root: JsRoot,
+        suffix: &'a str,
+    ) -> Option<Self> {
         let JsRoot::Expression(root) = root else { return None };
         // Non-ASCII whitespace (NBSP, U+2028) stays, fails `is_identifier_name` and goes to the parse
         let code = code.trim_ascii();
         let is_name = is_identifier_name(code)
             && (!is_reserved_keyword(code) || matches!(code, "true" | "false" | "null" | "this"));
-        is_name.then(|| Self { name: allocator.alloc_str(code), layout: root.layout })
+        is_name.then(|| Self { name: allocator.alloc_str(code), layout: root.layout, suffix })
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatName<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // A name never hugs, and has no comment
-        write_in_layout(&text_without_whitespace(self.name), self.layout, false, false, f);
+        write_in_layout(
+            &text_without_whitespace(self.name),
+            self.suffix,
+            self.layout,
+            false,
+            false,
+            f,
+        );
     }
 }
 
@@ -156,6 +170,7 @@ pub(super) fn write_expression<'a>(
     expression: &'a Expression<'a>,
     root: ExpressionRoot,
     ends_in_line_comment: bool,
+    suffix: &'a str,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     f.context_mut().set_expression_root(root);
@@ -177,21 +192,28 @@ pub(super) fn write_expression<'a>(
         }
         _ => false,
     };
-    write_in_layout(&expression, root.layout, hugs, ends_in_line_comment, f);
+    write_in_layout(&expression, suffix, root.layout, hugs, ends_in_line_comment, f);
     if tailwind.is_some() {
         f.context_mut().pop_tailwind_context();
     }
 }
 
-/// Writes `expression` in `layout`.
+/// Writes `expression` and the host's `suffix` after it ([`crate::ExpressionRoot::host_suffix`]) in `layout`.
 /// `hugs`: it hugs under `ExpressionLayout::Hug`; `ends_in_line_comment`: on its own lines unless `Bare`.
 fn write_in_layout<'a>(
     expression: &impl Format<'a, JsFormatContext<'a>>,
+    suffix: &'a str,
     layout: ExpressionLayout,
     hugs: bool,
     ends_in_line_comment: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) {
+    let expression = &format_with(|f| {
+        write!(f, expression);
+        if !suffix.is_empty() {
+            write!(f, text(suffix));
+        }
+    });
     match layout {
         ExpressionLayout::Bare => write!(f, expression),
         _ if ends_in_line_comment => write!(f, soft_block_indent(expression)),
@@ -204,7 +226,8 @@ fn write_in_layout<'a>(
 /// The object at `span`, in an embedded expression its host ends at the first `}}` ([`ExpressionRoot::ends_at_double_brace`]),
 /// prints right before another `}`: it prints in parens.
 /// A template literal's substitution closes right after it (`${({a: 1})}`), whatever `bracketSpacing` says;
-/// without bracket spacing, an object's does too (`{a: ({b: 1})}`, `{...({a: 1})}`).
+/// without bracket spacing, an object's does too (`{a: ({b: 1})}`, `{...({a: 1})}`),
+/// and the host's right after the root ([`ExpressionRoot::ends_before_brace`]).
 ///
 /// Prettier parens a property's value only (`apps/oxfmt/DIVERGENCES.md#js-in-vue-object-before-double-brace`).
 ///
@@ -214,17 +237,31 @@ pub fn object_prints_double_brace(
     parent: &AstNodes<'_, '_>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    f.context().expression_root().is_some_and(|root| root.ends_at_double_brace)
-        && is_followed_by_right_bracket(span, parent, f.options().bracket_spacing.value())
+    let Some(root) = f.context().expression_root().filter(|root| root.ends_at_double_brace) else {
+        return false;
+    };
+    let bracket_spacing = f.options().bracket_spacing.value();
+    is_followed_by_right_bracket(
+        span,
+        parent,
+        bracket_spacing,
+        !bracket_spacing && root.ends_before_brace,
+        f,
+    )
 }
 
 /// The node at `span` prints right before a `}`: a template literal's substitution's,
-/// or an object's without `bracket_spacing`.
+/// or an object's without `bracket_spacing`, or the host's right after the root (`root_before_brace`).
 fn is_followed_by_right_bracket(
     span: Span,
     parent: &AstNodes<'_, '_>,
     bracket_spacing: bool,
+    root_before_brace: bool,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
+    if f.context().is_embedded_root(parent) {
+        return root_before_brace;
+    }
     // `node` at `span` is the last of the object `parent`, whose `}` prints right after it without bracket spacing
     let ends_object = |parent: &AstNodes<'_, '_>, span: Span| {
         !bracket_spacing
@@ -252,5 +289,12 @@ fn is_followed_by_right_bracket(
         AstNodes::UnaryExpression(_) => true,
         _ => false,
     };
-    ends_parent && is_followed_by_right_bracket(parent.span(), parent.parent(), bracket_spacing)
+    ends_parent
+        && is_followed_by_right_bracket(
+            parent.span(),
+            parent.parent(),
+            bracket_spacing,
+            root_before_brace,
+            f,
+        )
 }
