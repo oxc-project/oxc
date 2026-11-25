@@ -2,7 +2,7 @@
 // (`@import` parts and modifiers, `@layer`, `@custom-selector`, `@namespace`) place them,
 // and whatever a prelude printer leaves pending is written before the `;` / `{`.
 // A `//` breaks the prelude; the continuation is one level in.
-// Prettier differs on three lines: `supports(x), // c` moves below (DIVERGENCES.md#line-comment-after-comma),
+// Besides the marked line, Prettier differs on three lines: `supports(x), // c` moves below (DIVERGENCES.md#line-comment-after-comma),
 // `:--x a, /* c */ b` keeps the source break before `b` (ours: a block comment is a plain fill item),
 // `@charset "utf-8" // c;` puts the `;` inside the comment (a Prettier bug; ours rides it past the `;`).
 @import // c
@@ -27,6 +27,54 @@
   url(http://www.w3.org/2000/svg);
 @charset "utf-8" // c
 ;
+// A comment before the prelude leads it, whichever printer prints the prelude.
+@namespace // c
+  "x";
+@keyframes // c
+  foo {
+}
+@page // c
+  :first {
+}
+@font-feature-values // c
+  Font {
+}
+@counter-style // c
+  foo {
+}
+@property // c
+  --x {
+}
+@custom-selector // c
+  :--x a;
+@supports // c
+  (a: b) {
+}
+@charset /* c */ "utf-8";
+@include // c
+  foo;
+@include /* c */ foo;
+@use /* c */ "a";
+@forward /* c */ "a";
+@mixin /* c */ foo {
+}
+@function /* c */ foo() {
+  @return /* c */ 1;
+}
+.a {
+  @extend /* c */ .b;
+  @at-root /* c */ .c {
+  }
+}
+@debug /* c */ 1;
+@each /* c */ $a in $b {
+}
+@for /* c */ $i from 1 through 2 {
+}
+// DIVERGENCES.md#at-root-line-comment-indent
+@at-root // c
+.foo {
+}
 // A comment before a comma stays before it (`write_group_comma`).
 @layer a /* c */, b;
 // A verbatim prelude prints its comments as part of its text, exactly once.

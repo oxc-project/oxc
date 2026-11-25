@@ -382,7 +382,7 @@
 
 ## scss
 
-121/153 (79.08%)
+120/153 (78.43%)
 
 ### Failed
 
@@ -392,6 +392,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/4878.scss (💥, 89.39%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
+- externals/prettier/scss/comments/at-rule.scss (💥, 87.50%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#at-root-line-comment-indent
 - externals/prettier/scss/comments/lists.scss (💥, 76.92%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/maps.scss (💥, 66.67%)

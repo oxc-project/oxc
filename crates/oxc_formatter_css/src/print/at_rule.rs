@@ -112,12 +112,7 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     if has_params_comments && !has_inline_params_comment {
         let lowercased = at_rule.name.raw.cow_to_ascii_lowercase();
         let raw = source.slice_range(name_span.end, region_end).trim();
-        // `@-webkit-keyframes` takes the `@keyframes` path
-        let unprefixed = ["-webkit-", "-moz-", "-o-", "-ms-"]
-            .iter()
-            .find_map(|prefix| lowercased.strip_prefix(prefix))
-            .unwrap_or(&lowercased);
-        match unprefixed {
+        match &*lowercased {
             "media" | "custom-media" if !raw.contains("#{") => {
                 let _ = f.context().comments().take_before(region_end);
                 write!(f, space());
@@ -147,25 +142,12 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
                 write_block_or_semicolon(at_rule, f);
                 return;
             }
-            // String params: as written (Prettier's raw `node.params`),
-            // `@namespace`'s on one line, as Prettier's value parser prints them
-            "keyframes"
-            | "page"
-            | "font-feature-values"
-            | "counter-style"
-            | "viewport"
-            | "namespace"
-            | "styleset"
-            | "property" => {
+            // String params: as written (Prettier's raw `node.params`)
+            "page" | "font-feature-values" | "counter-style" | "property" => {
                 let _ = f.context().comments().take_before(region_end);
                 if !raw.is_empty() {
                     write!(f, space());
-                    if unprefixed == "namespace" {
-                        let normalized = normalize_whitespace(raw);
-                        write!(f, text(f.allocator().alloc_str(&normalized)));
-                    } else {
-                        write!(f, text(raw));
-                    }
+                    write!(f, text(raw));
                 }
                 write_block_or_semicolon(at_rule, f);
                 return;
@@ -752,6 +734,14 @@ fn find_outside_comments(raw: &str, needle: u8) -> Option<usize> {
 
 fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    // Comments before the prelude lead it; a `//` breaks, the prelude continues one level in.
+    // `@import` places its own: one fuses with the path after it (`write_import_path_list`).
+    // Guarded: an empty `indent` is an error
+    let start = prelude.span().start;
+    let places_own = matches!(prelude, AtRulePrelude::Import(_) | AtRulePrelude::SassImport(_));
+    if !places_own && f.context().comments().peek().is_some_and(|c| c.span.end <= start) {
+        write!(f, indent(&format_with(|f| _ = value::flush_value_comments(start, f))));
+    }
     match prelude {
         AtRulePrelude::Media(media) => write_media_query_list(media, f),
         AtRulePrelude::CustomMedia(custom) => {
