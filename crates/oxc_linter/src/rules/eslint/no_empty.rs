@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::BlockStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -95,8 +96,19 @@ impl Rule for NoEmpty {
                 });
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
+                // Only the braces are reported, and comments inside them make the switch valid.
+                let discriminant_end = switch.discriminant.span().end;
+                let Some(offset) =
+                    ctx.find_next_token_within(discriminant_end, switch.span.end, "{")
+                else {
+                    return;
+                };
+                let braces_span = Span::new(discriminant_end + offset, switch.span.end);
+                if ctx.has_comments_between(braces_span) {
+                    return;
+                }
                 ctx.diagnostic_with_suggestion(
-                    no_empty_diagnostic("switch", switch.span),
+                    no_empty_diagnostic("switch", braces_span),
                     |fixer| fixer.delete(switch),
                 );
             }
@@ -155,6 +167,8 @@ fn test() {
             "try { foo(); } catch (ex) {} finally { bar(); }",
             Some(json!([ { "allowEmptyCatch": true }])),
         ),
+        ("switch (foo) {/* empty */}", None),
+        ("switch (foo) { /* empty */ }", None),
     ];
 
     let fail = vec![
@@ -165,11 +179,12 @@ fn test() {
         ("while (foo) {}", None),
         ("for (;foo;) {}", None),
         ("switch(foo) {}", None),
-        ("switch (foo) { /* empty */ }", None),
         ("try {} catch (ex) {}", Some(json!([ { "allowEmptyCatch": true }]))),
         ("try { foo(); } catch (ex) {} finally {}", Some(json!([ { "allowEmptyCatch": true }]))),
         ("try {} catch (ex) {} finally {}", Some(json!([ { "allowEmptyCatch": true }]))),
         ("try { foo(); } catch (ex) {} finally {}", None),
+        ("switch /* empty */ (/* empty */ foo /* empty */) /* empty */ {} /* empty */", None),
+        ("switch (foo) /* { outside } */ {}", None),
     ];
 
     let fix = vec![
@@ -185,7 +200,6 @@ fn test() {
         ("while (foo) {}", "", None),
         ("for (;foo;) {}", "", None),
         ("switch(foo) {}", "", None),
-        ("switch (foo) { /* empty */ }", "", None),
         ("try {} catch (ex) {}", "", Some(json!([ { "allowEmptyCatch": true }]))),
         (
             "try { foo(); } catch (ex) {} finally {}",
@@ -220,6 +234,11 @@ fn test() {
             None,
         ),
         ("try{a()}catch(e){b()}//finally\nfinally{}", "try{a()}catch(e){b()}//finally\n", None),
+        (
+            "switch /* empty */ (/* empty */ foo /* empty */) /* empty */ {} /* empty */",
+            " /* empty */",
+            None,
+        ),
     ];
 
     Tester::new(NoEmpty::NAME, NoEmpty::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
