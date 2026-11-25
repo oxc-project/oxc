@@ -1,0 +1,77 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* Comments between the terms: the terms print as they do without them */
+@supports /* c */ (display:flex) and (gap:1PX) {
+}
+@supports /* c */ not ( display : flex ) {
+}
+@supports (a:b) /* c */ and (c:'d') {
+}
+@supports /* c */ ((display:flex) or (display:grid)) and selector(a:hover) {
+}
+@supports /* c */ (display: flex) and (gap: 1rem) and (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+/* A paren in a comment, a comment opener in a string */
+@supports /* (c) */ (display:flex) {
+}
+@supports /* c */ (content:'/*') {
+}
+
+/* DIVERGENCES.md#prelude-keyword-case */
+@supports /* c */ (DISPLAY:FLEX) {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* Comments between the terms: the terms print as they do without them */
+@supports /* c */ (display: flex) and (gap: 1px) {
+}
+@supports /* c */ not (display: flex) {
+}
+@supports (a: b) /* c */ and (c: "d") {
+}
+@supports /* c */ ((display: flex) or (display: grid)) and selector(a:hover) {
+}
+@supports /* c */ (display: flex) and (gap: 1rem) and
+  (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+/* A paren in a comment, a comment opener in a string */
+@supports /* (c) */ (display: flex) {
+}
+@supports /* c */ (content: "/*") {
+}
+
+/* DIVERGENCES.md#prelude-keyword-case */
+@supports /* c */ (display: FLEX) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* Comments between the terms: the terms print as they do without them */
+@supports /* c */ (display: flex) and (gap: 1px) {
+}
+@supports /* c */ not (display: flex) {
+}
+@supports (a: b) /* c */ and (c: "d") {
+}
+@supports /* c */ ((display: flex) or (display: grid)) and selector(a:hover) {
+}
+@supports /* c */ (display: flex) and (gap: 1rem) and
+  (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+/* A paren in a comment, a comment opener in a string */
+@supports /* (c) */ (display: flex) {
+}
+@supports /* c */ (content: "/*") {
+}
+
+/* DIVERGENCES.md#prelude-keyword-case */
+@supports /* c */ (display: FLEX) {
+}
+
+===================== End =====================
