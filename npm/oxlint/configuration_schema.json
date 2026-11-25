@@ -3702,6 +3702,29 @@
             }
           ]
         },
+        "jsdoc/require-hyphen-before-param-description": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AlwaysNever"
+                },
+                {
+                  "$ref": "#/definitions/HyphenTagOptions"
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/require-param": {
           "anyOf": [
             {
@@ -11864,6 +11887,40 @@
       },
       "additionalProperties": false
     },
+    "HyphenTagKeyword": {
+      "type": "string",
+      "enum": [
+        "any"
+      ]
+    },
+    "HyphenTagOptions": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "description": "Map tag names to `\"always\"` or `\"never\"`. Use `\"*\"` as a fallback for other tags.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HyphenTags"
+            }
+          ],
+          "markdownDescription": "Map tag names to `\"always\"` or `\"never\"`. Use `\"*\"` as a fallback for other tags."
+        }
+      },
+      "additionalProperties": false
+    },
+    "HyphenTags": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/AlwaysNever"
+          }
+        },
+        {
+          "$ref": "#/definitions/HyphenTagKeyword"
+        }
+      ]
+    },
     "IdDenylist": {
       "type": "array",
       "additionalItems": {
@@ -18665,6 +18722,21 @@
         }
       },
       "additionalProperties": false
+    },
+    "RequireHyphenBeforeParamDescriptionConfig": {
+      "description": "The first option controls hyphens for parameter descriptions (default: `\"always\"`).\nThe second configures additional tags.",
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/AlwaysNever"
+        },
+        {
+          "$ref": "#/definitions/HyphenTagOptions"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "markdownDescription": "The first option controls hyphens for parameter descriptions (default: `\"always\"`).\nThe second configures additional tags."
     },
     "RequireMockTypeParametersConfig": {
       "type": "object",
