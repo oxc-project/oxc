@@ -1,5 +1,5 @@
 use lazy_regex::Regex;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -125,9 +125,14 @@ impl Rule for RequireParam {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Collected targets from `FormalParameters`
-        let params_to_check = match node.kind() {
-            AstKind::Function(func) if !func.is_typescript_syntax() => {
+        // Collected targets from `FormalParameters`.
+        // `TSDeclareFunction` (`declare function`, overload signatures, and ambient
+        // declarations) is in eslint-plugin-jsdoc's default contexts. Other
+        // TypeScript-only functions, such as abstract methods, stay excluded.
+        let formal_params = match node.kind() {
+            AstKind::Function(func)
+                if !func.is_typescript_syntax() || func.is_ts_declare_function() =>
+            {
                 if self.0.interface_exempts_params_check
                     && (is_parent_fn_typed(func.node_id(), ctx)
                         || is_first_fn_param_typed(&func.params))
@@ -135,7 +140,7 @@ impl Rule for RequireParam {
                     return;
                 }
 
-                collect_params(&func.params, self.0.use_default_object_properties)
+                &func.params
             }
             AstKind::ArrowFunctionExpression(arrow_func) => {
                 if self.0.interface_exempts_params_check
@@ -145,11 +150,12 @@ impl Rule for RequireParam {
                     return;
                 }
 
-                collect_params(&arrow_func.params, self.0.use_default_object_properties)
+                &arrow_func.params
             }
             // If not a function, skip
             _ => return,
         };
+        let params_to_check = collect_params(formal_params, self.0.use_default_object_properties);
 
         let config = &self.0;
 
@@ -243,11 +249,24 @@ impl Rule for RequireParam {
                         }
                     }
 
-                    // If false, skip nested props
+                    // `checkDestructured: false` skips properties only. The root
+                    // `@param` is still required while `checkDestructuredRoots` is true.
+                    // A shallow tag at this index is that root (named, or `root0`).
+                    // When properties are also checked, their spans already report the
+                    // parameter; adding the enclosing pattern span would hide them.
+                    let root_span = if matched_param_tag.is_none() {
+                        destructured_root_span(formal_params, idx)
+                    } else {
+                        None
+                    };
                     if !config.check_destructured {
+                        if let Some(span) = root_span {
+                            violations.push(span);
+                        }
                         continue;
                     }
 
+                    let violations_before_props = violations.len();
                     let root_name = matched_param_tag.map_or("", |(name, _)| name);
                     let mut not_checking_names = FxHashSet::default();
                     for param in params {
@@ -281,6 +300,12 @@ impl Rule for RequireParam {
                         {
                             violations.push(param.span);
                         }
+                    }
+
+                    if let Some(span) = root_span
+                        && violations.len() == violations_before_props
+                    {
+                        violations.push(span);
                     }
                 }
             }
@@ -353,6 +378,21 @@ fn is_name_equal(a: &str, b: &str) -> bool {
             _ => return false,           // Either one is done, or not equal
         }
     }
+}
+
+/// Span of a destructured parameter, used when its root `@param` is missing.
+fn destructured_root_span(params: &FormalParameters, index: usize) -> Option<Span> {
+    if let Some(param) = params.items.get(index) {
+        return Some(param.pattern.span());
+    }
+
+    if index == params.items.len()
+        && let Some(rest) = &params.rest
+    {
+        return Some(rest.rest.argument.span());
+    }
+
+    None
 }
 
 fn is_first_fn_param_typed(params: &FormalParameters) -> bool {
@@ -992,6 +1032,69 @@ fn test() {
             "#,
             None,
             Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
+        // https://github.com/oxc-project/oxc/issues/29051
+        // `checkDestructured: false` still requires the root `@param`.
+        (
+            "
+            /**
+             * Does a thing.
+             * @param root0
+             */
+            export function f({ a, b }: { a: number; b: number }): number {
+                return a + b;
+            }
+            ",
+            Some(serde_json::json!([{ "checkDestructured": false }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * Does a thing.
+             * @param options
+             */
+            export function f({ a, b }: { a: number; b: number }): number {
+                return a + b;
+            }
+            ",
+            Some(serde_json::json!([{ "checkDestructured": false, "checkDestructuredRoots": true }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * Does a thing.
+             */
+            export function f({ a, b }: { a: number; b: number }): number {
+                return a + b;
+            }
+            ",
+            Some(serde_json::json!([{ "checkDestructuredRoots": false }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * Declared function.
+             * @param text
+             */
+            export declare function declared(text: string): void;
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            /**
+             * Overload signature.
+             * @param text
+             */
+            export function declared(text: string): void;
+            export function declared(text: string): void {}
+            ",
+            None,
+            None,
         ),
     ];
 
@@ -1671,6 +1774,63 @@ fn test() {
             ",
             None,
             Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
+        // https://github.com/oxc-project/oxc/issues/29051
+        (
+            "
+            /**
+             * Does a thing.
+             */
+            export function f({ a, b }: { a: number; b: number }): number {
+                return a + b;
+            }
+            ",
+            Some(serde_json::json!([{ "checkDestructured": false }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * Does a thing.
+             */
+            export function f({ a, b }: { a: number; b: number }): number {
+                return a + b;
+            }
+            ",
+            Some(
+                serde_json::json!([{ "checkDestructured": false, "checkDestructuredRoots": true }]),
+            ),
+            None,
+        ),
+        (
+            "
+            /**
+             * Declared function.
+             */
+            export declare function declared(text: string): void;
+
+            /**
+             * Normal function.
+             */
+            export function normal(text: string): void {}
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            /**
+             * Overload signature.
+             */
+            export function declared(text: string): void;
+            /**
+             * Implementation.
+             * @param text
+             */
+            export function declared(text: string): void {}
+            ",
+            None,
+            None,
         ),
     ];
 

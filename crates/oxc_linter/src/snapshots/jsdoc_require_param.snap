@@ -24,7 +24,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[require_param.tsx:5:34]
  4 │                        */
  5 │                       function quux (foo, bar, {baz}) {
-   ·                                           ───
+   ·                                           ───  ─────
  6 │ 
    ╰────
   help: Add `@param` tag with name.
@@ -424,5 +424,50 @@ source: crates/oxc_linter/src/tester.rs
  7 │             export function f(p: string, q: string): void {
    ·                                          ─
  8 │                 void p;
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:31]
+ 4 │              */
+ 5 │             export function f({ a, b }: { a: number; b: number }): number {
+   ·                               ────────
+ 6 │                 return a + b;
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:31]
+ 4 │              */
+ 5 │             export function f({ a, b }: { a: number; b: number }): number {
+   ·                               ────────
+ 6 │                 return a + b;
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:46]
+ 4 │              */
+ 5 │             export declare function declared(text: string): void;
+   ·                                              ────
+ 6 │ 
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+    ╭─[require_param.tsx:10:36]
+  9 │              */
+ 10 │             export function normal(text: string): void {}
+    ·                                    ────
+ 11 │             
+    ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:38]
+ 4 │              */
+ 5 │             export function declared(text: string): void;
+   ·                                      ────
+ 6 │             /**
    ╰────
   help: Add `@param` tag with name.
