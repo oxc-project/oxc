@@ -972,6 +972,7 @@ impl<'a> LegacyDecorator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let scope_id = ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
+        ctx.move_scopes_of_statements(&decorations, scope_id);
         let decorations = ArenaVec::from_iter_in(decorations, ctx);
         let element =
             ClassElement::new_static_block_with_scope_id(SPAN, decorations, scope_id, ctx);
@@ -1011,6 +1012,8 @@ impl<'a> LegacyDecorator<'a> {
     /// all transformed fields are injected before the class decorator statements.
     pub fn exit_class_at_end(&mut self, _class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         for (address, stmts) in mem::take(&mut self.decorations) {
+            // The statements are inserted next to the class, in the current scope.
+            ctx.move_scopes_of_statements(&stmts, ctx.current_scope_id());
             ctx.state.statement_injector.insert_many_after(&address, stmts);
         }
     }
