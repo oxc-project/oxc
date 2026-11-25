@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 173/173 (100.00%)
 Positive Passed: 173/173 (100.00%)
-Negative Passed: 310/310 (100.00%)
+Negative Passed: 311/311 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -6107,6 +6107,13 @@ Negative Passed: 310/310 (100.00%)
    ·                         ─
    ╰────
   help: Function name is required in function declaration or named export
+
+  × Expected `Identifier` but found `if`
+   ╭─[misc/fail/ts-declare-function-reserved-name.ts:1:18]
+ 1 │ declare function if(): void;
+   ·                  ─┬
+   ·                   ╰── `Identifier` expected
+   ╰────
 
   × Expected function name
    ╭─[misc/fail/ts-function-declaration-type-parameters-missing-name.ts:1:9]
