@@ -1,3 +1,4 @@
+pub mod import;
 mod jest;
 pub mod jsdoc;
 mod jsx_a11y;
@@ -9,8 +10,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer, ser::Error};
 
 use self::{
-    jest::JestPluginSettings, jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings,
-    next::NextPluginSettings, react::ReactPluginSettings, vitest::VitestPluginSettings,
+    import::ImportPluginSettings, jest::JestPluginSettings, jsdoc::JSDocPluginSettings,
+    jsx_a11y::JSXA11yPluginSettings, next::NextPluginSettings, react::ReactPluginSettings,
+    vitest::VitestPluginSettings,
 };
 
 pub use self::react::ReactVersion;
@@ -64,6 +66,9 @@ pub struct OxlintSettings {
 
     #[serde(default)]
     pub jest: JestPluginSettings,
+
+    #[serde(default)]
+    pub import: ImportPluginSettings,
 }
 
 #[derive(Deserialize, Default)]
@@ -87,6 +92,9 @@ struct WellKnownOxlintSettings {
 
     #[serde(default)]
     pub jest: JestPluginSettings,
+
+    #[serde(default)]
+    pub import: ImportPluginSettings,
 }
 
 pub type OxlintSettingsJson = serde_json::Map<String, serde_json::Value>;
@@ -112,6 +120,7 @@ impl<'de> Deserialize<'de> for OxlintSettings {
             jsdoc: well_known_settings.jsdoc,
             vitest: well_known_settings.vitest,
             jest: well_known_settings.jest,
+            import: well_known_settings.import,
         })
     }
 }
@@ -152,6 +161,7 @@ impl OxlintSettings {
                         settings_to_override.jsdoc = well_known_settings.jsdoc;
                         settings_to_override.vitest = well_known_settings.vitest;
                         settings_to_override.jest = well_known_settings.jest;
+                        settings_to_override.import = well_known_settings.import;
                     }
                     Err(e) => {
                         panic!("Failed to parse override settings: {e:?}");
@@ -165,6 +175,7 @@ impl OxlintSettings {
                 settings_to_override.jsdoc = self.jsdoc.clone();
                 settings_to_override.vitest = self.vitest.clone();
                 settings_to_override.jest = self.jest.clone();
+                settings_to_override.import = self.import.clone();
             }
         }
     }
