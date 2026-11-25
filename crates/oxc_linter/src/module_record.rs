@@ -350,7 +350,8 @@ pub enum ExportImportName {
     /// the ExportDeclaration does not have a ModuleSpecifier
     #[default]
     Null,
-    /// source is used for re-exports of `import source x from "mod"` bindings.
+    /// source is used for re-exports of `import source x from "mod"` bindings,
+    /// with the span of `x` in the import declaration.
     Source(Span),
 }
 

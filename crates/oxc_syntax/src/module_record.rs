@@ -196,7 +196,7 @@ pub enum ImportImportName<'a> {
     /// `import defaultExport from "mod"`
     #[estree(via = ImportOrExportNameDefault)]
     Default(Span) = 2,
-    /// `import source x from "mod"`
+    /// `import source x from "mod"`, with the span of the local binding `x`
     #[estree(via = ImportOrExportNameSource)]
     Source(Span) = 3,
 }
@@ -295,7 +295,8 @@ pub enum ExportImportName<'a> {
     #[default]
     #[estree(via = ExportNameNull)]
     Null = 3,
-    /// source is used for re-exports of `import source x from "mod"` bindings.
+    /// source is used for re-exports of `import source x from "mod"` bindings,
+    /// with the span of `x` in the import declaration.
     #[estree(via = ImportOrExportNameSource)]
     Source(Span) = 4,
 }
