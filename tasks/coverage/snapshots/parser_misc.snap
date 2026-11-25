@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 159/159 (100.00%)
-Positive Passed: 159/159 (100.00%)
-Negative Passed: 294/294 (100.00%)
+AST Parsed     : 160/160 (100.00%)
+Positive Passed: 160/160 (100.00%)
+Negative Passed: 296/296 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -305,6 +305,51 @@ Negative Passed: 294/294 (100.00%)
  3 │ class B { accessor set
    ·           ────────
  4 │  m(v) {} }
+   ╰────
+
+  × TS(1029): 'static' modifier must precede 'accessor' modifier.
+   ╭─[misc/fail/auto-accessor-named-static.ts:1:20]
+ 1 │ class A { accessor static
+   ·                    ──────
+ 2 │  m() {} }
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-named-static.ts:1:11]
+ 1 │ class A { accessor static
+   ·           ────────
+ 2 │  m() {} }
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1029): 'static' modifier must precede 'accessor' modifier.
+   ╭─[misc/fail/auto-accessor-named-static.ts:3:20]
+ 2 │  m() {} }
+ 3 │ class B { accessor static
+   ·                    ──────
+ 4 │  x }
+   ╰────
+
+  × TS(1029): 'static' modifier must precede 'accessor' modifier.
+   ╭─[misc/fail/auto-accessor-static-same-line.js:1:20]
+ 1 │ class A { accessor static m() {} }
+   ·                    ──────
+ 2 │ class B { accessor static x }
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/auto-accessor-static-same-line.js:1:11]
+ 1 │ class A { accessor static m() {} }
+   ·           ────────
+ 2 │ class B { accessor static x }
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1029): 'static' modifier must precede 'accessor' modifier.
+   ╭─[misc/fail/auto-accessor-static-same-line.js:2:20]
+ 1 │ class A { accessor static m() {} }
+ 2 │ class B { accessor static x }
+   ·                    ──────
    ╰────
 
   × Cannot use `await` as an identifier in an async context
