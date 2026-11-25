@@ -15,7 +15,10 @@ use crate::{
     },
 };
 
-use super::{ClassProperties, utils::create_underscore_ident_name};
+use super::{
+    ClassProperties, new_target::replace_new_target_in_expression,
+    utils::create_underscore_ident_name,
+};
 
 // Instance properties
 impl<'a> ClassProperties<'a> {
@@ -28,7 +31,10 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = prop.value.take();
+        let mut value = prop.value.take();
+        if let Some(value) = &mut value {
+            replace_new_target_in_expression(value, ctx);
+        }
 
         let span = prop.span;
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {

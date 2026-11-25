@@ -112,6 +112,9 @@ pub struct Scoping {
     /* Scope Tree - single allocation for all scope-indexed flat fields */
     scope_table: ScopeTable,
 
+    /// Whether the program contains `new.target`.
+    has_new_target: bool,
+
     pub(crate) cell: ScopingCell,
 }
 
@@ -185,6 +188,7 @@ impl Scoping {
             no_side_effects: FxHashSet::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
+            has_new_target: false,
             cell: ScopingCell::new(allocator, |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(&allocator),
                 resolved_references: ArenaVec::new_in(&allocator),
@@ -1316,6 +1320,21 @@ impl Scoping {
     pub fn set_has_unresolved_labels(&mut self) {
         self.cell.with_dependent_mut(|_, cell| cell.has_unresolved_labels = true);
     }
+
+    /// Whether the program contains `new.target`.
+    ///
+    /// Set by [`SemanticBuilder`](crate::SemanticBuilder). It may stay `true` after
+    /// transforms remove every `new.target`.
+    #[inline]
+    pub fn has_new_target(&self) -> bool {
+        self.has_new_target
+    }
+
+    /// Record that the program contains `new.target`.
+    #[inline]
+    pub fn set_has_new_target(&mut self) {
+        self.has_new_target = true;
+    }
 }
 
 impl Scoping {
@@ -1331,6 +1350,7 @@ impl Scoping {
             no_side_effects: self.no_side_effects.clone(),
             enum_data: self.enum_data.clone(),
             scope_table: self.scope_table.clone(),
+            has_new_target: self.has_new_target,
             cell: {
                 let allocator = Allocator::with_capacity(used_bytes);
                 ScopingCell::new(allocator, |allocator| ScopingInner {

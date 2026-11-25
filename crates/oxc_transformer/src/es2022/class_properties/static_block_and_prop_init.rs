@@ -12,6 +12,7 @@ use crate::{context::TraverseCtx, utils::ast_builder::wrap_statements_in_arrow_f
 
 use super::{
     ClassProperties,
+    new_target::{replace_new_target_in_expression, replace_new_target_in_statements},
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
@@ -25,6 +26,8 @@ impl<'a> ClassProperties<'a> {
         value: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        replace_new_target_in_expression(value, ctx);
+
         let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
         let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
         replacer.visit_expression(value);
@@ -57,6 +60,8 @@ impl<'a> ClassProperties<'a> {
         block: &mut StaticBlock<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        replace_new_target_in_statements(&mut block.body, ctx);
+
         let scope_id = block.scope_id();
         let outer_scope_strict_flag = ctx.current_scope_flags() & ScopeFlags::StrictMode;
         let make_sloppy_mode = outer_scope_strict_flag == ScopeFlags::empty();
@@ -246,12 +251,6 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
             Expression::ThisExpression(this_expr) => {
                 let span = this_expr.span;
                 self.replace_this_with_temp_var(expr, span);
-                return;
-            }
-            // `new.target` is always `undefined` in class static blocks. Replace it before moving
-            // the block body outside the class.
-            Expression::NewTarget(new_target) if self.this_depth == 0 => {
-                *expr = Expression::new_void_0(new_target.span, self.ctx);
                 return;
             }
             // `delete this`

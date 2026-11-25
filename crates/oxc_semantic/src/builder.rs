@@ -2765,6 +2765,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_new_target(&mut self, it: &NewTarget) {
+        self.scoping.set_has_new_target();
+        oxc_ast_visit::walk::walk_new_target(self, it);
+    }
+
     fn visit_private_identifier(&mut self, ident: &PrivateIdentifier<'a>) {
         let kind = AstKind::PrivateIdentifier(self.alloc(ident));
         self.enter_node(kind);

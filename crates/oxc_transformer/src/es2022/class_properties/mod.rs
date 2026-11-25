@@ -216,6 +216,7 @@ mod class_name;
 mod computed_key;
 mod constructor;
 mod instance_prop_init;
+mod new_target;
 mod private_field;
 mod private_method;
 mod prop_decl;
