@@ -1699,9 +1699,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-htmlish-parser"
-version = "0.0.9"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09d54b6b0b217d473573d14269ae2cec0f4f115f4034a45b9830aac05925a714"
+checksum = "8af2a167640452dd0f2d10c10f72129fa4e0dc7b4c74951bd76947f42b584aea"
 dependencies = [
  "memchr",
  "oxc_allocator",
