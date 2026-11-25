@@ -11,7 +11,8 @@
 // - `hello_delay_ms`: how long it waits before it answers the handshake (default 0).
 // - `lint`: "done" (default) answers a Lint with a diagnostic for another request id, a diagnostic
 //   for this one and Done; "exit" exits; "hold" answers only after a Cancel for it, with a
-//   canceled error.
+//   canceled error; "slow" sends a diagnostic for another request id every 50 ms for `slow_ms`,
+//   then answers as "done" does.
 
 "use strict";
 
@@ -73,6 +74,15 @@ function handle(type, message) {
         process.exit(1);
       } else if (mode === "hold") {
         held.add(message.id);
+      } else if (mode === "slow") {
+        // Busy for `slow_ms`, sending frames for another request every 50 ms, then answers.
+        const filePath = message.configs[0]?.file_paths[0] ?? "unknown.ts";
+        const busy = setInterval(() => write(1, diagnostic(message.id + 1000, filePath)), 50);
+        setTimeout(() => {
+          clearInterval(busy);
+          write(1, diagnostic(message.id, filePath));
+          write(3, { id: message.id });
+        }, behavior.slow_ms ?? 0);
       } else {
         const filePath = message.configs[0]?.file_paths[0] ?? "unknown.ts";
         write(1, diagnostic(message.id + 1000, filePath));

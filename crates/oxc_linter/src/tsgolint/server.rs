@@ -59,8 +59,9 @@ const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(30);
 /// How long a process may take to exit after it is asked to shut down.
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(2);
 
-/// How long a request may wait for its next frame. A process that does not answer in time is
-/// killed, and the next request starts another one.
+/// How long a request may wait while the process sends no frame at all, for any request. A process
+/// that stays silent that long is killed, and the next request starts another one. A process busy
+/// with other requests sends their frames, so a request queued behind them does not kill it.
 const REQUEST_TIMEOUT: Duration = Duration::from_mins(5);
 
 /// At most this many processes are started within [`START_WINDOW`].
@@ -181,10 +182,17 @@ struct Connection {
     alive: Arc<AtomicBool>,
     /// Set once the process is asked to shut down, so its exit is expected.
     stopping: Arc<AtomicBool>,
+    /// When the process last sent a frame, for any request.
+    last_frame: Arc<Mutex<Option<Instant>>>,
     pid: u32,
 }
 
 impl Connection {
+    /// When the process last sent a frame, if it sent one.
+    fn last_frame(&self) -> Option<Instant> {
+        *self.last_frame.lock().expect("tsrs-lint last frame mutex poisoned")
+    }
+
     fn is_alive(&self) -> bool {
         self.alive.load(Ordering::Acquire)
     }
@@ -561,11 +569,19 @@ impl TsrsLintServer {
         let started = Instant::now();
         let mut diagnostics = vec![];
         let result = loop {
-            match events.recv_timeout(self.request_timeout) {
+            // The process is silent since this request was sent, or since its last frame.
+            let silent_since = connection.last_frame().map_or(started, |last| last.max(started));
+            let wait = self.request_timeout.saturating_sub(silent_since.elapsed());
+            match events.recv_timeout(wait) {
                 Ok(Event::Diagnostic(diagnostic)) => diagnostics.push(diagnostic),
                 Ok(Event::Done) => break Ok(diagnostics),
                 Ok(Event::Error(error)) => break Err(LintError::Failed(error)),
                 Ok(Event::Canceled) => break Err(LintError::Canceled),
+                // A frame for another request arrived meanwhile: the process is working.
+                Err(RecvTimeoutError::Timeout)
+                    if connection
+                        .last_frame()
+                        .is_some_and(|last| last.elapsed() < self.request_timeout) => {}
                 Err(RecvTimeoutError::Timeout) => {
                     let error = format!(
                         "tsrs-lint server did not answer request {id} within {} seconds",
@@ -743,17 +759,20 @@ impl TsrsLintServer {
         let pending: Pending = Arc::default();
         let alive = Arc::new(AtomicBool::new(true));
         let stopping = Arc::new(AtomicBool::new(false));
+        let last_frame = Arc::new(Mutex::new(None));
         let pid = child.id();
         let (hello_sender, hello) = mpsc::channel();
         {
             let pending = Arc::clone(&pending);
             let alive = Arc::clone(&alive);
             let stopping = Arc::clone(&stopping);
+            let last_frame = Arc::clone(&last_frame);
             let last_exit = Arc::clone(&self.last_exit);
             std::thread::Builder::new()
                 .name("tsrs-lint-reader".into())
                 .spawn(move || {
-                    let exit_error = read_loop(stdout, &pending, &alive, &stopping, &hello_sender);
+                    let exit_error =
+                        read_loop(stdout, &pending, &alive, &stopping, &last_frame, &hello_sender);
                     if stopping.load(Ordering::Acquire) {
                         debug!("tsrs-lint server (pid {pid}) stopped: {exit_error}");
                     } else {
@@ -772,6 +791,7 @@ impl TsrsLintServer {
             pending,
             alive,
             stopping,
+            last_frame,
             pid,
         };
         // A `tsrs-lint` without server mode exits without reading its input, so the write may
@@ -824,6 +844,7 @@ fn read_loop(
     pending: &Pending,
     alive: &AtomicBool,
     stopping: &AtomicBool,
+    last_frame: &Mutex<Option<Instant>>,
     hello: &mpsc::Sender<HelloPayload>,
 ) -> String {
     let mut reader = BufReader::new(stdout);
@@ -833,6 +854,7 @@ fn read_loop(
             Ok(None) => break "tsrs-lint server exited".to_string(),
             Err(error) => break format!("Failed to read from tsrs-lint server: {error}"),
         };
+        *last_frame.lock().expect("tsrs-lint last frame mutex poisoned") = Some(Instant::now());
         match message_type {
             SERVER_HELLO => match serde_json::from_slice::<HelloPayload>(&payload) {
                 Ok(payload) => {

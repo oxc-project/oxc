@@ -415,3 +415,16 @@ fn stop_cancels_a_pending_request() {
     assert!(matches!(result, Err(LintError::Canceled)), "{result:?}");
     assert_eq!(fixture.messages(SHUTDOWN), vec![json!({})]);
 }
+
+/// A process that keeps sending frames, for other requests, is working: a request that waits
+/// longer than the timeout does not kill it.
+#[test]
+fn busy_process_is_not_killed() {
+    let Some(fixture) = Fixture::new(&json!({ "lint": "slow", "slow_ms": 600 })) else { return };
+    let server = fixture.server().with_request_timeout(Duration::from_millis(200));
+    let file = fixture.file("index.ts");
+
+    let diagnostics = lint(&server, &file).expect("lint failed");
+    assert_eq!(diagnostics.len(), 1);
+    assert_eq!(fixture.starts(), 1);
+}
