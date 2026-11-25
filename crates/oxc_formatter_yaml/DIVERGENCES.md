@@ -184,7 +184,7 @@ a:
 
 An indentation indicator counts from the enclosing collection's items (YAML's `n + m`), so the content is re-indented with them.
 Prettier keeps it at its source column: the value changes when the items move left, and the output fails to re-parse when they move right (a wider `tabWidth`, or a source indented narrower than the output).
-psych and js-yaml agree.
+Values and parse errors as yaml@2 reads them.
 
 ## flow-flat-with-newline
 
