@@ -3662,6 +3662,26 @@
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/no-bad-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoBadBlocksConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/no-blank-blocks": {
           "anyOf": [
             {
@@ -13941,6 +13961,37 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Determines if developer-created components are checked."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoBadBlocksConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "description": "Tags which exempt a block from this rule. By default TypeScript directives\nand license tags are ignored.",
+          "default": [
+            "ts-check",
+            "ts-expect-error",
+            "ts-ignore",
+            "ts-nocheck",
+            "license",
+            "license-end",
+            "licstart",
+            "licend",
+            "source"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Tags which exempt a block from this rule. By default TypeScript directives\nand license tags are ignored."
+        },
+        "preventAllMultiAsteriskBlocks": {
+          "description": "Also report comments with three or more opening asterisks that contain no tags.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also report comments with three or more opening asterisks that contain no tags."
         }
       },
       "additionalProperties": false
