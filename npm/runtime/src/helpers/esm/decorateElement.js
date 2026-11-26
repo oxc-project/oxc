@@ -30,8 +30,12 @@ function decoratorContext(kind, name, done, metadata, fns) {
     },
   };
 }
+// Unlike esbuild and Babel, access functions reject primitive receivers, as the spec requires.
+function expectObject(x) {
+  if (Object(x) !== x) throw new TypeError("Decorator access receiver must be an object");
+}
 function privateHas(brand, x) {
-  if (Object(x) !== x) throw new TypeError("right-hand side of 'in' should be an object");
+  expectObject(x);
   return typeof brand === "function" ? x === brand : brand.has(x);
 }
 function privateAccess(kind, brand, desc) {
@@ -116,10 +120,12 @@ function _decorateElement(array, flags, name, decorators, target, elementInfo) {
         });
         if (k !== 3)
           access.get = function (x) {
+            expectObject(x);
             return x[name];
           };
         if (k > 2)
           access.set = function (x, y) {
+            expectObject(x);
             x[name] = y;
           };
       }
