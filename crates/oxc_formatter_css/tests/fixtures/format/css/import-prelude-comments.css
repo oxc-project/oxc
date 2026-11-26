@@ -7,6 +7,8 @@
 @import url(a.css) /* c */ screen and (orientation: landscape), print and (min-width: 100px), tv and (max-width: 200px);
 @import url("a.css") /* c */ layer(base) supports(display: grid) screen and (/* d */ min-width /* e */ : /* f */ 100px /* g */);
 @import url(foo.css) screen /* c */ and /* d */ (min-width: 100px);
+@import url(a.css) layer(/* c */ x) /* d */ screen;
+@import url(a.css) supports(/* c */ display: flex /* d */);
 
 /* DIVERGENCES.md#import-media-feature-flat */
 @import url("landscape.css") screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy);

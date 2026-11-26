@@ -30,7 +30,7 @@ use crate::{
     context::CssFormatContext,
     format::to_span,
     print::{
-        CssFormatter, format_with, is_glued, scss, selector, statement,
+        CssFormatter, block_comment_end, format_with, is_glued, scss, selector, statement,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -43,8 +43,8 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     let name_span = to_span(at_rule.name.span());
     write_maybe_lowercase(source.text_for(&name_span), f);
 
-    // Comments inside the params:
-    // postcss keeps them embedded in the params string / media tokens; reconstruct from the source.
+    // Comments inside the params: the structured printers place them,
+    // a commented String-params prelude prints them as written (below).
     let region_end = statement::params_region_end(at_rule.block.as_ref(), at_rule.span().end, f);
     let has_params_comments = f
         .context()
@@ -98,31 +98,28 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         }
     }
 
-    // `//` comments have their own layout rules (e.g. less `selector(...)`)
-    // handled by the structural printers below
-    // (which place their comments themselves; a verbatim prelude prints them as part of its text).
-    let has_inline_params_comment = f
-        .context()
-        .comments()
-        .iter_before(region_end)
-        .any(|c| c.inline && c.span.start >= name_span.end);
-    if has_params_comments && !has_inline_params_comment {
-        let lowercased = at_rule.name.raw.cow_to_ascii_lowercase();
+    // String params with a comment: as written (Prettier's raw `node.params`),
+    // kept for Prettier alignment only: unlike `@keyframes`, they hold no string to re-quote.
+    // A `//` leaves them to the structured printers below, which place it.
+    if has_params_comments
+        && matches!(
+            &*at_rule.name.raw.cow_to_ascii_lowercase(),
+            "page" | "font-feature-values" | "counter-style" | "property"
+        )
+        && !f
+            .context()
+            .comments()
+            .iter_before(region_end)
+            .any(|c| c.inline && c.span.start >= name_span.end)
+    {
         let raw = source.slice_range(name_span.end, region_end).trim();
-        match &*lowercased {
-            // String params: as written (Prettier's raw `node.params`),
-            // kept for Prettier alignment only: unlike `@keyframes`, they hold no string to re-quote
-            "page" | "font-feature-values" | "counter-style" | "property" => {
-                let _ = f.context().comments().take_before(region_end);
-                if !raw.is_empty() {
-                    write!(f, space());
-                    write!(f, text(raw));
-                }
-                write_block_or_semicolon(at_rule, f);
-                return;
-            }
-            _ => {}
+        let _ = f.context().comments().take_before(region_end);
+        if !raw.is_empty() {
+            write!(f, space());
+            write!(f, text(raw));
         }
+        write_block_or_semicolon(at_rule, f);
+        return;
     }
 
     // SCSS control directives wrap the prelude and the gap before `{` in one group:
@@ -1100,8 +1097,8 @@ fn write_import_prelude<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_,
         }
         let commas = import.media.as_ref().map_or(&[][..], |media| &media.comma_spans[..]);
         // The prelude's span ends at its last word: the comments before the `;` are its too
-        let semi = statement::end_with_semicolon(prelude_end, f);
-        push_comment_words(&mut groups, commas, semi.saturating_sub(1).max(prelude_end), f);
+        let end = statement::params_region_end(None, prelude_end, f);
+        push_comment_words(&mut groups, commas, end, f);
         write_import_words(&groups, f);
         return;
     }
@@ -1150,21 +1147,17 @@ impl ImportWord<'_, '_> {
     }
 }
 
-/// The block comments pending before `end` and outside every word, each a word where it sits:
-/// in the comma group its position among the `commas` gives, before the first word after it.
+/// The block comments pending before `end` and outside every word, up to a `//` (which rides past the `;`),
+/// each a word where it sits: in the comma group its position among the `commas` gives, before the first word after it.
 fn push_comment_words<'a>(
     groups: &mut [Vec<ImportWord<'_, 'a>>],
     commas: &[oxc_css_parser::Span],
     end: u32,
     f: &CssFormatter<'_, 'a>,
 ) {
-    for &comment in f.context().comments().iter_before(end) {
+    for &comment in f.context().comments().iter_before(end).take_while(|c| !c.inline) {
         // A word's own comments are its printer's (`(/* c */ a: b)`)
-        let inside = |word: &ImportWord<'_, '_>| {
-            let span = word.span();
-            span.start < comment.span.start && comment.span.end <= span.end
-        };
-        if groups.iter().flatten().any(inside) {
+        if groups.iter().flatten().any(|word| word.span().contains_inclusive(comment.span)) {
             continue;
         }
         let group = commas.iter().filter(|comma| comma.start < comment.span.start).count();
@@ -1185,7 +1178,7 @@ fn has_unclaimed_comments_before(end: u32, f: &CssFormatter<'_, '_>) -> bool {
 /// - several: `indent(group(fill(<comma group + ",">...)))`, each comma group per `write_import_comma_group`
 ///
 /// So a long prelude breaks wherever the width runs out (`screen and\n  (max-width: 601px)`),
-/// not at a structural seam. Comment-free preludes only: the structured printers place comments themselves.
+/// not at a structural seam. A block comment is a word of its own; a `//` takes the structured printers instead.
 fn write_import_words<'a>(comma_groups: &[Vec<ImportWord<'_, 'a>>], f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     let write_words = move |words: &[ImportWord<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
@@ -1202,7 +1195,11 @@ fn write_import_words<'a>(comma_groups: &[Vec<ImportWord<'_, 'a>>], f: &mut CssF
                     write_maybe_lowercase(source.text_for(&to_span(keyword.span())), f);
                     write_media_in_parens(in_parens, f);
                 }
-                ImportWord::Verbatim(span) => write!(f, text(source.text_for(span))),
+                // Its comments are in its text
+                ImportWord::Verbatim(span) => {
+                    write!(f, text(source.text_for(span)));
+                    let _ = f.context().comments().take_before(span.end);
+                }
                 ImportWord::Comment(comment) => {
                     for &comment in f.context().comments().take_before(comment.span.end) {
                         write!(
@@ -1417,7 +1414,8 @@ fn write_import_supports<'a>(supports: &ImportPreludeSupports<'a>, f: &mut CssFo
         }
         // `supports(display: flex)`: a bare declaration (no inner parens)
         ImportPreludeSupportsKind::Declaration(decl) => {
-            statement::write_declaration(decl, f);
+            let close = supports.span().end - 1;
+            write!(f, group(&format_with(|f| write_supports_declaration(decl, close, f))));
         }
     }
     write!(f, ")");
@@ -1984,6 +1982,24 @@ fn supports_in_parens_start(in_parens: &SupportsInParens<'_>, f: &CssFormatter<'
     u32::try_from(name_start).unwrap_or(list_start)
 }
 
+/// A `@supports` declaration with the comments inside its parens (`close` is the `)`), as around one in a rule:
+/// a leading one ends its line when the parens open, the trailing ones wrap as before a `;`.
+fn write_supports_declaration<'a>(
+    decl: &oxc_css_parser::ast::Declaration<'a>,
+    close: u32,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    for &comment in f.context().comments().take_before(decl.span().start) {
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
+        if !comment.inline {
+            write!(f, soft_line_break_or_space());
+        }
+    }
+    statement::write_declaration_until(decl, Some(close), f);
+    // What the declaration's tail left (after an `!important`) stays inside the `)` too
+    value::flush_trailing_value_comments(close, f);
+}
+
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     // The term's `)`: the comments before it stay inside (but a `selector()`'s, see below)
@@ -1998,19 +2014,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Feature(feature) => {
-            // The comments inside the parens as around a declaration in a rule:
-            // a leading one ends its line when the parens open, the trailing ones wrap as before a `;`
-            let content = format_with(|f| {
-                for &comment in f.context().comments().take_before(feature.decl.span().start) {
-                    write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
-                    if !comment.inline {
-                        write!(f, soft_line_break_or_space());
-                    }
-                }
-                statement::write_declaration_until(&feature.decl, Some(close), f);
-                // What the declaration's tail left (after an `!important`) stays inside the `)` too
-                value::flush_trailing_value_comments(close, f);
-            });
+            let content = format_with(|f| write_supports_declaration(&feature.decl, close, f));
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Selector(list) => {
