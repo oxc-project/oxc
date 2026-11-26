@@ -2,7 +2,7 @@ commit: 51225612
 
 node: v26.12.1
 
-Passed: 345 of 602 (57.31%)
+Passed: 350 of 602 (58.14%)
 
 Failures:
 
@@ -59,42 +59,6 @@ SyntaxError: Invalid or unexpected token
 SyntaxError: Unexpected identifier 'x'
     at new Script (node:vm:118:7)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-static-public-this-exec.test.js:10:15
-
-./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-private-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-private-exec.test.js:3
-  accessor #a;
-           ^^
-
-SyntaxError: Unexpected identifier '#a'
-    at new Script (node:vm:118:7)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-private-exec.test.js:10:15
-
-./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-public-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-public-exec.test.js:3
-  accessor a;
-           ^
-
-SyntaxError: Unexpected identifier 'a'
-    at new Script (node:vm:118:7)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-public-exec.test.js:10:15
-
-./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-static-private-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-static-private-exec.test.js:3
-  static accessor #a;
-                  ^^
-
-SyntaxError: Unexpected identifier '#a'
-    at new Script (node:vm:118:7)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-static-private-exec.test.js:10:15
-
-./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-static-public-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-static-public-exec.test.js:3
-  static accessor a;
-                  ^
-
-SyntaxError: Unexpected identifier 'a'
-    at new Script (node:vm:118:7)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors--to-es2015-undecorated-static-public-exec.test.js:10:15
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors-context-name-exec.test.js
 ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-accessors-context-name-exec.test.js:11
@@ -305,7 +269,7 @@ SyntaxError: Invalid or unexpected token
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-decorator-access-modified-methods-exec.test.js:10:15
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-expressions-named-evaluation-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-expressions-named-evaluation-exec.test.js:12
+./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-expressions-named-evaluation-exec.test.js:16
 const __vite_ssr_export_default__ = @dec class {};
                                     ^
 
@@ -327,13 +291,13 @@ SyntaxError: Invalid or unexpected token
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-block-super-exec.test.js:10:15
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:7
-      static accessor ["x" + hint] = hint + "Super" + ".x";
-                      ^
+./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:44
+      @dec class B extends createClassWithStaticX("B") {
+      ^
 
-SyntaxError: Unexpected token '['
+SyntaxError: Invalid or unexpected token
     at new Script (node:vm:118:7)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:10:15
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-elements-super-this-exec.test.js:14:15
 
 ./fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-environment-super-exec.test.js
 ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-decorators-test-fixtures-2023-11-classes-replacement-static-method-private-environment-super-exec.test.js:23
@@ -1516,15 +1480,6 @@ TypeError: Cannot destructure property 'b' of 'undefined' as it is undefined.
 SyntaxError: Invalid or unexpected token
     at new Script (node:vm:118:7)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-call-in-decorator-exec.test.js:10:15
-
-./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js
-./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js:12
-      accessor [super.toString()] = "hello";
-               ^
-
-SyntaxError: Unexpected token '['
-    at new Script (node:vm:118:7)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js:10:15
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
 ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js:12

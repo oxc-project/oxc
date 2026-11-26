@@ -207,7 +207,11 @@ use oxc_str::{Ident, IdentBuildHasher};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{
+    context::TraverseCtx,
+    decorator::{DecoratorMode, standard::StandardDecoratorState},
+    state::TransformState,
+};
 
 mod class;
 mod class_bindings;
@@ -215,6 +219,7 @@ mod class_details;
 mod class_name;
 mod computed_key;
 mod constructor;
+mod decorators;
 mod instance_prop_init;
 mod private_field;
 mod private_method;
@@ -287,6 +292,9 @@ pub struct ClassProperties<'a> {
     insert_after_exprs: Vec<Expression<'a>>,
     /// Statements to insert after class declaration
     insert_after_stmts: Vec<Statement<'a>>,
+
+    /// Standard decorator options, metadata, and exit-phase scratch state.
+    decorator_state: StandardDecoratorState<'a>,
 }
 
 impl ClassProperties<'_> {
@@ -295,6 +303,7 @@ impl ClassProperties<'_> {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
+        decorator_mode: DecoratorMode,
     ) -> Self {
         Self {
             set_public_class_fields: options.loose,
@@ -308,19 +317,37 @@ impl ClassProperties<'_> {
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
+            decorator_state: StandardDecoratorState::new(decorator_mode),
         }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_anonymous_export_default_class(stmt, ctx);
+        self.decorator_state.wrap_decorated_loop_body(stmt, ctx);
+    }
+
+    fn enter_object_property(
+        &mut self,
+        property: &mut ObjectProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator_state.capture_object_property_class_name(property, ctx);
+    }
+
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert_eq!(self.private_field_count, 0);
+        debug_assert!(
+            !self.decorator_state.has_leftover_class_entries(),
+            "per-class decorator data outlived its class"
+        );
     }
 
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.transform_anonymous_export_default_class(stmt, ctx);
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator_state.lower_native_auto_accessors(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -348,11 +375,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     // `#[inline]` for fast exit for expressions which are not any of the transformed types
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // All of transforms below only act on `PrivateFieldExpression`s or `PrivateInExpression`s.
-        // If we're not inside a class which has private fields, `#prop` can't be present here,
-        // so skip the slow path - fast path for common case.
-        if self.private_field_count != 0 {
-            self.enter_expression_with_private_fields(expr, ctx);
+        // Private field transforms only act inside a class with private fields, and standard
+        // decorator lowering only acts on class expressions. Test both in one condition, so other
+        // expressions take the fast path.
+        if self.private_field_count != 0
+            || (self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)))
+        {
+            self.enter_expression_slow(expr, ctx);
         }
     }
 
@@ -438,9 +467,18 @@ impl<'a> ClassProperties<'a> {
         }
     }
 
-    // Keep the rare private-field transform body out of the hot expression visitor.
+    // Keep the rare transform bodies out of the hot expression visitor.
     // Rust 1.97 otherwise inlines these large branches into the generated walker.
     #[inline(never)]
+    fn enter_expression_slow(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)) {
+            self.decorator_state.wrap_native_accessor_expression(expr, ctx);
+        }
+        if self.private_field_count != 0 {
+            self.enter_expression_with_private_fields(expr, ctx);
+        }
+    }
+
     fn enter_expression_with_private_fields(
         &mut self,
         expr: &mut Expression<'a>,

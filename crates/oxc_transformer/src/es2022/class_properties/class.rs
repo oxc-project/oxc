@@ -14,6 +14,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
+    decorator::standard::StandardDecoratorState,
     utils::ast_builder::{create_assignment, create_new_weakset, create_variable_declaration},
 };
 
@@ -78,6 +79,8 @@ impl<'a> ClassProperties<'a> {
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
+        let mut entry = self.on_body_entry(body, class_name_binding.as_ref(), ctx);
+        let has_auto_accessor = entry.has_auto_accessor;
         if !lowering.lowers_fields() {
             // Register private names only when they can shadow a lowered name in an enclosing
             // class. Other unresolved names belong to untouched classes and are left as-is.
@@ -101,9 +104,12 @@ impl<'a> ClassProperties<'a> {
                 is_transform_required: false,
                 private_props: PrivateProps::Native(private_names),
                 bindings: ClassBindings::dummy(),
+                has_auto_accessor,
             });
             return;
         }
+        let transform_static_blocks = self.transform_static_blocks || entry.lowers_static_blocks();
+
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
         let mut has_static_prop = false;
@@ -138,7 +144,7 @@ impl<'a> ClassProperties<'a> {
                 }
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
-                    if self.transform_static_blocks {
+                    if transform_static_blocks {
                         has_static_private_method_or_static_block = true;
                     }
                 }
@@ -211,6 +217,7 @@ impl<'a> ClassProperties<'a> {
                 is_transform_required: false,
                 private_props: PrivateProps::Lowered(private_props),
                 bindings: ClassBindings::dummy(),
+                has_auto_accessor,
             });
             return;
         }
@@ -220,18 +227,21 @@ impl<'a> ClassProperties<'a> {
         // temp var for class. Static prop in class declaration doesn't.
         // Anonymous `export default class {}` with static elements always has a temp var,
         // so that static blocks are evaluated after the class is defined.
-        let need_temp_var = (is_anonymous_default_export
-            && (has_static_prop || has_static_private_method_or_static_block))
+        let need_temp_var = entry.static_accessor_binding.is_some()
+            || (is_anonymous_default_export
+                && (has_static_prop || has_static_private_method_or_static_block))
             || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
 
         let outer_hoist_scope_id = ctx.current_hoist_scope_id();
         let class_temp_binding = if need_temp_var {
-            let temp_binding = ClassBindings::create_temp_binding(
-                class_name_binding.as_ref(),
-                outer_hoist_scope_id,
-                ctx,
-            );
-            if is_declaration {
+            let temp_binding = entry.static_accessor_binding.take().unwrap_or_else(|| {
+                ClassBindings::create_temp_binding(
+                    class_name_binding.as_ref(),
+                    outer_hoist_scope_id,
+                    ctx,
+                )
+            });
+            if is_declaration && class_name_binding.is_none() {
                 // Anonymous `export default class {}`. Set class name binding to temp var.
                 // Actual class name will be set to this later.
                 class_name_binding = Some(temp_binding.clone());
@@ -272,6 +282,7 @@ impl<'a> ClassProperties<'a> {
             is_transform_required: true,
             private_props: PrivateProps::Lowered(private_props),
             bindings: class_bindings,
+            has_auto_accessor,
         });
 
         // Exit if no instance properties (public or private)
@@ -446,7 +457,12 @@ impl<'a> ClassProperties<'a> {
                 // For an anonymous class, `temp_var_is_created` assumes the class itself will bind
                 // the temp. If another transform changed the class ID, declare the temp separately.
                 if !class_details.bindings.temp_var_is_created
-                    || ident.symbol_id() != temp_binding.symbol_id
+                    || (class_details
+                        .bindings
+                        .name
+                        .as_ref()
+                        .is_some_and(|name| name.symbol_id == temp_binding.symbol_id)
+                        && ident.symbol_id() != temp_binding.symbol_id)
                 {
                     ctx.state.var_declarations.insert_var(temp_binding, &ctx.ast);
                 }
@@ -609,10 +625,7 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expr else { unreachable!() };
-
-        // Transform static properties, remove static and instance properties, and move computed keys
-        // to before class
-        self.transform_class_elements(class, ctx);
+        let inferred_name = self.on_class_exit(class, ctx);
 
         // Insert expressions before / after class.
         // `C = class { [x()] = 1; static y = 2 };`
@@ -755,7 +768,12 @@ impl<'a> ClassProperties<'a> {
             }
 
             // `_Class = class {}`
-            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), true, ctx);
+            let class_expr = match inferred_name {
+                Some(name) => {
+                    StandardDecoratorState::set_inferred_class_name(expr.take_in(ctx), name, ctx)
+                }
+                None => Self::preserve_anonymous_class_name(expr.take_in(ctx), true, ctx),
+            };
             let assignment = create_assignment(binding, class_expr, SPAN, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -784,7 +802,12 @@ impl<'a> ClassProperties<'a> {
                 return;
             }
 
-            let class_expr = Self::preserve_anonymous_class_name(expr.take_in(ctx), false, ctx);
+            let class_expr = match inferred_name {
+                Some(name) => {
+                    StandardDecoratorState::set_inferred_class_name(expr.take_in(ctx), name, ctx)
+                }
+                None => Self::preserve_anonymous_class_name(expr.take_in(ctx), false, ctx),
+            };
             exprs.push(class_expr);
         }
 
@@ -812,6 +835,9 @@ impl<'a> ClassProperties<'a> {
         class: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let transform_static_blocks =
+            self.transform_static_blocks || self.current_class().has_auto_accessor;
+
         let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {
             match element {
@@ -828,7 +854,7 @@ impl<'a> ClassProperties<'a> {
                     return false;
                 }
                 ClassElement::StaticBlock(block) => {
-                    if self.transform_static_blocks {
+                    if transform_static_blocks {
                         self.convert_static_block(block, ctx);
                         return false;
                     }

@@ -85,7 +85,7 @@ impl<'a> TransformState<'a> {
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
 
         let decorator_mode = options.decorator.mode();
-        let class_transform = ClassTransform::new(&options.env);
+        let class_transform = ClassTransform::new(&options.env, decorator_mode);
 
         Self {
             errors: vec![],
@@ -108,6 +108,11 @@ impl<'a> TransformState<'a> {
     /// Record the lowering of a class before its decorators or auto-accessors are rewritten.
     pub fn record_class_lowering(&mut self, class: &Class<'a>) {
         self.class_lowering_decisions.record(class);
+    }
+
+    /// The lowering of a class before its entry hook has run.
+    pub fn class_lowering_before_entry(&self, class: &Class<'a>) -> ClassLowering {
+        self.class_lowering_decisions.for_untransformed_class(class)
     }
 
     /// The lowering of a class which has already been entered.

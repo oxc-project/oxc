@@ -1,6 +1,7 @@
 mod accessor;
 mod legacy;
 mod options;
+pub mod standard;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;

@@ -340,7 +340,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         // Record ownership before decorators or TypeScript rewrite the class.
         if self.x0_typescript.is_some()
-            || matches!(ctx.state.class_transform, ClassTransform::ClassProperties { .. })
+            || matches!(
+                ctx.state.class_transform,
+                ClassTransform::ClassProperties { .. } | ClassTransform::StandardDecorators { .. }
+            )
         {
             ctx.state.record_class_lowering(class);
         }
@@ -348,6 +351,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
         }
+        self.x2_es2022.enter_class(class, ctx);
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -549,6 +553,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.decorator.exit_method_definition(def, ctx);
+    }
+
+    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2022.enter_object_property(prop, ctx);
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {

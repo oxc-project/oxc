@@ -2,7 +2,10 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_traverse::Traverse;
 
-use crate::{common::class_transform::ClassTransform, context::TraverseCtx, state::TransformState};
+use crate::{
+    common::class_transform::ClassTransform, context::TraverseCtx, decorator::DecoratorMode,
+    state::TransformState,
+};
 
 mod class_properties;
 mod class_static_block;
@@ -27,17 +30,33 @@ impl ES2022<'_> {
         class_transform: ClassTransform,
         remove_class_fields_without_initializer: bool,
     ) -> Self {
+        // Class-properties owns static blocks in classes it lowers. In decorators-only mode,
+        // the standalone static-block transform handles the remaining classes.
         let (class_static_block, class_properties) = match class_transform {
-            ClassTransform::None => (None, None),
-            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
-            ClassTransform::ClassProperties { options, transform_static_blocks, .. } => (
+            ClassTransform::ClassProperties {
+                options,
+                transform_static_blocks,
+                decorator_mode,
+            } => (
                 None,
                 Some(ClassProperties::new(
                     options,
                     transform_static_blocks,
                     remove_class_fields_without_initializer,
+                    decorator_mode,
                 )),
             ),
+            ClassTransform::StandardDecorators { transform_static_blocks } => (
+                transform_static_blocks.then(ClassStaticBlock::new),
+                Some(ClassProperties::new(
+                    ClassPropertiesOptions::default(),
+                    transform_static_blocks,
+                    remove_class_fields_without_initializer,
+                    DecoratorMode::Standard,
+                )),
+            ),
+            ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
+            ClassTransform::None => (None, None),
         };
         Self { top_level_await, class_static_block, class_properties }
     }
@@ -45,6 +64,11 @@ impl ES2022<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Class-properties also scopes loop bodies for standard decorators, so it sees every
+        // statement. The static block transform only needs class and export statements.
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_statement(stmt, ctx);
+        }
         if !matches!(
             stmt,
             Statement::ClassDeclaration(_)
@@ -52,9 +76,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
                 | Statement::ExportDefaultDeclaration(_)
         ) {
             return;
-        }
-        if let Some(class_properties) = &mut self.class_properties {
-            class_properties.enter_statement(stmt, ctx);
         }
         if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_statement(stmt, ctx);
@@ -70,8 +91,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
 
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Keep the `else if` shape for the common single-transform case. Visiting both transforms
+        // here made the inlined expression walker slower for every expression.
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);
+            if self.class_static_block.is_some() {
+                self.enter_expression_both_class_transforms(expr, ctx);
+            }
         } else if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_expression(expr, ctx);
         }
@@ -81,30 +107,45 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
         if !matches!(expr, Expression::ClassExpression(_)) {
             return;
         }
+        // Both transforms are present only when class properties transform lowers decorated
+        // classes, and static block transform handles the rest. Class properties transform runs
+        // first. If it replaced the class, static block transform skipped that class.
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_expression(expr, ctx);
-        } else if let Some(class_static_block) = &mut self.class_static_block {
+        }
+        if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.exit_expression(expr, ctx);
         }
     }
 
+    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_object_property(prop, ctx);
+        }
+    }
+
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_class(class, ctx);
+        }
+    }
+
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        match &mut self.class_properties {
-            Some(class_properties) => {
-                class_properties.enter_class_body(body, ctx);
-            }
-            _ => {
-                if let Some(class_static_block) = &mut self.class_static_block {
-                    class_static_block.enter_class_body(body, ctx);
-                }
-            }
+        // Static block transform first, so it can skip decorated classes before their decorators
+        // are lowered. Plain auto-accessors were already lowered on entering the class.
+        if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_class_body(body, ctx);
+        }
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_class_body(body, ctx);
         }
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_class(class, ctx);
-        } else if let Some(class_static_block) = &mut self.class_static_block {
+        }
+        if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.exit_class(class, ctx);
         }
     }
@@ -126,7 +167,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     ) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_property_definition(prop, ctx);
-        } else if let Some(class_static_block) = &mut self.class_static_block {
+        }
+        if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_property_definition(prop, ctx);
         }
     }
@@ -168,7 +210,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     }
 }
 
-impl ES2022<'_> {
+impl<'a> ES2022<'a> {
+    /// The static block transform's visit when class-properties also runs, which happens only
+    /// when standard decorators are lowered. Out of line to keep it out of the expression walker.
+    #[inline(never)]
+    fn enter_expression_both_class_transforms(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(class_static_block) = &mut self.class_static_block {
+            class_static_block.enter_expression(expr, ctx);
+        }
+    }
+
     fn is_top_level(ctx: &TraverseCtx) -> bool {
         ctx.current_hoist_scope_id() == ctx.scoping().root_scope_id()
     }

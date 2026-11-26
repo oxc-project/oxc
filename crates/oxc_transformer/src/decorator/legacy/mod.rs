@@ -360,7 +360,8 @@ impl<'a> LegacyDecorator<'a> {
             &mut class.body,
             class.scope_id.get().unwrap(),
             binding.as_ref(),
-            false,
+            super::accessor::AccessorKeys::Legacy,
+            |_, _| {},
             ctx,
         );
     }
