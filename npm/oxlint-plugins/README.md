@@ -53,6 +53,20 @@ const rule: Rule = {
 };
 ```
 
+### Diagnostic help
+
+Pass `help` to `context.report()` to display additional guidance alongside a diagnostic:
+
+```typescript
+context.report({
+  node,
+  message: "Unexpected debugger statement.",
+  help: "Remove the debugger statement before committing your code.",
+});
+```
+
+The optional `help` field accepts a string. ESLint ignores this Oxlint extension.
+
 ### ESLint compatibility
 
 If your plugin uses Oxlint's [alternative `createOnce` API](https://oxc.rs/docs/guide/usage/linter/js-plugins#alternative-api),
