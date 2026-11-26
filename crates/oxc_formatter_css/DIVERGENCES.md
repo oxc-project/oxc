@@ -858,6 +858,32 @@ Prettier moves it past the `{` as the block's first comment for `@media` / `@sup
 the comment crosses the `{`, a grammar-fixed delimiter.
 For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{` / the comment text, bugs on its side.
 
+## own-line-comment-before-block
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+
+```css
+/* input */
+@media screen
+  /* c */{
+}
+
+/* ours */
+@media screen
+/* c */ {
+}
+
+/* prettier */
+@media screen /* c */ {
+}
+```
+
+A comment starting a line before an at-rule's `{` keeps its line, the `{` on it or on the next as in the source, as before a JS block (`if (a)\n/* c */ {`);
+Prettier moves it onto the prelude's line: the comment changes line.
+
 ## at-root-line-comment-indent
 
 - Why: uniform-rule (same construct, same output: an `@include` prelude after a `//`)
@@ -1637,6 +1663,64 @@ At-rule names, property names, media feature names and the prelude keywords next
 Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may be a case-sensitive custom ident (`animation-name`, `grid-area`).
 So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
 Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.
+
+## media-query-comments
+
+- Why: uniform-rule (comment presence never changes layout)
+- Pin: `tests/fixtures/format/css/media-commented-feature.css`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less`
+
+```css
+/* input */
+@media all and (max-width:1024px) {}
+@media all and/* c */(max-width:1024px) {}
+
+/* ours */
+@media all and (max-width: 1024px) {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
+
+/* prettier */
+@media all and (max-width: 1024px) {
+}
+@media all and/* c */(max-width:1024px) {
+}
+```
+
+A commented `@media` query prints as an uncommented one, each comment kept between the tokens it sits between;
+Prettier's media query parser keeps a token touching a comment as written, its source spacing and quotes included.
+Same rule as DIVERGENCES.md#keyframes-name-comment.
+
+## url-string-comment
+
+- Why: uniform-rule (same construct, same output: a comment after a function argument, `calc(1px /* c */)`)
+- Pin: `tests/fixtures/format/css/function-argument-comments.css`
+
+```css
+/* input */
+a {
+  background: url("x" /* c */);
+  width: calc(1px /* c */);
+}
+
+/* ours */
+a {
+  background: url("x" /* c */);
+  width: calc(1px /* c */);
+}
+
+/* prettier */
+a {
+  background: url("x"/* c */);
+  width: calc(1px /* c */);
+}
+```
+
+A comment after a quoted `url()` string is spaced from it, as one after any other function argument;
+Prettier glues it to the string there only.
 
 ## media-feature-comment-case
 

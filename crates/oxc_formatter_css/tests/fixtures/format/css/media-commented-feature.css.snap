@@ -2,17 +2,28 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-/* A comment in the params: a token opening with `(` prints as `(feature: value)`, any other as written */
+/* A comment in the params: the query prints as it does without it, the comment in place */
 @media /* c */ (foo:'a') {
 }
 @media /* c */ (min-width:100px) and (foo : 'a'), print and (MIN-WIDTH: 100.0PX) {
 }
-@media /* c */ (foo: a   b) and (bar:/* d */'b') and (baz: 'a"b') {
-}
-@media /* c */ (400PX <= WIDTH) and (HOVER) {
+@media /* c */ (baz: 'a"b') {
 }
 @media /* c */ (min-width:
     100px) {
+}
+@media (/* c */ min-width /* d */ : /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
+}
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@media (width: calc(1px /* c */)) and (width: calc((1px /* d */) + 2px)) {
+}
+@custom-media --foo /* c */ true;
+
+/* DIVERGENCES.md#media-query-comments */
+@media /* c */ (bar:/* d */'b') {
 }
 @media all and/* c */(max-width:1024px) {
 }
@@ -27,20 +38,31 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-/* A comment in the params: a token opening with `(` prints as `(feature: value)`, any other as written */
+/* A comment in the params: the query prints as it does without it, the comment in place */
 @media /* c */ (foo: "a") {
 }
 @media /* c */ (min-width: 100px) and (foo: "a"), print and (min-width: 100px) {
 }
-@media /* c */ (foo: a   b) and (bar: /* d */"b") and (baz: 'a"b') {
-}
-@media /* c */ (400px <= width) and (hover) {
+@media /* c */ (baz: 'a"b') {
 }
 @media /* c */ (min-width: 100px) {
 }
-@media all and/* c */(max-width:1024px) {
+@media (/* c */ min-width /* d */: /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
 }
-@media /* c */ screen and/* d */(foo:'a') {
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@media (width: calc(1px /* c */)) and (width: calc((1px /* d */) + 2px)) {
+}
+@custom-media --foo /* c */ true;
+
+/* DIVERGENCES.md#media-query-comments */
+@media /* c */ (bar: /* d */ "b") {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
+@media /* c */ screen and /* d */ (foo: "a") {
 }
 
 /* DIVERGENCES.md#media-feature-comment-case */
@@ -50,20 +72,31 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-/* A comment in the params: a token opening with `(` prints as `(feature: value)`, any other as written */
+/* A comment in the params: the query prints as it does without it, the comment in place */
 @media /* c */ (foo: "a") {
 }
 @media /* c */ (min-width: 100px) and (foo: "a"), print and (min-width: 100px) {
 }
-@media /* c */ (foo: a   b) and (bar: /* d */"b") and (baz: 'a"b') {
-}
-@media /* c */ (400px <= width) and (hover) {
+@media /* c */ (baz: 'a"b') {
 }
 @media /* c */ (min-width: 100px) {
 }
-@media all and/* c */(max-width:1024px) {
+@media (/* c */ min-width /* d */: /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
 }
-@media /* c */ screen and/* d */(foo:'a') {
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@media (width: calc(1px /* c */)) and (width: calc((1px /* d */) + 2px)) {
+}
+@custom-media --foo /* c */ true;
+
+/* DIVERGENCES.md#media-query-comments */
+@media /* c */ (bar: /* d */ "b") {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
+@media /* c */ screen and /* d */ (foo: "a") {
 }
 
 /* DIVERGENCES.md#media-feature-comment-case */

@@ -333,7 +333,9 @@
 
 - externals/prettier/css/atrule/supports.css (💥, 95.22%)
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-long-value
-- externals/prettier/css/comments/at-rules.css (💥, 74.62%)
+- externals/prettier/css/comments/at-rules.css (💥, 66.67%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#own-line-comment-before-block
+  - crates/oxc_formatter_css/DIVERGENCES.md#media-query-comments
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-comments
 - externals/prettier/css/comments/declaration.css (💥, 98.88%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
@@ -459,9 +461,10 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-lookup-glue
 - externals/prettier/less/less-test-suite/snippet: tests-unit/color-functions/rgba.less (💥, 82.93%)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
-- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less (💥, 87.50%)
+- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less (💥, 85.00%)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-variable-value-comments
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-continuation-indent
+  - crates/oxc_formatter_css/DIVERGENCES.md#media-query-comments
 - externals/prettier/less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less (💥, 98.25%)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-extend-statement-break
 - externals/prettier/less/less-test-suite/snippet: tests-unit/extend-selector/extend-selector.less (💥, 98.67%)
