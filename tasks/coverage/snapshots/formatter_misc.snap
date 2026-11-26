@@ -1,17 +1,5 @@
 formatter_misc Summary:
-AST Parsed     : 192/192 (100.00%)
-Positive Passed: 185/192 (96.35%)
+AST Parsed     : 196/196 (100.00%)
+Positive Passed: 195/196 (99.49%)
 Mismatch: tasks/coverage/misc/pass/for-using-escaped-of.js
 
-Expect to Parse: tasks/coverage/misc/pass/unambiguous-await-reparse-pure-shifted.js
-Unexpected token
-Expect to Parse: tasks/coverage/misc/pass/unambiguous-await-reparse-pure-trivia.js
-Unexpected token
-Expect to Parse: tasks/coverage/misc/pass/unambiguous-await-reparse-regex-comment.js
-Unexpected token
-Expect to Parse: tasks/coverage/misc/pass/unambiguous-await-reparse-regex-newline.js
-Unexpected token
-Expect to Parse: tasks/coverage/misc/pass/unambiguous-await-reparse-regex-string.js
-Expected `,` or `)` but found `;`
-Expect to Parse: tasks/coverage/misc/pass/unambiguous-await-reparse-trailing-comma.js
-Expected a semicolon or an implicit semicolon after a statement, but found none

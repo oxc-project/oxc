@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 192/192 (100.00%)
-Positive Passed: 192/192 (100.00%)
-Negative Passed: 332/332 (100.00%)
+AST Parsed     : 196/196 (100.00%)
+Positive Passed: 196/196 (100.00%)
+Negative Passed: 340/340 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -6389,6 +6389,37 @@ Negative Passed: 332/332 (100.00%)
    · ─
    ╰────
 
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-fatal-module.js:3:3]
+ 2 │ export {};
+ 3 │ f(;
+   ·   ─
+   ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[misc/fail/unambiguous-await-fatal-script.js:2:1]
+ 1 │ await();
+ 2 │ import a = b;
+   · ─────────────
+ 3 │ import('c');
+   ╰────
+  help: TypeScript transforms 'import ... =' to 'const ... ='
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-fatal-script.js:4:3]
+ 3 │ import('c');
+ 4 │ f(;
+   ·   ─
+   ╰────
+
+  × Cannot use import statement outside a module
+   ╭─[misc/fail/unambiguous-await-fatal-script.js:2:1]
+ 1 │ await();
+ 2 │ import a = b;
+   · ──────
+ 3 │ import('c');
+   ╰────
+
   × TS(1036): Statements are not allowed in ambient contexts.
    ╭─[misc/fail/unambiguous-await-reparse-ambient-order.d.ts:2:1]
  1 │ declare var await: number;
@@ -6550,6 +6581,47 @@ Negative Passed: 332/332 (100.00%)
    ·                  ▲
    ╰────
   help: Check for unbalanced brackets or invalid escape sequences
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-retry-ambient.d.ts:1:10]
+ 1 │ await /x/;
+   ·          ─
+ 2 │ y;
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-retry-cover-initialized-name.js:1:10]
+ 1 │ await /x/;
+   ·          ─
+ 2 │ ({a = 1});
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-retry-html-comment-before.js:2:10]
+ 1 │ <!-- c
+ 2 │ await /x/;
+   ·          ─
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-retry-html-comment.js:1:10]
+ 1 │ await /x/;
+   ·          ─
+ 2 │ --> c
+   ╰────
+
+  × Invalid escape sequence
+   ╭─[misc/fail/unambiguous-await-retry-lexer-error.js:1:2]
+ 1 │ '\u{zz}'; await(1); (
+   ·  ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `let` declaration
+   ╭─[misc/fail/unambiguous-await-retry-pure.js:2:5]
+ 1 │ /*#__PURE__*/ await(f());
+ 2 │ let let = 1;
+   ·     ───
+   ╰────
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[misc/fail/yield-of-outside-generator.cjs:2:3]
