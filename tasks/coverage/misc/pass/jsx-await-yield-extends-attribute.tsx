@@ -4,3 +4,6 @@ async function f() {
 function* g() {
   return <yield extends disabled />;
 }
+function* h() {
+  return <await extends unknown>() => 0;
+}
