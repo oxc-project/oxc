@@ -1,0 +1,37 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ import(default): No default export found in imported module "default-type/SearchSpecification"
+   ╭─[type-imports.ts:1:8]
+ 1 │ import SearchSpecification from "default-type/SearchSpecification";
+   ·        ───────────────────
+   ╰────
+  help: Does "default-type/SearchSpecification" have the default export?
+
+  ⚠ import(default): No default export found in imported module "default-type/SearchSpecification"
+   ╭─[type-imports.ts:3:20]
+ 2 │             import type SearchSpecification from "default-type/SearchSpecification";
+ 3 │             import search from "default-type/SearchSpecification";
+   ·                    ──────
+ 4 │         
+   ╰────
+  help: Does "default-type/SearchSpecification" have the default export?
+
+  ⚠ import(default): No default export found in imported module "default-type/SearchSpecification"
+   ╭─[type-imports.ts:2:20]
+ 1 │ 
+ 2 │             import search from "default-type/SearchSpecification";
+   ·                    ──────
+ 3 │             import type SearchSpecification from "default-type/SearchSpecification";
+   ╰────
+  help: Does "default-type/SearchSpecification" have the default export?
+
+  ⚠ import(default): No default export found in imported module "default-type/SearchSpecification"
+   ╭─[type-imports.ts:2:20]
+ 1 │ 
+ 2 │             import SearchSpecification from "default-type/SearchSpecification";
+   ·                    ───────────────────
+ 3 │             type Specification = SearchSpecification;
+   ╰────
+  help: Does "default-type/SearchSpecification" have the default export?
