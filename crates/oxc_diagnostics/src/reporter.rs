@@ -169,8 +169,12 @@ impl Info {
         let mut start = InfoPosition { line: 0, column: 0 };
         let mut end = InfoPosition { line: 0, column: 0 };
         let mut filename = String::new();
-        let mut message = String::new();
-        let mut severity = Severity::Warning;
+        let message = diagnostic.to_string();
+        let severity = if matches!(diagnostic.severity(), Some(Severity::Error)) {
+            Severity::Error
+        } else {
+            Severity::Warning
+        };
         let rule_id = diagnostic.code().map(|code| code.to_string());
 
         if let Some(source) = diagnostic.source_code() {
@@ -189,12 +193,6 @@ impl Info {
                 if let Some(end_position) = line_column(source.data(), end_offset) {
                     end = end_position;
                 }
-
-                if matches!(diagnostic.severity(), Some(Severity::Error)) {
-                    severity = Severity::Error;
-                }
-
-                message = diagnostic.to_string();
             }
         }
 
@@ -204,15 +202,56 @@ impl Info {
 
 #[cfg(test)]
 mod test {
-    use crate::{Error, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
 
-    use super::Info;
+    use crate::{Error, NamedSource, OxcDiagnostic, Severity};
+
+    use super::{Info, InfoPosition};
 
     #[test]
-    fn includes_source_name_for_unlabelled_diagnostic() {
-        let error: Error = OxcDiagnostic::error("Something went wrong")
-            .with_source_code(NamedSource::new("file.js", ""));
+    fn includes_details_for_unlabelled_diagnostic() {
+        for diagnostic in [
+            OxcDiagnostic::error("Something went wrong"),
+            OxcDiagnostic::warn("Something went wrong"),
+        ] {
+            let severity = diagnostic.severity;
+            let error = diagnostic
+                .with_error_code("plugin", "rule")
+                .with_source_code(NamedSource::new("file.js", "const a = 1;"));
+            let info = Info::new(&error);
 
-        assert_eq!(Info::new(&error).filename, "file.js");
+            assert_eq!(info.filename, "file.js");
+            assert_eq!(info.message, "Something went wrong");
+            assert_eq!(info.severity, severity);
+            assert_eq!(info.rule_id.as_deref(), Some("plugin(rule)"));
+            assert_eq!(info.start, InfoPosition { line: 0, column: 0 });
+            assert_eq!(info.end, InfoPosition { line: 0, column: 0 });
+        }
+    }
+
+    #[test]
+    fn includes_details_without_source() {
+        let error: Error = OxcDiagnostic::error("Something went wrong").into();
+        let info = Info::new(&error);
+
+        assert_eq!(info.message, "Something went wrong");
+        assert_eq!(info.severity, Severity::Error);
+        assert_eq!(info.filename, "");
+        assert_eq!(info.start, InfoPosition { line: 0, column: 0 });
+        assert_eq!(info.end, InfoPosition { line: 0, column: 0 });
+    }
+
+    #[test]
+    fn includes_details_with_out_of_bounds_label() {
+        let error = OxcDiagnostic::error("Something went wrong")
+            .with_label(Span::new(0, 20))
+            .with_source_code(NamedSource::new("file.js", "const a = 1;"));
+        let info = Info::new(&error);
+
+        assert_eq!(info.filename, "file.js");
+        assert_eq!(info.message, "Something went wrong");
+        assert_eq!(info.severity, Severity::Error);
+        assert_eq!(info.start, InfoPosition { line: 0, column: 0 });
+        assert_eq!(info.end, InfoPosition { line: 0, column: 0 });
     }
 }
