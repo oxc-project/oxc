@@ -23,9 +23,8 @@ doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["full"] }
-oxc_napi = { workspace = true }
+oxc_napi = { workspace = true, features = ["sourcemap"] }
 oxc_relay = { workspace = true }
-oxc_sourcemap = { workspace = true, features = ["napi"] }
 
 napi = { workspace = true }
 napi-derive = { workspace = true }

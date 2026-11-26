@@ -10,8 +10,7 @@ use oxc::{
     parser::Parser,
     span::SourceType,
 };
-use oxc_napi::OxcError;
-use oxc_sourcemap::napi::SourceMap;
+use oxc_napi::{OxcError, SourceMap};
 
 #[napi(object)]
 pub struct IsolatedDeclarationsResult {

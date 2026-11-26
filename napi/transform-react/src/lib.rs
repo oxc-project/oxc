@@ -28,9 +28,8 @@ use oxc::{
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     transformer::Transformer,
 };
-use oxc_napi::{OxcError, get_source_type};
+use oxc_napi::{OxcError, SourceMap, get_source_type};
 use oxc_react_compiler::{CompileResult, compile as react_compiler_compile};
-use oxc_sourcemap::napi::SourceMap;
 
 pub use crate::options::*;
 

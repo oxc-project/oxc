@@ -23,9 +23,8 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
-use oxc_napi::get_source_type;
+use oxc_napi::{SourceMap, get_source_type};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_sourcemap::napi::SourceMap;
 use oxc_syntax::scope::ScopeFlags;
 
 /// Options describing how a fixture should be parsed.

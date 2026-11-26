@@ -26,6 +26,7 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_diagnostics = { workspace = true }
 oxc_span = { workspace = true }
+oxc_sourcemap = { workspace = true, optional = true }
 oxc_syntax = { workspace = true }
 
 napi = { workspace = true }
@@ -33,3 +34,7 @@ napi-derive = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
+
+[features]
+# Expose the `SourceMap` / `JSONSourceMap` napi objects.
+sourcemap = ["dep:oxc_sourcemap"]

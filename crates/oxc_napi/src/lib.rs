@@ -1,10 +1,14 @@
 mod comment;
 mod error;
 mod js_reg_exp;
+#[cfg(feature = "sourcemap")]
+mod sourcemap;
 
 pub use comment::*;
 pub use error::*;
 pub use js_reg_exp::*;
+#[cfg(feature = "sourcemap")]
+pub use sourcemap::*;
 
 use oxc_ast::{CommentKind, ast::Program};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;

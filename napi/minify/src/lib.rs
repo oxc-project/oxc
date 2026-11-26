@@ -24,9 +24,8 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_minifier::Minifier;
-use oxc_napi::OxcError;
+use oxc_napi::{OxcError, SourceMap};
 use oxc_parser::Parser;
-use oxc_sourcemap::napi::SourceMap;
 use oxc_span::SourceType;
 
 pub use crate::options::*;
@@ -134,7 +133,7 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
     MinifyResult {
         code: ret.code,
-        map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
+        map: ret.map.map(SourceMap::from),
         errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
         legal_comments,
         mangle_cache,

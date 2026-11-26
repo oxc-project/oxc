@@ -1912,7 +1912,6 @@ dependencies = [
  "oxc_codegen",
  "oxc_napi",
  "oxc_parser",
- "oxc_sourcemap",
  "oxc_syntax",
 ]
 
@@ -2434,7 +2433,6 @@ dependencies = [
  "oxc_minifier",
  "oxc_napi",
  "oxc_parser",
- "oxc_sourcemap",
  "oxc_span",
  "oxc_str",
  "rustc-hash",
@@ -2470,6 +2468,7 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_diagnostics",
+ "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
 ]
@@ -2681,9 +2680,6 @@ checksum = "1ca9998ccb8eabb05099c5827ce983cca9f5dfc008c6c47d7dcc034cee301e91"
 dependencies = [
  "base64-simd",
  "json-escape-simd",
- "napi",
- "napi-build",
- "napi-derive",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -2828,7 +2824,6 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_napi",
- "oxc_sourcemap",
  "rustc-hash",
 ]
 
@@ -2843,7 +2838,6 @@ dependencies = [
  "oxc",
  "oxc_napi",
  "oxc_react_compiler",
- "oxc_sourcemap",
 ]
 
 [[package]]
@@ -2857,7 +2851,6 @@ dependencies = [
  "oxc",
  "oxc_napi",
  "oxc_relay",
- "oxc_sourcemap",
 ]
 
 [[package]]

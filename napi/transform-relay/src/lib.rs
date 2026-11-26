@@ -27,9 +27,8 @@ use oxc::{
     parser::Parser,
     semantic::SemanticBuilder,
 };
-use oxc_napi::{OxcError, get_source_type};
+use oxc_napi::{OxcError, SourceMap, get_source_type};
 use oxc_relay::Relay;
-use oxc_sourcemap::napi::SourceMap;
 
 pub use crate::options::*;
 

@@ -30,8 +30,7 @@ use oxc::{
         ReplaceGlobalDefinesConfig,
     },
 };
-use oxc_napi::{OxcError, get_source_type};
-use oxc_sourcemap::napi::SourceMap;
+use oxc_napi::{OxcError, SourceMap, get_source_type};
 
 use crate::IsolatedDeclarationsOptions;
 
