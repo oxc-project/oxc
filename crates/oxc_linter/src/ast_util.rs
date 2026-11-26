@@ -12,7 +12,7 @@ use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Se
 use oxc_span::{GetSpan, Span};
 use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
-    identifier::is_irregular_whitespace,
+    identifier::{is_identifier_part, is_irregular_whitespace},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
@@ -1075,13 +1075,15 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
 
     // Characters that could cause ASI issues when followed by `[`, `(`, `/`, etc.
     matches!(last_char, ')' | ']' | '}' | '"' | '\'' | '`' | '+' | '-' | '/' | '.')
-        || last_char.is_alphanumeric()
-        || last_char == '_'
-        || last_char == '$'
+        || is_identifier_part(last_char)
 }
 
 /// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
-fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
+pub fn find_last_meaningful_char(
+    source_text: &str,
+    end_pos: u32,
+    ctx: &LintContext,
+) -> Option<char> {
     let comments = ctx.semantic().comments();
     let mut idx = comments.partition_point(|c| c.span.start < end_pos);
     let mut text = &source_text[..end_pos as usize];
