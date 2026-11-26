@@ -141,12 +141,11 @@ fn write_attribute<'a>(
     let source = t.source();
     let name = attribute.name.slice(source);
     let is = |known| t.attribute_is(name, known);
-    let printed_name = t.attribute_name(element, name);
-    if let Some(written) = written_attribute(t, element, attribute, printed_name, f) {
+    if let Some(written) = written_attribute(t, element, attribute, f) {
         write!(f, text(written));
         return;
     }
-    write!(f, text(printed_name));
+    write!(f, text(t.attribute_name(element, name)));
     let Some(value) = attribute.value else { return };
     let quoted = value.quote != Quote::None;
     let value = value.span.slice(source);
@@ -158,6 +157,7 @@ fn write_attribute<'a>(
         return;
     }
     let raw = unescaped(value, f);
+    // A branch below re-printing a plain `"`-quoted value is excluded in `written_attribute` too.
     // A Vue attribute whose value is JS prints as written where it does not format (as Prettier does)
     if t.rules().template_expressions == TemplateExpressions::Vue
         && let Some(kind) = vue::value_kind(t, element, attribute)
@@ -247,40 +247,42 @@ fn write_attribute<'a>(
 }
 
 /// `name="value"` as written, when [`write_attribute`] prints it so:
-/// a plain attribute embedded in nothing, its name as written, `"`-quoted right after the `=`,
-/// and a value printed as [`write_quoted_value`] does with nothing to (un)escape, or a `class` already collapsed;
-/// any value another branch may re-print is left to it.
+/// - a plain attribute, embedded in nothing
+/// - `"`-quoted right after the `=`, its name as written
+/// - no value another branch re-prints (`style`, an event handler, `srcset`, `allow`, Tailwind's, Vue's JS)
+/// - nothing to (un)escape ([`write_quoted_value`]), and a `class` already collapsed
 fn written_attribute<'a>(
     t: &'a Tree<'a>,
     element: NodeId,
     attribute: &'a Attribute<'a>,
-    printed_name: &str,
     f: &HtmlishFormatter<'_, 'a>,
 ) -> Option<&'a str> {
     let value = attribute.value?;
-    let source = t.source();
-    let name = attribute.name.slice(source);
     if !matches!(attribute.kind, AttributeKind::Plain)
         || value.quote != Quote::Double
         || value.span.start != attribute.name.end + 2
-        || !std::ptr::eq(printed_name, name)
         || f.context().embedded_in().is_some()
     {
         return None;
     }
-    let value_text = value.span.slice(source);
+    let source = t.source();
+    let name = attribute.name.slice(source);
     let is = |known| t.attribute_is(name, known);
     let class = is("class");
-    let reprinted = value_text.contains('&')
-        || (class && !is_collapsed(value_text))
-        || is("style")
+    let reprinted = is("style")
         || is_event_handler(name)
         || is("srcset")
         || is("allow")
         || t.tailwind().is_some_and(|tailwind| class || tailwind.holds(name))
         || (t.rules().template_expressions == TemplateExpressions::Vue
-            && vue::value_kind(t, element, attribute).is_some());
-    (!reprinted).then(|| attribute.span().slice(source))
+            && vue::value_kind(t, element, attribute).is_some())
+        || !std::ptr::eq(t.attribute_name(element, name), name);
+    if reprinted {
+        return None;
+    }
+    let value = value.span.slice(source);
+    (!value.contains('&') && (!class || is_collapsed(value)))
+        .then(|| attribute.span().slice(source))
 }
 
 /// A class list (unescaped) for the session's Tailwind sorter, which collapses its whitespace unless told to preserve it;
