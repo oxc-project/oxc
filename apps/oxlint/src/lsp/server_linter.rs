@@ -1258,7 +1258,7 @@ mod test {
                 uri: &uri,
                 version: None,
                 language_id: LanguageId::default(),
-                text: Some("if (foo == NaN) {}".into()),
+                text: Some("if (foo > -0) {}".into()),
             })
             .unwrap();
         let code_actions = linter.get_code_actions_or_commands(code_action_params(
