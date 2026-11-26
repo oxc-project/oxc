@@ -57,3 +57,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ╰── 'e' is declared here
    ╰────
   help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Catch parameter 'unused' is caught but never used.
+   ╭─[no_unused_vars.tsx:1:36]
+ 1 │ try { throw { keep: 1 } } catch ({ unused, keep }) { console.log(keep) }
+   ·                                    ───┬──
+   ·                                       ╰── 'unused' is declared here
+   ╰────
+  help: Consider handling this error.

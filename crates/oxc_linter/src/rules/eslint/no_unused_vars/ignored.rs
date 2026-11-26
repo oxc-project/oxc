@@ -286,21 +286,17 @@ impl NoUnusedVars {
             BindingPattern::ArrayPattern(arr) => {
                 for el in arr.elements.iter().flatten() {
                     let status = self.search_binding_pattern(target, el);
-                    match el.get_binding_identifier() {
+                    match el {
                         // el is a simple pattern for the symbol we're looking
                         // for. Check if it is ignored.
-                        Some(id) if target == id => {
+                        BindingPattern::BindingIdentifier(id) if target == id.as_ref() => {
                             return status.ignore(self.is_ignored_array_destructured(&id.name));
                         }
-                        // el is a destructuring pattern containing the target
-                        // symbol; our search is done, propegate it upwards
-                        None if status.is_found() => {
-                            debug_assert!(el.is_destructuring_pattern());
-                            return status;
-                        }
-                        // el is a simple pattern for a different symbol, or is
-                        // a destructuring pattern that doesn't contain the target. Keep looking
-                        Some(_) | None => {}
+                        // el is a defaulted or destructuring pattern containing
+                        // the target symbol; our search is done, propagate it upwards
+                        _ if status.is_found() => return status,
+                        // el is a pattern that doesn't contain the target. Keep looking
+                        _ => {}
                     }
                 }
 
