@@ -49,28 +49,26 @@
 // ]
 // ```
 //
-// # Object reuse
+// # Compilation
 //
-// No more than 1 compiled visitor exists at any time, so we reuse a single array `compiledVisitor`,
-// rather than creating a new array for each file being linted.
-//
-// To compile visitors, call:
-// * `initCompiledVisitor` once.
+// To compile a visitor, call:
+// * `createCompiledVisitor` once.
 // * `addVisitorToCompiled` with each visitor object.
 // * `finalizeCompiledVisitor` once.
 //
-// After this sequence of calls, `compiledVisitor` is ready to be used to walk the AST.
+// After this sequence of calls, the array returned by `createCompiledVisitor` is ready to be used
+// to walk the AST. Each `Visitor` (see `index.js`) keeps the array it compiled, so a compiled
+// visitor outlives its compilation and nothing in it can be recycled into a later one.
 //
-// We also recycle:
+// # Object reuse
 //
-// * `{ enter, exit }` objects which are stored in compiled visitor.
-// * Temporary arrays used to store multiple visit functions, which are merged into a single function
-//   in `finalizeCompiledVisitor`.
+// The temporary arrays used to hold multiple visit functions for the same AST type *are* recycled:
+// `finalizeCompiledVisitor` merges each into a single function and empties it, so they hold nothing
+// afterwards. Reusing them reduces pressure on the garbage collector: they are long-lived and
+// graduate to "old space", leaving as much capacity as possible in "new space" for objects created
+// by user code in visitors.
 //
-// The aim is to reduce pressure on the garbage collector. All these recycled objects are long-lived
-// and will graduate to "old space", which leaves as much capacity as possible in "new space"
-// for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
-// it will avoid full GC runs, which should greatly improve performance.
+// The `{ enter, exit }` objects are not pooled, because a compiled visitor keeps them alive.
 
 import {
   LEAF_NODE_TYPES_COUNT,
@@ -121,25 +119,18 @@ mergedExitVisitorTypeIds.length = 0;
 // `true` if `addVisitor` has been called with a visitor which visits at least one AST type
 let hasActiveVisitors = false;
 
-// Enter+exit object cache.
+// Enter+exit objects.
 //
 // `compiledVisitor` may contain many `{ enter, exit }` objects.
-// Use this cache to reuse those objects across all visitor compilations.
 //
-// `enterExitObjectCacheNextIndex` is the index of first object in cache which is currently unused.
-// It may point to the end of the cache array.
-const enterExitObjectCache = [];
-let enterExitObjectCacheNextIndex = 0;
+// These are deliberately *not* pooled. Each compiled visitor is retained by the `Visitor` that
+// created it (see `index.js`), so its `{ enter, exit }` objects stay reachable for as long as that
+// `Visitor` lives, and cannot be handed out to a later compilation. Holding them in a module-level
+// cache instead kept every visitor callback -- and everything its closure captured -- alive for the
+// lifetime of the process.
 
 function getEnterExitObject() {
-  if (enterExitObjectCacheNextIndex < enterExitObjectCache.length) {
-    return enterExitObjectCache[enterExitObjectCacheNextIndex++];
-  }
-
-  const enterExit = { enter: null, exit: null };
-  enterExitObjectCache.push(enterExit);
-  enterExitObjectCacheNextIndex++;
-  return enterExit;
+  return { enter: null, exit: null };
 }
 
 // Visit function arrays cache.
@@ -166,24 +157,6 @@ function createVisitFnArray(visit1, visit2) {
   visitFnArrayCache.push(arr);
   visitFnArrayCacheNextIndex++;
   return arr;
-}
-
-/**
- * Initialize compiled visitor, ready for calls to `addVisitor`.
- */
-export function initCompiledVisitor() {
-  // Reset `compiledVisitor` array after previous compilation
-  for (let i = 0; i < NODE_TYPES_COUNT; i++) {
-    compiledVisitor[i] = null;
-  }
-
-  // Reset enter+exit objects which were used in previous compilation
-  for (let i = 0; i < enterExitObjectCacheNextIndex; i++) {
-    const enterExit = enterExitObjectCache[i];
-    enterExit.enter = null;
-    enterExit.exit = null;
-  }
-  enterExitObjectCacheNextIndex = 0;
 }
 
 /**
