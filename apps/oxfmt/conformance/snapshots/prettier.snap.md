@@ -333,9 +333,10 @@
 
 - externals/prettier/css/atrule/supports.css (💥, 95.22%)
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-long-value
-- externals/prettier/css/comments/at-rules.css (💥, 66.67%)
+- externals/prettier/css/comments/at-rules.css (💥, 64.23%)
   - crates/oxc_formatter_css/DIVERGENCES.md#own-line-comment-before-block
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-comments
+  - crates/oxc_formatter_css/DIVERGENCES.md#import-media-feature-flat
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-comments
 - externals/prettier/css/comments/declaration.css (💥, 98.88%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
