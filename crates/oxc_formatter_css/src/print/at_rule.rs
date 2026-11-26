@@ -33,7 +33,7 @@ use crate::{
     format::to_span,
     print::{
         CssFormatter, block_comment_end, format_with, is_glued, normalize_whitespace, scss,
-        selector, statement,
+        selector, split_verbatim, statement,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -390,8 +390,7 @@ fn write_block_or_semicolon<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
 /// `@media` params containing comments, rebuilt the way
 /// `postcss-media-query-parser` + Prettier's `media-*` cases lay them out:
 /// queries split on top-level commas (`,` + line in a group),
-/// tokens joined by single spaces, `( feature : value )` re-spaced
-/// when the parser would have recognized it (spaces around the `:`), kept verbatim otherwise.
+/// tokens joined by single spaces, each through [`write_media_token`].
 ///
 /// NOTE: the params are a typed `MediaQueryList` and the comments are in the comment store,
 /// so the structured printer placing them (`value::write_with_comments`) is possible.
@@ -528,15 +527,14 @@ enum TokenizeMode {
     /// a top-level `/* ... */` is its own token (postcss-values splits comments out).
     SplitComments,
     /// `@media` queries:
-    /// a top-level `/* ... */` absorbs into the surrounding /// token
+    /// a top-level `/* ... */` absorbs into the surrounding token
     /// (`postcss-media-query-parser` keeps comments inline).
     AbsorbComments,
 }
 
 /// Whitespace-separated tokens;
 /// comments and balanced paren regions glue to adjacent touching text.
-/// A `)` closing a single-line paren region ends the token (postcss-media-query-parser splits there);
-/// a multi-line region is a `media-unknown` and keeps its touching suffix.
+/// A `)` closing a top-level paren region ends the token (postcss-media-query-parser splits there).
 fn tokenize(raw: &str, mode: TokenizeMode) -> Vec<&str> {
     let bytes = raw.as_bytes();
     let mut tokens = vec![];
@@ -687,43 +685,41 @@ fn split_top_level(raw: &str, sep: u8) -> Vec<&str> {
     parts
 }
 
-/// One media token: a paren region (with glued prefix/suffix) gets the
-/// `( feature: value )` re-spacing when the `:` has space around it.
+/// One media token. postcss-media-query-parser parses only a token opening with `(`,
+/// which prints as Prettier's `media-feature-expression`: `(feature: value)`,
+/// the feature whitespace-collapsed and lowercased, the value with its numbers and strings adjusted.
+/// Any other token (`screen`, `and(...)`, `/* c */(...)`) prints as written.
 fn write_media_token<'a>(token: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    let Some(open) = find_outside_comments(token, b'(') else {
+    let Some(inner) = token.strip_prefix('(').and_then(|token| token.strip_suffix(')')) else {
         write!(f, text(token));
         return;
     };
-    let Some(close) = token.rfind(')') else {
-        write!(f, text(token));
-        return;
+    let (feature, value) = match find_outside_comments(inner, b':') {
+        Some(colon) => (&inner[..colon], Some(inner[colon + 1..].trim())),
+        None => (inner, None),
     };
-    let inner = &token[open + 1..close];
-    let colon = find_outside_comments(inner, b':');
-    let respace = colon.is_some_and(|c| {
-        let before_ws = inner[..c].ends_with([' ', '\t', '\n', '\r']);
-        let after_ws = inner[c + 1..].starts_with([' ', '\t', '\n', '\r']);
-        before_ws || after_ws
-    });
-    if !respace {
-        // Unparsable for postcss-media-query-parser: verbatim
-        write!(f, text(token));
-        return;
+    write!(f, "(");
+    let feature = f.allocator().alloc_str(&normalize_whitespace(feature));
+    // A comment's text is the user's: only the code around it lowercases
+    for (run, verbatim) in split_verbatim(feature) {
+        if verbatim {
+            write!(f, text(run));
+        } else {
+            write_maybe_lowercase(run, f);
+        }
     }
-    let colon = colon.unwrap();
-    write!(f, text(&token[..=open]));
-    let feature = inner[..colon].trim();
-    let value = inner[colon + 1..].trim();
-    let normalized = f.allocator().alloc_concat_strs_array([
-        &normalize_whitespace(feature),
-        ": ",
-        &normalize_whitespace(value),
-    ]);
-    write!(f, text(normalized));
-    write!(f, text(&token[close..]));
+    if let Some(value) = value {
+        write!(f, ": ");
+        value::write_adjusted_verbatim(value, f);
+    }
+    write!(f, ")");
 }
 
 /// First position of `needle` outside `/* */` comments.
+///
+/// NOTE: A string is not skipped, a known ceiling shared with [`tokenize`] and [`split_top_level`]:
+/// a `:` or `(` in a string before the real one shows only in invalid CSS (a media feature name is an ident).
+/// Building these scanners on [`split_verbatim`] lifts it.
 fn find_outside_comments(raw: &str, needle: u8) -> Option<usize> {
     let bytes = raw.as_bytes();
     let mut i = 0usize;
