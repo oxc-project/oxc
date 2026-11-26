@@ -18,7 +18,7 @@
 }
 @custom-media --foo /* c */ true;
 
-/* DIVERGENCES.md#media-query-comments */
+/* DIVERGENCES.md#commented-as-uncommented */
 @media /* c */ (bar:/* d */'b') {
 }
 @media all and/* c */(max-width:1024px) {

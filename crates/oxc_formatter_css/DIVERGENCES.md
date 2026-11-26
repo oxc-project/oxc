@@ -36,14 +36,19 @@ Scope: END-OF-LINE positions only (statement-level trailing, SCSS map/config tra
 a value-interior `//` (before `)`, glued to an argument, inside a fill entry) stays inline because tokens still follow on the line.
 Trailing `/* */` comments still count, matching Prettier (self-delimiting comments are inline content).
 
-## keyframe-selector-comment-list
+## commented-as-uncommented
 
 - Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/css/keyframe-selector-comment.css`
+- Pin: `tests/fixtures/format/css/keyframe-selector-comment.css`, `tests/fixtures/format/css/keyframes-name-comment.css`, `tests/fixtures/format/css/media-commented-feature.css`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less`
 
 ```css
 /* input */
 @keyframes x { 60%   /* mid */  ,   70% { opacity: 1; } }
+@keyframes /* c */  foo {}
+@media all and/* c */(max-width:1024px) {}
 
 /* ours */
 @keyframes x {
@@ -52,6 +57,10 @@ Trailing `/* */` comments still count, matching Prettier (self-delimiting commen
     opacity: 1;
   }
 }
+@keyframes /* c */ foo {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
 
 /* prettier */
 @keyframes x {
@@ -59,38 +68,16 @@ Trailing `/* */` comments still count, matching Prettier (self-delimiting commen
     opacity: 1;
   }
 }
-```
-
-Prettier keeps a COMMENTED keyframe selector list verbatim, interior spacing included;
-ours prints commented and uncommented lists with the same structural layout (one selector per line, comments per the separator rule).
-Same rule as DIVERGENCES.md#comment-preceded-map-indent.
-
-## keyframes-name-comment
-
-- Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/css/keyframes-name-comment.css`
-
-```css
-/* input */
-@keyframes   foo {}
-@keyframes /* c */  foo {}
-
-/* ours */
-@keyframes foo {
-}
-@keyframes /* c */ foo {
-}
-
-/* prettier */
-@keyframes foo {
-}
 @keyframes /* c */  foo {
 }
+@media all and/* c */(max-width:1024px) {
+}
 ```
 
-Prettier keeps COMMENTED `@keyframes` params verbatim and collapses the whitespace of uncommented ones;
-ours prints the name the same way with or without a comment, its string re-quoted (DIVERGENCES.md#prelude-string-requote).
-Same rule as DIVERGENCES.md#keyframe-selector-comment-list.
+A keyframe selector list, a `@keyframes` name and a `@media` query print the same with or without a comment in them, each comment kept between the tokens it sits between,
+a `@keyframes` string re-quoted as without one (DIVERGENCES.md#prelude-string-requote).
+Prettier keeps each of them as written once it holds a comment, source spacing and quotes included, and normalizes the uncommented ones.
+Same rule as DIVERGENCES.md#comment-preceded-map-indent.
 
 ## layer-comma-list
 
@@ -1664,36 +1651,6 @@ Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may
 So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
 Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.
 
-## media-query-comments
-
-- Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/css/media-commented-feature.css`
-- Conformance:
-  - `externals/prettier/css/comments/at-rules.css`
-  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less`
-
-```css
-/* input */
-@media all and (max-width:1024px) {}
-@media all and/* c */(max-width:1024px) {}
-
-/* ours */
-@media all and (max-width: 1024px) {
-}
-@media all and /* c */ (max-width: 1024px) {
-}
-
-/* prettier */
-@media all and (max-width: 1024px) {
-}
-@media all and/* c */(max-width:1024px) {
-}
-```
-
-A commented `@media` query prints as an uncommented one, each comment kept between the tokens it sits between;
-Prettier's media query parser keeps a token touching a comment as written, its source spacing and quotes included.
-Same rule as DIVERGENCES.md#keyframes-name-comment.
-
 ## url-string-comment
 
 - Why: uniform-rule (same construct, same output: a comment after a function argument, `calc(1px /* c */)`)
@@ -1892,16 +1849,28 @@ a {
 A `;` in a value glues to what precedes it, in every dialect (`value.rs` `base_separator`);
 Prettier glues it only between SCSS `if()` branches and keeps the source space elsewhere.
 
-## supports-function-args-indent
+## supports-declaration-as-in-rule
 
-- Why: uniform-rule (same construct, same output: the function in a declaration value)
-- Pin: `tests/fixtures/format/css/supports-function-args-indent.css`
+- Why: uniform-rule (same construct, same output: the declaration in a rule)
+- Pin: `tests/fixtures/format/css/supports-declaration-long-value.css`, `tests/fixtures/format/css/supports-function-args-indent.css`, `tests/fixtures/format/css/supports-commented-terms.css`
+- Conformance:
+  - `externals/prettier/css/atrule/supports.css`
+  - `externals/prettier/css/comments/at-rules.css`
 
 ```css
 /* input */
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
 @supports not (clip-path: shape(from center left, curve by 200px 0 with 50% -50% from start / 50% 0 from origin, close)) {}
+@supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
 
 /* ours */
+@supports (
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
 @supports not (
   clip-path: shape(
     from center left,
@@ -1910,38 +1879,9 @@ Prettier glues it only between SCSS `if()` branches and keeps the source space e
   )
 ) {
 }
-
-/* prettier */
-@supports not (
-  clip-path: shape(
-      from center left,
-      curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
-      close
-    )
-) {
-}
-```
-
-A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
-Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.
-
-## supports-declaration-long-value
-
-- Why: uniform-rule (same construct, same output: the declaration in a rule)
-- Pin: `tests/fixtures/format/css/supports-declaration-long-value.css`
-- Conformance:
-  - `externals/prettier/css/atrule/supports.css`
-
-```css
-/* input */
-@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
-a {
-  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
-}
-
-/* ours */
 @supports (
-  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+  /* a comment long enough to break this term */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
 ) {
 }
 a {
@@ -1954,13 +1894,30 @@ a {
     an-experimental-keyword-value-that-is-quite-long-and-longer
 ) {
 }
+@supports not (
+  clip-path: shape(
+      from center left,
+      curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
+      close
+    )
+) {
+}
+@supports (
+  /* a comment long enough to break this term */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+) {
+}
 a {
   text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
 }
 ```
 
-An over-wide `@supports` declaration opens its parens and stays on one line, as the same declaration does in a rule;
-Prettier breaks after its `:` there too, its prelude value group allowing a break the declaration printer does not.
+A `@supports` declaration prints as the same declaration does in a rule;
+Prettier prints it through its prelude value parser instead, as a fill of words in a value group adding its own indent:
+
+- An over-wide one opens its parens and stays on one line; Prettier also breaks after its `:`
+- A broken function call indents its arguments one level; Prettier indents them and the `)` one level further
+- A comment leading it ends its line once the parens open, the declaration at the comment's indent; Prettier puts the declaration one level in
 
 ## declaration-colon-comments
 
@@ -2004,47 +1961,6 @@ the `:` glued to what precedes it, one space around each comment.
 Prettier prints a rule's `raws.between` as written but for its ends, so the space before the first comment goes, the rest stays, and a line break in it lands at column 0.
 A line break inside the between, a `//` or a Less merge marker keeps it as written, as Prettier prints it (a comment starting a line after the `:` or alone on its line keeps it);
 a line break only at its ends goes (`display\n  /* c */ : flex` -> `display /* c */: flex`).
-
-## supports-declaration-comments
-
-- Why: uniform-rule (same construct, same output: the declaration in a rule)
-- Pin: `tests/fixtures/format/css/supports-commented-terms.css`
-- Conformance:
-  - `externals/prettier/css/comments/at-rules.css`
-
-```css
-/* input */
-@supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {}
-a {
-  /* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-}
-
-/* ours */
-@supports (
-  /* a comment long enough to break this term */
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
-) {
-}
-a {
-  /* a comment long enough to break this term */
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-}
-
-/* prettier */
-@supports (
-  /* a comment long enough to break this term */
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
-) {
-}
-a {
-  /* a comment long enough to break this term */
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-}
-```
-
-A commented `@supports` declaration prints as the same declaration does in a rule, as an uncommented one does (DIVERGENCES.md#supports-declaration-long-value):
-a comment leading it ends its line once its parens open, the declaration at the comment's indent.
-Prettier prints a commented one through its prelude value parser instead, as a fill of words, the declaration a continuation one level in.
 
 ## grid-value-broken-in-function
 
