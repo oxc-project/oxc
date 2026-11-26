@@ -93,8 +93,10 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         // Therefore `chunk_footer_ptr` is valid for writing a `ChunkFooter`.
         unsafe { chunk_footer_ptr.write(chunk_footer) };
 
-        // Create `Arena`
-        Self::new_impl(start_ptr, cursor_ptr, Some(chunk_footer_ptr))
+        // Create `Arena`.
+        // Parent allocator is `None`. The `Arena` cannot get any further chunks, so it never allocates a chunk
+        // from a parent allocator.
+        Self::new_impl(start_ptr, cursor_ptr, Some(chunk_footer_ptr), None)
     }
 
     /// Get the current cursor pointer for this [`Arena`]'s current chunk.
