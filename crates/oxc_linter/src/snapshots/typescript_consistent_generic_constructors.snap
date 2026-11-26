@@ -278,3 +278,32 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the generic type to the type annotation
+
+  ⚠ typescript(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
+   ╭─[consistent_generic_constructors.tsx:1:9]
+ 1 │ ╭─▶ const xs: // element type
+ 2 │ ╰─▶  Array<string> = new Array();
+   ╰────
+  help: Move the type annotation to the constructor
+
+  ⚠ typescript(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
+   ╭─[consistent_generic_constructors.tsx:1:26]
+ 1 │ class C { xs? = new Array<string>(); }
+   ·                          ────────
+   ╰────
+  help: Move the generic type to the type annotation
+
+  ⚠ typescript(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
+   ╭─[consistent_generic_constructors.tsx:1:21]
+ 1 │ const box = (new Box<1>(1));
+   ·                     ───
+   ╰────
+  help: Move the generic type to the type annotation
+
+  ⚠ typescript(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
+   ╭─[consistent_generic_constructors.tsx:2:1]
+ 1 │ const a = new Foo // element type
+ 2 │ <string>();
+   · ────────
+   ╰────
+  help: Move the generic type to the type annotation

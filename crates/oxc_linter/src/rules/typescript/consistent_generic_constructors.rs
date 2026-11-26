@@ -5,8 +5,8 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, Expression, NewExpression, TSType, TSTypeAnnotation, TSTypeName,
-        TSTypeParameterInstantiation, TSTypeReference,
+        BindingPattern, Comment, Expression, NewExpression, PropertyKey, TSType, TSTypeAnnotation,
+        TSTypeName, TSTypeParameterInstantiation, TSTypeReference,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -128,7 +128,7 @@ impl ConsistentGenericConstructors {
         ctx: &LintContext<'a>,
     ) {
         let Some(init) = init else { return };
-        let Expression::NewExpression(new_expression) = init.get_inner_expression() else {
+        let Expression::NewExpression(new_expression) = init.without_parentheses() else {
             return;
         };
         let Expression::Identifier(identifier) = &new_expression.callee else {
@@ -228,12 +228,12 @@ impl ConsistentGenericConstructors {
         let type_name_end = type_ref.type_name.span().end;
 
         // Preserve comment order while building the replacement directly.
-        let new_type_args: String = ctx
-            .comments_range((colon_pos + 1)..type_name_start)
-            .chain(ctx.comments_range(type_name_end..type_params.span.start))
-            .map(|c| c.span.source_text(source_text))
-            .chain(std::iter::once(type_params_text))
-            .collect();
+        let mut new_type_args = comments_text(
+            ctx.comments_range((colon_pos + 1)..type_name_start)
+                .chain(ctx.comments_range(type_name_end..type_params.span.start)),
+            source_text,
+        );
+        new_type_args.push_str(type_params_text);
 
         // Delete from before any whitespace preceding the colon to the end of the type annotation
         // This ensures we don't leave extra whitespace when removing ` : Type`
@@ -316,17 +316,11 @@ impl ConsistentGenericConstructors {
         // Check if there are only whitespace/comments between callee and type args
         // If there's whitespace before `<`, we delete from callee end to type args end
         // and replace with just the comments (if any)
-        let comments_between: String = ctx
-            .comments_range(callee_end..type_args.span.start)
-            .map(|c| c.span.source_text(source_text))
-            .collect();
+        let replacement =
+            comments_text(ctx.comments_range(callee_end..type_args.span.start), source_text);
 
         // The delete span is from callee end to type args end
         let delete_span = Span::new(callee_end, type_args.span.end);
-
-        // Replacement: keep comments but remove type args
-        let replacement =
-            if comments_between.is_empty() { String::new() } else { comments_between };
 
         // Build the fix
         let mut fix = fixer.new_fix_with_capacity(2);
@@ -378,30 +372,48 @@ impl ConsistentGenericConstructors {
                 }
             }
             AstKind::PropertyDefinition(prop_def) => {
-                // For computed properties like `[a]` or `[a + b]`, we need to insert
-                // after the closing bracket `]`, not after the key expression
-                if prop_def.key.is_computed() {
-                    // Find the closing bracket after the key
-                    let key_end = prop_def.key.span().end;
-                    ctx.find_next_token_within(key_end, prop_def.span.end, "]")
+                let key_end = property_key_end(&prop_def.key, prop_def.span, ctx)?;
+                if prop_def.optional {
+                    ctx.find_next_token_within(key_end, prop_def.span.end, "?")
                         .map(|offset| key_end + offset + 1)
                 } else {
-                    // Insert after the property key
-                    Some(prop_def.key.span().end)
+                    Some(key_end)
                 }
             }
             AstKind::AccessorProperty(accessor) => {
-                if accessor.key.is_computed() {
-                    let key_end = accessor.key.span().end;
-                    ctx.find_next_token_within(key_end, accessor.span.end, "]")
-                        .map(|offset| key_end + offset + 1)
-                } else {
-                    Some(accessor.key.span().end)
-                }
+                property_key_end(&accessor.key, accessor.span, ctx)
             }
             _ => None,
         }
     }
+}
+
+/// Returns the end of a class property key, including the closing `]` of a computed key.
+fn property_key_end(
+    key: &PropertyKey<'_>,
+    property_span: Span,
+    ctx: &LintContext<'_>,
+) -> Option<u32> {
+    let key_end = key.span().end;
+    if key.is_computed() {
+        ctx.find_next_token_within(key_end, property_span.end, "]")
+            .map(|offset| key_end + offset + 1)
+    } else {
+        Some(key_end)
+    }
+}
+
+/// Concatenates comment text, ending each line comment with a newline so that
+/// code moved after it is not commented out.
+fn comments_text<'c>(comments: impl Iterator<Item = &'c Comment>, source_text: &str) -> String {
+    let mut text = String::new();
+    for comment in comments {
+        text.push_str(comment.span.source_text(source_text));
+        if comment.is_line() {
+            text.push('\n');
+        }
+    }
+    text
 }
 
 fn is_built_in_typed_array(name: &str) -> bool {
@@ -424,6 +436,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            "class Box<T> { constructor(public value: T) {} } const box = new Box<1>(1) as Box<number>;",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
+        ("const a: Foo<string> = new Foo() as Foo<string>;", None),
         ("const a = new Foo();", None),
         ("const a = new Foo<string>();", None),
         ("const a: Foo<string> = new Foo<string>();", None),
@@ -779,6 +796,13 @@ fn test() {
                   ",
             Some(serde_json::json!(["type-annotation"])),
         ),
+        ("const xs: // element type\n Array<string> = new Array();", None),
+        ("class C { xs? = new Array<string>(); }", Some(serde_json::json!(["type-annotation"]))),
+        ("const box = (new Box<1>(1));", Some(serde_json::json!(["type-annotation"]))),
+        (
+            "const a = new Foo // element type\n<string>();",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
         // (
         //     "
         //     class Float32Array<T> {}
@@ -1092,6 +1116,31 @@ fn test() {
             export {};
                   ",
             None,
+        ),
+        (
+            "const xs: // element type\n Array<string> = new Array();",
+            "const xs = new Array// element type\n<string>();",
+            None,
+        ),
+        (
+            "class C { xs? = new Array<string>(); }",
+            "class C { xs?: Array<string> = new Array(); }",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
+        (
+            "class C { [key]? = new Array<string>(); }",
+            "class C { [key]?: Array<string> = new Array(); }",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
+        (
+            "const box = (new Box<1>(1));",
+            "const box: Box<1> = (new Box(1));",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
+        (
+            "const a = new Foo // element type\n<string>();",
+            "const a: Foo<string> = new Foo// element type\n();",
+            Some(serde_json::json!(["type-annotation"])),
         ),
     ];
 
