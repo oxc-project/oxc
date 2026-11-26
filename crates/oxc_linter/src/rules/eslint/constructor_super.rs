@@ -145,17 +145,25 @@ enum SuperClassType {
     Valid,   // extends <potentially valid class expression>
 }
 
-/// Result of analyzing control flow paths for super() calls
+/// Summary of the `super()` calls on the paths through a constructor.
+///
+/// Paths that throw do not need to call `super()`, and returning a value replaces the
+/// constructed object, so it counts as calling `super()`.
+#[derive(Debug, Default, Clone, Copy)]
+struct PathSummary {
+    /// Some returning path calls `super()` or returns a value.
+    called: bool,
+    /// Some returning path neither calls `super()` nor returns a value.
+    missing: bool,
+    /// Some path calls `super()` more than once.
+    duplicate: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PathResult {
-    /// super() was not called in this path
-    NoSuper,
-    /// super() was called exactly once in this path
-    CalledOnce,
-    /// super() was called multiple times in this path (duplicate)
-    CalledMultiple,
-    /// Path exited early (return/throw) without calling super()
-    ExitedWithoutSuper,
+enum ExitKind {
+    Throw,
+    ReturnValue,
+    Return,
 }
 
 /// Abstract state representing super() call status in dataflow analysis.
@@ -236,7 +244,9 @@ impl Rule for ConstructorSuper {
             return;
         };
 
-        let Some(body) = &constructor.value.body else { return };
+        if constructor.value.body.is_none() {
+            return;
+        }
 
         let cfg = ctx.cfg();
 
@@ -251,73 +261,30 @@ impl Rule for ConstructorSuper {
                     ctx.diagnostic(bad_super(span, super_class_context));
                 }
             }
-            SuperClassType::Null => {
-                // extends null: must return or will error, but super() is invalid
-                if super_call_counts.is_empty() {
-                    let has_return_with_value = Self::has_return_with_value(&body.statements);
-                    if !has_return_with_value {
-                        ctx.diagnostic(missing_super_all(constructor.span));
-                    }
-                } else {
-                    for &span in &super_call_spans {
-                        ctx.diagnostic(bad_super(span, super_class_context));
-                    }
+            SuperClassType::Null if !super_call_spans.is_empty() => {
+                for &span in &super_call_spans {
+                    ctx.diagnostic(bad_super(span, super_class_context));
                 }
             }
-            SuperClassType::Valid => {
-                if super_call_counts.is_empty() {
-                    ctx.diagnostic(missing_super_all(constructor.span));
-                    return;
-                }
-
-                let path_results =
+            SuperClassType::Null | SuperClassType::Valid => {
+                let summary =
                     Self::analyze_super_paths(cfg, constructor_block_id, &super_call_counts);
 
-                if path_results.is_empty() {
-                    // Treat as single path
-                    if super_call_spans.len() > 1 {
-                        let mut sorted_spans = super_call_spans;
-                        sorted_spans.sort_unstable_by_key(|s| s.start);
-                        let first_super_span = sorted_spans[0];
-
-                        for &span in sorted_spans.iter().skip(1) {
-                            ctx.diagnostic(duplicate_super(span, first_super_span));
-                        }
-                    }
-                } else {
-                    // Check if super() was called on any path (once or multiple times)
-                    let has_super_on_any_path = path_results
-                        .iter()
-                        .any(|r| matches!(r, PathResult::CalledOnce | PathResult::CalledMultiple));
-
-                    // Check if super() is missing on some paths
-                    let some_missing =
-                        path_results.iter().any(|r| matches!(r, PathResult::NoSuper));
-
-                    // Check if ALL paths exit early (no normal completion)
-                    let all_paths_exit =
-                        path_results.iter().all(|r| matches!(r, PathResult::ExitedWithoutSuper));
-
-                    // Check for duplicate super() calls
-                    let has_duplicate =
-                        path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple));
-
-                    if !has_super_on_any_path && all_paths_exit {
-                        // super() was never called and all paths exit early (like "return; super();")
-                        ctx.diagnostic(missing_super_all(constructor.span));
-                    } else if some_missing {
-                        // super() was called on some paths but missing on others
+                if summary.missing {
+                    if summary.called {
                         ctx.diagnostic(missing_super_some(constructor.span));
+                    } else {
+                        ctx.diagnostic(missing_super_all(constructor.span));
                     }
+                }
 
-                    if has_duplicate && super_call_spans.len() > 1 {
-                        let mut sorted_spans = super_call_spans;
-                        sorted_spans.sort_unstable_by_key(|s| s.start);
-                        let first_super_span = sorted_spans[0];
+                if summary.duplicate && super_call_spans.len() > 1 {
+                    let mut sorted_spans = super_call_spans;
+                    sorted_spans.sort_unstable_by_key(|s| s.start);
+                    let first_super_span = sorted_spans[0];
 
-                        for &span in sorted_spans.iter().skip(1) {
-                            ctx.diagnostic(duplicate_super(span, first_super_span));
-                        }
+                    for &span in sorted_spans.iter().skip(1) {
+                        ctx.diagnostic(duplicate_super(span, first_super_span));
                     }
                 }
             }
@@ -493,16 +460,17 @@ impl ConstructorSuper {
     /// handles loops conservatively by not following backedges and marking any loop containing super()
     /// as potentially violating the "exactly once" requirement.
     ///
-    /// Returns path results indicating super() call patterns for different execution paths.
+    /// Returns a summary of the super() call patterns on the execution paths.
     fn analyze_super_paths(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
         super_call_counts: &FxHashMap<BlockNodeId, usize>,
-    ) -> Vec<PathResult> {
+    ) -> PathSummary {
         let mut block_states: FxHashMap<BlockNodeId, SuperCallState> = FxHashMap::default();
         let mut loop_with_super = false;
         let mut worklist: VecDeque<BlockNodeId> = VecDeque::new();
-        let mut exit_results: Vec<(SuperCallState, bool)> = Vec::new();
+        let mut exit_results: Vec<(SuperCallState, ExitKind)> = Vec::new();
+        let mut summary = PathSummary::default();
 
         block_states.insert(constructor_block, SuperCallState::Never);
         worklist.push_back(constructor_block);
@@ -523,27 +491,24 @@ impl ConstructorSuper {
 
             let block_super_count = super_call_counts.get(&block_id).copied().unwrap_or(0);
             let state_after_block = current_state.add_super_calls(block_super_count);
+            if state_after_block == SuperCallState::Multiple {
+                summary.duplicate = true;
+            }
 
-            let has_exit = block.instructions().iter().any(|inst| {
-                matches!(
-                    inst.kind,
-                    oxc_cfg::InstructionKind::Return(_)
-                        | oxc_cfg::InstructionKind::Throw
-                        | oxc_cfg::InstructionKind::ImplicitReturn
+            let exit = block.instructions().iter().find_map(|inst| match inst.kind {
+                oxc_cfg::InstructionKind::Throw => Some(ExitKind::Throw),
+                oxc_cfg::InstructionKind::Return(
+                    oxc_cfg::ReturnInstructionKind::NotImplicitUndefined,
+                ) => Some(ExitKind::ReturnValue),
+                oxc_cfg::InstructionKind::Return(
+                    oxc_cfg::ReturnInstructionKind::ImplicitUndefined,
                 )
+                | oxc_cfg::InstructionKind::ImplicitReturn => Some(ExitKind::Return),
+                _ => None,
             });
 
-            if has_exit {
-                let is_acceptable_exit = block.instructions().iter().any(|inst| {
-                    matches!(
-                        inst.kind,
-                        oxc_cfg::InstructionKind::Throw
-                            | oxc_cfg::InstructionKind::Return(
-                                oxc_cfg::ReturnInstructionKind::NotImplicitUndefined
-                            )
-                    )
-                });
-                exit_results.push((state_after_block, is_acceptable_exit));
+            if let Some(exit) = exit {
+                exit_results.push((state_after_block, exit));
                 // Exit blocks are terminal - don't propagate to successors
                 continue;
             }
@@ -596,6 +561,11 @@ impl ConstructorSuper {
                         if current_block_has_super || target_has_super || super_in_loop_body {
                             loop_with_super = true;
                         }
+
+                        if loop_header_state == SuperCallState::Unreached {
+                            block_states.insert(target, state_after_block);
+                            worklist.push_back(target);
+                        }
                     }
 
                     EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit) => {
@@ -630,39 +600,29 @@ impl ConstructorSuper {
             }
         }
 
-        let mut path_results = Vec::new();
-
         if loop_with_super {
-            // A loop containing super() can execute 0 times (NoSuper) or multiple times (CalledMultiple).
-            // Report both to trigger appropriate diagnostics.
-            path_results.push(PathResult::NoSuper);
-            path_results.push(PathResult::CalledMultiple);
+            // A loop containing super() can execute 0 times or multiple times.
+            summary.called = true;
+            summary.missing = true;
+            summary.duplicate = true;
         }
 
-        for (state, is_acceptable_exit) in exit_results {
-            match state {
-                SuperCallState::Unreached => {}
-                SuperCallState::Never => {
-                    if is_acceptable_exit {
-                        path_results.push(PathResult::ExitedWithoutSuper);
-                    } else {
-                        path_results.push(PathResult::NoSuper);
-                    }
+        for (state, exit) in exit_results {
+            match (exit, state) {
+                (_, SuperCallState::Unreached) | (ExitKind::Throw, _) => {}
+                (ExitKind::ReturnValue, _)
+                | (ExitKind::Return, SuperCallState::Once | SuperCallState::Multiple) => {
+                    summary.called = true;
                 }
-                SuperCallState::Once => {
-                    path_results.push(PathResult::CalledOnce);
-                }
-                SuperCallState::Multiple => {
-                    path_results.push(PathResult::CalledMultiple);
-                }
-                SuperCallState::Mixed => {
-                    path_results.push(PathResult::CalledOnce);
-                    path_results.push(PathResult::NoSuper);
+                (ExitKind::Return, SuperCallState::Never) => summary.missing = true,
+                (ExitKind::Return, SuperCallState::Mixed) => {
+                    summary.called = true;
+                    summary.missing = true;
                 }
             }
         }
 
-        path_results
+        summary
     }
 
     /// Checks if an expression is definitely an invalid superclass.
@@ -714,12 +674,13 @@ impl ConstructorSuper {
                 seq.expressions.last().is_none_or(|e| Self::is_invalid_super_class(e))
             }
 
-            // Literals and binary expressions are invalid
+            // Literals, binary expressions and arrow functions are invalid
             Expression::NumericLiteral(_)
             | Expression::StringLiteral(_)
             | Expression::BooleanLiteral(_)
             | Expression::BigIntLiteral(_)
-            | Expression::BinaryExpression(_) => true,
+            | Expression::BinaryExpression(_)
+            | Expression::ArrowFunctionExpression(_) => true,
 
             _ => false,
         }
@@ -748,46 +709,6 @@ impl ConstructorSuper {
             }
         }
         false
-    }
-
-    /// Check if statements contain a return with value
-    fn has_return_with_value(statements: &[Statement]) -> bool {
-        statements.iter().any(|stmt| Self::statement_returns_value(stmt))
-    }
-
-    /// Recursively check if statement contains return with value
-    fn statement_returns_value(stmt: &Statement) -> bool {
-        match stmt {
-            Statement::ReturnStatement(ret) => ret.argument.is_some(),
-            Statement::BlockStatement(block) => Self::has_return_with_value(&block.body),
-            Statement::IfStatement(if_stmt) => {
-                Self::statement_returns_value(&if_stmt.consequent)
-                    || if_stmt
-                        .alternate
-                        .as_ref()
-                        .is_some_and(|alt| Self::statement_returns_value(alt))
-            }
-            Statement::SwitchStatement(switch) => {
-                switch.cases.iter().any(|case| Self::has_return_with_value(&case.consequent))
-            }
-            Statement::TryStatement(try_stmt) => {
-                Self::has_return_with_value(&try_stmt.block.body)
-                    || try_stmt
-                        .handler
-                        .as_ref()
-                        .is_some_and(|handler| Self::has_return_with_value(&handler.body.body))
-                    || try_stmt
-                        .finalizer
-                        .as_ref()
-                        .is_some_and(|finalizer| Self::has_return_with_value(&finalizer.body))
-            }
-            Statement::WhileStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::DoWhileStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::ForStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::ForInStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::ForOfStatement(s) => Self::statement_returns_value(&s.body),
-            _ => false,
-        }
     }
 }
 
@@ -901,9 +822,23 @@ fn test() {
         "class A extends B { constructor() { super(); try { throw new Error(); } catch (e) {} } }",
         // super() in finally always executes
         "class A extends B { constructor() { try { mayThrow(); } catch (e) {} finally { super(); } } }",
+        "class A extends B { constructor() { return {}; } }",
+        "class A extends B { constructor() { throw new Error(); } }",
+        "class A extends B { constructor() { if (a) return {}; throw e; } }",
+        "class A extends B { constructor() { if (a) super(); else throw e; } }",
+        "class A extends B { constructor() { throw e; super(); } }",
+        "class A extends B { constructor() { try { foo(); } catch { throw e; } return {}; } }",
+        "class A extends null { constructor() { throw e; } }",
+        "class A extends null { constructor() { if (a) return a; throw e; } }",
     ];
 
     let fail = vec![
+        "class A extends B { constructor() { if (a) return {}; } }",
+        "class A extends B { constructor() { if (a) return; throw e; } }",
+        "class A extends B { constructor() { if (a) { super(); super(); throw e; } return; } }",
+        "class A extends B { constructor() { super(); super(); for (;;) {} } }",
+        "class A extends null { constructor() { if (a) return {}; } }",
+        "class A extends (() => {}) { constructor() { super(); } }",
         "class A extends null { constructor() { super(); } }",
         "class A extends null { constructor() { } }",
         "class A extends 100 { constructor() { super(); } }",
