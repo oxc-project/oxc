@@ -9,7 +9,7 @@ use oxc_span::SourceType;
 use oxc_syntax::scope::ScopeId;
 
 use crate::{
-    CompilerAssumptions, HelperLoaderOptions, Module, TransformOptions,
+    CompilerAssumptions, DecoratorMode, EnvOptions, HelperLoaderOptions, Module, TransformOptions,
     common::{
         class_lowering::{ClassLowering, ClassLoweringDecisions},
         class_transform::ClassTransform,
@@ -84,9 +84,6 @@ impl<'a> TransformState<'a> {
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
 
-        let decorator_mode = options.decorator.mode();
-        let class_transform = ClassTransform::new(&options.env, decorator_mode);
-
         Self {
             errors: vec![],
             filename,
@@ -100,9 +97,20 @@ impl<'a> TransformState<'a> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            class_transform,
-            class_lowering_decisions: ClassLoweringDecisions::new(class_transform, decorator_mode),
+            // Set by `init_class_lowering` once the program is known.
+            class_transform: ClassTransform::default(),
+            class_lowering_decisions: ClassLoweringDecisions::default(),
         }
+    }
+
+    /// Decide class lowering for the program, before transformation starts.
+    ///
+    /// The decorator mode depends on the program as well as the options: standard decorators
+    /// are only lowered in a program which contains decorators or auto-accessors.
+    pub(crate) fn init_class_lowering(&mut self, env: &EnvOptions, decorator_mode: DecoratorMode) {
+        self.class_transform = ClassTransform::new(env, decorator_mode);
+        self.class_lowering_decisions =
+            ClassLoweringDecisions::new(self.class_transform, decorator_mode);
     }
 
     /// Record the lowering of a class before its decorators or auto-accessors are rewritten.

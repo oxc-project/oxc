@@ -42,7 +42,7 @@ mod plugins;
 
 use common::{Common, class_transform::ClassTransform};
 use context::TraverseCtx;
-use decorator::Decorator;
+use decorator::{Decorator, DecoratorMode};
 use es2015::ES2015;
 use es2016::ES2016;
 use es2017::ES2017;
@@ -129,13 +129,20 @@ impl<'a> Transformer<'a> {
     }
 
     /// Run all configured transforms on `program` and return diagnostics and updated scoping.
+    ///
+    /// `scoping` must be built by [`SemanticBuilder`](oxc_semantic::SemanticBuilder) for
+    /// `program` as it is now. Among other things, its
+    /// [`has_decorators_or_auto_accessors`](Scoping::has_decorators_or_auto_accessors) decides
+    /// whether standard decorators are lowered: if code with decorators is added to `program`
+    /// after semantic analysis, those decorators are left as written.
     pub fn build_with_scoping(
         mut self,
         scoping: Scoping,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
-        let decorator_mode = self.decorator.mode();
+        let decorator_mode = self.decorator.mode(&self.env, &scoping);
+        self.state.init_class_lowering(&self.env, decorator_mode);
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -175,6 +182,7 @@ impl<'a> Transformer<'a> {
             x2_es2022: ES2022::new(
                 self.env.es2022.top_level_await,
                 self.state.class_transform,
+                decorator_mode,
                 !self.typescript.allow_declare_fields
                     || self.typescript.remove_class_fields_without_initializer,
             ),
@@ -553,10 +561,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.decorator.exit_method_definition(def, ctx);
-    }
-
-    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x2_es2022.enter_object_property(prop, ctx);
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {

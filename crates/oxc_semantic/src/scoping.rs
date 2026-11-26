@@ -109,6 +109,9 @@ pub struct Scoping {
     /// Pre-computed enum member values and scope mappings.
     pub(crate) enum_data: EnumData,
 
+    /// Whether the program contains a decorator or an `accessor` class property.
+    pub(crate) has_decorators_or_auto_accessors: bool,
+
     /* Scope Tree - single allocation for all scope-indexed flat fields */
     scope_table: ScopeTable,
 
@@ -184,6 +187,7 @@ impl Scoping {
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             enum_data: EnumData::default(),
+            has_decorators_or_auto_accessors: false,
             scope_table: ScopeTable::new(),
             cell: ScopingCell::new(allocator, |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(&allocator),
@@ -839,6 +843,17 @@ impl Scoping {
         &self.no_side_effects
     }
 
+    /// Whether [`SemanticBuilder`](crate::SemanticBuilder) saw a decorator or an `accessor` class
+    /// property in the program, including TypeScript-only ones such as decorators on `declare`
+    /// fields. Transforms use this to skip decorator lowering for programs without that syntax.
+    ///
+    /// It describes the program `SemanticBuilder` analyzed. Transforms don't update it, so it can
+    /// stay `true` after a transform lowers or removes every decorator. It is always `false` for a
+    /// `Scoping` not built by `SemanticBuilder`.
+    pub fn has_decorators_or_auto_accessors(&self) -> bool {
+        self.has_decorators_or_auto_accessors
+    }
+
     /// Get the computed constant value for an enum member symbol.
     pub fn get_enum_member_value(&self, symbol_id: SymbolId) -> Option<&ConstantValue> {
         self.enum_data.get_member_value(symbol_id)
@@ -1330,6 +1345,7 @@ impl Scoping {
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
             enum_data: self.enum_data.clone(),
+            has_decorators_or_auto_accessors: self.has_decorators_or_auto_accessors,
             scope_table: self.scope_table.clone(),
             cell: {
                 let allocator = Allocator::with_capacity(used_bytes);

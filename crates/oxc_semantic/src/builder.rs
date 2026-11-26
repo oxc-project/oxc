@@ -2657,6 +2657,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_decorator(&mut self, decorator: &Decorator<'a>) {
+        self.scoping.has_decorators_or_auto_accessors = true;
+        oxc_ast_visit::walk::walk_decorator(self, decorator);
+    }
+
+    fn visit_accessor_property(&mut self, prop: &AccessorProperty<'a>) {
+        self.scoping.has_decorators_or_auto_accessors = true;
+        oxc_ast_visit::walk::walk_accessor_property(self, prop);
+    }
+
     fn visit_property_definition(&mut self, prop: &PropertyDefinition<'a>) {
         let kind = AstKind::PropertyDefinition(self.alloc(prop));
         self.enter_node(kind);

@@ -42,7 +42,8 @@ use super::ClassProperties;
 
 impl<'a> ClassProperties<'a> {
     /// Convert anonymous `export default class {}` to a class expression, if transforming it
-    /// would require a temp var for the class.
+    /// would require a temp var for the class. When standard decorators are lowered, that's
+    /// always the case for classes with decorators or auto-accessors.
     ///
     /// A class declaration would have to be given a name to be referenced by the static
     /// initializers following it, which would change its `name` from `"default"`.
@@ -63,14 +64,18 @@ impl<'a> ClassProperties<'a> {
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
             return;
         };
-        // Leave classes which are lowered by other transforms (decorators) unchanged.
-        // Legacy decorators also lower classes with decorated method parameters.
-        if class.id.is_some()
-            || class.declare
-            || class_has_decorators(class)
-            || class_body_has_auto_accessors(&class.body)
-            || Self::class_has_decorated_parameters(class)
-        {
+        if class.id.is_some() || class.declare || Self::class_has_decorated_parameters(class) {
+            return;
+        }
+        let decorated_or_accessors =
+            class_has_decorators(class) || class_body_has_auto_accessors(&class.body);
+        if decorated_or_accessors {
+            // Standard decorator lowering refers to the class from outside its body, so it needs
+            // a temp var. Lower it as a class expression to preserve `"default"` as its name.
+            // Otherwise leave classes which are lowered by legacy decorators unchanged.
+            if self.decorator_state.enabled() {
+                Self::convert_to_class_expression(export, ctx);
+            }
             return;
         }
 
@@ -95,6 +100,16 @@ impl<'a> ClassProperties<'a> {
             return;
         }
 
+        Self::convert_to_class_expression(export, ctx);
+    }
+
+    fn convert_to_class_expression(
+        export: &mut ExportDefaultDeclaration<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
+            unreachable!()
+        };
         let mut class = class.take_in(ctx);
         class.r#type = ClassType::ClassExpression;
         export.declaration = ExportDefaultDeclarationKind::ClassExpression(ctx.alloc(class));

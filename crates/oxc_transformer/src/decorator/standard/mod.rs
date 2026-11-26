@@ -22,9 +22,10 @@
 //! legacy decorators share the storage/getter/setter builder. Static accessors use a class reference
 //! as their receiver, so inherited accessors continue to access the defining class's storage.
 //!
-//! Lowering is opt-in: `decorator.lower: true` lowers decorators and auto-accessors at any target.
-//! Otherwise they are preserved for a later tool, while other syntax transforms and TypeScript
-//! erasure still run.
+//! The `StandardDecorators` compatibility feature covers decorators and auto-accessors. It has no
+//! ES edition or engine support yet, so concrete targets lower both while `esnext` and an
+//! unspecified target preserve them. `decorator.lower` overrides that decision at any target
+//! while other syntax transforms and TypeScript erasure still run.
 //!
 //! Babel's 2023-* decorator fixtures are execution oracles, not output snapshots: their helper
 //! protocol differs from ours. Local output fixtures cover Oxc's lowering choices.

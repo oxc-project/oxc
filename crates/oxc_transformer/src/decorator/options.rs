@@ -1,4 +1,7 @@
+use oxc_semantic::Scoping;
 use serde::Deserialize;
+
+use crate::EnvOptions;
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
@@ -15,9 +18,10 @@ pub struct DecoratorOptions {
 
     /// Lower standard decorators and auto-accessors.
     ///
-    /// When omitted or `false`, this syntax is preserved for a later transform at any target
-    /// while TypeScript types are still stripped. Set to `true` to lower it.
-    /// Other target-selected transforms still run on unrelated syntax.
+    /// When omitted, lowering follows the target: a concrete target lowers them, and `esnext`
+    /// or no target preserves them. Set to `false` to preserve this syntax for a later transform
+    /// at any target while stripping TypeScript types. Set to `true` to lower it regardless of
+    /// target. Other target-selected transforms still run on unrelated syntax.
     /// `legacy: true` takes precedence over this option.
     #[serde(default)]
     pub lower: Option<bool>,
@@ -69,13 +73,42 @@ impl DecoratorMode {
 }
 
 impl DecoratorOptions {
-    pub(crate) fn mode(self) -> DecoratorMode {
+    /// The decorator semantics [`Transformer::build_with_scoping`] applies to the program
+    /// `scoping` describes.
+    ///
+    /// [`Transformer::build_with_scoping`]: crate::Transformer::build_with_scoping
+    pub(crate) fn mode(self, env: &EnvOptions, scoping: &Scoping) -> DecoratorMode {
         if self.legacy {
             DecoratorMode::Legacy
-        } else if self.lower == Some(true) {
+        } else if self.lower.unwrap_or(env.standard_decorators)
+            // Standard decorator lowering makes class-properties visit every class, statement
+            // and expression. A program without decorators or `accessor` has nothing for it to
+            // lower.
+            && scoping.has_decorators_or_auto_accessors()
+        {
             DecoratorMode::Standard
         } else {
             DecoratorMode::Preserve
         }
+    }
+
+    /// Whether [`Transformer::build_with_scoping`] would transform decorators or `accessor`
+    /// properties in the program `scoping` describes, with these options and `env`.
+    ///
+    /// `scoping` must be built by [`SemanticBuilder`](oxc_semantic::SemanticBuilder) for the
+    /// program, as [`Transformer::build_with_scoping`] requires.
+    ///
+    /// Together with [`EnvOptions::lowers_syntax`], this tells whether a JavaScript program
+    /// needs the transformer for syntax lowering at all; see there for what neither covers.
+    ///
+    /// With `legacy: true`, this is `true` for any program with decorators or `accessor`
+    /// properties: legacy decorators lower `accessor` properties too, at any target.
+    ///
+    /// [`Transformer::build_with_scoping`]: crate::Transformer::build_with_scoping
+    pub fn transforms_decorators(self, env: &EnvOptions, scoping: &Scoping) -> bool {
+        // Legacy decorators run whatever `has_decorators_or_auto_accessors` says, but they have
+        // nothing to do in a program without decorators or `accessor`.
+        self.mode(env, scoping) != DecoratorMode::Preserve
+            && scoping.has_decorators_or_auto_accessors()
     }
 }
