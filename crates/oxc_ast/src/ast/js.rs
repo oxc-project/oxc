@@ -359,7 +359,7 @@ pub struct ObjectExpression<'a> {
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum ObjectPropertyKind<'a> {
-    /// `a: 1` or `a` in `const obj = { a: 1, b };`
+    /// `a: 1` or shorthand `b` in `const obj = { a: 1, b };`
     ObjectProperty(Box<'a, ObjectProperty<'a>>) = 0,
     /// `a() {}`, `get a() {}` or `set a(v) {}` in `const obj = { a() {} };`
     MethodProperty(Box<'a, ObjectMethodProperty<'a>>) = 1,
@@ -367,7 +367,7 @@ pub enum ObjectPropertyKind<'a> {
     SpreadProperty(Box<'a, SpreadElement<'a>>) = 2,
 }
 
-/// `a: 1` or `a` in `const obj = { a: 1, b };`
+/// `a: 1` or shorthand `b` in `const obj = { a: 1, b };`
 ///
 /// Represents a key-value or shorthand property in an object literal.
 #[ast(visit)]
