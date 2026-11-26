@@ -229,7 +229,10 @@ impl Rule for ArrayType {
             }
             AstKind::TSTypeReference(ts_type_reference)
                 if ts_type_reference.type_name.get_identifier_reference().is_some_and(
-                    |type_name| matches!(type_name.name.as_str(), "Array" | "ReadonlyArray"),
+                    |type_name| {
+                        matches!(type_name.name.as_str(), "Array" | "ReadonlyArray")
+                            && type_name.is_global_reference(ctx.scoping())
+                    },
                 ) =>
             {
                 let readonly_config = self.readonly_config();
@@ -646,6 +649,12 @@ fn test() {
     use crate::tester::Tester;
 
     let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
+        ("export {}; type Array<T> = { item: T }; type Result = Array<string>;", None),
+        (
+            "export {}; type ReadonlyArray<T> = { item: T }; type Result = ReadonlyArray<string>;",
+            None,
+        ),
+        ("namespace N { interface Array<T> { item: T } type Result = Array<string>; }", None),
         ("let a: number[] = [];", Some(serde_json::json!([{"default":"array"}]))),
         ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
         ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array"}]))),
