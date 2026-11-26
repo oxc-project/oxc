@@ -81,6 +81,20 @@ impl DiffManager {
         self.runtime_map.mark_seen(filename);
     }
 
+    /// Mark that a file failed to parse, so the lint rules did not run on it.
+    /// Its recorded suppressions are kept as they are, as if the file was not linted.
+    pub fn collect_unparsed_file(&self, file_path: &Path, cwd: &Path) {
+        if self.ignore_diff {
+            return;
+        }
+
+        let Ok(file_path) = file_path.strip_prefix(cwd) else {
+            return;
+        };
+
+        self.runtime_map.mark_unparsed(Filename::new(file_path));
+    }
+
     pub fn skip(&self) -> bool {
         self.ignore_diff
     }
