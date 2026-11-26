@@ -13,7 +13,6 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use crate::{
     AstNode,
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::{Rule, TupleRuleConfig},
 };
 
@@ -188,9 +187,6 @@ impl Eqeqeq {
         }
         let operator = binary_expr.operator.as_str();
         let truncated_operator = &operator[..operator.len() - 1];
-        // There are some uncontrolled cases to auto fix.
-        // In ESLint, `null >= null` will be auto fixed to `null > null` which is also wrong.
-        // So I just report it.
         ctx.diagnostic(eqeqeq_diagnostic(operator, truncated_operator, binary_expr.span));
     }
 }
@@ -209,15 +205,16 @@ impl Rule for Eqeqeq {
         let is_null_comparison = is_null_check(binary_expr);
         let must_enforce_null = matches!(options.null, NullType::Always);
 
-        let (preferred_operator, preferred_operator_with_padding) = match binary_expr.operator {
-            BinaryOperator::Equality => ("===", " === "),
-            BinaryOperator::Inequality => ("!==", " !== "),
-            _ => {
+        let preferred_operator = match binary_expr.operator {
+            BinaryOperator::Equality => "===",
+            BinaryOperator::Inequality => "!==",
+            BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
                 if is_null_comparison {
                     self.report_inverse_null_comparison(binary_expr, ctx);
                 }
                 return;
             }
+            _ => return,
         };
 
         let is_typeof_check = is_type_of_binary(binary_expr);
@@ -250,7 +247,7 @@ impl Rule for Eqeqeq {
         ctx.diagnostic_with_fix_of_kind(
             eqeqeq_diagnostic(operator, preferred_operator, operator_span),
             fix_kind,
-            |fixer| apply_rule_fix(&fixer, binary_expr, preferred_operator_with_padding),
+            |fixer| fixer.replace(operator_span, preferred_operator),
         );
     }
 }
@@ -267,16 +264,6 @@ fn get_operator_span(binary_expr: &BinaryExpression, operator: &str, ctx: &LintC
     let operator_end = operator_start + operator.len() as u32;
 
     Span::new(operator_start, operator_end)
-}
-
-fn apply_rule_fix<'a>(
-    fixer: &RuleFixer<'_, 'a>,
-    binary_expr: &'a BinaryExpression,
-    preferred_operator_with_padding: &'static str,
-) -> RuleFix {
-    let span = Span::new(binary_expr.left.span().end, binary_expr.right.span().start);
-
-    fixer.replace(span, preferred_operator_with_padding)
 }
 
 fn is_type_of(expr: &Expression) -> bool {
@@ -316,6 +303,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
+        ("null + 1", Some(json!(["always", { "null": "never" }]))),
         ("typeof foo == 'undefined'", Some(json!(["smart"]))),
         ("'hello' != 'world'", Some(json!(["smart"]))),
         ("0 == 0", Some(json!(["smart"]))),
@@ -355,8 +344,6 @@ fn test() {
     ];
 
     let fail = vec![
-        // ESLint will perform like below case
-        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
         ("typeof foo == 'undefined'", None),
         ("'hello' != 'world'", None),
         ("0 == 0", None),
@@ -370,10 +357,11 @@ fn test() {
     ];
 
     let fix = vec![
-        ("null==null", "null === null", None),
-        ("'foo'=='foo'", "'foo' === 'foo'", None),
+        ("null==null", "null===null", None),
+        ("'foo'=='foo'", "'foo'==='foo'", None),
         ("typeof a == b", "typeof a === b", None),
-        ("1000  !=  1000", "1000 !== 1000", None),
+        ("1000  !=  1000", "1000  !==  1000", None),
+        ("const same = 1 /* units */ == 1;", "const same = 1 /* units */ === 1;", None),
         ("(1000 + 1) != 1000", "(1000 + 1) !== 1000", None),
         ("a == b", "a === b", None),
     ];
