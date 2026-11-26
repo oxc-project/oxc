@@ -15,7 +15,7 @@
 use oxc_formatter_core::{Format, builders::text, write};
 use oxc_htmlish_parser::{
     Span,
-    ast::{NodeId, NodeKind},
+    ast::{Element, NodeId, NodeKind},
 };
 
 use super::{HtmlishFormatter, attribute::write_attributes};
@@ -97,11 +97,12 @@ pub fn opening_start_marker<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
                 Marker::one(Span::new(start, start + 9).slice(t.source()))
             }
         }
-        NodeKind::Element(_) => match t[id].condition.map(|start| t.kind(start)) {
+        NodeKind::Element(el) => match t[id].condition.map(|start| t.kind(start)) {
             Some(NodeKind::ConditionalStart(start)) => {
                 Marker(["<!--[if ", t.collapsed(start.condition), "]><!--><", t.name(id)])
             }
-            _ => Marker::two("<", t.name(id)),
+            _ => written_opening_start(t, id, el)
+                .map_or_else(|| Marker::two("<", t.name(id)), Marker::one),
         },
         _ => Marker::two("<", t.name(id)),
     }
@@ -151,6 +152,42 @@ pub fn closing_end_marker<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
     }
 }
 
+/// `<name` as written, when the name prints as written.
+fn written_opening_start<'a>(t: &Tree<'a>, id: NodeId, el: &Element<'a>) -> Option<&'a str> {
+    let written = el.name.slice(t.source());
+    (std::ptr::eq(t.printed_name(id, el, written), written)
+        && el.name.start == el.start_tag.start + 1)
+        .then(|| Span::new(el.start_tag.start, el.name.end).slice(t.source()))
+}
+
+/// The whole start tag `<name>` as written, when it prints so with nothing borrowed: no attributes, no `/`, no condition.
+fn written_start_tag<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
+    let el = t.element(id)?;
+    let plain = el.attributes.is_empty()
+        && !el.self_closing
+        && !el.void
+        && !t[id].self_closing
+        && t[id].condition.is_none()
+        && el.start_tag.end == el.name.end + 1
+        && t.source().as_bytes().get(el.name.end as usize) == Some(&b'>')
+        && !opening_start_borrowed(t, id)
+        && !opening_end_borrowed(t, id);
+    if !plain {
+        return None;
+    }
+    written_opening_start(t, id, el).map(|_| el.start_tag.slice(t.source()))
+}
+
+/// The whole end tag `</name>` as written, when it prints so: the name as written and the `>` right after it.
+fn written_end_tag<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
+    let el = t.element(id)?;
+    let tag = el.end_tag?;
+    let written = tag.name.slice(t.source());
+    let end = tag.ignored.map_or(tag.name.end, |ignored| ignored.end);
+    (std::ptr::eq(t.printed_name(id, el, written), written) && tag.span.end == end + 1)
+        .then(|| tag.span.slice(t.source()))
+}
+
 /// What follows a leading `html` word in a doctype's value (`HTML PUBLIC …`), which HTML reads case-insensitively.
 pub fn after_html_word(value: &str) -> Option<&str> {
     let rest = value.get(4..).filter(|_| value[..4].eq_ignore_ascii_case("html"))?;
@@ -188,6 +225,10 @@ pub fn write_opening_tag_start<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishF
 }
 
 pub fn write_opening_tag<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>) {
+    if let Some(tag) = written_start_tag(t, id) {
+        write!(f, [opening_tag_prefix(t, id), text(tag)]);
+        return;
+    }
     write_opening_tag_start(t, id, f);
     write_attributes(t, id, f);
     if !t[id].self_closing && !opening_end_borrowed(t, id) {
@@ -199,6 +240,12 @@ pub fn write_closing_tag<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatt
     if !t[id].self_closing && !closing_start_borrowed(t, id) {
         if t[id].borrows.last_child_closing_end {
             write!(f, closing_end_marker(t, t[id].last_child.expect("borrowed by the last child")));
+        }
+        if !closing_end_borrowed(t, id)
+            && let Some(tag) = written_end_tag(t, id)
+        {
+            write!(f, [text(tag), closing_tag_suffix(t, id)]);
+            return;
         }
         write!(f, closing_start_marker(t, id));
     }
