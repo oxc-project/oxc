@@ -731,16 +731,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:25]
- 4 │                         const value = 1;
- 5 │                         useState(value);
-   ·                         ───────┬───────
-   ·                                ╰── This Hook call is not reachable on every render path.
- 6 │                     } catch {}
-   ╰────
-  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
-
-  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
-   ╭─[rules_of_hooks.tsx:5:25]
  4 │                         const value = f();
  5 │                         useState(value);
    ·                         ───────┬───────
@@ -766,6 +756,78 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────┬────
    ·                              ╰── This Hook call is not reachable on every render path.
  6 │                     } catch {}
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useA" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:44]
+ 1 │ function useS3() { let c = null; try { c = useA(); } catch { c = null; } return c; }
+   ·                                            ───┬──
+   ·                                               ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useA" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:38]
+ 1 │ function useS9() { try { f(); return useA(); } catch { return null; } }
+   ·                                      ───┬──
+   ·                                         ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:28]
+ 1 │ function useG() { try { x; useState(); } catch {} }
+   ·                            ─────┬────
+   ·                                 ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:35]
+ 1 │ function useH() { try { obj.prop; useState(); } catch {} }
+   ·                                   ─────┬────
+   ·                                        ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:46]
+ 1 │ function useI() { try { const { a } = props; useState(a); } catch {} }
+   ·                                              ─────┬─────
+   ·                                                   ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:36]
+ 1 │ function useK() { try { f(); try { useState(); } catch {} } catch {} }
+   ·                                    ─────┬────
+   ·                                         ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:40]
+ 1 │ function useC() { try { f(); } catch { useState(); } }
+   ·                                        ─────┬────
+   ·                                             ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:35]
+ 1 │ function useN() { try { } catch { useState(); } }
+   ·                                   ─────┬────
+   ·                                        ╰── This Hook call is not reachable on every render path.
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:42]
+ 1 │ function useD() { try { f(); } finally { useState(); } }
+   ·                                          ─────┬────
+   ·                                               ╰── This Hook call is not reachable on every render path.
    ╰────
   help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
 
