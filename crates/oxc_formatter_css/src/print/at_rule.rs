@@ -139,7 +139,8 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
                 write_block_or_semicolon(at_rule, f);
                 return;
             }
-            // String params: whitespace-normalized verbatim, one line
+            // String params: as written (Prettier's raw `node.params`),
+            // `@namespace`'s on one line, as Prettier's value parser prints them
             "keyframes"
             | "page"
             | "font-feature-values"
@@ -152,8 +153,12 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
                 let _ = f.context().comments().take_before(region_end);
                 if !raw.is_empty() {
                     write!(f, space());
-                    let normalized = normalize_whitespace(raw);
-                    write!(f, text(f.allocator().alloc_str(&normalized)));
+                    if unprefixed == "namespace" {
+                        let normalized = normalize_whitespace(raw);
+                        write!(f, text(f.allocator().alloc_str(&normalized)));
+                    } else {
+                        write!(f, text(raw));
+                    }
                 }
                 write_block_or_semicolon(at_rule, f);
                 return;

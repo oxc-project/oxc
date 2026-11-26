@@ -22,7 +22,10 @@ use crate::{
     TEMPLATE_PLACEHOLDER,
     comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
-    print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
+    print::{
+        CssFormatter, format_with, less, normalize_whitespace, split_verbatim, value,
+        write_maybe_lowercase,
+    },
 };
 
 /// Detects an ICSS rule (`:import { ... }` / `:export { ... }`)
@@ -76,8 +79,8 @@ pub(super) fn write_selector_list<'a>(
         list.selectors.iter().position(|complex| {
             let raw = source.text_for(&to_span(complex.span()));
             TEMPLATE_PLACEHOLDER.is_in(raw)
-                && split_strings(raw)
-                    .any(|(run, quoted)| !quoted && TEMPLATE_PLACEHOLDER.is_in(run))
+                && split_verbatim(raw)
+                    .any(|(run, verbatim)| !verbatim && TEMPLATE_PLACEHOLDER.is_in(run))
         })
     } else {
         None
@@ -309,7 +312,7 @@ pub(super) fn write_interpolable_ident<'a>(
 ///
 /// Unlike the structurally-parsed positions, garbage mode prints degraded source verbatim,
 /// so the markers are recovered from the text here.
-/// A line break left in it is a string's, which breaks no group as in [`value::write_attribute_str`].
+/// A line break left in it is a string's or a comment's, which breaks no group as in [`value::write_attribute_str`].
 fn write_text_with_placeholders<'a>(source: &'a str, f: &mut CssFormatter<'_, 'a>) {
     for piece in TEMPLATE_PLACEHOLDER.pieces(source) {
         match piece {
@@ -328,62 +331,22 @@ fn write_text_with_placeholders<'a>(source: &'a str, f: &mut CssFormatter<'_, 'a
     }
 }
 
-/// `raw` split into runs outside a quoted string and the strings themselves (`true`, quotes included).
-///
-/// NOTE: A quote in a comment opens a string here, a known ceiling:
-/// only an at-rule's selector list (`@extend`) brings a comment, a rule's prints as written then;
-/// skipping comments (`block_comment_end`) lifts it.
-fn split_strings(raw: &str) -> impl Iterator<Item = (&str, bool)> {
-    let bytes = raw.as_bytes();
-    let mut pos = 0;
-    std::iter::from_fn(move || {
-        let start = pos;
-        let quote = *bytes.get(pos)?;
-        let quoted = matches!(quote, b'"' | b'\'');
-        pos += usize::from(quoted);
-        // The run ends at an ASCII quote or the end, a char boundary
-        while let Some(&b) = bytes.get(pos) {
-            if !quoted && matches!(b, b'"' | b'\'') {
-                break;
-            }
-            // An escape is skipped in and out of a string (`\"` outside one opens none)
-            pos += 1 + usize::from(b == b'\\');
-            if quoted && b == quote {
-                break;
-            }
-        }
-        pos = pos.min(bytes.len());
-        Some((&raw[start..pos], quoted))
-    })
-}
-
-/// `raw` split at its line breaks outside a string (one in a string stays in its line),
-/// each whitespace run outside a string as one space, none at a line's ends.
+/// `raw` split at its line breaks outside a string or a block comment (one in them stays in its line),
+/// each line through [`normalize_whitespace`].
 /// Source newlines are normalized to `\n` by `parse_stylesheet`, so splitting on `\n` is enough.
 fn collapsed_lines(raw: &str) -> Vec<String> {
-    fn push(lines: &mut [String], space: &mut bool, word: &str) {
-        let line = lines.last_mut().unwrap();
-        if std::mem::take(space) && !line.is_empty() {
-            line.push(' ');
-        }
-        line.push_str(word);
-    }
-
-    let mut lines = vec![String::new()];
-    let mut space = false;
-    for (run, quoted) in split_strings(raw) {
-        if quoted {
-            push(&mut lines, &mut space, run);
-            continue;
-        }
-        for (i, c) in run.char_indices() {
-            match c {
-                '\n' => lines.push(String::new()),
-                c if c.is_whitespace() => space = true,
-                c => push(&mut lines, &mut space, &run[i..i + c.len_utf8()]),
+    let mut lines = Vec::new();
+    let (mut start, mut offset) = (0, 0);
+    for (run, verbatim) in split_verbatim(raw) {
+        if !verbatim {
+            for (i, _) in run.match_indices('\n') {
+                lines.push(normalize_whitespace(&raw[start..offset + i]));
+                start = offset + i + 1;
             }
         }
+        offset += run.len();
     }
+    lines.push(normalize_whitespace(&raw[start..]));
     lines
 }
 

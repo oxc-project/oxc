@@ -112,8 +112,8 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - Glued placeholders and static parts interpolate into one name like `#{}` (`${a}-${b}`, `x-${a}`); see DIVERGENCES.md#placeholder-property-name
 - Value position: `ComponentValue::Placeholder`; rides existing gap-based separator rules
   - One added rule: glued to a paren group → `Separator::SoftBreak` (`${fn}(30px)` breaks BEFORE the parens)
-- Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector, outside a string, still triggers "garbage mode" in `write_selector_list`
-  - Emits the raw source slice with whitespace runs outside strings collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
+- Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector, outside a string or a comment, still triggers "garbage mode" in `write_selector_list`
+  - Emits the raw source slice with whitespace runs outside strings and comments collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
   - Mirrors `postcss-selector-parser` degrading on at-words
   - A statement-position placeholder-led selector must not absorb across a newline (oxc-css-parser `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
 - String / `url()` / comment position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
