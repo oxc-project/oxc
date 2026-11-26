@@ -5,7 +5,7 @@ use serde::Deserialize;
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, StringLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -102,60 +102,54 @@ impl Rule for NoInvalidRegexp {
             _ => return,
         };
 
-        // No arguments, skip
-        if pattern_arg.is_none() && flags_arg.is_none() {
-            return;
-        }
-
         let (mut u_flag_found, mut v_flag_found) = (false, false);
         // Validate flags first if exists
         // `oxc_regular_expression` crate has a ability to validate flags.
         // But, it does not accept any `allow_constructor_flags` option.
         // And if we omit user defined flags here, `Span` may be incorrect on error reporting.
-        if let Some(flags_span) = flags_arg {
-            // Strip quotes
-            let flags_text =
-                flags_span.source_text(ctx.source_text()).trim_matches('\'').trim_matches('"');
+        if let Flags::Literal(flags) = flags_arg {
+            let Some(flags_text) = flags.value.as_str() else {
+                return ctx.diagnostic(unknown_flag_diagnostic(
+                    flags.span,
+                    &flags.value.display().to_string(),
+                ));
+            };
+            let raw_flags_span = Span::new(flags.span.start + 1, flags.span.end - 1);
+            let has_escapes = ctx.source_range(raw_flags_span) != flags_text;
 
             let mut unique_flags = FxHashSet::default();
             for (idx, ch) in flags_text.char_indices() {
                 #[expect(clippy::cast_possible_truncation)]
-                let start = flags_span.start + 1 + idx as u32;
+                let span = if has_escapes {
+                    flags.span
+                } else {
+                    Span::empty(raw_flags_span.start + idx as u32)
+                };
 
                 // Invalid combination: u+v
                 if ch == 'u' {
                     if v_flag_found {
-                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(
-                            Span::empty(start),
-                            false,
-                        ));
+                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(span, false));
                     }
                     u_flag_found = true;
                 }
                 if ch == 'v' {
                     if u_flag_found {
-                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(
-                            Span::empty(start),
-                            true,
-                        ));
+                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(span, true));
                     }
                     v_flag_found = true;
                 }
 
                 // Duplicated: user defined, invalid or valid
                 if !unique_flags.insert(ch) {
-                    return ctx.diagnostic(duplicated_flag_diagnostic(
-                        Span::empty(start),
-                        &ch.to_string(),
-                    ));
+                    return ctx.diagnostic(duplicated_flag_diagnostic(span, &ch.to_string()));
                 }
 
                 // Unknown: not valid, not user defined
                 if !(matches!(ch, 'd' | 'g' | 'i' | 'm' | 's' | 'u' | 'v' | 'y')
                     || self.0.allow_constructor_flags.contains(&ch))
                 {
-                    return ctx
-                        .diagnostic(unknown_flag_diagnostic(Span::empty(start), &ch.to_string()));
+                    return ctx.diagnostic(unknown_flag_diagnostic(span, &ch.to_string()));
                 }
             }
         }
@@ -163,46 +157,61 @@ impl Rule for NoInvalidRegexp {
         // Then, validate pattern if exists
         // Pattern check is skipped when 1st argument is NOT a `StringLiteral`
         // e.g. `new RegExp(var)`, `RegExp("str" + var)`
+        let Some(pattern) = pattern_arg else { return };
         let allocator = Allocator::default();
-        if let Some(pattern_span) = pattern_arg {
-            let pattern_text = pattern_span.source_text(ctx.source_text());
-
-            let flags_text = match (u_flag_found, v_flag_found) {
-                (true, false) => Some("'u'"),
-                (_, true) => Some("'v'"),
-                (false, false) => None,
-            };
-
-            match ConstructorParser::new(
+        let pattern_text = ctx.source_range(pattern.span);
+        let parse = |flags_text: Option<&str>| {
+            ConstructorParser::new(
                 &allocator,
                 pattern_text,
                 flags_text,
-                Options { pattern_span_offset: pattern_span.start, flags_span_offset: 0 },
+                Options { pattern_span_offset: pattern.span.start, flags_span_offset: 0 },
             )
             .parse()
-            {
-                Ok(_) => {}
-                Err(diagnostic) => ctx.diagnostic(diagnostic),
+            .err()
+        };
+
+        let diagnostic = if matches!(flags_arg, Flags::Unknown) {
+            if parse(Some("'u'")).is_none() || parse(Some("'v'")).is_none() {
+                return;
             }
+            parse(None)
+        } else {
+            parse(match (u_flag_found, v_flag_found) {
+                (true, false) => Some("'u'"),
+                (_, true) => Some("'v'"),
+                (false, false) => None,
+            })
+        };
+        if let Some(diagnostic) = diagnostic {
+            ctx.diagnostic(diagnostic);
         }
     }
 }
 
-fn parse_arguments_to_check<'a>(
-    arg1: Option<&Argument<'a>>,
-    arg2: Option<&Argument<'a>>,
-) -> (Option<Span>, Option<Span>) {
-    match (arg1, arg2) {
-        // ("pattern", "flags")
-        (Some(Argument::StringLiteral(pattern)), Some(Argument::StringLiteral(flags))) => {
-            (Some(pattern.span), Some(flags.span))
-        }
-        // (pattern, "flags")
-        (Some(_arg), Some(Argument::StringLiteral(flags))) => (None, Some(flags.span)),
-        // ("pattern")
-        (Some(Argument::StringLiteral(pattern)), None) => (Some(pattern.span), None),
-        // (pattern), ()
-        _ => (None, None),
+#[derive(Clone, Copy)]
+enum Flags<'b, 'a> {
+    Absent,
+    Literal(&'b StringLiteral<'a>),
+    Unknown,
+}
+
+fn parse_arguments_to_check<'b, 'a>(
+    arg1: Option<&'b Argument<'a>>,
+    arg2: Option<&'b Argument<'a>>,
+) -> (Option<&'b StringLiteral<'a>>, Flags<'b, 'a>) {
+    let pattern = arg1.and_then(string_literal);
+    let flags = match arg2 {
+        None => Flags::Absent,
+        Some(arg) => string_literal(arg).map_or(Flags::Unknown, Flags::Literal),
+    };
+    (pattern, flags)
+}
+
+fn string_literal<'b, 'a>(arg: &'b Argument<'a>) -> Option<&'b StringLiteral<'a>> {
+    match arg.as_expression()?.without_parentheses() {
+        Expression::StringLiteral(literal) => Some(literal),
+        _ => None,
     }
 }
 
@@ -220,6 +229,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (r#"RegExp(".", "\u0067");"#, None),
+        (r#"RegExp(".", "\x67\u{69}");"#, None),
+        ("new RegExp('.', ('g'));", None),
+        ("RegExp('[A--B]', flags);", None),
+        ("RegExp('.', ...flags);", None),
         ("RegExp('')", None),
         ("RegExp()", None),
         ("RegExp('.', 'g')", None),
@@ -328,6 +342,12 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"RegExp(".", "\u0067\u0067");"#, None),
+        (r#"RegExp(".", "g\u007a");"#, None),
+        ("new RegExp('.', ('gg'));", None),
+        ("new RegExp(('['));", None),
+        ("function make(flags) { return RegExp('[', flags); }", None),
+        ("RegExp(')', ...flags);", None),
         ("RegExp('[');", None),
         ("RegExp('.', 'z');", None),
         ("RegExp('.', 'a');", Some(serde_json::json!([{}]))),
