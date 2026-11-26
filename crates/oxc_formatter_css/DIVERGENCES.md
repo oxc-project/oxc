@@ -1750,7 +1750,8 @@ Prettier glues it to the string there only.
 }
 ```
 
-An `@import` media feature never breaks inside its parens, however long, as in `@media`;
+An `@import` media feature never breaks inside its parens, however long, as in `@media`:
+both preludes end in the same `<media-query-list>`, which parses to the same nodes and prints through the same printer.
 Prettier value-parses an `@import` prelude, so an over-wide feature there opens its parens and breaks after the `:`.
 
 ## media-feature-comment-case
