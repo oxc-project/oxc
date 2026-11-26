@@ -26,6 +26,10 @@
 }
 @supports (/* d */ a:b) and selector(/* e */ a:hover) {
 }
+@supports selector(/* e */ a:hover) {
+}
+@supports selector(/* a /* b */ a:hover) {
+}
 
 /* DIVERGENCES.md#supports-declaration-comments */
 @supports (display /* c */ : flex) and (gap:1PX) {

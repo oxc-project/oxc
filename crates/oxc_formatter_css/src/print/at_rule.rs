@@ -19,7 +19,7 @@ use oxc_css_parser::{
 };
 
 use oxc_formatter_core::{
-    Format, FormatElement, SourceText, arena_cow_str,
+    Format, FormatElement, arena_cow_str,
     builders::{
         empty_line, group, hard_line_break, indent, soft_block_indent, soft_line_break,
         soft_line_break_or_space, space, text,
@@ -730,7 +730,17 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
     let source = f.context().source_text();
     // `@import` places its own: one fuses with the path after it (`write_import_path_list`)
     if !matches!(prelude, AtRulePrelude::Import(_) | AtRulePrelude::SassImport(_)) {
-        write_leading_comments(prelude.span().start, f);
+        // A first `selector()` term starts before its span (`supports_in_parens_start`)
+        let start = match prelude {
+            AtRulePrelude::Supports(condition) => match condition.conditions.first() {
+                Some(SupportsConditionKind::SupportsInParens(in_parens)) => {
+                    supports_in_parens_start(in_parens, f)
+                }
+                _ => condition.span.start,
+            },
+            _ => prelude.span().start,
+        };
+        write_leading_comments(start, f);
     }
     match prelude {
         AtRulePrelude::Media(media) => write_media_query_list(media, f),
@@ -2231,29 +2241,39 @@ fn write_supports_term<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let mut span = to_span(in_parens.span());
-    if matches!(in_parens.kind, SupportsInParensKind::Selector(_)) {
-        span.start = selector_function_start(span.start, f.context().source_text());
-    }
+    span.start = supports_in_parens_start(in_parens, f);
     value::write_with_comments(span, end, f, |f| {
         write_supports_in_parens(in_parens, f);
     });
 }
 
-/// Where `selector(` starts, for the selector list starting at `list_start` in it.
+/// Where a term starts, so a comment inside it never reads as leading it.
 ///
-/// NOTE: oxc-css-parser spans a `selector()` term as its selector list only,
-/// so a comment after `selector(` would read as leading the term; fixing the span in the parser removes this.
-fn selector_function_start(list_start: u32, source: SourceText<'_>) -> u32 {
-    let head = source.slice_range(0, list_start);
-    // Back over the comments and whitespace after `(` (a comment holds no `*/` before its end)
-    let mut rest = head.trim_end();
-    while let Some(before) = rest.strip_suffix("*/") {
-        rest = before.rfind("/*").map_or(before, |open| before[..open].trim_end());
+/// NOTE: oxc-css-parser spans a `selector()` term as its selector list only:
+/// its start is found back over the pending comments and whitespace after `selector(`.
+/// Fixing the span in the parser removes this.
+fn supports_in_parens_start(in_parens: &SupportsInParens<'_>, f: &CssFormatter<'_, '_>) -> u32 {
+    let list_start = in_parens.span.start;
+    if !matches!(in_parens.kind, SupportsInParensKind::Selector(_)) {
+        return list_start;
     }
-    let Some(before_paren) = rest.strip_suffix('(') else { return list_start };
-    let name = before_paren.len()
-        - before_paren.trim_end_matches(|c: char| c.is_ascii_alphanumeric() || c == '-').len();
-    u32::try_from(before_paren.len() - name).unwrap_or(list_start)
+    let source = f.context().source_text();
+    let mut end = list_start;
+    loop {
+        end = u32::try_from(source.slice_range(0, end).trim_end().len()).unwrap_or(end);
+        match f.context().comments().iter_before(list_start).find(|c| c.span.end == end) {
+            Some(comment) => end = comment.span.start,
+            None => break,
+        }
+    }
+    let Some(head) = source.slice_range(0, end).strip_suffix('(') else { return list_start };
+    head.len()
+        .checked_sub("selector".len())
+        .filter(|&start| {
+            head.get(start..).is_some_and(|name| name.eq_ignore_ascii_case("selector"))
+        })
+        .and_then(|start| u32::try_from(start).ok())
+        .unwrap_or(list_start)
 }
 
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
