@@ -11,10 +11,12 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
+    fixer::RuleFixer,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -67,7 +69,7 @@ impl RestrictedTypesIndex {
         for (key, value) in types {
             let normalized = remove_spaces(key);
             let normalized_key = normalized.as_ref();
-            let display = key.trim();
+            let display = key.trim_matches(is_js_whitespace);
 
             if normalized_key.contains('.') {
                 index.has_qualified_keys = true;
@@ -109,7 +111,7 @@ impl RestrictedTypesIndex {
     /// Lookup a source snippet (may contain whitespace); normalizes only when needed.
     #[inline]
     fn lookup_source(&self, source_text: &str) -> Option<(&str, &BanConfigValue)> {
-        if source_text.contains(char::is_whitespace) {
+        if source_text.contains(is_js_whitespace) {
             let normalized = remove_spaces(source_text);
             self.lookup(&normalized)
         } else {
@@ -332,19 +334,25 @@ impl Rule for NoRestrictedTypes {
             }
             AstKind::TSTupleType(tuple) => {
                 if tuple.element_types.is_empty() && self.0.index.ban_empty_tuple {
-                    report_keyword(ctx, &self.0.index, "[]", tuple.span);
+                    self.check_banned_source(tuple.span, ctx);
                 }
             }
             AstKind::TSTypeLiteral(lit) => {
                 if lit.members.is_empty() && self.0.index.ban_empty_object {
-                    report_keyword(ctx, &self.0.index, "{}", lit.span);
+                    self.check_banned_source(lit.span, ctx);
                 }
             }
             AstKind::TSClassImplements(implements) => {
-                self.check_banned_source(implements.span, ctx);
+                self.check_type_name(&implements.expression, ctx);
+                if implements.type_arguments.is_some() && self.0.index.has_generic_or_complex_keys {
+                    self.check_banned_source(implements.span, ctx);
+                }
             }
             AstKind::TSInterfaceHeritage(heritage) => {
-                self.check_banned_source(heritage.span, ctx);
+                self.check_type_name(&heritage.type_name, ctx);
+                if heritage.type_arguments.is_some() && self.0.index.has_generic_or_complex_keys {
+                    self.check_banned_source(heritage.span, ctx);
+                }
             }
             _ => {}
         }
@@ -357,39 +365,24 @@ impl Rule for NoRestrictedTypes {
 
 impl NoRestrictedTypes {
     fn check_type_reference(&self, type_ref: &TSTypeReference<'_>, ctx: &LintContext<'_>) {
-        let index = &self.0.index;
-
-        if type_ref.type_arguments.is_none() {
-            match type_name_lookup(&type_ref.type_name, index.has_qualified_keys) {
-                TypeNameLookup::Name(name) => {
-                    if let Some((display, config)) = index.lookup(name.as_ref()) {
-                        report(ctx, type_ref.type_name.span(), display, config);
-                    }
-                }
-                TypeNameLookup::SourceFallback => {
-                    self.check_banned_source(type_ref.type_name.span(), ctx);
-                }
-                TypeNameLookup::Skip => {}
-            }
-            return;
+        self.check_type_name(&type_ref.type_name, ctx);
+        if type_ref.type_arguments.is_some() && self.0.index.has_generic_or_complex_keys {
+            self.check_banned_source(type_ref.span, ctx);
         }
+    }
 
-        // With type arguments: check the head name (e.g. `Banned` in `Banned<any>`).
-        match type_name_lookup(&type_ref.type_name, index.has_qualified_keys) {
+    fn check_type_name(&self, type_name: &TSTypeName<'_>, ctx: &LintContext<'_>) {
+        let index = &self.0.index;
+        match type_name_lookup(type_name, index.has_qualified_keys) {
             TypeNameLookup::Name(name) => {
-                if let Some((display, config)) = index.lookup(name.as_ref()) {
-                    report(ctx, type_ref.type_name.span(), display, config);
+                if let Some((display, config)) = index.lookup(name) {
+                    report(ctx, type_name.span(), display, config);
                 }
             }
             TypeNameLookup::SourceFallback => {
-                self.check_banned_source(type_ref.type_name.span(), ctx);
+                self.check_banned_source(type_name.span(), ctx);
             }
             TypeNameLookup::Skip => {}
-        }
-
-        // Full `Banned<any>` source only when config has generic/complex keys.
-        if index.has_generic_or_complex_keys {
-            self.check_banned_source(type_ref.span, ctx);
         }
     }
 
@@ -402,41 +395,23 @@ impl NoRestrictedTypes {
 }
 
 enum TypeNameLookup<'a> {
-    Name(Cow<'a, str>),
+    Name(&'a str),
     SourceFallback,
     Skip,
 }
 
-/// Dotted name for simple type references. Borrows for a single identifier.
+/// Name of a simple type reference. Qualified names are matched by their source text, like
+/// typescript-eslint, so a comment inside `NS./* c */Banned` prevents a match.
 fn type_name_lookup<'a>(
     type_name: &'a TSTypeName<'a>,
     allow_qualified: bool,
 ) -> TypeNameLookup<'a> {
     match type_name {
-        TSTypeName::IdentifierReference(ident) => {
-            TypeNameLookup::Name(Cow::Borrowed(ident.name.as_str()))
-        }
+        TSTypeName::IdentifierReference(ident) => TypeNameLookup::Name(ident.name.as_str()),
         TSTypeName::QualifiedName(_) if !allow_qualified => TypeNameLookup::Skip,
-        TSTypeName::QualifiedName(qual) => {
-            let mut parts = Vec::with_capacity(4);
-            let mut current = qual.as_ref();
-            loop {
-                parts.push(current.right.name.as_str());
-                match &current.left {
-                    TSTypeName::IdentifierReference(ident) => {
-                        parts.push(ident.name.as_str());
-                        break;
-                    }
-                    TSTypeName::QualifiedName(inner) => {
-                        current = inner.as_ref();
-                    }
-                    TSTypeName::ThisExpression(_) => return TypeNameLookup::SourceFallback,
-                }
-            }
-            parts.reverse();
-            TypeNameLookup::Name(Cow::Owned(parts.join(".")))
+        TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => {
+            TypeNameLookup::SourceFallback
         }
-        TSTypeName::ThisExpression(_) => TypeNameLookup::SourceFallback,
     }
 }
 
@@ -450,27 +425,35 @@ fn report_keyword(ctx: &LintContext<'_>, index: &RestrictedTypesIndex, keyword: 
 fn report(ctx: &LintContext<'_>, span: Span, type_name: &str, config: &BanConfigValue) {
     let diagnostic = no_restricted_types_diagnostic(type_name, config.message(), span);
 
-    if let Some(fix_with) = config.fix_with() {
-        let fix_with = fix_with.to_string();
-        ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(span, fix_with));
-    } else if let Some(suggestions) = config.suggest() {
-        // TODO: Support multiple suggestions in the future
-        if let Some(first_suggestion) = suggestions.first() {
-            let suggestion = first_suggestion.clone();
-            ctx.diagnostic_with_suggestion(diagnostic, |fixer| fixer.replace(span, suggestion));
-        } else {
-            ctx.diagnostic(diagnostic);
-        }
-    } else {
+    let fix_with = config.fix_with().filter(|fix_with| !fix_with.is_empty());
+    let suggestions = config.suggest().unwrap_or_default();
+    if fix_with.is_none() && suggestions.iter().all(String::is_empty) {
         ctx.diagnostic(diagnostic);
+        return;
     }
+
+    let fixer = RuleFixer::new(FixKind::Fix, ctx);
+    let suggester = RuleFixer::new(FixKind::Suggestion, ctx);
+    ctx.diagnostic_with_suggestions(
+        diagnostic,
+        fix_with.map(|fix_with| fixer.replace(span, fix_with.to_string())).into_iter().chain(
+            suggestions
+                .iter()
+                .filter(|suggestion| !suggestion.is_empty())
+                .map(|suggestion| suggester.replace(span, suggestion.clone())),
+        ),
+    );
+}
+
+fn is_js_whitespace(c: char) -> bool {
+    is_white_space(c) || is_line_terminator(c)
 }
 
 /// Remove all whitespace from a string for normalization.
 /// This matches the TypeScript reference implementation's `removeSpaces` function.
 fn remove_spaces(s: &str) -> Cow<'_, str> {
-    if s.contains(char::is_whitespace) {
-        Cow::Owned(s.chars().filter(|c| !c.is_whitespace()).collect())
+    if s.contains(is_js_whitespace) {
+        Cow::Owned(s.chars().filter(|&c| !is_js_whitespace(c)).collect())
     } else {
         Cow::Borrowed(s)
     }
@@ -481,6 +464,18 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            "type T = [/* intentionally empty */];",
+            Some(serde_json::json!([{ "types": { "[]": { "fixWith": "unknown[]" } } }])),
+        ),
+        (
+            "type T = {/* intentionally empty */};",
+            Some(serde_json::json!([{ "types": { "{}": { "fixWith": "object" } } }])),
+        ),
+        (
+            "type T = NS./* compatibility */Old;",
+            Some(serde_json::json!([{ "types": { "NS.Old": { "fixWith": "NS.New" } } }])),
+        ),
         ("let f = Object();", None),
         ("let f: { x: number; y: number } = { x: 1, y: 1 };", None),
         ("let f = Object();", Some(serde_json::json!([{ "types": { "Object": true } }]))),
@@ -648,9 +643,44 @@ fn test() {
                 serde_json::json!([{ "types": { "Banned": { "message": "Use a safer type", "suggest": ["SafeType", "AnotherType"] } } }]),
             ),
         ),
+        ("type T = Foo;", Some(serde_json::json!([{ "types": { "Foo": { "fixWith": "" } } }]))),
+        ("type T = Foo;", Some(serde_json::json!([{ "types": { "\u{feff}Foo": true } }]))),
+        (
+            "interface Derived extends Banned<string> {}",
+            Some(serde_json::json!([{ "types": { "Banned": { "fixWith": "Ok" } } }])),
+        ),
+        (
+            "class Derived implements Banned<string> {}",
+            Some(serde_json::json!([{ "types": { "Banned": { "fixWith": "Ok" } } }])),
+        ),
     ];
 
     let fix = vec![
+        (
+            "type T = Foo;",
+            "type T = Foo;",
+            Some(serde_json::json!([{ "types": { "Foo": { "fixWith": "" } } }])),
+        ),
+        (
+            "interface Derived extends Banned<string> {}",
+            "interface Derived extends Ok<string> {}",
+            Some(serde_json::json!([{ "types": { "Banned": { "fixWith": "Ok" } } }])),
+        ),
+        (
+            "class Derived implements Banned<string> {}",
+            "class Derived implements Ok<string> {}",
+            Some(serde_json::json!([{ "types": { "Banned": { "fixWith": "Ok" } } }])),
+        ),
+        (
+            "type T = [ ];",
+            "type T = unknown[];",
+            Some(serde_json::json!([{ "types": { "[]": { "fixWith": "unknown[]" } } }])),
+        ),
+        (
+            "let value: NS . Banned;",
+            "let value: NS.Ok;",
+            Some(serde_json::json!([{ "types": { "NS.Banned": { "fixWith": "NS.Ok" } } }])),
+        ),
         (
             "let b: { c: Banned };",
             "let b: { c: Ok };",
@@ -729,7 +759,42 @@ fn test() {
             ),
         ),
     ];
+    let fix_kinds = vec![
+        (
+            "type T = Foo;",
+            "type T = Bar;",
+            Some(
+                serde_json::json!([{ "types": { "Foo": { "fixWith": "Bar", "suggest": ["Baz"] } } }]),
+            ),
+            FixKind::Fix,
+        ),
+        (
+            "type T = Foo;",
+            "type T = Baz;",
+            Some(
+                serde_json::json!([{ "types": { "Foo": { "fixWith": "Bar", "suggest": ["Baz"] } } }]),
+            ),
+            FixKind::Suggestion,
+        ),
+        (
+            "type T = Foo;",
+            "type T = Foo;",
+            Some(serde_json::json!([{ "types": { "Foo": { "suggest": [""] } } }])),
+            FixKind::Suggestion,
+        ),
+    ];
+
+    let multiple_suggestions = vec![(
+        "let value: Banned;",
+        ("let value: SafeType;", "let value: AnotherType;"),
+        Some(
+            serde_json::json!([{ "types": { "Banned": { "suggest": ["SafeType", "AnotherType"] } } }]),
+        ),
+    )];
+
     Tester::new(NoRestrictedTypes::NAME, NoRestrictedTypes::PLUGIN, pass, fail)
         .expect_fix(fix)
+        .expect_fix(fix_kinds)
+        .expect_fix(multiple_suggestions)
         .test_and_snapshot();
 }
