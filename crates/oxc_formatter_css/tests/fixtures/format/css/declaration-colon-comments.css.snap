@@ -1,0 +1,64 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* As Prettier prints them: the siblings */
+a {
+  display: /* c */ flex;
+}
+@supports (display /* c */ : flex) {
+}
+@media (min-width /* c */ : 100px) {
+}
+
+/* DIVERGENCES.md#declaration-colon-comments */
+a {
+  display /* c */ : flex;
+  display/* c */: /* d */ flex;
+  display :/* c */ flex;
+  display
+    /* c */ : flex;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* As Prettier prints them: the siblings */
+a {
+  display: /* c */ flex;
+}
+@supports (display /* c */: flex) {
+}
+@media (min-width /* c */: 100px) {
+}
+
+/* DIVERGENCES.md#declaration-colon-comments */
+a {
+  display /* c */: flex;
+  display /* c */: /* d */ flex;
+  display: /* c */ flex;
+  display /* c */: flex;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* As Prettier prints them: the siblings */
+a {
+  display: /* c */ flex;
+}
+@supports (display /* c */: flex) {
+}
+@media (min-width /* c */: 100px) {
+}
+
+/* DIVERGENCES.md#declaration-colon-comments */
+a {
+  display /* c */: flex;
+  display /* c */: /* d */ flex;
+  display: /* c */ flex;
+  display /* c */: flex;
+}
+
+===================== End =====================

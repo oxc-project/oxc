@@ -1962,6 +1962,48 @@ a {
 An over-wide `@supports` declaration opens its parens and stays on one line, as the same declaration does in a rule;
 Prettier breaks after its `:` there too, its prelude value group allowing a break the declaration printer does not.
 
+## declaration-colon-comments
+
+- Why: uniform-rule (same construct, same output: a `@supports` declaration's and a media feature's `:`)
+- Pin: `tests/fixtures/format/css/declaration-colon-comments.css`
+- Conformance:
+  - `externals/prettier/css/comments/declaration.css`
+  - `externals/prettier/scss/comments/between-decl.scss`
+  - `externals/prettier/scss/comments/custom-properties.scss`
+  - `externals/prettier/less/comments/between-decl.less`
+  - `externals/prettier/less/comments/selectors.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments.less`
+
+```css
+/* input */
+a {
+  display /* c */ : flex;
+  display :/* c */ flex;
+}
+@supports (display /* c */ : flex) {}
+
+/* ours */
+a {
+  display /* c */: flex;
+  display: /* c */ flex;
+}
+@supports (display /* c */: flex) {
+}
+
+/* prettier */
+a {
+  display/* c */ : flex;
+  display:/* c */ flex;
+}
+@supports (display /* c */: flex) {
+}
+```
+
+Block comments around a declaration's `:` are spaced as in a `@supports` declaration or a media feature, where Prettier prints them that way:
+the `:` glued to what precedes it, one space around each comment.
+Prettier prints a rule's `raws.between` as written but for its ends, so the space before the first comment goes, the rest stays, and a line break in it lands at column 0.
+Own-line comments there join the line, unwrapped; a `//` keeps the between as written.
+
 ## supports-declaration-comments
 
 - Why: uniform-rule (same construct, same output: the declaration in a rule)
@@ -1971,40 +2013,37 @@ Prettier breaks after its `:` there too, its prelude value group allowing a brea
 
 ```css
 /* input */
-@supports (display /* c */ : flex) {}
 @supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {}
 a {
-  display /* c */ : flex;
+  /* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 }
 
 /* ours */
-@supports (display/* c */ : flex) {
-}
 @supports (
   /* a comment long enough to break this term */
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
 ) {
 }
 a {
-  display/* c */ : flex;
+  /* a comment long enough to break this term */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 }
 
 /* prettier */
-@supports (display /* c */: flex) {
-}
 @supports (
   /* a comment long enough to break this term */
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
 ) {
 }
 a {
-  display/* c */ : flex;
+  /* a comment long enough to break this term */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 }
 ```
 
 A commented `@supports` declaration prints as the same declaration does in a rule, as an uncommented one does (DIVERGENCES.md#supports-declaration-long-value):
-the comments between its property and value as written, a comment leading it on its own line once its parens open.
-Prettier prints a commented one through its prelude value parser instead, as a fill of words.
+a comment leading it ends its line once its parens open, the declaration at the comment's indent.
+Prettier prints a commented one through its prelude value parser instead, as a fill of words, the declaration a continuation one level in.
 
 ## grid-value-broken-in-function
 

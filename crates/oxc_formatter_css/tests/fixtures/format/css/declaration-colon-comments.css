@@ -1,0 +1,17 @@
+/* As Prettier prints them: the siblings */
+a {
+  display: /* c */ flex;
+}
+@supports (display /* c */ : flex) {
+}
+@media (min-width /* c */ : 100px) {
+}
+
+/* DIVERGENCES.md#declaration-colon-comments */
+a {
+  display /* c */ : flex;
+  display/* c */: /* d */ flex;
+  display :/* c */ flex;
+  display
+    /* c */ : flex;
+}
