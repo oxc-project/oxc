@@ -742,6 +742,42 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `else` block, moving its contents outside of the `if` statement.
 
   ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:68]
+ 1 │ const config = {}; function foo() { if (config.debug) { return 1; } else { const config = 2; return config; } }
+   ·                                                         ────┬────  ───┬──
+   ·                                                             │         ╰── Making this `else` block unnecessary.
+   ·                                                             ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
+ 1 │ function foo() { if (bar) { return true; } else { let a; } a(); }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:54]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { var a; } } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
+   ╭─[no_else_return.tsx:1:43]
+ 1 │ function foo() { if (bar) { return true; } else { let a = 1; foo(a); } b(); }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary `else` after `return`.
     ╭─[no_else_return.tsx:10:26]
   4 │                             if (value) {
   5 │ ╭─▶                             if (meta.has(item)) {
