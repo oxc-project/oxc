@@ -45,6 +45,13 @@ pub fn write_text<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 
         return;
     }
 
+    // One word: no separator for a fill to decide
+    let word = value.trim_ascii();
+    if !word.is_empty() && !word.bytes().any(|b| b.is_ascii_whitespace()) {
+        write!(f, [prefix, text(word), suffix]);
+        return;
+    }
+
     let mut words = words(value).peekable();
     let mut fill = f.fill();
     let mut prev_word = "";
