@@ -97,6 +97,14 @@ fn gt_run_in_type_context_always_splits(cpu: DynCpu) {
         "class X extends React.Component<Props<T>> {}",
         "let x = <Foo<Bar<T>>>y;",
         "let x = <A<B<C<D>>>>y;",
+        // Annotations of for-head and `await using` bindings, and arrow return types in objects.
+        "for (let x: A<B<C>>= y; ;) {}",
+        "await using x: A<B<C>>= y;",
+        "({ k: (): A<B<C>>=> a });",
+        "({ k: x => (): A<B<C>>=> a });",
+        "for (let f = (): A<B<C>>=> a; ;) {}",
+        "for (using of: A<B<C>>= y; ;) {}",
+        "for (let x = c ? 'a' in o : b, f: A<B<C>>= g; ;) {}",
         "let x = <Map<K, Set<V>>>y;",
         "let s = <Foo<Bar<T>>>\"str\";",
         "let n = <Foo<Bar<T>>>-1;",
@@ -587,8 +595,12 @@ fn tsx_generic_function_type_in_type_position(cpu: DynCpu) {
     type_params("const r = f<{ m: <T>(x: T) => T }>(0);");
     type_params("const r = g<<T>(x: T) => T>(0);");
     type_params("let w = h<{ a: { b: <T>(x: T) => T } }>(1);");
-    type_params("var a = <T>(x: T) => x;");
 
+    // As in TypeScript, a bare `<T>(` at an operand opens JSX, even before `=>`.
+    jsx("var a = <T>(x: T) => x;");
+    // JSX text is not code: an apostrophe or `/*` in it opens no string or comment.
+    jsx("let u = <T>(it's {'a) => b'}</T>;");
+    jsx("let u = <T>(a /* {'*/) => b'}</T>;");
     jsx("function Badge(): JSX.Element { return <em>(new)</em>; }");
     jsx("const Note = () => <Callout>(see docs)</Callout>;");
     jsx("const p = <code>/usr/bin</code>;");
@@ -709,14 +721,15 @@ fn tsx_generic_function_type_is_decided_by_its_arrow(cpu: DynCpu) {
 
 #[test_cpus]
 fn tsx_generic_arrow_in_expression_position_is_diagnosed(cpu: DynCpu) {
+    // A JSX element, as in TypeScript, whose text holds the `>` of the `=>`.
     let diagnosed = |code: &str| {
         let codes = diag_codes_of(code, ScriptTSX, cpu);
         assert!(
-            codes.contains(&DiagCode::UnterminatedJsxElement),
+            codes.contains(&DiagCode::JsxTextInvalidCharacter),
             "{code:?} must be diagnosed: {codes:?}"
         );
         let ks = kinds_of(code, ScriptTSX, cpu);
-        assert!(!ks.contains(&TokenKind::JsxLt), "{code:?} lexes as type parameters: {ks:?}");
+        assert!(ks.contains(&TokenKind::JsxLt), "{code:?} must open JSX: {ks:?}");
     };
     let silent = |code: &str| {
         let codes = diag_codes_of(code, ScriptTSX, cpu);
@@ -1031,6 +1044,17 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic(cpu:
         "f(a, (s: <el>() => U) => 1);",
         "using a = f, o: <obj>() => U = g;",
         "let a = f, o: <obj>() => U;",
+        "({ k: (): <T>(x: T) => T => a });",
+        "({ k: x => (): <T>(x: T) => T => a });",
+        "for (let f: <T>(x: T) => T; ;) {}",
+        "for (using f: <T>(x: T) => T of a) {}",
+        "try {} catch (e: <T>(x: T) => T) {}",
+        "try {} catch ({ a }: <T>(x: T) => T) {}",
+        "await using f: <T>(x: T) => T = null!;",
+        "for (let f = (): <T>(x: T) => T => a; ;) {}",
+        "if ((a): <T>(x: T) => T => a) {}",
+        "for (using of: <T>(x: T) => T = f; ;) {}",
+        "for (await using of: <T>(x: T) => T of a) {}",
     ] {
         silent(code);
     }

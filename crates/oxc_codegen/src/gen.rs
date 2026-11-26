@@ -1611,6 +1611,20 @@ impl GenExpr for PrivateFieldExpression<'_> {
     }
 }
 
+/// The span of the node a callee prints first, which is the node that maps the start of a call.
+///
+/// Member expressions and calls do not map their own span; their first token comes from their
+/// object or callee.
+fn callee_start_span(callee: &Expression<'_>) -> Span {
+    match callee {
+        Expression::StaticMemberExpression(e) => callee_start_span(&e.object),
+        Expression::ComputedMemberExpression(e) => callee_start_span(&e.object),
+        Expression::PrivateFieldExpression(e) => callee_start_span(&e.object),
+        Expression::CallExpression(e) => callee_start_span(&e.callee),
+        _ => callee.span(),
+    }
+}
+
 impl GenExpr for CallExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let is_statement = p.start_of_stmt == p.code_len();
@@ -1625,6 +1639,11 @@ impl GenExpr for CallExpression<'_> {
             if pure {
                 p.add_source_mapping(self.span);
                 p.print_annotation_comment(self.span.start, AnnotationKind::Pure, false);
+            } else if callee_start_span(&self.callee).is_empty() {
+                // A callee that starts with a generated node, such as a helper reference or
+                // `Math` in `Math.pow(a, b)`, prints no mapping at the start of the call. A stack
+                // trace reports a call at its callee, so map the call's own span there instead.
+                p.add_source_mapping(self.span);
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();
@@ -1782,6 +1801,7 @@ impl Gen for ObjectPropertyKind<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::ObjectProperty(prop) => prop.print(p, ctx),
+            Self::MethodProperty(prop) => prop.print(p, ctx),
             Self::SpreadProperty(elem) => elem.print(p, ctx),
         }
     }
@@ -1789,55 +1809,8 @@ impl Gen for ObjectPropertyKind<'_> {
 
 impl Gen for ObjectProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if let Expression::FunctionExpression(func) = &self.value {
+        if matches!(self.value, Expression::FunctionExpression(_)) {
             p.add_source_mapping(self.span);
-            let is_accessor = match &self.kind {
-                PropertyKind::Init => false,
-                PropertyKind::Get => {
-                    p.print_str("get");
-                    p.print_soft_space();
-                    true
-                }
-                PropertyKind::Set => {
-                    p.print_str("set");
-                    p.print_soft_space();
-                    true
-                }
-            };
-            if self.method || is_accessor {
-                if func.r#async {
-                    p.print_space_before_identifier();
-                    p.print_str("async");
-                    p.print_soft_space();
-                }
-                if func.generator {
-                    p.print_ascii_byte(b'*');
-                }
-                self.key.print(p, ctx);
-                if let Some(type_parameters) = &func.type_parameters {
-                    type_parameters.print(p, ctx);
-                }
-                p.print_ascii_byte(b'(');
-                if let Some(this_param) = &func.this_param {
-                    this_param.print(p, ctx);
-                    if !func.params.is_empty() || func.params.rest.is_some() {
-                        p.print_ascii_byte(b',');
-                        p.print_soft_space();
-                    }
-                }
-                func.params.print(p, ctx);
-                p.print_ascii_byte(b')');
-                if let Some(return_type) = &func.return_type {
-                    p.print_colon();
-                    p.print_soft_space();
-                    return_type.print(p, ctx);
-                }
-                if let Some(body) = &func.body {
-                    p.print_soft_space();
-                    body.print(p, ctx);
-                }
-                return;
-            }
         }
 
         let mut shorthand = false;
@@ -1871,6 +1844,55 @@ impl Gen for ObjectProperty<'_> {
 
         p.print_leading_comments_before_expression(&self.value);
         self.value.print_expr(p, Precedence::Comma, Context::empty());
+    }
+}
+
+impl Gen for ObjectMethodProperty<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        let func = &self.value;
+        p.add_source_mapping(self.span);
+        match self.kind {
+            ObjectMethodKind::Method => {}
+            ObjectMethodKind::Get => {
+                p.print_str("get");
+                p.print_soft_space();
+            }
+            ObjectMethodKind::Set => {
+                p.print_str("set");
+                p.print_soft_space();
+            }
+        }
+        if func.r#async {
+            p.print_space_before_identifier();
+            p.print_str("async");
+            p.print_soft_space();
+        }
+        if func.generator {
+            p.print_ascii_byte(b'*');
+        }
+        self.key.print(p, ctx);
+        if let Some(type_parameters) = &func.type_parameters {
+            type_parameters.print(p, ctx);
+        }
+        p.print_ascii_byte(b'(');
+        if let Some(this_param) = &func.this_param {
+            this_param.print(p, ctx);
+            if !func.params.is_empty() || func.params.rest.is_some() {
+                p.print_ascii_byte(b',');
+                p.print_soft_space();
+            }
+        }
+        func.params.print(p, ctx);
+        p.print_ascii_byte(b')');
+        if let Some(return_type) = &func.return_type {
+            p.print_colon();
+            p.print_soft_space();
+            return_type.print(p, ctx);
+        }
+        if let Some(body) = &func.body {
+            p.print_soft_space();
+            body.print(p, ctx);
+        }
     }
 }
 
@@ -3257,26 +3279,11 @@ impl Gen for AssignmentPattern<'_> {
 
 impl Gen for Decorator<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        /// Whether `expr` is a `DecoratorMemberExpression` in the decorators grammar. Only that,
-        /// or a single call of it (`DecoratorCallExpression`), may follow `@` without parentheses.
-        fn is_decorator_member_expression(expr: &Expression) -> bool {
-            match expr {
-                Expression::Identifier(_) => true,
-                Expression::StaticMemberExpression(member) => {
-                    is_decorator_member_expression(&member.object)
-                }
-                Expression::PrivateFieldExpression(field) => {
-                    is_decorator_member_expression(&field.object)
-                }
-                _ => false,
-            }
-        }
-
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'@');
         let wrap = match &self.expression {
-            Expression::CallExpression(call) => !is_decorator_member_expression(&call.callee),
-            expr => !is_decorator_member_expression(expr),
+            Expression::CallExpression(call) => !call.callee.is_decorator_member_expression(),
+            expr => !expr.is_decorator_member_expression(),
         };
         p.wrap(wrap, |p| {
             self.expression.print_expr(p, Precedence::Lowest, Context::empty());

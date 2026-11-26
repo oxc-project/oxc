@@ -175,8 +175,9 @@ fn is_jsx_element_with_charset_attr(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let with_dash = Some(json!([{ "withDash": true }]));
     let no_dash = Some(json!([{ "withDash": false }]));

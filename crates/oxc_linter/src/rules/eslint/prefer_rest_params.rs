@@ -1,8 +1,9 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_rest_params_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use the rest parameters instead of `arguments`.")

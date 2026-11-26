@@ -1,25 +1,25 @@
 use std::borrow::Cow;
 
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget,
+        FunctionType, ObjectAssignmentTarget, ObjectMethodProperty, ObjectProperty,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
+use oxc_semantic::{NodeId, ReferenceId};
 use oxc_span::{GetSpan, Span};
 use oxc_str::Ident;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object};
 
-use schemars::JsonSchema;
-use serde::Deserialize;
-
 use crate::{
     AstNode,
-    ast_util::get_function_name_with_kind,
+    ast_util::{get_function_name_with_kind, outermost_paren_parent},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{Rule, TupleRuleConfig},
@@ -231,50 +231,27 @@ impl Rule for FuncNames {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::Function(func) = node.kind() {
-            let parent_node = ctx.nodes().parent_node(node.id());
+            if is_name_referenced(func, ctx) {
+                return;
+            }
+            let Some(parent_node) = outermost_paren_parent(node, ctx.semantic()) else {
+                return;
+            };
             let config = if func.generator { self.generators_config() } else { self.0 };
 
             if is_invalid_function(config, func, parent_node) {
-                // For named functions, check if they're recursive (need their name for recursion)
-                if let Some(func_name) = func.name()
-                    && is_recursive_function(func, func_name, ctx)
-                {
-                    return;
-                }
                 diagnostic_invalid_function(func, node, parent_node, ctx);
             }
         }
     }
 }
 
-fn is_recursive_function(func: &Function, func_name: Ident<'_>, ctx: &LintContext) -> bool {
-    let Some(func_scope_id) = func.scope_id.get() else {
-        return false;
-    };
-
-    if let Some(binding) = ctx.scoping().find_binding(func_scope_id, func_name) {
-        return ctx.semantic().symbol_references(binding).any(|reference| {
-            let parent = ctx.nodes().parent_node(reference.node_id());
-            // Check if this reference is the callee of a call expression (direct recursive call)
-            if let AstKind::CallExpression(call_expr) = parent.kind() {
-                // Only consider it recursive if the reference is the callee, not an argument
-                if call_expr.callee.span()
-                    == ctx.nodes().get_node(reference.node_id()).kind().span()
-                {
-                    return ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
-                        if let AstKind::Function(f) = ancestor.kind() {
-                            f.scope_id.get() == Some(func_scope_id)
-                        } else {
-                            false
-                        }
-                    });
-                }
-            }
-            false
-        });
-    }
-
-    false
+/// Returns whether the function's own name binding is referenced, which makes the name necessary.
+fn is_name_referenced(func: &Function, ctx: &LintContext) -> bool {
+    func.id
+        .as_ref()
+        .and_then(|id| id.symbol_id.get())
+        .is_some_and(|symbol_id| !ctx.scoping().get_resolved_reference_ids(symbol_id).is_empty())
 }
 
 fn diagnostic_invalid_function(
@@ -324,11 +301,7 @@ fn is_valid_identifier_name(name: &str) -> bool {
 /// Determines whether the current FunctionExpression node is a get, set, or
 /// shorthand method in an object literal or a class.
 fn is_object_or_class_method(parent_node: &AstNode) -> bool {
-    match parent_node.kind() {
-        AstKind::MethodDefinition(_) => true,
-        AstKind::ObjectProperty(property) => property.method || property.kind.is_accessor(),
-        _ => false,
-    }
+    matches!(parent_node.kind(), AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_))
 }
 
 fn has_object_assignment_target_name<'a>(
@@ -371,7 +344,10 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
         }
         AstKind::FormalParameter(pattern) => {
             matches!(pattern.pattern, BindingPattern::BindingIdentifier(_))
-                && pattern.initializer.as_ref().is_some_and(|init| init.span() == function.span)
+                && pattern
+                    .initializer
+                    .as_ref()
+                    .is_some_and(|init| init.without_parentheses().span() == function.span)
         }
         AstKind::AssignmentTargetPropertyIdentifier(ident) => {
             ident.init.as_ref().is_some_and(|expr| is_same_function(expr, function))
@@ -384,7 +360,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
 }
 
 fn is_same_function<'a>(fn1: &Expression<'a>, fn2: &Function<'a>) -> bool {
-    matches!(fn1, Expression::FunctionExpression(function_expression)
+    matches!(fn1.without_parentheses(), Expression::FunctionExpression(function_expression)
         if get_function_identifier(function_expression) == get_function_identifier(fn2)
     )
 }
@@ -418,11 +394,20 @@ fn is_invalid_function(
 
 /// Returns whether it's safe to insert a function name without breaking shadowing rules
 fn can_safely_apply_fix(func: &Function, name: Ident<'_>, ctx: &LintContext) -> bool {
-    !ctx.scoping().find_binding(func.scope_id(), name).is_some_and(|shadowed_var| {
-        ctx.semantic().symbol_references(shadowed_var).any(|reference| {
-            func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())
-        })
-    })
+    let scoping = ctx.scoping();
+    let is_value_reference_inside_function = |reference_id: &ReferenceId| {
+        let reference = scoping.get_reference(*reference_id);
+        !reference.flags().is_type_only()
+            && func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())
+    };
+    let shadows_binding = scoping.find_binding(func.scope_id(), name).is_some_and(|symbol_id| {
+        scoping.get_resolved_reference_ids(symbol_id).iter().any(is_value_reference_inside_function)
+    });
+    let shadows_global = scoping
+        .root_unresolved_references()
+        .get(&name)
+        .is_some_and(|reference_ids| reference_ids.iter().any(is_value_reference_inside_function));
+    !shadows_binding && !shadows_global
 }
 
 fn apply_rule_fix(
@@ -458,10 +443,10 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
                     .filter(|name| is_valid_identifier_name(name))
                     .map(Cow::Borrowed);
             }
-            AstKind::ObjectProperty(prop) => {
+            AstKind::ObjectProperty(ObjectProperty { key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
                 // Stop here - we found the direct property context
-                return prop
-                    .key
+                return key
                     .static_name()
                     .and_then(StaticPropertyName::into_cow_str)
                     .filter(|name| is_valid_identifier_name(name));
@@ -529,14 +514,17 @@ fn test() {
             "const fibonacci = function fib(n) { if (n <= 1) return n; return fib(n - 1) + fib(n - 2); };",
             never.clone(),
         ),
-        // Multiple references, but only one is a call - still recursive
         ("var a = function foo() { var x = foo; foo(); };", never.clone()),
-        // Direct recursive call in setTimeout - this is actually recursive
         ("setTimeout(function ticker() { ticker(); }, 1000);", never.clone()),
-        // Mutual recursion doesn't count as self-recursion (would need different handling)
         ("var a = function foo() { function bar() { foo(); } bar(); };", never.clone()),
-        // Critical test: function with multiple references where the recursive call is not the first reference
-        // This tests the fix for the control flow bug where early returns could miss later recursive calls
+        ("var x = function foo() { return foo.length; };", never.clone()),
+        ("var foo = 1; var x = function foo() { return foo + 1; };", never.clone()),
+        ("setTimeout(function ticker() { setTimeout(ticker, 1000); }, 1000);", never.clone()),
+        ("const f = function self() { return self; };", never.clone()),
+        ("const f = (function () {});", as_needed.clone()),
+        ("a = (function () {});", as_needed.clone()),
+        ("function g(a = (function () {})) {}", as_needed.clone()),
+        ("({ a: (function () {}) })", as_needed.clone()),
         (
             "var x = function foo() { var ref1 = foo.name; var ref2 = foo.length; foo(); };",
             never.clone(),
@@ -618,11 +606,9 @@ fn test() {
         ("var { a: [b] = function(){} } = foo;", as_needed.clone()), // { "ecmaVersion": 6 },
         ("function foo({ a } = function(){}) {};", as_needed.clone()), // { "ecmaVersion": 6 },
         ("var x = function foo() {};", never.clone()),
-        ("var x = function foo() { return foo.length; };", never.clone()),
-        ("var foo = 1; var x = function foo() { return foo + 1; };", never.clone()),
         ("var x = function foo() { console.log('hello'); };", never.clone()),
         ("var outer = function inner() { function nested() { nested(); } };", never.clone()),
-        ("setTimeout(function ticker() { setTimeout(ticker, 1000); }, 1000);", never.clone()),
+        ("globalThis.handler = function () { return handler; };", always.clone()),
         ("Foo.prototype.bar = function foo() {};", never.clone()),
         ("({foo: function foo() {}})", never.clone()),
         ("export default function() {}", always.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
@@ -728,6 +714,16 @@ fn test() {
         (
             "const x = { ['foo']: function() {} }",
             "const x = { ['foo']: function foo() {} }",
+            always.clone(),
+        ),
+        (
+            "globalThis.handler = function () { return handler; };",
+            "globalThis.handler = function () { return handler; };",
+            always.clone(),
+        ),
+        (
+            "globalThis.handler = function() { return 1; };",
+            "globalThis.handler = function handler() { return 1; };",
             always.clone(),
         ),
         // suggest removal when configured to "never"

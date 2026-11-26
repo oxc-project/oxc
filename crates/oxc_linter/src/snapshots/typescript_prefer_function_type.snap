@@ -113,23 +113,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The function type form `(this: string) => T` is generally preferred when possible for being more succinct.
 
-  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
-   ╭─[prefer_function_type.tsx:3:11]
+  ⚠ typescript(prefer-function-type): `this` refers to the function type `Foo`, did you intend to use a generic `this` parameter like `<Self>(this: Self, ...) => Self` instead?
+   ╭─[prefer_function_type.tsx:3:17]
  2 │         interface Foo {
  3 │           (arg: this): void;
-   ·           ──────────────────
+   ·                 ────
  4 │         }
    ╰────
-  help: The function type form `(arg: this) => void` is generally preferred when possible for being more succinct.
 
-  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
-   ╭─[prefer_function_type.tsx:3:11]
+  ⚠ typescript(prefer-function-type): `this` refers to the function type `Foo`, did you intend to use a generic `this` parameter like `<Self>(this: Self, ...) => Self` instead?
+   ╭─[prefer_function_type.tsx:3:26]
  2 │         interface Foo {
  3 │           (arg: number): this | undefined;
-   ·           ────────────────────────────────
+   ·                          ────
  4 │         }
    ╰────
-  help: The function type form `(arg: number) => this | undefined` is generally preferred when possible for being more succinct.
 
   ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
     ╭─[prefer_function_type.tsx:4:11]
@@ -182,3 +180,51 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─────
    ╰────
   help: The function type form `() => T` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript(prefer-function-type): `this` refers to the function type `Factory`, did you intend to use a generic `this` parameter like `<Self>(this: Self, ...) => Self` instead?
+   ╭─[prefer_function_type.tsx:1:25]
+ 1 │ interface Factory { (): this; }
+   ·                         ────
+   ╰────
+
+  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:17]
+ 1 │ type Result = { (): number; } | { error: string };
+   ·                 ───────────
+   ╰────
+  help: The function type form `() => number` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:20]
+ 1 │ type Callbacks = { (): void }[];
+   ·                    ────────
+   ╰────
+  help: The function type form `() => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:21]
+ 1 │ type Keys = keyof { (): void };
+   ·                     ────────
+   ╰────
+  help: The function type form `() => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:54]
+ 1 │ interface Callback<T> { /* Documents the callback */ (): T; }
+   ·                                                      ──────
+   ╰────
+  help: The function type form `() => T` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:48]
+ 1 │ type Callback = { /* Documents the callback */ (): void };
+   ·                                                ────────
+   ╰────
+  help: The function type form `() => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:22]
+ 1 │ interface Callback { (/* value */ value: string): void }
+   ·                      ─────────────────────────────────
+   ╰────
+  help: The function type form `(/* value */ value: string) => void` is generally preferred when possible for being more succinct.

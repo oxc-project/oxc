@@ -231,6 +231,67 @@ for (const mode of ["commonjs", "esm", "coverage"]) {
 }
 
 for (const mode of ["commonjs", "esm", "coverage"]) {
+  test(`${mode}: decorator access objects reject non-object receivers and failed writes`, async () => {
+    const coverage = {};
+    if (mode === "coverage") {
+      runInNewContext(
+        readFileSync(
+          new URL("../../../tasks/coverage/src/runtime/decoratorHelpers.js", import.meta.url),
+          "utf8",
+        ),
+        { babelHelpers: coverage },
+      );
+    }
+    const load = async (name) =>
+      mode === "coverage"
+        ? coverage[name]
+        : mode === "commonjs"
+          ? require(`@oxc-project/runtime/helpers/${name}`)
+          : (await import(`@oxc-project/runtime/helpers/esm/${name}`)).default;
+    const start = await load("decoratorStart");
+    const decorate = await load("decorateElement");
+    class C {}
+    const array = start(undefined);
+    const accesses = {};
+    const capture = (label) => [void 0, (_, context) => void (accesses[label] = context.access)];
+    decorate(array, 5, "x", [capture("public")], C);
+    const brand = new WeakMap();
+    decorate(array, 5 | 16, "#x", [capture("private")], C, [brand]);
+
+    // The coverage helpers run in another realm, with their own TypeError.
+    const typeError = { name: "TypeError" };
+    const object = { x: 1 };
+    brand.set(object, 1);
+    for (const [label, access] of Object.entries(accesses)) {
+      for (const primitive of [1, "x", true, null, undefined, Symbol("x")]) {
+        const message = `${label} ${String(primitive)}`;
+        assert.throws(() => access.get(primitive), typeError, message);
+        assert.throws(() => access.set(primitive, 2), typeError, message);
+        assert.throws(() => access.has(primitive), typeError, message);
+      }
+      assert.equal(access.has(object), true, label);
+      assert.equal(access.get(object), 1, label);
+      assert.equal(access.set(object, 2), undefined, label);
+      assert.equal(access.get(object), 2, label);
+    }
+    assert.equal(object.x, 2);
+    assert.equal(brand.get(object), 2);
+    assert.equal(accesses.private.has({}), false);
+
+    // Public `set` is `Set(obj, name, value, true)`, which throws when the write fails.
+    const frozen = Object.freeze({ x: 1 });
+    assert.throws(() => accesses.public.set(frozen, 2), typeError, "frozen");
+    assert.equal(frozen.x, 1);
+    const getterOnly = {
+      get x() {
+        return 1;
+      },
+    };
+    assert.throws(() => accesses.public.set(getterOnly, 2), typeError, "getter-only");
+  });
+}
+
+for (const mode of ["commonjs", "esm", "coverage"]) {
   test(`${mode}: colliding public elements retain their own descriptors and home objects`, async () => {
     const coverage = {};
     if (mode === "coverage") {

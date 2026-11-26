@@ -485,6 +485,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let decl = match self.cur_kind() {
             // `export import A = B`
             Kind::Import => {
+                self.report_decorators_not_valid_here(&decorators);
                 let import_start = self.cur_start();
                 self.bump_any();
                 // Pass `should_record_module_record: false` to prevent an `import` module record
@@ -522,11 +523,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 ModuleDeclaration::ExportDeclaration(export_decl)
             }
-            Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
-                self.parse_ts_export_assignment_declaration(start),
-            ),
+            Kind::Eq if self.is_ts => {
+                self.report_decorators_not_valid_here(&decorators);
+                ModuleDeclaration::TSExportAssignment(
+                    self.parse_ts_export_assignment_declaration(start),
+                )
+            }
             Kind::As if self.is_ts && self.lexer.peek_token().kind() == Kind::Namespace => {
                 // `export as namespace ...`
+                self.report_decorators_not_valid_here(&decorators);
                 ModuleDeclaration::TSNamespaceExportDeclaration(
                     self.parse_ts_export_namespace(start),
                 )
@@ -534,21 +539,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Default => ModuleDeclaration::ExportDefaultDeclaration(
                 self.parse_export_default_declaration(start, decorators),
             ),
-            Kind::Star => ModuleDeclaration::ExportAllDeclaration(
-                self.parse_export_all_declaration(start, ImportOrExportKind::Value),
-            ),
-            Kind::LCurly => self.parse_export_named_specifiers(start, ImportOrExportKind::Value),
+            Kind::Star => {
+                self.report_decorators_not_valid_here(&decorators);
+                ModuleDeclaration::ExportAllDeclaration(
+                    self.parse_export_all_declaration(start, ImportOrExportKind::Value),
+                )
+            }
+            Kind::LCurly => {
+                self.report_decorators_not_valid_here(&decorators);
+                self.parse_export_named_specifiers(start, ImportOrExportKind::Value)
+            }
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
                     Kind::LCurly => {
+                        self.report_decorators_not_valid_here(&decorators);
                         self.bump_any(); // bump `type`
                         self.parse_export_named_specifiers(start, ImportOrExportKind::Type)
                     }
                     // `export type * as ...`
                     Kind::Star => {
+                        self.report_decorators_not_valid_here(&decorators);
                         self.bump_any(); // bump `type`
                         ModuleDeclaration::ExportAllDeclaration(
                             self.parse_export_all_declaration(start, ImportOrExportKind::Type),
@@ -577,6 +590,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
         stmt
+    }
+
+    fn report_decorators_not_valid_here(&mut self, decorators: &[Decorator<'a>]) {
+        for decorator in decorators {
+            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+        }
     }
 
     // export NamedExports ;
@@ -744,12 +763,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         //                  AssignmentExpression ;
         // <https://tc39.es/ecma262/#prod-ExportDeclaration>
         //
-        // `abstract`/`interface` (TS) and `async` are contextual keywords, so each can be the start
-        // of the `AssignmentExpression` (`export default async;`). Peek the token after the keyword
-        // to apply the lookahead restriction without consuming it, committing only when it confirms
+        // `abstract` (TS) and `async` are contextual keywords, so each can be the start of the
+        // `AssignmentExpression` (`export default async;`). Peek the token after the keyword to
+        // apply the lookahead restriction without consuming it, committing only when it confirms
         // a declaration. `[no LineTerminator here]` maps to `!next.is_on_new_line()`.
         let kind = self.cur_kind();
-        if matches!(kind, Kind::Abstract | Kind::Async | Kind::Interface) {
+        // export default interface I {}
+        // `interface` is reserved in module code, so in TypeScript it always starts a declaration,
+        // even across a line break, as in `tsc`.
+        if self.is_ts && kind == Kind::Interface {
+            let interface_start = self.cur_start();
+            self.bump_any();
+            for decorator in &decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+            if let Declaration::TSInterfaceDeclaration(decl) =
+                self.parse_ts_interface_declaration(interface_start, &Modifiers::empty())
+            {
+                return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
+            }
+        }
+        if matches!(kind, Kind::Abstract | Kind::Async) {
             let modifier_start = self.cur_start();
             let next = self.lexer.peek_token();
             if !next.is_on_new_line() {
@@ -777,18 +811,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
                     }
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
-                }
-                // export default interface I {}
-                if self.is_ts && kind == Kind::Interface {
-                    self.bump_any();
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-                    }
-                    if let Declaration::TSInterfaceDeclaration(decl) =
-                        self.parse_ts_interface_declaration(modifier_start, &Modifiers::empty())
-                    {
-                        return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
-                    }
                 }
             }
             // Used as an identifier (`export default async;`); nothing consumed, so fall through.

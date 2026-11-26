@@ -225,6 +225,14 @@ impl IdDenylist {
                     return;
                 }
             }
+            AstKind::ObjectMethodProperty(property)
+                if property.key.span().contains_inclusive(ident.span)
+                    && !property.key.is_computed() =>
+            {
+                if is_dynamic_import_attribute_object_method_property(property, ctx) {
+                    return;
+                }
+            }
             AstKind::BindingProperty(property)
                 if property.key.span().contains_inclusive(ident.span)
                     && !property.key.is_computed() =>
@@ -280,6 +288,30 @@ impl IdDenylist {
     fn is_restricted(&self, name: &str) -> bool {
         self.0.contains(name)
     }
+}
+
+fn is_dynamic_import_attribute_object_method_property<'a>(
+    property: &oxc_ast::ast::ObjectMethodProperty<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let property_node = ctx.nodes().get_node(property.node_id());
+    let object_node = ctx.nodes().parent_node(property_node.id());
+    if property.key.is_specific_static_name("with")
+        && matches!(
+            ctx.nodes().parent_kind(object_node.id()),
+            AstKind::ImportExpression(import_expr)
+                if import_expr.options.as_ref().is_some_and(|options| options.span() == object_node.span())
+        )
+    {
+        return true;
+    }
+    let outer_property_node = ctx.nodes().parent_node(object_node.id());
+    let AstKind::ObjectProperty(outer_property) = outer_property_node.kind() else {
+        return false;
+    };
+    outer_property.key.is_specific_static_name("with")
+        && outer_property.value.span() == object_node.span()
+        && is_dynamic_import_attribute_object_property(outer_property, ctx)
 }
 
 fn export_specifier_identifier_should_skip(
@@ -401,6 +433,7 @@ fn test() {
             "import('foo.json', { with: { type: 'json' } })",
             Some(serde_json::json!(["with", "type"])),
         ), // { "ecmaVersion": 2025 },
+        ("import('foo.json', { with: { type() {} } })", Some(serde_json::json!(["type"]))), // { "ecmaVersion": 2025 },
         ("import('foo.json', { 'with': { type: 'json' } })", Some(serde_json::json!(["type"]))), // { "ecmaVersion": 2025 },
         ("import('foo.json', { with: { type } })", Some(serde_json::json!(["type"]))), // { "ecmaVersion": 2025 }
     ];

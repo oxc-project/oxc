@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{BindingPattern, ClassElement, ForStatementLeft, IdentifierReference, ModuleExportName},
@@ -10,8 +13,6 @@ use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,

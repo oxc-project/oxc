@@ -28,20 +28,21 @@ After a contentless keep-chomped scalar (its conformance failures), Prettier pri
 ## keep-chomped-space-only-eof-line
 
 - Why: semantics (prettier/prettier#19256)
-- Pin: `tests/fixtures/yaml/keep-chomped-eos-spaces-only.yaml`, `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
-- Conformance:
-  - `externals/prettier/yaml/yaml-test-suite/snippet: JEF9-3.yaml*` (the suite asserts no JSON value, only yaml@2's dump)
+- Pin: `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
 
 ```yaml
 # input (no final newline; the last line is two spaces)
 key: |+
+
 ␣␣
 
-# ours: value "" (the break-less space-only line adds nothing to the kept tail)
-# prettier: prints one newline too many, value "\n"
+# ours: value "\n" (the break-less space-only line adds nothing after the blank line)
+# prettier: prints one newline too many, value "\n\n"
 ```
 
-A space-only EOF line at-or-below the block's indent holds no line break, so it adds nothing to the kept tail (psych/PyYAML agree).
+A break-less EOF line of at-or-below-indent spaces adds nothing to the kept tail after another line.
+As the scalar's only line it is one kept line, which Prettier prints too.
+Values as yaml@2 reads them.
 
 ## empty-document-end-marker
 
@@ -157,6 +158,34 @@ folded: >
 ```
 
 More-indented lines in a folded scalar are never re-flowed under `proseWrap: always`: their line breaks are literal per YAML folding, so wrapping breaks idempotency and the value.
+
+## block-scalar-explicit-indent
+
+- Why: semantics
+- Pin: `tests/fixtures/yaml/block-scalar-explicit-indent.yaml`
+- Conformance:
+  - `externals/aws-cloudformation-templates/EC2/ec2_with_waitcondition_template.yaml`
+
+```yaml
+# input: value "  x\n"
+a:
+    b: |2
+        x
+
+# ours: value "  x\n"
+a:
+  b: |2
+      x
+
+# prettier: the content stays at its source column, value "    x\n"
+a:
+  b: |2
+        x
+```
+
+An indentation indicator counts from the enclosing collection's items (YAML's `n + m`), so the content is re-indented with them.
+Prettier keeps it at its source column: the value changes when the items move left, and the output fails to re-parse when they move right (a wider `tabWidth`, or a source indented narrower than the output).
+Values and parse errors as yaml@2 reads them.
 
 ## flow-flat-with-newline
 

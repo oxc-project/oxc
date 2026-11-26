@@ -2,6 +2,7 @@
 //! [`Symbol`] are considered a usage.
 
 use itertools::Itertools;
+
 use oxc_ast::{AstKind, AstType, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -207,10 +208,7 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::IdentifierReference(_)
                 | AstKind::ComputedMemberExpression(_)
                 | AstKind::StaticMemberExpression(_)
-                | AstKind::PrivateFieldExpression(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_) => {}
+                | AstKind::PrivateFieldExpression(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,

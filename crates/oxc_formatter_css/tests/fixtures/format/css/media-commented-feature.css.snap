@@ -1,0 +1,106 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A comment in the params: the query prints as it does without it, the comment in place */
+@media /* c */ (foo:'a') {
+}
+@media /* c */ (min-width:100px) and (foo : 'a'), print and (MIN-WIDTH: 100.0PX) {
+}
+@media /* c */ (baz: 'a"b') {
+}
+@media /* c */ (min-width:
+    100px) {
+}
+@media (/* c */ min-width /* d */ : /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
+}
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@media (width: calc(1px /* c */)) and (width: calc((1px /* d */) + 2px)) {
+}
+@custom-media --foo /* c */ true;
+
+/* DIVERGENCES.md#commented-as-uncommented */
+@media /* c */ (bar:/* d */'b') {
+}
+@media all and/* c */(max-width:1024px) {
+}
+@media /* c */ screen and/* d */(foo:'a') {
+}
+
+/* DIVERGENCES.md#media-feature-comment-case */
+@media (/* A */ COLOR) {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A comment in the params: the query prints as it does without it, the comment in place */
+@media /* c */ (foo: "a") {
+}
+@media /* c */ (min-width: 100px) and (foo: "a"), print and (min-width: 100px) {
+}
+@media /* c */ (baz: 'a"b') {
+}
+@media /* c */ (min-width: 100px) {
+}
+@media (/* c */ min-width /* d */: /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
+}
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@media (width: calc(1px /* c */)) and (width: calc((1px /* d */) + 2px)) {
+}
+@custom-media --foo /* c */ true;
+
+/* DIVERGENCES.md#commented-as-uncommented */
+@media /* c */ (bar: /* d */ "b") {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
+@media /* c */ screen and /* d */ (foo: "a") {
+}
+
+/* DIVERGENCES.md#media-feature-comment-case */
+@media (/* A */ color) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A comment in the params: the query prints as it does without it, the comment in place */
+@media /* c */ (foo: "a") {
+}
+@media /* c */ (min-width: 100px) and (foo: "a"), print and (min-width: 100px) {
+}
+@media /* c */ (baz: 'a"b') {
+}
+@media /* c */ (min-width: 100px) {
+}
+@media (/* c */ min-width /* d */: /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
+}
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@media (width: calc(1px /* c */)) and (width: calc((1px /* d */) + 2px)) {
+}
+@custom-media --foo /* c */ true;
+
+/* DIVERGENCES.md#commented-as-uncommented */
+@media /* c */ (bar: /* d */ "b") {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
+@media /* c */ screen and /* d */ (foo: "a") {
+}
+
+/* DIVERGENCES.md#media-feature-comment-case */
+@media (/* A */ color) {
+}
+
+===================== End =====================

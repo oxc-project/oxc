@@ -262,6 +262,7 @@ fn first_difference(a: &Tokens, b: &Tokens) -> Option<(String, String)> {
         .or_else(|| lane_difference("spans", a.spans(), b.spans()))
         .or_else(|| lane_difference("diagnostics", a.diagnostics(), b.diagnostics()))
         .or_else(|| lane_difference("numbers", &numbers(a), &numbers(b)))
+        .or_else(|| lane_difference("bigints", a.bigints(), b.bigints()))
         .or_else(|| lane_difference("strings", a.strings(), b.strings()))
         .or_else(|| lane_difference("templates", a.templates(), b.templates()))
         .or_else(|| lane_difference("atoms", a.atoms(), b.atoms()))

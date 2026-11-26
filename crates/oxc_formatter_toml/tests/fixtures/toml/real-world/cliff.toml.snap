@@ -1,0 +1,216 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# git-cliff ~ configuration file
+# https://git-cliff.org/docs/configuration
+
+# [remote.github]
+# owner = "oxc-project"
+# repo = "oxc"
+
+# https://git-cliff.org/docs/configuration/bump
+[bump]
+features_always_bump_minor = false
+breaking_always_bump_major = false
+bump_type = "minor"
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).\n
+"""
+footer = ""
+# remove the leading and trailing whitespace from the templates
+trim = true
+# template for the changelog body
+# https://keats.github.io/tera/docs/#introduction
+body = """
+{%- macro print_commit(commit) -%}
+    - {{ commit.id | truncate(length=7, end="") }} \
+        {% if commit.scope %}{{ commit.scope }}: {% endif %}\
+        {% if commit.breaking %}[**BREAKING**] {% endif %}\
+"""
+
+[git]
+# parse the commits based on https://www.conventionalcommits.org
+conventional_commits = true
+# filter out the commits that are not conventional
+filter_unconventional = true
+# Require all commits to be conventional.
+# Takes precedence over filter_unconventional.
+require_conventional = false
+# process each line of a commit as an individual commit
+split_commits = false
+# protect breaking changes from being skipped due to matching a skipping commit_parser
+protect_breaking_commits = false
+# filter out the commits that are not matched by commit parsers
+filter_commits = false
+# sort the tags topologically
+topo_order = false
+# sort the commits inside sections by oldest/newest order
+sort_commits = "newest"
+# regex for parsing and grouping commits
+commit_parsers = [
+  # Only keep interesting changes for users to read.
+  { message = "^feat", group = "<!-- 0 -->🚀 Features" },
+  { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
+  # { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
+  { message = "^perf", group = "<!-- 3 -->⚡ Performance" },
+  { message = "^doc", group = "<!-- 4 -->📚 Documentation" },
+  # { message = "^style", group = "<!-- 5 -->🎨 Styling" },
+  # { message = "^test", group = "<!-- 6 -->🧪 Testing" },
+  # { message = "^chore|^ci", skip = true },
+  { body = ".*security", group = "<!-- 7 -->🛡️ Security" },
+  # { message = "^revert", group = "<!-- 8 -->◀️ Revert" },
+  # { message = ".*", group = "<!-- 9 -->💼 Other" },
+  { message = ".*", skip = true },
+]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# git-cliff ~ configuration file
+# https://git-cliff.org/docs/configuration
+
+# [remote.github]
+# owner = "oxc-project"
+# repo = "oxc"
+
+# https://git-cliff.org/docs/configuration/bump
+[bump]
+features_always_bump_minor = false
+breaking_always_bump_major = false
+bump_type = "minor"
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).\n
+"""
+footer = ""
+# remove the leading and trailing whitespace from the templates
+trim = true
+# template for the changelog body
+# https://keats.github.io/tera/docs/#introduction
+body = """
+{%- macro print_commit(commit) -%}
+    - {{ commit.id | truncate(length=7, end="") }} \
+        {% if commit.scope %}{{ commit.scope }}: {% endif %}\
+        {% if commit.breaking %}[**BREAKING**] {% endif %}\
+"""
+
+[git]
+# parse the commits based on https://www.conventionalcommits.org
+conventional_commits = true
+# filter out the commits that are not conventional
+filter_unconventional = true
+# Require all commits to be conventional.
+# Takes precedence over filter_unconventional.
+require_conventional = false
+# process each line of a commit as an individual commit
+split_commits = false
+# protect breaking changes from being skipped due to matching a skipping commit_parser
+protect_breaking_commits = false
+# filter out the commits that are not matched by commit parsers
+filter_commits = false
+# sort the tags topologically
+topo_order = false
+# sort the commits inside sections by oldest/newest order
+sort_commits = "newest"
+# regex for parsing and grouping commits
+commit_parsers = [
+  # Only keep interesting changes for users to read.
+  { message = "^feat", group = "<!-- 0 -->🚀 Features" },
+  { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
+  # { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
+  { message = "^perf", group = "<!-- 3 -->⚡ Performance" },
+  { message = "^doc", group = "<!-- 4 -->📚 Documentation" },
+  # { message = "^style", group = "<!-- 5 -->🎨 Styling" },
+  # { message = "^test", group = "<!-- 6 -->🧪 Testing" },
+  # { message = "^chore|^ci", skip = true },
+  { body = ".*security", group = "<!-- 7 -->🛡️ Security" },
+  # { message = "^revert", group = "<!-- 8 -->◀️ Revert" },
+  # { message = ".*", group = "<!-- 9 -->💼 Other" },
+  { message = ".*", skip = true },
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# git-cliff ~ configuration file
+# https://git-cliff.org/docs/configuration
+
+# [remote.github]
+# owner = "oxc-project"
+# repo = "oxc"
+
+# https://git-cliff.org/docs/configuration/bump
+[bump]
+features_always_bump_minor = false
+breaking_always_bump_major = false
+bump_type = "minor"
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).\n
+"""
+footer = ""
+# remove the leading and trailing whitespace from the templates
+trim = true
+# template for the changelog body
+# https://keats.github.io/tera/docs/#introduction
+body = """
+{%- macro print_commit(commit) -%}
+    - {{ commit.id | truncate(length=7, end="") }} \
+        {% if commit.scope %}{{ commit.scope }}: {% endif %}\
+        {% if commit.breaking %}[**BREAKING**] {% endif %}\
+"""
+
+[git]
+# parse the commits based on https://www.conventionalcommits.org
+conventional_commits = true
+# filter out the commits that are not conventional
+filter_unconventional = true
+# Require all commits to be conventional.
+# Takes precedence over filter_unconventional.
+require_conventional = false
+# process each line of a commit as an individual commit
+split_commits = false
+# protect breaking changes from being skipped due to matching a skipping commit_parser
+protect_breaking_commits = false
+# filter out the commits that are not matched by commit parsers
+filter_commits = false
+# sort the tags topologically
+topo_order = false
+# sort the commits inside sections by oldest/newest order
+sort_commits = "newest"
+# regex for parsing and grouping commits
+commit_parsers = [
+  # Only keep interesting changes for users to read.
+  { message = "^feat", group = "<!-- 0 -->🚀 Features" },
+  { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
+  # { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
+  { message = "^perf", group = "<!-- 3 -->⚡ Performance" },
+  { message = "^doc", group = "<!-- 4 -->📚 Documentation" },
+  # { message = "^style", group = "<!-- 5 -->🎨 Styling" },
+  # { message = "^test", group = "<!-- 6 -->🧪 Testing" },
+  # { message = "^chore|^ci", skip = true },
+  { body = ".*security", group = "<!-- 7 -->🛡️ Security" },
+  # { message = "^revert", group = "<!-- 8 -->◀️ Revert" },
+  # { message = ".*", group = "<!-- 9 -->💼 Other" },
+  { message = ".*", skip = true },
+]
+
+===================== End =====================

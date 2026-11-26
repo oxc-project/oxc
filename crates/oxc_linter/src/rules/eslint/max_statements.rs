@@ -1,18 +1,18 @@
-use oxc_ast::ast::{
-    ArrowFunctionExpression, BlockStatement, Class, Function, FunctionBody, StaticBlock,
-};
-use oxc_ast_visit::VisitJs;
-use oxc_ast_visit::walk_js::{
-    walk_arrow_function_expression, walk_class, walk_function, walk_function_body,
-    walk_static_block,
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use oxc_ast::ast::{ArrowFunctionExpression, BlockStatement, Function, FunctionBody, StaticBlock};
+use oxc_ast_visit::{
+    VisitJs,
+    walk_js::{
+        walk_arrow_function_expression, walk_function, walk_function_body, walk_static_block,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::scope::ScopeFlags;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -253,7 +253,9 @@ impl Rule for MaxStatements {
 
         if visitor.top_level_functions.len() > 1 {
             for (name, count, span) in visitor.top_level_functions {
-                ctx.diagnostic(max_statements_diagnostic(name, count, self.max, span));
+                if count > self.max {
+                    ctx.diagnostic(max_statements_diagnostic(name, count, self.max, span));
+                }
             }
         }
     }
@@ -264,7 +266,7 @@ struct StatementCounter<'a> {
     ignore_top_level_functions: bool,
     /// Stack of statement counts for each function we're currently inside
     function_stack: Vec<u32>,
-    /// Top-level functions that exceed the limit (reported only if > 1)
+    /// Top-level functions (all exempt if exactly one exists)
     top_level_functions: Vec<(Option<&'a str>, u32, Span)>,
     /// Diagnostics for non-top-level functions
     diagnostics: Vec<(Option<&'a str>, u32, Span)>,
@@ -282,12 +284,10 @@ impl<'a> StatementCounter<'a> {
             return;
         }
 
-        if count > self.max {
-            if self.ignore_top_level_functions && self.function_stack.is_empty() {
-                self.top_level_functions.push((name, count, span));
-            } else {
-                self.diagnostics.push((name, count, span));
-            }
+        if self.ignore_top_level_functions && self.function_stack.is_empty() {
+            self.top_level_functions.push((name, count, span));
+        } else if count > self.max {
+            self.diagnostics.push((name, count, span));
         }
     }
 
@@ -315,12 +315,6 @@ impl<'a> VisitJs<'a> for StatementCounter<'a> {
         self.start_function();
         walk_static_block(self, block);
         self.end_function(None, block.span, true);
-    }
-
-    fn visit_class(&mut self, class: &Class<'a>) {
-        self.start_function();
-        walk_class(self, class);
-        self.function_stack.pop();
     }
 
     #[expect(clippy::cast_possible_truncation)] // the length of body statements can't be over u32::MAX, because the source code is already limited by u32::MAX.
@@ -418,6 +412,14 @@ fn test() {
             "function foo() { let one; let two = class { static { let three; let four; let five; if (six) { let seven; let eight; let nine; } } }; }",
             Some(serde_json::json!([2])),
         ), // { "ecmaVersion": 2022 }
+        (
+            "class Stack { constructor() { let a = 1; a++; a++; a++; } }",
+            Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
+        ),
+        (
+            "class K { m() { let a = 1; a++; a++; a++; } }",
+            Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -512,6 +514,14 @@ fn test() {
             "class C { static { { one; two; three; four; } function not_top_level() { 1; 2; 3; } { five; six; seven; eight; } } }",
             Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
         ), // { "ecmaVersion": 2022 }
+        (
+            "class Stack { constructor() { let a = 1; a++; a++; a++; } } var helper = () => { let b = 1; b++; b++; b++; };",
+            Some(serde_json::json!([2, { "ignoreTopLevelFunctions": true }])),
+        ),
+        (
+            "function f() { a(); b(); } function g() { c(); }",
+            Some(serde_json::json!([1, { "ignoreTopLevelFunctions": true }])),
+        ),
     ];
 
     Tester::new(MaxStatements::NAME, MaxStatements::PLUGIN, pass, fail).test_and_snapshot();

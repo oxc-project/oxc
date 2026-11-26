@@ -229,9 +229,7 @@ source: crates/oxc_linter/src/tester.rs
   4 │ │                         const b = function b () {}
   5 │ │                         const c = function () {}
   6 │ │                         const d = () => {}
-  7 │ │                         const obj = {
-  8 │ │                           a: function a () {},
-  9 │ │                           b: function b () {},
+... · │   
  10 │ │                           c () {},
  11 │ │                           d: () => {},
  12 │ │                         }
@@ -249,10 +247,7 @@ source: crates/oxc_linter/src/tester.rs
   4 │ │                         const b = function b () {}
   5 │ │                         const c = function () {}
   6 │ │                         const d = () => {}
-  7 │ │                         const obj = {
-  8 │ │                           a: function a () {},
-  9 │ │                           b: function b () {},
- 10 │ │                           c () {},
+... · │   
  11 │ │                           d: () => {},
  12 │ │                         }
  13 │ │   
@@ -270,11 +265,7 @@ source: crates/oxc_linter/src/tester.rs
   4 │ │                           function a () {}
   5 │ │                           const b = function b () {}
   6 │ │                           const c = function () {}
-  7 │ │                           const d = () => {}
-  8 │ │                           const obj = {
-  9 │ │                             a: function a () {},
- 10 │ │                             b: function b () {},
- 11 │ │                             c () {},
+... · │   
  12 │ │                             d: () => {},
  13 │ │                           }
  14 │ │                           return <div>Hello {this.props.name}</div>;

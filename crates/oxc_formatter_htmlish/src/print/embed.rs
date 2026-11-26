@@ -209,7 +209,12 @@ pub fn write_embedded_content<'a>(
     } else {
         value
     };
-    let Some(ir) = dispatch_fragment_ir(f, language, value, None) else { return false };
+    // An HTML body reads the parent's placeholders as this part does (html-in-js's `${}` in a `<script type="text/html">`);
+    // a Markdown body's HTML fences do not: a known limit, three embeddings deep
+    let embedded_in =
+        f.context().embedded_in().filter(|e| language == "html" && e.placeholder.is_some());
+    let context = embedded_in.as_ref().map(|e| e as &dyn Any);
+    let Some(ir) = dispatch_fragment_ir(f, language, value, context) else { return false };
     let ir = if t.tag(id) == "script" { escape_script_end(ir, value, f) } else { ir };
     f.write_elements(ir);
     true
@@ -315,7 +320,8 @@ pub fn write_interpolation<'a>(
         if borrowed {
             write!(f, [soft_line_indent_or_space(&formatted), space()]);
         } else {
-            write!(f, soft_space_or_block_indent(&formatted));
+            // A group of its own: the separator after it breaking does not break it (apps/oxfmt/DIVERGENCES.md#interpolation-own-group)
+            write!(f, group(&soft_space_or_block_indent(&formatted)));
         }
         return;
     }

@@ -456,8 +456,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 let kind = token.kind();
                 // `for (using of` is only a using declaration if followed by `=`, `;`, or `:`
-                // to distinguish from `for (using of collection)` which is a for-of loop
-                if kind == Kind::Of {
+                // to distinguish from `for (using of collection)` which is a for-of loop.
+                // An escaped `of` cannot be the delimiter, so it is parsed as the binding.
+                if kind == Kind::Of && !token.escaped() {
                     p.bump_any(); // bump `of`
                     return matches!(p.cur_kind(), Kind::Eq | Kind::Semicolon | Kind::Colon);
                 }

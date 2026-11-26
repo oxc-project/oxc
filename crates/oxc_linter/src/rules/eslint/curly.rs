@@ -9,13 +9,11 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::{
-    identifier::{is_identifier_part, is_white_space},
-    line_terminator::is_line_terminator,
-};
+use oxc_syntax::{identifier::is_identifier_part, line_terminator::is_line_terminator};
 
 use crate::{
     AstNode,
+    ast_util::next_token,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{Rule, TupleRuleConfig},
@@ -494,22 +492,6 @@ fn ends_with_block(stmt: &Statement) -> bool {
     }
 }
 
-/// The start and first character of the next token after `pos`, skipping whitespace
-/// and comments.
-fn next_token(mut pos: u32, ctx: &LintContext) -> Option<(u32, char)> {
-    loop {
-        let rest = &ctx.source_text()[pos as usize..];
-        let (offset, c) =
-            rest.char_indices().find(|&(_, c)| !is_white_space(c) && !is_line_terminator(c))?;
-        #[expect(clippy::cast_possible_truncation)]
-        let start = pos + offset as u32;
-        match ctx.semantic().get_comment_at(start) {
-            Some(comment) => pos = comment.span.end,
-            None => return Some((start, c)),
-        }
-    }
-}
-
 /// `else{foo()}` has to become `else foo()`, not `elsefoo()`.
 fn needs_space_before(body: &Statement, text: &str, ctx: &LintContext) -> bool {
     ctx.source_text()[..body.span().start as usize]
@@ -595,42 +577,12 @@ fn is_lexical_declaration(node: &Statement) -> bool {
     }
 }
 
-#[expect(clippy::cast_possible_truncation)]
-fn get_next_char_offset(span: Span, ctx: &LintContext) -> Option<u32> {
-    let src = ctx.source_text();
-    let start = span.end as usize;
-    if start >= src.len() {
-        return None;
-    }
-
-    if let Some(tail) = src.get(start..)
-        && (tail.starts_with("\r\n") || tail.starts_with("\n\r"))
-    {
-        return Some(span.end + 2);
-    }
-
-    src[start..].chars().next().map(|c| span.end + c.len_utf8() as u32)
-}
-
 fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
-    let Some(next_char_offset) = get_next_char_offset(node.span(), ctx) else {
-        return false;
-    };
-
-    let start = next_char_offset;
-    let end: u32 = match ctx.source_text().len().try_into() {
-        Ok(val) => val,
-        Err(_) => return false, // length too large for u32
-    };
-
-    if start > end {
-        return false;
-    }
-
-    ctx.source_range(Span::new(start, end))
-        .trim_start()
-        .trim_start_matches("else")
-        .starts_with([' ', ';', '{'])
+    next_token(node.span().end, ctx).is_some_and(|(start, _)| {
+        ctx.source_text()[start as usize..]
+            .strip_prefix("else")
+            .is_some_and(|rest| !rest.starts_with(|c| is_identifier_part(c) || c == '\\'))
+    })
 }
 
 fn has_unsafe_if(node: &Statement) -> bool {
@@ -971,6 +923,15 @@ fn test() {
         ),
         ("if (a) { if (b) foo(); } else bar();", Some(serde_json::json!(["multi"]))),
         ("if (a) { if (b) foo(); } else bar();", Some(serde_json::json!(["multi-or-nest"]))),
+        // the `else` after a comment or before a line break still belongs to the outer `if`
+        ("if (a) { if (b) foo(); } /* comment */ else bar();", Some(serde_json::json!(["multi"]))),
+        ("if (a) { if (b) foo(); } // comment\nelse bar();", Some(serde_json::json!(["multi"]))),
+        ("if (a) { if (b) foo(); } else\nbar();", Some(serde_json::json!(["multi"]))),
+        ("if (a) { if (b) foo(); } else(bar());", Some(serde_json::json!(["multi"]))),
+        (
+            "if (a) while (c) { if (b) foo(); } /* comment */ else bar();",
+            Some(serde_json::json!(["multi"])),
+        ),
         (
             "if (a) { if (b) foo(); } else { bar(); }",
             Some(serde_json::json!(["multi", "consistent"])),
@@ -1432,6 +1393,7 @@ fn test() {
             Some(serde_json::json!(["multi"])),
         ),
         ("if (a) { if (b) foo(); } bar();", Some(serde_json::json!(["multi"]))),
+        ("if (a) { if (b) foo(); } /* else */ bar();", Some(serde_json::json!(["multi"]))),
         (
             "if(a) { if (b) foo(); } if (c) bar(); else baz();",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -2025,6 +1987,11 @@ fn test() {
         (
             "if (a) { if (b) foo(); } bar();",
             "if (a)  if (b) foo();  bar();",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "if (a) { if (b) foo(); } /* else */ bar();",
+            "if (a)  if (b) foo();  /* else */ bar();",
             Some(serde_json::json!(["multi"])),
         ),
         (

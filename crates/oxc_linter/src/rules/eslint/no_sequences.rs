@@ -1,13 +1,16 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
-    AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::DefaultRuleConfig,
-    rule::Rule,
+    AstNode,
+    ast_util::outermost_paren_parent,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_sequences_diagnostic(span: Span) -> OxcDiagnostic {

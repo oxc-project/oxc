@@ -916,10 +916,12 @@ pub fn transform_sync(
     let mut compiler = match Compiler::new(options) {
         Ok(compiler) => compiler,
         Err(errors) => {
-            return TransformResult {
-                errors: OxcError::from_diagnostics(&filename, &source_text, errors),
-                ..Default::default()
-            };
+            // Options errors are not errors in the source text. If they have labels
+            // (e.g. a syntax error in a `define` value), the labels are offsets into
+            // the option's value, so don't produce a codeframe.
+            // They're also unrelated to this specific file, so don't include file path.
+            let errors = errors.iter().map(OxcError::from).collect();
+            return TransformResult { errors, ..Default::default() };
         }
     };
 
@@ -958,10 +960,12 @@ impl Task for TransformTask {
         let mut compiler = match Compiler::new(self.options.take()) {
             Ok(compiler) => compiler,
             Err(errors) => {
-                return Ok(TransformResult {
-                    errors: OxcError::from_diagnostics(&self.filename, &self.source_text, errors),
-                    ..Default::default()
-                });
+                // Options errors are not errors in the source text. If they have labels
+                // (e.g. a syntax error in a `define` value), the labels are offsets into
+                // the option's value, so don't produce a codeframe.
+                // They're also unrelated to this specific file, so don't include file path.
+                let errors = errors.iter().map(OxcError::from).collect();
+                return Ok(TransformResult { errors, ..Default::default() });
             }
         };
 

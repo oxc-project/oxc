@@ -29,9 +29,20 @@ impl Walk {
             self.type_word(kw);
             return end;
         }
-        // `for await (`: the `await` belongs to the head.
-        if kw == tk!(KwAwait) && self.prev_kw == tk!(KwFor) {
-            return end;
+        if kw == tk!(KwAwait) {
+            // `for await (`: the `await` belongs to the head.
+            if self.prev_kw == tk!(KwFor) {
+                return end;
+            }
+            // `await using x`: the `await` belongs to the declaration.
+            let nx = tokens.peek(end, cpu);
+            if nx.kind == tk!(Ident)
+                && tokens.ident_is(nx.pos, b"using", cpu)
+                && self.using_binds(tokens, nx.pos + 5, true)
+            {
+                self.prev_kw = tk!(KwAwait);
+                return end;
+            }
         }
         let kw = self.resolve_keyword(tokens, end, kw);
 
@@ -101,12 +112,7 @@ impl Walk {
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'{'));
                 binding && (self.at_stmt_start() || self.top_kind() == FrameKind::Head)
             }
-            tk!(KwUsing) => {
-                let nx = tokens.peek(end, cpu);
-                nx.kind == tk!(Ident)
-                    && !tokens.line_break_between(end, nx.pos, cpu)
-                    && self.at_stmt_start()
-            }
+            tk!(KwUsing) => self.using_binds(tokens, end, self.prev_kw == tk!(KwAwait)),
             tk!(KwAsync) => {
                 // `async` is a modifier only when the next token is on the same line and continues
                 // a function / arrow head.
@@ -146,6 +152,32 @@ impl Walk {
             _ => true,
         };
         if keyword { kw } else { 0 }
+    }
+
+    /// Is the `using` ending at end a declaration keyword? A name must follow on its line. In a for
+    /// head `using of` declares only before `=`, `;` or `:`, unless an `await` came first (tsc).
+    #[cpu_version(Generic)]
+    fn using_binds(&self, tokens: &TokensView, end: usize, allow_of: bool) -> bool {
+        let cpu = BASELINE;
+
+        let nx = tokens.peek(end, cpu);
+        let head = self.for_head();
+        if nx.kind != tk!(Ident) || !(self.at_stmt_start() || head) {
+            return false;
+        }
+        if head && !allow_of && tokens.ident_is(nx.pos, b"of", cpu) {
+            let n2 = tokens.peek(nx.pos + 2, cpu);
+            return n2.kind >= OP_KIND_BASE
+                && (matches!(n2.byte, b';' | b':')
+                    || (n2.byte == b'=' && !matches!(tokens.src[n2.pos + 1], b'=' | b'>')));
+        }
+        !tokens.line_break_between(end, nx.pos, cpu)
+    }
+
+    /// Inside a for head, before its first `;`, `of` or `in`.
+    #[cpu_version(Generic)]
+    fn for_head(&self) -> bool {
+        self.top_kind() == FrameKind::Head && !self.top().of_closed
     }
 
     /// True when a statement register takes the word as its name (break label, type X, import x).
@@ -217,8 +249,13 @@ impl Walk {
                 KwReturn | KwThrow | KwYield | KwAwait | KwTypeof | KwVoid | KwDelete | KwNew | KwIn
                 | KwInstanceof | KwOf | KwDebugger | KwExtends | KwImplements | KwFrom
             ) => {
-                if self.top_kind() == FrameKind::Head && matches_tk!(kw, KwOf | KwIn) {
-                    self.top_mut().of_closed = true;
+                if self.top_kind() == FrameKind::Head
+                    && matches_tk!(kw, KwOf | KwIn)
+                    && self.top().open_questions == 0
+                {
+                    let f = self.top_mut();
+                    f.of_closed = true;
+                    f.declarator = Declarator::None;
                 }
                 self.keyword(kw);
             }
@@ -237,7 +274,7 @@ impl Walk {
                 self.keyword(kw);
             }
             tk!(KwVar | KwConst | KwLet | KwUsing) => {
-                if self.top_kind().is_stmt_holder() {
+                if self.top_kind().is_stmt_holder() || self.for_head() {
                     self.top_mut().declarator = Declarator::Binding;
                 }
                 self.keyword(kw);

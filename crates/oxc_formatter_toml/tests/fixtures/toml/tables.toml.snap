@@ -1,0 +1,60 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+root = "before any header"
+[a]
+x = 1
+[ a.b ]
+y = 2
+[a . "quoted key" . 'literal']
+z = 3
+[[products]]
+name = "Hammer"
+[[products]]
+[[products]]
+name = "Nail"
+[empty]
+[after_empty]
+k = "v"
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+root = "before any header"
+[a]
+x = 1
+[a.b]
+y = 2
+[a."quoted key".'literal']
+z = 3
+[[products]]
+name = "Hammer"
+[[products]]
+[[products]]
+name = "Nail"
+[empty]
+[after_empty]
+k = "v"
+
+-------------------
+{ printWidth: 100 }
+-------------------
+root = "before any header"
+[a]
+x = 1
+[a.b]
+y = 2
+[a."quoted key".'literal']
+z = 3
+[[products]]
+name = "Hammer"
+[[products]]
+[[products]]
+name = "Nail"
+[empty]
+[after_empty]
+k = "v"
+
+===================== End =====================

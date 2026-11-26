@@ -138,8 +138,7 @@ impl Rule for NoImportTypeSideEffects {
 
 #[test]
 fn test() {
-    use crate::FixKind;
-    use crate::tester::Tester;
+    use crate::{FixKind, tester::Tester};
 
     let pass = vec![
         "import T from 'mod';",

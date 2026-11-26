@@ -184,6 +184,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                         allocator.alloc_str("default").into(),
                         *span,
                     )),
+                    ImportImportName::Source(span) => ExportImportName::Source(*span),
                     // ParseModule 10.a.ii.3: normalize to `export * as name from 'mod'`.
                     ImportImportName::NamespaceObject => ExportImportName::All,
                 };
@@ -243,7 +244,12 @@ impl<'a> ModuleRecordBuilder<'a> {
                         (ImportImportName::NamespaceObject, decl.import_kind.is_type())
                     }
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        (ImportImportName::Default(specifier.span), decl.import_kind.is_type())
+                        let import_name = if decl.phase == Some(ImportPhase::Source) {
+                            ImportImportName::Source(specifier.span)
+                        } else {
+                            ImportImportName::Default(specifier.span)
+                        };
+                        (import_name, decl.import_kind.is_type())
                     }
                 };
                 self.add_import_entry(ImportEntry {

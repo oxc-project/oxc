@@ -488,8 +488,13 @@ parser_diagnostics! {
         OxcDiagnostic::error("Invalid optional chain from new expression.").with_label(span)
     };
 
-    decorator_optional(span: Span) => {
+    decorator_expression_not_parenthesized(span: Span) => {
         OxcDiagnostic::error("Expression must be enclosed in parentheses to be used as a decorator.")
+            .with_label(span)
+    };
+
+    decorator_arguments_outside_parentheses(span: Span) => {
+        OxcDiagnostic::error("Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'")
             .with_label(span)
     };
 

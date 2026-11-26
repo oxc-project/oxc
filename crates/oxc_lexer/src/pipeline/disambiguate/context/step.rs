@@ -64,8 +64,13 @@ impl Walk {
         if newline && !self.operand_allowed() && !self.continues_line(tokens, pos) {
             self.asi(tokens, pos);
         }
-        // A binding that ended the line goes on with =, a comma or a type annotation only.
-        if newline && !self.operand_allowed() && self.top().declarator == Declarator::Bound {
+        // A binding that ended the line goes on with =, a comma or a type annotation only; a for or
+        // catch head stays open.
+        if newline
+            && !self.operand_allowed()
+            && self.top().declarator == Declarator::Bound
+            && self.top_kind() != FrameKind::Head
+        {
             let c = tokens.src[pos];
             if !(k >= OP_KIND_BASE && matches!(c, b'=' | b',' | b':')) {
                 self.end_statement();
@@ -214,6 +219,8 @@ impl Walk {
     fn end_region_by_break(&mut self) {
         let r = self.pop();
         match r.region {
+            // `for (let x: T` then a new line: the head goes on.
+            RegionRule::Inline if self.top_kind() == FrameKind::Head => self.set_value(),
             RegionRule::Stmt | RegionRule::Inline => self.end_statement(),
             RegionRule::Expr => {
                 // `x as T` then a new line: the value is complete.

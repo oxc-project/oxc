@@ -6,6 +6,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::DirEntry;
+use rayon::prelude::*;
 
 use oxc_config::{
     ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version,
@@ -55,46 +56,42 @@ pub fn config_file_names() -> Vec<&'static str> {
 ///
 /// In Vite+ mode, only `vite.config.*` is discovered.
 ///
+/// Directories are deduplicated in memory, then checked in parallel.
+/// Each upward walk stops at the root config directory, which the root config already covers.
+///
 /// Conflicts (multiple configs in the same dir) are returned in the second
 /// tuple element so callers can surface them as load errors alongside other
 /// parse/build failures.
-pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
-    files: &[P],
+pub fn discover_configs_in_ancestors<'a>(
+    files: impl IntoIterator<Item = &'a Path>,
     base_config_path: &Path,
 ) -> (FxHashSet<DiscoveredConfigFile>, Vec<ConfigConflict>) {
     let discovery = config_discovery();
-    let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
-    let mut visited_dirs = FxHashSet::default();
-    let mut conflicts = Vec::new();
+    let base_config_dir = base_config_path.parent();
+    let mut visited_dirs = FxHashSet::<&Path>::default();
+    let mut dirs = Vec::new();
 
     for file in files {
-        let path = file.as_ref();
-        let mut base_config_found = false;
-        // Start from the file's parent directory and walk up the tree
-        let mut current = path.parent();
-        while let Some(dir) = current {
-            if base_config_found {
-                // Stop if we've reached the base config file (e.g., root oxlintrc)
-                // to avoid duplicate loading and filling nested config with configs outside from the root config.
+        for dir in file.ancestors().skip(1) {
+            if !visited_dirs.insert(dir) || Some(dir) == base_config_dir {
                 break;
             }
-            // Stop if we've already checked this directory (and its ancestors)
-            let inserted = visited_dirs.insert(dir.to_path_buf());
-            if !inserted {
-                break;
+            dirs.push(dir);
+        }
+    }
+
+    let results =
+        dirs.into_par_iter().map(|dir| discovery.find_unique_config(dir)).collect::<Vec<_>>();
+
+    let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
+    let mut conflicts = Vec::new();
+    for result in results {
+        match result {
+            Ok(Some(config)) => {
+                config_paths.insert(config);
             }
-            match discovery.find_unique_config_by_readdir(dir) {
-                Ok(Some(config)) => {
-                    if config.path() == base_config_path {
-                        base_config_found = true;
-                    } else {
-                        config_paths.insert(config);
-                    }
-                }
-                Ok(None) => {}
-                Err(conflict) => conflicts.push(conflict),
-            }
-            current = dir.parent();
+            Ok(None) => {}
+            Err(conflict) => conflicts.push(conflict),
         }
     }
 
@@ -507,8 +504,7 @@ impl<'a> ConfigLoader<'a> {
         discovery: &ConfigDiscovery,
         dir: &Path,
     ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let config_file =
-            discovery.find_unique_config_by_readdir(dir).map_err(OxcDiagnostic::from)?;
+        let config_file = discovery.find_unique_config(dir).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
@@ -641,10 +637,10 @@ impl<'a> ConfigLoader<'a> {
 
         let configs = if search_for_nested_configs {
             // Discover config files by walking up from each file's directory
-            let config_paths: Vec<_> =
-                paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-            let (discovered_configs, conflicts) =
-                discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
+            let (discovered_configs, conflicts) = discover_configs_in_ancestors(
+                paths.iter().map(|path| Path::new(path.as_ref())),
+                &oxlintrc.path,
+            );
 
             let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
 

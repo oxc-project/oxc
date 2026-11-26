@@ -302,3 +302,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ─────────────
    ╰────
   help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:17]
+ 1 │ const enabled = !!(0, 1);
+   ·                 ────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:17]
+ 1 │ const present = !(!value);
+   ·                 ─────────
+   ╰────
+  help: Use `Boolean(value)` instead
+
+  ⚠ eslint(no-implicit-coercion): Unexpected implicit coercion to boolean
+   ╭─[no_implicit_coercion.tsx:1:7]
+ 1 │ typeof!!foo
+   ·       ─────
+   ╰────
+  help: Use `Boolean(value)` instead

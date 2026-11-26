@@ -1,3 +1,7 @@
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
@@ -7,9 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{ConstructorParser, Options};
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

@@ -112,6 +112,8 @@ pub enum LineMode {
     HardWithoutExpand,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
+    /// See [crate::builders::Line::without_expand_parent] for documentation.
+    EmptyWithoutExpand,
     /// See [crate::builders::exact_line_breaks] for documentation.
     ExactLineBreaks(std::num::NonZeroU32),
     /// See [crate::builders::literal_line_break] for documentation.
@@ -132,6 +134,7 @@ impl LineMode {
             LineMode::Hard
                 | LineMode::HardWithoutExpand
                 | LineMode::Empty
+                | LineMode::EmptyWithoutExpand
                 | LineMode::ExactLineBreaks(_)
                 | LineMode::Literal
         )
@@ -139,9 +142,15 @@ impl LineMode {
 
     /// The line forces enclosing groups to expand at build time.
     /// See `Document::propagate_expand`:
-    /// every always-breaking mode except [Self::HardWithoutExpand].
+    /// every always-breaking mode except the `without_expand_parent` ones.
     pub const fn propagates_expand(self) -> bool {
-        self.will_break() && !matches!(self, LineMode::HardWithoutExpand)
+        self.will_break()
+            && !matches!(self, LineMode::HardWithoutExpand | LineMode::EmptyWithoutExpand)
+    }
+
+    /// [Self::Empty] or [Self::EmptyWithoutExpand]: prints like [crate::builders::empty_line].
+    pub const fn is_empty_line(self) -> bool {
+        matches!(self, LineMode::Empty | LineMode::EmptyWithoutExpand)
     }
 }
 
@@ -574,9 +583,9 @@ impl TextWidth {
     }
 
     /// Returns true if the text forces enclosing groups to expand:
-    /// it contains newlines and is not marked [`Self::without_expand_parent`].
+    /// it contains newlines and is not marked `without_expand_parent`.
     #[inline]
-    pub(crate) const fn propagates_expand(self) -> bool {
+    pub const fn propagates_expand(self) -> bool {
         (self.flags & (Self::MULTILINE_MASK | Self::NO_EXPAND_MASK)) == Self::MULTILINE_MASK
     }
 }

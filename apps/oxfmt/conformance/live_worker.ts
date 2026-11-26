@@ -14,9 +14,11 @@ export type LiveTask = {
   options: Record<string, unknown>;
 };
 
-/** `null` when both agree, otherwise both outputs (`"ERROR"` for a failed one). */
+/** The comparison with Prettier, `null` when both agree, otherwise both outputs (`"ERROR"` for a failed one);
+ * and for a project, whether oxfmt's output of the file as written is no fixpoint (`null` when it is, `true` when the second pass errored). */
 export default async function run({ name, fullPath, isProject, options }: LiveTask) {
-  let input = readFileSync(fullPath, "utf8");
+  const source = readFileSync(fullPath, "utf8");
+  let input = source;
   let expected = await formatWithPrettier(name, input, options);
   // A project hands over Prettier's output, unless Prettier cannot read it back either
   if (isProject && expected !== null) {
@@ -27,8 +29,25 @@ export default async function run({ name, fullPath, isProject, options }: LiveTa
   const oxfmtResult = await formatWithOxfmt(name, input, options);
 
   // Both failing to parse is not a pass, the fixture exercised nothing
-  if (oxfmtResult === prettierResult && oxfmtResult !== "ERROR") return null;
-  return { name, oxfmt: oxfmtResult, prettier: prettierResult };
+  const failure =
+    oxfmtResult === prettierResult && oxfmtResult !== "ERROR"
+      ? null
+      : { name, oxfmt: oxfmtResult, prettier: prettierResult };
+  // A project's file as written, which Prettier's output does not show (the shapes Prettier normalizes away)
+  const nonIdempotent = isProject ? await nonIdempotentOf(name, source, options) : null;
+  return { failure, nonIdempotent };
+}
+
+/** `null` when oxfmt's output of `content` formats to itself (or `content` fails), `true` when the second pass errored. */
+async function nonIdempotentOf(
+  fileName: string,
+  content: string,
+  options: Record<string, unknown>,
+): Promise<boolean | null> {
+  const first = await formatWithOxfmt(fileName, content, options);
+  if (first === "ERROR") return null;
+  const second = await formatWithOxfmt(fileName, first, options);
+  return second === first ? null : second === "ERROR";
 }
 
 /** `null` when Prettier fails. */

@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{AstKind, StaticPropertyName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -109,6 +110,19 @@ impl Rule for NoUnsafe {
                 }
             }
             AstKind::ObjectProperty(obj_prop) => {
+                if let Some(name) =
+                    obj_prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
+                    && is_unsafe_method(&name, self.0.check_aliases, ctx)
+                {
+                    for ancestor in ctx.nodes().ancestors(node.id()) {
+                        if is_es5_component(ancestor) {
+                            ctx.diagnostic(no_unsafe_diagnostic(&name, obj_prop.key.span()));
+                            break;
+                        }
+                    }
+                }
+            }
+            AstKind::ObjectMethodProperty(obj_prop) => {
                 if let Some(name) =
                     obj_prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
                     && is_unsafe_method(&name, self.0.check_aliases, ctx)

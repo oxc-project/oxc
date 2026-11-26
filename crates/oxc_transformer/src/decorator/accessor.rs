@@ -3,11 +3,10 @@
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 use oxc_syntax::scope::ScopeId;
 use oxc_traverse::BoundIdentifier;
-use rustc_hash::FxHashSet;
 
 use crate::{
     common::{
@@ -18,7 +17,7 @@ use crate::{
     context::TraverseCtx,
     utils::{
         ast_builder::{create_accessor_method, take_literal_property_key},
-        decorated_class::is_auto_accessor,
+        decorated_class::{PrivateNames, is_auto_accessor},
     },
 };
 
@@ -43,19 +42,8 @@ pub(super) fn lower_auto_accessors<'a>(
     }
     // Storage must not capture references to enclosing private names, including those in
     // nested classes. Reserving all private identifiers also covers this class's declarations.
-    let mut collector = PrivateNameCollector::default();
-    collector.visit_class_body(body);
-    let mut used_names = collector.names;
-    let mut unique_name = |base: Str<'a>, ctx: &TraverseCtx<'a>| -> Str<'a> {
-        let mut name = base;
-        let mut n = 2u32;
-        while used_names.contains(name.as_str()) {
-            name = Str::from_strs_array_in([&base, itoa::Buffer::new().format(n)], ctx);
-            n += 1;
-        }
-        used_names.insert(name.as_str());
-        name
-    };
+    let mut private_names = PrivateNames::default();
+    private_names.visit_class_body(body);
     // Each accessor is replaced by storage plus a getter and setter, so the result is
     // `len + 2 * accessor_count` long.
     let mut new_body = ArenaVec::with_capacity_in(body.body.len() + accessor_count * 2, ctx);
@@ -70,15 +58,19 @@ pub(super) fn lower_auto_accessors<'a>(
             continue;
         }
         let mut accessor = accessor.unbox();
+        // The storage, getter, setter and their bodies map to the accessor, so a debugger
+        // stepping into them lands on its declaration. Statements in the bodies map to the key.
+        let span = accessor.span;
+        let key_span = accessor.key.span();
         let (storage_name, getter_key, setter_key) = match accessor.key {
             PropertyKey::StaticIdentifier(ident) => {
                 let name = Str::from_strs_array_in(["_", &ident.name, "_accessor_storage"], ctx);
-                let setter_key = PropertyKey::new_static_identifier(SPAN, ident.name, ctx);
+                let setter_key = PropertyKey::new_static_identifier(ident.span, ident.name, ctx);
                 (name, PropertyKey::StaticIdentifier(ident), setter_key)
             }
             PropertyKey::PrivateIdentifier(ident) => {
                 let name = Str::from_strs_array_in(["_", &ident.name, "_accessor_storage"], ctx);
-                let setter_key = PropertyKey::new_private_identifier(SPAN, ident.name, ctx);
+                let setter_key = PropertyKey::new_private_identifier(ident.span, ident.name, ctx);
                 (name, PropertyKey::PrivateIdentifier(ident), setter_key)
             }
             // A non-computed literal key stays non-computed unless it has to be converted once.
@@ -113,9 +105,9 @@ pub(super) fn lower_auto_accessors<'a>(
                 (name, PropertyKey::from(assignment), PropertyKey::from(reference))
             }
         };
-        let storage_name = unique_name(storage_name, ctx);
+        let storage_name = private_names.generate(storage_name, ctx);
         let storage = PropertyDefinition::boxed(
-            SPAN,
+            span,
             PropertyDefinitionType::PropertyDefinition,
             [],
             PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
@@ -136,6 +128,8 @@ pub(super) fn lower_auto_accessors<'a>(
         // Decorators move to the getter for later processing. Its return type also carries the
         // accessor's annotation so legacy `emitDecoratorMetadata` can derive `design:type`.
         let getter = create_accessor_method(
+            span,
+            key_span,
             accessor.decorators,
             getter_key,
             MethodDefinitionKind::Get,
@@ -147,6 +141,8 @@ pub(super) fn lower_auto_accessors<'a>(
             ctx,
         );
         let setter = create_accessor_method(
+            span,
+            key_span,
             ArenaVec::new_in(ctx),
             setter_key,
             MethodDefinitionKind::Set,
@@ -170,15 +166,4 @@ fn positional_storage_name<'a>(counter: &mut u32, ctx: &TraverseCtx<'a>) -> Str<
     );
     *counter += 1;
     name
-}
-
-#[derive(Default)]
-struct PrivateNameCollector<'a> {
-    names: FxHashSet<&'a str>,
-}
-
-impl<'a> VisitJs<'a> for PrivateNameCollector<'a> {
-    fn visit_private_identifier(&mut self, ident: &PrivateIdentifier<'a>) {
-        self.names.insert(ident.name.as_str());
-    }
 }

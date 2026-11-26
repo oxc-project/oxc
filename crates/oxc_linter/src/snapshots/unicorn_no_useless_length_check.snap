@@ -253,3 +253,34 @@ source: crates/oxc_linter/src/tester.rs
  16 │                         siblings.some(condition =>
     ╰────
   help: The non-empty check is useless as `Array#some()` returns `false` for an empty array.
+
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
+   ╭─[no_useless_length_check.tsx:1:7]
+ 1 │ if (((array.length > 0))) { for (const element of array) { use(element); } }
+   ·       ────────────────
+   ╰────
+  help: The non-empty check is useless as `for...of` does not iterate over an empty array.
+
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
+   ╭─[no_useless_length_check.tsx:1:5]
+ 1 │ if (object.array.length !== 0) { for (const element of object.array) { use(element); } }
+   ·     ─────────────────────────
+   ╰────
+  help: The non-empty check is useless as `for...of` does not iterate over an empty array.
+
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
+   ╭─[no_useless_length_check.tsx:1:5]
+ 1 │ if (arrays.length > 0) {
+   ·     ─────────────────
+ 2 │     for (const array of arrays) {
+   ╰────
+  help: The non-empty check is useless as `for...of` does not iterate over an empty array.
+
+  ⚠ unicorn(no-useless-length-check): Found a useless array length check
+   ╭─[no_useless_length_check.tsx:3:7]
+ 2 │     for (const array of arrays) {
+ 3 │         if (array.length > 0) {
+   ·             ────────────────
+ 4 │             for (const element of array) {
+   ╰────
+  help: The non-empty check is useless as `for...of` does not iterate over an empty array.

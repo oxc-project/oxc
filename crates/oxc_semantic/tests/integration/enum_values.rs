@@ -138,8 +138,25 @@ fn const_enum() {
 
 #[test]
 fn declare_enum() {
-    let source = "declare enum A { X = 1 }";
-    debug_assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(1.0)));
+    let source = "declare enum A { W, X = 1, Y } enum B { Z = A.Y }";
+    assert_eq!(get_enum_member_value(source, "W"), None);
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(1.0)));
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "Z"), None);
+}
+
+#[test]
+fn enum_in_declare_namespace() {
+    let source = "declare namespace N { enum A { X = 1, Y } }";
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(1.0)));
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+}
+
+#[test]
+fn declare_const_enum() {
+    let source = "declare const enum A { X, Y = 10, Z }";
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(0.0)));
+    assert_eq!(get_enum_member_value(source, "Z"), Some(ConstantValue::Number(11.0)));
 }
 
 #[test]

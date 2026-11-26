@@ -39,11 +39,7 @@
   3 | |   // All `Identifier`s
   4 | |   let a = { x: y };
   5 | |   
-  6 | |   // No `ParenthesizedExpression`s in AST
-  7 | |   // prettier-ignore
-  8 | |   const b = (x * ((('str' + ((123))))));
-  9 | |   
- 10 | |   // TS syntax
+... : |   
  11 | |   type T = string;
  12 | |   
  13 | |   // No `TSParenthesizedType`s in AST
@@ -61,11 +57,7 @@
   3 | |   // All `Identifier`s
   4 | |   let a = { x: y };
   5 | |   
-  6 | |   // No `ParenthesizedExpression`s in AST
-  7 | |   // prettier-ignore
-  8 | |   const b = (x * ((('str' + ((123))))));
-  9 | |   
- 10 | |   // TS syntax
+... : |   
  11 | |   type T = string;
  12 | |   
  13 | |   // No `TSParenthesizedType`s in AST

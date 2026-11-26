@@ -30,6 +30,9 @@ use crate::{Allocator, arena::Arena};
 /// while that call is on the stack. There are no allocations in between, but another
 /// *thread* allocating at that exact moment could steal the marker; the tracking task's
 /// measured workload is single-threaded, so this cannot happen in practice.
+///
+/// Only chunk operations on the global allocator are marked. Chunks of an [`Arena`] with a parent
+/// allocator do not necessarily go through the global allocator, and then nothing would consume the marker.
 static CHUNK_OPERATION_PENDING: AtomicBool = AtomicBool::new(false);
 
 /// Mark that the next system allocator call is an [`Arena`] chunk operation.

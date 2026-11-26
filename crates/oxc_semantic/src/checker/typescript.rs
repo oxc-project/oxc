@@ -112,7 +112,7 @@ fn is_allowed_type_predicate_position(ctx: &SemanticBuilder<'_>) -> bool {
     match ancestors.next() {
         Some(AstKind::Function(_)) => match ancestors.next() {
             Some(AstKind::MethodDefinition(method)) => method.kind.is_method(),
-            Some(AstKind::ObjectProperty(property)) => !property.kind.is_accessor(),
+            Some(AstKind::ObjectMethodProperty(property)) => !property.kind.is_accessor(),
             _ => true,
         },
         Some(
@@ -280,7 +280,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
                     // E = -1
                     | Expression::UnaryExpression(_)
             );
-        } else if need_initializer {
+        } else if need_initializer && (decl.r#const || !ctx.in_ambient_context()) {
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
     });

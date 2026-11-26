@@ -1122,21 +1122,18 @@ impl<'a> PeepholeOptimizations {
                     {
                         for prop in o.properties.drain(..) {
                             match &prop {
-                                ObjectPropertyKind::SpreadProperty(_) => {
-                                    new_properties.push(prop);
-                                }
                                 ObjectPropertyKind::ObjectProperty(p)
-                                    if p.method || !p.key.is_specific_literal_name("__proto__") =>
+                                    if p.key.is_specific_literal_name("__proto__") =>
                                 {
-                                    new_properties.push(prop);
-                                }
-                                ObjectPropertyKind::ObjectProperty(p) => {
                                     // Non-computed `__proto__` is being elided
                                     // because it would set the prototype rather
                                     // than become a regular property. The key is
                                     // a static name with no refs, but the value
                                     // subtree must be walked to drop its refs.
                                     ctx.drop_expression(&p.value);
+                                }
+                                _ => {
+                                    new_properties.push(prop);
                                 }
                             }
                         }
@@ -1166,16 +1163,12 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
+            // non-computed __proto__ property sets the prototype of the object instead
             ObjectPropertyKind::ObjectProperty(p) => {
-                // getters are evaluated when spreading
-                matches!(p.kind, PropertyKind::Init)
-                    && (
-                        // non-computed __proto__ property sets the prototype of the object instead
-                        p.method
-                            || !p.key.is_specific_literal_name("__proto__")
-                            || !p.value.may_have_side_effects(ctx)
-                    )
+                !p.key.is_specific_literal_name("__proto__") || !p.value.may_have_side_effects(ctx)
             }
+            // getters are evaluated when spreading
+            ObjectPropertyKind::MethodProperty(p) => matches!(p.kind, ObjectMethodKind::Method),
         })
     }
 

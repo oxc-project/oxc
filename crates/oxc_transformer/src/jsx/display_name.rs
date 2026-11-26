@@ -160,7 +160,7 @@ impl<'a> ReactDisplayName {
 
         // Not safe with existing display name.
         let not_safe = obj_expr.properties.iter().any(|prop| {
-            matches!(prop, ObjectPropertyKind::ObjectProperty(p) if p.key.static_name().is_some_and(|name| name == DISPLAY_NAME))
+            prop.key().and_then(PropertyKey::static_name).is_some_and(|name| name == DISPLAY_NAME)
         });
         if not_safe {
             return;
@@ -169,10 +169,8 @@ impl<'a> ReactDisplayName {
             0,
             ObjectPropertyKind::new_object_property(
                 SPAN,
-                PropertyKind::Init,
                 PropertyKey::new_static_identifier(SPAN, DISPLAY_NAME, ctx),
                 Expression::new_string_literal(SPAN, name, None, ctx),
-                false,
                 false,
                 ctx,
             ),

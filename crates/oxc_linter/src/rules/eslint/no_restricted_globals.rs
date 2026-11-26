@@ -1,5 +1,13 @@
 use std::ops::Deref;
 
+use rustc_hash::FxHashMap;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{ArrayValidation, Schema, SchemaObject},
+};
+use serde::de::Error;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, IdentifierReference},
@@ -8,13 +16,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use rustc_hash::FxHashMap;
-use schemars::{
-    JsonSchema, SchemaGenerator,
-    schema::{ArrayValidation, Schema, SchemaObject},
-};
-use serde::de::Error;
-use serde_json::Value;
 
 use crate::{AstNode, ast_util::iter_outer_expressions, context::LintContext, rule::Rule};
 
@@ -386,8 +387,9 @@ fn is_ident_property(ident: &IdentifierReference, kind: &AstKind) -> bool {
 }
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     const CUSTOM_MESSAGE: &str = "Use bar instead.";
 

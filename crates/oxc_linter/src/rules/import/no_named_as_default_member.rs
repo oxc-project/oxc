@@ -1,3 +1,5 @@
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{BindingPattern, Expression, IdentifierReference},
@@ -6,7 +8,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
-use rustc_hash::FxHashMap;
 
 use crate::{
     ast_util::get_symbol_id_of_variable, context::LintContext, module_record::ImportImportName,

@@ -714,6 +714,12 @@ impl<'a> PeepholeOptimizations {
         access_value: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
+        // Example case: `x = (0, class {})` (`x.name === ""`) -> `x = class {}` (`x.name === "x"`)
+        if ctx.is_expression_whose_name_needs_to_be_kept(access_value)
+            && Self::is_named_evaluation_position(ctx)
+        {
+            return true;
+        }
         match ctx.parent() {
             Ancestor::CallExpressionCallee(call)
                 if !call.optional()
@@ -771,6 +777,33 @@ impl<'a> PeepholeOptimizations {
                 }
                 _ => false,
             },
+            _ => false,
+        }
+    }
+
+    /// Whether an anonymous function or class in the current position would be
+    /// named by NamedEvaluation, e.g. `x = class {}` names the class `x`.
+    ///
+    /// Destructuring targets and member assignments do not name the value.
+    /// `__proto__: class {}` does not either, but it is kept for simplicity.
+    fn is_named_evaluation_position(ctx: &TraverseCtx<'a>) -> bool {
+        match ctx.parent() {
+            Ancestor::AssignmentExpressionRight(assign) => {
+                let operator = *assign.operator();
+                (operator.is_assign() || operator.is_logical())
+                    && matches!(assign.left(), AssignmentTarget::AssignmentTargetIdentifier(_))
+            }
+            Ancestor::VariableDeclaratorInit(decl) => decl.id().is_binding_identifier(),
+            Ancestor::AssignmentPatternRight(pattern) => pattern.left().is_binding_identifier(),
+            Ancestor::FormalParameterInitializer(param) => param.pattern().is_binding_identifier(),
+            Ancestor::AssignmentTargetWithDefaultInit(target) => {
+                matches!(target.binding(), AssignmentTarget::AssignmentTargetIdentifier(_))
+            }
+            Ancestor::AssignmentTargetPropertyIdentifierInit(_)
+            | Ancestor::ObjectPropertyValue(_)
+            | Ancestor::PropertyDefinitionValue(_)
+            | Ancestor::AccessorPropertyValue(_)
+            | Ancestor::ExportDefaultDeclarationDeclaration(_) => true,
             _ => false,
         }
     }

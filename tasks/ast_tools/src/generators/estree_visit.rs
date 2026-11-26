@@ -344,6 +344,7 @@ fn generate(codegen: &Codegen) -> Codes {
             ]),
             "Property" => Some(&[
                 "ObjectProperty",
+                "ObjectMethodProperty",
                 "AssignmentTargetProperty",
                 "AssignmentTargetPropertyProperty",
                 "BindingProperty",

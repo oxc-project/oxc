@@ -299,6 +299,7 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             ObjectPropertyKind::ObjectProperty(o) => o.may_have_side_effects(ctx),
+            ObjectPropertyKind::MethodProperty(m) => m.key.may_have_side_effects(ctx),
             ObjectPropertyKind::SpreadProperty(e) => {
                 if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
                     e.argument.may_have_side_effects(ctx)
@@ -308,7 +309,11 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
                         Expression::ObjectExpression(obj) => {
                             obj.properties.iter().any(|property| match property {
                                 ObjectPropertyKind::ObjectProperty(p) => {
-                                    p.kind == PropertyKind::Get || p.may_have_side_effects(ctx)
+                                    p.may_have_side_effects(ctx)
+                                }
+                                ObjectPropertyKind::MethodProperty(m) => {
+                                    m.kind == ObjectMethodKind::Get
+                                        || m.key.may_have_side_effects(ctx)
                                 }
                                 ObjectPropertyKind::SpreadProperty(e) => {
                                     e.argument.may_have_side_effects(ctx)

@@ -1,0 +1,17 @@
+# Input
+
+`````html
+<p>{{ '&quot;' }} {{ '&#39;' }} {{ '&times;' }} {{ '&quotation' }} {{ a  +  b }}</p>
+<p title="{{ '&quot;' }}"></p>
+
+`````
+
+# Output
+
+## `{}`
+
+`````html
+<p>{{ '&quot;' }} {{ '&#39;' }} {{ "&times;" }} {{ "&quotation" }} {{ a + b }}</p>
+<p title="{{ '&quot;' }}"></p>
+
+`````

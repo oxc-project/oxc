@@ -425,6 +425,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for Modifiers {
     }
 }
 
+impl<'new_alloc> CloneIn<'new_alloc> for Modifier {
+    type Cloned = Modifier;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for IndexedReference {
     type Cloned = IndexedReference;
 

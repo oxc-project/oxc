@@ -1,8 +1,9 @@
+use rustc_hash::FxHashMap;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,

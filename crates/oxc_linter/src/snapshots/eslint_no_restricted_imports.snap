@@ -1090,3 +1090,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─
    ╰────
   help: Use 'util/zod' instead.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import source wasm from 'foo'; export { wasm };
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import source wasm from 'foo';
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import source wasm from 'foo';
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import source wasm from 'foo';
+   · ──────────────────────────────
+   ╰────

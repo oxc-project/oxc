@@ -36,6 +36,8 @@ impl<'a> TakeIn<'a> for ObjectPropertyKind<'a> {}
 
 impl<'a> TakeIn<'a> for ObjectProperty<'a> {}
 
+impl<'a> TakeIn<'a> for ObjectMethodProperty<'a> {}
+
 impl<'a> TakeIn<'a> for PropertyKey<'a> {}
 
 impl<'a> TakeIn<'a> for TemplateLiteral<'a> {}

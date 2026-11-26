@@ -217,6 +217,7 @@ impl ESTree for ObjectPropertyKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::ObjectProperty(it) => it.serialize(serializer),
+            Self::MethodProperty(it) => it.serialize(serializer),
             Self::SpreadProperty(it) => it.serialize(serializer),
         }
     }
@@ -226,15 +227,41 @@ impl ESTree for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Property"));
-        state.serialize_field("kind", &self.kind);
+        state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
-        state.serialize_field("method", &self.method);
+        state.serialize_field("method", &crate::serialize::basic::False(self));
         state.serialize_field("shorthand", &self.shorthand);
         state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_span(self.span);
         state.end();
+    }
+}
+
+impl ESTree for ObjectMethodProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("method", &crate::serialize::js::ObjectMethodPropertyMethod(self));
+        state.serialize_field("shorthand", &crate::serialize::basic::False(self));
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
+        state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ObjectMethodKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Method => JsonSafeString("init").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
+        }
     }
 }
 
@@ -290,16 +317,6 @@ impl ESTree for PropertyKey<'_> {
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
-        }
-    }
-}
-
-impl ESTree for PropertyKind {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::Init => JsonSafeString("init").serialize(serializer),
-            Self::Get => JsonSafeString("get").serialize(serializer),
-            Self::Set => JsonSafeString("set").serialize(serializer),
         }
     }
 }

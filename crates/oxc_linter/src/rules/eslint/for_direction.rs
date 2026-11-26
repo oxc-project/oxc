@@ -8,13 +8,18 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::{
-    operator::BinaryOperator::{GreaterEqualThan, GreaterThan, LessEqualThan, LessThan},
-    operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator},
+use oxc_syntax::operator::{
+    AssignmentOperator, BinaryOperator,
+    BinaryOperator::{GreaterEqualThan, GreaterThan, LessEqualThan, LessThan},
+    UnaryOperator, UpdateOperator,
 };
 
-use crate::fixer::{RuleFix, RuleFixer};
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn for_direction_diagnostic(test_span: Span, update_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The update clause in this loop moves the variable in the wrong direction")

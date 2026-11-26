@@ -1,0 +1,21 @@
+# Input
+
+`````html
+<span>{{a}}</span>
+<span ngNonBindable>{{a}}</span>
+<div ngNonBindable title="{{a}}" [x]="a+b"><span title="{{a}}" [x]="a+b">{{a|b}} {{ a }} {{a   +b}}</span></div>
+
+`````
+
+# Output
+
+## `{}`
+
+`````html
+<span>{{ a }}</span>
+<span ngNonBindable>{{a}}</span>
+<div ngNonBindable title="{{ a }}" [x]="a + b">
+  <span title="{{a}}" [x]="a+b">{{a|b}} {{ a }} {{a +b}}</span>
+</div>
+
+`````

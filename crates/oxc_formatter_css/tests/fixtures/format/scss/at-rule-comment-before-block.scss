@@ -18,6 +18,20 @@
 {
   margin: 1px;
 }
+// DIVERGENCES.md#own-line-comment-before-block
+@media screen
+/* c */
+{
+  a {
+    b: c;
+  }
+}
+@supports (a: b)
+  /* c */{
+  a {
+    b: c;
+  }
+}
 @font-face // c
 {
   a: b;

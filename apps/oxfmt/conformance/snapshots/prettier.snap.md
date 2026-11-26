@@ -136,8 +136,6 @@
   - ❓unclassified
 - externals/prettier/jsx/comments/in-opening-tag-name.js (💥, 42.86%)
   - ❓unclassified
-- externals/prettier/misc/embedded-language-formatting/in-javascript/test.js (💥✨, 98.00%)
-  - ❓unclassified
 - externals/prettier/js/array-exprssion/numbers-with-holes.js (💥, 92.86%)
   - crates/oxc_formatter/DIVERGENCES.md#array-hole-comments
 - externals/prettier/js/class/assignment.js (💥, 76.47%)
@@ -170,6 +168,8 @@
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 - externals/prettier/js/ternaries/indent-after-paren.js (💥💥💥💥, 99.14%)
   - crates/oxc_formatter/DIVERGENCES.md#computed-member-object-paren-break
+- externals/prettier/misc/embedded-language-formatting/in-javascript/test.js (💥✨, 96.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#unclosed-at-end
 
 ### Not idempotent
 
@@ -327,14 +327,20 @@
 
 ## css
 
-140/164 (85.37%)
+139/164 (84.76%)
 
 ### Failed
 
 - externals/prettier/css/atrule/supports.css (💥, 95.22%)
-  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-long-value
-- externals/prettier/css/comments/declaration.css (💥, 98.88%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-as-in-rule
+- externals/prettier/css/comments/at-rules.css (💥, 64.23%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#commented-as-uncommented
+  - crates/oxc_formatter_css/DIVERGENCES.md#own-line-comment-before-block
+  - crates/oxc_formatter_css/DIVERGENCES.md#import-media-feature-flat
+  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-as-in-rule
+- externals/prettier/css/comments/declaration.css (💥, 93.26%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/css/fill-value/fill.css (💥, 93.33%)
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - externals/prettier/css/parens/empty-lines.css (💥, 31.58%)
@@ -382,7 +388,7 @@
 
 ## scss
 
-121/153 (79.08%)
+118/153 (77.12%)
 
 ### Failed
 
@@ -392,6 +398,12 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/4878.scss (💥, 89.39%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
+- externals/prettier/scss/comments/at-rule.scss (💥, 87.50%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#at-root-line-comment-indent
+- externals/prettier/scss/comments/between-decl.scss (💥, 97.01%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+- externals/prettier/scss/comments/custom-properties.scss (💥, 88.89%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/scss/comments/lists.scss (💥, 76.92%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/maps.scss (💥, 66.67%)
@@ -441,10 +453,14 @@
 
 ## less
 
-230/252 (91.27%)
+227/252 (90.08%)
 
 ### Failed
 
+- externals/prettier/less/comments/between-decl.less (💥, 94.44%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+- externals/prettier/less/comments/selectors.less (💥, 88.89%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/less/comments/value-lists.less (💥, 76.92%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/less/less-test-suite/snippet: tests-config/globalVars/extended.less (💥, 78.26%)
@@ -455,7 +471,10 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-lookup-glue
 - externals/prettier/less/less-test-suite/snippet: tests-unit/color-functions/rgba.less (💥, 82.93%)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
-- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less (💥, 87.50%)
+- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments.less (💥, 99.12%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less (💥, 85.00%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#commented-as-uncommented
   - crates/oxc_formatter_css/DIVERGENCES.md#less-variable-value-comments
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-continuation-indent
 - externals/prettier/less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less (💥, 98.25%)
@@ -500,7 +519,7 @@
 
 ## yaml
 
-1604/1625 (98.71%)
+1605/1625 (98.77%)
 
 ### Failed
 
@@ -528,8 +547,6 @@
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
 - externals/prettier/yaml/yaml-test-suite/snippet: HWV9.yaml - Document-end marker (💥, 66.67%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#empty-document-end-marker
-- externals/prettier/yaml/yaml-test-suite/snippet: JEF9-3.yaml - Trailing whitespace in streams (💥, 66.67%)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#keep-chomped-space-only-eof-line
 - externals/prettier/yaml/yaml-test-suite/snippet: K3WX.yaml - Colon and adjacent value after comment on next line (💥, 25.00%)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#flow-flat-with-newline
 - externals/prettier/yaml/yaml-test-suite/snippet: NJ66.yaml - Multiline plain flow mapping key (💥, 50.00%)
@@ -584,7 +601,66 @@
 
 ## angular-html
 
-128/128 (100.00%)
+82/128 (64.06%)
+
+### Failed
+
+- externals/prettier/angular/angular/angularjs.html (💥💥💥💥💥, 54.99%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/angular/attributes.component.html (💥💥💥💥💥, 79.92%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+  - crates/oxc_formatter/DIVERGENCES.md#single-level-member-no-break
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
+- externals/prettier/angular/angular/interpolation.component.html (💥💥💥💥💥, 97.87%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-nested-pipe-as-name
+- externals/prettier/angular/angular/ng-model-options.html (💥💥💥💥💥, 8.00%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/angular/real-world.component.html (💥💥💥💥💥, 99.75%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#omitted-end-tag
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- externals/prettier/angular/bracket-same-line/angularjs.html (💥💥, 73.08%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/control-flow/after-close-tag.html (💥, 90.32%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
+- externals/prettier/angular/control-flow/chid.html (💥, 62.50%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
+- externals/prettier/angular/control-flow/for.html (💥, 85.22%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+  - apps/oxfmt/DIVERGENCES.md#interpolation-own-group
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-unread-code-as-written
+- externals/prettier/angular/control-flow/ignore.html (💥, 89.66%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-ignored-block-chain
+- externals/prettier/angular/control-flow/multiple-switch-cases.html (💥, 98.31%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-reserved-word-as-written
+- externals/prettier/angular/expression/logical-expressions.html (💥, 91.43%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+- externals/prettier/angular/icu-expression/basic-plural-01.html (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-plural-02.html (💥, 31.58%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-plural-03.html (💥, 9.52%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-plural-04.html (💥, 20.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-select-01.html (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/basic-select-02.html (💥, 20.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/icu-expression/combination-01.html (💥, 25.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-i18n-content-as-written
+- externals/prettier/angular/let-declaration/valid-from-tokenizer-test.html (💥, 95.24%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
+- externals/prettier/angular/template-literal/template-literal.html (💥, 88.89%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- externals/prettier/angular/trailing-comma/trailing-comma.html (💥💥💥, 92.78%)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- externals/prettier/angular/upper-case/upper-case-html-tag.html (💥, 0.00%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-upper-case-html-after-doctype
 
 ## vue
 

@@ -1,0 +1,15 @@
+# Input
+
+`````html
+<button (click)="a && b" (focus)="0" (blur)="{ a: 1 }" (keyup)="a = 1" (keydown)="a()"></button>
+
+`````
+
+# Output
+
+## `{}`
+
+`````html
+<button (click)="a && b" (focus)="0" (blur)="{ a: 1 }" (keyup)="a = 1" (keydown)="a()"></button>
+
+`````

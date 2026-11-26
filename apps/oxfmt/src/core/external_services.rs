@@ -3,7 +3,7 @@
 //!
 //! [`ExternalServices`] wraps the JS callbacks as `Arc<dyn Fn>`s (private `wrap_*` helpers), serving:
 //! - [`ExternalServices::init`]: JS-side worker-pool setup
-//! - [`ExternalServices::format_file`]: Tier 3/4 whole-file delegation (`core::format`)
+//! - [`ExternalServices::format_file`]: Whole-file delegation (`core::format`)
 //! - the embed callback `Arc`s (`format_embedded_doc` / `sort_tailwindcss_classes`),
 //!   consumed by the `core::embed::services` profiles
 
@@ -19,7 +19,7 @@ use tracing::debug_span;
 
 use crate::core::embed::{FormatEmbeddedDocWithConfigCallback, TailwindWithConfigCallback};
 
-/// Callback function type for formatting whole files (Tier 3/4 delegation).
+/// Callback function type for formatting whole files.
 /// Takes (options, code) and returns formatted code or an error.
 /// The `options` Value is owned and includes `parser` and `filepath` set by the caller.
 pub type FormatFileWithConfigCallback =

@@ -129,8 +129,9 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
             write!(f, [":", space()]);
             FmtJsonStringifyValue { expression: &prop.value }.fmt(f);
         }
-        ObjectPropertyKind::SpreadProperty(spread) => {
-            write!(f, FormatInvalidJson(spread.span));
+        property @ (ObjectPropertyKind::MethodProperty(_)
+        | ObjectPropertyKind::SpreadProperty(_)) => {
+            write!(f, FormatInvalidJson(property.span()));
         }
     });
     write!(f, "}");

@@ -5,11 +5,10 @@ use crate::{pipeline::chunk::mm64, token::tk};
 use super::{
     Planes,
     luts::{
-        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, VT_FF_MASK, WORD_LUTS,
-        WORD_MASK, WS_MASK,
+        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, VT_FF_MASK, WORD_LUTS, WORD_MASK, WS_MASK,
     },
     mask_tail,
-    punct::{PUNCT_HASH_HI, PUNCT_HASH_KINDS, PUNCT_HASH_LO},
+    punct::{PUNCT_HASH_HI_NEON, PUNCT_HASH_KINDS_NEON, PUNCT_HASH_LO},
 };
 
 struct Luts {
@@ -44,8 +43,8 @@ pub(super) fn classify_neon(ts: bool, src: &[[u8; 64]], n: usize, out: Planes, c
         mrg_lo: mrg_lo.read(cpu),
         mrg_hi: MERGED_LUTS.hi.read(cpu),
         punct_lo: PUNCT_HASH_LO.read(cpu),
-        punct_hi: PUNCT_HASH_HI.read(cpu),
-        punct_kinds: PUNCT_HASH_KINDS.read(cpu),
+        punct_hi: PUNCT_HASH_HI_NEON.read(cpu),
+        punct_kinds: PUNCT_HASH_KINDS_NEON.read(cpu),
     };
 
     let mut cw: u64 = 0;
@@ -111,7 +110,7 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
     let digit = tb.test_u8(DIGIT_MASK);
     let misc = v.eq_u8(b'#') | v.eq_u8(b'\\') | na | tb.test_u8(VT_FF_MASK);
 
-    let kind = punct_kinds(v, lo, hn, l)
+    let kind = punct_kinds(lo, hn, l)
         .blend(tk!(Whitespace), ws)
         .blend(tk!(Ident), word)
         .blend(tk!(Number), digit);
@@ -122,7 +121,8 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
         digit,
         dot: t.test_u8(DOT_MASK),
         kwinit: t.test_u8(KWINIT_MASK),
-        opch: t.test_u8(OPCH_MASK),
+        // Any set bit above the keyword-start bits implies an operator char
+        opch: t.gt_u8(KWINIT_MASK),
         misc,
         kind,
     }
@@ -130,11 +130,10 @@ fn chunk(v: Vec128<Neon>, l: &Luts) -> Classified {
 
 #[cpu_version(Neon)]
 #[inline(always)]
-fn punct_kinds(v: Vec128<Neon>, lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) -> Vec128<Neon> {
-    // Every `PUNCT_HASH_LO` and `PUNCT_HASH_HI` entry is under 32,
-    // so `h` is in range for the 32-entry `l.punct_kinds`
+fn punct_kinds(lo: Vec128<Neon>, hn: Vec128<Neon>, l: &Luts) -> Vec128<Neon> {
+    // `h` is under 32 except for control chars, whose `h` is 0x80 or more.
+    // `PUNCT_HASH_KINDS_NEON` holds each kind + 1. Indexing the 32-entry `l.punct_kinds`
+    // with 32 or more gives 0, which subtracting 1 wraps round to `Invalid`.
     let h = l.punct_lo.shuffle_u8s(lo) ^ l.punct_hi.shuffle_u8s(hn);
-    let ord = l.punct_kinds.shuffle_u8s(h);
-    let ctl = v.lt_i8(0x20);
-    ord.blend(tk!(Invalid), ctl)
+    l.punct_kinds.shuffle_u8s(h).sub_u8(1)
 }

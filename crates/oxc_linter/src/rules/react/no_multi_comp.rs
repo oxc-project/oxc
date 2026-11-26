@@ -1,10 +1,13 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, CallExpression,
         Class, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
-        JSXAttributeItem, JSXElementName, ObjectProperty, PropertyKey, Statement,
-        VariableDeclarator,
+        JSXAttributeItem, JSXElementName, ObjectMethodProperty, ObjectProperty, PropertyKey,
+        Statement, VariableDeclarator,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -12,8 +15,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     context::LintContext,
@@ -230,6 +231,20 @@ impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
             self.component_depth -= 1;
         } else {
             walk_js::walk_object_property(self, prop);
+        }
+    }
+
+    fn visit_object_method_property(&mut self, prop: &ObjectMethodProperty<'a>) {
+        if let PropertyKey::StaticIdentifier(id) = &prop.key
+            && is_react_component_name(&id.name)
+            && function_contains_jsx(&prop.value)
+        {
+            self.record_component(id.name.to_string(), prop.span, true);
+            self.component_depth += 1;
+            walk_js::walk_object_method_property(self, prop);
+            self.component_depth -= 1;
+        } else {
+            walk_js::walk_object_method_property(self, prop);
         }
     }
 

@@ -37,7 +37,7 @@ pub struct CliRunner {
     options: LintCommand,
     cwd: PathBuf,
     external_linter: Option<ExternalLinter>,
-    /// Callback for loading JavaScript/TypeScript config files (experimental).
+    /// Callback for loading JavaScript/TypeScript config files.
     /// This is only available when running via Node.js with NAPI.
     #[cfg(feature = "napi")]
     js_config_loader: Option<JsConfigLoaderCb>,
@@ -311,7 +311,7 @@ impl CliRunner {
                                 }
                                 ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
                                     "Error: JavaScript/TypeScript config files found but JS runtime not available.\n\
-                                     This is an experimental feature that requires running oxlint via Node.js.\n\
+                                     JavaScript/TypeScript config files require running Oxlint via Node.js.\n\
                                      Please use JSON config files (.oxlintrc.json or .oxlintrc.jsonc) instead, or run oxlint via the npm package.\n".to_string()
                                 }
                                 ConfigLoadError::Diagnostic(error) => {

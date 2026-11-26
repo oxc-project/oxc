@@ -13,16 +13,19 @@ use oxc_css_parser::ast::{
     PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
 use oxc_formatter_core::{
-    FormatElement, arena_cow_str,
+    FormatElement, PlaceholderPiece, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
     write,
 };
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
+    TEMPLATE_PLACEHOLDER,
     comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
-    print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
+    print::{
+        CssFormatter, format_with, less, normalize_whitespace, split_verbatim, value,
+        write_maybe_lowercase,
+    },
 };
 
 /// Detects an ICSS rule (`:import { ... }` / `:export { ... }`)
@@ -56,11 +59,11 @@ pub(super) fn write_selector_list<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     // css-in-js `${}` placeholders: `postcss-selector-parser` degrades on at-words,
-    // everything from the selector containing the first placeholder onwards
+    // everything from the selector containing the first placeholder outside a string onwards
     // becomes one garbage token soup whose commas no longer split selectors.
     // Prettier then prints it near-verbatim:
     // - source newlines are preserved (a `,\n` selector-list boundary stays a hardline)
-    // - and only intra-line whitespace runs collapse to a single space
+    // - and only intra-line whitespace runs collapse to a single space, a string stays as is
     // Selectors BEFORE the first placeholder still split normally.
     // Only the embedded entry point can contain placeholders;
     // the gate also keeps a literal marker inside
@@ -74,7 +77,10 @@ pub(super) fn write_selector_list<'a>(
     let placeholder_idx = if f.context().template_placeholders() {
         let source = f.context().source_text();
         list.selectors.iter().position(|complex| {
-            source.text_for(&to_span(complex.span())).contains(TEMPLATE_PLACEHOLDER_PREFIX)
+            let raw = source.text_for(&to_span(complex.span()));
+            TEMPLATE_PLACEHOLDER.is_in(raw)
+                && split_verbatim(raw)
+                    .any(|(run, verbatim)| !verbatim && TEMPLATE_PLACEHOLDER.is_in(run))
         })
     } else {
         None
@@ -123,18 +129,13 @@ pub(super) fn write_selector_list<'a>(
                 let _ = f.context().comments().take_before(end);
                 // Emit each source line as a collapsed run of placeholders + text,
                 // joined by `hard_line_break()`.
-                // Source newlines are normalized to `\n` by `parse_stylesheet`,
-                // so splitting on `\n` is enough.
                 // The degraded chunk is printed verbatim,
                 // but the embedded placeholders must stay typed so the host can splice `${expr}` back.
-                for (line_idx, line) in raw.split('\n').enumerate() {
+                for (line_idx, line) in collapsed_lines(raw).iter().enumerate() {
                     if line_idx > 0 {
                         write!(f, hard_line_break());
                     }
-                    let joined = normalize_whitespace(line);
-                    if !joined.is_empty() {
-                        write_text_with_placeholders(f.allocator().alloc_str(&joined), f);
-                    }
+                    write_text_with_placeholders(f.allocator().alloc_str(line), f);
                 }
                 return;
             }
@@ -311,30 +312,42 @@ pub(super) fn write_interpolable_ident<'a>(
 ///
 /// Unlike the structurally-parsed positions, garbage mode prints degraded source verbatim,
 /// so the markers are recovered from the text here.
-fn write_text_with_placeholders<'a>(mut rest: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    while let Some(start) = rest.find(TEMPLATE_PLACEHOLDER_PREFIX) {
-        let after_prefix = &rest[start + TEMPLATE_PLACEHOLDER_PREFIX.len()..];
-        let digits_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-        if digits_end > 0
-            && let Some(tail) = after_prefix[digits_end..].strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
-            && let Ok(index) = after_prefix[..digits_end].parse::<u32>()
-        {
-            if start > 0 {
-                write!(f, text(&rest[..start]));
+/// A line break left in it is a string's or a comment's, which breaks no group as in [`value::write_attribute_str`].
+fn write_text_with_placeholders<'a>(source: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    for piece in TEMPLATE_PLACEHOLDER.pieces(source) {
+        match piece {
+            PlaceholderPiece::Text(run) => write!(f, text(run).without_expand_parent()),
+            PlaceholderPiece::Index(index) => {
+                if let Ok(index) = u32::try_from(index) {
+                    f.write_element(FormatElement::EmbedPlaceholder(index));
+                } else {
+                    // No index of the host's: verbatim, as any other text
+                    let mut placeholder = String::new();
+                    TEMPLATE_PLACEHOLDER.write(&mut placeholder, index);
+                    write!(f, text(f.allocator().alloc_str(&placeholder)));
+                }
             }
-            f.write_element(FormatElement::EmbedPlaceholder(index));
-            rest = tail;
-        } else {
-            // Not a valid marker: emit up to and including the prefix verbatim.
-            let consumed = start + TEMPLATE_PLACEHOLDER_PREFIX.len();
-            write!(f, text(&rest[..consumed]));
-            rest = &rest[consumed..];
         }
     }
-    if !rest.is_empty() {
-        write!(f, text(rest));
+}
+
+/// `raw` split at its line breaks outside a string or a block comment (one in them stays in its line),
+/// each line through [`normalize_whitespace`].
+/// Source newlines are normalized to `\n` by `parse_stylesheet`, so splitting on `\n` is enough.
+fn collapsed_lines(raw: &str) -> Vec<String> {
+    let mut lines = Vec::new();
+    let (mut start, mut offset) = (0, 0);
+    for (run, verbatim) in split_verbatim(raw) {
+        if !verbatim {
+            for (i, _) in run.match_indices('\n') {
+                lines.push(normalize_whitespace(&raw[start..offset + i]));
+                start = offset + i + 1;
+            }
+        }
+        offset += run.len();
     }
+    lines.push(normalize_whitespace(&raw[start..]));
+    lines
 }
 
 fn write_wq_name<'a>(name: &WqName<'a>, f: &mut CssFormatter<'_, 'a>) {

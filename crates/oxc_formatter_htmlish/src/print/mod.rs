@@ -7,7 +7,10 @@ use oxc_formatter_core::{
     builders::{FormatOnce, FormatWith, group, space, text, token},
     write,
 };
-use oxc_htmlish_parser::ast::{Interpolation, NodeId, NodeKind};
+use oxc_htmlish_parser::{
+    Dialect,
+    ast::{Interpolation, NodeId, NodeKind},
+};
 
 use crate::{context::HtmlishFormatContext, rules::TemplateExpressions, tree::Tree};
 
@@ -21,7 +24,7 @@ mod tag;
 mod text;
 mod vue;
 
-pub use angular::JsInAngularTemplate;
+pub use angular::{JsInAngularPiece, JsInAngularTemplate};
 pub use embed::{CssInHtmlStyleAttribute, JsInHtmlEventHandler};
 pub use vue::JsInVueTemplate;
 
@@ -116,22 +119,22 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
         NodeKind::Text(_) => write_text(t, id, f),
         NodeKind::Interpolation(interpolation) => {
             let expression = Interpolation::expression(item.span).slice(t.source());
-            // TODO: A character reference is not checked, unlike in an attribute's value (`embed::dispatch_attribute_value`):
-            // Vue and Angular decode it before they read the code, so `{{ '&quot;' }}` printed `"&quot;"` reads `"""`.
-            // Left for now as rare (one, harmless, in the corpus), and the check's cost unmeasured
             // Each its own type, borrowed as one
             let (vue, angular);
+            // Vue and Angular decode a character reference before they read the code: one to a quote, in a string it re-quotes,
+            // reads otherwise, so it prints as written (apps/oxfmt/DIVERGENCES.md#character-reference-in-code-as-written)
+            let decodes_quote = |dialect| Interpolation::decodes_quote(expression, dialect);
             let formatted: Option<&dyn Format<'a, _>> = match t.rules().template_expressions {
-                TemplateExpressions::Vue => {
+                TemplateExpressions::Vue if !decodes_quote(Dialect::Vue) => {
                     vue = vue::dispatch_interpolation(t, expression, f).map(format_ir);
                     vue.as_ref().map(|ir| ir as _)
                 }
-                TemplateExpressions::Angular => {
+                TemplateExpressions::Angular if !decodes_quote(Dialect::Angular) => {
                     angular = angular::format_interpolation(interpolation.angular.as_deref(), f);
                     angular.as_ref().map(|ir| ir as _)
                 }
                 // The parser reads `{{ }}` in Vue and Angular only
-                TemplateExpressions::None => None,
+                _ => None,
             };
             write_opening_tag_start(t, id, f);
             embed::write_interpolation(t, id, expression, formatted, f);
@@ -156,7 +159,7 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
         }
         NodeKind::LetDeclaration(declaration) => {
             write!(f, opening_tag_prefix(t, id));
-            if !angular::write_let(declaration, f) {
+            if !angular::write_let(declaration, item.span.end, f) {
                 write!(f, text(item.span.slice(t.source())));
             }
             write!(f, closing_tag_suffix(t, id));

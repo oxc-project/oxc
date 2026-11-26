@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{ChainElement, Expression, match_member_expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -18,8 +15,8 @@ fn no_non_null_asserted_optional_chain_diagnostic(
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.")
         .with_help("Remove the non-null assertion.")
-        .with_label(assertion_span.primary_label("non-null assertion made after optional chain"))
-        .and_label(chain_span.label("optional chain used"))
+        .with_label(chain_span.primary_label("optional chain used"))
+        .and_label(assertion_span.label("non-null assertion made after optional chain"))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -69,101 +66,24 @@ impl Rule for NoNonNullAssertedOptionalChain {
             return;
         };
 
-        let expression = non_null_expr.expression.get_inner_expression();
-        let chain_span = match expression {
-            Expression::ChainExpression(chain) => find_optional_chain_span(&chain.expression),
-            Expression::CallExpression(_)
-            | Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_)
-            | Expression::PrivateFieldExpression(_)
-                if !is_parent_member_or_call(node, ctx) =>
-            {
-                find_optional_chain_span_in_expression(expression)
+        let chain_span = match non_null_expr.expression.without_parentheses() {
+            Expression::ChainExpression(chain) => chain.span,
+            _ if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ChainExpression(_)) => {
+                non_null_expr.expression.span()
             }
-            _ => None,
+            _ => return,
         };
 
-        if let Some(chain_span) = chain_span {
-            let chain_span_end = chain_span.end;
-            let non_null_end = non_null_expr.span.end - 1;
-            let diagnostic = no_non_null_asserted_optional_chain_diagnostic(
-                Span::sized(chain_span_end, 1),
-                Span::sized(non_null_end, 1),
-            );
-            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                fixer.delete_range(Span::sized(non_null_end, 1))
-            });
-        }
+        let assertion_span = Span::sized(non_null_expr.span.end - 1, 1);
+        ctx.diagnostic_with_suggestion(
+            no_non_null_asserted_optional_chain_diagnostic(chain_span, assertion_span),
+            |fixer| fixer.delete_range(assertion_span),
+        );
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
-}
-
-fn find_optional_chain_span(chain: &ChainElement<'_>) -> Option<Span> {
-    let expression = match chain {
-        ChainElement::CallExpression(call) => {
-            if call.optional {
-                return Some(call.callee.span());
-            }
-            &call.callee
-        }
-        ChainElement::TSNonNullExpression(non_null) => &non_null.expression,
-        ChainElement::ComputedMemberExpression(member) => {
-            if member.optional {
-                return Some(member.object.span());
-            }
-            &member.object
-        }
-        ChainElement::StaticMemberExpression(member) => {
-            if member.optional {
-                return Some(member.object.span());
-            }
-            &member.object
-        }
-        ChainElement::PrivateFieldExpression(member) => {
-            if member.optional {
-                return Some(member.object.span());
-            }
-            &member.object
-        }
-    };
-
-    find_optional_chain_span_in_expression(expression)
-}
-
-fn find_optional_chain_span_in_expression(mut expression: &Expression<'_>) -> Option<Span> {
-    loop {
-        if matches!(expression, Expression::ParenthesizedExpression(_)) {
-            return None;
-        }
-
-        match expression.get_inner_expression() {
-            Expression::ChainExpression(chain) => {
-                return find_optional_chain_span(&chain.expression);
-            }
-            Expression::CallExpression(call) => {
-                if call.optional {
-                    return Some(call.callee.span());
-                }
-                expression = &call.callee;
-            }
-            expr @ match_member_expression!(Expression) => {
-                let member = expr.to_member_expression();
-                if member.optional() {
-                    return Some(member.object().span());
-                }
-                expression = member.object();
-            }
-            _ => return None,
-        }
-    }
-}
-
-fn is_parent_member_or_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let parent_kind = ctx.nodes().parent_kind(node.id());
-    matches!(parent_kind, AstKind::CallExpression(_)) || parent_kind.is_member_expression_kind()
 }
 
 #[test]
@@ -185,6 +105,9 @@ fn test() {
         "foo?.bar!();",
         "foo?.['bar']!.baz;",
         "foo?.get()!.bar()",
+        "(foo?.bar as string)!;",
+        "foo?.bar!!.baz;",
+        "// eslint-disable-next-line typescript/no-non-null-asserted-optional-chain\nfoo\n  ?.bar!;",
     ];
 
     let fail = vec![
@@ -201,6 +124,9 @@ fn test() {
         "(foo?.bar)!()",
         "(foo?.bar!)",
         "(foo?.bar!)()",
+        "foo?.bar!!;",
+        "foo\u{a0}?.bar!;",
+        "foo\n  ?.bar!;",
     ];
 
     let fix = vec![
@@ -216,6 +142,8 @@ fn test() {
         ("(foo?.bar)!()", "(foo?.bar)()"),
         ("(foo?.bar!)", "(foo?.bar)"),
         ("(foo?.bar!)()", "(foo?.bar)()"),
+        ("foo?.bar!!", "foo?.bar!"),
+        ("foo\u{a0}?.bar!", "foo\u{a0}?.bar"),
     ];
 
     Tester::new(

@@ -300,6 +300,28 @@ impl<'a, State> TraverseCtx<'a, State> {
         self.scoping.insert_scope_below_expression(expr, flags)
     }
 
+    /// Move the scopes of statements which have been moved to a new location in the AST.
+    ///
+    /// All child scopes of the statements are reassigned to be children of `parent_id`,
+    /// and their strict mode is updated to match.
+    ///
+    /// This is a shortcut for `ctx.scoping.move_scopes_of_statements`.
+    #[inline]
+    pub fn move_scopes_of_statements(&mut self, stmts: &[Statement<'a>], parent_id: ScopeId) {
+        self.scoping.move_scopes_of_statements(stmts, parent_id);
+    }
+
+    /// Move the scopes of expressions which have been moved to a new location in the AST.
+    ///
+    /// All child scopes of the expressions are reassigned to be children of `parent_id`,
+    /// and their strict mode is updated to match.
+    ///
+    /// This is a shortcut for `ctx.scoping.move_scopes_of_expressions`.
+    #[inline]
+    pub fn move_scopes_of_expressions(&mut self, exprs: &[Expression<'a>], parent_id: ScopeId) {
+        self.scoping.move_scopes_of_expressions(exprs, parent_id);
+    }
+
     /// Insert a scope into scope tree below a `Vec` of statements.
     ///
     /// Statements must be in current scope.

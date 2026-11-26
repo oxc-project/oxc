@@ -20,7 +20,7 @@ use oxc_formatter_css::{CssEmbeddedIn, CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_htmlish::{
     CssInHtmlStyleAttribute, HtmlishEmbeddedIn, HtmlishFormatOptions, HtmlishVariant,
-    JsInAngularTemplate, JsInHtmlEventHandler, JsInVueTemplate,
+    JsInAngularPiece, JsInAngularTemplate, JsInHtmlEventHandler, JsInVueTemplate,
 };
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
@@ -254,18 +254,16 @@ impl ResolvedDispatchConfig {
     }
 }
 
-/// Fallback invoked for [`Route::Prettier`] languages.
-/// Same shape as `FormatDispatcher`, plus the routed language
-/// (the Doc path consumes `parent_context` only for angular-in-js's [`HtmlInJsTemplate`], not `input_kind`;
-/// re-examine if it ever serves envelope-bearing inputs).
+/// Fallback invoked for [`Route::Prettier`] languages, with the routed language and the part's text:
+/// the Doc path reads nothing else of the request.
 ///
 /// Assembled only in napi builds ([`super::prettier_doc`]);
 /// the pure Rust build passes `None` and these languages are deliberately preserved as-is.
 pub type PrettierDocFallback = Arc<
-    dyn for<'a, 'r> Fn(
+    dyn for<'a> Fn(
             &FormatSession<'a>,
             PrettierLanguage,
-            &DispatchRequest<'r>,
+            &str,
         ) -> Result<DispatchResponse<'a>, String>
         + Send
         + Sync,
@@ -315,10 +313,13 @@ pub fn build_dispatcher(
                             .parent_context_as::<CssInJsTemplate>()
                             .is_some()
                         {
+                            // A JS template literal's CSS (`css`/`styled` tags, a `<style jsx>` body)
                             (CssVariant::Scss, Some(CssEmbeddedIn::CssInJsTemplate))
                         } else if request.parent_context_as::<CssInHtmlStyleAttribute>().is_some() {
+                            // An HTML `style` attribute's declarations
                             (variant, Some(CssEmbeddedIn::HtmlStyleAttribute))
                         } else {
+                            // A whole stylesheet: a `<style>` body, a Markdown code block
                             (variant, None)
                         };
                         oxc_formatter_css::format_to_ir(
@@ -359,15 +360,22 @@ pub fn build_dispatcher(
                     ),
                     NativeLanguage::Html(variant) => {
                         // Every part is embedded in its parent, but a JSDoc code block, formatted on its own
+                        let html_part = request.parent_context_as::<HtmlishEmbeddedIn>();
                         let embedded_in =
                             if let Some(c) = request.parent_context_as::<HtmlInJsTemplate>() {
+                                // A JS template literal's HTML (`html` tag, Angular's `@Component` template), its `${}` placeholders
                                 Some(HtmlishEmbeddedIn {
                                     indent_multiple_roots: c.indent_multiple_roots,
                                     placeholder: Some(c.placeholder),
                                 })
+                            } else if let Some(&c) = html_part {
+                                // A `<script type="text/html">` body in one: its parent's placeholders, its own layout
+                                Some(HtmlishEmbeddedIn { indent_multiple_roots: false, ..c })
                             } else if request.parent_context_as::<XxxInJsdocFence>().is_some() {
+                                // A JSDoc code block
                                 None
                             } else {
+                                // Any other part: a Markdown code block, a `<script type="text/html">` body
                                 Some(HtmlishEmbeddedIn::default())
                             };
                         oxc_formatter_htmlish::format_to_ir(
@@ -384,7 +392,7 @@ pub fn build_dispatcher(
             // deliberate skip otherwise (pure build).
             Route::Prettier(language) => {
                 if let Some(fallback) = &fallback {
-                    fallback(session, language, &request)
+                    fallback(session, language, text)
                 } else {
                     debug!(
                         "No fallback for Prettier language '{}' in this build, part stays as-is",
@@ -411,10 +419,14 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         layout,
         tailwind_classes: false,
         ends_at_double_brace: false,
+        ends_before_brace: false,
         reads_as_statements: false,
         in_parens: false,
+        host_suffix: 0,
+        closes_paren: false,
     };
     if let Some(&part) = request.parent_context_as::<JsInVueTemplate>() {
+        // Vue: a template's `{{ }}`, a directive's value, `v-for`'s and `v-slot`'s parts, `<script generic>`
         let root = match part {
             JsInVueTemplate::Interpolation => JsRoot::Expression(ExpressionRoot {
                 ends_at_double_brace: true,
@@ -450,13 +462,20 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
             JsEmbeddedIn { in_html_attribute, inlines_code: true, ..JsEmbeddedIn::default() },
         );
     }
-    if let Some(&part) = request.parent_context_as::<JsInAngularTemplate>() {
+    if let Some(&JsInAngularPiece { part, closes_paren }) =
+        request.parent_context_as::<JsInAngularPiece>()
+    {
+        // Angular: a template's `{{ }}`, a binding's value or piece of one, a block's parameters, `@let`
         let root = match part {
-            JsInAngularTemplate::Interpolation | JsInAngularTemplate::ValueInterpolation => {
-                ExpressionRoot { ends_at_double_brace: true, ..expression(ExpressionLayout::Bare) }
-            }
-            JsInAngularTemplate::Binding { tailwind_classes } => ExpressionRoot {
+            JsInAngularTemplate::Interpolation { before_brace }
+            | JsInAngularTemplate::ValueInterpolation { before_brace } => ExpressionRoot {
+                ends_at_double_brace: true,
+                ends_before_brace: before_brace,
+                ..expression(ExpressionLayout::Bare)
+            },
+            JsInAngularTemplate::Binding { tailwind_classes, .. } => ExpressionRoot {
                 tailwind_classes,
+                host_suffix: part.suffix_len(),
                 ..expression(ExpressionLayout::Hug { literals: true })
             },
             JsInAngularTemplate::AttributePiece { tailwind_classes } => {
@@ -464,6 +483,7 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
             }
             JsInAngularTemplate::BlockPiece => expression(ExpressionLayout::Bare),
         };
+        let root = ExpressionRoot { closes_paren, ..root };
         let embedded_in = JsEmbeddedIn {
             // Every one but an interpolation's and a block's is a `"`-quoted attribute value
             in_html_attribute: part.in_html_attribute(),
@@ -475,9 +495,11 @@ fn js_root_of(request: &DispatchRequest<'_>) -> (JsRoot, JsEmbeddedIn) {
         return (JsRoot::Expression(root), embedded_in);
     }
     if request.parent_context_as::<JsInHtmlEventHandler>().is_some() {
+        // An HTML `on*` attribute's statements
         let root = in_attribute(ProgramSemicolons::LoneExpressionOmitted);
         return (root, JsEmbeddedIn { in_html_attribute: true, ..JsEmbeddedIn::default() });
     }
+    // A program: a `<script>` body, a Markdown code block (which shows a lone JSX snippet), a JSDoc code block
     let semicolons = if request.parent_context_as::<XxxInMarkdownCodeBlock>().is_some() {
         ProgramSemicolons::LoneJsxOmitted
     } else {
@@ -565,6 +587,8 @@ mod tests {
             "toml",
             "html",
             "vue",
+            "angular-html",
+            "angular",
         ] {
             let text = match language {
                 "graphql" | "gql" => "{ a }",
@@ -574,6 +598,7 @@ mod tests {
                 "markdown" | "md" => "#  a",
                 "html" => "<p>  a  </p>",
                 "vue" => "<template><p>{{ a }}</p></template>",
+                "angular-html" | "angular" => "<p>{{ a }}</p>",
                 _ => "a  =  1",
             };
             let response = session.dispatch(DispatchRequest {

@@ -1,4 +1,5 @@
 use std::{
+    array,
     num::NonZeroU32,
     ops::{Deref, DerefMut},
 };
@@ -23,7 +24,7 @@ pub struct Comments<'a> {
 impl<'a> Comments<'a> {
     fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
+            inline: array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
             len: 0,
             vec: ArenaVec::new_in(&allocator),
             starts_end: 0,
@@ -161,6 +162,12 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub(super) fn checkpoint(&self) -> TriviaCheckpoint {
+        // Checkpoint does not store `processed`, as it's always the same as `comments.len()`.
+        // Checkpoints are only created between tokens.
+        // Once a token is finished, all comments before it have been attached,
+        // and attaching comments sets `processed` to `comments.len()`.
+        debug_assert_eq!(self.processed, self.comments.len());
+
         TriviaCheckpoint {
             comments_len: self.comments.len(),
             irregular_whitespaces_len: self.irregular_whitespaces.len(),
@@ -177,6 +184,30 @@ impl<'a> TriviaBuilder<'a> {
         self.processed = self.comments.len();
         self.previous_token = checkpoint.previous_token;
         self.annotation_comments = checkpoint.annotation_comments;
+        if self.annotation_comments.ends != [None; 2] {
+            self.unapply_annotation_comments();
+        }
+    }
+
+    /// Mark the annotations before the current token as not applied.
+    ///
+    /// Only parsing from that token applies them, which rewinding to it discards.
+    #[cold]
+    #[inline(never)]
+    fn unapply_annotation_comments(&mut self) {
+        let AnnotationComments { starts, ends } = self.annotation_comments;
+        for (index, applied, not_applied) in [
+            (0, CommentContent::Pure, CommentContent::PureNotApplied),
+            (1, CommentContent::NoSideEffects, CommentContent::NoSideEffectsNotApplied),
+        ] {
+            if let Some(end) = ends[index] {
+                for comment in &mut self.comments[starts[index] as usize..end.get() as usize] {
+                    if comment.content == applied {
+                        comment.content = not_applied;
+                    }
+                }
+            }
+        }
     }
 
     /// Make rewinding to `checkpoint` keep the trivia lexed after it.

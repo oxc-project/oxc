@@ -31,9 +31,9 @@ use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     AstNode,
-    ast_util::variable_declaration_kind,
     ast_util::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
+        variable_declaration_kind,
     },
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
@@ -1499,7 +1499,6 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 }
 
 mod fix {
-    use super::Name;
     use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::{
         ast::{ArrayExpression, Expression},
@@ -1508,6 +1507,7 @@ mod fix {
     use oxc_span::{GetSpan, SPAN, Span};
     use oxc_str::Str;
 
+    use super::Name;
     use crate::{
         context::LintContext,
         fixer::{RuleFix, RuleFixer},

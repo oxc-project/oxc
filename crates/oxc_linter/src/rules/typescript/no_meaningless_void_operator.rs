@@ -1,8 +1,9 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoMeaninglessVoidOperator(Box<NoMeaninglessVoidOperatorConfig>);

@@ -125,20 +125,13 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
 
     #[inline]
     fn is_simple_object(object: &'b ObjectExpression<'a>, depth: u8) -> bool {
-        object.properties.iter().all(|member| {
-            if let ObjectPropertyKind::ObjectProperty(property) = member {
-                if property.method {
-                    return false;
-                }
-
-                if property.shorthand {
-                    return true;
-                }
-
-                !property.key.is_computed() && Self::from(&property.value).is_simple_impl(depth + 1)
-            } else {
-                false
+        object.properties.iter().all(|member| match member {
+            ObjectPropertyKind::ObjectProperty(property) => {
+                property.shorthand
+                    || (!property.key.is_computed()
+                        && Self::from(&property.value).is_simple_impl(depth + 1))
             }
+            ObjectPropertyKind::MethodProperty(_) | ObjectPropertyKind::SpreadProperty(_) => false,
         })
     }
 

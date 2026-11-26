@@ -138,43 +138,60 @@ impl Lanes {
         self.strings.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, cpu));
     }
 
-    #[cpu_multiversion]
-    #[inline(always)]
-    pub(crate) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
-        // Escaped-identifier atoms are the one funnel every code-level
-        // identifier escape passes through, so validation rides here.
-        self.validate_ident_escapes(src, bs, be);
-        let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32, cpu);
-        self.atoms.push(sp);
-    }
-
-    /// A well-formed escape decoding to a non-identifier char (`var \u0020 = 1`):
-    /// oxc_parser reports the decoded char with an empty span after the escape.
-    /// We emit `(end, 0)`; the bridge recognizes the len-0 shape and decodes the
-    /// escape text backward to recover the char.
-    #[cpu_version(Generic)]
-    #[cold]
-    #[inline(never)]
-    fn check_escaped_ident_char(&mut self, value: u32, at_start: bool, end: usize) {
-        let Some(ch) = char::from_u32(value) else { return }; // surrogates handled by caller
-        let ok = if at_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
-        if !ok {
-            self.push_diag(end as u32, 0, DiagCode::UnexpectedCharacter);
-        }
-    }
-
-    /// Validate every unicode escape in an identifier atom, mirroring
-    /// oxc_parser's consumption exactly: spans start after the backslash and
-    /// end where the parser's scanner stopped; surrogate pairs are invalid in
-    /// identifiers (one diag over both escapes); a failed pair-low rewinds so
-    /// the second escape is validated on its own.
+    /// Cook an escaped identifier and report its invalid escapes. An invalid escape adds nothing
+    /// to the value (`x\uD800y` cooks to `xy`), so the value is UTF-8 whenever the source is.
     ///
     /// As it's cold code, it's compiled only once, not separately for each CPU feature set.
     /// `#[inline(never)]` stops it being inlined into the separate copies of its callers.
     #[cpu_version(Generic)]
     #[cold]
     #[inline(never)]
-    fn validate_ident_escapes(&mut self, src: &[u8], bs: usize, be: usize) {
+    pub(crate) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize) {
+        let ss = self.cooked.len() as u32;
+        let mut i = bs;
+        while let Some(p) = memchr::memchr(b'\\', &src[i..be]) {
+            self.cooked.extend_from_slice(&src[i..i + p]);
+            // For private names `bs` is already past the `#`.
+            let (ch, next) = self.ident_escape(src, i + p + 1, be, i + p == bs);
+            if let Some(ch) = ch {
+                self.cooked.extend_from_slice(ch.encode_utf8(&mut [0; 4]).as_bytes());
+            }
+            i = next;
+        }
+        self.cooked.extend_from_slice(&src[i..be]);
+        let we = self.cooked.len() as u32;
+        self.atoms.push(StringSpan::new(ss, we & StringSpan::END_MASK, false, BASELINE));
+    }
+
+    /// The char a well-formed escape decodes to, if an identifier can have it there.
+    /// A non-identifier char (`var \u0020 = 1`): oxc_parser reports the decoded char
+    /// with an empty span after the escape. We emit `(end, 0)`; the bridge recognizes
+    /// the len-0 shape and decodes the escape text backward to recover the char.
+    #[cpu_version(Generic)]
+    fn ident_char(&mut self, value: u32, at_start: bool, start: usize, end: usize) -> Option<char> {
+        let Some(ch) = char::from_u32(value) else {
+            self.push_bad_ident_escape(start, end); // a lone surrogate
+            return None;
+        };
+        let ok = if at_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
+        if !ok {
+            self.push_diag(end as u32, 0, DiagCode::UnexpectedCharacter);
+            return None;
+        }
+        Some(ch)
+    }
+
+    /// The char of the escape whose `u` is at `start`, if it's valid there, and where the
+    /// escape ends. Diagnostics mirror oxc_parser's consumption exactly: spans start after
+    /// the backslash and end where the parser's scanner stopped.
+    #[cpu_version(Generic)]
+    fn ident_escape(
+        &mut self,
+        src: &[u8],
+        start: usize,
+        be: usize,
+        at_start: bool,
+    ) -> (Option<char>, usize) {
         #[cpu_version(Generic)]
         fn hex4(src: &[u8], mut k: usize, be: usize) -> (Option<u32>, usize) {
             let cpu = BASELINE;
@@ -193,92 +210,59 @@ impl Lanes {
 
         let cpu = BASELINE;
 
-        let mut i = bs;
-        while i < be {
-            if src[i] != b'\\' {
-                i += 1;
-                continue;
-            }
-            // `is_identifier_start` applies when the escape begins the atom
-            // (for private names `bs` is already past the `#`).
-            let at_start = i == bs;
-            let start = i + 1;
-            if start >= be || src[start] != b'u' {
-                // Unreachable via scan_ident_esc, but mirror the parser
-                // defensively: consume one char, span = it.
-                self.push_diag(
-                    start as u32,
-                    u32::from(start < be),
-                    DiagCode::InvalidIdentifierEscape,
-                );
-                i = start + 1;
-                continue;
-            }
-            let mut k = start + 1; // after `u`
-            if k < be && src[k] == b'{' {
-                k += 1;
-                let mut value: u32 = 0;
-                let mut any = false;
-                let mut over = false;
-                while k < be {
-                    let Some(h) = hex_digit(src[k], cpu) else { break };
-                    value = (value << 4) | u32::from(h);
-                    any = true;
-                    k += 1;
-                    if value > 0x0010_FFFF {
-                        over = true; // parser bails right after this digit
-                        break;
-                    }
-                }
-                if !over && any && k < be && src[k] == b'}' {
-                    k += 1; // `}` consumed only on the well-formed path
-                    if (0xD800..=0xDFFF).contains(&value) {
-                        // lone surrogate via braces: invalid in identifiers
-                        self.push_bad_ident_escape(start, k);
-                    } else {
-                        self.check_escaped_ident_char(value, at_start, k);
-                    }
-                } else {
-                    // overflow / no digits / missing `}`: end = parser stop
-                    self.push_bad_ident_escape(start, k);
-                }
-                i = k;
-                continue;
-            }
-            let (h1, e1) = hex4(src, k, be);
-            let Some(high) = h1 else {
-                self.push_bad_ident_escape(start, e1);
-                i = e1;
-                continue;
-            };
-            k = e1;
-            if !(0xD800..=0xDFFF).contains(&high) {
-                // well-formed BMP code point: must still be an identifier char
-                self.check_escaped_ident_char(high, at_start, k);
-                i = k;
-                continue;
-            }
-            if (0xD800..=0xDBFF).contains(&high)
-                && k + 1 < be
-                && src[k] == b'\\'
-                && src[k + 1] == b'u'
-            {
-                let (low, low_end) = hex4(src, k + 2, be);
-                if let Some(low) = low
-                    && (0xDC00..=0xDFFF).contains(&low)
-                {
-                    // A well-formed pair is still invalid in identifiers:
-                    // one diag over both escapes.
-                    self.push_bad_ident_escape(start, low_end);
-                    i = low_end;
-                    continue;
-                }
-                // Not a valid low: fall through - the parser rewinds and
-                // reports the first escape alone.
-            }
-            self.push_bad_ident_escape(start, k);
-            i = k;
+        if start >= be || src[start] != b'u' {
+            // Unreachable via scan_ident_esc, but mirror the parser
+            // defensively: consume one char, span = it.
+            self.push_diag(start as u32, u32::from(start < be), DiagCode::InvalidIdentifierEscape);
+            return (None, (start + 1).min(be));
         }
+        let mut k = start + 1; // after `u`
+        if k < be && src[k] == b'{' {
+            k += 1;
+            let mut value: u32 = 0;
+            let mut any = false;
+            let mut over = false;
+            while k < be {
+                let Some(h) = hex_digit(src[k], cpu) else { break };
+                value = (value << 4) | u32::from(h);
+                any = true;
+                k += 1;
+                if value > 0x0010_FFFF {
+                    over = true; // parser bails right after this digit
+                    break;
+                }
+            }
+            if !over && any && k < be && src[k] == b'}' {
+                k += 1; // `}` consumed only on the well-formed path
+                return (self.ident_char(value, at_start, start, k), k);
+            }
+            // overflow / no digits / missing `}`: end = parser stop
+            self.push_bad_ident_escape(start, k);
+            // The token runs on to the end of the escape (`\u{110000}`), and none of it is kept.
+            while k < be && hex_digit(src[k], cpu).is_some() {
+                k += 1;
+            }
+            return (None, k + usize::from(k < be && src[k] == b'}'));
+        }
+        let (h1, e1) = hex4(src, k, be);
+        let Some(high) = h1 else {
+            self.push_bad_ident_escape(start, e1);
+            return (None, e1);
+        };
+        if (0xD800..=0xDBFF).contains(&high)
+            && e1 + 1 < be
+            && src[e1] == b'\\'
+            && src[e1 + 1] == b'u'
+        {
+            let (low, low_end) = hex4(src, e1 + 2, be);
+            if low.is_some_and(|low| (0xDC00..=0xDFFF).contains(&low)) {
+                // A well-formed pair is still invalid in identifiers: one diag over both escapes.
+                self.push_bad_ident_escape(start, low_end);
+                return (None, low_end);
+            }
+            // Not a valid low: the parser rewinds and reports the first escape alone.
+        }
+        (self.ident_char(high, at_start, start, e1), e1)
     }
 
     /// An invalid escape in an identifier, spanning from after its backslash to end.

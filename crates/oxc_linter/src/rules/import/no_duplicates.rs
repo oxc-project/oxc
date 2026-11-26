@@ -216,7 +216,7 @@ impl Rule for NoDuplicates {
                             match import_entry.import_name {
                                 ImportImportName::Name(_) => u8::from(!self.prefer_inline),
                                 ImportImportName::NamespaceObject => 2,
-                                ImportImportName::Default(_) => 3,
+                                ImportImportName::Default(_) | ImportImportName::Source(_) => 3,
                             }
                         } else {
                             match import_entry.import_name {

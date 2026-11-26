@@ -1,11 +1,15 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_ast_visit::VisitJs;
 use oxc_span::Span;
 use oxc_str::Ident;
 use oxc_syntax::scope::ScopeId;
-use oxc_traverse::Traverse;
+use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::{common::class_lowering::ClassLowering, context::TraverseCtx, state::TransformState};
+use crate::{
+    common::class_lowering::ClassLowering, context::TraverseCtx, decorator::DecoratorMode,
+    state::TransformState, utils::decorated_class::PrivateNames,
+};
 
 mod annotations;
 mod class;
@@ -54,15 +58,25 @@ pub struct TypeScript<'a> {
     source_type_is_typescript_definition: bool,
     set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
+    /// Whether legacy decorators (`experimentalDecorators`) lower decorated members.
+    legacy_decorators: bool,
     /// Parameter properties of the entered classes, for [`Self::add_parameter_property_fields`].
     parameter_properties: Vec<(Span, Ident<'a>)>,
     /// Entered classes with parameter properties, and where theirs start in
     /// `parameter_properties`. Classes without any push nothing, so most files never allocate.
     parameter_properties_starts: Vec<(ScopeId, usize)>,
+    /// See [`Self::computed_key_marker`].
+    computed_key_marker: Option<BoundIdentifier<'a>>,
+    /// Enclosing private declarations that direct eval could reference by string.
+    eval_private_names: PrivateNames<'a>,
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
+    pub fn new(
+        options: &TypeScriptOptions,
+        decorator_mode: DecoratorMode,
+        state: &TransformState<'a>,
+    ) -> Self {
         Self {
             annotations: TypeScriptAnnotations::new(options),
             r#enum: TypeScriptEnum::new(options.optimize_const_enums, options.optimize_enums),
@@ -73,8 +87,11 @@ impl<'a> TypeScript<'a> {
             set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
+            legacy_decorators: decorator_mode.is_legacy(),
             parameter_properties: Vec::new(),
             parameter_properties_starts: Vec::new(),
+            computed_key_marker: None,
+            eval_private_names: PrivateNames::default(),
         }
     }
 
@@ -131,14 +148,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         let lowering = ctx.state.class_lowering_of(class.scope_id());
+        if self.set_public_class_fields
+            && ctx.scoping().scope_flags(class.scope_id()).contains_direct_eval()
+        {
+            for element in &class.body.body {
+                if let Some(PropertyKey::PrivateIdentifier(name)) = element.property_key() {
+                    self.eval_private_names.visit_private_identifier(name);
+                }
+            }
+        }
         self.annotations.enter_class(class, ctx);
 
         if lowering.lowers_fields() {
             // Erase type-only fields before class-properties lowers the rest.
             self.remove_uninitialized_class_fields(class, ctx);
+            self.convert_decorated_declare_field_keys(class, lowering, ctx);
         } else if self.assigns_fields(lowering) {
             self.transform_class_fields(class, lowering, ctx);
         } else {
+            self.convert_decorated_declare_field_keys(class, lowering, ctx);
             // Define semantics: parameter properties also get field declarations.
             let start = self.parameter_properties.len();
             Self::collect_parameter_properties(class, &mut self.parameter_properties);

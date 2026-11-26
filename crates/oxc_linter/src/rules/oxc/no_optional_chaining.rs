@@ -1,14 +1,16 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 fn no_optional_chaining_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
     if help.is_empty() {

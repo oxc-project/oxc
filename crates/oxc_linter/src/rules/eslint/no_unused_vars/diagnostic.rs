@@ -1,6 +1,7 @@
 use std::fmt;
 
 use cow_utils::CowUtils;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
 use oxc_span::{GetSpan, Span};

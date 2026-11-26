@@ -51,6 +51,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Using default import as "userEvent" can be confusing. Use another name for default import to avoid confusion.
 
+  ⚠ import(no-named-as-default): Module "./re-export-source-default-and-named-misleading" has named export "wasm"
+   ╭─[index.js:1:8]
+ 1 │ import wasm from "./re-export-source-default-and-named-misleading"
+   ·        ────
+   ╰────
+  help: Using default import as "wasm" can be confusing. Use another name for default import to avoid confusion.
+
   ⚠ import(no-named-as-default): Module "./portal-paywall" has named export "PortalPaywall"
    ╭─[index.js:1:8]
  1 │ import PortalPaywall from "./portal-paywall"

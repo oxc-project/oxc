@@ -1,4 +1,5 @@
 use itertools::Itertools;
+
 use oxc_ast::ast::{ModuleDeclaration, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

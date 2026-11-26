@@ -1,4 +1,6 @@
 use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
@@ -9,8 +11,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 use oxc_str::{JSStr, static_ident};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

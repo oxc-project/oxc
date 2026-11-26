@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, BindingPattern,
-        CallExpression, Declaration, Expression, ObjectPropertyKind, PropertyKey, match_expression,
+        CallExpression, Declaration, Expression, PropertyKey, match_expression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -85,8 +85,8 @@ impl Rule for NoThenable {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
                 expr.properties.iter().for_each(|prop| {
-                    if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                        && let Some(span) = contains_then(&prop.key, ctx)
+                    if let Some(key) = prop.key()
+                        && let Some(span) = contains_then(key, ctx)
                     {
                         ctx.diagnostic(object(span));
                     }

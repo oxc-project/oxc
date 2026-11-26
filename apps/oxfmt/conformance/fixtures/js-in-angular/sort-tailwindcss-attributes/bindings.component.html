@@ -1,0 +1,3 @@
+<div class="p-4 flex" [class]="'p-4 flex'" [ngClass]="{ 'p-4 flex': a }" foo="p-4 flex" [bar]="'p-4 flex'" bind-class="'p-4 flex'"></div>
+<div [(class)]="'p-4 flex'" [class.x]="'p-4 flex'" ngClass="p-4 flex" class="p-4 flex {{ a }}"></div>
+<div [class]="cn('p-4 flex')" [ngClass]="('p-4 flex' | async)"></div>

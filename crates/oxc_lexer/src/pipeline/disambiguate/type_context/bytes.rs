@@ -90,7 +90,7 @@ pub fn lt_run_split(tokens: &TokensView, lt: usize, cpu: impl Cpu) -> bool {
 }
 
 #[cpu_multiversion]
-pub(super) fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> bool {
+fn arrow_after_params(tokens: &TokensView, lp: usize, cpu: impl Cpu) -> bool {
     let TokensView { src, n, .. } = *tokens;
     let Some(rp) = group_closer(tokens, lp, cpu) else {
         return false;

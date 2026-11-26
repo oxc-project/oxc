@@ -28,6 +28,8 @@ impl UnstableAddress for ObjectExpression<'_> {}
 
 impl UnstableAddress for ObjectProperty<'_> {}
 
+impl UnstableAddress for ObjectMethodProperty<'_> {}
+
 impl UnstableAddress for TemplateLiteral<'_> {}
 
 impl UnstableAddress for TaggedTemplateExpression<'_> {}
