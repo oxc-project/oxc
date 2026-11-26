@@ -194,8 +194,8 @@ fn transform<'a>(
     //
     // Chunking is done by detecting boundaries.
     // By default, no boundary exists within an import run, so the whole chunk is sorted as one unit.
-    // Depending on options, empty lines (`partition_by_newline`) and comment-only lines
-    // (`partition_by_comment`) can also be boundaries.
+    // Depending on options, empty lines (`partition_by_newline`), comment-only lines
+    // (`partition_by_comment`) and side-effect imports (`partition_by_side_effect`) can also be boundaries.
     //
     // Within each chunk, we will sort import lines.
     // e.g. with `partition_by_newline: true`:
@@ -218,8 +218,11 @@ fn transform<'a>(
     let mut current_chunk = PartitionedChunk::default();
     for line in lines {
         match line {
-            // `SourceLine::Import` never be a boundary.
-            SourceLine::Import(..) => {
+            // `SourceLine::Import` is a boundary only for side-effect imports
+            // when `partition_by_side_effect` is true.
+            SourceLine::Import(_, ref metadata)
+                if !(options.partition_by_side_effect && metadata.is_side_effect) =>
+            {
                 current_chunk.add_imports_line(line);
             }
             // `SourceLine::Empty` and `SourceLine::CommentOnly` can be boundaries depending on options.
@@ -233,8 +236,9 @@ fn transform<'a>(
                 current_chunk.add_imports_line(line);
             }
             // This `SourceLine` is a boundary!
-            // Reached only when `partition_by_newline` is true (for `Empty`)
-            // or `partition_by_comment` is true (for `CommentOnly`).
+            // Reached only when `partition_by_newline` is true (for `Empty`),
+            // `partition_by_comment` is true (for `CommentOnly`),
+            // or `partition_by_side_effect` is true (for side-effect `Import`).
             _ => {
                 // Flush current import chunk
                 if !current_chunk.is_empty() {
