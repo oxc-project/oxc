@@ -709,6 +709,17 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         Self::substitute_object_property(prop, ctx);
     }
 
+    fn exit_object_method_property(
+        &mut self,
+        prop: &mut ObjectMethodProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.is_tree_shake_only() {
+            return;
+        }
+        Self::substitute_object_method_property(prop, ctx);
+    }
+
     fn exit_assignment_target_property(
         &mut self,
         node: &mut AssignmentTargetProperty<'a>,

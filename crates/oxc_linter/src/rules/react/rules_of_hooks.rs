@@ -971,8 +971,11 @@ fn get_declaration_identifier<'a>(
                 }
                 // { useHook: () => {} }
                 // { useHook() {} }
-                AstKind::ObjectProperty(prop) => {
-                    let name = prop.key.name()?;
+                AstKind::ObjectProperty(oxc_ast::ast::ObjectProperty { key, .. })
+                | AstKind::ObjectMethodProperty(oxc_ast::ast::ObjectMethodProperty {
+                    key, ..
+                }) => {
+                    let name = key.name()?;
                     // The name is only classified as a component or hook name. A lone surrogate
                     // is neither an uppercase letter nor a digit, and neither is U+FFFD.
                     let replaced = name.as_str().is_none().then(|| {

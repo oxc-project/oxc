@@ -144,6 +144,21 @@ impl Rule for NoUselessComputedKey {
                     );
                 }
             }
+            AstKind::ObjectMethodProperty(property) if property.key.is_computed() => {
+                if let Some(expr) =
+                    property.key.as_expression().map(Expression::without_parentheses)
+                {
+                    check_computed_class_member(
+                        ctx,
+                        property.key.span(),
+                        property.span,
+                        expr,
+                        false,
+                        &[],
+                        &["__proto__"],
+                    );
+                }
+            }
             AstKind::BindingProperty(binding_prop) if binding_prop.key.is_computed() => {
                 if let Some(expr) =
                     binding_prop.key.as_expression().map(Expression::without_parentheses)

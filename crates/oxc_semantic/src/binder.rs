@@ -238,7 +238,9 @@ impl<'a> Binder<'a> for Function<'a> {
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
-        if !is_declaration && let AstKind::ObjectProperty(prop) = builder.ancestry().parent_kind() {
+        if !is_declaration
+            && let AstKind::ObjectMethodProperty(prop) = builder.ancestry().parent_kind()
+        {
             // Do not bind scope flags when function is inside of the object property key:
             //
             // { set [function() {}](val) {} }
@@ -248,9 +250,9 @@ impl<'a> Binder<'a> for Function<'a> {
             }
             let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
             match prop.kind {
-                PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
-                PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
-                PropertyKind::Init => {}
+                ObjectMethodKind::Get => *flags |= ScopeFlags::GetAccessor,
+                ObjectMethodKind::Set => *flags |= ScopeFlags::SetAccessor,
+                ObjectMethodKind::Method => {}
             }
         }
     }

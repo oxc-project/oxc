@@ -174,6 +174,7 @@ fn remove_console<'c, 'a: 'c>(
             // to:   const x = (undefined, 5);
             | AstKind::SequenceExpression(_)
             | AstKind::ObjectProperty(_)
+            | AstKind::ObjectMethodProperty(_)
             => {
                 return fixer.replace(node_to_delete.span(), "undefined").dangerously()
             }

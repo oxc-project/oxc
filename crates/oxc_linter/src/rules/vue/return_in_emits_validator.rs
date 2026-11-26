@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement},
+    ast::{
+        ArrowFunctionExpression, Expression, Function, ObjectMethodProperty, ObjectProperty,
+        ReturnStatement,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
@@ -112,8 +115,12 @@ impl Rule for ReturnInEmitsValidator {
 fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<String> {
     let nodes = ctx.nodes();
     let parent = nodes.parent_node(node.id());
-    let AstKind::ObjectProperty(prop) = parent.kind() else { return None };
-    let emit_name = prop.key.static_name()?;
+    let (AstKind::ObjectProperty(ObjectProperty { key, .. })
+    | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })) = parent.kind()
+    else {
+        return None;
+    };
+    let emit_name = key.static_name()?;
 
     let obj_node = nodes.parent_node(parent.id());
     if !matches!(obj_node.kind(), AstKind::ObjectExpression(_)) {
@@ -121,7 +128,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
     }
     let outer = nodes.parent_node(obj_node.id());
 
-    // Options API: function -> ObjectProperty(emit name) -> ObjectExpression(emits body)
+    // Options API: function -> property(emit name) -> ObjectExpression(emits body)
     //              -> ObjectProperty("emits") -> ObjectExpression(component options)
     if let AstKind::ObjectProperty(emits_prop) = outer.kind() {
         if !emits_prop.key.is_specific_static_name("emits") {
@@ -134,7 +141,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
         return None;
     }
 
-    // Composition API: function -> ObjectProperty(emit name) -> ObjectExpression
+    // Composition API: function -> property(emit name) -> ObjectExpression
     //                  -> CallExpression(`defineEmits(...)`)
     if ctx.frameworks_options() == FrameworkOptions::VueSetup
         && let AstKind::CallExpression(call) = outer.kind()

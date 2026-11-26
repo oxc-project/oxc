@@ -229,15 +229,8 @@ impl<'a> ClassProperties<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let create_object = |key| {
-            let property = ObjectPropertyKind::new_object_property(
-                SPAN,
-                PropertyKind::Init,
-                key,
-                class_expr,
-                false,
-                false,
-                ctx,
-            );
+            let property =
+                ObjectPropertyKind::new_object_property(SPAN, key, class_expr, false, ctx);
             Expression::new_object_expression(SPAN, [property], ctx)
         };
 

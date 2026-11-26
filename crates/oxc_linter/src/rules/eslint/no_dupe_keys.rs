@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
+    ast::{ObjectMethodKind, ObjectProperty, ObjectPropertyKind, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -75,6 +75,8 @@ declare_oxc_lint!(
 
 const INLINE_CAPACITY: usize = 8;
 
+type KeyEntry<'a> = (StaticPropertyName<'a>, (Option<ObjectMethodKind>, Span));
+
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ObjectExpression(obj_expr) = node.kind() else {
@@ -84,25 +86,30 @@ impl Rule for NoDupeKeys {
         if len <= 1 {
             return;
         }
-        let mut inline: SmallVec<
-            [(StaticPropertyName<'_>, (PropertyKind, Span)); INLINE_CAPACITY],
-        > = SmallVec::new();
+        let mut inline: SmallVec<[KeyEntry<'_>; INLINE_CAPACITY]> = SmallVec::new();
         // Bound linear searches to small objects; retain hashing for larger ones.
         let mut map = FxHashMap::with_capacity_and_hasher(
             if len > INLINE_CAPACITY { len } else { 0 },
             FxBuildHasher,
         );
         for prop in &obj_expr.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+            // `None` for properties with ESTree `kind: "init"`, the accessor kind otherwise.
+            let (key, accessor_kind) = match prop {
+                ObjectPropertyKind::ObjectProperty(prop) => (&prop.key, None),
+                ObjectPropertyKind::MethodProperty(prop) => {
+                    (&prop.key, Some(prop.kind).filter(|kind| kind.is_accessor()))
+                }
+                ObjectPropertyKind::SpreadProperty(_) => continue,
+            };
+            let Some(name) = key.static_name() else {
                 continue;
             };
-            let Some(name) = prop.key.static_name() else {
-                continue;
-            };
-            if is_proto_setter_property(prop, &name) {
+            if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                && is_proto_setter_property(prop, &name)
+            {
                 continue;
             }
-            let value = (prop.kind, prop.key.span());
+            let value = (accessor_kind, key.span());
             let previous = if len <= INLINE_CAPACITY {
                 if let Some((_, previous)) = inline.iter_mut().find(|(key, _)| *key == name) {
                     Some(std::mem::replace(previous, value))
@@ -114,23 +121,17 @@ impl Rule for NoDupeKeys {
                 map.insert(name, value)
             };
             if let Some((prev_kind, prev_span)) = previous
-                && (prev_kind == PropertyKind::Init
-                    || prop.kind == PropertyKind::Init
-                    || prev_kind == prop.kind)
+                && (prev_kind.is_none() || accessor_kind.is_none() || prev_kind == accessor_kind)
             {
-                let name = prop_key_name(&prop.key, ctx);
-                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), &name));
+                let name = prop_key_name(key, ctx);
+                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, key.span(), &name));
             }
         }
     }
 }
 
 fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &StaticPropertyName<'_>) -> bool {
-    name == "__proto__"
-        && prop.kind == PropertyKind::Init
-        && !prop.key.is_computed()
-        && !prop.shorthand
-        && !prop.method
+    name == "__proto__" && !prop.key.is_computed() && !prop.shorthand
 }
 
 /// Display spelling for the diagnostic.

@@ -1119,28 +1119,21 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
         let func_address = func_kinds.next().unwrap().address();
 
         match func_kinds.next().unwrap() {
-            AstKind::ObjectProperty(prop) => {
-                // Function's parent is an `ObjectProperty`.
-                // Check the function is a method/getter/setter, not a normal property.
+            AstKind::ObjectMethodProperty(prop) => {
+                // Function's parent is an `ObjectMethodProperty` representing a method/getter/setter.
+                // Check the function is the value of the property, not computed key.
                 // Valid: `obj = { method() { super.foo } }`
-                // Invalid: `obj = { x: function() { super.foo } }`
-                let is_method_or_getter_or_setter = prop.method || prop.kind != PropertyKind::Init;
-                if is_method_or_getter_or_setter {
-                    // Function's parent is an `ObjectProperty` representing a method/getter/setter.
-                    // Check the function is the value of the property, not computed key.
-                    // Valid: `obj = { method() { super.foo } }`
-                    // Invalid: `obj = { [ function() { super.foo } ]() {} }`
-                    if func_address == prop.value.address() {
-                        // `super.foo` is legal here, `super()` is not.
-                        // > PropertyDefinition : MethodDefinition
-                        // > * It is a Syntax Error if HasDirectSuper of MethodDefinition is true.
-                        if super_call_span.is_some() {
-                            break;
-                        }
-                        return;
+                // Invalid: `obj = { [ function() { super.foo } ]() {} }`
+                if func_address == prop.value.address() {
+                    // `super.foo` is legal here, `super()` is not.
+                    // > PropertyDefinition : MethodDefinition
+                    // > * It is a Syntax Error if HasDirectSuper of MethodDefinition is true.
+                    if super_call_span.is_some() {
+                        break;
                     }
+                    return;
                 }
-                // Function is value of a normal property, or computed key - illegal
+                // Function is computed key - illegal
                 break;
             }
             AstKind::MethodDefinition(method) => {
@@ -1183,6 +1176,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                 break;
             }
             // Function is not a class or object method/getter/setter/constructor - illegal.
+            // Invalid: `obj = { x: function() { super.foo } }`
             // > * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
             _ => break,
         }
@@ -1224,20 +1218,16 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
 
     let mut prev_proto: Option<Span> = None;
     for prop in &obj_expr.properties {
-        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-            // Skip if not a property definition production:
-            // PropertyDefinition : PropertyName : AssignmentExpression
-            if obj_prop.kind != PropertyKind::Init || obj_prop.method {
-                continue;
+        // Only check the property definition production:
+        // PropertyDefinition : PropertyName : AssignmentExpression
+        if let ObjectPropertyKind::ObjectProperty(_) = prop
+            && let Some((prop_name, span)) = prop.prop_name()
+            && prop_name == "__proto__"
+        {
+            if let Some(prev_span) = prev_proto {
+                ctx.error(diagnostics::redeclaration("__proto__", prev_span, span));
             }
-            if let Some((prop_name, span)) = prop.prop_name()
-                && prop_name == "__proto__"
-            {
-                if let Some(prev_span) = prev_proto {
-                    ctx.error(diagnostics::redeclaration("__proto__", prev_span, span));
-                }
-                prev_proto = Some(span);
-            }
+            prev_proto = Some(span);
         }
     }
 }

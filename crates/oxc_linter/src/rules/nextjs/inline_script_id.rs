@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -137,9 +137,7 @@ impl Rule for InlineScriptId {
                             spread_attr.argument.without_parentheses()
                         {
                             for prop in &obj_expr.properties {
-                                if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                                    && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
-                                {
+                                if let Some(PropertyKey::StaticIdentifier(ident)) = prop.key() {
                                     prop_names_hash_set.insert(ident.name.into());
                                 }
                             }

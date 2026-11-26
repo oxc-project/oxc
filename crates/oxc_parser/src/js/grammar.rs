@@ -198,6 +198,11 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
                     let target = AssignmentTargetProperty::cover(property.unbox(), p);
                     properties.push(target);
                 }
+                ObjectPropertyKind::MethodProperty(property) => {
+                    let target =
+                        p.fatal_error(diagnostics::invalid_assignment(property.value.span));
+                    properties.push(target);
+                }
                 ObjectPropertyKind::SpreadProperty(spread) => {
                     if i == len - 1 {
                         let span = spread.span;
@@ -323,15 +328,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 for (index, property) in object.properties.iter().enumerate() {
                     match property {
                         ObjectPropertyKind::ObjectProperty(property) => {
-                            // Methods and accessors are not properties of a pattern.
-                            if property.kind != PropertyKind::Init || property.method {
-                                return Err(diagnostics::invalid_arrow_function_parameter(
-                                    property.span,
-                                ));
-                            }
                             if !property.shorthand {
                                 self.check_cover_binding_element(&property.value)?;
                             }
+                        }
+                        ObjectPropertyKind::MethodProperty(property) => {
+                            // Methods and accessors are not properties of a pattern.
+                            return Err(diagnostics::invalid_arrow_function_parameter(
+                                property.span,
+                            ));
                         }
                         ObjectPropertyKind::SpreadProperty(spread) => {
                             if index != last {
@@ -496,6 +501,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             };
                             list.push(BindingProperty::new(span, key, value, shorthand, self));
                         }
+                        // The check rejects methods and accessors.
+                        ObjectPropertyKind::MethodProperty(_) => {}
                         ObjectPropertyKind::SpreadProperty(spread) => {
                             rest = Some(self.cover_spread_to_binding_rest(spread, span.start));
                         }

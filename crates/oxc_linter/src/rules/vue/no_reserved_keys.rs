@@ -1,10 +1,12 @@
+use std::borrow::Cow;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        CallExpression, Expression, ObjectExpression, ObjectPropertyKind, Statement, TSSignature,
+        CallExpression, Expression, Function, ObjectExpression, PropertyKey, Statement, TSSignature,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -133,19 +135,7 @@ impl Rule for NoReservedKeys {
         match node.kind() {
             AstKind::CallExpression(call) => self.check_define_props(call, ctx),
             AstKind::ObjectProperty(prop) => {
-                let Some(group) = prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
-                else {
-                    return;
-                };
-                if !self.is_target_group(&group) {
-                    return;
-                }
-
-                let Some(parent) = ctx.nodes().ancestors(node.id()).next() else { return };
-                if !is_vue_component_options_object(parent, ctx) {
-                    return;
-                }
-
+                let Some(group) = self.target_group(&prop.key, node, ctx) else { return };
                 match prop.value.get_inner_expression() {
                     Expression::ArrayExpression(arr) => {
                         for elem in &arr.elements {
@@ -164,16 +154,7 @@ impl Rule for NoReservedKeys {
                         self.check_keys(&group, obj, ctx);
                     }
                     Expression::FunctionExpression(func) => {
-                        let Some(body) = &func.body else { return };
-                        for stmt in &body.statements {
-                            if let Statement::ReturnStatement(ret) = stmt
-                                && let Some(arg) = &ret.argument
-                                && let Expression::ObjectExpression(obj) =
-                                    arg.get_inner_expression()
-                            {
-                                self.check_keys(&group, obj, ctx);
-                            }
-                        }
+                        self.check_returned_keys(&group, func, ctx);
                     }
                     Expression::ArrowFunctionExpression(arrow) => {
                         if arrow.is_expression() {
@@ -200,6 +181,10 @@ impl Rule for NoReservedKeys {
                     _ => {}
                 }
             }
+            AstKind::ObjectMethodProperty(prop) => {
+                let Some(group) = self.target_group(&prop.key, node, ctx) else { return };
+                self.check_returned_keys(&group, &prop.value, ctx);
+            }
             _ => {}
         }
     }
@@ -210,6 +195,32 @@ impl Rule for NoReservedKeys {
 }
 
 impl NoReservedKeys {
+    fn target_group<'a>(
+        &self,
+        key: &PropertyKey<'a>,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+    ) -> Option<Cow<'a, str>> {
+        let group = key.static_name().and_then(StaticPropertyName::into_cow_str)?;
+        if !self.is_target_group(&group) {
+            return None;
+        }
+        let parent = ctx.nodes().ancestors(node.id()).next()?;
+        is_vue_component_options_object(parent, ctx).then_some(group)
+    }
+
+    fn check_returned_keys<'a>(&self, group: &str, func: &Function<'a>, ctx: &LintContext<'a>) {
+        let Some(body) = &func.body else { return };
+        for stmt in &body.statements {
+            if let Statement::ReturnStatement(ret) = stmt
+                && let Some(arg) = &ret.argument
+                && let Expression::ObjectExpression(obj) = arg.get_inner_expression()
+            {
+                self.check_keys(group, obj, ctx);
+            }
+        }
+    }
+
     /// Built-in groups plus any added via the `groups` option.
     fn is_target_group(&self, group: &str) -> bool {
         matches!(group, "props" | "data" | "asyncData" | "computed" | "methods" | "setup")
@@ -223,12 +234,11 @@ impl NoReservedKeys {
 
     fn check_keys<'a>(&self, group: &str, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         for prop_kind in &obj.properties {
-            let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-            let Some(name) = p.key.static_name() else {
+            let Some(name) = prop_kind.key().and_then(PropertyKey::static_name) else {
                 continue;
             };
             let name = name.as_js_str();
-            let span = p.key.span();
+            let span = prop_kind.key().map_or_else(|| prop_kind.span(), oxc_span::GetSpan::span);
             if let Some(n) = name.as_str()
                 && self.is_reserved(n)
             {
@@ -263,14 +273,18 @@ impl NoReservedKeys {
                 }
                 Expression::ObjectExpression(obj) => {
                     for prop_kind in &obj.properties {
-                        let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-                        let Some(name) =
-                            p.key.static_name().and_then(StaticPropertyName::into_cow_str)
+                        let Some(name) = prop_kind
+                            .key()
+                            .and_then(PropertyKey::static_name)
+                            .and_then(StaticPropertyName::into_cow_str)
                         else {
                             continue;
                         };
                         if self.is_reserved(&name) {
-                            ctx.diagnostic(reserved_key_diagnostic(&name, p.key.span()));
+                            let span = prop_kind
+                                .key()
+                                .map_or_else(|| prop_kind.span(), oxc_span::GetSpan::span);
+                            ctx.diagnostic(reserved_key_diagnostic(&name, span));
                         }
                     }
                 }

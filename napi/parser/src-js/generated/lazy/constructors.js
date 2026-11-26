@@ -639,6 +639,8 @@ function constructObjectPropertyKind(pos, ast) {
     case 0:
       return constructBoxObjectProperty(pos + 8, ast);
     case 1:
+      return constructBoxObjectMethodProperty(pos + 8, ast);
+    case 2:
       return constructBoxSpreadElement(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectPropertyKind`);
@@ -670,11 +672,6 @@ export class ObjectProperty {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
-  get kind() {
-    const internal = this.#internal;
-    return constructPropertyKind(internal.pos + 12, internal.ast);
-  }
-
   get key() {
     const internal = this.#internal;
     return constructPropertyKey(internal.pos + 16, internal.ast);
@@ -685,14 +682,9 @@ export class ObjectProperty {
     return constructExpression(internal.pos + 32, internal.ast);
   }
 
-  get method() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
-  }
-
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 12, internal.ast);
   }
 
   get computed() {
@@ -705,10 +697,8 @@ export class ObjectProperty {
       type: "ObjectProperty",
       start: this.start,
       end: this.end,
-      kind: this.kind,
       key: this.key,
       value: this.value,
-      method: this.method,
       shorthand: this.shorthand,
       computed: this.computed,
     };
@@ -720,6 +710,89 @@ export class ObjectProperty {
 }
 
 const DebugObjectProperty = class ObjectProperty {};
+
+export class ObjectMethodProperty {
+  type = "ObjectMethodProperty";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get kind() {
+    const internal = this.#internal;
+    return constructObjectMethodKind(internal.pos + 12, internal.ast);
+  }
+
+  get key() {
+    const internal = this.#internal;
+    return constructPropertyKey(internal.pos + 16, internal.ast);
+  }
+
+  get value() {
+    const internal = this.#internal;
+    return constructBoxFunction(internal.pos + 32, internal.ast);
+  }
+
+  get method() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 12] === 0;
+  }
+
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 16] < 64;
+  }
+
+  toJSON() {
+    return {
+      type: "ObjectMethodProperty",
+      start: this.start,
+      end: this.end,
+      kind: this.kind,
+      key: this.key,
+      value: this.value,
+      method: this.method,
+      computed: this.computed,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectMethodProperty.prototype);
+  }
+}
+
+const DebugObjectMethodProperty = class ObjectMethodProperty {};
+
+function constructObjectMethodKind(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return "init";
+    case 1:
+      return "get";
+    case 2:
+      return "set";
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectMethodKind`);
+  }
+}
 
 function constructPropertyKey(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -823,19 +896,6 @@ function constructPropertyKey(pos, ast) {
       return constructBoxPrivateIdentifier(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKey`);
-  }
-}
-
-function constructPropertyKind(pos, ast) {
-  switch (ast.buffer[pos]) {
-    case 0:
-      return "init";
-    case 1:
-      return "get";
-    case 2:
-      return "set";
-    default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKind`);
   }
 }
 
@@ -13164,6 +13224,10 @@ function constructVecObjectPropertyKind(pos, ast) {
 
 function constructBoxObjectProperty(pos, ast) {
   return new ObjectProperty(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxObjectMethodProperty(pos, ast) {
+  return new ObjectMethodProperty(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBool(pos, ast) {

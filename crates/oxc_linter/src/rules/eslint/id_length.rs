@@ -341,6 +341,7 @@ impl IdLength {
                 }
             }
             AstKind::ObjectProperty(_)
+            | AstKind::ObjectMethodProperty(_)
             | AstKind::TSPropertySignature(_)
             | AstKind::TSMethodSignature(_)
                 if self.properties == AlwaysNever::Never => {
@@ -527,6 +528,10 @@ fn test() {
         ("function xyz() {};", None),
         ("function xyz(abc, de) {};", None),
         ("var obj = { abc: 1, de: 2 };", None),
+        (
+            "var obj = { longMethodName() {} };",
+            Some(serde_json::json!([{ "properties": "never" }])),
+        ),
         ("var obj = { 'a': 1, bc: 2 };", None),
         ("var obj = {}; obj['a'] = 2;", None),
         ("abc = d;", None),

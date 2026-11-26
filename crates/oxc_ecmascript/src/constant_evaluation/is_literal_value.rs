@@ -175,6 +175,9 @@ impl<'a> IsLiteralValue<'a, '_> for ObjectPropertyKind<'a> {
     fn is_literal_value(&self, include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
         match self {
             Self::ObjectProperty(property) => property.is_literal_value(include_functions, ctx),
+            Self::MethodProperty(property) => {
+                include_functions && property.key.is_literal_value(include_functions, ctx)
+            }
             Self::SpreadProperty(property) => match &property.argument {
                 Expression::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
                 Expression::StringLiteral(_) => true,

@@ -7,8 +7,8 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ClassElement, MethodDefinition, ObjectProperty, ObjectPropertyKind, PropertyKey,
-        PropertyKind, TSInterfaceBody, TSMethodSignature, TSMethodSignatureKind, TSSignature,
+        ClassElement, MethodDefinition, ObjectMethodKind, ObjectMethodProperty, ObjectPropertyKind,
+        PropertyKey, TSInterfaceBody, TSMethodSignature, TSMethodSignatureKind, TSSignature,
         TSTypeLiteral,
     },
 };
@@ -195,15 +195,15 @@ impl Rule for GroupedAccessorPairs {
             AstKind::ObjectExpression(obj_expr) => {
                 let mut prop_map = FxHashMap::<
                     (StaticPropertyName<'a>, bool),
-                    Vec<(usize, &ArenaBox<'_, ObjectProperty<'_>>)>,
+                    Vec<(usize, &ArenaBox<'_, ObjectMethodProperty<'_>>)>,
                 >::default();
                 let properties = &obj_expr.properties;
 
                 for (idx, v) in properties.iter().enumerate() {
-                    let ObjectPropertyKind::ObjectProperty(obj_prop) = v else {
+                    let ObjectPropertyKind::MethodProperty(obj_prop) = v else {
                         continue;
                     };
-                    if obj_prop.kind == PropertyKind::Init {
+                    if obj_prop.kind == ObjectMethodKind::Method {
                         continue;
                     }
                     // get the Key name of the Object and verify that it is Literal
@@ -228,7 +228,7 @@ impl Rule for GroupedAccessorPairs {
                             continue;
                         }
                         let (getter_idx, getter_node, setter_idx, setter_node) =
-                            if first_node.kind == PropertyKind::Get {
+                            if first_node.kind == ObjectMethodKind::Get {
                                 (first_idx, first_node, second_idx, second_node)
                             } else {
                                 (second_idx, second_node, first_idx, first_node)

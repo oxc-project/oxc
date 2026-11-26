@@ -22,10 +22,8 @@ fn test() {
         SPAN,
         [ObjectPropertyKind::new_object_property(
             SPAN,
-            PropertyKind::Init,
             PropertyKey::new_static_identifier(SPAN, "toString", ast),
             Expression::new_string_literal(SPAN, "foo", None, ast),
-            false,
             false,
             ast,
         )],

@@ -209,9 +209,10 @@ impl Rule for StylePropObject {
                 };
 
                 for prop in &obj_expr.properties {
-                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                        && let Some(prop_name) = obj_prop.key.static_name()
+                    if let Some(prop_name) =
+                        prop.key().and_then(oxc_ast::ast::PropertyKey::static_name)
                         && prop_name == "style"
+                        && let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
                         && is_invalid_expression(Some(&obj_prop.value), ctx)
                     {
                         ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));

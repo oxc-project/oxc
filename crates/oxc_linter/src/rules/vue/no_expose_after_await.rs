@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, BindingPattern, CallExpression, ChainElement,
-        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, Program, Statement,
+        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, ObjectPropertyKind,
+        Program, Statement,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -101,10 +102,18 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let (params, function) = match &setup_prop.value {
-        Expression::FunctionExpression(func) => (&func.params, FunctionKind::Function(func)),
-        Expression::ArrowFunctionExpression(arrow) => (&arrow.params, FunctionKind::Arrow(arrow)),
-        _ => return,
+    let (params, function) = match setup_prop {
+        ObjectPropertyKind::ObjectProperty(prop) => match &prop.value {
+            Expression::FunctionExpression(func) => (&func.params, FunctionKind::Function(func)),
+            Expression::ArrowFunctionExpression(arrow) => {
+                (&arrow.params, FunctionKind::Arrow(arrow))
+            }
+            _ => return,
+        },
+        ObjectPropertyKind::MethodProperty(prop) => {
+            (&prop.value.params, FunctionKind::Function(&prop.value))
+        }
+        ObjectPropertyKind::SpreadProperty(_) => return,
     };
 
     let Some(second_param) = params.items.get(1) else {

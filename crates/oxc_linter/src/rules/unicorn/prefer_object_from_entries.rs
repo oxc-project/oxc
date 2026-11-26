@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind},
+    ast::{Expression, MemberExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -193,10 +193,7 @@ impl Rule for PreferObjectFromEntries {
                 return;
             }
 
-            let ObjectPropertyKind::ObjectProperty(k) = &source.properties[0] else { return };
-            if k.kind != PropertyKind::Init || k.method {
-                return;
-            }
+            let ObjectPropertyKind::ObjectProperty(_) = &source.properties[0] else { return };
 
             ctx.diagnostic(prefer_object_from_entries_diagnostic(
                 call_expr_member_expr_property_span(call_expr),
@@ -218,13 +215,9 @@ impl Rule for PreferObjectFromEntries {
             if spread_symbol_id != accumulator_ident.symbol_id() {
                 return;
             }
-            let ObjectPropertyKind::ObjectProperty(object_prop) = &object_expr.properties[1] else {
+            let ObjectPropertyKind::ObjectProperty(_) = &object_expr.properties[1] else {
                 return;
             };
-
-            if object_prop.kind != PropertyKind::Init || object_prop.method {
-                return;
-            }
 
             ctx.diagnostic(prefer_object_from_entries_diagnostic(
                 call_expr_member_expr_property_span(call_expr),

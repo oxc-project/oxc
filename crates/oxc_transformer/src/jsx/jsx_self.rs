@@ -79,10 +79,9 @@ impl<'a> JsxSelf {
     pub fn get_object_property_kind_for_jsx_plugin(
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
-        let kind = PropertyKind::Init;
         let key = PropertyKey::new_static_identifier(SPAN, SELF, ctx);
         let value = Expression::new_this_expression(SPAN, ctx);
-        ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
+        ObjectPropertyKind::new_object_property(SPAN, key, value, false, ctx)
     }
 
     pub fn can_add_self_attribute(ctx: &TraverseCtx<'a>) -> bool {

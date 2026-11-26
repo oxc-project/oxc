@@ -7,7 +7,7 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget,
+        FunctionType, ObjectAssignmentTarget, ObjectMethodProperty, ObjectProperty,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -301,11 +301,7 @@ fn is_valid_identifier_name(name: &str) -> bool {
 /// Determines whether the current FunctionExpression node is a get, set, or
 /// shorthand method in an object literal or a class.
 fn is_object_or_class_method(parent_node: &AstNode) -> bool {
-    match parent_node.kind() {
-        AstKind::MethodDefinition(_) => true,
-        AstKind::ObjectProperty(property) => property.method || property.kind.is_accessor(),
-        _ => false,
-    }
+    matches!(parent_node.kind(), AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_))
 }
 
 fn has_object_assignment_target_name<'a>(
@@ -447,10 +443,10 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
                     .filter(|name| is_valid_identifier_name(name))
                     .map(Cow::Borrowed);
             }
-            AstKind::ObjectProperty(prop) => {
+            AstKind::ObjectProperty(ObjectProperty { key, .. })
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. }) => {
                 // Stop here - we found the direct property context
-                return prop
-                    .key
+                return key
                     .static_name()
                     .and_then(StaticPropertyName::into_cow_str)
                     .filter(|name| is_valid_identifier_name(name));

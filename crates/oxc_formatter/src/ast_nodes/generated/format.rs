@@ -977,6 +977,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectPropertyKind<
                 }
                 .fmt(f);
             }
+            ObjectPropertyKind::MethodProperty(inner) => {
+                AstNode::<ObjectMethodProperty> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
             ObjectPropertyKind::SpreadProperty(inner) => {
                 AstNode::<SpreadElement> {
                     inner,
@@ -990,6 +998,28 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectPropertyKind<
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectProperty<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectMethodProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_quiet(
             self.span(),

@@ -1041,17 +1041,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
         // cpu is faster than memory allocation
         let mut should_preserved_keys = Vec::with_capacity(obj.properties.len());
         for prop in &obj.properties {
-            let v = match prop {
-                ObjectPropertyKind::ObjectProperty(prop) => {
+            let v = match prop.key() {
+                Some(key) => {
                     // not static key just preserve it
-                    if let Some(name) = prop.key.name() {
-                        needed_keys.contains(&name)
-                    } else {
-                        true
-                    }
+                    if let Some(name) = key.name() { needed_keys.contains(&name) } else { true }
                 }
-                // not static key
-                ObjectPropertyKind::SpreadProperty(_) => true,
+                // spread property
+                None => true,
             };
             should_preserved_keys.push(v);
         }

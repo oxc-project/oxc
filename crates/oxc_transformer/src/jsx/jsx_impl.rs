@@ -644,12 +644,10 @@ impl<'a> JsxImpl<'a> {
                         }
 
                         // Add attribute to prop object
-                        let kind = PropertyKind::Init;
                         let key = Self::get_attribute_name(name, ctx);
                         let value = self.transform_jsx_attribute_value(value, ctx);
-                        let object_property = ObjectPropertyKind::new_object_property(
-                            span, kind, key, value, false, false, ctx,
-                        );
+                        let object_property =
+                            ObjectPropertyKind::new_object_property(span, key, value, false, ctx);
                         properties.push(object_property);
                     }
                     // optimize `{...prop}` to `prop` in static mode
@@ -710,10 +708,8 @@ impl<'a> JsxImpl<'a> {
                     Expression::new_array_expression(span, children, ctx)
                 };
                 let children = PropertyKey::new_static_identifier(SPAN, "children", ctx);
-                let kind = PropertyKind::Init;
-                let property = ObjectPropertyKind::new_object_property(
-                    SPAN, kind, children, value, false, false, ctx,
-                );
+                let property =
+                    ObjectPropertyKind::new_object_property(SPAN, children, value, false, ctx);
                 properties.push(property);
             }
 
