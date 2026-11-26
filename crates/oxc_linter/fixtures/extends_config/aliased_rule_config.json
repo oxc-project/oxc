@@ -1,0 +1,9 @@
+{
+  "plugins": ["eslint", "typescript"],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      { "patterns": [{ "group": ["*/internal"], "message": "from-base" }] }
+    ]
+  }
+}
