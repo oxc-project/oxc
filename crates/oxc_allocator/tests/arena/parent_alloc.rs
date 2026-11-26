@@ -17,10 +17,17 @@ struct CountingAlloc {
 
 #[derive(Default, Clone)]
 struct Events {
-    /// `(address, size, align)` of each allocation, in order
-    allocs: Vec<(usize, usize, usize)>,
-    /// `(address, size, align)` of each deallocation, in order
-    deallocs: Vec<(usize, usize, usize)>,
+    /// Each allocation, in order
+    allocs: Vec<Event>,
+    /// Each deallocation, in order
+    deallocs: Vec<Event>,
+}
+
+#[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+struct Event {
+    address: usize,
+    size: usize,
+    align: usize,
 }
 
 impl CountingAlloc {
@@ -53,13 +60,21 @@ unsafe impl GlobalAlloc for CountingAlloc {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let ptr = unsafe { System.alloc(layout) };
         if !ptr.is_null() {
-            self.events.lock().unwrap().allocs.push((ptr.addr(), layout.size(), layout.align()));
+            self.events.lock().unwrap().allocs.push(Event {
+                address: ptr.addr(),
+                size: layout.size(),
+                align: layout.align(),
+            });
         }
         ptr
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        self.events.lock().unwrap().deallocs.push((ptr.addr(), layout.size(), layout.align()));
+        self.events.lock().unwrap().deallocs.push(Event {
+            address: ptr.addr(),
+            size: layout.size(),
+            align: layout.align(),
+        });
         unsafe { System.dealloc(ptr, layout) };
     }
 }
@@ -162,8 +177,8 @@ fn reset_frees_all_chunks_except_current() {
     // All chunks except the current (last) one are freed
     let Events { allocs, deallocs } = PARENT.events();
     assert_eq!(deallocs.len(), num_chunks - 1);
-    let current_chunk = *allocs.last().unwrap();
-    assert!(!deallocs.contains(&current_chunk), "current chunk must not be freed by `reset`");
+    let current_chunk = allocs.last().unwrap();
+    assert!(!deallocs.contains(current_chunk), "current chunk must not be freed by `reset`");
     for chunk in &allocs[..num_chunks - 1] {
         assert!(deallocs.contains(chunk), "retired chunk {chunk:?} must be freed by `reset`");
     }
@@ -193,9 +208,9 @@ fn large_alignment() {
 
     let Events { allocs, .. } = PARENT.events();
     assert_eq!(allocs.len(), 2);
-    let (addr, _size, align) = allocs[1];
-    assert!(align >= ALIGN, "chunk for over-aligned allocation must have align >= {ALIGN}");
-    assert!(addr.is_multiple_of(ALIGN));
+    let last = &allocs[1];
+    assert!(last.align >= ALIGN, "chunk for over-aligned allocation must have align >= {ALIGN}");
+    assert!(last.address.is_multiple_of(ALIGN));
 
     drop(allocator);
     PARENT.assert_all_freed();
@@ -214,7 +229,7 @@ fn large_alignment_in_first_chunk() {
 
     let Events { allocs, .. } = PARENT.events();
     assert_eq!(allocs.len(), 1);
-    assert!(allocs[0].2 >= ALIGN);
+    assert!(allocs[0].align >= ALIGN);
 
     drop(allocator);
     PARENT.assert_all_freed();
