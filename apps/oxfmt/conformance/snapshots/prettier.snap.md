@@ -333,7 +333,7 @@
 
 - externals/prettier/css/atrule/supports.css (💥, 95.22%)
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-long-value
-- externals/prettier/css/comments/at-rules.css (💥, 66.40%)
+- externals/prettier/css/comments/at-rules.css (💥, 66.67%)
   - crates/oxc_formatter_css/DIVERGENCES.md#own-line-comment-before-block
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-comments
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-comments

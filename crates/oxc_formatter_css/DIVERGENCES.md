@@ -873,8 +873,7 @@ For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{
 
 /* ours */
 @media screen
-/* c */
-{
+/* c */ {
 }
 
 /* prettier */
@@ -882,7 +881,7 @@ For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{
 }
 ```
 
-A comment on its own line before an at-rule's `{` keeps its line, as before a JS block (`if (a)\n/* c */\n{`);
+A comment starting a line before an at-rule's `{` keeps its line, the `{` on it or on the next as in the source, as before a JS block (`if (a)\n/* c */ {`);
 Prettier moves it onto the prelude's line: the comment changes line.
 
 ## at-root-line-comment-indent

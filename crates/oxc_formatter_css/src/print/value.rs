@@ -796,8 +796,19 @@ pub(super) fn write_comments_before_block(
         return;
     }
     write!(f, hard_line_break());
-    for &comment in own_line {
-        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
+    let source = f.context().source_text();
+    let last = own_line.len() - 1;
+    for (i, &comment) in own_line.iter().enumerate() {
+        // The `{` stays on the last comment's line when it is there (`/* c */ {`), as before a JS block
+        let after = if i == last
+            && comments::classify_gap(source.bytes_range(comment.span.end, block_start))
+                == comments::Gap::None
+        {
+            BlockCommentAfter::None
+        } else {
+            BlockCommentAfter::HardLine
+        };
+        write!(f, FormatCommentBeforeContent::new(comment, after));
     }
 }
 

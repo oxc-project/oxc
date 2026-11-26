@@ -114,8 +114,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   }
 }
 @supports (a: b)
-/* c */
-{
+/* c */ {
   a {
     b: c;
   }
@@ -197,8 +196,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   }
 }
 @supports (a: b)
-/* c */
-{
+/* c */ {
   a {
     b: c;
   }
