@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 179/179 (100.00%)
-Positive Passed: 179/179 (100.00%)
-Negative Passed: 320/320 (100.00%)
+AST Parsed     : 180/180 (100.00%)
+Positive Passed: 180/180 (100.00%)
+Negative Passed: 321/321 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -5659,6 +5659,13 @@ Negative Passed: 320/320 (100.00%)
    · ┬                ┬
    · │                ╰── `,` or `>` expected
    · ╰── Opened here
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-30388.js:2:3]
+ 1 │ export {};
+ 2 │ --> b
+   ·   ─
    ╰────
 
   × Expected `:` but found `[`

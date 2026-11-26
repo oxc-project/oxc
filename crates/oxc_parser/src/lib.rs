@@ -635,91 +635,138 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
     #[inline]
     fn parse_impl(mut self) -> ParserReturn<'a> {
-        let mut program = self.parse_program();
-        let mut has_fatal_error = false;
+        // The loop runs a 2nd time only when a source parsed as `ModuleKind::Unambiguous`
+        // resolves to a module, but an HTML-like comment which the Module goal does not
+        // recognize (Annex B.1.1) was lexed as a comment before that was known. See the
+        // `needs_module_reparse` branch below.
+        loop {
+            let mut program = self.parse_program();
 
-        if let Some(fatal_error) = self.fatal_error.take() {
-            has_fatal_error = true;
-            self.errors.truncate(fatal_error.errors_len);
-            if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
-                // Noop
-            } else {
-                self.error(fatal_error.error);
+            // Resolved to Module, but an HTML-like comment was lexed as a comment before the
+            // source was known to be a module, and the Module goal does not recognize it
+            // (Annex B.1.1). Mid-line `<!--` and line-start `-->` lex differently as a module,
+            // so this parse's token stream and AST are wrong. Parse the whole source again as
+            // a module, and discard the result of this parse.
+            if self.source_type.is_unambiguous()
+                && self.module_record_builder.has_module_syntax()
+                && self.lexer.needs_module_reparse
+            {
+                self.reset_for_module_reparse();
+                continue;
             }
 
-            program = Program::dummy(self.allocator());
-            program.source_type = self.source_type;
-            program.source_text = self.source_text;
-        }
+            let mut has_fatal_error = false;
 
-        self.check_unfinished_errors();
+            if let Some(fatal_error) = self.fatal_error.take() {
+                has_fatal_error = true;
+                self.errors.truncate(fatal_error.errors_len);
+                if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
+                    // Noop
+                } else {
+                    self.error(fatal_error.error);
+                }
 
-        if let Some(overlong_error) = self.overlong_error() {
-            has_fatal_error = true;
-            self.lexer.errors.clear();
-            self.errors.clear();
-            self.error(overlong_error);
-        }
-
-        let mut is_flow_language = false;
-        let mut errors = Diagnostics::new();
-        // only check for `@flow` if the file failed to parse.
-        if (!self.lexer.errors.is_empty() || !self.errors.is_empty())
-            && let Some(error) = self.flow_error()
-        {
-            is_flow_language = true;
-            errors.push(error.into_diagnostic());
-        }
-        let (module_record, mut module_record_errors) = self.module_record_builder.build();
-        if errors.len() != 1 {
-            errors
-                .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
-            errors.extend(self.lexer.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
-            errors.extend(self.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
-            errors.append(&mut module_record_errors);
-        }
-        let irregular_whitespaces =
-            std::mem::take(&mut self.lexer.trivia_builder.irregular_whitespaces).into_boxed_slice();
-
-        let source_type = program.source_type;
-        if source_type.is_unambiguous() {
-            if module_record.has_module_syntax {
-                // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
-                // but emit deferred module errors (HTML comments are invalid in ESM)
-                program.source_type = source_type.with_module(true);
-                errors.extend(
-                    self.lexer
-                        .deferred_module_errors
-                        .drain(..)
-                        .map(ParserDiagnostic::into_diagnostic),
-                );
-            } else {
-                // Resolved to Script - emit deferred script errors
-                // discard deferred module errors (HTML comments are valid in scripts)
-                program.source_type = source_type.with_script(true);
-                errors.extend(
-                    self.deferred_script_errors.into_iter().map(ParserDiagnostic::into_diagnostic),
-                );
+                program = Program::dummy(self.allocator());
+                program.source_type = self.source_type;
+                program.source_text = self.source_text;
             }
+
+            self.check_unfinished_errors();
+
+            if let Some(overlong_error) = self.overlong_error() {
+                has_fatal_error = true;
+                self.lexer.errors.clear();
+                self.errors.clear();
+                self.error(overlong_error);
+            }
+
+            let mut is_flow_language = false;
+            let mut errors = Diagnostics::new();
+            // only check for `@flow` if the file failed to parse.
+            if (!self.lexer.errors.is_empty() || !self.errors.is_empty())
+                && let Some(error) = self.flow_error()
+            {
+                is_flow_language = true;
+                errors.push(error.into_diagnostic());
+            }
+            let (module_record, mut module_record_errors) = self.module_record_builder.build();
+            if errors.len() != 1 {
+                errors.reserve(
+                    self.lexer.errors.len() + self.errors.len() + module_record_errors.len(),
+                );
+                errors.extend(self.lexer.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
+                errors.extend(self.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
+                errors.append(&mut module_record_errors);
+            }
+            let irregular_whitespaces =
+                std::mem::take(&mut self.lexer.trivia_builder.irregular_whitespaces)
+                    .into_boxed_slice();
+
+            let source_type = program.source_type;
+            if source_type.is_unambiguous() {
+                if module_record.has_module_syntax {
+                    // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
+                    // but emit deferred module errors (HTML comments are invalid in ESM)
+                    program.source_type = source_type.with_module(true);
+                    errors.extend(
+                        self.lexer
+                            .deferred_module_errors
+                            .drain(..)
+                            .map(ParserDiagnostic::into_diagnostic),
+                    );
+                } else {
+                    // Resolved to Script - emit deferred script errors
+                    // discard deferred module errors (HTML comments are valid in scripts)
+                    program.source_type = source_type.with_script(true);
+                    errors.extend(
+                        self.deferred_script_errors
+                            .into_iter()
+                            .map(ParserDiagnostic::into_diagnostic),
+                    );
+                }
+            }
+
+            let tokens = if has_fatal_error {
+                ArenaVec::new_in(&self.ast)
+            } else {
+                self.lexer.finalize_tokens()
+            };
+
+            program.comments = self.lexer.trivia_builder.comments.take_vec(&self.ast);
+
+            break ParserReturn {
+                program,
+                module_record,
+                diagnostics: errors,
+                irregular_whitespaces,
+                tokens,
+                fatal_error: has_fatal_error,
+                is_flow_language,
+            };
         }
+    }
 
-        let tokens = if has_fatal_error {
-            ArenaVec::new_in(&self.ast)
-        } else {
-            self.lexer.finalize_tokens()
-        };
-
-        program.comments = self.lexer.trivia_builder.comments.take_vec(&self.ast);
-
-        ParserReturn {
-            program,
-            module_record,
-            diagnostics: errors,
-            irregular_whitespaces,
-            tokens,
-            fatal_error: has_fatal_error,
-            is_flow_language,
-        }
+    /// Reset the parser to its initial state, to parse the whole source again from the start
+    /// as a module.
+    ///
+    /// Called when a source parsed as `ModuleKind::Unambiguous` resolves to a module, but
+    /// contains an HTML-like comment which the Module goal does not recognize (Annex B.1.1).
+    /// Such a comment changes the token stream between script and module lexing, so the
+    /// whole source must be parsed again, and the result of the previous parse discarded.
+    #[cold]
+    fn reset_for_module_reparse(&mut self) {
+        let source_type = self.source_type.with_module(true);
+        self.source_type = source_type;
+        self.lexer.reset_to_start(source_type);
+        self.errors.clear();
+        self.deferred_script_errors.clear();
+        self.fatal_error = None;
+        self.token = Token::default();
+        self.prev_token_end = 0;
+        self.state = ParserState::new(self.allocator());
+        self.ctx = Self::default_context(source_type, self.options);
+        self.ast = ParserAstBuilder::new(self.allocator());
+        self.module_record_builder = ModuleRecordBuilder::new(self.allocator(), source_type);
     }
 
     fn parse_expression(
