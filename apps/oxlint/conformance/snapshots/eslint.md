@@ -20,9 +20,9 @@ Tested against: [eslint@4e6c4ac](https://github.com/eslint/eslint/tree/4e6c4ac04
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33285 | 100.0% |
-| Passing     | 33006 |  99.2% |
+| Passing     | 33005 |  99.2% |
 | Failing     |     0 |   0.0% |
-| Skipped     |   279 |   0.8% |
+| Skipped     |   280 |   0.8% |
 
 ## Fully Passing Rules
 
@@ -145,7 +145,7 @@ Tested against: [eslint@4e6c4ac](https://github.com/eslint/eslint/tree/4e6c4ac04
 - `no-extra-bind` (43 tests)
 - `no-extra-boolean-cast` (501 tests) (1 skipped)
 - `no-extra-label` (34 tests)
-- `no-extra-parens` (1072 tests) (1 skipped)
+- `no-extra-parens` (1072 tests) (2 skipped)
 - `no-extra-semi` (53 tests)
 - `no-fallthrough` (87 tests) (1 skipped)
 - `no-floating-decimal` (8 tests)

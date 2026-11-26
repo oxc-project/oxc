@@ -45,6 +45,19 @@ const group: TestGroup = {
       return true;
     }
 
+    // Oxc rejects bare `let` as a script expression, but ESLint accepts it.
+    // Checking fix output exposes this existing parser difference.
+    if (
+      ruleName === "no-extra-parens"
+      && code === "(let)"
+      && "output" in test
+      && test.output === "let"
+      && test.languageOptions?.sourceType === "script"
+      && err.message === "Autofix: Parsing failed in fixed code: Unexpected token\nlet"
+    ) {
+      return true;
+    }
+
     // Oxlint's suggestion message differs from ESLint's, but in a completely cosmetic way
     if (
       ruleName === "prefer-regex-literals"
