@@ -85,7 +85,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if kind.is_binding_identifier() {
             let (name_span, name, contains_dash) = self.bump_jsx_identifier();
             // Only these tokens can follow the name of a type parameter and not that of an element.
-            if matches!(self.cur_kind(), Kind::Comma | Kind::Eq | Kind::Extends) && !contains_dash {
+            // `await` and `yield` can't name a type parameter where they are reserved.
+            if matches!(self.cur_kind(), Kind::Comma | Kind::Eq | Kind::Extends)
+                && !contains_dash
+                && kind.is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await())
+            {
                 let arrow = self.is_generic_arrow_function_expression_after_jsx_name();
                 return self.parse_generic_arrow_function_or_jsx_expression(
                     checkpoint,
