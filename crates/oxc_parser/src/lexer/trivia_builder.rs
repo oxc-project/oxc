@@ -1276,6 +1276,14 @@ function bar() {}";
             "foo\n/* #__PURE__ */ + bar;",
             "foo // #__PURE__\n+ bar;",
             "(a = foo /* #__PURE__ */ + bar)",
+            // A pure comment before `(` only applies when the parentheses contain
+            // nothing but one call. Parenthesized member-expression chains are
+            // invalid, unlike the unparenthesized `/*#__PURE__*/ a().b` form.
+            "/*#__PURE__*/ (a().b);",
+            "/*#__PURE__*/ (a().b).c;",
+            "/*#__PURE__*/ (new Foo().b);",
+            "/*#__PURE__*/ ((a().b));",
+            "/*#__PURE__*/ (a?.().b);",
         ];
         for source_text in cases {
             let comments = get_comments_typescript(source_text);
@@ -1300,6 +1308,7 @@ function bar() {}";
             "/* #__PURE__ */ foo();",
             "/* #__PURE__ */ (foo)();",
             "/* #__PURE__ */ (new Foo());",
+            "/*#__PURE__*/ (foo());",
             "a + /* #__PURE__ */ <T>foo(), bar;",
             "x = /* #__PURE__ */ pureOperation() || y;",
             "y || (x = /* #__PURE__ */ pureOperation());",
@@ -1340,6 +1349,9 @@ function bar() {}";
             "/*#__PURE__*/ foo()?.a.b;",
             "/*#__PURE__*/ foo?.().a.b;",
             "/*#__PURE__*/ foo?.()[0];",
+            // Chain rooted at a parenthesized call: the parentheses contain
+            // nothing but the call, so the annotation applies to it.
+            "/*#__PURE__*/ (test()).a.b;",
         ];
         for source_text in cases {
             let comments = get_comments(source_text);
