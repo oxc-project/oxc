@@ -1,4 +1,7 @@
 import { Worker } from "node:worker_threads";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it, test } from "vitest";
 
 import { HelperMode, transformSync, transform } from "../index";
@@ -620,10 +623,37 @@ describe("styled-components", () => {
 			"import styled, { css } from "styled-components";
 			styled.div.withConfig({
 				displayName: "test",
-				componentId: "sc-3q0sbi-0"
+				componentId: "sc-122lpu-0"
 			})\`color:red;\`;
 			const v = /* @__PURE__ */ css(["color: red;"]);
 			"
 		`);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/30335
+  test("componentId does not depend on the file path", () => {
+    const code = `
+      import styled from 'styled-components';
+      const Bar = styled.header\`color: red;\`;
+    `;
+    const options = { plugins: { styledComponents: { ssr: true } } };
+    // The same project checked out at different absolute paths must produce the
+    // same componentIds.
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "oxc-transform-test-"));
+    try {
+      const outputs = ["proj-a", "proj-b", "deeper/x/y/proj-a"].map((dir) => {
+        const projectRoot = path.join(root, dir);
+        fs.mkdirSync(projectRoot, { recursive: true });
+        fs.writeFileSync(path.join(projectRoot, "package.json"), '{ "name": "ssg-sample" }');
+        const filename = path.join(projectRoot, "src/components/Header.jsx");
+        return transformSync(filename, code, options);
+      });
+      for (const output of outputs) {
+        expect(output.code).toEqual(outputs[0].code);
+        expect(output.code).toContain("componentId");
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
