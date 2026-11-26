@@ -716,6 +716,10 @@ fn write_media_token<'a>(token: &'a str, f: &mut CssFormatter<'_, 'a>) {
 }
 
 /// First position of `needle` outside `/* */` comments.
+///
+/// NOTE: A string is not skipped, a known ceiling shared with [`tokenize`] and [`split_top_level`]:
+/// a `:` or `(` in a string before the real one shows only in invalid CSS (a media feature name is an ident).
+/// Building these scanners on [`split_verbatim`] lifts it.
 fn find_outside_comments(raw: &str, needle: u8) -> Option<usize> {
     let bytes = raw.as_bytes();
     let mut i = 0usize;
