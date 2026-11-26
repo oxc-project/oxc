@@ -73,7 +73,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// ESM modules or Typescript uses `import` and `export` syntax instead of CommonJS syntax.
+    /// ESM modules or TypeScript uses `import` and `export` syntax instead of CommonJS syntax.
     /// This rule enforces the use of more modern module systems to improve maintainability and consistency across the codebase.
     ///
     /// ### Examples
