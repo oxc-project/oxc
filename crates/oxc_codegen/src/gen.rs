@@ -2622,7 +2622,7 @@ impl Gen for Class<'_> {
         p.wrap(wrap, |p| {
             p.print_decorators(&self.decorators, ctx);
             p.print_space_before_identifier();
-            p.add_source_mapping(self.span);
+            p.add_class_keyword_mapping(self);
             if self.declare {
                 p.print_str("declare ");
             }

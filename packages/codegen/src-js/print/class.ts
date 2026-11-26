@@ -4,7 +4,6 @@ import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import {
   CAT_CLOSE_BRACKET,
-  CAT_IDENT,
   CAT_OP_UN_NOT,
   CAT_OTHER,
   CAT_QUESTION,
@@ -12,6 +11,7 @@ import {
 } from "./categories.ts";
 import {
   debugAssertLastFresh,
+  markMapAtStartOffset,
   markMapStart,
   write,
   writeIdent,
@@ -82,7 +82,8 @@ export function printClass(node: ESTree.Class, state: State): void {
   if (declare || abstract) {
     writeIdent(state, "class");
   } else {
-    writeWithMap(state, "class", CAT_IDENT, node.start, node.end, node);
+    markMapAtStartOffset(state, classKeywordOffset(node, state), node.start, node.end, node);
+    writeIdent(state, "class");
   }
 
   if (node.id != null) {
@@ -116,6 +117,57 @@ export function printClass(node: ESTree.Class, state: State): void {
   printClassBody(node.body, state);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
+}
+
+/**
+ * Get the offset of a class's `class` keyword from the start of the class, for its mapping.
+ *
+ * A class's span starts at its first decorator. So when the span starts at `@`, find the keyword
+ * before the class name, type parameters or body (only without `extends`), and map to it.
+ * Otherwise, or if the keyword is not found there, the offset is 0, and the mapping is at the span start.
+ * The caller does not call this for `declare` and `abstract` classes, whose modifiers print before the keyword.
+ *
+ * Only whitespace may separate the keyword from what follows it, so a comment there falls back to the span start.
+ * So does a `class` with `//` before it on its line, which may be inside a line comment.
+ *
+ * Matches `add_class_keyword_mapping` in Rust `oxc_codegen`. `trimEnd` trims ECMAScript whitespace
+ * and line terminators, as the Rust version does.
+ *
+ * @param node - Class
+ * @param state - Printer state
+ * @returns Offset of the `class` keyword from `node.start`
+ */
+function classKeywordOffset(node: ESTree.Class, state: State): number {
+  const { sourceText } = state;
+  if (sourceText === null) return 0;
+
+  const { start } = node;
+  if (sourceText.charCodeAt(start) !== 64 /* @ */) return 0;
+
+  let anchor: number;
+  if (node.id != null) {
+    anchor = node.id.start;
+  } else if (TS && node.typeParameters != null) {
+    anchor = node.typeParameters.start;
+  } else if (node.superClass == null) {
+    anchor = node.body.start;
+  } else {
+    return 0;
+  }
+
+  const before = sourceText.slice(start, anchor).trimEnd();
+  if (!before.endsWith("class")) return 0;
+  const keyword = before.length - 5;
+
+  // Reject a `class` which may be inside a line comment: one with `//` before it on its line
+  let lineStart = keyword;
+  while (lineStart > 0) {
+    const char = before.charCodeAt(lineStart - 1);
+    // LF, CR, LS, PS
+    if (char === 10 || char === 13 || char === 0x2028 || char === 0x2029) break;
+    lineStart--;
+  }
+  return before.slice(lineStart, keyword).includes("//") ? 0 : keyword;
 }
 
 /**

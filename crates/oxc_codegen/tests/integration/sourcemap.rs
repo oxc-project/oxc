@@ -707,3 +707,53 @@ fn renamed_label_records_original_name() {
         .collect::<Vec<_>>();
     assert_eq!(names, [(0, 0, "outer"), (9, 15, "outer")]);
 }
+
+/// The `class` keyword of a decorated class maps to the keyword, not to the first decorator
+/// where the class's span starts, also after a transform has removed the decorators.
+/// A `class` which may be inside a line comment is not taken for the keyword.
+#[test]
+fn decorated_class_keyword_maps_to_keyword() {
+    let source_text = "@dec class A {}\n@dec()\nclass B {}\nx = @dec class {};\n\
+                       @dec /* class */\nclass C {}\n@dec class // class\nD {}\n";
+    let allocator = Allocator::default();
+    let mut program = Parser::new(&allocator, source_text, SourceType::mjs()).parse().program;
+    let keyword_sources = |program: &oxc_ast::ast::Program<'_>| {
+        let ret = Codegen::new().with_options(default_options()).build(program);
+        let tokens = ret.map.unwrap().get_tokens().collect::<Vec<_>>();
+        // Original `(line, column)` of each generated `class` keyword, looked up like a source
+        // map consumer: the last mapping at or before it on its line.
+        ret.code
+            .lines()
+            .enumerate()
+            .filter_map(|(line, text)| Some((u32::try_from(line).unwrap(), text.find("class")?)))
+            .map(|(line, column)| {
+                let column = u32::try_from(column).unwrap();
+                tokens
+                    .iter()
+                    .filter(|t| t.get_dst_line() == line && t.get_dst_col() <= column)
+                    .max_by_key(|t| t.get_dst_col())
+                    .map(|t| (t.get_src_line(), t.get_src_col()))
+            })
+            .collect::<Vec<_>>()
+    };
+    // `D`'s keyword maps to its decorator, where the class's span starts: the last `class` before
+    // its name is inside a comment.
+    let expected = vec![Some((0, 5)), Some((2, 0)), Some((3, 9)), Some((5, 0)), Some((6, 0))];
+    assert_eq!(keyword_sources(&program), expected);
+
+    // Remove the decorators, as a transform that lowers them does.
+    for stmt in &mut program.body {
+        match stmt {
+            Statement::ClassDeclaration(class) => class.decorators.clear(),
+            Statement::ExpressionStatement(stmt) => {
+                let Expression::AssignmentExpression(assign) = &mut stmt.expression else {
+                    unreachable!()
+                };
+                let Expression::ClassExpression(class) = &mut assign.right else { unreachable!() };
+                class.decorators.clear();
+            }
+            _ => unreachable!(),
+        }
+    }
+    assert_eq!(keyword_sources(&program), expected);
+}
