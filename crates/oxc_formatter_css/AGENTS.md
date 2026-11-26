@@ -51,6 +51,9 @@ Ownership is a claim discipline, not attachment: each printer claims the comment
 - Statement level: `write_comments` before the statement (then `write_statement_separator`), `write_terminator_tail_comments` before its `;`
 - Value level: a comma group claims its own head (`write_comma_group`); a bare value has no group to do so,
   its CALLER claims (`write_list_element` / `write_top_level_list_element`), never `write_component_value` itself (a `//` hardline would land inside the indent an arm opens)
+- A printer writing a source slice as its text (a glued `and(...)`, `layer(...)`) claims the comments in it, or they print again after it;
+  one writing a closing `)` / `]` claims the comments before it (`flush_trailing_value_comments` up to it), or they cross it.
+  A node's span may stop at its last child, not its `)`: bound the claim by the delimiter, not the child
 - After each statement, the sequence DISCARDS unclaimed comments inside the statement span:
   a monotonicity guard (the cursor must never point before a printed position), not a placement rule.
   A comment reaching it is LOST (the lossless contract), so every new value position must claim its leads
