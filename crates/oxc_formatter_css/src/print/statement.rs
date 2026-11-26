@@ -377,21 +377,16 @@ pub(super) fn write_declaration_until<'a>(
     let trimmed_between = between.trim_ascii();
     // `lastLineHasInlineComment`: the value drops to the next line,
     // one indent under the prop (`indent([hardline, dedent(value)])`).
-    // Printed as written, as Prettier does, with a `//`, a Less merge marker,
-    // a comment starting a line after the `:` or one alone on its line before it (each keeps its line);
+    // Printed as written, as Prettier does, with a `//`, a Less merge marker or a line break inside it
+    // (a comment starting a line after the `:` or alone on its line keeps it, and so does a second pass);
     // otherwise its block comments are spaced (DIVERGENCES.md#declaration-colon-comments)
     let verbatim_between = trimmed_between != ":"
         && (decl.less_property_merge.is_some()
-            || f.context().comments().iter_before(between_upper).any(|&c| {
-                c.span.start >= name_span.end
-                    && (c.inline
-                        || value::comment_is_own_line(c, source)
-                            && (c.span.start >= colon_end
-                                || source
-                                    .slice_range(c.span.end, between_upper)
-                                    .trim_start_matches([' ', '\t'])
-                                    .starts_with('\n')))
-            }));
+            || trimmed_between.contains('\n')
+            || f.context()
+                .comments()
+                .iter_before(between_upper)
+                .any(|c| c.inline && c.span.start >= name_span.end));
     let between_breaks = trimmed_between != ":"
         && trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//");
     // A Less merge marker (`prop+: val` / `prop+_: val`)

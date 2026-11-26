@@ -434,10 +434,6 @@
 - externals/prettier/scss/variables/postcss-8-improment.scss (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
 
-### Not idempotent
-
-- externals/prettier/scss/comments/between-decl.scss
-
 ### Error
 
 - externals/prettier/scss/case/case.scss: Syntax error: expect token `<string>`, but found `<ident>`
@@ -499,10 +495,6 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-escaped-string-gap
 - externals/prettier/less/postcss-8-improment/test.less (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
-
-### Not idempotent
-
-- externals/prettier/less/comments/between-decl.less
 
 ### Error
 
