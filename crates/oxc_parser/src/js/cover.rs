@@ -361,7 +361,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `(this: T) => …`. Arrow functions cannot have a `this` parameter.
                 Expression::ThisExpression(this) if is_first && this.span.start == start => {
                     self.parse_ts_type_annotation();
-                    self.error(diagnostics::ts_arrow_function_this_parameter(self.end_span(start)));
+                    let span = self.end_span(start);
+                    self.error(diagnostics::ts_arrow_function_this_parameter(span));
+                    self.unassign_comments(span);
                     if !self.at(Kind::RParen) {
                         self.expect(Kind::Comma);
                     }
