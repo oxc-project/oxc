@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::iter_outer_expressions, context::LintContext, rule::Rule};
 
 fn no_unassigned_vars_diagnostic(span: Span, ident_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -22,6 +22,9 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallow let or var variables that are read but never assigned.
+    ///
+    /// Variables passed directly to a JSX `ref` attribute are ignored, since JSX
+    /// compilers such as SolidJS can assign them when creating the element.
     ///
     /// #### Ignored Files
     /// This rule ignores `.svelte` and `.vue` files entirely. Oxlint only parses the
@@ -106,6 +109,14 @@ impl Rule for NoUnassignedVars {
                     break;
                 }
                 if reference.is_read() {
+                    // SolidJS can compile `ref={variable}` into an assignment.
+                    let mut ancestors = iter_outer_expressions(ctx.nodes(), reference.node_id());
+                    if matches!(ancestors.next(), Some(AstKind::JSXExpressionContainer(_)))
+                        && matches!(ancestors.next(), Some(AstKind::JSXAttribute(attr)) if attr.is_identifier("ref"))
+                    {
+                        has_read = false;
+                        break;
+                    }
                     has_read = true;
                 }
             }
@@ -154,6 +165,12 @@ fn test() {
         "for (let p of pathToRemove) { p.remove() }",
         "for (let a, b; check(a, b);) { break; }",
         "declare let a, b; log(a, b);",
+        "function Component() { let divRef: HTMLDivElement | undefined; return <div ref={divRef} />; }",
+        "function Component() { let divRef!: HTMLDivElement; onMount(() => divRef.focus()); return <div ref={divRef} />; }",
+        "let ref; const element = <Component ref={ref} />; log(ref);",
+        "var ref; const element = <div ref={(ref)} />;",
+        "let ref; const element = <div ref={ref!} />;",
+        "let ref; const element = <div ref={ref as HTMLDivElement} />;",
     ];
 
     let fail = vec![
@@ -170,6 +187,16 @@ fn test() {
         "let a, b; log(a, b); a = 1;",
         "let initialized = 1, unassigned; log(initialized, unassigned);",
         "const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }",
+        "let value; const element = <div title={value} />;",
+        "let ref; const element = <div>{ref}</div>;",
+        "let ref; const element = <div ref={ref.current} />;",
+        "let ref; const element = <div ref={() => ref} />;",
+        "let ref; const element = <div ref={getRef(ref)} />;",
+        "let ref; const element = <div ref={ref || fallback} />;",
+        "let ref; const element = <div ref:other={ref} />;",
+        "let ref!: HTMLDivElement; ref.focus();",
+        "let ref, value; const element = <div ref={ref} title={value} />;",
+        "let ref; function Component() { let ref; return <div ref={ref} />; } log(ref);",
         "
                             declare module 'module' {
                                 let x: string;
