@@ -427,7 +427,7 @@ a {
 
 A Less escape (`LessEscapedStr`) prints as `~` hugging its re-quoted string wherever it is typed (`value.rs` `write_less_escaped_str`);
 Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see DIVERGENCES.md#prelude-string-requote).
-The Prettier-compat raw paths keep the source as-is: a selector or at-rule prelude with a comment, and Less mixin call / definition arguments and `when` guards.
+The Prettier-compat raw paths keep the source as-is: a selector with a comment, a commented `@page` / `@font-feature-values` / `@counter-style` / `@property` prelude, and Less mixin call / definition arguments and `when` guards.
 
 ## call-after-line-comment-indent
 
@@ -1721,6 +1721,37 @@ a {
 
 A comment after a quoted `url()` string is spaced from it, as one after any other function argument;
 Prettier glues it to the string there only.
+
+## import-media-feature-flat
+
+- Why: uniform-rule (same construct, same output: the media feature in `@media`)
+- Pin: `tests/fixtures/format/css/import-prelude-comments.css`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+
+```css
+/* input */
+@import url("a.css") screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy);
+@media screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy) {}
+
+/* ours */
+@import url("a.css") screen and
+  (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy);
+@media screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy) {
+}
+
+/* prettier */
+@import url("a.css") screen and
+  (
+    orientation-something-very-long-name-xxxxxxxxx:
+      landscape-value-quite-long-yyyyyyyy
+  );
+@media screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy) {
+}
+```
+
+An `@import` media feature never breaks inside its parens, however long, as in `@media`;
+Prettier value-parses an `@import` prelude, so an over-wide feature there opens its parens and breaks after the `:`.
 
 ## media-feature-comment-case
 
