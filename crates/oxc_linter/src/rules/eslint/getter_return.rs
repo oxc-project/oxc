@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, MethodDefinitionKind, PropertyKind},
+    ast::{Argument, CallExpression, Expression, MethodDefinitionKind, ObjectMethodKind},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind, ReturnInstructionKind,
@@ -119,10 +119,14 @@ impl GetterReturn {
         let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => matches!(mdef.kind, MethodDefinitionKind::Get),
-            AstKind::ObjectProperty(prop) => {
-                if matches!(prop.kind, PropertyKind::Get) {
+            AstKind::ObjectMethodProperty(prop) => {
+                if matches!(prop.kind, ObjectMethodKind::Get) {
                     return true;
                 }
+                prop.key.is_specific_static_name("get")
+                    && is_property_descriptor(ctx.nodes().parent_node(parent.id()), ctx)
+            }
+            AstKind::ObjectProperty(prop) => {
                 prop.key.is_specific_static_name("get")
                     && is_property_descriptor(ctx.nodes().parent_node(parent.id()), ctx)
             }

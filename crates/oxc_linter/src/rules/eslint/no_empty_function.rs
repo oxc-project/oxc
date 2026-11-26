@@ -8,7 +8,8 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         Expression, FormalParameter, Function, IdentifierName, IdentifierReference,
-        MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
+        MethodDefinition, MethodDefinitionKind, ObjectMethodKind, ObjectMethodProperty,
+        ObjectProperty, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -425,6 +426,12 @@ impl NoEmptyFunction {
                     }
                     return ("function", None).into();
                 }
+                AstKind::ObjectMethodProperty(property) => {
+                    if self.is_allowed_object_method(property) {
+                        return ViolationInfo::default();
+                    }
+                    return ("function", None).into();
+                }
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {
                         match init.get_inner_expression() {
@@ -494,23 +501,24 @@ impl NoEmptyFunction {
     }
 
     fn is_allowed_object_property(&self, property: &ObjectProperty) -> bool {
+        let Expression::FunctionExpression(function) = &property.value else {
+            return false;
+        };
+        self.is_allowed_function_expression(function)
+    }
+
+    fn is_allowed_object_method(&self, property: &ObjectMethodProperty) -> bool {
         match property.kind {
-            PropertyKind::Get => self.allow.contains(Allowed::Getters),
-            PropertyKind::Set => self.allow.contains(Allowed::Setters),
-            PropertyKind::Init => {
-                let Expression::FunctionExpression(function) = &property.value else {
-                    return false;
-                };
-                if property.method {
-                    if function.r#async && self.allow.contains(Allowed::AsyncMethods)
-                        || function.generator && self.allow.contains(Allowed::GeneratorMethods)
-                    {
-                        return true;
-                    }
-                    self.allow.contains(Allowed::Methods)
-                } else {
-                    self.is_allowed_function_expression(function)
+            ObjectMethodKind::Get => self.allow.contains(Allowed::Getters),
+            ObjectMethodKind::Set => self.allow.contains(Allowed::Setters),
+            ObjectMethodKind::Method => {
+                let function = &property.value;
+                if function.r#async && self.allow.contains(Allowed::AsyncMethods)
+                    || function.generator && self.allow.contains(Allowed::GeneratorMethods)
+                {
+                    return true;
                 }
+                self.allow.contains(Allowed::Methods)
             }
         }
     }
@@ -522,13 +530,7 @@ impl NoEmptyFunction {
     }
 
     fn is_plain_function_expression_container(parent: AstKind) -> bool {
-        match parent {
-            AstKind::MethodDefinition(_) => false,
-            AstKind::ObjectProperty(property) => {
-                property.kind == PropertyKind::Init && !property.method
-            }
-            _ => true,
-        }
+        !matches!(parent, AstKind::MethodDefinition(_) | AstKind::ObjectMethodProperty(_))
     }
 
     fn allow_decorated_function(&self) -> bool {
@@ -699,6 +701,7 @@ fn test() {
         ),
         ("const foo = async () => {};", Some(serde_json::json!([{ "allow": ["asyncFunctions"] }]))),
         ("class Foo { async bar() {} }", Some(serde_json::json!([{ "allow": ["asyncMethods"] }]))),
+        ("const obj = { foo() {} };", Some(serde_json::json!([{ "allow": ["methods"] }]))),
         ("class Foo { async bar() {} }", Some(serde_json::json!([{ "allow": ["async-methods"] }]))),
         ("class Foo { *gen() {} }", Some(serde_json::json!([{ "allow": ["generatorMethods"] }]))),
         ("class Foo { *gen() {} }", Some(serde_json::json!([{ "allow": ["generator-methods"] }]))),

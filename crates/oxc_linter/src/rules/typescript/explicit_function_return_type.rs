@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType, PropertyKind,
-        ReturnStatement,
+        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType,
+        ObjectMethodKind, ReturnStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -210,6 +210,13 @@ impl Rule for ExplicitFunctionReturnType {
 
                             return;
                         }
+                        AstKind::ObjectMethodProperty(prop) => {
+                            ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
+                                prop.span.start,
+                                func.params.span.start,
+                            )));
+                            return;
+                        }
                         _ => {}
                     }
                 }
@@ -277,6 +284,13 @@ impl Rule for ExplicitFunctionReturnType {
                                 func.params.span.start,
                             )));
 
+                            return;
+                        }
+                        AstKind::ObjectMethodProperty(prop) => {
+                            ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
+                                prop.span.start,
+                                func.params.span.start,
+                            )));
                             return;
                         }
                         _ => {}
@@ -369,6 +383,12 @@ impl ExplicitFunctionReturnType {
                 def.key.is_identifier() && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
+                let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
+                prop.key.is_identifier() && self.allowed_names.contains(name.as_ref())
+            }
+            AstKind::ObjectMethodProperty(prop) => {
                 let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
                     return false;
                 };
@@ -475,9 +495,7 @@ fn is_constructor(node: &AstNode) -> bool {
 fn is_setter(node: &AstNode) -> bool {
     match node.kind() {
         AstKind::MethodDefinition(method_def) => method_def.kind.is_set(),
-        AstKind::ObjectProperty(obj_prop) => {
-            matches!(obj_prop.kind, PropertyKind::Set)
-        }
+        AstKind::ObjectMethodProperty(method) => method.kind == ObjectMethodKind::Set,
         _ => false,
     }
 }
@@ -651,7 +669,7 @@ impl<'a> VisitJs<'a> for ReturnStatementChecker {
  * ```
  */
 fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
-    if !matches!(node.kind(), AstKind::ObjectProperty(_)) {
+    if !matches!(node.kind(), AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_)) {
         return false;
     }
     let parent = ctx.nodes().parent_node(node.id());

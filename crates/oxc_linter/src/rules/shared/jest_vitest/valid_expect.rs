@@ -288,7 +288,7 @@ impl ValidExpectConfig {
                      *
                      */
                     let span_to_insert_before =
-                        if matches!(context_function.kind(), AstKind::ObjectProperty(_)) {
+                        if matches!(context_function.kind(), AstKind::ObjectMethodProperty(_)) {
                             context_function.span()
                         } else {
                             function_scope_node.span()

@@ -165,12 +165,35 @@ impl<'a> Dummy<'a> for ObjectProperty<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            key: Dummy::dummy(allocator),
+            value: Dummy::dummy(allocator),
+            shorthand: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ObjectMethodProperty<'a> {
+    /// Create a dummy [`ObjectMethodProperty`].
+    ///
+    /// Has cost of making 3 allocations (160 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            method: Dummy::dummy(allocator),
-            shorthand: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for ObjectMethodKind {
+    /// Create a dummy [`ObjectMethodKind`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Method
     }
 }
 
@@ -180,16 +203,6 @@ impl<'a> Dummy<'a> for PropertyKey<'a> {
     /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::NullLiteral(Dummy::dummy(allocator))
-    }
-}
-
-impl<'a> Dummy<'a> for PropertyKind {
-    /// Create a dummy [`PropertyKind`].
-    ///
-    /// Does not allocate any data into arena.
-    #[inline(always)]
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Init
     }
 }
 

@@ -68,6 +68,7 @@ impl GetAddress for ObjectPropertyKind<'_> {
     fn address(&self) -> Address {
         match self {
             Self::ObjectProperty(it) => GetAddress::address(it),
+            Self::MethodProperty(it) => GetAddress::address(it),
             Self::SpreadProperty(it) => GetAddress::address(it),
         }
     }

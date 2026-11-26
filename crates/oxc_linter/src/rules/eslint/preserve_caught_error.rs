@@ -166,30 +166,38 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
                     // if the second argument is an existing object, merge into it
                     if let Argument::ObjectExpression(obj_expr) = &args[1] {
                         let cause_prop = obj_expr.properties.iter().find(|prop| match prop {
-                            ObjectPropertyKind::ObjectProperty(prop) => {
-                                let PropertyKey::StaticIdentifier(ident) = &prop.key else {
-                                    return false;
-                                };
-                                ident.name == "cause"
+                            ObjectPropertyKind::ObjectProperty(prop) if prop.shorthand => {
+                                prop.key.is_specific_id("cause")
                             }
                             ObjectPropertyKind::SpreadProperty(_) => true,
+                            _ => matches!(
+                                prop.key(),
+                                Some(PropertyKey::StaticIdentifier(ident)) if ident.name == "cause"
+                            ),
                         });
 
                         if let Some(cause_prop) = cause_prop {
-                            // if the identifier name is not the catch parameter, replace it
-                            if let ObjectPropertyKind::ObjectProperty(prop) = cause_prop
-                                && !is_catch_parameter(&prop.value, catch_param, self.ctx)
-                            {
-                                if prop.shorthand || prop.method || prop.kind.is_accessor() {
+                            match cause_prop {
+                                ObjectPropertyKind::ObjectProperty(prop)
+                                    if !is_catch_parameter(&prop.value, catch_param, self.ctx) =>
+                                {
+                                    let (span, replacement) = if prop.shorthand {
+                                        (prop.span, cause_prop_text)
+                                    } else {
+                                        (prop.value.span(), ident.as_str().to_string())
+                                    };
                                     return fixer
-                                        .replace(prop.span(), cause_prop_text)
+                                        .replace(span, replacement)
                                         .extend(preserve_catch_param())
                                         .with_message(REPLACE_CAUSE_PROPERTY);
                                 }
-                                return fixer
-                                    .replace(prop.value.span(), ident.as_str().to_string())
-                                    .extend(preserve_catch_param())
-                                    .with_message(REPLACE_CAUSE_PROPERTY);
+                                ObjectPropertyKind::MethodProperty(prop) => {
+                                    return fixer
+                                        .replace(prop.span, cause_prop_text)
+                                        .extend(preserve_catch_param())
+                                        .with_message(REPLACE_CAUSE_PROPERTY);
+                                }
+                                _ => {}
                             }
                         } else if obj_expr.properties.is_empty() {
                             return fixer
@@ -255,12 +263,20 @@ fn has_cause_property(
 ) -> bool {
     for prop in &obj_expr.properties {
         match prop {
+            ObjectPropertyKind::ObjectProperty(prop) if prop.shorthand => {
+                if prop.key.is_specific_id("cause") {
+                    let Expression::Identifier(ident) = &prop.value else { return false };
+                    return is_catch_parameter_reference(ident, catch_param, ctx);
+                }
+            }
             ObjectPropertyKind::ObjectProperty(prop) => {
-                let PropertyKey::StaticIdentifier(ident) = &prop.key else {
-                    continue;
-                };
-                if ident.name == "cause" {
+                if prop.key.is_specific_id("cause") {
                     return is_catch_parameter(&prop.value, catch_param, ctx);
+                }
+            }
+            ObjectPropertyKind::MethodProperty(prop) => {
+                if prop.key.is_specific_id("cause") {
+                    return false;
                 }
             }
             ObjectPropertyKind::SpreadProperty(_) => return true,
@@ -270,15 +286,21 @@ fn has_cause_property(
 }
 
 fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &LintContext) -> bool {
-    let BindingPattern::BindingIdentifier(binding) = &catch_param else {
-        return false;
-    };
-
-    let catch_symbol_id = binding.symbol_id();
-
     let Expression::Identifier(ident) = expr else {
         return false;
     };
+    is_catch_parameter_reference(ident, catch_param, ctx)
+}
+
+fn is_catch_parameter_reference(
+    ident: &IdentifierReference,
+    catch_param: &BindingPattern,
+    ctx: &LintContext,
+) -> bool {
+    let BindingPattern::BindingIdentifier(binding) = &catch_param else {
+        return false;
+    };
+    let catch_symbol_id = binding.symbol_id();
 
     let reference = ctx.scoping().get_reference(ident.reference_id());
     let Some(symbol_id) = reference.symbol_id() else {

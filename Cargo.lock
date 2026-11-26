@@ -2048,6 +2048,7 @@ dependencies = [
  "oxc_estree",
  "oxc_parser",
  "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]

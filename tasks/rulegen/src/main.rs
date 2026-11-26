@@ -364,7 +364,7 @@ impl<'a> VisitJs<'a> for TestCase {
                     }
                     _ => {}
                 },
-                ObjectPropertyKind::SpreadProperty(_) => {}
+                ObjectPropertyKind::MethodProperty(_) | ObjectPropertyKind::SpreadProperty(_) => {}
             }
         }
     }

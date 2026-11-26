@@ -615,7 +615,9 @@ fn get_short_span_for_fn_scope(
 
     let scope_id =
         match ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(function_symbol_id)) {
-            AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_) => {
+            AstKind::AssignmentExpression(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::ObjectMethodProperty(_) => {
                 ctx.scoping().scope_parent_id(scope_id).unwrap_or(scope_id)
             }
             _ => scope_id,

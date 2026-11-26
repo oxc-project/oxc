@@ -216,17 +216,15 @@ impl<'a> PeepholeOptimizations {
                 // Setters trigger side effects on property writes.
                 // Getter-only properties throw TypeError in strict mode on write.
                 // Also check property values for nested setters/getters.
-                let has_side_effects = obj.properties.iter().any(|prop| {
-                    matches!(
-                        prop,
-                        ObjectPropertyKind::ObjectProperty(p)
-                            if p.kind.is_accessor()
-                                || Self::expression_has_setter_or_getter(&p.value)
-                                // `{ __proto__: ... }` sets the prototype chain and could
-                                // install setters that make property writes side-effectful.
-                                || (p.kind == PropertyKind::Init
-                                    && p.key.is_specific_literal_name("__proto__"))
-                    )
+                let has_side_effects = obj.properties.iter().any(|prop| match prop {
+                    ObjectPropertyKind::ObjectProperty(p) => {
+                        Self::expression_has_setter_or_getter(&p.value)
+                            // `{ __proto__: ... }` sets the prototype chain and could
+                            // install setters that make property writes side-effectful.
+                            || p.key.is_specific_literal_name("__proto__")
+                    }
+                    ObjectPropertyKind::MethodProperty(p) => p.kind.is_accessor(),
+                    ObjectPropertyKind::SpreadProperty(_) => false,
                 });
                 if has_side_effects { FreshValueKind::None } else { FreshValueKind::Object }
             }
@@ -286,13 +284,12 @@ impl<'a> PeepholeOptimizations {
     /// Check if an expression contains setter or getter definitions (recursively).
     fn expression_has_setter_or_getter(expr: &Expression<'a>) -> bool {
         match expr {
-            Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| {
-                matches!(
-                    prop,
-                    ObjectPropertyKind::ObjectProperty(p)
-                        if p.kind.is_accessor()
-                            || Self::expression_has_setter_or_getter(&p.value)
-                )
+            Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
+                ObjectPropertyKind::ObjectProperty(p) => {
+                    Self::expression_has_setter_or_getter(&p.value)
+                }
+                ObjectPropertyKind::MethodProperty(p) => p.kind.is_accessor(),
+                ObjectPropertyKind::SpreadProperty(_) => false,
             }),
             Expression::ClassExpression(class) => Self::class_may_have_property_side_effects(class),
             _ => false,

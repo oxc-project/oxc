@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, CallExpression,
-        Expression, NewExpression, ObjectPropertyKind, SimpleAssignmentTarget, Statement,
+        Expression, Function, NewExpression, ObjectPropertyKind, SimpleAssignmentTarget, Statement,
         VariableDeclaration, VariableDeclarator,
     },
 };
@@ -473,6 +473,28 @@ fn args_reference_variable(call: &CallExpression<'_>, var_name: &str) -> bool {
     false
 }
 
+fn function_references_variable(func: &Function<'_>, var_name: &str) -> bool {
+    let is_shadowed = func
+        .params
+        .items
+        .iter()
+        .any(|param| param.pattern.get_identifier_name().is_some_and(|name| name == var_name));
+    if is_shadowed {
+        return false;
+    }
+    func.body.as_ref().is_some_and(|body| {
+        body.statements.iter().any(|stmt| match stmt {
+            Statement::ExpressionStatement(expr_stmt) => {
+                expression_references_variable(&expr_stmt.expression, var_name)
+            }
+            Statement::ReturnStatement(ret) => {
+                ret.argument.as_ref().is_some_and(|e| expression_references_variable(e, var_name))
+            }
+            _ => false,
+        })
+    })
+}
+
 /// Check if an expression references a variable (shallow check for common patterns)
 fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool {
     match expr.get_inner_expression() {
@@ -502,6 +524,12 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
         Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
             ObjectPropertyKind::ObjectProperty(p) => {
                 expression_references_variable(&p.value, var_name)
+                    || p.key
+                        .as_expression()
+                        .is_some_and(|e| expression_references_variable(e, var_name))
+            }
+            ObjectPropertyKind::MethodProperty(p) => {
+                function_references_variable(&p.value, var_name)
                     || p.key
                         .as_expression()
                         .is_some_and(|e| expression_references_variable(e, var_name))
@@ -549,31 +577,7 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
             };
             left_refs || expression_references_variable(&assign.right, var_name)
         }
-        Expression::FunctionExpression(func) => {
-            // Check if any parameter shadows the variable name
-            let is_shadowed = func.params.items.iter().any(|param| {
-                param.pattern.get_identifier_name().is_some_and(|name| name == var_name)
-            });
-            if is_shadowed {
-                return false;
-            }
-            // Check the function body for references
-            if let Some(body) = &func.body {
-                body.statements.iter().any(|stmt| {
-                    if let Statement::ExpressionStatement(expr_stmt) = stmt {
-                        expression_references_variable(&expr_stmt.expression, var_name)
-                    } else if let Statement::ReturnStatement(ret) = stmt {
-                        ret.argument
-                            .as_ref()
-                            .is_some_and(|e| expression_references_variable(e, var_name))
-                    } else {
-                        false
-                    }
-                })
-            } else {
-                false
-            }
-        }
+        Expression::FunctionExpression(func) => function_references_variable(func, var_name),
         // Conditional expression (ternary): cond ? array[0] : x
         Expression::ConditionalExpression(cond) => {
             expression_references_variable(&cond.test, var_name)

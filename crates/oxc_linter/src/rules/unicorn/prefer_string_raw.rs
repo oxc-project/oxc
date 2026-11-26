@@ -104,6 +104,13 @@ impl Rule for PreferStringRaw {
                     return;
                 }
             }
+            AstKind::ObjectMethodProperty(prop) => {
+                if let PropertyKey::StaticStringLiteral(key) = &prop.key
+                    && string_literal.span == key.span
+                {
+                    return;
+                }
+            }
             AstKind::TSPropertySignature(prop) => {
                 if let PropertyKey::StaticStringLiteral(key) | PropertyKey::StringLiteral(key) =
                     &prop.key
@@ -259,6 +266,7 @@ fn test() {
         r#"interface Bar { regex: "foo\\.bar"; }"#,
         r#"interface EventSchemas { "foo\\bar": Record<string, any>; }"#,
         r#"interface Methods { "foo\\bar"(): void; }"#,
+        r#"const o = { "a\\b"() {} };"#,
         r#"let x: "a\\b";"#,
         r"const o = { newline: 'a\\b\nc', trail: 'a\\', interpolation: 'a\\b${foo}', tick: 'a\\b`' };",
     ];

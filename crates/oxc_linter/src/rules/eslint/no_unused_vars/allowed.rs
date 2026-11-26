@@ -360,7 +360,10 @@ impl NoUnusedVars {
             AstKind::MethodDefinition(MethodDefinition {
                 kind: MethodDefinitionKind::Set, ..
             })
-            | AstKind::ObjectProperty(ObjectProperty { kind: PropertyKind::Set, .. }) => true,
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty {
+                kind: ObjectMethodKind::Set,
+                ..
+            }) => true,
 
             // Allow unused parameters in function overloads
             AstKind::Function(f)

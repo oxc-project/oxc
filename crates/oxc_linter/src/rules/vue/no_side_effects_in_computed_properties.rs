@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, UnaryOperator},
+    ast::{
+        CallExpression, Expression, IdentifierReference, ObjectMethodProperty, ObjectProperty,
+        UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -327,8 +330,12 @@ fn is_inside_setup_function(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
             return false;
         }
         let parent = ctx.nodes().parent_node(ancestor.id());
-        let AstKind::ObjectProperty(prop) = parent.kind() else { return false };
-        if !prop.key.is_specific_static_name("setup") {
+        let (AstKind::ObjectProperty(ObjectProperty { key, .. })
+        | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })) = parent.kind()
+        else {
+            return false;
+        };
+        if !key.is_specific_static_name("setup") {
             return false;
         }
         let grandparent = ctx.nodes().parent_node(parent.id());

@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind, MemberExpressionKind, StaticPropertyName,
     ast::{
-        BindingPattern, MethodDefinition, ObjectProperty, PropertyKey, PropertyKind,
+        BindingPattern, MethodDefinition, ObjectMethodKind, ObjectMethodProperty, PropertyKey,
         SimpleAssignmentTarget, UpdateExpression,
     },
 };
@@ -131,7 +131,7 @@ impl Rule for NoAccessorRecursion {
                 };
                 match func_parent.kind() {
                     // e.g. "const foo = { get bar() { return this.bar }}"
-                    AstKind::ObjectProperty(property) => {
+                    AstKind::ObjectMethodProperty(property) => {
                         let Some(prop_key_name) = property.key.name() else {
                             return;
                         };
@@ -145,14 +145,15 @@ impl Rule for NoAccessorRecursion {
                         if !is_same_key {
                             return;
                         }
-                        if property.kind == PropertyKind::Get {
+                        if property.kind == ObjectMethodKind::Get {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "getters",
                             ));
                         }
 
-                        if property.kind == PropertyKind::Set && is_property_write(target, ctx) {
+                        if property.kind == ObjectMethodKind::Set && is_property_write(target, ctx)
+                        {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "setters",
@@ -272,7 +273,7 @@ fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr
 
 fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
     match parent.kind() {
-        AstKind::ObjectProperty(obj_prop) => {
+        AstKind::ObjectMethodProperty(obj_prop) => {
             !obj_prop.key.is_computed() && obj_prop.kind.is_accessor()
         }
         AstKind::MethodDefinition(method_def) => {
@@ -304,7 +305,7 @@ fn get_public_property_or_method_def_name<'a>(
     parent: &'a AstNode<'a>,
 ) -> Option<StaticPropertyName<'a>> {
     match parent.kind() {
-        AstKind::ObjectProperty(ObjectProperty { key, .. })
+        AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })
         | AstKind::MethodDefinition(MethodDefinition { key, .. })
             if !key.is_private_identifier() =>
         {

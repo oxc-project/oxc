@@ -7,7 +7,7 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
-        TSSignature, TSType,
+        ObjectPropertyKind, TSSignature, TSType,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -171,7 +171,8 @@ impl MaxProps {
             return;
         };
 
-        let Some(props_prop) = obj_expr.find_property("props") else {
+        let Some(ObjectPropertyKind::ObjectProperty(props_prop)) = obj_expr.find_property("props")
+        else {
             return;
         };
         let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()

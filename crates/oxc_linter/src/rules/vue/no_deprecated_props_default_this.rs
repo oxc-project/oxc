@@ -88,9 +88,10 @@ impl Rule for NoDeprecatedPropsDefaultThis {
         };
 
         let prop_node = nodes.parent_node(fn_id);
-        let AstKind::ObjectProperty(default_prop) = prop_node.kind() else { return };
-        if !default_prop.key.is_specific_static_name("default") {
-            return;
+        match prop_node.kind() {
+            AstKind::ObjectProperty(prop) if prop.key.is_specific_static_name("default") => {}
+            AstKind::ObjectMethodProperty(prop) if prop.key.is_specific_static_name("default") => {}
+            _ => return,
         }
 
         // `type: Function` means `default` is the function value itself, not a

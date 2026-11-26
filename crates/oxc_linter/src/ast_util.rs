@@ -736,6 +736,9 @@ pub fn is_default_this_binding<'a>(
             AstKind::ObjectProperty(obj) => {
                 return obj.value.span() != current_node.span();
             }
+            AstKind::ObjectMethodProperty(obj) => {
+                return obj.value.span != current_node.span();
+            }
             AstKind::MethodDefinition(method) => {
                 return method.value.span != current_node.span();
             }
@@ -830,6 +833,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<StaticP
         AstKind::PropertyDefinition(definition) => &definition.key,
         AstKind::MethodDefinition(definition) => &definition.key,
         AstKind::ObjectProperty(property) => &property.key,
+        AstKind::ObjectMethodProperty(property) => &property.key,
         _ => return None,
     };
     if key.is_identifier() {

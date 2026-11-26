@@ -102,22 +102,28 @@ fn is_invalid_fetch_options<'a>(
             return None;
         }
 
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = property else {
-            continue;
-        };
-        let PropertyKey::StaticIdentifier(key_ident) = &obj_prop.key else {
+        let Some(PropertyKey::StaticIdentifier(key_ident)) = property.key() else {
             continue;
         };
 
         let key_ident_name = key_ident.name.as_str();
 
         if key_ident_name == "body" {
-            if obj_prop.value.is_null_or_undefined() {
+            let is_null_or_undefined = matches!(
+                property,
+                ObjectPropertyKind::ObjectProperty(obj_prop)
+                    if obj_prop.value.is_null_or_undefined()
+            );
+            if is_null_or_undefined {
                 body_span.end = body_span.start;
             } else {
                 body_span = key_ident.span;
             }
         } else if key_ident_name == "method" {
+            let ObjectPropertyKind::ObjectProperty(obj_prop) = property else {
+                method_name = UNKNOWN_METHOD_NAME;
+                continue;
+            };
             match &obj_prop.value {
                 Expression::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();

@@ -133,6 +133,11 @@ pub trait VisitJs<'a>: Sized {
     }
 
     #[inline]
+    fn visit_object_method_property(&mut self, it: &ObjectMethodProperty<'a>) {
+        walk_object_method_property(self, it);
+    }
+
+    #[inline]
     fn visit_property_key(&mut self, it: &PropertyKey<'a>) {
         walk_property_key(self, it);
     }
@@ -1224,6 +1229,7 @@ pub mod walk_js {
         // No `AstKind` for this type
         match it {
             ObjectPropertyKind::ObjectProperty(it) => visitor.visit_object_property(it),
+            ObjectPropertyKind::MethodProperty(it) => visitor.visit_object_method_property(it),
             ObjectPropertyKind::SpreadProperty(it) => visitor.visit_spread_element(it),
         }
     }
@@ -1235,6 +1241,22 @@ pub mod walk_js {
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.key);
         visitor.visit_expression(&it.value);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_object_method_property<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &ObjectMethodProperty<'a>,
+    ) {
+        let kind = AstKind::ObjectMethodProperty(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_property_key(&it.key);
+        {
+            let flags = ScopeFlags::Function;
+            visitor.visit_function(&it.value, flags);
+        }
         visitor.leave_node(kind);
     }
 

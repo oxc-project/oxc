@@ -4378,19 +4378,12 @@ fn lower_expression<'a>(
             let mut properties = ArenaVec::new_in(&alloc);
             for prop in &obj.properties {
                 match prop {
-                    oxc::ObjectPropertyKind::ObjectProperty(p) => {
-                        // In oxc, getters/setters/methods are encoded as an
-                        // `ObjectProperty` whose value is a `FunctionExpression`
-                        // (the Babel AST instead carried a separate `ObjectMethod`
-                        // node). Route those through `lower_object_method`.
-                        if p.method
-                            || matches!(p.kind, oxc::PropertyKind::Get | oxc::PropertyKind::Set)
-                        {
-                            if let Some(method_prop) = lower_object_method(builder, p)? {
-                                properties.push(ObjectPropertyOrSpread::Property(method_prop));
-                            }
-                            continue;
+                    oxc::ObjectPropertyKind::MethodProperty(p) => {
+                        if let Some(method_prop) = lower_object_method(builder, p)? {
+                            properties.push(ObjectPropertyOrSpread::Property(method_prop));
                         }
+                    }
+                    oxc::ObjectPropertyKind::ObjectProperty(p) => {
                         let key = lower_object_property_key(builder, &p.key)?;
                         let key = match key {
                             Some(k) => k,
@@ -5832,24 +5825,21 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
     }
 }
 
-/// Lower an oxc object getter/setter/method (`ObjectProperty` whose value is a
-/// `FunctionExpression`). Faithful to the original `lower_object_method`:
-/// `get`/`set` record a Todo error and are skipped. The `method` case lowers the
-/// key and the nested function (`lower_function_for_object_method`) and emits an
-/// `ObjectMethod` instruction value.
+/// Lower an oxc object getter/setter/method. Faithful to the original
+/// `lower_object_method`: `get`/`set` record a Todo error and are skipped. The
+/// `method` case lowers the key and the nested function
+/// (`lower_function_for_object_method`) and emits an `ObjectMethod` instruction
+/// value.
 fn lower_object_method<'a>(
     builder: &mut HirBuilder<'a, '_>,
-    method: &oxc::ObjectProperty<'a>,
+    method: &oxc::ObjectMethodProperty<'a>,
 ) -> Result<Option<ObjectProperty<'a>>, OxcDiagnostic> {
-    // In oxc, a shorthand method is encoded as `kind: Init, method: true`; only
-    // getters/setters carry a non-`Init` `PropertyKind`.
-    let is_method = method.method && matches!(method.kind, oxc::PropertyKind::Init);
-    if !is_method {
-        let kind_str = match method.kind {
-            oxc::PropertyKind::Get => "get",
-            oxc::PropertyKind::Set => "set",
-            oxc::PropertyKind::Init => "method",
-        };
+    let kind_str = match method.kind {
+        oxc::ObjectMethodKind::Method => None,
+        oxc::ObjectMethodKind::Get => Some("get"),
+        oxc::ObjectMethodKind::Set => Some("set"),
+    };
+    if let Some(kind_str) = kind_str {
         let kind_span = Span::new(
             method.span.start,
             method.span.start.saturating_add(kind_str.len() as u32).min(method.span.end),
@@ -5861,10 +5851,7 @@ fn lower_object_method<'a>(
     let key = lower_object_property_key(builder, &method.key)?
         .unwrap_or(ObjectPropertyKey::String { name: Ident::empty(), span: None });
 
-    let func = match &method.value {
-        oxc::Expression::FunctionExpression(func) => func,
-        _ => unreachable!("object method value is always a FunctionExpression in oxc"),
-    };
+    let func = &method.value;
     let body = func.body.as_ref().expect("object method always has a body");
     let lowered_func = lower_function_for_object_method(
         builder,
@@ -6022,8 +6009,6 @@ fn is_reorderable_expression(
         oxc::Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
             oxc::ObjectPropertyKind::ObjectProperty(p) => {
                 !p.key.is_computed()
-                    && !p.method
-                    && matches!(p.kind, oxc::PropertyKind::Init)
                     && is_reorderable_expression(builder, &p.value, allow_local_identifiers)
             }
             _ => false,

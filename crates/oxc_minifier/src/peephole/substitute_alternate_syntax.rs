@@ -34,10 +34,7 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     pub fn substitute_object_property(prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
-        if !prop.method
-            && let PropertyKey::StringLiteral(str) | PropertyKey::StaticStringLiteral(str) =
-                &prop.key
-        {
+        if let PropertyKey::StringLiteral(str) | PropertyKey::StaticStringLiteral(str) = &prop.key {
             // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
             if str.value == "__proto__" {
                 return;
@@ -49,6 +46,13 @@ impl<'a> PeepholeOptimizations {
         // for shorthand normalisation in the same visit.
         Self::try_compress_property_key(&mut prop.key, ctx);
         Self::normalize_object_property_shorthand(prop);
+    }
+
+    pub fn substitute_object_method_property(
+        prop: &mut ObjectMethodProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::try_compress_property_key(&mut prop.key, ctx);
     }
 
     /// `{ x: x }` is observationally equivalent to `{ x }`, and codegen always
@@ -64,7 +68,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Expression::Identifier(value) = &prop.value else { return };
-        if prop.key.is_computed() || prop.method || prop.kind != PropertyKind::Init {
+        if prop.key.is_computed() {
             return;
         }
         let PropertyKey::StaticIdentifier(key) = &prop.key else { return };

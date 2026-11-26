@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, Expression, MemberExpression, ObjectProperty, ObjectPropertyKind,
+        AssignmentTargetProperty, Expression, MemberExpression, ObjectPropertyKind,
         SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target,
     },
 };
@@ -290,19 +290,15 @@ impl NoSelfAssign {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)
                 if id1.init.is_none() =>
             {
-                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else {
-                    return;
-                };
-
-                let ObjectProperty { method: false, value: expr, span, key, .. } = &**obj_prop
-                else {
-                    return;
-                };
+                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else { return };
+                let expr = &obj_prop.value;
+                let span = obj_prop.span;
+                let key = &obj_prop.key;
                 if key.is_specific_static_name(id1.binding.name.as_str())
                     && let Expression::Identifier(id2) = expr.without_parentheses()
                     && id1.binding.name == id2.name
                 {
-                    ctx.diagnostic(no_self_assign_diagnostic(*span));
+                    ctx.diagnostic(no_self_assign_diagnostic(span));
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
@@ -312,12 +308,9 @@ impl NoSelfAssign {
                     }
                     AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => return,
                 };
-                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else {
-                    return;
-                };
-                let ObjectProperty { method: false, value: expr, key, .. } = &**obj_prop else {
-                    return;
-                };
+                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else { return };
+                let expr = &obj_prop.value;
+                let key = &obj_prop.key;
 
                 let property_name = property.name.static_name();
                 let key_name = key.static_name();

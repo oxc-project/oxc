@@ -196,7 +196,10 @@ impl Rule for PreferNumberProperties {
                 let is_method_shorthand =
                     matches!(name, "isNaN" | "isFinite" | "parseFloat" | "parseInt");
                 if is_method_shorthand
-                    && !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                    && !matches!(
+                        ctx.nodes().parent_kind(node.id()),
+                        AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_)
+                    )
                 {
                     continue;
                 }
@@ -531,6 +534,7 @@ function inner() {
         ("const foo = {NaN: NaN};", "const foo = {NaN: Number.NaN};", None),
         ("const {foo = NaN} = {};", "const {foo = Number.NaN} = {};", None),
         ("const foo = NaN.toString();", "const foo = Number.NaN.toString();", None),
+        ("const foo = {[isNaN]() {}}", "const foo = {[Number.isNaN]() {}}", None),
         ("class Foo3 {[NaN] = 1}", "class Foo3 {[Number.NaN] = 1}", None),
         ("class Foo2 {[NaN] = 1}", "class Foo2 {[Number.NaN] = 1}", None),
         ("class Foo {[NaN] = 1}", "class Foo {[Number.NaN] = 1}", None),

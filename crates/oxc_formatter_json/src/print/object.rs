@@ -70,8 +70,9 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
                             FmtJsonValue { expression: &prop.value }.fmt(f);
                         }
                     }
-                    ObjectPropertyKind::SpreadProperty(spread) => {
-                        write!(f, FormatInvalidJson(spread.span));
+                    ObjectPropertyKind::MethodProperty(_)
+                    | ObjectPropertyKind::SpreadProperty(_) => {
+                        write!(f, FormatInvalidJson(property.span()));
                     }
                 }
             });

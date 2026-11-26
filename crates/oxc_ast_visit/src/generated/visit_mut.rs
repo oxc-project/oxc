@@ -98,6 +98,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_object_method_property(&mut self, it: &mut ObjectMethodProperty<'a>) {
+        walk_object_method_property(self, it);
+    }
+
+    #[inline]
     fn visit_property_key(&mut self, it: &mut PropertyKey<'a>) {
         walk_property_key(self, it);
     }
@@ -1554,6 +1559,7 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             ObjectPropertyKind::ObjectProperty(it) => visitor.visit_object_property(it),
+            ObjectPropertyKind::MethodProperty(it) => visitor.visit_object_method_property(it),
             ObjectPropertyKind::SpreadProperty(it) => visitor.visit_spread_element(it),
         }
     }
@@ -1565,6 +1571,22 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_expression(&mut it.value);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_object_method_property<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ObjectMethodProperty<'a>,
+    ) {
+        let kind = AstType::ObjectMethodProperty;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_property_key(&mut it.key);
+        {
+            let flags = ScopeFlags::Function;
+            visitor.visit_function(&mut it.value, flags);
+        }
         visitor.leave_node(kind);
     }
 

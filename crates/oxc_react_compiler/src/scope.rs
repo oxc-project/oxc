@@ -1,8 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, PropertyKind,
-};
+use oxc_ast::ast::{BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration};
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
@@ -169,13 +167,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 resolver.function_scope_ranges.push((span.start, span.end));
             }
             // For function scopes inside object methods, also record a window from
-            // the parent ObjectProperty's start, so range checks match Babel's
+            // the parent ObjectMethodProperty's start, so range checks match Babel's
             // ObjectMethod extent (which starts at the property, not the function).
             if let AstKind::Function(_) = node.kind() {
                 let parent = nodes.parent_node(node.id());
-                if let AstKind::ObjectProperty(prop) = parent.kind()
-                    && is_object_method_property(prop)
-                {
+                if let AstKind::ObjectMethodProperty(_) = parent.kind() {
                     let prop_start = parent.kind().span().start;
                     if prop_start != span.start {
                         resolver.function_scope_ranges.push((prop_start, span.end));
@@ -604,7 +600,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     }
 
     /// The subtree root for capture analysis of a function scope: the function
-    /// node itself, widened to the enclosing ObjectProperty for object methods
+    /// node itself, widened to the enclosing ObjectMethodProperty for object methods
     /// and accessors (Babel's ObjectMethod node spans the whole property,
     /// including `get `/`set ` prefixes and computed keys).
     pub fn capture_root_node(&self, function_scope: ScopeId) -> NodeId {
@@ -612,9 +608,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         let node = self.nodes.get_node(node_id);
         if let AstKind::Function(_) = node.kind() {
             let parent = self.nodes.parent_node(node_id);
-            if let AstKind::ObjectProperty(prop) = parent.kind()
-                && is_object_method_property(prop)
-            {
+            if let AstKind::ObjectMethodProperty(_) = parent.kind() {
                 return parent.id();
             }
         }
@@ -636,10 +630,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         self.nodes.ancestor_kinds(node_id).filter_map(|kind| match kind {
             AstKind::Function(func) => func.scope_id.get(),
             AstKind::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
-            AstKind::ObjectProperty(prop) if is_object_method_property(prop) => match &prop.value {
-                oxc_ast::ast::Expression::FunctionExpression(func) => func.scope_id.get(),
-                _ => None,
-            },
+            AstKind::ObjectMethodProperty(prop) => prop.value.scope_id.get(),
             _ => None,
         })
     }
@@ -680,12 +671,6 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         }
         descendants
     }
-}
-
-/// Whether an object property is what Babel models as an `ObjectMethod`
-/// (a method or a `get`/`set` accessor), whose node spans the whole property.
-fn is_object_method_property(prop: &oxc_ast::ast::ObjectProperty) -> bool {
-    prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set)
 }
 
 /// Find the binding identifier with the given name within a declaration AST node.
