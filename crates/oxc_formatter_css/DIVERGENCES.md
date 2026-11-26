@@ -65,6 +65,33 @@ Prettier keeps a COMMENTED keyframe selector list verbatim, interior spacing inc
 ours prints commented and uncommented lists with the same structural layout (one selector per line, comments per the separator rule).
 Same rule as `comment-preceded-map-indent`.
 
+## keyframes-name-comment
+
+- Why: uniform-rule (comment presence never changes layout)
+- Pin: `tests/fixtures/format/css/keyframes-name-comment.css`
+
+```css
+/* input */
+@keyframes   foo {}
+@keyframes /* c */  foo {}
+
+/* ours */
+@keyframes foo {
+}
+@keyframes /* c */ foo {
+}
+
+/* prettier */
+@keyframes foo {
+}
+@keyframes /* c */  foo {
+}
+```
+
+Prettier keeps COMMENTED `@keyframes` params verbatim and collapses the whitespace of uncommented ones;
+ours prints the name the same way with or without a comment, its string re-quoted (DIVERGENCES.md#prelude-string-requote).
+Same rule as DIVERGENCES.md#keyframe-selector-comment-list.
+
 ## layer-comma-list
 
 - Why: uniform-rule (same construct, same output: a comma list in `@media` / `@custom-selector`)
@@ -830,6 +857,38 @@ Prettier moves it past the `{` as the block's first comment for `@media` / `@sup
 (and keeps it before the `{` for `@page` / `@keyframes` / `@font-face` / `@if`):
 the comment crosses the `{`, a grammar-fixed delimiter.
 For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{` / the comment text, bugs on its side.
+
+## at-root-line-comment-indent
+
+- Why: uniform-rule (same construct, same output: an `@include` prelude after a `//`)
+- Pin: `tests/fixtures/format/scss/at-rule-prelude-comments.scss`
+- Conformance:
+  - `externals/prettier/scss/comments/at-rule.scss`
+
+```scss
+/* input */
+@include // c
+foo;
+@at-root // c
+.foo {}
+
+/* ours */
+@include // c
+  foo;
+@at-root // c
+  .foo {
+}
+
+/* prettier */
+@include // c
+  foo;
+@at-root // c
+.foo {
+}
+```
+
+A `//` before an at-rule prelude breaks it, and the prelude continues one level in, as Prettier prints `@include`;
+Prettier keeps an `@at-root` selector after a `//` as written instead.
 
 ## line-comment-before-comma-fill-head
 
