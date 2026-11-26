@@ -136,6 +136,9 @@ impl Rule for NoUselessRename {
                     else {
                         continue;
                     };
+                    if property.name.is_computed() {
+                        continue;
+                    }
                     let Some(key) = property.name.static_name() else {
                         continue;
                     };
@@ -159,6 +162,13 @@ impl Rule for NoUselessRename {
                 ctx.diagnostic_with_fix(
                     no_useless_rename_diagnostic(import_specifier.local.span),
                     |fixer| {
+                        if has_comments_outside(
+                            import_specifier.span,
+                            import_specifier.local.span,
+                            ctx,
+                        ) {
+                            return fixer.noop();
+                        }
                         let local_text =
                             import_specifier.local.span.source_text(ctx.source_text()).to_string();
                         let replacement = if import_specifier.import_kind.is_type() {
@@ -181,6 +191,10 @@ impl Rule for NoUselessRename {
                         ctx.diagnostic_with_fix(
                             no_useless_rename_diagnostic(specifier.local.span()),
                             |fixer| {
+                                if has_comments_outside(specifier.span, specifier.local.span(), ctx)
+                                {
+                                    return fixer.noop();
+                                }
                                 // Always replace the entire specifier with just the local part.
                                 // The local is what the variable is named inside the module.
                                 let local_text = specifier
@@ -210,6 +224,10 @@ impl Rule for NoUselessRename {
                         ctx.diagnostic_with_fix(
                             no_useless_rename_diagnostic(specifier.local.span()),
                             |fixer| {
+                                if has_comments_outside(specifier.span, specifier.local.span(), ctx)
+                                {
+                                    return fixer.noop();
+                                }
                                 let local_text = specifier
                                     .local
                                     .span()
@@ -231,6 +249,13 @@ impl Rule for NoUselessRename {
     }
 }
 
+/// Whether `outer` contains comments that are not inside `inner`, which a fix
+/// replacing `outer` with the text of `inner` would delete.
+fn has_comments_outside(outer: Span, inner: Span, ctx: &LintContext) -> bool {
+    ctx.has_comments_between(Span::new(outer.start, inner.start))
+        || ctx.has_comments_between(Span::new(inner.end, outer.end))
+}
+
 /// Fix for object pattern properties like `{foo: foo}` -> `{foo}`.
 ///
 /// For properties with default values like `{foo: foo = 1}`, we produce `{foo = 1}`.
@@ -239,6 +264,9 @@ fn fix_object_pattern_property<'c, 'a: 'c>(
     property: &BindingProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
+    if has_comments_outside(property.span, property.value.span(), ctx) {
+        return fixer.noop();
+    }
     let (ident_span, default_span): (Span, Option<Span>) = match &property.value {
         BindingPattern::AssignmentPattern(assignment_pattern) => {
             match &assignment_pattern.left {
@@ -274,6 +302,9 @@ fn fix_object_assignment_target_property<'c, 'a: 'c>(
     property: &AssignmentTargetPropertyProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
+    if has_comments_outside(property.span, property.binding.span(), ctx) {
+        return fixer.noop();
+    }
     let (ident_span, default_span): (Span, Option<Span>) = match &property.binding {
         AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
             if with_default.binding.get_identifier_name().is_some() {
@@ -334,6 +365,7 @@ fn test() {
         ("let {foo, ['bar']: {['baz']: qux}} = obj;", None),
         ("let {[foo]: foo} = obj;", None),
         ("let {['foo']: foo} = obj;", None),
+        ("let foo; ({ ['foo']: foo } = obj);", None),
         ("let {[foo]: bar} = obj;", None),
         ("function func({foo}) {}", None),
         ("function func({foo: bar}) {}", None),
@@ -545,6 +577,16 @@ fn test() {
 
     let fix = vec![
         ("let {foo: foo} = obj;", "let {foo} = obj;"),
+        (
+            "const { foo: /* explanation */ foo } = obj;",
+            "const { foo: /* explanation */ foo } = obj;",
+        ),
+        ("const { foo /* c */ : foo = 1 } = obj;", "const { foo /* c */ : foo = 1 } = obj;"),
+        ("const { foo: foo = /* c */ 1 } = obj;", "const { foo = /* c */ 1 } = obj;"),
+        ("({ foo: /* c */ foo } = obj);", "({ foo: /* c */ foo } = obj);"),
+        ("import { foo as /* c */ foo } from 'foo';", "import { foo as /* c */ foo } from 'foo';"),
+        ("export { foo /* c */ as foo } from 'foo';", "export { foo /* c */ as foo } from 'foo';"),
+        ("let foo; export { foo as /* c */ foo };", "let foo; export { foo as /* c */ foo };"),
         ("({foo: (foo)} = obj);", "({foo} = obj);"),
         (r"let {\u0061: a} = obj;", "let {a} = obj;"),
         (r"let {a: \u0061} = obj;", r"let {\u0061} = obj;"),
