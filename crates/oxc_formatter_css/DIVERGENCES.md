@@ -1846,6 +1846,50 @@ a {
 An over-wide `@supports` declaration opens its parens and stays on one line, as the same declaration does in a rule;
 Prettier breaks after its `:` there too, its prelude value group allowing a break the declaration printer does not.
 
+## supports-declaration-comments
+
+- Why: uniform-rule (same construct, same output: the declaration in a rule)
+- Pin: `tests/fixtures/format/css/supports-commented-terms.css`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+
+```css
+/* input */
+@supports (display /* c */ : flex) {}
+@supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {}
+a {
+  display /* c */ : flex;
+}
+
+/* ours */
+@supports (display/* c */ : flex) {
+}
+@supports (
+  /* a comment long enough to break this term */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+) {
+}
+a {
+  display/* c */ : flex;
+}
+
+/* prettier */
+@supports (display /* c */: flex) {
+}
+@supports (
+  /* a comment long enough to break this term */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+) {
+}
+a {
+  display/* c */ : flex;
+}
+```
+
+A commented `@supports` declaration prints as the same declaration does in a rule, as an uncommented one does (DIVERGENCES.md#supports-declaration-long-value):
+the comments between its property and value as written, a comment leading it on its own line once its parens open.
+Prettier prints a commented one through its prelude value parser instead, as a fill of words.
+
 ## grid-value-broken-in-function
 
 - Why: invariant

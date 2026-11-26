@@ -19,7 +19,7 @@ use oxc_css_parser::{
 };
 
 use oxc_formatter_core::{
-    Format, FormatElement, arena_cow_str,
+    Format, FormatElement, SourceText, arena_cow_str,
     builders::{
         empty_line, group, hard_line_break, indent, soft_block_indent, soft_line_break,
         soft_line_break_or_space, space, text,
@@ -125,21 +125,6 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
                 write!(f, space());
                 write_commented_value_params(raw, 8, true, f);
                 write!(f, ";");
-                return;
-            }
-            // Only a comment inside a term takes the source rebuild,
-            // kept for Prettier alignment only (see `write_commented_value_params`);
-            // comments between the terms are the structured printer's to place
-            "supports"
-                if matches!(at_rule.prelude, Some(AtRulePrelude::Supports(_)))
-                    && tokenize(raw, TokenizeMode::SplitComments)
-                        .into_iter()
-                        .any(has_comment_in_parens) =>
-            {
-                let _ = f.context().comments().take_before(region_end);
-                write!(f, space());
-                write_commented_value_params(raw, 10, false, f);
-                write_block_or_semicolon(at_rule, f);
                 return;
             }
             // String params: as written (Prettier's raw `node.params`),
@@ -2245,9 +2230,30 @@ fn write_supports_term<'a>(
     end: u32,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    value::write_with_comments(to_span(in_parens.span()), end, f, |f| {
+    let mut span = to_span(in_parens.span());
+    if matches!(in_parens.kind, SupportsInParensKind::Selector(_)) {
+        span.start = selector_function_start(span.start, f.context().source_text());
+    }
+    value::write_with_comments(span, end, f, |f| {
         write_supports_in_parens(in_parens, f);
     });
+}
+
+/// Where `selector(` starts, for the selector list starting at `list_start` in it.
+///
+/// NOTE: oxc-css-parser spans a `selector()` term as its selector list only,
+/// so a comment after `selector(` would read as leading the term; fixing the span in the parser removes this.
+fn selector_function_start(list_start: u32, source: SourceText<'_>) -> u32 {
+    let head = source.slice_range(0, list_start);
+    // Back over the comments and whitespace after `(` (a comment holds no `*/` before its end)
+    let mut rest = head.trim_end();
+    while let Some(before) = rest.strip_suffix("*/") {
+        rest = before.rfind("/*").map_or(before, |open| before[..open].trim_end());
+    }
+    let Some(before_paren) = rest.strip_suffix('(') else { return list_start };
+    let name = before_paren.len()
+        - before_paren.trim_end_matches(|c: char| c.is_ascii_alphanumeric() || c == '-').len();
+    u32::try_from(before_paren.len() - name).unwrap_or(list_start)
 }
 
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -2259,7 +2265,18 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Feature(feature) => {
-            let content = format_with(|f| statement::write_declaration(&feature.decl, f));
+            // The comments inside the parens as around a declaration in a rule:
+            // a leading one ends its line when the parens open, the trailing ones wrap as before a `;`
+            let close = in_parens.span.end - 1;
+            let content = format_with(|f| {
+                for &comment in f.context().comments().take_before(feature.decl.span().start) {
+                    write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
+                    if !comment.inline {
+                        write!(f, soft_line_break_or_space());
+                    }
+                }
+                statement::write_declaration_until(&feature.decl, Some(close), f);
+            });
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Selector(list) => {
@@ -2289,8 +2306,10 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 });
                 write!(f, [indent(&body), hard_line_break(), ")"]);
             } else {
-                // As a rule's selectors: one per line, the parens open when broken
+                // As a rule's selectors: one per line, the parens open when broken;
+                // a comment after `selector(` leads the first one on its line
                 let content = format_with(|f| {
+                    value::flush_value_comments(list.span.start, f);
                     selector::write_selector_list(list, selector::SelectorListStyle::Hard, f);
                 });
                 write!(f, group(&format_args!(soft_block_indent(&content), ")")));

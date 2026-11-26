@@ -333,8 +333,18 @@ pub(super) fn write_verbatim_prelude_rule<'a>(
 }
 
 /// Mirrors Prettier's `css-decl`.
-/// Used without a trailing semicolon for `@supports (...)` features (the caller skips the `;`).
+/// Writes no `;`: the caller does.
 pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
+    write_declaration_until(decl, None, f);
+}
+
+/// [`write_declaration`] whose trailing comments wrap up to `tail_end` instead of its `;`
+/// (a `@supports` declaration's `)`).
+pub(super) fn write_declaration_until<'a>(
+    decl: &Declaration<'a>,
+    tail_end: Option<u32>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
@@ -515,8 +525,10 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             // The `;` position bounds wrapped trailing comments.
             // Only when such comments exist (keeps simple declarations on the single-component fast path).
             let decl_end_pre = decl.span().end;
-            let semi = end_with_semicolon(decl_end_pre, f);
-            let bound = if semi > decl_end_pre { semi - 1 } else { decl_end_pre };
+            let bound = tail_end.unwrap_or_else(|| {
+                let semi = end_with_semicolon(decl_end_pre, f);
+                if semi > decl_end_pre { semi - 1 } else { decl_end_pre }
+            });
             // A single interpolated component is exempt,
             // its fill-chunk fit ignores the line tail (see `is_single_sass_interpolation`).
             let has_tail = decl.important.is_none()
