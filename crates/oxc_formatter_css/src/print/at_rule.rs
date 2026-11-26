@@ -132,7 +132,8 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
                 write!(f, ";");
                 return;
             }
-            // Only a comment inside a term takes the source rebuild;
+            // Only a comment inside a term takes the source rebuild,
+            // kept for Prettier alignment only (see `write_commented_value_params`);
             // comments between the terms are the structured printer's to place
             "supports"
                 if matches!(at_rule.prelude, Some(AtRulePrelude::Supports(_)))
