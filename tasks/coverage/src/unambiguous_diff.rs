@@ -10,13 +10,18 @@ use std::{
 
 use oxc::{
     allocator::Allocator,
-    ast::ast::Program,
+    ast::{
+        AstKind,
+        ast::{Comment, Program},
+    },
+    ast_visit::Visit,
     diagnostics::{Diagnostics, LabeledSpan, OxcDiagnostic},
     parser::{Parser, ParserReturn, config::TokensParserConfig},
     span::SourceType,
-    syntax::module_record::ModuleRecord,
+    syntax::{module_record::ModuleRecord, node::NodeId},
 };
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 
 use crate::{
     BabelFile, CoverageResult, MiscFile, Test262File, TestResult, TypeScriptFile, full_eq::FullEq,
@@ -82,8 +87,10 @@ fn unambiguous_diff(code: &str, source_type: SourceType) -> TestResult {
     if !program_eq(&actual.program, &expected.program) {
         return mismatch("AST", &actual.program, &expected.program);
     }
-    if actual.program.comments != expected.program.comments {
-        return mismatch("Comments", &actual.program.comments, &expected.program.comments);
+    let actual_comments = comments_with_owner_indices(&actual.program);
+    let expected_comments = comments_with_owner_indices(&expected.program);
+    if actual_comments != expected_comments {
+        return mismatch("Comments", &actual_comments, &expected_comments);
     }
     if actual.tokens != expected.tokens {
         return mismatch("Tokens", &actual.tokens, &expected.tokens);
@@ -141,6 +148,34 @@ fn program_eq(actual: &Program, expected: &Program) -> bool {
         && actual.directives.full_eq(&expected.directives)
         && actual.body.full_eq(&expected.body)
         && actual.scope_id.full_eq(&expected.scope_id)
+}
+
+/// Pre-order indices of AST nodes by node ID.
+#[derive(Default)]
+struct NodeIndices(FxHashMap<NodeId, usize>);
+
+impl<'a> Visit<'a> for NodeIndices {
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        let index = self.0.len();
+        self.0.insert(kind.node_id(), index);
+    }
+}
+
+/// Comments with the pre-order index of their owner in the AST in place of its node ID.
+/// Statements parsed again in unambiguous mode get new node IDs, so the IDs of equal ASTs differ.
+fn comments_with_owner_indices(program: &Program) -> Vec<(Option<usize>, Comment)> {
+    let mut nodes = NodeIndices::default();
+    nodes.visit_program(program);
+    program
+        .comments
+        .iter()
+        .map(|comment| {
+            let owner = nodes.0.get(&comment.node_id.get()).copied();
+            let comment = comment.clone();
+            comment.node_id.set(NodeId::DUMMY);
+            (owner, comment)
+        })
+        .collect()
 }
 
 /// Skip `has_module_syntax`. Unambiguous mode also sets it for top-level `await`,

@@ -17,17 +17,20 @@
 //! errors reported later, such as for HTML-like comments anywhere in the source. Otherwise, the
 //! output of the first parse is put back.
 
-use std::{mem, ops::Range, vec};
+use std::{iter::Peekable, mem, ops::Range, vec};
 
 use oxc_allocator::{ArenaVec, GetAllocator};
-use oxc_ast::ast::{Comment, Statement};
+use oxc_ast::ast::{Comment, CommentPlacement, Directive, Statement};
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::module_record::DynamicImport;
+use oxc_syntax::{
+    module_record::DynamicImport,
+    node::{GetNodeId, NodeId},
+};
 
 use crate::{
-    ParserConfig as Config, ParserImpl, StatementContext, config::LexerConfig,
-    cursor::ParserCheckpoint, diagnostics, diagnostics::ParserDiagnostic, lexer::Token,
-    module_record::ModuleRecordBuilder,
+    ParserConfig as Config, ParserImpl, StatementContext, comment_attachment::ListComments,
+    config::LexerConfig, cursor::ParserCheckpoint, diagnostics, diagnostics::ParserDiagnostic,
+    lexer::Token, module_record::ModuleRecordBuilder,
 };
 
 /// State before a top-level statement of the first parse.
@@ -45,6 +48,13 @@ impl StatementCheckpoint<'_> {
     fn start(&self) -> u32 {
         self.parser.token().start()
     }
+}
+
+/// The top-level statement list, which statements parsed after the first parse are added to.
+#[derive(Clone, Copy)]
+pub struct TopLevelList<'l, 'a> {
+    pub comments: &'l ListComments,
+    pub directives: &'l [Directive<'a>],
 }
 
 /// Output of the first parse from the first checkpoint on, moved out while statements are
@@ -77,6 +87,8 @@ struct OriginalOutput<'a> {
     statements: Original<Statement<'a>>,
     tokens: Original<Token>,
     comments: Original<Comment>,
+    /// Indices in the first parse's comments of those following a comma, from `comments` on.
+    comma_comments: Peekable<vec::IntoIter<u32>>,
     irregular_whitespaces: Original<Span>,
     errors: Original<ParserDiagnostic<'a>>,
     lexer_errors: Original<ParserDiagnostic<'a>>,
@@ -107,12 +119,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse a top-level statement, after the first parse.
     fn parse_top_level_statement(
         &mut self,
+        list: TopLevelList<'_, 'a>,
+        previous: Option<&Statement<'a>>,
         reported_ambient_statement: &mut bool,
     ) -> Option<Statement<'a>> {
         if self.has_fatal_error() {
             return None;
         }
-        let statement = self.parse_statement_list_item(StatementContext::Program);
+        let statement = self.parse_statement_in_list(
+            StatementContext::Program,
+            list.comments,
+            list.directives,
+            previous,
+        );
         if self.ctx.has_ambient() {
             self.check_ambient_statement(&statement, reported_ambient_statement);
         }
@@ -123,9 +142,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_top_level_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
+        list: TopLevelList<'_, 'a>,
         reported_ambient_statement: &mut bool,
     ) {
-        while let Some(statement) = self.parse_top_level_statement(reported_ambient_statement) {
+        while let Some(statement) =
+            self.parse_top_level_statement(list, statements.last(), reported_ambient_statement)
+        {
             statements.push(statement);
         }
     }
@@ -139,6 +161,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn finish_top_level_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
+        list: TopLevelList<'_, 'a>,
         reported_ambient_statement: &mut bool,
     ) {
         if self.module_record_builder.has_module_syntax() {
@@ -148,14 +171,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let first_statement = statements.len() - checkpoints.len();
                 self.rewind_to_statement(&checkpoints[0], statements, first_statement);
             } else {
-                self.reparse_top_level_awaits(statements, reported_ambient_statement);
+                self.reparse_top_level_awaits(statements, list, reported_ambient_statement);
             }
             // Parsed again, the module syntax may not be, as in `await /x; export {}; y/u`.
             // Like Babel, the source is still a module.
             self.module_record_builder.set_module_syntax();
-            self.parse_top_level_statements(statements, reported_ambient_statement);
+            self.parse_top_level_statements(statements, list, reported_ambient_statement);
         } else if self.has_errors_since(&self.state.statement_checkpoints[0]) {
-            self.retry_as_module(statements, reported_ambient_statement);
+            self.retry_as_module(statements, list, reported_ambient_statement);
         } else {
             let mut checkpoints = mem::take(&mut self.state.statement_checkpoints);
             if self.ctx.has_ambient() {
@@ -176,6 +199,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn retry_as_module(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
+        list: TopLevelList<'_, 'a>,
         reported_ambient_statement: &mut bool,
     ) {
         let mut checkpoints = mem::take(&mut self.state.statement_checkpoints);
@@ -212,7 +236,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.tokens_mut().push(first.parser.token());
         }
         self.set_await_context(true);
-        self.parse_top_level_statements(statements, reported_ambient_statement);
+        self.parse_top_level_statements(statements, list, reported_ambient_statement);
         if self.module_record_builder.has_module_syntax()
             || (!self.has_errors_since(first) && self.lexer.deferred_module_errors.is_empty())
         {
@@ -272,6 +296,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         index: usize,
     ) {
         statements.truncate(index);
+        // Comments after the previous token were assigned after the checkpoint, as were the nodes
+        // after it, which are discarded
+        self.unassign_comments(Span::new(checkpoint.parser.prev_token_end(), u32::MAX));
         self.rewind(checkpoint.parser);
         self.lexer.deferred_module_errors.truncate(checkpoint.deferred_module_errors_len);
         self.deferred_script_errors.truncate(checkpoint.deferred_script_errors_len);
@@ -285,6 +312,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn reparse_top_level_awaits(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
+        list: TopLevelList<'_, 'a>,
         reported_ambient_statement: &mut bool,
     ) {
         let mut checkpoints = mem::take(&mut self.state.statement_checkpoints);
@@ -319,8 +347,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Parse statements until the first parse is reached again
             let mut next = start + 1;
             let overran = loop {
-                let Some(statement) = self.parse_top_level_statement(reported_ambient_statement)
-                else {
+                let Some(statement) = self.parse_top_level_statement(
+                    list,
+                    statements.last(),
+                    reported_ambient_statement,
+                ) else {
                     break true;
                 };
                 statements.push(statement);
@@ -398,11 +429,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .comments
             .partition_point(|comment| comment.span.start < first.parser.prev_token_end());
         let comments = trivia.comments.split_off(comments_start);
-        for comment in &comments[..lexer.comments_len() - comments_start] {
+        let (leading_comments, later_comments) =
+            comments.split_at(lexer.comments_len() - comments_start);
+        for comment in leading_comments {
             trivia.comments.push(comment.clone());
         }
+        #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
+        let later_assigned_comments =
+            later_comments.iter().filter(|comment| comment.node_id.get() != NodeId::ROOT).count()
+                as u32;
+        let comma_comments_start =
+            trivia.comma_comments.partition_point(|&index| (index as usize) < lexer.comments_len());
+        let comma_comments = trivia.comma_comments.split_off(comma_comments_start);
         let irregular_whitespaces =
             trivia.irregular_whitespaces.split_off(lexer.irregular_whitespaces_len());
+        self.assigned_comments -= later_assigned_comments;
+        // Only parsing the statement assigns the comments before it
+        self.unassign_comments(Span::new(first.parser.prev_token_end(), u32::MAX));
 
         let (declarations, dynamic_imports, import_metas) = self.take_module_record(first);
 
@@ -413,6 +456,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ),
             tokens: Original::new(tokens, token_index),
             comments: Original::new(comments, comments_start),
+            comma_comments: comma_comments.into_iter().peekable(),
             irregular_whitespaces: Original::new(
                 irregular_whitespaces,
                 lexer.irregular_whitespaces_len(),
@@ -469,6 +513,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) {
         let (from, to) = (&checkpoints[0], &checkpoints[checkpoints.len() - 1]);
         let (from_lexer, to_lexer) = (from.parser.lexer(), to.parser.lexer());
+        // The statement before the kept ones, which may have been parsed again
+        let previous = statements.last().map(GetNodeId::node_id);
         let statements_len = statements.len();
         statements.extend(
             original.statements.take(first_statement..first_statement + checkpoints.len() - 1),
@@ -488,9 +534,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .take(from_lexer.comments_len() - leading_comments..to_lexer.comments_len());
         for (comment, original) in trivia.comments[comments_start..].iter_mut().zip(&mut comments) {
             debug_assert_eq!(comment.span, original.span);
+            if comment.node_id.get() != NodeId::ROOT {
+                self.assigned_comments -= 1;
+            }
             *comment = original;
+            if comment.node_id.get() != NodeId::ROOT {
+                self.assigned_comments += 1;
+                // Trailing comments before a statement trail the previous statement
+                if comment.placement == CommentPlacement::Trailing
+                    && let Some(previous) = previous
+                {
+                    comment.node_id.set(previous);
+                }
+            }
+        }
+        let comments_len = trivia.comments.len();
+        while let Some(&index) = original.comma_comments.peek()
+            && (index as usize) < to_lexer.comments_len()
+        {
+            original.comma_comments.next();
+            if let Some(offset) = (index as usize).checked_sub(from_lexer.comments_len()) {
+                #[expect(
+                    clippy::cast_possible_truncation,
+                    reason = "Comment counts fit within u32"
+                )]
+                trivia.comma_comments.push((comments_len + offset) as u32);
+            }
         }
         for comment in comments {
+            if comment.node_id.get() != NodeId::ROOT {
+                self.assigned_comments += 1;
+            }
             trivia.comments.push(comment);
         }
         trivia.irregular_whitespaces.extend(
