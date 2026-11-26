@@ -6,9 +6,9 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, Expression, Function, IdentifierReference, NewTarget,
-        ObjectExpression, ObjectMethodKind, ObjectMethodProperty, ObjectProperty,
-        ObjectPropertyKind, PropertyKey, Super, ThisExpression,
+        AccessorProperty, ArrowFunctionExpression, Expression, Function, IdentifierReference,
+        NewTarget, ObjectExpression, ObjectMethodKind, ObjectMethodProperty, ObjectProperty,
+        ObjectPropertyKind, PropertyDefinition, PropertyKey, StaticBlock, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -425,10 +425,7 @@ fn check_longform_properties<'a>(
         && property_name == value_identifier.name
     {
         ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
-            if ctx.semantic().has_comments_between(Span::new(
-                property.key.span().start,
-                value_identifier.span.end,
-            )) {
+            if ctx.semantic().has_comments_between(property.span) {
                 return fixer.noop();
             }
             fixer.replace(property.span, property_name.to_string())
@@ -442,7 +439,7 @@ fn check_consistency<'a>(
     check_redundancy: bool,
 ) {
     let properties =
-        obj_expr.properties.iter().filter(|property| can_property_have_shorthand(property));
+        obj_expr.properties.iter().filter(|property| is_consistency_candidate(property));
 
     let properties_count = properties.clone().count();
     if properties_count > 0 {
@@ -489,8 +486,45 @@ fn check_method_property<'a>(
     if property.kind == ObjectMethodKind::Method
         && !property.key.is_specific_literal_name("__proto__")
         && (rule.apply_never || rule.avoid_quotes && is_property_key_string_literal(&property.key))
+        && !method_uses_super(&property.value)
     {
         make_function_long_form(rule, ctx, property);
+    }
+}
+
+/// Returns whether a method references `super` through its own home object, which a
+/// function expression cannot do.
+fn method_uses_super(method: &Function<'_>) -> bool {
+    let mut finder = SuperFinder::default();
+    finder.visit_formal_parameters(&method.params);
+    if let Some(body) = &method.body {
+        finder.visit_function_body(body);
+    }
+    finder.found
+}
+
+#[derive(Default)]
+struct SuperFinder {
+    found: bool,
+}
+
+impl<'a> Visit<'a> for SuperFinder {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
+
+    fn visit_property_definition(&mut self, it: &PropertyDefinition<'a>) {
+        self.visit_decorators(&it.decorators);
+        self.visit_property_key(&it.key);
+    }
+
+    fn visit_accessor_property(&mut self, it: &AccessorProperty<'a>) {
+        self.visit_decorators(&it.decorators);
+        self.visit_property_key(&it.key);
+    }
+
+    fn visit_static_block(&mut self, _it: &StaticBlock<'a>) {}
+
+    fn visit_super(&mut self, _it: &Super) {
+        self.found = true;
     }
 }
 
@@ -599,6 +633,9 @@ fn is_redundant_property(property: &ObjectPropertyKind) -> bool {
     let ObjectPropertyKind::ObjectProperty(property) = property else {
         return matches!(property, ObjectPropertyKind::MethodProperty(_));
     };
+    if property.key.is_specific_literal_name("__proto__") {
+        return false;
+    }
     match &property.value {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::Identifier(value_identifier) => {
@@ -614,16 +651,12 @@ fn is_redundant_property(property: &ObjectPropertyKind) -> bool {
     }
 }
 
-fn can_property_have_shorthand(property: &ObjectPropertyKind) -> bool {
+/// Returns whether a property counts toward `consistent` and `consistent-as-needed`, which
+/// consider every property except getters, setters, and spreads.
+fn is_consistency_candidate(property: &ObjectPropertyKind) -> bool {
     match property {
-        ObjectPropertyKind::ObjectProperty(property) => {
-            !property.key.is_specific_literal_name("__proto__")
-                && (!property.key.is_computed() || is_property_value_function(property))
-        }
-        ObjectPropertyKind::MethodProperty(property) => {
-            property.kind == ObjectMethodKind::Method
-                && !property.key.is_specific_literal_name("__proto__")
-        }
+        ObjectPropertyKind::ObjectProperty(_) => true,
+        ObjectPropertyKind::MethodProperty(property) => property.kind == ObjectMethodKind::Method,
         ObjectPropertyKind::SpreadProperty(_) => false,
     }
 }
@@ -638,6 +671,22 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("const obj = { m() { return super.m(); } };", Some(serde_json::json!(["never"]))),
+        ("const obj = { m() { return () => super.m(); } };", Some(serde_json::json!(["never"]))),
+        ("const obj = { m(a = super.x) { return a; } };", Some(serde_json::json!(["never"]))),
+        ("const obj = { m() { class A extends super.B {} } };", Some(serde_json::json!(["never"]))),
+        (
+            r#"const obj = { "m"() { return super.m(); } };"#,
+            Some(serde_json::json!(["always", { "avoidQuotes": true }])),
+        ),
+        (
+            "const obj = { x: x, __proto__: foo };",
+            Some(serde_json::json!(["consistent-as-needed"])),
+        ),
+        (
+            "const obj = { __proto__: __proto__ };",
+            Some(serde_json::json!(["consistent-as-needed"])),
+        ),
         ("var x = {y() {}}", None),
         ("var x = {y}", None),
         ("var x = {a: b}", None),
@@ -1011,6 +1060,17 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "const obj = { m() { return { n() { return super.n(); } }; } };",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const obj = { m() { class A extends B { x = super.y; } } };",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("const obj = { x: (x /* keep */) };", Some(serde_json::json!(["always"]))),
+        ("const obj = { x, [key]: value };", Some(serde_json::json!(["consistent"]))),
+        ("const obj = { x, __proto__: foo };", Some(serde_json::json!(["consistent"]))),
         ("var x = {x: x}", None),
         ("var x = {'x': x}", None),
         ("var x = {y: y, x: x}", None),
@@ -1448,6 +1508,16 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "const obj = { x: (x /* keep */) };",
+            "const obj = { x: (x /* keep */) };",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "const obj = { m() { return { n() { return super.n(); } }; } };",
+            "const obj = { m: function() { return { n() { return super.n(); } }; } };",
+            Some(serde_json::json!(["never"])),
+        ),
         ("var x = {x: x}", "var x = {x}", None),
         ("var x = {'x': x}", "var x = {x}", None),
         ("var x = {y: y, x: x}", "var x = {y, x}", None),

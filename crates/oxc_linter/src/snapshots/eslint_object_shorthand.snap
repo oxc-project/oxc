@@ -2,6 +2,38 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:15]
+ 1 │ const obj = { m() { return { n() { return super.n(); } }; } };
+   ·               ─────────────────────────────────────────────
+   ╰────
+  help: Replace `m` with `m: function`.
+
+  ⚠ eslint(object-shorthand): Expected longform method syntax.
+   ╭─[object_shorthand.tsx:1:15]
+ 1 │ const obj = { m() { class A extends B { x = super.y; } } };
+   ·               ──────────────────────────────────────────
+   ╰────
+  help: Replace `m` with `m: function`.
+
+  ⚠ eslint(object-shorthand): Expected property shorthand.
+   ╭─[object_shorthand.tsx:1:15]
+ 1 │ const obj = { x: (x /* keep */) };
+   ·               ─────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.
+   ╭─[object_shorthand.tsx:1:13]
+ 1 │ const obj = { x, [key]: value };
+   ·             ───────────────────
+   ╰────
+
+  ⚠ eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.
+   ╭─[object_shorthand.tsx:1:13]
+ 1 │ const obj = { x, __proto__: foo };
+   ·             ─────────────────────
+   ╰────
+
   ⚠ eslint(object-shorthand): Expected property shorthand.
    ╭─[object_shorthand.tsx:1:10]
  1 │ var x = {x: x}
@@ -156,7 +188,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var x = {a: (a /* comment */)}
    ·          ────────────────────
    ╰────
-  help: Replace `a: (a /* comment */)` with `a`.
 
   ⚠ eslint(object-shorthand): Expected property shorthand.
    ╭─[object_shorthand.tsx:1:10]
@@ -169,7 +200,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var x = {'a': (a /* comment */)}
    ·          ──────────────────────
    ╰────
-  help: Replace `'a': (a /* comment */)` with `a`.
 
   ⚠ eslint(object-shorthand): Expected property shorthand.
    ╭─[object_shorthand.tsx:1:10]
