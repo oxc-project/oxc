@@ -733,15 +733,19 @@ fn find_outside_comments(raw: &str, needle: u8) -> Option<usize> {
     None
 }
 
+/// The comments before `start` lead what follows; after a `//`, it continues one level in.
+fn write_leading_comments(start: u32, f: &mut CssFormatter<'_, '_>) {
+    // Guarded: an empty `indent` is an error
+    if has_unclaimed_comments_before(start, f) {
+        write!(f, indent(&format_with(|f| _ = value::flush_value_comments(start, f))));
+    }
+}
+
 fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
-    // Comments before the prelude lead it; a `//` breaks, the prelude continues one level in.
-    // `@import` places its own: one fuses with the path after it (`write_import_path_list`).
-    // Guarded: an empty `indent` is an error
-    let start = prelude.span().start;
-    let places_own = matches!(prelude, AtRulePrelude::Import(_) | AtRulePrelude::SassImport(_));
-    if !places_own && f.context().comments().peek().is_some_and(|c| c.span.end <= start) {
-        write!(f, indent(&format_with(|f| _ = value::flush_value_comments(start, f))));
+    // `@import` places its own: one fuses with the path after it (`write_import_path_list`)
+    if !matches!(prelude, AtRulePrelude::Import(_) | AtRulePrelude::SassImport(_)) {
+        write_leading_comments(prelude.span().start, f);
     }
     match prelude {
         AtRulePrelude::Media(media) => write_media_query_list(media, f),
@@ -1878,11 +1882,13 @@ fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssForm
         write_import_words(&groups, f);
         return;
     }
+    if !import.options.names.is_empty() {
+        write_less_import_options(&import.options, f);
+        write!(f, space());
+    }
+    // A comment after the options leads the href, outside the group: its `//` breaks no media query
+    write_leading_comments(import.href.span().start, f);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        if !import.options.names.is_empty() {
-            write_less_import_options(&import.options, f);
-            write!(f, space());
-        }
         write_import_href(&import.href, f);
         if let Some(media) = &import.media {
             write!(f, soft_line_break_or_space());
@@ -1892,17 +1898,17 @@ fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssForm
     write!(f, group(&indent(&body)));
 }
 
-/// `(reference, optional)`
+/// `(reference, optional)`, its comments placed like a `@layer` list's
 fn write_less_import_options<'a>(options: &LessImportOptions<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let source = f.context().source_text();
     write!(f, "(");
     for (i, name) in options.names.iter().enumerate() {
         if i > 0 {
-            write!(f, ", ");
+            value::write_group_comma(options.comma_spans.get(i - 1).map(|sp| sp.start), f);
+            write!(f, space());
         }
-        let span = to_span(name.span());
-        write!(f, text(source.text_for(&span)));
+        value::write_text_with_leading_comments(to_span(name.span()), f);
     }
+    value::flush_trailing_value_comments(to_span(options.span).end, f);
     write!(f, ")");
 }
 
