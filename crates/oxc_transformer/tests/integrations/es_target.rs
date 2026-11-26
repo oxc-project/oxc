@@ -1,7 +1,10 @@
-use std::str::FromStr;
+use std::{path::Path, str::FromStr};
 
+use oxc_allocator::Allocator;
+use oxc_parser::{ParseOptions, Parser};
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{ESTarget, TransformOptions};
+use oxc_transformer::{DecoratorOptions, ESTarget, TransformOptions, Transformer};
 
 use crate::{codegen, test, test_with_source_type};
 
@@ -119,6 +122,77 @@ fn standard_decorators_opt_out_keeps_plain_class_field_lowering() {
     assert!(output.contains("#value = 3;"));
     assert!(output.contains("obj.#value = 4;"));
     assert!(output.contains("return obj.#value;"));
+}
+
+/// Parse and transform `source`, returning the parser's and the transformer's error messages.
+fn decorator_errors(
+    source: &str,
+    source_type: SourceType,
+    preserve_parens: bool,
+    options: &TransformOptions,
+) -> (Vec<String>, Vec<String>) {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source, source_type)
+        .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+        .parse();
+    let parser_errors = ret.diagnostics.iter().map(ToString::to_string).collect();
+    let mut program = ret.program;
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let ret = Transformer::new(&allocator, Path::new(""), options)
+        .build_with_scoping(scoping, &mut program);
+    (parser_errors, ret.diagnostics.iter().map(ToString::to_string).collect())
+}
+
+/// Without `experimentalDecorators`, only `DecoratorMemberExpression`, `DecoratorCallExpression`
+/// and `DecoratorParenthesizedExpression` may follow `@` (TS1497). The parser enforces this for
+/// JavaScript, but not for TypeScript, where any expression is valid in legacy mode, so the
+/// transformer reports it for TypeScript in every non-legacy mode.
+#[test]
+fn standard_decorator_expression_grammar() {
+    const NOT_PARENTHESIZED: &str =
+        "Expression must be enclosed in parentheses to be used as a decorator.";
+    const ARGUMENTS_OUTSIDE: &str = "Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'";
+    let invalid = [
+        ("@a.b().c class A {}", NOT_PARENTHESIZED),
+        ("@a.b()() class A {}", NOT_PARENTHESIZED),
+        ("@(a).b class A {}", NOT_PARENTHESIZED),
+        ("@ /* ( */ a.b().c class A {}", NOT_PARENTHESIZED),
+        ("@(a)(b) class A {}", ARGUMENTS_OUTSIDE),
+        ("class A { @a.b().c m() {} }", NOT_PARENTHESIZED),
+    ];
+    let valid = [
+        "@a class A {}",
+        "@a.b.c() class A {}",
+        "@(a.b().c) class A {}",
+        "@ ( /* x */ a.b().c ) class A {}",
+        "class A { static #b; @A.#b m() {} }",
+    ];
+    let valid_ts = ["@a!.b<T>() class A {}", "@a.b()! class A {}"];
+
+    for target in [ESTarget::ES2022, ESTarget::ESNext] {
+        let standard = TransformOptions::from(target);
+        let legacy = TransformOptions {
+            decorator: DecoratorOptions { legacy: true, ..DecoratorOptions::default() },
+            ..TransformOptions::from(target)
+        };
+        for preserve_parens in [true, false] {
+            for (source, message) in invalid {
+                let (parser, transformer) =
+                    decorator_errors(source, SourceType::ts(), preserve_parens, &standard);
+                assert_eq!((parser, transformer), (vec![], vec![message.to_string()]), "{source}");
+                let errors = decorator_errors(source, SourceType::ts(), preserve_parens, &legacy);
+                assert_eq!(errors, (vec![], vec![]), "legacy: {source}");
+                // JavaScript is reported once, by the parser.
+                let errors =
+                    decorator_errors(source, SourceType::mjs(), preserve_parens, &standard);
+                assert_eq!(errors, (vec![message.to_string()], vec![]), "js: {source}");
+            }
+            for source in valid.iter().copied().chain(valid_ts) {
+                let errors = decorator_errors(source, SourceType::ts(), preserve_parens, &standard);
+                assert_eq!(errors, (vec![], vec![]), "{source}");
+            }
+        }
+    }
 }
 
 #[test]

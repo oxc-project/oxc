@@ -2,7 +2,7 @@ use std::num::NonZeroU32;
 
 use cow_utils::CowUtils;
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
-use oxc_ast::ast::*;
+use oxc_ast::{DecoratorExpressionError, ast::*};
 use oxc_data_structures::buffered_vec::BufferedVec;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
@@ -2236,35 +2236,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         expr_start: u32,
         is_parenthesized: bool,
     ) {
-        // Optional chains are already reported while parsing.
-        if matches!(expr, Expression::ChainExpression(_)) {
-            return;
-        }
-        let error = if is_parenthesized {
-            // `@(expr)` is valid only when nothing follows the closing `)`. Without `preserve_parens`,
-            // the parenthesized expression starts after `(`, while a suffixed one such as `(a)(b)`
-            // starts at `(`.
-            let is_parenthesized_head = |e: &Expression<'a>| {
-                matches!(e, Expression::ParenthesizedExpression(_)) || e.span().start != expr_start
-            };
-            match expr {
-                expr if is_parenthesized_head(expr) => return,
-                Expression::CallExpression(call) if is_parenthesized_head(&call.callee) => {
-                    diagnostics::decorator_arguments_outside_parentheses(expr.span())
+        if let Err(error) = expr.check_decorator_expression(expr_start, is_parenthesized) {
+            let span = expr.span();
+            self.error(match error {
+                DecoratorExpressionError::NotParenthesized => {
+                    diagnostics::decorator_expression_not_parenthesized(span)
                 }
-                _ => diagnostics::decorator_expression_not_parenthesized(expr.span()),
-            }
-        } else {
-            let is_valid = match expr {
-                Expression::CallExpression(call) => call.callee.is_decorator_member_expression(),
-                expr => expr.is_decorator_member_expression(),
-            };
-            if is_valid {
-                return;
-            }
-            diagnostics::decorator_expression_not_parenthesized(expr.span())
-        };
-        self.error(error);
+                DecoratorExpressionError::ArgumentsOutsideParentheses => {
+                    diagnostics::decorator_arguments_outside_parentheses(span)
+                }
+            });
+        }
     }
 
     fn is_yield_expression(&mut self) -> bool {

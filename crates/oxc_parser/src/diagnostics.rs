@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_ast::ast::REGEXP_FLAGS_LIST;
+use oxc_ast::{DecoratorExpressionError, ast::REGEXP_FLAGS_LIST};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
@@ -489,12 +489,12 @@ parser_diagnostics! {
     };
 
     decorator_expression_not_parenthesized(span: Span) => {
-        OxcDiagnostic::error("Expression must be enclosed in parentheses to be used as a decorator.")
+        OxcDiagnostic::error(DecoratorExpressionError::NotParenthesized.message())
             .with_label(span)
     };
 
     decorator_arguments_outside_parentheses(span: Span) => {
-        OxcDiagnostic::error("Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'")
+        OxcDiagnostic::error(DecoratorExpressionError::ArgumentsOutsideParentheses.message())
             .with_label(span)
     };
 
