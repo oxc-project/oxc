@@ -709,3 +709,48 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:6:33]
+ 5 │                 try { call(); x = 2; }
+ 6 │                 catch { use(x); x = 3; }
+   ·                                 ─
+ 7 │             }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:17]
+ 1 │ function f() {
+ 2 │             let x = 0;
+   ·                 ─
+ 3 │             while (condition) {
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:5:33]
+ 4 │                 try { call(); x = 1; }
+ 5 │                 catch { use(x); x = 2; x = 3; }
+   ·                                 ─
+ 6 │             }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:8:27]
+ 7 │                     use(x);
+ 8 │                 } catch { x = 3; }
+   ·                           ─
+ 9 │             }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+    ╭─[no_useless_assignment.tsx:9:27]
+  8 │                     use(x);
+  9 │                 } catch { x = 3; }
+    ·                           ─
+ 10 │             }
+    ╰────
+  help: Consider removing or reusing the assigned value.
