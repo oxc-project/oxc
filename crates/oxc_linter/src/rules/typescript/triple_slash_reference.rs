@@ -277,6 +277,7 @@ fn test() {
         ("/// <reference path=\"./types.d.ts\" />\n\"use strict\";\nexport {};", None),
         ("/// <reference types=\"lodash\" />\nexport import lodash = require(\"lodash\");", None),
         ("/// <reference types='lodash' />\nimport 'lodash';", None),
+        ("/// <reference types=\"foo\" />\ndeclare module \"x\" { import \"foo\"; }", None),
         ("/// <reference types = \"lodash\" />\nimport 'lodash';", None),
         (
             "/// <reference types=\"lodash\" />\n/// <reference types=\"lodash\" />\nimport \"lodash\";",
