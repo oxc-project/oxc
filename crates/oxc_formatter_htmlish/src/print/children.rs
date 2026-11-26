@@ -198,7 +198,7 @@ pub fn write_children<'a>(
         });
         let child_group = group(&content).with_group_id(Some(group_id));
         match leading {
-            // A group around the child's alone would decide as the child's does
+            // Nothing leads: an outer group would only wrap the child's
             None => write!(f, child_group),
             Some(leading) => write!(
                 f,
