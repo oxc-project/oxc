@@ -2267,13 +2267,13 @@ fn supports_in_parens_start(in_parens: &SupportsInParens<'_>, f: &CssFormatter<'
         }
     }
     let Some(head) = source.slice_range(0, end).strip_suffix('(') else { return list_start };
-    head.len()
-        .checked_sub("selector".len())
-        .filter(|&start| {
-            head.get(start..).is_some_and(|name| name.eq_ignore_ascii_case("selector"))
-        })
-        .and_then(|start| u32::try_from(start).ok())
-        .unwrap_or(list_start)
+    // The name, escapes included (`s\65lector`)
+    let name_start =
+        head.trim_end_matches(|c: char| c.is_ascii_alphanumeric() || c == '-' || c == '\\').len();
+    if name_start == head.len() {
+        return list_start;
+    }
+    u32::try_from(name_start).unwrap_or(list_start)
 }
 
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -2281,7 +2281,11 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
     match &in_parens.kind {
         // An over-wide term opens its parens (Prettier's parenthesized value group)
         SupportsInParensKind::SupportsCondition(condition) => {
-            let content = format_with(|f| write_supports_condition(condition, f));
+            // The comments before the `)` stay inside it
+            let content = format_with(|f| {
+                write_supports_condition(condition, f);
+                value::flush_trailing_value_comments(in_parens.span.end - 1, f);
+            });
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Feature(feature) => {
@@ -2296,6 +2300,8 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                     }
                 }
                 statement::write_declaration_until(&feature.decl, Some(close), f);
+                // What the declaration's tail left (after an `!important`) stays inside the `)` too
+                value::flush_trailing_value_comments(close, f);
             });
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
@@ -2308,7 +2314,11 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             let bytes = source.as_bytes();
             let mut scan = span_end.saturating_sub(1) as usize;
             while scan < bytes.len() && bytes[scan] != b')' {
-                scan += 1;
+                scan = if bytes[scan..].starts_with(b"/*") {
+                    block_comment_end(&source, scan)
+                } else {
+                    scan + 1
+                };
             }
             let r_paren = u32::try_from(scan).unwrap_or(span_end);
             let has_inline_inside = f.context().comments().iter_before(r_paren).any(|c| c.inline);
@@ -2331,6 +2341,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 let content = format_with(|f| {
                     value::flush_value_comments(list.span.start, f);
                     selector::write_selector_list(list, selector::SelectorListStyle::Hard, f);
+                    value::flush_trailing_value_comments(r_paren, f);
                 });
                 write!(f, group(&format_args!(soft_block_indent(&content), ")")));
             }

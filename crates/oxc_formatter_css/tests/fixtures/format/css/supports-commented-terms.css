@@ -30,6 +30,12 @@
 }
 @supports selector(/* a /* b */ a:hover) {
 }
+@supports selector(a /* c */) {
+}
+@supports (display: flex !important /* c */) {
+}
+@supports ((a: b) /* inner */) {
+}
 
 /* DIVERGENCES.md#supports-declaration-comments */
 @supports (display /* c */ : flex) and (gap:1PX) {
