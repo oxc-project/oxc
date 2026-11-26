@@ -208,3 +208,30 @@ source: crates/oxc_linter/src/tester.rs
  3 │           ));
    ╰────
   help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:42]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.createElement('div', { key: index })
+   ·                                          ──────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:4:37]
+ 3 │             things.map((thing, index) => (
+ 4 │               cloneElement(thing, { key: index })
+   ·                                     ──────────
+ 5 │             ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:4:38]
+ 3 │             things.map((thing, index) => (
+ 4 │               createElement('div', { key: index })
+   ·                                      ──────────
+ 5 │             ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders

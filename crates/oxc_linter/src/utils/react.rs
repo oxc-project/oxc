@@ -6,9 +6,10 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression,
-        Function, FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild,
-        JSXElement, JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement, Statement, StaticMemberExpression,
+        Function, FunctionBody, IdentifierReference, JSXAttributeItem, JSXAttributeName,
+        JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression, JSXFragment,
+        JSXMemberExpression, JSXMemberExpressionObject, JSXOpeningElement, Statement,
+        StaticMemberExpression,
     },
     match_expression,
 };
@@ -24,7 +25,10 @@ use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{LintContext, OxlintSettings};
-use crate::{globals::HTML_TAG, utils::is_import_from_module};
+use crate::{
+    globals::HTML_TAG,
+    utils::{is_import_from_module, is_import_symbol},
+};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
@@ -829,6 +833,32 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
     }
 }
 
+/// Like [`is_react_function_call`], but also follows the callee binding so
+/// aliased named imports from "react" are recognized, e.g.
+/// `import { useState as useStateAlternativeName } from "react"`.
+///
+/// Resolving the reference means locally shadowed names do not match.
+pub fn is_react_function_call_resolved(
+    call: &CallExpression,
+    expected_call: &str,
+    ctx: &LintContext<'_>,
+) -> bool {
+    if is_react_function_call(call, expected_call) {
+        return true;
+    }
+
+    let Some(subject) = call.callee_name() else { return false };
+
+    if is_react_hook_name(subject)
+        && let Expression::Identifier(ident) = &call.callee
+        && is_import_symbol(ident, "react", expected_call, ctx)
+    {
+        return true;
+    }
+
+    false
+}
+
 /// Checks if a JSX opening element is a React Fragment.
 /// Recognizes both `<Fragment>` and `<React.Fragment>` forms.
 pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
@@ -844,6 +874,69 @@ pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
         JSXElementName::NamespacedName(_)
         | JSXElementName::Identifier(_)
         | JSXElementName::ThisExpression(_) => false,
+    }
+}
+
+/// Checks if a JSX opening element is a React Fragment, following the element
+/// name's binding like eslint-plugin-react's `jsx-fragments` rule:
+///
+/// - `import { Fragment as Frag } from "react"`
+/// - `const { Fragment } = React` / `const Fragment = React.Fragment`
+/// - `const { Fragment: Frag } = require("react")`
+pub fn is_react_fragment_element(elem: &JSXOpeningElement, ctx: &LintContext) -> bool {
+    if is_jsx_fragment(elem) {
+        return true;
+    }
+
+    let JSXElementName::IdentifierReference(ident) = &elem.name else { return false };
+
+    identifier_references_react_fragment(ident, ctx)
+}
+
+fn identifier_references_react_fragment(
+    ident: &IdentifierReference,
+    ctx: &LintContext<'_>,
+) -> bool {
+    if is_import_symbol(ident, "react", "Fragment", ctx) {
+        return true;
+    }
+
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+
+    // Find the `VariableDeclarator` owning the binding, if any, and inspect its
+    // initializer. Stop at nodes that cannot own a variable binding.
+    let ancestors = std::iter::once(declaration_id).chain(ctx.nodes().ancestor_ids(declaration_id));
+    for ancestor_id in ancestors {
+        match ctx.nodes().get_node(ancestor_id).kind() {
+            AstKind::VariableDeclarator(decl) => {
+                return decl.init.as_ref().is_some_and(is_react_fragment_source);
+            }
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::Class(_)
+            | AstKind::Program(_) => return false,
+            _ => {}
+        }
+    }
+    false
+}
+
+/// Checks whether a variable initializer provides React's `Fragment`:
+/// `React`, `React.Fragment`, or `require("react")`.
+fn is_react_fragment_source(init: &Expression<'_>) -> bool {
+    match init {
+        Expression::Identifier(ident) => ident.name == PRAGMA,
+        Expression::StaticMemberExpression(member) => {
+            member.object.is_specific_id(PRAGMA) && member.property.name == "Fragment"
+        }
+        Expression::CallExpression(call) => {
+            call.is_require_call()
+                && matches!(call.arguments.first(), Some(Argument::StringLiteral(source)) if source.value == "react")
+        }
+        _ => false,
     }
 }
 

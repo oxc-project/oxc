@@ -554,7 +554,7 @@ fn is_allowed_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>, pattern: &s
     }
 
     if let Some(prop_name) = direct_object_property_name(node, ctx)
-        && (prop_name == "children" || glob_match(pattern, &prop_name))
+        && glob_match(pattern, &prop_name)
     {
         return true;
     }
@@ -2052,6 +2052,16 @@ fn test() {
         ),
         (
             "function Parent() { return <Thing footer={function () { const element = <>text</>; return element; }} />; }",
+            None,
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      return (
+                        <SomeComponent item={{ children: () => <div /> }} />
+                      );
+                    }
+                  ",
             None,
         ),
     ];

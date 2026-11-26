@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_import_symbol};
 
 fn no_array_index_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Usage of Array index in keys is not allowed")
@@ -87,12 +87,12 @@ fn check_jsx_element<'a>(jsx: &'a JSXElement, node: &'a AstNode, ctx: &'a LintCo
     }
 }
 
-fn check_react_clone_element<'a>(
+fn check_react_create_or_clone_element<'a>(
     call_expr: &'a CallExpression,
     node: &'a AstNode,
     ctx: &'a LintContext,
 ) {
-    if !is_method_call(call_expr, Some(&["React"]), Some(&["cloneElement"]), Some(2), Some(3)) {
+    if !is_create_or_clone_element_call(call_expr, ctx) {
         return;
     }
     let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
@@ -124,6 +124,23 @@ fn check_react_clone_element<'a>(
         if expression_uses_index(ctx, index_param_symbol_id, value) {
             ctx.diagnostic(no_array_index_key_diagnostic(span));
         }
+    }
+}
+
+/// Matches `React.createElement`/`React.cloneElement` calls and bare
+/// identifiers resolving to a named `createElement`/`cloneElement` import
+/// from "react", like eslint-plugin-react's `isCreateCloneElement`.
+fn is_create_or_clone_element_call(call_expr: &CallExpression, ctx: &LintContext<'_>) -> bool {
+    match &call_expr.callee {
+        Expression::StaticMemberExpression(member) => {
+            member.object.is_specific_id("React")
+                && matches!(member.property.name.as_ref(), "createElement" | "cloneElement")
+        }
+        Expression::Identifier(ident) => {
+            is_import_symbol(ident, "react", "createElement", ctx)
+                || is_import_symbol(ident, "react", "cloneElement", ctx)
+        }
+        _ => false,
     }
 }
 
@@ -247,7 +264,7 @@ impl Rule for NoArrayIndexKey {
                 check_jsx_element(jsx, node, ctx);
             }
             AstKind::CallExpression(call_expr) => {
-                check_react_clone_element(call_expr, node, ctx);
+                check_react_create_or_clone_element(call_expr, node, ctx);
             }
             _ => (),
         }
@@ -329,6 +346,12 @@ fn test() {
             React.cloneElement(thing, { key: `abc${index.toString()}` })
           ));
         ",
+        r#"
+            import { cloneElement } from "./util";
+            things.map((thing, index) => (
+              cloneElement(thing, { key: index })
+            ));
+        "#,
     ];
 
     let fail = vec![
@@ -426,6 +449,22 @@ fn test() {
             React.cloneElement(thing, { key: String(index) })
           ));
         ",
+        r"things.map((thing, index) => (
+            React.createElement('div', { key: index })
+          ));
+        ",
+        r#"
+            import { cloneElement } from "react";
+            things.map((thing, index) => (
+              cloneElement(thing, { key: index })
+            ));
+        "#,
+        r#"
+            import { createElement } from "react";
+            things.map((thing, index) => (
+              createElement('div', { key: index })
+            ));
+        "#,
     ];
 
     Tester::new(NoArrayIndexKey::NAME, NoArrayIndexKey::PLUGIN, pass, fail).test_and_snapshot();

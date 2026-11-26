@@ -512,3 +512,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ──────────────────────────────────────────────────────────
    ╰────
   help: Move this component definition out of the parent component `Parent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:4:58]
+ 3 │                       return (
+ 4 │                         <SomeComponent item={{ children: () => <div /> }} />
+   ·                                                          ─────────────
+ 5 │                       );
+   ╰────
+  help: Move this component definition out of the parent component `ParentComponent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.

@@ -55,3 +55,12 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 return [res, {}];
    ╰────
   help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export function useColor() {
+ 4 │                 const result = useStateAlternativeName();
+   ·                       ──────────────────────────────────
+ 5 │                 return result;
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
