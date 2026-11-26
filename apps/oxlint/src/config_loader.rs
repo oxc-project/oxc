@@ -504,8 +504,7 @@ impl<'a> ConfigLoader<'a> {
         discovery: &ConfigDiscovery,
         dir: &Path,
     ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let config_file =
-            discovery.find_unique_config_by_readdir(dir).map_err(OxcDiagnostic::from)?;
+        let config_file = discovery.find_unique_config(dir).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
