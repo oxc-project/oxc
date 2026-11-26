@@ -1638,6 +1638,36 @@ Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may
 So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
 Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.
 
+## media-query-comments
+
+- Why: uniform-rule (comment presence never changes layout)
+- Pin: `tests/fixtures/format/css/media-commented-feature.css`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less`
+
+```css
+/* input */
+@media all and (max-width:1024px) {}
+@media all and/* c */(max-width:1024px) {}
+
+/* ours */
+@media all and (max-width: 1024px) {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
+
+/* prettier */
+@media all and (max-width: 1024px) {
+}
+@media all and/* c */(max-width:1024px) {
+}
+```
+
+A commented `@media` query prints as an uncommented one, each comment kept between the tokens it sits between;
+Prettier's media query parser keeps a token touching a comment as written, its source spacing and quotes included.
+Same rule as DIVERGENCES.md#keyframes-name-comment.
+
 ## media-feature-comment-case
 
 - Why: invariant

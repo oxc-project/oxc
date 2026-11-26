@@ -783,7 +783,8 @@ fn flush_trailing_comments_while(
 
 /// Comments between a prelude ending at `prelude_end` and its `{` at `block_start`:
 /// a run glued to the prelude stays on its line (`@page :first // c`, the `//` ends it so `{` starts the next),
-/// own-line ones keep their line before the `{`.
+/// own-line ones keep their line before the `{` from the first `//` on;
+/// an own-line block comment before it joins the prelude's line, as one does in a fill body.
 /// Either way the caller's space before `{` is safe: the printer drops it at the start of a line.
 pub(super) fn write_comments_before_block(
     prelude_end: u32,
@@ -791,12 +792,16 @@ pub(super) fn write_comments_before_block(
     f: &mut CssFormatter<'_, '_>,
 ) {
     flush_glued_comments(prelude_end, block_start, f);
-    let own_line = f.context().comments().take_before(block_start);
-    if own_line.is_empty() {
-        return;
-    }
-    write!(f, hard_line_break());
-    for &comment in own_line {
+    let mut broke = false;
+    for &comment in f.context().comments().take_before(block_start) {
+        if !broke && !comment.inline {
+            write!(f, [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]);
+            continue;
+        }
+        if !broke {
+            write!(f, hard_line_break());
+            broke = true;
+        }
         write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
     }
 }
