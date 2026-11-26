@@ -98,3 +98,27 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── 'a' is declared here
    ╰────
   help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'unused' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:19]
+ 1 │ export function f(unused, [_ignored]) {}
+   ·                   ───┬──
+   ·                      ╰── 'unused' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'unused' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:19]
+ 1 │ export function f(unused, { a, ...rest }) {}
+   ·                   ───┬──
+   ·                      ╰── 'unused' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:35]
+ 1 │ export function f(unused, { a, ...rest }) {}
+   ·                                   ──┬─
+   ·                                     ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this parameter.

@@ -24,7 +24,7 @@ impl<'s, 'a> BindingContext<'s, 'a> {
 }
 
 pub(super) trait HasAnyUsedBinding<'a> {
-    /// Returns `true` if this node contains a binding that is used or ignored.
+    /// Returns `true` if this node contains a binding that is used.
     fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool;
 }
 
@@ -46,20 +46,13 @@ impl<'a> HasAnyUsedBinding<'a> for BindingIdentifier<'a> {
 }
 impl<'a> HasAnyUsedBinding<'a> for ObjectPattern<'a> {
     fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool {
-        if ctx.options.ignore_rest_siblings && self.rest.is_some() {
-            return true;
-        }
         self.properties.iter().any(|p| p.value.has_any_used_binding(ctx))
             || self.rest.as_ref().is_some_and(|rest| rest.argument.has_any_used_binding(ctx))
     }
 }
 impl<'a> HasAnyUsedBinding<'a> for ArrayPattern<'a> {
     fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool {
-        self.elements.iter().flatten().any(|el| {
-            // if the destructured element is ignored, it is considered used
-            el.get_identifier_name()
-                .is_some_and(|name| ctx.options.is_ignored_array_destructured(&name).is_some())
-                || el.has_any_used_binding(ctx)
-        }) || self.rest.as_ref().is_some_and(|rest| rest.argument.has_any_used_binding(ctx))
+        self.elements.iter().flatten().any(|el| el.has_any_used_binding(ctx))
+            || self.rest.as_ref().is_some_and(|rest| rest.argument.has_any_used_binding(ctx))
     }
 }

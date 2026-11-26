@@ -208,10 +208,7 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::IdentifierReference(_)
                 | AstKind::ComputedMemberExpression(_)
                 | AstKind::StaticMemberExpression(_)
-                | AstKind::PrivateFieldExpression(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_) => {}
+                | AstKind::PrivateFieldExpression(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,

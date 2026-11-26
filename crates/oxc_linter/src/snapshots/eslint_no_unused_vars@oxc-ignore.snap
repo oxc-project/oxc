@@ -73,3 +73,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ╰── '_err' is declared here
    ╰────
   help: Consider renaming this catch parameter.
+
+  ⚠ eslint(no-unused-vars): Variable '_api' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ export const _api = 1; console.log(_api);
+   ·              ──┬─
+   ·                ╰── '_api' is declared here
+   ╰────
+  help: Consider renaming this variable to 'api'.
+
+  ⚠ eslint(no-unused-vars): Variable '_api' is marked as ignored but is used.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ const _api = 1; export { _api };
+   ·       ──┬─
+   ·         ╰── '_api' is declared here
+   ╰────
+  help: Consider renaming this variable to 'api'.
+
+  ⚠ eslint(no-unused-vars): Variable '_a' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ const [_a = 0, b] = arr; console.log(b)
+   ·        ─┬
+   ·         ╰── '_a' is declared here
+   ╰────
+  help: Consider removing this declaration.

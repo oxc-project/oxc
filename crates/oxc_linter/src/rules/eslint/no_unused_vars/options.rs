@@ -360,7 +360,7 @@ impl TryFrom<Option<&str>> for IgnorePattern<Regex> {
 
     fn try_from(value: Option<&str>) -> Result<Self, Self::Error> {
         match value {
-            None => Ok(Self::None),
+            None | Some("") => Ok(Self::None),
             Some("^_") => Ok(Self::PrefixUnderscore),
             Some(pattern) => RegexBuilder::new(pattern).build().map(Self::Some),
         }
@@ -857,6 +857,9 @@ mod tests {
 
         let pat = json!("^_");
         assert!(matches!(parse_unicode_rule(Some(&pat)).unwrap(), IgnorePattern::PrefixUnderscore));
+
+        let pat = json!("");
+        assert!(parse_unicode_rule(Some(&pat)).unwrap().is_none());
     }
 
     #[test]
