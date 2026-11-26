@@ -67,8 +67,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///
     /// The two differ at the token after the name, which a JSX element reads anyway, see
     /// [`Self::is_generic_arrow_function_expression_after_jsx_name`]. So parse `<` and the name
-    /// as JSX, and go back to `<` only if `,`, `=` or `extends` follows the name. Every other
-    /// JSX element or fragment is parsed without reading a token twice.
+    /// as JSX, and go back to `<` only if `,`, `=` or `extends` follows the name and the name
+    /// can be an identifier here, which a reserved `await` or `yield` can't. Every other JSX
+    /// element or fragment is parsed without reading a token twice.
     ///
     /// Returns the expression, and whether it is an arrow function.
     pub(crate) fn parse_jsx_expression_or_generic_arrow_function(
@@ -85,7 +86,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if kind.is_binding_identifier() {
             let (name_span, name, contains_dash) = self.bump_jsx_identifier();
             // Only these tokens can follow the name of a type parameter and not that of an element.
-            if matches!(self.cur_kind(), Kind::Comma | Kind::Eq | Kind::Extends) && !contains_dash {
+            if matches!(self.cur_kind(), Kind::Comma | Kind::Eq | Kind::Extends)
+                && !contains_dash
+                && kind.is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await())
+            {
                 let arrow = self.is_generic_arrow_function_expression_after_jsx_name();
                 return self.parse_generic_arrow_function_or_jsx_expression(
                     checkpoint,
