@@ -969,6 +969,7 @@ impl<'a> TypeScript<'a> {
         let params =
             FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
         class.body.body.push(create_class_method(
+            SPAN,
             decorators,
             key,
             MethodDefinitionKind::Method,

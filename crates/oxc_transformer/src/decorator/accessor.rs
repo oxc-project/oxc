@@ -3,7 +3,7 @@
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 use oxc_syntax::scope::ScopeId;
 use oxc_traverse::BoundIdentifier;
@@ -58,15 +58,19 @@ pub(super) fn lower_auto_accessors<'a>(
             continue;
         }
         let mut accessor = accessor.unbox();
+        // The storage, getter, setter and their bodies map to the accessor, so a debugger
+        // stepping into them lands on its declaration. Statements in the bodies map to the key.
+        let span = accessor.span;
+        let key_span = accessor.key.span();
         let (storage_name, getter_key, setter_key) = match accessor.key {
             PropertyKey::StaticIdentifier(ident) => {
                 let name = Str::from_strs_array_in(["_", &ident.name, "_accessor_storage"], ctx);
-                let setter_key = PropertyKey::new_static_identifier(SPAN, ident.name, ctx);
+                let setter_key = PropertyKey::new_static_identifier(ident.span, ident.name, ctx);
                 (name, PropertyKey::StaticIdentifier(ident), setter_key)
             }
             PropertyKey::PrivateIdentifier(ident) => {
                 let name = Str::from_strs_array_in(["_", &ident.name, "_accessor_storage"], ctx);
-                let setter_key = PropertyKey::new_private_identifier(SPAN, ident.name, ctx);
+                let setter_key = PropertyKey::new_private_identifier(ident.span, ident.name, ctx);
                 (name, PropertyKey::PrivateIdentifier(ident), setter_key)
             }
             // A non-computed literal key stays non-computed unless it has to be converted once.
@@ -103,7 +107,7 @@ pub(super) fn lower_auto_accessors<'a>(
         };
         let storage_name = private_names.generate(storage_name, ctx);
         let storage = PropertyDefinition::boxed(
-            SPAN,
+            span,
             PropertyDefinitionType::PropertyDefinition,
             [],
             PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
@@ -124,6 +128,8 @@ pub(super) fn lower_auto_accessors<'a>(
         // Decorators move to the getter for later processing. Its return type also carries the
         // accessor's annotation so legacy `emitDecoratorMetadata` can derive `design:type`.
         let getter = create_accessor_method(
+            span,
+            key_span,
             accessor.decorators,
             getter_key,
             MethodDefinitionKind::Get,
@@ -135,6 +141,8 @@ pub(super) fn lower_auto_accessors<'a>(
             ctx,
         );
         let setter = create_accessor_method(
+            span,
+            key_span,
             ArenaVec::new_in(ctx),
             setter_key,
             MethodDefinitionKind::Set,
