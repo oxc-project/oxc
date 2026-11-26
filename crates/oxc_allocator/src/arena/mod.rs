@@ -9,7 +9,7 @@
 use std::{
     alloc::{GlobalAlloc, Layout},
     cell::Cell,
-    fmt,
+    fmt::{self, Debug},
     ptr::NonNull,
 };
 
@@ -280,7 +280,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 // can be used to deallocate chunks on whichever thread the `Arena` is dropped or reset on.
 unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 
-impl<const MIN_ALIGN: usize> fmt::Debug for Arena<MIN_ALIGN> {
+impl<const MIN_ALIGN: usize> Debug for Arena<MIN_ALIGN> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // `dyn GlobalAlloc` does not implement `Debug`, so only show whether a parent allocator is set
         let mut s = f.debug_struct("Arena");
