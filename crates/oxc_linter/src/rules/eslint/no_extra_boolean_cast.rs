@@ -44,11 +44,6 @@ pub struct NoExtraBooleanCast {
     /// meaning that this rule by default does not warn about extra booleans
     /// cast inside inner expressions.
     pub enforce_for_inner_expressions: bool,
-    /// Deprecated. When set to `true`, also checks the operands of `&&` and
-    /// `||` expressions whose result is used in a boolean context. Unlike
-    /// `enforceForInnerExpressions`, it does not check conditional branches,
-    /// sequence expressions, or the right operand of `??`.
-    pub enforce_for_logical_operands: bool,
 }
 
 declare_oxc_lint!(
@@ -113,7 +108,7 @@ impl Rule for NoExtraBooleanCast {
                 } else {
                     node
                 };
-                if is_flagged_ctx(node, ctx, self) {
+                if is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) {
                     report_boolean_call(expr, node, ctx);
                 }
             }
@@ -124,7 +119,7 @@ impl Rule for NoExtraBooleanCast {
                 match parent.kind() {
                     AstKind::UnaryExpression(p)
                         if p.operator == UnaryOperator::LogicalNot
-                            && is_flagged_ctx(parent, ctx, self) =>
+                            && is_flagged_ctx(parent, ctx, self.enforce_for_inner_expressions) =>
                     {
                         ctx.diagnostic_with_suggestion(
                             no_extra_double_negation_cast_diagnostic(parent.kind().span()),
@@ -196,14 +191,15 @@ fn report_boolean_call<'a>(
 
 // Checks whether the node is a context that should report an error
 // Acts recursively if it is in a logical context
-fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, options: &NoExtraBooleanCast) -> bool {
+fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_inner_expressions: bool) -> bool {
     let parent = get_real_parent(node, ctx);
     if is_bool_context(node, parent, ctx) {
         return true;
     }
 
     parent.is_some_and(|parent| {
-        is_inner_bool_context(node, parent, options) && is_flagged_ctx(parent, ctx, options)
+        is_inner_bool_context(node, parent, enforce_for_inner_expressions)
+            && is_flagged_ctx(parent, ctx, enforce_for_inner_expressions)
     })
 }
 
@@ -216,22 +212,25 @@ fn is_bool_context(node: &AstNode, parent: Option<&AstNode>, ctx: &LintContext) 
     })
 }
 
-fn is_inner_bool_context(node: &AstNode, parent: &AstNode, options: &NoExtraBooleanCast) -> bool {
-    let inner = options.enforce_for_inner_expressions;
+fn is_inner_bool_context(
+    node: &AstNode,
+    parent: &AstNode,
+    enforce_for_inner_expressions: bool,
+) -> bool {
+    if !enforce_for_inner_expressions {
+        return false;
+    }
+
     match parent.kind() {
         AstKind::LogicalExpression(expr) => match expr.operator {
-            LogicalOperator::And | LogicalOperator::Or => {
-                inner || options.enforce_for_logical_operands
-            }
-            LogicalOperator::Coalesce => inner && is_same_expression(&expr.right, node),
+            LogicalOperator::And | LogicalOperator::Or => true,
+            LogicalOperator::Coalesce => is_same_expression(&expr.right, node),
         },
         AstKind::ConditionalExpression(expr) => {
-            inner
-                && (is_same_expression(&expr.consequent, node)
-                    || is_same_expression(&expr.alternate, node))
+            is_same_expression(&expr.consequent, node) || is_same_expression(&expr.alternate, node)
         }
         AstKind::SequenceExpression(expr) => {
-            inner && expr.expressions.last().is_some_and(|last| is_same_expression(last, node))
+            expr.expressions.last().is_some_and(|last| is_same_expression(last, node))
         }
         _ => false,
     }
@@ -390,74 +389,8 @@ fn test() {
         ("for(;; Boolean(foo)) {}", None),
         ("if (new Boolean(foo)) {}", None),
         ("if ((Boolean(1), 2)) {}", None),
-        (
-            "var foo = bar || !!baz",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = bar && !!baz",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = bar || (baz && !!bat)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function foo() { return (!!bar || baz); }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = bar() ? (!!baz && bat) : (!!bat && qux)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for(!!(foo && bar);;) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for(;; !!(foo || bar)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = Boolean(bar) || baz;",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = bar || Boolean(baz);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = Boolean(bar) || Boolean(baz);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function foo() { return (Boolean(bar) || baz); }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = bar() ? Boolean(baz) || bat : Boolean(bat)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for(Boolean(foo) || bar;;) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for(;; Boolean(foo) || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (new Boolean(foo) || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
         ("if (!!foo || bar) {}", None),
         ("if (!!foo || bar) {}", Some(serde_json::json!([{}]))),
-        ("if (!!foo || bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": false }]))),
-        (
-            "if ((!!foo || bar) === baz) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("if (!!foo ?? bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))), // { "ecmaVersion": 2020 },
         (
             "var foo = bar || !!baz",
             Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
@@ -531,15 +464,6 @@ fn test() {
             "if ((1, Boolean(2), 3)) {}",
             Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
         ),
-        (
-            "if (flag ? Boolean(x) : y) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((foo, Boolean(bar))) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("if (foo ?? !!bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
         ("let Boolean = x => x; if (Boolean(bar)) {}", None),
         ("function foo(Boolean) { return !!Boolean(bar); }", None),
         ("function foo(Boolean) { if (Boolean(!!bar)) {} }", None),
@@ -550,10 +474,6 @@ fn test() {
         (
             "if (flag ? Boolean(x) : y) {}",
             Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
-        ),
-        (
-            "if (Boolean(x) || y) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
         ),
         (
             "if (Boolean(x) || y) {}",
@@ -630,233 +550,6 @@ fn test() {
         ("if(Boolean(/**/));", None),
         ("if(Boolean()/**/);", None),
         ("(Boolean/**/() ? 1 : 2)", None),
-        ("if (!!foo || bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("if (!!foo && bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "if ((!!foo || bar) && bat) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("if (foo && !!bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "do {} while (!!foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (!!foo || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!!foo && bat ? bar : baz",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for (; !!foo || bar;) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("!!!foo || bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("Boolean(!!foo || bar)", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "new Boolean(!!foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(foo) || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "do {} while (Boolean(foo) || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (Boolean(foo) || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "Boolean(foo) || bat ? bar : baz",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for (; Boolean(foo) || bar;) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("!Boolean(foo) || bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "!Boolean(foo && bar) || bat",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo + bar) || bat",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(+foo)  || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo()) || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo() || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo = bar) || bat",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(...foo) || bar;",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2015 },
-        (
-            "!Boolean(foo, bar()) || bar;",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean((foo, bar()) || bat);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("!Boolean() || bar;", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("!(Boolean()) || bar;", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "if (!Boolean() || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (!Boolean() || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = Boolean() || bar ? bar() : baz()",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean() || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (Boolean() || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield(!!a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2015 },
-        (
-            "function *foo() { yield(!! a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2015 },
-        (
-            "function *foo() { yield(! !a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2015 },
-        (
-            "function *foo() { yield (!!a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2015 },
-        (
-            "function *foo() { yield/**/(!!a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2015 },
-        ("x=!!a || d ? b : c ", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "void(!Boolean() || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "void(! Boolean() || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "typeof(!Boolean() || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("(!Boolean() || bar)", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "void/**/(!Boolean() || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("!/**/(!!foo || bar)", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("!!/**/!foo || bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("!!!/**/foo || bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("!(!!foo || bar)/**/", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("if(!/**/!foo || bar);", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "(!!/**/foo || bar ? 1 : 2)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!/**/(Boolean(foo) || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean/**/(foo) || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(/**/foo) || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo/**/) || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!(Boolean(foo)|| bar)/**/",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(Boolean/**/(foo) || bar);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "(Boolean(foo/**/)|| bar ? 1 : 2)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        ("/**/!Boolean()|| bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("!/**/Boolean()|| bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("!Boolean/**/()|| bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        ("!Boolean(/**/)|| bar", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
-        (
-            "(!Boolean()|| bar)/**/",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(!/**/Boolean()|| bar);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "(!Boolean(/**/) || bar ? 1 : 2)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(/**/Boolean()|| bar);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(Boolean/**/()|| bar);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(Boolean(/**/)|| bar);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(Boolean()|| bar/**/);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "(Boolean/**/()|| bar ? 1 : 2)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (a && !!(b ? c : d)){}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield!!a || d ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 6 },
         ("if (!!foo || bar) {}", Some(serde_json::json!([{ "enforceForInnerExpressions": true }]))),
         ("if (!!foo && bar) {}", Some(serde_json::json!([{ "enforceForInnerExpressions": true }]))),
         (
@@ -1236,139 +929,7 @@ fn test() {
         ("!!!(f(a))", None),
         ("!!!a", None),
         ("!Boolean(a)", None),
-        (
-            "if (!!(a, b) || !!(c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean((a, b)) || Boolean((c, d))) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((!!((a, b))) || (!!((c, d)))) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a, b) && !!(c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean((a, b)) && Boolean((c, d))) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((!!((a, b))) && (!!((c, d)))) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a = b) || !!(c = d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a /= b) || Boolean(c /= d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a >>= b) && !!(c >>= d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a **= b) && Boolean(c **= d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2016 },
-        (
-            "if (!!(a ? b : c) || !!(d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a ? b : c) || Boolean(d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a ? b : c) && !!(d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a ? b : c) && Boolean(d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a || b) || !!(c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a || b) || Boolean(c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a || b) && !!(c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a || b) && Boolean(c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a && b) || !!(c && d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a && b) || Boolean(c && d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a && b) && !!(c && d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a && b) && Boolean(c && d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a !== b) || !!(c !== d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a != b) || Boolean(c != d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a === b) && !!(c === d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a > b) || !!(c < d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(!a) || Boolean(+b)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!f(a) && !!b.c) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a) || !!b) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!a && Boolean(b)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((!!a) || (Boolean(b))) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a ?? b) || c) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2020 },
         ("if (Boolean?.(foo)) {};", None), // { "ecmaVersion": 2020 },
-        (
-            "if (Boolean?.(a ?? b) || c) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ), // { "ecmaVersion": 2020 },
         ("if (!Boolean(a as any)) { }", None), // {  "parser": require(  parser("typescript-parsers/boolean-cast-with-assertion"),  ),  "ecmaVersion": 2020,  },
         (
             "if ((1, 2, Boolean(3))) {}",
@@ -1638,266 +1199,6 @@ fn test() {
         ("!Boolean()/**/", "true/**/", None),
         ("if(/**/Boolean());", "if(/**/false);", None),
         ("if(Boolean()/**/);", "if(false/**/);", None),
-        (
-            "if (!!foo || bar) {}",
-            "if (foo || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!foo && bar) {}",
-            "if (foo && bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((!!foo || bar) && bat) {}",
-            "if ((foo || bar) && bat) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (foo && !!bar) {}",
-            "if (foo && bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "do {} while (!!foo || bar)",
-            "do {} while (foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (!!foo || bar) {}",
-            "while (foo || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!!foo && bat ? bar : baz",
-            "foo && bat ? bar : baz",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for (; !!foo || bar;) {}",
-            "for (; foo || bar;) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!!!foo || bar",
-            "!foo || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "Boolean(!!foo || bar)",
-            "Boolean(foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "new Boolean(!!foo || bar)",
-            "new Boolean(foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(foo) || bar) {}",
-            "if (foo || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "do {} while (Boolean(foo) || bar)",
-            "do {} while (foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (Boolean(foo) || bar) {}",
-            "while (foo || bar) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "Boolean(foo) || bat ? bar : baz",
-            "foo || bat ? bar : baz",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "for (; Boolean(foo) || bar;) {}",
-            "for (; foo || bar;) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo) || bar",
-            "!foo || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo && bar) || bat",
-            "!(foo && bar) || bat",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo + bar) || bat",
-            "!(foo + bar) || bat",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(+foo)  || bar",
-            "!+foo  || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo()) || bar",
-            "!foo() || bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo() || bar)",
-            "!(foo() || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean(foo = bar) || bat",
-            "!(foo = bar) || bat",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean((foo, bar()) || bat);",
-            "!((foo, bar()) || bat);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!Boolean() || bar;",
-            "true || bar;",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!(Boolean()) || bar;",
-            "true || bar;",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!Boolean() || bar) { foo() }",
-            "if (true || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (!Boolean() || bar) { foo() }",
-            "while (true || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "var foo = Boolean() || bar ? bar() : baz()",
-            "var foo = false || bar ? bar() : baz()",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean() || bar) { foo() }",
-            "if (false || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "while (Boolean() || bar) { foo() }",
-            "while (false || bar) { foo() }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield(!!a || d) ? b : c }",
-            "function *foo() { yield(a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield(!! a || d) ? b : c }",
-            "function *foo() { yield(a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield(! !a || d) ? b : c }",
-            "function *foo() { yield(a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield (!!a || d) ? b : c }",
-            "function *foo() { yield (a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield/**/(!!a || d) ? b : c }",
-            "function *foo() { yield/**/(a || d) ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "x=!!a || d ? b : c ",
-            "x=a || d ? b : c ",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "void(!Boolean() || bar)",
-            "void(true || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "void(! Boolean() || bar)",
-            "void(true || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "typeof(!Boolean() || bar)",
-            "typeof(true || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "(!Boolean() || bar)",
-            "(true || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "void/**/(!Boolean() || bar)",
-            "void/**/(true || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!/**/(!!foo || bar)",
-            "!/**/(foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!(!!foo || bar)/**/",
-            "!(foo || bar)/**/",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!/**/(Boolean(foo) || bar)",
-            "!/**/(foo || bar)",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "!(Boolean(foo)|| bar)/**/",
-            "!(foo|| bar)/**/",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "/**/!Boolean()|| bar",
-            "/**/true|| bar",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "(!Boolean()|| bar)/**/",
-            "(true|| bar)/**/",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(/**/Boolean()|| bar);",
-            "if(/**/false|| bar);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if(Boolean()|| bar/**/);",
-            "if(false|| bar/**/);",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (a && !!(b ? c : d)){}",
-            "if (a && (b ? c : d)){}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "function *foo() { yield!!a || d ? b : c }",
-            "function *foo() { yield a || d ? b : c }",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
         (
             "if (!!foo || bar) {}",
             "if (foo || bar) {}",
@@ -2308,172 +1609,7 @@ fn test() {
         ("!Boolean((x > 0) && (y > 0))", "!((x > 0) && (y > 0))", None),
         ("!Boolean((a) ? (b) : (c))", "!((a) ? (b) : (c))", None),
         ("!!!((a) || (b))", "!((a) || (b))", None),
-        (
-            "if (!!(a, b) || !!(c, d)) {}",
-            "if ((a, b) || (c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean((a, b)) || Boolean((c, d))) {}",
-            "if ((a, b) || (c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((!!((a, b))) || (!!((c, d)))) {}",
-            "if ((a, b) || (c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a, b) && !!(c, d)) {}",
-            "if ((a, b) && (c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean((a, b)) && Boolean((c, d))) {}",
-            "if ((a, b) && (c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((!!((a, b))) && (!!((c, d)))) {}",
-            "if ((a, b) && (c, d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a = b) || !!(c = d)) {}",
-            "if ((a = b) || (c = d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a /= b) || Boolean(c /= d)) {}",
-            "if ((a /= b) || (c /= d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a >>= b) && !!(c >>= d)) {}",
-            "if ((a >>= b) && (c >>= d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a **= b) && Boolean(c **= d)) {}",
-            "if ((a **= b) && (c **= d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a ? b : c) || !!(d ? e : f)) {}",
-            "if ((a ? b : c) || (d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a ? b : c) || Boolean(d ? e : f)) {}",
-            "if ((a ? b : c) || (d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a ? b : c) && !!(d ? e : f)) {}",
-            "if ((a ? b : c) && (d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a ? b : c) && Boolean(d ? e : f)) {}",
-            "if ((a ? b : c) && (d ? e : f)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a || b) || !!(c || d)) {}",
-            "if (a || b || (c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a || b) || Boolean(c || d)) {}",
-            "if (a || b || (c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a || b) && !!(c || d)) {}",
-            "if ((a || b) && (c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a || b) && Boolean(c || d)) {}",
-            "if ((a || b) && (c || d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a && b) || !!(c && d)) {}",
-            "if (a && b || c && d) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a && b) || Boolean(c && d)) {}",
-            "if (a && b || c && d) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a && b) && !!(c && d)) {}",
-            "if (a && b && (c && d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a && b) && Boolean(c && d)) {}",
-            "if (a && b && (c && d)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a !== b) || !!(c !== d)) {}",
-            "if (a !== b || c !== d) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a != b) || Boolean(c != d)) {}",
-            "if (a != b || c != d) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a === b) && !!(c === d)) {}",
-            "if (a === b && c === d) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!(a > b) || !!(c < d)) {}",
-            "if (a > b || c < d) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(!a) || Boolean(+b)) {}",
-            "if (!a || +b) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!f(a) && !!b.c) {}",
-            "if (f(a) && b.c) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a) || !!b) {}",
-            "if (a || b) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (!!a && Boolean(b)) {}",
-            "if (a && b) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if ((!!a) || (Boolean(b))) {}",
-            "if ((a) || (b)) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
-        (
-            "if (Boolean(a ?? b) || c) {}",
-            "if ((a ?? b) || c) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
         ("if (Boolean?.(foo)) {};", "if (foo) {};", None),
-        (
-            "if (Boolean?.(a ?? b) || c) {}",
-            "if ((a ?? b) || c) {}",
-            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
-        ),
         ("if (!Boolean(a as any)) { }", "if (!(a as any)) { }", None),
         (
             "if ((1, 2, Boolean(3))) {}",

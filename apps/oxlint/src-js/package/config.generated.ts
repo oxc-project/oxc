@@ -3627,13 +3627,6 @@ export interface NoExtraBooleanCast {
    * cast inside inner expressions.
    */
   enforceForInnerExpressions?: boolean;
-  /**
-   * Deprecated. When set to `true`, also checks the operands of `&&` and
-   * `||` expressions whose result is used in a boolean context. Unlike
-   * `enforceForInnerExpressions`, it does not check conditional branches,
-   * sequence expressions, or the right operand of `??`.
-   */
-  enforceForLogicalOperands?: boolean;
 }
 export interface NoFallthroughConfig {
   /**
