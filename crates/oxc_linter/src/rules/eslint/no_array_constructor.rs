@@ -266,6 +266,10 @@ fn test() {
         ("foo\nArray(1, 2)", "foo\n;[1, 2]"),
         ("foo\nnew Array()", "foo\n;[]"),
         ("foo;\nArray()", "foo;\n[]"),
+        // identifiers can end with non-ASCII identifier parts
+        ("foo\u{200c}\nArray(1, 2)", "foo\u{200c}\n;[1, 2]"),
+        ("foo\u{200d}\nArray(1, 2)", "foo\u{200d}\n;[1, 2]"),
+        ("foo\u{301}\nArray(1, 2)", "foo\u{301}\n;[1, 2]"),
         ("Array()", "[]"),
         ("if (x) Array()", "if (x) []"),
         // TODO: these no longer produce invalid syntax, but they still differ: after a
