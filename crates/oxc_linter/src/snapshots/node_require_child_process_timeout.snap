@@ -473,6 +473,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
    ╭─[require_child_process_timeout.tsx:1:39]
+ 1 │ import { exec } from 'child_process'; exec('cmd', { toString() { return 'options' } })
+   ·                                       ────────────────────────────────────────────────
+   ╰────
+  help: Pass a positive `timeout` option or an `AbortSignal` as the `signal` option to `exec()` to bound its execution.
+
+  ⚠ node(require-child-process-timeout): `exec()` is called without a timeout or an abort signal.
+   ╭─[require_child_process_timeout.tsx:1:39]
  1 │ import { exec } from 'child_process'; exec('cmd', { timeout: 1000, timeout: 0 })
    ·                                       ──────────────────────────────────────────
    ╰────

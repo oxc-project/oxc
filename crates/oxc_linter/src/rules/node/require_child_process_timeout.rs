@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, BindingPattern, CallExpression, Expression, IdentifierReference,
-        ImportDeclarationSpecifier, ObjectExpression, ObjectPropertyKind, PropertyKind,
-        UnaryOperator, VariableDeclarationKind,
+        ImportDeclarationSpecifier, ObjectExpression, ObjectPropertyKind, UnaryOperator,
+        VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -494,10 +494,7 @@ impl<'a> Resolver<'_, 'a> {
                     let ObjectPropertyKind::ObjectProperty(property) = property else {
                         return None;
                     };
-                    if property.kind != PropertyKind::Init
-                        || property.method
-                        || property.key.is_computed()
-                    {
+                    if property.key.is_computed() {
                         return None;
                     }
                     self.constant_of(&property.value, seen)?;
@@ -585,18 +582,18 @@ impl<'a> Resolver<'_, 'a> {
         let mut timeout: Bound = Some(false);
         let mut signal: Bound = Some(false);
         for property in &object.properties {
-            let ObjectPropertyKind::ObjectProperty(property) = property else {
+            let Some(property_key) = property.key() else {
                 timeout = None;
                 signal = None;
                 continue;
             };
-            let key = if let Some(key) = property.key.as_expression() {
+            let key = if let Some(key) = property_key.as_expression() {
                 match self.constant_of(key, &mut FxHashSet::default()) {
                     Some(Constant::String(key)) => Some(key),
                     _ => None,
                 }
             } else {
-                property.key.static_name().and_then(|key| key.as_str().map(str::to_string))
+                property_key.static_name().and_then(|key| key.as_str().map(str::to_string))
             };
             let Some(key) = key else {
                 timeout = None;
@@ -606,11 +603,10 @@ impl<'a> Resolver<'_, 'a> {
             if key != "timeout" && key != "signal" {
                 continue;
             }
-            let constant = if property.kind == PropertyKind::Init && !property.method {
-                self.constant_of(&property.value, &mut FxHashSet::default())
-            } else {
-                None
-            };
+            // Methods, getters and setters have no constant value.
+            let constant = property
+                .as_property()
+                .and_then(|property| self.constant_of(&property.value, &mut FxHashSet::default()));
             let bound = constant.map(|constant| {
                 if key == "timeout" {
                     matches!(constant, Constant::Number(number) if number.is_finite() && number > 0.0)
@@ -777,6 +773,7 @@ fn test() {
             "import { exec } from 'child_process'; exec('cmd', { ['timeout']: 0 })",
             "import { exec } from 'child_process'; const key = 'signal'; exec('cmd', { [key]: undefined })",
             "import { exec } from 'child_process'; exec('cmd', { timeout: -1 })",
+            "import { exec } from 'child_process'; exec('cmd', { toString() { return 'options' } })",
             "import { exec } from 'child_process'; exec('cmd', { timeout: 1000, timeout: 0 })",
             "import { exec } from 'child_process'; exec('cmd', { signal: controller.signal, signal: null })",
             "import { execSync } from 'child_process'; execSync('cmd', { ...options, timeout: 0 })",
