@@ -11,25 +11,31 @@ use crate::{AstNode, context::LintContext, rule::Rule, utils::run_on_regex_node}
 
 fn no_useless_backreference_diagnostic(
     span: Span,
-    problem: &Problem,
+    problem: Problem,
     back_reference: &str,
     group: &str,
+    other_groups: usize,
 ) -> OxcDiagnostic {
+    let other_groups = match other_groups {
+        0 => String::new(),
+        1 => " and another group".to_string(),
+        n => format!(" and other {n} groups"),
+    };
     let diagnostic = match problem {
         Problem::Nested => OxcDiagnostic::warn(format!(
-            "Backreference '{back_reference}' will be ignored. It references group '{group}' from within that group."
+            "Backreference '{back_reference}' will be ignored. It references group '{group}'{other_groups} from within that group."
         )),
         Problem::Disjunctive => OxcDiagnostic::warn(format!(
-            "Backreference '{back_reference}' will be ignored. It references group '{group}' which is in another alternative."
+            "Backreference '{back_reference}' will be ignored. It references group '{group}'{other_groups} which is in another alternative."
         )),
         Problem::Forward => OxcDiagnostic::warn(format!(
-            "Backreference '{back_reference}' will be ignored. It references group '{group}' which appears later in the pattern."
+            "Backreference '{back_reference}' will be ignored. It references group '{group}'{other_groups} which appears later in the pattern."
         )),
         Problem::Backward => OxcDiagnostic::warn(format!(
-            "Backreference '{back_reference}' will be ignored. It references group '{group}' which appears before in the same lookbehind."
+            "Backreference '{back_reference}' will be ignored. It references group '{group}'{other_groups} which appears before in the same lookbehind."
         )),
         Problem::IntoNegativeLookaround => OxcDiagnostic::warn(format!(
-            "Backreference '{back_reference}' will be ignored. It references group '{group}' which is in a negative lookaround."
+            "Backreference '{back_reference}' will be ignored. It references group '{group}'{other_groups} which is in a negative lookaround."
         )),
     };
     diagnostic
@@ -62,7 +68,7 @@ declare_oxc_lint!(
     /// ```js
     /// /\1(a)/;                     // backreference appears before group
     /// /(a|\1b)/;                   // group and reference are in different alternatives
-    /// /(?<=\1(a))b/;               // backreference used before group in lookbehind
+    /// /(?<=(a)\1)b/;               // backreference used after group in lookbehind
     /// /\1(?!(a))/;                 // group is inside negative lookahead
     /// /(a\1)/;                     // backreference is inside its own group
     /// ```
@@ -89,21 +95,52 @@ impl Rule for NoUselessBackreference {
             collector.visit_pattern(pattern);
 
             for bref in &collector.backrefs {
-                if let Some((problem, cap_group_span, bref_group_span)) =
-                    problems_for_backref(bref, &collector.nodes, &collector.groups)
-                {
-                    ctx.diagnostic(no_useless_backreference_diagnostic(
-                        bref.span,
-                        &problem,
-                        ctx.source_range(bref_group_span),
-                        ctx.source_range(cap_group_span),
-                    ));
-                }
+                let groups: Vec<&GroupInfo> = match bref.target {
+                    BackRefInfoTarget::Index(i) => {
+                        collector.groups.get(i as usize - 1).into_iter().collect()
+                    }
+                    BackRefInfoTarget::Name(name) => {
+                        collector.groups.iter().filter(|g| g.name == Some(name)).collect()
+                    }
+                };
+                debug_assert!(
+                    !groups.is_empty(),
+                    "a backreference must have a corresponding capture group, else it is an octal escape"
+                );
+
+                let Some(problems) = groups
+                    .iter()
+                    .map(|group| {
+                        problem_for_group(bref, group, &collector.nodes)
+                            .map(|problem| (problem, group.span))
+                    })
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    continue;
+                };
+
+                let in_same_disjunction: Vec<_> = problems
+                    .iter()
+                    .filter(|(problem, _)| *problem != Problem::Disjunctive)
+                    .copied()
+                    .collect();
+                let to_report =
+                    if in_same_disjunction.is_empty() { problems } else { in_same_disjunction };
+                let Some(&(problem, group_span)) = to_report.first() else { continue };
+
+                ctx.diagnostic(no_useless_backreference_diagnostic(
+                    bref.span,
+                    problem,
+                    ctx.source_range(bref.span),
+                    ctx.source_range(group_span),
+                    to_report.len() - 1,
+                ));
             }
         });
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Problem {
     Nested,
     Disjunctive,
@@ -196,8 +233,8 @@ impl<'ast> Visit<'ast> for RegexCollector<'ast> {
     }
 }
 
-/// Determines if a backreference is useless — meaning it references a capturing
-/// group that hasn't (and cannot) participate at the time it's evaluated.
+/// Determines if a backreference cannot use the given capturing group — meaning the
+/// group hasn't (and cannot) participate at the time the backreference is evaluated.
 ///
 /// Returns the reason as a `Problem` if one is found; otherwise returns `None`.
 ///
@@ -211,40 +248,22 @@ impl<'ast> Visit<'ast> for RegexCollector<'ast> {
 ///   `/ ((a)|\1b) /`
 ///   ↳ Backref and group are in different alternatives — only one branch runs, so the group can't be matched.
 ///
-/// - `Problem::Backward`:
+/// - `Problem::Forward`:
 ///   `/ \1(a) /`
 ///   ↳ Backref appears before the group. Left-to-right matching means the group hasn’t matched yet.
 ///
-/// - `Problem::Forward`:
-///   `/ (?<=\1(a)) /`
-///   ↳ In a lookbehind (right-to-left match), the group appears *after* the reference — invalid.
+/// - `Problem::Backward`:
+///   `/ (?<=(a)\1) /`
+///   ↳ In a lookbehind (right-to-left match), the group appears *before* the reference — invalid.
 ///
 /// - `Problem::IntoNegativeLookaround`:
 ///   `/ \1(?!(a)) /`
 ///   ↳ Group is inside a negative lookaround — by definition, it can never successfully match.
-fn problems_for_backref<'a>(
-    bref: &'a BackRefInfo<'a>,
+fn problem_for_group<'a>(
+    bref: &BackRefInfo<'a>,
+    cap_group: &GroupInfo<'a>,
     nodes: &IndexVec<RegexNodeId, RegExpAstKind<'a>>,
-    groups: &'a [GroupInfo<'a>],
-) -> Option<(
-    Problem,
-    /* span of the backreference */ Span,
-    /* span of the capture group */ Span,
-)> {
-    let cap_group = match bref.target {
-        BackRefInfoTarget::Index(i) => groups.get(i as usize - 1),
-        BackRefInfoTarget::Name(cap_group_name) => {
-            groups.iter().find(|g| g.name.is_some_and(|n| n == cap_group_name))
-        }
-    };
-    let Some(cap_group) = cap_group else {
-        debug_assert!(
-            false,
-            "a backreference must have a corresponding capture group, else it is an octal escape"
-        );
-        return None;
-    };
-
+) -> Option<Problem> {
     // Problem::Nested
     // In this scenario, the backreference appears *inside* the group it refers to.
     // e.g. `/(a\1)/`
@@ -257,7 +276,7 @@ fn problems_for_backref<'a>(
     // While this does not cause a syntax error, the reference serves no purpose
     // and is almost certainly a logic mistake or misunderstanding of how regex works.
     if cap_group.span.contains_inclusive(bref.span) {
-        return Some((Problem::Nested, cap_group.span, bref.span));
+        return Some(Problem::Nested);
     }
 
     let index_of_lowest_common_ancestor = {
@@ -301,10 +320,10 @@ fn problems_for_backref<'a>(
     // the backreference is never reached; and if the backreference is evaluated, the group didn't match.
     // Therefore, the backreference is always empty — it's unreachable in practice.
     if group_cut.first().is_some_and(|id| matches!(nodes[*id], RegExpAstKind::Alternative(_))) {
-        return Some((Problem::Disjunctive, cap_group.span, bref.span));
+        return Some(Problem::Disjunctive);
     }
 
-    // Problem::Backward
+    // Problem::Forward
     // A "forward" reference during left-to-right matching (normal regex mode).
     // e.g. `/\1(a)/`
     //      ^^ backreference
@@ -314,19 +333,19 @@ fn problems_for_backref<'a>(
     // the capture group has not matched anything by the time `\1` is evaluated.
     // So the backreference resolves to the empty string and is effectively useless.
     if !is_matching_backwards && bref.span.end <= cap_group.span.start {
-        return Some((Problem::Backward, cap_group.span, bref.span));
+        return Some(Problem::Forward);
     }
 
-    // Problem::Forward
-    // A forward reference inside a lookbehind (right-to-left matching).
-    // e.g. `/(?<=\1(a))/`
-    //            ^^ backreference
-    //              ^^^ capture group
+    // Problem::Backward
+    // A backward reference inside a lookbehind (right-to-left matching).
+    // e.g. `/(?<=(a)\1)/`
+    //            ^^^ capture group
+    //               ^^ backreference
     // Lookbehinds are evaluated from right to left.
-    // In this direction, the group appears *after* the backreference, so it has not matched yet
+    // In this direction, the group appears *before* the backreference, so it has not matched yet
     // when `\1` is evaluated. As a result, the backreference resolves to the empty string.
     if is_matching_backwards && cap_group.span.end <= bref.span.start {
-        return Some((Problem::Forward, cap_group.span, bref.span));
+        return Some(Problem::Backward);
     }
 
     // Problem::IntoNegativeLookaround
@@ -346,7 +365,7 @@ fn problems_for_backref<'a>(
         ),
         _ => false,
     }) {
-        return Some((Problem::IntoNegativeLookaround, cap_group.span, bref.span));
+        return Some(Problem::IntoNegativeLookaround);
     }
 
     None
@@ -357,6 +376,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        r"/(?:(?<x>a)|(?<x>b)\k<x>)/",
+        r"/(?:(?<x>a)|(?<x>b))\k<x>/",
+        r"/(?<=\1(a))b/",
         r"'\1(a)'",
         r"regExp('\\1(a)')",
         r"new Regexp('\\1(a)', 'u')",
@@ -463,6 +485,11 @@ fn test() {
     ];
 
     let fail = vec![
+        r"/(?:(?<x>a)|b)|(?:(?<x>c)|\k<x>)/",
+        r"/(?:(?<x>a\k<x>)|(?<x>b\k<x>))/",
+        r"/(?:(?<x>a)|(?<x>b)|(?<x>c)|d\k<x>)/",
+        r"/\k<x>(?:(?<x>a)|(?<x>b))/",
+        r"/(?:\k<x>(?<x>a)|(?<x>b))/",
         r"/(b)(\2a)/",
         r"/\k<foo>(?<foo>bar)/",
         r"RegExp('(a|bc)|\\1')",
