@@ -404,7 +404,7 @@ pub(super) fn write_declaration_until<'a>(
     } else if trimmed_between == ":" {
         write!(f, ":");
     } else if !verbatim_between {
-        // Block comments around the `:` are spaced as in a media feature (`prop /* c */: /* d */ value`)
+        // Block comments around the `:` are spaced as in a media feature (`prop /* c */: /* d */ value`).
         value::flush_trailing_value_comments(decl.colon_span.start, f);
         write!(f, ":");
         value::flush_trailing_value_comments(between_upper, f);
