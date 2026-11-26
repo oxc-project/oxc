@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 use crate::{
     AstNode,
@@ -208,7 +209,14 @@ fn fix_object_assign<'c, 'a: 'c>(
             return fixer.noop();
         };
 
-        if let Expression::ObjectExpression(obj_expr) = expression {
+        if let Expression::ObjectExpression(obj_expr) = expression.without_parentheses() {
+            let mut inner = expression;
+            while let Expression::ParenthesizedExpression(paren_expr) = inner {
+                rule_fixes.push(fixer.delete_range(Span::sized(paren_expr.span.start, 1)));
+                rule_fixes.push(fixer.delete_range(Span::sized(paren_expr.span.end - 1, 1)));
+                inner = &paren_expr.expression;
+            }
+
             let delete_span_of_left = get_delete_span_of_left(obj_expr, ctx);
 
             let delete_span_of_right = Span::new(
@@ -220,7 +228,7 @@ fn fix_object_assign<'c, 'a: 'c>(
             rule_fixes.push(fixer.delete_range(delete_span_of_right));
 
             if (obj_expr.properties.is_empty()
-                || ctx.source_range(get_last_char_span(expression, 1, ctx).unwrap()) == ",")
+                || ctx.source_range(get_last_char_span(inner, 1, ctx).unwrap()) == ",")
                 && let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
                 && ctx.source_range(maybe_arg_comma_span) == ","
             {
@@ -244,6 +252,10 @@ fn fix_object_assign<'c, 'a: 'c>(
     }
 
     rule_fixes.with_message("Replace with object spread")
+}
+
+fn is_js_whitespace(c: char) -> bool {
+    is_white_space(c) || is_line_terminator(c)
 }
 
 fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
@@ -288,7 +300,7 @@ fn get_char_span_before(start_char_span: Span, ctx: &LintContext) -> Option<Span
         let c_size = u32::try_from(c.len_utf8()).unwrap();
         span_start -= c_size;
 
-        if c.is_whitespace() {
+        if is_js_whitespace(c) {
             continue;
         }
 
@@ -308,7 +320,7 @@ fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> O
         let c_size = u32::try_from(c.len_utf8()).unwrap();
         span_start -= c_size;
 
-        if c.is_whitespace() {
+        if is_js_whitespace(c) {
             continue;
         }
 
@@ -338,7 +350,7 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
         let c_size = u32::try_from(c.len_utf8()).unwrap();
         span_end += c_size;
 
-        if c.is_whitespace() {
+        if is_js_whitespace(c) {
             continue;
         }
 
@@ -360,7 +372,7 @@ fn get_delete_span_of_left(
 ) -> Span {
     let mut span_end = obj_expr.span.start;
     for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
-        if i != 0 && !c.is_whitespace() {
+        if i != 0 && !is_js_whitespace(c) {
             break;
         }
 
@@ -394,7 +406,7 @@ fn get_delete_span_start_of_right(
 
     let mut span_start: u32 = obj_expr.span.end;
     for (i, c) in ctx.source_range(obj_expr.span).chars().rev().enumerate() {
-        if i != 0 && !c.is_whitespace() {
+        if i != 0 && !is_js_whitespace(c) {
             break;
         }
 
@@ -999,11 +1011,9 @@ fn test() {
             ",
             "
             const actions = {
-                ...(
-                    {
-                        onChangeInput: this.handleChangeInput
-                    }
-                ),
+               \x20
+                    onChangeInput: this.handleChangeInput
+                ,
                 ...(
                     this.props.actions
                 )
@@ -1105,11 +1115,38 @@ fn test() {
         ),
         (
             "Object.assign(({ __proto__: proto }))",
-            "({...({ __proto__: proto })})",
+            "({__proto__: proto})",
             None,
             FixKind::Suggestion,
         ),
         ("Object.assign(({ get x() {} }))", "Object.assign(({ get x() {} }))", None, FixKind::Fix),
+        ("Object.assign(({ get x() {} }))", "({get x() {}})", None, FixKind::Suggestion),
+        (
+            "let reads = 0; const obj = Object.assign(({ get value() { return ++reads; } }));",
+            "let reads = 0; const obj = {get value() { return ++reads; }};",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const obj = Object.assign((({ a: 1 })), b);",
+            "const obj = {a: 1, ...b};",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("Object.assign({}, ({ a: 1 }))", "({ a: 1})", None, FixKind::Fix),
+        ("Object.assign(({}), ({ a: 1 }))", "({ a: 1})", None, FixKind::Suggestion),
+        (
+            "const x = Object.assign({}\u{feff}, {a: 1});",
+            "const x = {\u{feff} a: 1};",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const x = Object.assign({a: 1,}\u{feff}, {b: 2});",
+            "const x = {a: 1,\u{feff} b: 2};",
+            None,
+            FixKind::Fix,
+        ),
         (
             "
             const f = (x) => x
