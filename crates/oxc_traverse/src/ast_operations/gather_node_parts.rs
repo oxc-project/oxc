@@ -518,6 +518,7 @@ impl<'a> GatherNodeParts<'a> for ObjectPropertyKind<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {
             ObjectPropertyKind::ObjectProperty(prop) => prop.gather(f),
+            ObjectPropertyKind::MethodProperty(prop) => prop.key.gather(f),
             ObjectPropertyKind::SpreadProperty(prop) => prop.gather(f),
         }
     }

@@ -1,5 +1,8 @@
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, BindingPattern, Expression},
@@ -9,8 +12,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use oxc_syntax::{identifier::is_identifier_name, symbol::SymbolId};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

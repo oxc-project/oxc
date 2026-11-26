@@ -1,18 +1,23 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+use oxc_ast::{
+    AstKind,
+    ast::{
+        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName,
+        ObjectPropertyKind,
+    },
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
+
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
 };
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName},
-};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 fn missing_type_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have an explicit `type` attribute.")
@@ -124,9 +129,15 @@ impl Rule for ButtonHasType {
                             ctx.diagnostic(missing_type_prop(obj_expr.span));
                         },
                         |type_prop| {
-                            if !self.is_valid_button_type_prop_expression(&type_prop.value) {
+                            let is_valid = match type_prop {
+                                ObjectPropertyKind::ObjectProperty(prop) => {
+                                    self.is_valid_button_type_prop_expression(&prop.value)
+                                }
+                                _ => false,
+                            };
+                            if !is_valid {
                                 let allowed_types = self.allowed_types_message();
-                                ctx.diagnostic(invalid_type_prop(type_prop.span, &allowed_types));
+                                ctx.diagnostic(invalid_type_prop(type_prop.span(), &allowed_types));
                             }
                         },
                     );

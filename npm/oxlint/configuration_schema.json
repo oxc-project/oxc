@@ -3826,6 +3826,9 @@
         "jsdoc/require-returns-type": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/require-template-description": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jsdoc/require-throws-description": {
           "$ref": "#/definitions/RuleNoConfig"
         },

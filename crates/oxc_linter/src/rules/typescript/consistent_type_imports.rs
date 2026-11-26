@@ -671,7 +671,9 @@ fn get_fixes_named_specifiers<'a>(
         ) else {
             return Err(format!("Missing comma token in import declaration: {import_text}").into());
         };
-        let close_brace_token = try_find_token(ctx, import_decl.span, "}")?;
+        let last_specifier_end = all_named_specifiers[all_named_specifiers.len() - 1].span.end;
+        let close_brace_token = last_specifier_end - import_decl.span.start
+            + try_find_token(ctx, Span::new(last_specifier_end, import_decl.span.end), "}")?;
 
         // import DefType, {...} from 'foo'
         //                ^^^^^^ remove
@@ -733,7 +735,6 @@ fn get_named_specifier_ranges(
     let mut remove_range = Span::new(first.span().start, last.span().end);
     let mut text_range = Span::new(first.span().start, last.span().end);
 
-    let import_text = ctx.source_range(import_decl.span);
     let open_brace_start = import_decl.span().start + try_find_token(ctx, import_decl.span, "{")?;
     if let Some(comma) = ctx.find_prev_token_within(open_brace_start, first.span().start, ",") {
         // It's not the first specifier.
@@ -760,15 +761,24 @@ fn get_named_specifier_ranges(
         .last()
         .is_some_and(|last_specifier| last_specifier.span() == last.span());
 
-    let after = find_first_non_white_space(
-        &import_text[(last.span().end - import_decl.span().start) as usize..],
-    );
+    let mut pos = last.span().end;
+    let after = loop {
+        let Some((index, ch)) = find_first_non_white_space(&ctx.source_text()[pos as usize..])
+        else {
+            break None;
+        };
+        let start = pos + u32::try_from(index).unwrap_or_default();
+        match ctx.semantic().get_comment_at(start) {
+            Some(comment) => pos = comment.span.end,
+            None => break Some((start, ch)),
+        }
+    };
 
-    if let Some((index, ch)) = after {
-        text_range.end = last.span().end + u32::try_from(index).unwrap_or_default();
+    if let Some((start, ch)) = after {
+        text_range.end = start;
 
-        if (is_first || is_last) && matches!(ch, ',') {
-            remove_range.end = text_range.end + 1;
+        if (is_first || is_last) && ch == ',' {
+            remove_range.end = start + 1;
         }
     }
 
@@ -934,22 +944,14 @@ fn fix_remove_type_specifier_from_import_declaration<'a>(
     ctx: &LintContext<'a>,
 ) -> RuleFix {
     let import_source = ctx.source_range(import_decl_span);
-    let new_import_source = import_source
-        // `    type Foo from 'foo'`
-        .strip_prefix("import")
-        // `type Foo from 'foo'`
-        .map(str::trim_start)
-        // `type Foo from 'foo'`
-        .and_then(|import_text| import_text.strip_prefix("type"))
-        // `import Foo from 'foo'`
-        .map(|import_text| format!("import{import_text}"));
-
-    if let Some(new_import_source) = new_import_source {
-        fixer.replace(import_decl_span, new_import_source)
-    } else {
-        // when encountering an unexpected import declaration, do nothing.
-        fixer.replace(import_decl_span, import_source.to_string())
-    }
+    let Some(type_offset) =
+        ctx.find_next_token_within(import_decl_span.start + 6, import_decl_span.end, "type")
+    else {
+        return fixer.noop();
+    };
+    let type_start = 6 + type_offset as usize;
+    let before_type = import_source[..type_start].trim_end();
+    fixer.replace(import_decl_span, format!("{before_type}{}", &import_source[type_start + 4..]))
 }
 
 // import { type Foo } from 'foo'
@@ -959,13 +961,10 @@ fn fix_remove_type_specifier_from_import_specifier(
     specifier_span: Span,
     ctx: &LintContext<'_>,
 ) -> RuleFix {
-    let specifier_source = ctx.source_range(specifier_span).to_string();
-    let new_specifier_source = specifier_source.strip_prefix("type ");
-
-    fixer.replace(
-        specifier_span,
-        new_specifier_source.map(std::string::ToString::to_string).unwrap_or(specifier_source),
-    )
+    match ctx.source_range(specifier_span).strip_prefix("type") {
+        Some(rest) => fixer.replace(specifier_span, rest.trim_start().to_string()),
+        None => fixer.noop(),
+    }
 }
 
 #[test]
@@ -2298,6 +2297,31 @@ export class Foo extends Bar {}
     ];
 
     let fix = vec![
+        (
+            "import D, { \"}\" as T } from 'm'; type X = T; D();",
+            "import type { \"}\" as T } from 'm';\nimport D from 'm'; type X = T; D();",
+            None,
+        ),
+        (
+            "import { T /* note */, V } from 'm'; type X = T; V();",
+            "import type { T /* note */} from 'm';\nimport { V } from 'm'; type X = T; V();",
+            None,
+        ),
+        (
+            "import { A, T /* note */, V } from 'm'; type X = T; V(); A();",
+            "import type { T /* note */} from 'm';\nimport { A /* note */, V } from 'm'; type X = T; V(); A();",
+            None,
+        ),
+        (
+            "import /* note */ type { T } from 'm'; type X = T;",
+            "import /* note */ { T } from 'm'; type X = T;",
+            Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
+        ),
+        (
+            "import { type/* module shape */ Shape } from 'm'; type Local = Shape;",
+            "import { /* module shape */ Shape } from 'm'; type Local = Shape;",
+            Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
+        ),
         // the `{` inside the comment is not the start of the named specifiers
         (
             "import /* { */ Foo, { Type1 } from 'foo';\nlet a: Type1;\nnew Foo();",

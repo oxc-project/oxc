@@ -15,6 +15,12 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   @if (test) {text}
 </span>
 <p>a @if (x) {b} c</p>
+<li>@if (done) {
+    <icon-x />
+  }{{ label }}</li>
+<li>@if (x) { <icon-x /> }{{ title }}</li>
+<li>{{ label }}@if (x) { <icon-x /> } more</li>
+<p>a@if (x) {b }c</p>
 
 ==================== Output ====================
 ------------------
@@ -45,6 +51,27 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   }
   c
 </p>
+<li>
+  @if (done) {
+    <icon-x />
+  }{{ label }}
+</li>
+<li>
+  @if (x) {
+    <icon-x />
+  }{{ title }}
+</li>
+<li>
+  {{ label }}@if (x) {
+    <icon-x />
+  }
+  more
+</li>
+<p>
+  a@if (x) {b
+  }
+  c
+</p>
 
 -------------------
 { printWidth: 100 }
@@ -71,6 +98,27 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   a
   @if (x) {
     b
+  }
+  c
+</p>
+<li>
+  @if (done) {
+    <icon-x />
+  }{{ label }}
+</li>
+<li>
+  @if (x) {
+    <icon-x />
+  }{{ title }}
+</li>
+<li>
+  {{ label }}@if (x) {
+    <icon-x />
+  }
+  more
+</li>
+<p>
+  a@if (x) {b
   }
   c
 </p>

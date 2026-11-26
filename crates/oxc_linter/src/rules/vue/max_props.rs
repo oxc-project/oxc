@@ -1,19 +1,18 @@
-use oxc_ast::{
-    AstKind,
-    ast::{
-        CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
-        TSSignature, TSType,
-    },
-};
-
-use oxc_ast::StaticPropertyName;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
+
+use oxc_ast::{
+    AstKind, StaticPropertyName,
+    ast::{
+        CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
+        ObjectPropertyKind, TSSignature, TSType,
+    },
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 
 use crate::{
     AstNode,
@@ -172,7 +171,8 @@ impl MaxProps {
             return;
         };
 
-        let Some(props_prop) = obj_expr.find_property("props") else {
+        let Some(ObjectPropertyKind::ObjectProperty(props_prop)) = obj_expr.find_property("props")
+        else {
             return;
         };
         let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()
@@ -210,8 +210,9 @@ fn get_type_argument_keys<'a>(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

@@ -359,32 +359,72 @@ pub struct ObjectExpression<'a> {
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum ObjectPropertyKind<'a> {
-    /// `a: 1` in `const obj = { a: 1 };`
+    /// `a: 1` or shorthand `b` in `const obj = { a: 1, b };`
     ObjectProperty(Box<'a, ObjectProperty<'a>>) = 0,
+    /// `a() {}`, `get a() {}` or `set a(v) {}` in `const obj = { a() {} };`
+    MethodProperty(Box<'a, ObjectMethodProperty<'a>>) = 1,
     /// `...{ a: 1 }` in `const obj = { ...{ a: 1 } };`
-    SpreadProperty(Box<'a, SpreadElement<'a>>) = 1,
+    SpreadProperty(Box<'a, SpreadElement<'a>>) = 2,
 }
 
-/// `a: 1` in `const obj = { a: 1 };`
+/// `a: 1` or shorthand `b` in `const obj = { a: 1, b };`
 ///
-/// Represents a property in an object literal.
+/// Represents a key-value or shorthand property in an object literal.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(
     rename = "Property",
-    add_fields(computed = PropertyKeyComputed, optional = TsFalse),
+    add_fields(kind = Init, method = False, computed = PropertyKeyComputed, optional = TsFalse),
     field_order(kind, key, value, method, shorthand, computed, optional, span),
 )]
 pub struct ObjectProperty<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
     pub value: Expression<'a>,
-    pub method: bool,
     pub shorthand: bool,
+}
+
+/// `a() {}`, `get a() {}` or `set a(v) {}` in `const obj = { a() {} };`
+///
+/// Represents a method, getter or setter in an object literal.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "Property",
+    add_fields(
+        method = ObjectMethodPropertyMethod,
+        shorthand = False,
+        computed = PropertyKeyComputed,
+        optional = TsFalse,
+    ),
+    field_order(kind, key, value, method, shorthand, computed, optional, span),
+)]
+pub struct ObjectMethodProperty<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub kind: ObjectMethodKind,
+    pub key: PropertyKey<'a>,
+    #[visit(args(flags = ScopeFlags::Function))]
+    pub value: Box<'a, Function<'a>>, // FunctionExpression
+}
+
+/// The kind of an [`ObjectMethodProperty`].
+#[ast]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+pub enum ObjectMethodKind {
+    /// `a() {}` in `const obj = { a() {} };`
+    #[estree(rename = "init")]
+    Method = 0,
+    /// `get a() { return 1; }` in `const obj = { get a() { return 1; } };`
+    Get = 1,
+    /// `set a(value) { this._a = value; }` in `const obj = { set a(value) { this._a = value; } };`
+    Set = 2,
 }
 
 /// Property Key
@@ -418,19 +458,6 @@ pub enum PropertyKey<'a> {
 
     // `Expression` variants added here by `#[ast]` macro
     INHERIT(Expression<'a>),
-}
-
-/// Represents the kind of property in an object literal or class.
-#[ast]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
-pub enum PropertyKind {
-    /// `a: 1` in `const obj = { a: 1 };`
-    Init = 0,
-    /// `get a() { return 1; }` in `const obj = { get a() { return 1; } };`
-    Get = 1,
-    /// `set a(value) { this._a = value; }` in `const obj = { set a(value) { this._a = value; } };`
-    Set = 2,
 }
 
 /// `` `Hello, ${name}` `` in `` const foo = `Hello, ${name}` ``

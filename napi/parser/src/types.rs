@@ -176,6 +176,8 @@ pub enum ImportNameKind {
     NamespaceObject,
     /// `import defaultExport from "mod"`
     Default,
+    /// `import source x from "mod"`
+    Source,
 }
 
 #[napi(object, use_nullable = true)]
@@ -228,6 +230,8 @@ pub enum ExportImportNameKind {
     AllButDefault,
     /// Does not have a specifier.
     None,
+    /// `import source x from "mod"; export { x }`
+    Source,
 }
 
 #[napi(object, use_nullable = true)]

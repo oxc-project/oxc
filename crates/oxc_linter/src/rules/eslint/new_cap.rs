@@ -1,8 +1,8 @@
 use lazy_regex::Regex;
-use oxc_allocator::Allocator;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+use oxc_allocator::Allocator;
 use oxc_ast::{
     AstKind,
     ast::{ChainElement, ComputedMemberExpression, Expression},

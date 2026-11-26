@@ -5,9 +5,8 @@ use oxc_semantic::{Reference, ScopeId, Scoping};
 use oxc_span::GetSpan;
 use oxc_str::{CompactStr, Ident};
 
-use crate::rules::eslint::no_unused_vars::options::IgnorePattern;
-
 use super::{NoUnusedVars, Symbol};
+use crate::rules::eslint::no_unused_vars::options::IgnorePattern;
 
 impl NoUnusedVars {
     pub(super) fn get_unused_arg_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {

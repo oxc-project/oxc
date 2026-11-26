@@ -1,5 +1,11 @@
 use std::ops::Deref;
 
+use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+use smallvec::SmallVec;
+
 use oxc_allocator::{Address, ArenaVec, UnstableAddress};
 use oxc_ast::{AstKind, StaticPropertyName, ast::*};
 use oxc_ast_visit::{
@@ -11,11 +17,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 use oxc_str::CompactStr;
-use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
-use smallvec::SmallVec;
 
 use crate::{
     AstNode,
@@ -253,8 +254,17 @@ impl ExplicitModuleBoundaryTypes {
             // const foo = arg => arg;
             // export default { foo };
             Expression::ObjectExpression(obj) if inside_export => {
-                for el in obj.properties.iter().filter_map(ObjectPropertyKind::as_property) {
-                    self.run_on_exported_expression_inner(ctx, &el.value, false);
+                for prop in &obj.properties {
+                    match prop {
+                        ObjectPropertyKind::ObjectProperty(prop) => {
+                            self.run_on_exported_expression_inner(ctx, &prop.value, false);
+                        }
+                        ObjectPropertyKind::MethodProperty(prop) => {
+                            let mut checker = ExplicitTypesChecker::new(self, ctx);
+                            checker.visit_function(&prop.value, ScopeFlags::Function);
+                        }
+                        ObjectPropertyKind::SpreadProperty(_) => {}
+                    }
                 }
             }
             _ => {}
@@ -734,13 +744,20 @@ impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
     }
 
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
-        let is_set = it.kind == PropertyKind::Set;
         let prev_flags = self.scope_flags;
-        if is_set {
+        let had_name = self.with_target_property(Some(&it.key));
+        walk_js::walk_object_property(self, it);
+        self.scope_flags = prev_flags;
+        self.reset_target(had_name);
+    }
+
+    fn visit_object_method_property(&mut self, it: &ObjectMethodProperty<'a>) {
+        let prev_flags = self.scope_flags;
+        if it.kind == ObjectMethodKind::Set {
             self.scope_flags.set(ScopeFlags::SetAccessor, true);
         }
         let had_name = self.with_target_property(Some(&it.key));
-        walk_js::walk_object_property(self, it);
+        walk_js::walk_object_method_property(self, it);
         self.scope_flags = prev_flags;
         self.reset_target(had_name);
     }
@@ -874,10 +891,12 @@ fn is_skippable_typed_expression(expr: &Expression<'_>) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::path::PathBuf;
+
+    use serde_json::{Value, json};
+
     use super::{ExplicitModuleBoundaryTypes, ExplicitModuleBoundaryTypesConfig};
     use crate::{RuleMeta as _, rule::Rule as _, tester::Tester};
-    use serde_json::{Value, json};
-    use std::path::PathBuf;
 
     #[test]
     fn config() {

@@ -108,11 +108,11 @@ fn enclosing_data_options<'a>(
     })?;
 
     let prop_node = nodes.parent_node(function_node.id());
-    let AstKind::ObjectProperty(prop) = prop_node.kind() else { return None };
-    if !prop.key.is_specific_static_name("data") {
-        return None;
+    match prop_node.kind() {
+        AstKind::ObjectProperty(prop) if prop.key.is_specific_static_name("data") => {}
+        AstKind::ObjectMethodProperty(prop) if prop.key.is_specific_static_name("data") => {}
+        _ => return None,
     }
-
     let options_node = nodes.parent_node(prop_node.id());
     let AstKind::ObjectExpression(options) = options_node.kind() else { return None };
     if !is_vue_component_options_object(options_node, ctx) {
@@ -131,6 +131,11 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
                 _ => None,
             }
         }
+        ObjectPropertyKind::MethodProperty(prop)
+            if prop.key.is_specific_static_name("computed") =>
+        {
+            None
+        }
         _ => None,
     }) else {
         return FxHashSet::default();
@@ -139,9 +144,9 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
     computed_obj
         .properties
         .iter()
-        .filter_map(ObjectPropertyKind::as_property)
+        .filter_map(ObjectPropertyKind::key)
         // Numeric keys are not valid identifiers to reference via `this`.
-        .filter_map(|prop| match prop.key.literal_name()? {
+        .filter_map(|key| match key.literal_name()? {
             StaticPropertyName::Borrowed(name) => name.as_str(),
             StaticPropertyName::Owned(_) => None,
         })

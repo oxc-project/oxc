@@ -18,11 +18,17 @@ use crate::tree::Tree;
 /// a space before a block that continues the previous one (`} @else {`), a line break otherwise.
 pub fn between_block(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
     let (p, n) = (&t[prev], &t[next]);
-    // The run continues into a block's content past its marker
+    // The run continues into a block's content past its marker, in a text next to it only:
+    // a whitespace-only text at the edge of the body Angular drops too, as one outside the block,
+    // so it is not in the run (DIVERGENCES.md#angular-glued-block-markers)
     let spaces = p.has_trailing_spaces
         || n.has_leading_spaces
-        || (t.is_block(prev) && p.last_child.is_some_and(|last| t[last].has_trailing_spaces))
-        || (t.is_block(next) && n.first_child.is_some_and(|first| t[first].has_leading_spaces));
+        || (t.is_block(prev)
+            && p.last_child
+                .is_some_and(|last| t[last].has_trailing_spaces && t.is_text_content(last)))
+        || (t.is_block(next)
+            && n.first_child
+                .is_some_and(|first| t[first].has_leading_spaces && t.is_text_content(first)));
     if n.leading_sensitive && !spaces {
         Between::Nothing
     } else if t.continues_block(prev, next) {

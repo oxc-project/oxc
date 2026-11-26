@@ -151,7 +151,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// you've allocated in the arena.
     ///
     /// The allocated bytes do not include the size of arena metadata, so the amount of memory requested from
-    /// the Rust allocator is higher than the returned value.
+    /// the parent allocator (the global allocator by default) is higher than the returned value.
     ///
     /// # Example
     ///
@@ -246,7 +246,7 @@ impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
         let (ptr, len) = self.raw.next()?;
         let slice_ptr = NonNull::slice_from_raw_parts(ptr.cast::<mem::MaybeUninit<u8>>(), len);
         // SAFETY: The `ptr` & `len` pairs yielded by `ChunkRawIter` describe each chunk's allocation,
-        // each of which is part of a single allocation from the global allocator
+        // each of which is within a single backing allocation
         let slice = unsafe { slice_ptr.as_ref() };
         Some(slice)
     }

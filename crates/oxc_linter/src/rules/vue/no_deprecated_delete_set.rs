@@ -165,8 +165,9 @@ fn is_vue_global_or_default_import<'a>(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         // Different API (`$nextTick`)

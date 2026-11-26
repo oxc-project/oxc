@@ -1589,7 +1589,7 @@ Prettier keeps it in html-in-js, css-in-js and markdown-in-js, but a gql-in-js p
 ```
 
 A `style` attribute's last declaration prints its `;` only when the attribute breaks, whether a comment follows or not.
-Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#keyframe-selector-comment-list`;
+Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#commented-as-uncommented`;
 the `;` is a terminator, so the comment may sit where it was (`crates/oxc_formatter_css/AGENTS.md` "Placement invariants").
 Prettier prints the `;` when a comment follows: its last-declaration check counts the comment as a node.
 

@@ -11,3 +11,9 @@
   @if (test) {text}
 </span>
 <p>a @if (x) {b} c</p>
+<li>@if (done) {
+    <icon-x />
+  }{{ label }}</li>
+<li>@if (x) { <icon-x /> }{{ title }}</li>
+<li>{{ label }}@if (x) { <icon-x /> } more</li>
+<p>a@if (x) {b }c</p>

@@ -1,18 +1,18 @@
 use fast_glob::glob_match;
-use oxc_ast::AstKind;
-use oxc_ast::ast::JSXElementName;
+use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
+use serde::Deserialize;
+
+use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
-use serde::Deserialize;
 
-use crate::utils::{get_jsx_element_name, is_react_component_name};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
+    utils::{get_jsx_element_name, is_react_component_name},
 };
 
 fn forbid_component_props_diagnostic(

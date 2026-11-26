@@ -1,12 +1,13 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -287,7 +288,7 @@ impl ValidExpectConfig {
                      *
                      */
                     let span_to_insert_before =
-                        if matches!(context_function.kind(), AstKind::ObjectProperty(_)) {
+                        if matches!(context_function.kind(), AstKind::ObjectMethodProperty(_)) {
                             context_function.span()
                         } else {
                             function_scope_node.span()

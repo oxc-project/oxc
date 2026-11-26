@@ -122,7 +122,11 @@ impl Rule for PropNameCasing {
                 if !is_vue_component_options_object_excluding_instance(node, ctx) {
                     return;
                 }
-                let Some(props_prop) = obj.find_property("props") else { return };
+                let Some(ObjectPropertyKind::ObjectProperty(props_prop)) =
+                    obj.find_property("props")
+                else {
+                    return;
+                };
                 self.check_props_value(&props_prop.value, ctx);
             }
             AstKind::CallExpression(call) => {
@@ -174,8 +178,8 @@ impl PropNameCasing {
 
     fn check_object_props<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         for prop in &obj.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
-            let Some((name, span)) = property_key_static_name(&prop.key) else { continue };
+            let Some(key) = prop.key() else { continue };
+            let Some((name, span)) = property_key_static_name(key) else { continue };
             self.report_if_invalid(name, span, ctx);
         }
     }

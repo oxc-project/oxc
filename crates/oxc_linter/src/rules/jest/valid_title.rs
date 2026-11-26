@@ -1,7 +1,8 @@
+use serde_json::Value;
+
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use serde_json::Value;
 
 use crate::{
     context::{ContextHost, LintContext},

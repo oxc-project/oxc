@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, AstType, ast::Statement};
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -60,25 +60,24 @@ declare_oxc_lint!(
 impl Rule for NoUselessEmptyExport {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportNamedDeclaration(decl) = node.kind() else { return };
-        if !decl.specifiers.is_empty() {
+        let nodes = ctx.nodes();
+        if !decl.specifiers.is_empty()
+            || !matches!(nodes.parent_kind(node.id()), AstKind::Program(_))
+        {
             return;
         }
         let module_record = ctx.module_record();
-        let nodes = ctx.nodes();
         if module_record.requested_modules.is_empty()
             && module_record.exported_bindings.is_empty()
             && module_record.local_export_entries.is_empty()
             && module_record.indirect_export_entries.is_empty()
             && module_record.star_export_entries.is_empty()
             && module_record.export_default.is_none()
-            && !(nodes.contains(AstType::TSImportEqualsDeclaration)
-                && nodes.program().body.iter().any(|statement| {
-                    matches!(
-                        statement,
-                        Statement::TSImportEqualsDeclaration(decl)
-                            if decl.module_reference.is_external()
-                    )
-                }))
+            && !nodes.program().body.iter().any(|statement| match statement {
+                Statement::TSImportEqualsDeclaration(decl) => decl.module_reference.is_external(),
+                Statement::TSExportAssignment(_) => true,
+                _ => false,
+            })
         {
             return;
         }
@@ -114,6 +113,8 @@ fn test() {
         "export {};",
         "import x = ns.value; export {};",
         "namespace Foo { import Bar = Baz; } export {};",
+        "export declare namespace API { interface Internal {} export {}; }",
+        "import '_'; declare module 'foo' { interface Internal {} export {}; }",
     ];
 
     let fail = vec![
@@ -159,6 +160,7 @@ fn test() {
         "
             import _ = require('_')
             export {};",
+        "const api = {}; export = api; export {};",
     ];
 
     let fix = vec![
@@ -173,6 +175,7 @@ fn test() {
         ("import '_';export {};", "import '_';"),
         ("import * as all from '_';export {};", "import * as all from '_';"),
         ("import _ = require('_')\n\nexport {};", "import _ = require('_')\n\n"),
+        ("const api = {}; export = api; export {};", "const api = {}; export = api; "),
     ];
 
     Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::PLUGIN, pass, fail)

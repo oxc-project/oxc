@@ -1,8 +1,9 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{AstNode, AstTypesBitset, NodeId};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
 
 use crate::{
     context::{ContextHost, LintContext},

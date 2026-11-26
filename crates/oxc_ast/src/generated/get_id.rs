@@ -235,6 +235,22 @@ impl ObjectProperty<'_> {
     }
 }
 
+impl ObjectMethodProperty<'_> {
+    /// Get [`NodeId`] of [`ObjectMethodProperty`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ObjectMethodProperty`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
 impl TemplateLiteral<'_> {
     /// Get [`NodeId`] of [`TemplateLiteral`].
     ///
@@ -3776,6 +3792,7 @@ impl ObjectPropertyKind<'_> {
     pub fn node_id(&self) -> NodeId {
         match self {
             Self::ObjectProperty(it) => it.node_id(),
+            Self::MethodProperty(it) => it.node_id(),
             Self::SpreadProperty(it) => it.node_id(),
         }
     }
@@ -3785,6 +3802,7 @@ impl ObjectPropertyKind<'_> {
     pub fn set_node_id(&self, node_id: NodeId) {
         match self {
             Self::ObjectProperty(it) => it.set_node_id(node_id),
+            Self::MethodProperty(it) => it.set_node_id(node_id),
             Self::SpreadProperty(it) => it.set_node_id(node_id),
         }
     }

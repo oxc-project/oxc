@@ -3,7 +3,7 @@ use oxc_ast::{
     ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::fixer::{RuleFix, RuleFixer};
@@ -73,6 +73,10 @@ impl NoUnusedVars {
                     if has_neighbors {
                         return symbol.delete_from_list(fixer, declarations, decl).dangerously();
                     }
+                    // `if (x) var a = 1;` -> `if (x) ;`
+                    if is_statement_body(symbol.nodes().parent_kind(parent.id()), span) {
+                        return fixer.replace(span, ";").dangerously();
+                    }
                     return fixer.delete_range(span).dangerously();
                 }
                 BindingInfo::MultiDestructure(mut span, is_object, is_last) => {
@@ -116,6 +120,19 @@ impl NoUnusedVars {
         }
 
         fixer.noop()
+    }
+}
+
+/// Is a declaration with this `span` the body of a statement that requires one?
+fn is_statement_body(parent: AstKind<'_>, span: Span) -> bool {
+    match parent {
+        AstKind::IfStatement(_)
+        | AstKind::WhileStatement(_)
+        | AstKind::DoWhileStatement(_)
+        | AstKind::WithStatement(_)
+        | AstKind::LabeledStatement(_) => true,
+        AstKind::ForStatement(stmt) => stmt.body.span() == span,
+        _ => false,
     }
 }
 

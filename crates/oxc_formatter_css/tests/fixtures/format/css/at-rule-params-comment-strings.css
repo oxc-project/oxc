@@ -1,0 +1,48 @@
+/* A comment in the params leaves the strings and the comments in them as written */
+@keyframes /* c */ "a  b" {
+  from {
+    color: red;
+  }
+}
+@font-feature-values /* c */ "Font  One" {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@namespace /* c */ svg "http://a  b";
+@namespace /* it's */ svg "http://a  b";
+@namespace /* c */ svg "a  /* b */  c";
+@namespace /* c */  svg
+  "x";
+@keyframes /* a  b */ foo {
+  from {
+    color: red;
+  }
+}
+@page /* a  "b */ :first {
+  margin: 0;
+}
+@media /* c */ (foo:  "a  b") {
+  a {
+    color: red;
+  }
+}
+@media /* c */ screen and (foo:  "a  /* b */") {
+  a {
+    color: red;
+  }
+}
+
+/* The string params print as written */
+@font-feature-values /* c */ Font  One {
+  @styleset {
+    nice-style: 12;
+  }
+}
+@counter-style /* c */  x {
+  symbols: a;
+}
+@property /* c */  --x {
+  syntax: "*";
+  inherits: false;
+}

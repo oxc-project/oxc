@@ -1,0 +1,15 @@
+/* A comment in an `@import` prelude is a word of its own, laid out as one without it */
+@import /* c */ url(a.css) screen and (min-width:100PX);
+@import /* comment 2 */ url("fineprint.css") /* comment 3 */ print /* comment 4 */;
+@import /* comment 6 */ url("bluish.css") /* comment 7 */ projection /* comment 8 */, /* comment 9 */ tv /* comment 10 */;
+@import/* c */url("bluish.css")/* d */projection/* e */,/* f */tv/* g */;
+@import /* c */'custom.css'/* d */;
+@import url(a.css) /* c */ screen and (orientation: landscape), print and (min-width: 100px), tv and (max-width: 200px);
+@import url("a.css") /* c */ layer(base) supports(display: grid) screen and (/* d */ min-width /* e */ : /* f */ 100px /* g */);
+@import url(foo.css) screen /* c */ and /* d */ (min-width: 100px);
+@import url(a.css) layer(/* c */ x) /* d */ screen;
+@import url(a.css) supports(/* c */ display: flex /* d */);
+
+/* DIVERGENCES.md#import-media-feature-flat */
+@import url("landscape.css") screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy);
+@import /* comment 29 */ url('landscape.css') /* comment 30 */ screen /* comment 31 */ and /* comment 32 */ (/* comment 33 */orientation/* comment 34 */:/* comment 35 */landscape/* comment 36 */)/* comment 37 */;

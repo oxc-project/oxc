@@ -85,13 +85,17 @@ impl Rule for NoSetterReturn {
 fn is_descriptor_setter<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let function = outermost_paren(node, ctx.semantic());
     let property = ctx.nodes().parent_node(function.id());
-    let AstKind::ObjectProperty(prop) = property.kind() else { return false };
-    let is_set = match &prop.key {
+    let (key, value_span) = match property.kind() {
+        AstKind::ObjectProperty(prop) => (&prop.key, prop.value.without_parentheses().span()),
+        AstKind::ObjectMethodProperty(prop) => (&prop.key, prop.value.span),
+        _ => return false,
+    };
+    let is_set = match key {
         PropertyKey::StaticIdentifier(ident) => ident.name == "set",
         PropertyKey::StaticStringLiteral(lit) => lit.value == "set",
         key => key.as_expression().is_some_and(|expr| is_static_string(expr, "set")),
     };
-    if !is_set || prop.value.without_parentheses().span() != node.kind().span() {
+    if !is_set || value_span != node.kind().span() {
         return false;
     }
     let descriptor = ctx.nodes().parent_node(property.id());

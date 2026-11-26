@@ -1,8 +1,9 @@
+use smallvec::SmallVec;
+
 use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
-use smallvec::SmallVec;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

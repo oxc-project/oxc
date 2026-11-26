@@ -22,6 +22,20 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 {
   margin: 1px;
 }
+// DIVERGENCES.md#own-line-comment-before-block
+@media screen
+/* c */
+{
+  a {
+    b: c;
+  }
+}
+@supports (a: b)
+  /* c */{
+  a {
+    b: c;
+  }
+}
 @font-face // c
 {
   a: b;
@@ -91,6 +105,20 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 {
   margin: 1px;
 }
+// DIVERGENCES.md#own-line-comment-before-block
+@media screen
+/* c */
+{
+  a {
+    b: c;
+  }
+}
+@supports (a: b)
+/* c */ {
+  a {
+    b: c;
+  }
+}
 @font-face // c
 {
   a: b;
@@ -158,6 +186,20 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // c
 {
   margin: 1px;
+}
+// DIVERGENCES.md#own-line-comment-before-block
+@media screen
+/* c */
+{
+  a {
+    b: c;
+  }
+}
+@supports (a: b)
+/* c */ {
+  a {
+    b: c;
+  }
 }
 @font-face // c
 {

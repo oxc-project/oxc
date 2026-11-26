@@ -30,6 +30,7 @@ pub enum AstNodes<'parent, 'a> {
     Elision(&'parent AstNode<'parent, 'a, Elision>),
     ObjectExpression(&'parent AstNode<'parent, 'a, ObjectExpression<'a>>),
     ObjectProperty(&'parent AstNode<'parent, 'a, ObjectProperty<'a>>),
+    ObjectMethodProperty(&'parent AstNode<'parent, 'a, ObjectMethodProperty<'a>>),
     TemplateLiteral(&'parent AstNode<'parent, 'a, TemplateLiteral<'a>>),
     TaggedTemplateExpression(&'parent AstNode<'parent, 'a, TaggedTemplateExpression<'a>>),
     TemplateElement(&'parent AstNode<'parent, 'a, TemplateElement<'a>>),
@@ -236,6 +237,7 @@ pub enum AstNodeKind<'parent, 'a> {
     Elision(AstNode<'parent, 'a, Elision>),
     ObjectExpression(AstNode<'parent, 'a, ObjectExpression<'a>>),
     ObjectProperty(AstNode<'parent, 'a, ObjectProperty<'a>>),
+    ObjectMethodProperty(AstNode<'parent, 'a, ObjectMethodProperty<'a>>),
     TemplateLiteral(AstNode<'parent, 'a, TemplateLiteral<'a>>),
     TaggedTemplateExpression(AstNode<'parent, 'a, TaggedTemplateExpression<'a>>),
     TemplateElement(AstNode<'parent, 'a, TemplateElement<'a>>),
@@ -437,6 +439,7 @@ impl<'a> AstNodeKind<'_, 'a> {
             Self::Elision(n) => AstNodes::Elision(n),
             Self::ObjectExpression(n) => AstNodes::ObjectExpression(n),
             Self::ObjectProperty(n) => AstNodes::ObjectProperty(n),
+            Self::ObjectMethodProperty(n) => AstNodes::ObjectMethodProperty(n),
             Self::TemplateLiteral(n) => AstNodes::TemplateLiteral(n),
             Self::TaggedTemplateExpression(n) => AstNodes::TaggedTemplateExpression(n),
             Self::TemplateElement(n) => AstNodes::TemplateElement(n),
@@ -643,6 +646,7 @@ impl GetSpan for AstNodeKind<'_, '_> {
             Self::Elision(n) => n.span(),
             Self::ObjectExpression(n) => n.span(),
             Self::ObjectProperty(n) => n.span(),
+            Self::ObjectMethodProperty(n) => n.span(),
             Self::TemplateLiteral(n) => n.span(),
             Self::TaggedTemplateExpression(n) => n.span(),
             Self::TemplateElement(n) => n.span(),
@@ -849,6 +853,7 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
             Self::Elision(n) => n.span(),
             Self::ObjectExpression(n) => n.span(),
             Self::ObjectProperty(n) => n.span(),
+            Self::ObjectMethodProperty(n) => n.span(),
             Self::TemplateLiteral(n) => n.span(),
             Self::TaggedTemplateExpression(n) => n.span(),
             Self::TemplateElement(n) => n.span(),
@@ -1052,6 +1057,7 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
             Self::Elision(n) => n.parent(),
             Self::ObjectExpression(n) => n.parent(),
             Self::ObjectProperty(n) => n.parent(),
+            Self::ObjectMethodProperty(n) => n.parent(),
             Self::TemplateLiteral(n) => n.parent(),
             Self::TaggedTemplateExpression(n) => n.parent(),
             Self::TemplateElement(n) => n.parent(),
@@ -1250,6 +1256,7 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
             Self::Elision(_) => "Elision",
             Self::ObjectExpression(_) => "ObjectExpression",
             Self::ObjectProperty(_) => "ObjectProperty",
+            Self::ObjectMethodProperty(_) => "ObjectMethodProperty",
             Self::TemplateLiteral(_) => "TemplateLiteral",
             Self::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
             Self::TemplateElement(_) => "TemplateElement",
@@ -1923,6 +1930,11 @@ impl<'parent, 'a> AstNode<'parent, 'a, ObjectPropertyKind<'a>> {
                 parent,
                 following_span_start,
             }),
+            ObjectPropertyKind::MethodProperty(s) => AstNodeKind::ObjectMethodProperty(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             ObjectPropertyKind::SpreadProperty(s) => AstNodeKind::SpreadElement(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -1936,11 +1948,6 @@ impl<'parent, 'a> AstNode<'parent, 'a, ObjectProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn kind(&self) -> PropertyKind {
-        self.inner.kind
     }
 
     #[inline]
@@ -1964,13 +1971,49 @@ impl<'parent, 'a> AstNode<'parent, 'a, ObjectProperty<'a>> {
     }
 
     #[inline]
-    pub fn method(&self) -> bool {
-        self.inner.method
+    pub fn shorthand(&self) -> bool {
+        self.inner.shorthand
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'parent, 'a> AstNode<'parent, 'a, ObjectMethodProperty<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
     }
 
     #[inline]
-    pub fn shorthand(&self) -> bool {
-        self.inner.shorthand
+    pub fn kind(&self) -> ObjectMethodKind {
+        self.inner.kind
+    }
+
+    #[inline]
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
+        let following_span_start = self.inner.value.span().start;
+        AstNode {
+            inner: &self.inner.key,
+            parent: AstNodes::ObjectMethodProperty(self),
+            following_span_start,
+        }
+    }
+
+    #[inline]
+    pub fn value(&self) -> AstNode<'_, 'a, Function<'a>> {
+        let following_span_start = self.following_span_start;
+        AstNode {
+            inner: self.inner.value.as_ref(),
+            parent: AstNodes::ObjectMethodProperty(self),
+            following_span_start,
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

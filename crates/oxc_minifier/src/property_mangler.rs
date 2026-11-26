@@ -678,6 +678,12 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
         self.rewrite_key_position(&mut property.key, original_string);
     }
 
+    fn visit_object_method_property(&mut self, property: &mut ObjectMethodProperty<'a>) {
+        let original_string = Self::direct_string_key(&property.key);
+        walk_mut::walk_object_method_property(self, property);
+        self.rewrite_key_position(&mut property.key, original_string);
+    }
+
     fn visit_binding_property(&mut self, property: &mut BindingProperty<'a>) {
         let original_string = Self::direct_string_key(&property.key);
         let expands_shorthand = property.shorthand

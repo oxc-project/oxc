@@ -2,6 +2,11 @@ use std::{borrow::Cow, sync::OnceLock};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
+use phf::{Map, Set, phf_map, phf_set};
+use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXElementName},
@@ -9,10 +14,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::{Map, Set, phf_map, phf_set};
-use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

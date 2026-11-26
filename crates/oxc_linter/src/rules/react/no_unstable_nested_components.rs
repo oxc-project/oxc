@@ -468,6 +468,9 @@ fn function_like_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Strin
         AstKind::ObjectProperty(prop) => {
             prop.key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
         }
+        AstKind::ObjectMethodProperty(prop) => {
+            prop.key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
+        }
         AstKind::AssignmentExpression(assign) => {
             assign.left.get_identifier_name().map(ToString::to_string)
         }
@@ -495,7 +498,7 @@ fn is_anonymous_default_export(node: &AstNode<'_>, ctx: &LintContext<'_>) -> boo
 fn is_component_declared_in_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
 
-    if matches!(parent.kind(), AstKind::ObjectProperty(_)) {
+    if matches!(parent.kind(), AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_)) {
         return true;
     }
 
@@ -585,10 +588,12 @@ fn nearest_jsx_attribute_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Opti
 
 fn direct_object_property_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<String> {
     let parent = ctx.nodes().parent_node(node.id());
-    let AstKind::ObjectProperty(prop) = parent.kind() else {
-        return None;
+    let key = match parent.kind() {
+        AstKind::ObjectProperty(prop) => &prop.key,
+        AstKind::ObjectMethodProperty(prop) => &prop.key,
+        _ => return None,
     };
-    prop.key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
+    key.static_name().and_then(StaticPropertyName::into_cow_str).map(Cow::into_owned)
 }
 
 fn is_direct_jsx_child_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {

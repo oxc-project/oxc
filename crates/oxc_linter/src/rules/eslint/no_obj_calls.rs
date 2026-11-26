@@ -1,11 +1,16 @@
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::ArenaBox;
 use oxc_ast::{
-    AstKind,
-    ast::{Expression, IdentifierReference, MemberExpression, match_member_expression},
+    AstKind, StaticPropertyName,
+    ast::{
+        BindingPattern, Expression, IdentifierReference, MemberExpression, ObjectPattern,
+        match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::Span;
 use oxc_str::JSStr;
 
@@ -74,48 +79,74 @@ fn is_global_obj(s: &str) -> bool {
     matches!(s, "Atomics" | "Intl" | "JSON" | "Math" | "Reflect")
 }
 
+fn is_global_this(expr: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
+    let Expression::Identifier(ident) = expr.get_inner_expression() else { return false };
+    ident.name == GLOBAL_THIS && ctx.is_reference_to_global_variable(ident)
+}
+
 fn global_this_member<'a>(
     expr: &'a MemberExpression<'_>,
     ctx: &LintContext<'_>,
 ) -> Option<&'a str> {
-    let Expression::Identifier(ident) = expr.object().get_inner_expression() else { return None };
-    if ident.name == GLOBAL_THIS && ctx.is_reference_to_global_variable(ident) {
+    if is_global_this(expr.object(), ctx) {
         expr.static_property_name().and_then(JSStr::as_str)
     } else {
         None
     }
 }
 
-fn resolve_global_binding<'a, 'b: 'a>(
+fn global_this_destructured_property<'a>(
+    pattern: &'a ObjectPattern<'a>,
+    symbol_id: SymbolId,
+) -> Option<&'a str> {
+    let property = pattern.properties.iter().find(|property| {
+        property.value.get_binding_identifier().is_some_and(|ident| ident.symbol_id() == symbol_id)
+    })?;
+    match property.key.static_name()? {
+        StaticPropertyName::Borrowed(name) => name.as_str(),
+        StaticPropertyName::Owned(_) => None,
+    }
+}
+
+fn resolve_global_binding<'a>(
     ident: &'a ArenaBox<'a, IdentifierReference<'a>>,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
     let symbols = ctx.scoping();
+    let mut ident = ident;
+    let mut visited_symbols = FxHashSet::default();
 
-    let Some(binding_id) = symbols.get_reference(ident.reference_id()).symbol_id() else {
-        // Unresolved references are globals unless disabled through config.
-        return ctx.is_reference_to_global_variable(ident).then_some(ident.name.as_str());
-    };
+    loop {
+        let Some(symbol_id) = symbols.get_reference(ident.reference_id()).symbol_id() else {
+            // Unresolved references are globals unless disabled through config.
+            return ctx.is_reference_to_global_variable(ident).then_some(ident.name.as_str());
+        };
 
-    let decl = ctx.nodes().get_node(symbols.symbol_declaration(binding_id));
-    match decl.kind() {
-        AstKind::VariableDeclarator(parent_decl) => {
-            if !parent_decl.id.is_binding_identifier() {
-                return Some(ident.name.as_str());
-            }
-            match &parent_decl.init {
+        let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
+        let AstKind::VariableDeclarator(decl) = decl.kind() else { return None };
+        let init = decl.init.as_ref()?;
+
+        match &decl.id {
+            BindingPattern::BindingIdentifier(_) => match init {
                 // handles "let a = JSON; let b = a; a();"
-                Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
-                    resolve_global_binding(parent_ident, ctx)
+                Expression::Identifier(init_ident) => {
+                    if !visited_symbols.insert(symbol_id) {
+                        return None;
+                    }
+                    ident = init_ident;
                 }
                 // handles "let a = globalThis.JSON; let b = a; a();"
-                Some(parent_expr) if parent_expr.is_member_expression() => {
-                    global_this_member(parent_expr.to_member_expression(), ctx)
+                _ if init.is_member_expression() => {
+                    return global_this_member(init.to_member_expression(), ctx);
                 }
-                _ => None,
+                _ => return None,
+            },
+            // handles "const { JSON: j } = globalThis; j();"
+            BindingPattern::ObjectPattern(pattern) if is_global_this(init, ctx) => {
+                return global_this_destructured_property(pattern, symbol_id);
             }
+            _ => return None,
         }
-        _ => None,
     }
 }
 
@@ -220,6 +251,11 @@ fn test() {
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         "{const Math = () => {}; {let obj = new Math();}}",
         "{const {parse} = JSON;parse('{}')}",
+        "const { Math } = { Math() {} }; Math();",
+        "const { Math } = JSON; Math();",
+        "const [Math] = [() => {}]; Math();",
+        "for (const { Math } of items) Math();",
+        "var a = b; var b = a; a = () => {}; a();",
         // https://github.com/oxc-project/oxc/issues/4389
         r"export const getConfig = getConfig;
         getConfig();",
@@ -290,6 +326,10 @@ fn test() {
         "let j = JSON; j();",
         "let a = JSON; let b = a; let c = b; b();",
         "let m = globalThis.Math; new m();",
+        "const { Math } = globalThis; Math();",
+        "const { Math: M } = globalThis; M();",
+        "const { ['JSON']: J } = globalThis; new J();",
+        "const { Reflect = () => {} } = globalThis; Reflect();",
     ];
 
     Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test_and_snapshot();
@@ -320,9 +360,13 @@ fn shadowed_global_this() {
         pass.push(format!(
             "function f(globalThis) {{ const alias = globalThis.{name}; new alias(); }}"
         ));
+        pass.push(format!(
+            "function f(globalThis) {{ const {{ {name}: alias }} = globalThis; alias(); }}"
+        ));
         fail.push(format!("globalThis.{name}();"));
         fail.push(format!("new globalThis.{name}();"));
         fail.push(format!("const alias = globalThis.{name}; alias();"));
+        fail.push(format!("const {{ {name}: alias }} = globalThis; alias();"));
     }
     Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test();
 }

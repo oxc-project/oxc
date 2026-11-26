@@ -279,6 +279,11 @@ impl IdMatch {
                     return;
                 }
             }
+            AstKind::ObjectMethodProperty(property) => {
+                if !self.options().properties && !property.key.is_computed() {
+                    return;
+                }
+            }
             AstKind::BindingProperty(property) => {
                 // A computed destructuring key is a reference expression, not
                 // a binding introduced by destructuring.
@@ -366,6 +371,19 @@ impl IdMatch {
                     return;
                 }
                 if is_dynamic_import_attribute_object_property(property, ctx) {
+                    return;
+                }
+                self.report(ctx, node.span(), name);
+                return;
+            }
+            AstKind::ObjectMethodProperty(property)
+                if property.key.span().contains_inclusive(ident.span)
+                    && !property.key.is_computed() =>
+            {
+                if !self.options().properties {
+                    return;
+                }
+                if is_dynamic_import_attribute_object_method_property(property, ctx) {
                     return;
                 }
                 self.report(ctx, node.span(), name);
@@ -691,6 +709,30 @@ fn object_property_is_import_options_with<'a>(
     )
 }
 
+fn is_dynamic_import_attribute_object_method_property<'a>(
+    property: &oxc_ast::ast::ObjectMethodProperty<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let property_node = ctx.nodes().get_node(property.node_id());
+    let object_node = ctx.nodes().parent_node(property_node.id());
+    if property.key.is_specific_static_name("with")
+        && matches!(
+            ctx.nodes().parent_kind(object_node.id()),
+            AstKind::ImportExpression(import_expr)
+                if import_expr.options.as_ref().is_some_and(|options| options.span() == object_node.span())
+        )
+    {
+        return true;
+    }
+    let outer_property_node = ctx.nodes().parent_node(object_node.id());
+    let AstKind::ObjectProperty(outer_property) = outer_property_node.kind() else {
+        return false;
+    };
+    outer_property.key.is_specific_static_name("with")
+        && outer_property.value.span() == object_node.span()
+        && object_property_is_import_options_with(outer_property, ctx)
+}
+
 fn object_property_is_inside_dynamic_import_with<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
@@ -754,6 +796,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            "var obj = { bad_name() {} };",
+            Some(serde_json::json!(["^[^_]+$", { "properties": false }])),
+        ),
         (
             r#"__foo = "Matthieu""#,
             Some(serde_json::json!([ "^[a-z]+$", { "onlyDeclarations": true, }, ])),
@@ -883,6 +929,10 @@ fn test() {
             "import('foo.json', { with: { type: 'json' } })",
             Some(serde_json::json!([ "^foo", { "properties": true, }, ])),
         ),
+        (
+            "import('foo.json', { with: { type() {} } })",
+            Some(serde_json::json!([ "^foo", { "properties": true, }, ])),
+        ), // { "ecmaVersion": 2025 },
         (
             "import('foo.json', { 'with': { type: 'json' } })",
             Some(serde_json::json!([ "^foo", { "properties": true, }, ])),

@@ -104,12 +104,11 @@ impl<'s> Suite<'s> {
             .iter()
             .map(|property| {
                 let ObjectPropertyKind::ObjectProperty(property) = property else {
-                    panic!("esbuild tests cannot contain spread properties");
+                    panic!("esbuild tests must be key-value properties");
                 };
                 let PropertyKey::StaticStringLiteral(key) = &property.key else {
                     panic!("esbuild test names must be string literals");
                 };
-                assert!(!property.method);
                 assert!(
                     matches!(&property.value, Expression::ArrowFunctionExpression(_)),
                     "esbuild test must be an arrow callback"
@@ -184,7 +183,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "esbuild tests cannot contain spread properties")]
+    #[should_panic(expected = "esbuild tests must be key-value properties")]
     fn rejects_properties_that_cannot_be_expanded() {
         Suite::parse("const tests = { ...otherTests }; async function run() {}");
     }

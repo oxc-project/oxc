@@ -244,6 +244,7 @@ impl FullEq for ObjectPropertyKind<'_> {
     fn full_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::ObjectProperty(a), Self::ObjectProperty(b)) => FullEq::full_eq(a, b),
+            (Self::MethodProperty(a), Self::MethodProperty(b)) => FullEq::full_eq(a, b),
             (Self::SpreadProperty(a), Self::SpreadProperty(b)) => FullEq::full_eq(a, b),
             _ => false,
         }
@@ -254,11 +255,25 @@ impl FullEq for ObjectProperty<'_> {
     fn full_eq(&self, other: &Self) -> bool {
         FullEq::full_eq(&self.node_id, &other.node_id)
             && FullEq::full_eq(&self.span, &other.span)
+            && FullEq::full_eq(&self.key, &other.key)
+            && FullEq::full_eq(&self.value, &other.value)
+            && FullEq::full_eq(&self.shorthand, &other.shorthand)
+    }
+}
+
+impl FullEq for ObjectMethodProperty<'_> {
+    fn full_eq(&self, other: &Self) -> bool {
+        FullEq::full_eq(&self.node_id, &other.node_id)
+            && FullEq::full_eq(&self.span, &other.span)
             && FullEq::full_eq(&self.kind, &other.kind)
             && FullEq::full_eq(&self.key, &other.key)
             && FullEq::full_eq(&self.value, &other.value)
-            && FullEq::full_eq(&self.method, &other.method)
-            && FullEq::full_eq(&self.shorthand, &other.shorthand)
+    }
+}
+
+impl FullEq for ObjectMethodKind {
+    fn full_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 
@@ -336,12 +351,6 @@ impl FullEq for PropertyKey<'_> {
             }
             _ => false,
         }
-    }
-}
-
-impl FullEq for PropertyKind {
-    fn full_eq(&self, other: &Self) -> bool {
-        self == other
     }
 }
 

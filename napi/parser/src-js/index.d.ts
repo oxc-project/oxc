@@ -114,6 +114,8 @@ export declare const enum ExportImportNameKind {
   AllButDefault = 'AllButDefault',
   /** Does not have a specifier. */
   None = 'None',
+  /** `import source x from "mod"; export { x }` */
+  Source = 'Source',
 }
 
 export interface ExportLocalName {
@@ -149,6 +151,8 @@ export declare const enum ImportNameKind {
   NamespaceObject = 'NamespaceObject',
   /** `import defaultExport from "mod"` */
   Default = 'Default',
+  /** `import source x from "mod"` */
+  Source = 'Source',
 }
 
 /**

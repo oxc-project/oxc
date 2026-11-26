@@ -1912,6 +1912,23 @@ impl<'a> PeepholeOptimizations {
                                 return Some(changed);
                             }
                         }
+                        ObjectPropertyKind::MethodProperty(prop) => {
+                            if prop.key.is_computed() {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        prop.key.to_expression_mut(),
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                                // Stop now because computed keys have side effects
+                                return Some(false);
+                            }
+                        }
                         ObjectPropertyKind::SpreadProperty(prop) => {
                             if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                                 &mut prop.argument,

@@ -70,7 +70,7 @@ impl Rule for NoAsyncAwait {
                         //     async foo() {}
                         // };
                         // ```
-                        AstKind::ObjectProperty(obj_prop) => {
+                        AstKind::ObjectMethodProperty(obj_prop) => {
                             Span::new(obj_prop.span.start, obj_prop.key.span().start)
                         }
                         _ => func_decl.span,
