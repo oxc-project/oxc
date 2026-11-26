@@ -3,6 +3,15 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:3:23]
+ 2 │             export function countMatches(record, candidates) {
+ 3 │                 const keys = Object.keys(record);
+   ·                       ──────────────────────────
+ 4 │                 let count = 0;
+   ╰────
+  help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
  1 │ 
  2 │             const foo = [1, 2, 3];
