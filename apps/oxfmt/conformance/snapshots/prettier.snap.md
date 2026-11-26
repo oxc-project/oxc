@@ -400,7 +400,7 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/scss/comments/at-rule.scss (💥, 87.50%)
   - crates/oxc_formatter_css/DIVERGENCES.md#at-root-line-comment-indent
-- externals/prettier/scss/comments/between-decl.scss (💥, 94.74%)
+- externals/prettier/scss/comments/between-decl.scss (💥, 97.01%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/scss/comments/custom-properties.scss (💥, 88.89%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
@@ -434,6 +434,10 @@
 - externals/prettier/scss/variables/postcss-8-improment.scss (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
 
+### Not idempotent
+
+- externals/prettier/scss/comments/between-decl.scss
+
 ### Error
 
 - externals/prettier/scss/case/case.scss: Syntax error: expect token `<string>`, but found `<ident>`
@@ -457,7 +461,7 @@
 
 ### Failed
 
-- externals/prettier/less/comments/between-decl.less (💥, 90.14%)
+- externals/prettier/less/comments/between-decl.less (💥, 94.44%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/less/comments/selectors.less (💥, 88.89%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
@@ -495,6 +499,10 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-escaped-string-gap
 - externals/prettier/less/postcss-8-improment/test.less (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
+
+### Not idempotent
+
+- externals/prettier/less/comments/between-decl.less
 
 ### Error
 

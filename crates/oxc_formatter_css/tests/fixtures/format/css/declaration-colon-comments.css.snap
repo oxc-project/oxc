@@ -14,6 +14,10 @@ a {
   color:
     /* c */
     red;
+  /* A comment alone on its line before the `:` keeps it too */
+  color /* a */
+    /* b */
+    : red;
 }
 @supports (display /* c */ : flex) {
 }
@@ -43,6 +47,10 @@ a {
     /* bottom */ linear-gradient(transparent, red 70%) center bottom;
   color:
     /* c */ red;
+  /* A comment alone on its line before the `:` keeps it too */
+  color/* a */
+    /* b */
+    : red;
 }
 @supports (display /* c */: flex) {
 }
@@ -70,6 +78,10 @@ a {
     /* bottom */ linear-gradient(transparent, red 70%) center bottom;
   color:
     /* c */ red;
+  /* A comment alone on its line before the `:` keeps it too */
+  color/* a */
+    /* b */
+    : red;
 }
 @supports (display /* c */: flex) {
 }

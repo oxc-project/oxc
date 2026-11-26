@@ -2003,7 +2003,7 @@ Block comments around a declaration's `:` are spaced as in a `@supports` declara
 the `:` glued to what precedes it, one space around each comment.
 Prettier prints a rule's `raws.between` as written but for its ends, so the space before the first comment goes, the rest stays, and a line break in it lands at column 0.
 A comment starting a line after the `:`, a `//` or a Less merge marker keeps the between as written, the comment on its line;
-a line break before the `:` goes (`display\n  /* c */ : flex` -> `display /* c */: flex`), and so does one after a comment alone on its line there, unwrapped.
+so does a comment alone on its line before it; a line break before a comment leading the `:` goes (`display\n  /* c */ : flex` -> `display /* c */: flex`).
 
 ## supports-declaration-comments
 
