@@ -327,12 +327,14 @@
 
 ## css
 
-140/164 (85.37%)
+139/164 (84.76%)
 
 ### Failed
 
 - externals/prettier/css/atrule/supports.css (💥, 95.22%)
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-long-value
+- externals/prettier/css/comments/at-rules.css (💥, 74.62%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-comments
 - externals/prettier/css/comments/declaration.css (💥, 98.88%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/css/fill-value/fill.css (💥, 93.33%)
