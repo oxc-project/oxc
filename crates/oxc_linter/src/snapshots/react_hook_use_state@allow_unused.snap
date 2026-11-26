@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+   ╭─[hook_use_state.tsx:1:41]
+ 1 │ import { useState } from 'react'; const [_, setCount] = useState(0);
+   ·                                         ─────────────
+   ╰────
+  help: Follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+   ╭─[hook_use_state.tsx:1:41]
+ 1 │ import { useState } from 'react'; const [count, _] = useState(0);
+   ·                                         ──────────
+   ╰────
+  help: Follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+   ╭─[hook_use_state.tsx:1:41]
+ 1 │ import { useState } from 'react'; const [count, updateCount] = useState(0);
+   ·                                         ────────────────────
+   ╰────
+  help: Follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:1:41]
+ 1 │ import { useState } from 'react'; const _state = useState(0);
+   ·                                         ────────────────────
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:1:41]
+ 1 │ import { useState } from 'react'; const [count, _setter, extra] = useState(0);
+   ·                                         ───────────────────────
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:1:41]
+ 1 │ import { useState } from 'react'; const [count, _setter, ...rest] = useState(0);
+   ·                                         ─────────────────────────
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:1:41]
+ 1 │ import { useState } from 'react'; const [_, {}] = useState(0);
+   ·                                         ───────
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:1:34]
+ 1 │ import React from 'react'; const [{count}, _setter] = React.useState({count: 0});
+   ·                                  ──────────────────
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
