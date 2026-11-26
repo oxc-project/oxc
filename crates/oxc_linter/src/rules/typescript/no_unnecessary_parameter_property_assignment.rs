@@ -3,15 +3,16 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, Function, IdentifierReference, Statement,
+        AccessorProperty, ArrowFunctionExpression, AssignmentExpression, AssignmentOperator,
+        AssignmentTarget, Class, ClassElement, Expression, FormalParameter, Function,
+        IdentifierReference, PropertyDefinition,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, ScopeFlags};
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -86,12 +87,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             let Some(expression) = &property_definition.value else {
                 continue;
             };
-            let assignments = get_assignments_inside_expression(expression);
-            for assignment in assignments {
-                if let Some(this_property_name) = get_property_name(&assignment.left) {
-                    assigned_before_constructor.insert(this_property_name);
-                }
-            }
+            collect_field_initializer_writes(expression, &mut assigned_before_constructor);
         }
 
         let Some(function_body) = &method.value.body else {
@@ -103,6 +99,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             parameters: &method.value.params.items,
             assigned_before_unnecessary: FxHashSet::default(),
             assigned_before_constructor,
+            written_before: FxHashSet::default(),
         };
         visitor.visit_function_body(function_body);
     }
@@ -113,6 +110,8 @@ struct AssignmentVisitor<'a, 'b> {
     parameters: &'b [FormalParameter<'a>],
     assigned_before_unnecessary: FxHashSet<Str<'a>>,
     assigned_before_constructor: FxHashSet<Str<'a>>,
+    /// Properties already written with a value that may differ from the parameter.
+    written_before: FxHashSet<Str<'a>>,
 }
 
 impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
@@ -129,7 +128,7 @@ impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
                     .get_binding_identifier()
                     .is_some_and(|binding| reference.symbol_id() == Some(binding.symbol_id()))
             })
-            && self.is_in_constructor_scope(reference.node_id())
+            && self.is_in_constructor_scope(reference.node_id(), false)
         {
             // Any prior write may change the value copied by a later `this.x = x`.
             self.assigned_before_unnecessary.insert(identifier.name.into());
@@ -143,10 +142,19 @@ impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
 }
 
 impl<'a> AssignmentVisitor<'a, '_> {
-    fn is_in_constructor_scope(&self, node_id: NodeId) -> bool {
+    /// With `own_this`, the static blocks and field initializers of a nested class also end
+    /// the constructor scope, because they have their own `this`.
+    fn is_in_constructor_scope(&self, node_id: NodeId, own_this: bool) -> bool {
+        let span = self.ctx.nodes().get_node(node_id).kind().span();
         // Match the constructor scope, allowing a single arrow IIFE as upstream does.
-        let mut functions = self.ctx.nodes().ancestors(node_id).filter(|node| {
-            matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        let mut functions = self.ctx.nodes().ancestors(node_id).filter(|node| match node.kind() {
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => true,
+            AstKind::StaticBlock(_) => own_this,
+            AstKind::PropertyDefinition(PropertyDefinition { value: Some(value), .. })
+            | AstKind::AccessorProperty(AccessorProperty { value: Some(value), .. }) => {
+                own_this && value.span().contains_inclusive(span)
+            }
+            _ => false,
         });
         let mut function = functions.next();
         if let Some(node) = function
@@ -164,7 +172,7 @@ impl<'a> AssignmentVisitor<'a, '_> {
     }
 
     fn check_assignment(&mut self, assignment_expr: &AssignmentExpression<'a>) {
-        if !self.is_in_constructor_scope(assignment_expr.node_id()) {
+        if !self.is_in_constructor_scope(assignment_expr.node_id(), true) {
             return;
         }
 
@@ -179,98 +187,119 @@ impl<'a> AssignmentVisitor<'a, '_> {
         }
         // operator could be unnecessary
 
-        let Expression::Identifier(right_identifier) = assignment_expr.right.get_inner_expression()
-        else {
-            return;
-        };
-        // the right side of the assignment is an identifier
-
-        if this_property_name != right_identifier.name {
+        if !get_identifier(&assignment_expr.right).is_some_and(|right_identifier| {
+            right_identifier.name == this_property_name
+                && self.is_parameter_property(right_identifier)
+        }) {
+            self.written_before.insert(this_property_name);
             return;
         }
-        // the property of this matches the identifier name on the right
 
-        for param in self.parameters.iter().filter(|param| param.has_modifier()) {
-            let Some(binding_identifier) = param.pattern.get_binding_identifier() else {
-                continue;
-            };
-            if binding_identifier.name != this_property_name {
-                continue;
-            }
-            // name of property parameter matches the name of the assigned property
-
-            let right_reference = self.ctx.scoping().get_reference(right_identifier.reference_id());
-            if !self
-                .ctx
-                .symbol_references(binding_identifier.symbol_id())
-                .any(|reference| reference.node_id() == right_reference.node_id())
-            {
-                continue;
-            }
-            // property parameter is same symbol as identifier on the right of assignment
-
-            if self.assigned_before_unnecessary.contains(&this_property_name) {
-                continue; // there already was an assignment inside the constructor
-            }
-
-            if self.assigned_before_constructor.contains(&this_property_name) {
-                continue; // there already was an assignment outside the constructor
-            }
-
-            let diagnostic =
-                no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span);
-            if let AstKind::ExpressionStatement(statement) =
-                self.ctx.nodes().parent_kind(assignment_expr.node_id())
-            {
-                self.ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                    fixer.delete_range(statement.span)
-                });
-            } else {
-                // Nested assignments may supply a value to their surrounding expression.
-                self.ctx.diagnostic(diagnostic);
-            }
+        if self.assigned_before_unnecessary.contains(&this_property_name) {
+            return; // there already was an assignment inside the constructor
         }
+
+        if self.assigned_before_constructor.contains(&this_property_name) {
+            return; // there already was an assignment outside the constructor
+        }
+
+        let diagnostic =
+            no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span);
+        let statement_node = self.ctx.nodes().parent_node(assignment_expr.node_id());
+        if let AstKind::ExpressionStatement(statement) = statement_node.kind()
+            && !self.written_before.contains(&this_property_name)
+        {
+            self.ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                match self.ctx.nodes().parent_kind(statement_node.id()) {
+                    AstKind::IfStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForOfStatement(_)
+                    | AstKind::LabeledStatement(_)
+                    | AstKind::WithStatement(_) => fixer.replace(statement.span, "{}"),
+                    _ => fixer.delete_range(statement.span),
+                }
+            });
+        } else {
+            // Nested assignments may supply a value to their surrounding expression.
+            self.ctx.diagnostic(diagnostic);
+        }
+    }
+
+    /// Whether `identifier` refers to a parameter property of the same name.
+    fn is_parameter_property(&self, identifier: &IdentifierReference<'a>) -> bool {
+        let reference = self.ctx.scoping().get_reference(identifier.reference_id());
+        self.parameters
+            .iter()
+            .filter(|param| param.has_modifier())
+            .filter_map(|param| param.pattern.get_binding_identifier())
+            .any(|binding| {
+                binding.name == identifier.name
+                    && self
+                        .ctx
+                        .symbol_references(binding.symbol_id())
+                        .any(|binding_reference| binding_reference.node_id() == reference.node_id())
+            })
     }
 }
 
-fn get_assignments_inside_expression<'a>(
-    expression: &'a Expression,
-) -> Vec<&'a AssignmentExpression<'a>> {
-    let mut assignments: Vec<&AssignmentExpression> = Vec::new();
+/// Unwraps parentheses, `as` expressions and non-null assertions, but not other TypeScript
+/// wrappers such as `satisfies`, which perform an explicit check.
+fn get_identifier<'b, 'a>(expression: &'b Expression<'a>) -> Option<&'b IdentifierReference<'a>> {
+    match expression {
+        Expression::Identifier(identifier) => Some(identifier),
+        Expression::ParenthesizedExpression(expr) => get_identifier(&expr.expression),
+        Expression::TSAsExpression(expr) => get_identifier(&expr.expression),
+        Expression::TSNonNullExpression(expr) => get_identifier(&expr.expression),
+        _ => None,
+    }
+}
 
-    match expression.without_parentheses() {
-        Expression::CallExpression(call) => {
-            // Immediately Invoked Function Expression (IIFE)
-
-            if let Expression::ArrowFunctionExpression(expr) = call.callee.without_parentheses()
-                && let Some(Expression::AssignmentExpression(assignment)) = expr.get_expression()
-            {
-                assignments.push(assignment);
+/// Collects the `this` properties written by a field initializer, including inside an
+/// initializer IIFE such as `init = (() => { this.x = 1; })()`. Writes inside other functions
+/// and classes are skipped, because they have a different `this`.
+fn collect_field_initializer_writes<'a>(
+    expression: &Expression<'a>,
+    names: &mut FxHashSet<Str<'a>>,
+) {
+    let mut collector = FieldInitializerWrites { names };
+    if let Expression::CallExpression(call) = expression.without_parentheses() {
+        match call.callee.without_parentheses() {
+            Expression::ArrowFunctionExpression(arrow) => {
+                collector.visit_arrow_function_body(&arrow.body);
             }
-
-            let function_body = match call.callee.without_parentheses() {
-                Expression::ArrowFunctionExpression(expr) => expr.get_function_body(),
-                Expression::FunctionExpression(expr) => expr.body.as_deref(),
-                _ => None,
-            };
-
-            if let Some(function_body) = function_body {
-                for statement in &function_body.statements {
-                    if let Statement::ExpressionStatement(expr) = statement
-                        && let Expression::AssignmentExpression(assignment) = &expr.expression
-                    {
-                        assignments.push(assignment);
-                    }
+            Expression::FunctionExpression(function) => {
+                if let Some(body) = &function.body {
+                    collector.visit_function_body(body);
                 }
             }
+            callee => collector.visit_expression(callee),
         }
-        Expression::AssignmentExpression(assignment) => {
-            assignments.push(assignment);
-        }
-        _ => (),
+        collector.visit_arguments(&call.arguments);
+    } else {
+        collector.visit_expression(expression);
     }
+}
 
-    assignments
+struct FieldInitializerWrites<'n, 'a> {
+    names: &'n mut FxHashSet<Str<'a>>,
+}
+
+impl<'a> VisitJs<'a> for FieldInitializerWrites<'_, 'a> {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
+
+    fn visit_class(&mut self, _it: &Class<'a>) {}
+
+    fn visit_assignment_expression(&mut self, assignment_expr: &AssignmentExpression<'a>) {
+        if let Some(name) = get_property_name(&assignment_expr.left) {
+            self.names.insert(name);
+        }
+        walk_js::walk_assignment_expression(self, assignment_expr);
+    }
 }
 
 fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
@@ -286,19 +315,19 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
 fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
     match assignment_target {
         AssignmentTarget::StaticMemberExpression(expr)
-            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+            if matches!(expr.object.without_parentheses(), Expression::ThisExpression(_)) =>
         {
             // this.property
             Some(expr.property.name.into())
         }
         AssignmentTarget::ComputedMemberExpression(expr)
-            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+            if matches!(expr.object.without_parentheses(), Expression::ThisExpression(_)) =>
         {
             // this["property"]
-            if let Expression::StringLiteral(str) = &expr.expression {
-                str.value.as_arena_str()
-            } else {
-                None
+            match expr.expression.without_parentheses() {
+                Expression::StringLiteral(str) => str.value.as_arena_str(),
+                Expression::TemplateLiteral(template) => template.single_quasi()?.as_arena_str(),
+                _ => None,
             }
         }
         _ => None,
@@ -310,6 +339,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "class C { constructor(public x: number) { this.x = x satisfies number; } }",
+        "class C { snapshot = [this.x = 0]; constructor(public x: number) { this.x = x; } }",
+        "class C { init = (() => { if (ready) { this.x = 0; } })(); constructor(public x: number) { this.x = x; } }",
+        "class C { constructor(public x: number) { this[`${x}`] = x; } }",
         "
         class Foo {
           constructor(public name: unknown) {}
@@ -587,6 +620,12 @@ fn test() {
     ];
 
     let fail = vec![
+        "class C { constructor(public x: number) { this.x = (x as number); } }",
+        "class C { constructor(public x: number) { this.x = x!; } }",
+        "class C { constructor(public x: number) { this.x = 0; this.x = x; } }",
+        "class C { constructor(public x: number) { if (x) this.x = x; else {} } }",
+        "class Outer { constructor(public x: number) { class Inner { static x = 0; static { this.x += 1; } } this.x = x; } }",
+        "class C { constructor(public x: number) { (this).x = x; this[(\"x\")] = x; this[`x`] = x; } }",
         "
         class Foo {
           constructor(public name: unknown) {
@@ -805,6 +844,18 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "class C { constructor(public x: number) { this.x = 0; this.x = x; } }",
+            "class C { constructor(public x: number) { this.x = 0; this.x = x; } }",
+        ),
+        (
+            "class C { constructor(public x: number) { if (x) this.x = x; else {} } }",
+            "class C { constructor(public x: number) { if (x) {} else {} } }",
+        ),
+        (
+            "class C { constructor(public x: number) { (this).x = x; } }",
+            "class C { constructor(public x: number) {  } }",
+        ),
         (
             "
             class Foo {
