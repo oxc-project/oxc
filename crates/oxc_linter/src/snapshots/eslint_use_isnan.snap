@@ -297,6 +297,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
+   ╭─[use_isnan.tsx:1:35]
+ 1 │ function f(Number) { return x === NaN; }
+   ·                                   ───
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
   ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { case foo: break; }

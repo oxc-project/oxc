@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::JSStr;
+use oxc_str::{JSStr, static_ident};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
@@ -123,7 +123,12 @@ impl Rule for UseIsnan {
                         continue;
                     }
                     let diagnostic = comparison_with_nan(nan.span(), expr.operator);
-                    if matches!(nan.get_inner_expression(), Expression::SequenceExpression(_)) {
+                    if matches!(nan.get_inner_expression(), Expression::SequenceExpression(_))
+                        || ctx
+                            .scoping()
+                            .find_binding(node.scope_id(), static_ident!("Number"))
+                            .is_some()
+                    {
                         ctx.diagnostic(diagnostic);
                     } else {
                         ctx.diagnostic_with_suggestions(
@@ -514,6 +519,7 @@ fn test() {
         ("x == (doStuff(), NaN);", None),
         ("x == (doStuff(), Number.NaN);", None),
         ("x < (doStuff(), NaN);", None),
+        ("function f(Number) { return x === NaN; }", None),
         ("switch(NaN) { case foo: break; }", None),
         ("switch(foo) { case NaN: break; }", None),
         ("switch(NaN) { case foo: break; }", Some(serde_json::json!([{}]))),
@@ -674,6 +680,14 @@ fn test() {
         ("(1, 2) === NaN", "Number.isNaN((1, 2))", None, FixKind::Suggestion).into(),
         ("value === NaN", "value === NaN", None, FixKind::SafeFix).into(),
         ("x === (doStuff(), NaN)", "x === (doStuff(), NaN)", None, FixKind::Suggestion).into(),
+        (
+            "function f(Number) { return x === NaN; }",
+            "function f(Number) { return x === NaN; }",
+            None,
+            FixKind::Suggestion,
+        )
+            .into(),
+        ("let Number; x == NaN", "let Number; x == NaN", None, FixKind::Suggestion).into(),
     ];
 
     Tester::new(UseIsnan::NAME, UseIsnan::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
