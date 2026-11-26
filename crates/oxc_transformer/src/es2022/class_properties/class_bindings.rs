@@ -6,6 +6,8 @@ use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
 
+use super::class_details::ClassTemps;
+
 /// Store for bindings for class.
 ///
 /// 1. Existing binding for class name (if class has a name).
@@ -56,13 +58,13 @@ pub(super) struct ClassBindings<'a> {
     pub identity: ClassIdentity<'a>,
     /// Effective private-storage mode selected when the owning class is entered.
     private_fields_as_properties: bool,
-    /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
-    pub outer_hoist_scope_id: ScopeId,
     /// `true` if should use temp binding for references to class in transpiled static private fields,
     /// `false` if can use name binding
     pub static_private_fields_use_temp: bool,
     /// `true` if temp var for class has been inserted
     pub temp_var_is_created: bool,
+    /// Where this class declares its temporaries, including a lazily created temp var.
+    pub temps: ClassTemps,
 }
 
 /// What the class's own bindings refer to once the class is defined, which decides how transpiled
@@ -96,12 +98,22 @@ impl<'a> ClassIdentity<'a> {
 }
 
 impl<'a> ClassBindings<'a> {
+    /// Binding which refers to the class from outside its body, e.g. for static initializers and
+    /// decorator application.
+    ///
+    /// A class declaration uses its name (or a temp for `export default class {}`). A class
+    /// expression always uses the temp var.
+    pub fn outer_binding(&self, is_declaration: bool) -> &BoundIdentifier<'a> {
+        if is_declaration { self.name.as_ref().or(self.temp.as_ref()) } else { self.temp.as_ref() }
+            .expect("class referenced from outside its body always has a binding")
+    }
+
     /// Create new `ClassBindings`.
     pub fn new(
         name_binding: Option<BoundIdentifier<'a>>,
         temp_binding: Option<BoundIdentifier<'a>>,
         brand_binding: Option<BoundIdentifier<'a>>,
-        outer_scope_id: ScopeId,
+        temps: ClassTemps,
         static_private_fields_use_temp: bool,
         temp_var_is_created: bool,
         private_fields_as_properties: bool,
@@ -113,9 +125,9 @@ impl<'a> ClassBindings<'a> {
             brand: brand_binding,
             identity: ClassIdentity::Stable,
             private_fields_as_properties,
-            outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
+            temps,
         }
     }
 
@@ -123,7 +135,15 @@ impl<'a> ClassBindings<'a> {
     ///
     /// Used when class needs no transform, and for dummy entry at top of `ClassesStack`.
     pub fn dummy(private_fields_as_properties: bool) -> Self {
-        Self::new(None, None, None, ScopeId::new(0), false, false, private_fields_as_properties)
+        Self::new(
+            None,
+            None,
+            None,
+            ClassTemps::Hoisted(ScopeId::new(0)),
+            false,
+            false,
+            private_fields_as_properties,
+        )
     }
 
     /// Get `SymbolId` of name binding.
@@ -177,9 +197,8 @@ impl<'a> ClassBindings<'a> {
             || matches!(self.identity, ClassIdentity::NameReassigned)
         {
             // Create temp binding if doesn't already exist
-            self.temp.get_or_insert_with(|| {
-                Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
-            })
+            self.temp
+                .get_or_insert_with(|| self.temps.create_class_binding(self.name.as_ref(), ctx))
         } else {
             // `static_private_fields_use_temp` is always `true` for class expressions.
             // Class declarations always have a name binding if they have any static props.
@@ -214,18 +233,5 @@ impl<'a> ClassBindings<'a> {
             return self.get_or_init_static_binding(ctx);
         }
         self.identity.static_brand().unwrap()
-    }
-
-    /// Generate binding for temp var.
-    pub fn create_temp_binding(
-        name_binding: Option<&BoundIdentifier<'a>>,
-        outer_hoist_scope_id: ScopeId,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> BoundIdentifier<'a> {
-        // Base temp binding name on class name, or "Class" if no name.
-        // TODO(improve-on-babel): If class name var isn't mutated, no need for temp var for
-        // class declaration. Can just use class binding.
-        let name = name_binding.map_or("Class", |binding| binding.name.as_str());
-        ctx.generate_uid(name, outer_hoist_scope_id, SymbolFlags::FunctionScopedVariable)
     }
 }

@@ -12,16 +12,19 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier};
 
 use crate::{
     common::{
         computed_key::{create_computed_key_temp_var, key_needs_temp_var},
+        duplicate::duplicate_expression,
         helper_loader::{Helper, helper_call_expr},
     },
     context::TraverseCtx,
+    decorator::is_parameter_decorator,
+    es2020::OptionalChaining,
     state::TransformState,
     utils::ast_builder::{
         create_assignment, create_let_declaration, create_to_property_key,
@@ -76,61 +79,16 @@ impl<'a> StandardDecoratorState<'a> {
         statement: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        struct DecoratedClassFinder<'s, 'a> {
-            found: bool,
-            loop_classes: &'s mut FxHashMap<Address, bool>,
-            state: &'s TransformState<'a>,
-        }
-        impl<'a> Visit<'a> for DecoratedClassFinder<'_, 'a> {
-            fn visit_statement(&mut self, statement: &Statement<'a>) {
-                let loop_address = matches!(
-                    statement,
-                    Statement::ForStatement(_)
-                        | Statement::ForInStatement(_)
-                        | Statement::ForOfStatement(_)
-                        | Statement::WhileStatement(_)
-                        | Statement::DoWhileStatement(_)
-                )
-                .then(|| statement.address());
-                // Each cached loop is looked up at most once: a later search starts below the loop
-                // which cached it, and stops at the first cached loop.
-                if let Some(address) = loop_address
-                    && let Some(found) = self.loop_classes.remove(&address)
-                {
-                    self.found |= found;
-                    return;
-                }
-
-                let found_before = mem::take(&mut self.found);
-                oxc_ast_visit::walk::walk_statement(self, statement);
-                if let Some(address) = loop_address {
-                    // Reuse both positive and negative results for nested unbraced loops.
-                    self.loop_classes.insert(address, self.found);
-                }
-                self.found |= found_before;
-            }
-
-            fn visit_class(&mut self, class: &Class<'a>) {
-                self.found |=
-                    self.state.class_lowering_before_entry(class).handles_standard_decorators();
-                if !self.found {
-                    oxc_ast_visit::walk::walk_class(self, class);
-                }
-            }
-
-            // A class inside a function gets its state from that function's body on each call.
-            fn visit_function(&mut self, _: &Function<'a>, _: ScopeFlags) {}
-            fn visit_arrow_function_expression(&mut self, _: &ArrowFunctionExpression<'a>) {}
-        }
-        let found = {
+        // A loop nested in an unbraced loop body was already searched with its parent.
+        let found = self.loop_classes.remove(&ctx.parent().address()).unwrap_or_else(|| {
             let mut finder = DecoratedClassFinder {
                 found: false,
-                loop_classes: &mut self.loop_classes,
+                loop_classes: Some(&mut self.loop_classes),
                 state: &ctx.state,
             };
             finder.visit_statement(statement);
             finder.found
-        };
+        });
         if found {
             let scope_id = ctx.insert_scope_below_statement(statement, ScopeFlags::empty());
             let body = statement.take_in(ctx);
@@ -236,22 +194,8 @@ impl<'a> StandardDecoratorState<'a> {
     }
 
     fn header_has_decorated_class(expression: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        struct Finder<'s, 'a> {
-            found: bool,
-            state: &'s TransformState<'a>,
-        }
-        impl<'a> Visit<'a> for Finder<'_, 'a> {
-            fn visit_class(&mut self, class: &Class<'a>) {
-                self.found |=
-                    self.state.class_lowering_before_entry(class).handles_standard_decorators();
-                if !self.found {
-                    oxc_ast_visit::walk::walk_class(self, class);
-                }
-            }
-            fn visit_function(&mut self, _: &Function<'a>, _: ScopeFlags) {}
-            fn visit_arrow_function_expression(&mut self, _: &ArrowFunctionExpression<'a>) {}
-        }
-        let mut finder = Finder { found: false, state: &ctx.state };
+        let mut finder =
+            DecoratedClassFinder { found: false, loop_classes: None, state: &ctx.state };
         finder.visit_expression(expression);
         finder.found
     }
@@ -298,6 +242,78 @@ impl<'a> StandardDecoratorState<'a> {
             next,
             ctx,
         )
+    }
+
+    /// Preserve the receiver before private fields and `super` accesses are lowered.
+    /// Each decorator is stored as `[receiver, function]` in evaluation order.
+    pub(crate) fn capture_decorator_receiver(
+        &self,
+        decorator: &mut Decorator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.enabled {
+            return;
+        }
+        // Standard decorators cannot decorate parameters. Leave the parameter untouched; the
+        // error is reported by the parser (JavaScript) or `Decorator::enter_decorator` (TypeScript).
+        if is_parameter_decorator(ctx) {
+            return;
+        }
+        // TypeScript erases `declare` fields together with their decorators.
+        if let Ancestor::PropertyDefinitionDecorators(prop) = ctx.parent()
+            && *prop.declare()
+        {
+            return;
+        }
+        let expression = decorator.expression.get_inner_expression_mut();
+        if matches!(expression, Expression::ChainExpression(_)) {
+            // Capture only after the optional checks have succeeded. Pulling a member's
+            // object out of a chain would turn `null?.child.dec` into an early throw.
+            OptionalChaining::lower_chain_expression(expression, ctx);
+            Self::capture_optional_decorator_receiver(expression, ctx);
+        } else {
+            Self::capture_decorator_receiver_pair(expression, ctx);
+        }
+    }
+
+    fn capture_optional_decorator_receiver(
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match expression {
+            Expression::ConditionalExpression(conditional) => {
+                Self::capture_optional_decorator_receiver(&mut conditional.consequent, ctx);
+                Self::capture_optional_decorator_receiver(&mut conditional.alternate, ctx);
+            }
+            Expression::SequenceExpression(sequence) => {
+                Self::capture_optional_decorator_receiver(
+                    sequence.expressions.last_mut().unwrap(),
+                    ctx,
+                );
+            }
+            expression => Self::capture_decorator_receiver_pair(expression, ctx),
+        }
+    }
+
+    fn capture_decorator_receiver_pair(expression: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let receiver = if let Some(member) = expression.as_member_expression_mut() {
+            let object = member.object_mut();
+            if matches!(object.get_inner_expression(), Expression::Super(_)) {
+                Expression::new_this_expression(SPAN, ctx)
+            } else {
+                let (receiver, reference) = duplicate_expression(object.take_in(ctx), true, ctx);
+                *object = reference;
+                receiver
+            }
+        } else {
+            Expression::new_void_0(SPAN, ctx)
+        };
+        let function = expression.take_in(ctx);
+        *expression = Expression::new_array_expression(
+            SPAN,
+            [ArrayExpressionElement::from(receiver), ArrayExpressionElement::from(function)],
+            ctx,
+        );
     }
 
     /// Decorator context names use the property key after a single ToPropertyKey conversion.
@@ -363,11 +379,12 @@ impl<'a> StandardDecoratorState<'a> {
 
     /// Entry phase: assign initializer slot indexes to decorated fields and accessors.
     ///
-    /// Order matches the order `__decorateElement` is called in:
+    /// Order matches the order `decorateElement` is called in:
     /// static accessors, instance accessors, static fields, instance fields.
     pub(crate) fn prepare_class_decorators(
         body: &ClassBody<'a>,
         mut tables: ClassDecoratorTables<'a>,
+        heritage_class_symbol: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ClassDecoratorState<'a> {
         let mut groups: [Vec<Address>; 4] = Default::default();
@@ -480,7 +497,15 @@ impl<'a> StandardDecoratorState<'a> {
             SymbolFlags::BlockScopedVariable,
         );
         ctx.state.var_declarations.insert_let(&init, None, &ctx.ast);
-        ClassDecoratorState { init, instance_method_extras, static_method_extras, tables }
+        ClassDecoratorState {
+            init,
+            instance_method_extras,
+            static_method_extras,
+            original_class: None,
+            heritage_class_symbol,
+            tables,
+            declaration_rewrite: None,
+        }
     }
 
     /// Exit phase: evaluate class decorators into `_Class_decorators = [...]` before class,
@@ -493,10 +518,9 @@ impl<'a> StandardDecoratorState<'a> {
     ) {
         if !class.decorators.is_empty() {
             let name = class.id.as_ref().map_or("Class", |id| id.name.as_str());
-            let binding = ctx.generate_uid_in_current_hoist_scope(&format!("{name}_decorators"));
-            ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-            let array = Self::decorator_array(&mut class.decorators, ctx);
-            insert_before.push(create_assignment(&binding, array, SPAN, ctx));
+            let name = format!("{name}_decorators");
+            let binding =
+                Self::assign_decorator_array(&name, &mut class.decorators, insert_before, ctx);
             self.exit.class_decorators = Some(binding);
         }
         self.exit.class_prefix_len = insert_before.len();
@@ -544,32 +568,25 @@ impl<'a> StandardDecoratorState<'a> {
             PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
             _ => "member",
         };
-        let binding = ctx.generate_uid_in_current_hoist_scope(&format!("{hint}_dec"));
-        ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-        let array = Self::decorator_array(decorators, ctx);
-        insert_before.push(create_assignment(&binding, array, SPAN, ctx));
-        binding
+        Self::assign_decorator_array(&format!("{hint}_dec"), decorators, insert_before, ctx)
     }
 
-    /// Decorators as `[receiver, function]` pairs, which the runtime expects.
-    fn decorator_array(
+    /// `_name = [dec1, dec2]` before the class.
+    fn assign_decorator_array(
+        name: &str,
         decorators: &mut ArenaVec<'a, Decorator<'a>>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let mut elements = ArenaVec::with_capacity_in(decorators.len(), ctx);
-        for decorator in decorators.drain(..) {
-            let receiver = Expression::new_void_0(SPAN, ctx);
-            let pair = Expression::new_array_expression(
-                SPAN,
-                [
-                    ArrayExpressionElement::from(receiver),
-                    ArrayExpressionElement::from(decorator.expression),
-                ],
-                ctx,
-            );
-            elements.push(ArrayExpressionElement::from(pair));
-        }
-        Expression::new_array_expression(SPAN, elements, ctx)
+        insert_before: &mut Vec<Expression<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let binding = ctx.generate_uid_in_current_hoist_scope(name);
+        ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+        let elements = ArenaVec::from_iter_in(
+            decorators.drain(..).map(|d| ArrayExpressionElement::from(d.expression)),
+            ctx,
+        );
+        let array = Expression::new_array_expression(SPAN, elements, ctx);
+        insert_before.push(create_assignment(&binding, array, SPAN, ctx));
+        binding
     }
 
     /// Replace a method's key with a read of `binding`, at the original key's position so
@@ -673,7 +690,7 @@ impl<'a> StandardDecoratorState<'a> {
         }
     }
 
-    /// Expression for element name passed to `__decorateElement`.
+    /// Expression for element name passed to `decorateElement`.
     pub(crate) fn decorator_key_expr(
         key: &PropertyKey<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -803,4 +820,61 @@ impl<'a> ClassDecoratorTables<'a> {
             }
         }
     }
+}
+
+/// Finds a class that needs standard decorator lowering, outside nested functions.
+///
+/// With `loop_classes`, it also caches the result for each unbraced loop body it searches.
+struct DecoratedClassFinder<'s, 'a> {
+    found: bool,
+    loop_classes: Option<&'s mut FxHashMap<Address, bool>>,
+    state: &'s TransformState<'a>,
+}
+
+impl<'a> Visit<'a> for DecoratedClassFinder<'_, 'a> {
+    fn visit_statement(&mut self, statement: &Statement<'a>) {
+        let Some(loop_classes) = self.loop_classes.as_deref_mut() else {
+            oxc_ast_visit::walk::walk_statement(self, statement);
+            return;
+        };
+        // Only unbraced loop bodies are visited by `wrap_loop_body_if_decorated`, which
+        // consumes the cached result. Braced loops are not cached, so nothing is left over.
+        let loop_address = match statement {
+            Statement::ForStatement(s) => Some(&s.body),
+            Statement::ForInStatement(s) => Some(&s.body),
+            Statement::ForOfStatement(s) => Some(&s.body),
+            Statement::WhileStatement(s) => Some(&s.body),
+            Statement::DoWhileStatement(s) => Some(&s.body),
+            _ => None,
+        }
+        .filter(|body| !matches!(body, Statement::BlockStatement(_)))
+        .map(|_| statement.address());
+        if let Some(address) = loop_address
+            && let Some(found) = loop_classes.remove(&address)
+        {
+            self.found |= found;
+            return;
+        }
+
+        let found_before = mem::take(&mut self.found);
+        oxc_ast_visit::walk::walk_statement(self, statement);
+        if let Some(address) = loop_address {
+            // Reuse both positive and negative results for nested unbraced loops.
+            if let Some(loop_classes) = self.loop_classes.as_deref_mut() {
+                loop_classes.insert(address, self.found);
+            }
+        }
+        self.found |= found_before;
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.found |= self.state.class_lowering_before_entry(class).needs_per_evaluation_state();
+        if !self.found {
+            oxc_ast_visit::walk::walk_class(self, class);
+        }
+    }
+
+    // A class inside a function gets its state from that function's body on each call.
+    fn visit_function(&mut self, _: &Function<'a>, _: ScopeFlags) {}
+    fn visit_arrow_function_expression(&mut self, _: &ArrowFunctionExpression<'a>) {}
 }

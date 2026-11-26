@@ -243,3 +243,45 @@ fn standard_decorator_temporary_method_keys_keep_source_positions() {
         );
     }
 }
+
+/// Standard decorators cannot decorate parameters (TS1206). TypeScript files report this in every
+/// non-legacy mode, including when decorators are preserved. JavaScript files, and parameters of
+/// functions other than class methods and constructors, leave it to the parser, so the
+/// transformer does not report it a second time.
+#[test]
+fn standard_parameter_decorators_are_reported() {
+    let sources = [
+        "class A { m(@dec x: number) {} }",
+        "class A { m(@dec ...x: number[]) {} }",
+        "class A { constructor(@dec x: number) {} }",
+    ];
+    let parser_reported = ["function f(@dec x: number) {}", "const o = { m(@dec x: number) {} };"];
+    for decorator in [
+        DecoratorOptions::default(),
+        DecoratorOptions { lower: Some(false), ..DecoratorOptions::default() },
+        DecoratorOptions { lower: Some(true), ..DecoratorOptions::default() },
+    ] {
+        for target in [ESTarget::ES2022, ESTarget::ESNext] {
+            let options = TransformOptions { decorator, ..TransformOptions::from(target) };
+            for source in sources {
+                let errors = test_with_source_type(source, SourceType::ts(), &options)
+                    .expect_err("parameter decorator should be reported");
+                assert_eq!(errors.len(), 1, "{target}, {decorator:?}: {errors:?}");
+                assert_eq!(errors[0].to_string(), "Decorators are not valid here.");
+            }
+            let js = test_with_source_type("class A { m(@dec x) {} }", SourceType::mjs(), &options);
+            assert!(js.is_ok(), "{target}, {decorator:?}: {js:?}");
+            for source in parser_reported {
+                let ts = test_with_source_type(source, SourceType::ts(), &options);
+                assert!(ts.is_ok(), "{target}, {decorator:?}, {source}: {ts:?}");
+            }
+        }
+    }
+
+    let legacy = DecoratorOptions { legacy: true, ..DecoratorOptions::default() };
+    let options =
+        TransformOptions { decorator: legacy, ..TransformOptions::from(ESTarget::ES2022) };
+    for source in sources {
+        assert!(test_with_source_type(source, SourceType::ts(), &options).is_ok());
+    }
+}

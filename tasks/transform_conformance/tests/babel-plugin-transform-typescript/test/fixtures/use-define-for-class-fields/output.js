@@ -1,5 +1,5 @@
 var _z_dec, _z_dec2;
-let _init, _Cls, _init2, _StaticCls;
+let _init, _init2, _StaticCls;
 _z_dec = [[void 0, dce]];
 class Cls {
   constructor() {
@@ -8,7 +8,6 @@ class Cls {
     babelHelpers.runInitializers(_init, 11, this);
   }
 }
-_Cls = Cls;
 _init = babelHelpers.decoratorStart(null);
 babelHelpers.decorateElement(_init, 5, "z", _z_dec, Cls);
 babelHelpers.decoratorMetadata(_init, Cls);

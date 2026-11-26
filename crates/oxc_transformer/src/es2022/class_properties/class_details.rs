@@ -115,8 +115,6 @@ pub(super) struct ClassDetails<'a> {
     ///
     /// Boxed because decorated classes are rare, and this keeps `ClassDetails` small.
     pub decorators: Option<Box<ClassDecoratorState<'a>>>,
-    /// Where this class declares its temporaries.
-    pub temps: ClassTemps,
 }
 
 impl ClassDetails<'_> {
@@ -131,7 +129,6 @@ impl ClassDetails<'_> {
             private_props: PrivateProps::Lowered(IdentIndexMap::default()),
             bindings: ClassBindings::dummy(false),
             decorators: None,
-            temps: ClassTemps::Hoisted(ScopeId::new(0)),
         }
     }
 }

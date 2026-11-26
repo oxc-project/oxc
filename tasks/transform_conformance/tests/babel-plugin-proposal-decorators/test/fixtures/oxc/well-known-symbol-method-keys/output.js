@@ -1,5 +1,5 @@
 var _m_dec, _member_dec, _member_dec2, _m_dec3, _undefined_dec;
-let _init, _A, _Symbol$iterator, _key, _key2, _init2, _B, _Symbol$iterator2, _babelHelpers$toPrope, _init4, _D, _Symbol$iterator3, _key5, _key6, _init5, _E, _babelHelpers$toPrope3, _key7, _key8, _init6, _F, _babelHelpers$toPrope4;
+let _init, _Symbol$iterator, _key, _key2, _init2, _Symbol$iterator2, _babelHelpers$toPrope, _init4, _Symbol$iterator3, _key5, _key6, _init5, _babelHelpers$toPrope3, _key7, _key8, _init6, _babelHelpers$toPrope4;
 _m_dec = [[void 0, dec]];
 _Symbol$iterator = Symbol.iterator;
 // A well-known symbol key can't collide with a string name, so methods keep their keys.
@@ -11,7 +11,6 @@ class A {
   plain() {}
   *[_Symbol$iterator]() {}
 }
-_A = A;
 _init = babelHelpers.decoratorStart(null);
 babelHelpers.decorateElement(_init, 1, "m", _m_dec, A);
 babelHelpers.decoratorMetadata(_init, A);
@@ -28,7 +27,6 @@ class B {
   *[_key]() {}
   *[_key2]() {}
 }
-_B = B;
 _init2 = babelHelpers.decoratorStart(null, B, [[
   1,
   _Symbol$iterator2,
@@ -44,7 +42,7 @@ babelHelpers.decoratorMetadata(_init2, B);
 // A shadowed `Symbol` can produce any key.
 {
   var _m_dec2;
-  let _key3, _key4, _init3, _C, _babelHelpers$toPrope2;
+  let _key3, _key4, _init3, _babelHelpers$toPrope2;
   const Symbol = { iterator: "m" };
   _m_dec2 = [[void 0, dec]];
   _key3 = babelHelpers.decoratorKey();
@@ -57,7 +55,6 @@ babelHelpers.decoratorMetadata(_init2, B);
     [_key3]() {}
     [_key4]() {}
   }
-  _C = C;
   _init3 = babelHelpers.decoratorStart(null, C, [[
     1,
     "m",
@@ -81,7 +78,6 @@ class D {
   *[_Symbol$iterator3]() {}
   m() {}
 }
-_D = D;
 _init4 = babelHelpers.decoratorStart(null);
 babelHelpers.decorateElement(_init4, 1, _Symbol$iterator3, _member_dec2, D);
 babelHelpers.decoratorMetadata(_init4, D);
@@ -97,7 +93,6 @@ class E {
   [_key5]() {}
   [_key6]() {}
 }
-_E = E;
 _init5 = babelHelpers.decoratorStart(null, E, [[
   1,
   "m",
@@ -122,7 +117,6 @@ class F {
   [_key7]() {}
   [_key8]() {}
 }
-_F = F;
 _init6 = babelHelpers.decoratorStart(null, F, [[
   1,
   "undefined",

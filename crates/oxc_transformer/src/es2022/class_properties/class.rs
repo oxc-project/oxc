@@ -81,7 +81,7 @@ impl<'a> ClassProperties<'a> {
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
         let mut entry =
-            self.on_body_entry(body, class_name_binding.as_ref(), class_scope_id, lowering, ctx);
+            self.on_body_entry(body, &mut class_name_binding, class_scope_id, lowering, ctx);
         let temps = entry.temps;
         let instance_method_extras =
             entry.state.as_ref().is_some_and(|state| state.instance_method_extras);
@@ -194,7 +194,6 @@ impl<'a> ClassProperties<'a> {
                 private_props: PrivateProps::Lowered(private_props),
                 bindings: ClassBindings::dummy(self.private_fields_as_properties),
                 decorators: None,
-                temps,
             });
             return;
         }
@@ -203,14 +202,15 @@ impl<'a> ClassProperties<'a> {
         // Static prop in class expression or anonymous `export default class {}` always require
         // temp var for class. Static prop in class declaration doesn't.
         // Anonymous `export default class {}` with static elements always has a temp var,
-        // so that static blocks are evaluated after the class is defined.
-        let need_temp_var = entry.is_decorated()
+        // so that static blocks are evaluated after the class is defined. A decorated class
+        // declaration is decorated through its name binding; it needs a temp var only for the
+        // reasons an undecorated class does.
+        let need_temp_var = ((entry.is_decorated() || has_static_prop)
+            && (!is_declaration || class_name_binding.is_none()))
             || entry.static_accessor_binding.is_some()
             || (is_anonymous_default_export
-                && (has_static_prop || has_static_private_method_or_static_block))
-            || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
+                && (has_static_prop || has_static_private_method_or_static_block));
 
-        let outer_hoist_scope_id = ctx.current_hoist_scope_id();
         let class_temp_binding = if need_temp_var {
             let temp_binding = entry
                 .static_accessor_binding
@@ -250,7 +250,7 @@ impl<'a> ClassProperties<'a> {
             class_name_binding,
             class_temp_binding,
             class_brand_binding,
-            outer_hoist_scope_id,
+            temps,
             static_private_fields_use_temp,
             need_temp_var,
             private_fields_as_properties,
@@ -260,6 +260,7 @@ impl<'a> ClassProperties<'a> {
         }
 
         entry.configure_bindings(&mut class_bindings, &private_props, ctx);
+        entry.rewrite_expression_name(body, &class_bindings, is_declaration, ctx);
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
@@ -269,7 +270,6 @@ impl<'a> ClassProperties<'a> {
             private_props: PrivateProps::Lowered(private_props),
             bindings: class_bindings,
             decorators: entry.state,
-            temps,
         });
 
         // Exit if no instance properties (public or private)
@@ -376,6 +376,10 @@ impl<'a> ClassProperties<'a> {
         }
         // Pop off stack. We're done!
         let class_details = self.classes_stack.pop();
+        if let Some(rewrite) = class_details.decorators.and_then(|state| state.declaration_rewrite)
+        {
+            self.decorator_state.schedule_declaration_rewrite(class.unstable_address(), rewrite);
+        }
         if let Some(private_props) = class_details.private_props.lowered() {
             // Note: `private_props` can be non-empty even if `is_transform_required == false`,
             // if class contains private accessors, which we don't transform yet
@@ -450,7 +454,7 @@ impl<'a> ClassProperties<'a> {
                         .is_some_and(|name| name.symbol_id == temp_binding.symbol_id)
                         && ident.symbol_id() != temp_binding.symbol_id)
                 {
-                    class_details.temps.declare(temp_binding, ctx);
+                    class_details.bindings.temps.declare(temp_binding, ctx);
                 }
 
                 // Insert `_Class = Class` after class.
@@ -533,11 +537,15 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         let binding = class_details.bindings.brand();
                         let value = create_new_weakset(ctx);
-                        stmts.push(class_details.temps.declaration(binding, value, ctx));
+                        stmts.push(class_details.bindings.temps.declaration(binding, value, ctx));
                     } else {
                         // `var _prop = new WeakMap();`
                         let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
-                        stmts.push(class_details.temps.declaration(&prop.binding, value, ctx));
+                        stmts.push(class_details.bindings.temps.declaration(
+                            &prop.binding,
+                            value,
+                            ctx,
+                        ));
                     }
                 }
                 if !stmts.is_empty() {
@@ -691,13 +699,13 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
-                        class_details.temps.declare(binding, ctx);
+                        class_details.bindings.temps.declare(binding, ctx);
                         let value = create_new_weakset(ctx);
                         return Some(create_assignment(binding, value, SPAN, ctx));
                     }
 
                     // Insert `var _prop;` declaration
-                    class_details.temps.declare(&prop.binding, ctx);
+                    class_details.bindings.temps.declare(&prop.binding, ctx);
 
                     if prop.uses_static_lowering() {
                         return None;
@@ -723,7 +731,7 @@ impl<'a> ClassProperties<'a> {
                 };
                 let id = func.id.take().expect("private method binding always has an id");
                 let binding = BoundIdentifier::from_binding_ident(&id);
-                class_details.temps.declare(&binding, ctx);
+                class_details.bindings.temps.declare(&binding, ctx);
                 func.r#type = FunctionType::FunctionExpression;
                 let assignment =
                     create_assignment(&binding, Expression::FunctionExpression(func), SPAN, ctx);
@@ -826,7 +834,7 @@ impl<'a> ClassProperties<'a> {
     ) -> usize {
         let details = self.current_class();
         let transform_static_blocks =
-            self.transform_static_blocks || details.temps.is_per_evaluation();
+            self.transform_static_blocks || details.bindings.temps.is_per_evaluation();
 
         let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {

@@ -66,11 +66,11 @@ binder.ts:
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
-  sys allocs: 359
-  sys reallocs: 174
-  sys deallocs: 359
+  sys allocs: 374
+  sys reallocs: 175
+  sys deallocs: 374
   sys alloc bytes: 5284342 # 5.28 MB
   sys peak growth: 3707425 # 3.71 MB
-  arena allocs: 18562
-  arena reallocs: 867
-  arena size: 7069064 # 7.07 MB
+  arena allocs: 18689
+  arena reallocs: 881
+  arena size: 7143040 # 7.14 MB

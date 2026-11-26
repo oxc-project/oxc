@@ -1,5 +1,5 @@
 var _member_dec, _value_dec, _x_dec, _x_dec2;
-let _key, _key2, _key3, _key4, _key5, _key6, _key7, _init, _C, _babelHelpers$toPrope, _babelHelpers$toPrope2;
+let _key, _key2, _key3, _key4, _key5, _key6, _key7, _init, _babelHelpers$toPrope, _babelHelpers$toPrope2;
 function dec() {}
 const key = Symbol("method");
 let _value_accessor_storage = /* @__PURE__ */ new WeakMap();
@@ -50,7 +50,6 @@ class C {
     return 2;
   }
 }
-_C = C;
 _init = babelHelpers.decoratorStart(null, C, [
   [
     1,
