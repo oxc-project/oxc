@@ -1,15 +1,16 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, TSInterfaceDeclaration, TSSignature, TSType, TSTypeName},
+    ast::{TSInterfaceDeclaration, TSSignature, TSThisType, TSTypeLiteral, TSTypeName},
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    fixer::Fix,
     rule::Rule,
 };
 
@@ -18,6 +19,13 @@ fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnosti
     OxcDiagnostic::warn("Enforce using function types instead of interfaces with call signatures.")
         .with_help(format!("The function type form `{suggestion}` is generally preferred when possible for being more succinct."))
         .with_label(span)
+}
+
+fn unexpected_this_diagnostic(interface_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "`this` refers to the function type `{interface_name}`, did you intend to use a generic `this` parameter like `<Self>(this: Self, ...) => Self` instead?"
+    ))
+    .with_label(span)
 }
 
 const CONVERT_TO_FUNCTION_TYPE: &str = "Convert to function type";
@@ -105,275 +113,143 @@ fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
     true
 }
 
-fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>) {
+fn function_type_text(member: &TSSignature, ctx: &LintContext<'_>) -> Option<(Span, String)> {
     let (span, return_type) = match member {
         TSSignature::TSConstructSignatureDeclaration(decl) => (decl.span, &decl.return_type),
         TSSignature::TSCallSignatureDeclaration(decl) => (decl.span, &decl.return_type),
-        _ => return,
+        _ => return None,
     };
-
-    let Some(type_annotation) = &return_type else {
-        return;
-    };
-    let Span { start, end, .. } = span;
-    let colon_pos = type_annotation.span.start - start;
-    let source_code = &ctx.source_text();
-    let text: &str = &source_code[start as usize..end as usize];
-    let mut suggestion = format!(
-        "{} =>{}",
-        &text[0..colon_pos as usize],
-        &text[(colon_pos + 1) as usize..text.len()]
-    );
-
+    let type_annotation = return_type.as_ref()?;
+    let text = ctx.source_range(span);
+    let colon_pos = (type_annotation.span.start - span.start) as usize;
+    let mut suggestion = format!("{} =>{}", &text[..colon_pos], &text[colon_pos + 1..]);
     if suggestion.ends_with([';', ',']) {
         suggestion.pop();
     }
+    Some((span, suggestion))
+}
 
-    match node.kind() {
-        AstKind::TSInterfaceDeclaration(interface_decl) => {
-            if let Some(type_parameters) = &interface_decl.type_parameters {
-                ctx.diagnostic_with_fix(
-                    prefer_function_type_diagnostic(&suggestion, span),
-                    |fixer| {
-                        let mut span = interface_decl.id.span;
-                        span.end = type_parameters.span.end;
-                        let type_name = fixer.source_range(span);
-                        fixer
-                            .replace(
-                                interface_decl.span,
-                                format!("type {type_name} = {suggestion};"),
-                            )
-                            .with_message(CONVERT_TO_FUNCTION_TYPE)
-                    },
-                );
-            } else {
-                ctx.diagnostic_with_fix(prefer_function_type_diagnostic(&suggestion, span), |_| {
-                    let mut is_parent_exported = false;
-                    let mut node_start = interface_decl.span.start;
-                    let mut node_end = interface_decl.span.end;
-                    if let AstKind::ExportDeclaration(export_name_decl) =
-                        ctx.nodes().parent_kind(node.id())
-                    {
-                        is_parent_exported = true;
-                        node_start = export_name_decl.span.start;
-                        node_end = export_name_decl.span.end;
-                    }
+fn check_interface<'a>(
+    decl: &TSInterfaceDeclaration<'a>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    let Some((span, suggestion)) = function_type_text(&decl.body.body[0], ctx) else {
+        return;
+    };
 
-                    let mut comments = ctx.comments_range(node_start..node_end).peekable();
-                    if comments.peek().is_some() {
-                        let mut comments_text = String::new();
-
-                        for comment in comments {
-                            comments_text.push_str(comment.span.source_text(source_code));
-                            comments_text.push('\n');
-                        }
-
-                        return Fix::new(
-                            format!(
-                                "{}{}{} = {};",
-                                comments_text,
-                                if is_parent_exported { "export type " } else { "type " },
-                                interface_decl.id.name,
-                                suggestion
-                            ),
-                            Span::new(node_start, node_end),
-                        )
-                        .with_message(CONVERT_TO_FUNCTION_TYPE);
-                    }
-
-                    Fix::new(
-                        format!(
-                            "{} {} = {};",
-                            if is_parent_exported { "export type" } else { "type" },
-                            interface_decl.id.name,
-                            suggestion
-                        ),
-                        Span::new(node_start, node_end),
-                    )
-                    .with_message(CONVERT_TO_FUNCTION_TYPE)
-                });
-            }
-        }
-
-        AstKind::TSTypeAnnotation(ts_type_annotation) => {
-            match &ts_type_annotation.type_annotation {
-                TSType::TSUnionType(union_type) => {
-                    union_type.types.iter().for_each(|ts_type| {
-                        if let TSType::TSTypeLiteral(literal) = ts_type {
-                            ctx.diagnostic_with_fix(
-                                prefer_function_type_diagnostic(&suggestion, span),
-                                |fixer| {
-                                    fixer
-                                        .replace(literal.span, format!("({suggestion})"))
-                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
-                                },
-                            );
-                        }
-                    });
-                }
-
-                TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                    prefer_function_type_diagnostic(&suggestion, span),
-                    |fixer| {
-                        fixer
-                            .replace(literal.span, suggestion)
-                            .with_message(CONVERT_TO_FUNCTION_TYPE)
-                    },
-                ),
-
-                _ => {
-                    ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, span));
-                }
-            }
-        }
-
-        AstKind::TSTypeAliasDeclaration(ts_type_alias_decl) => {
-            match &ts_type_alias_decl.type_annotation {
-                TSType::TSUnionType(union_type) => {
-                    union_type.types.iter().for_each(|ts_type| {
-                        let TSType::TSTypeLiteral(literal) = ts_type else {
-                            return;
-                        };
-                        let body = &literal.members;
-                        if body.len() != 1 {
-                            return;
-                        }
-                        ctx.diagnostic_with_fix(
-                            prefer_function_type_diagnostic(&suggestion, span),
-                            |fixer| {
-                                fixer
-                                    .replace(literal.span, format!("({suggestion})"))
-                                    .with_message(CONVERT_TO_FUNCTION_TYPE)
-                            },
-                        );
-                    });
-                }
-
-                TSType::TSIntersectionType(intersection_type) => {
-                    intersection_type.types.iter().for_each(|ts_type| {
-                        let TSType::TSTypeLiteral(literal) = ts_type else {
-                            return;
-                        };
-                        let body = &literal.members;
-                        if body.len() != 1 {
-                            return;
-                        }
-                        ctx.diagnostic_with_fix(
-                            prefer_function_type_diagnostic(&suggestion, span),
-                            |fixer| {
-                                fixer
-                                    .replace(literal.span, format!("({suggestion})"))
-                                    .with_message(CONVERT_TO_FUNCTION_TYPE)
-                            },
-                        );
-                    });
-                }
-
-                TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                    prefer_function_type_diagnostic(&suggestion, span),
-                    |fixer| {
-                        fixer
-                            .replace(literal.span, suggestion)
-                            .with_message(CONVERT_TO_FUNCTION_TYPE)
-                    },
-                ),
-
-                _ => {}
-            }
-        }
-
-        _ => ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, span)),
+    let mut this_finder = ThisTypeFinder::default();
+    this_finder.visit_ts_interface_declaration(decl);
+    if let Some(this_span) = this_finder.span {
+        ctx.diagnostic(unexpected_this_diagnostic(&decl.id.name, this_span));
+        return;
     }
+
+    let diagnostic = prefer_function_type_diagnostic(&suggestion, span);
+    let (node_span, keyword) = match ctx.nodes().parent_kind(node.id()) {
+        AstKind::ExportDefaultDeclaration(_) => {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+        AstKind::ExportDeclaration(export_decl) => (export_decl.span, "export type"),
+        _ => (decl.span, "type"),
+    };
+
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+        let type_name = match &decl.type_parameters {
+            Some(type_parameters) => {
+                ctx.source_range(Span::new(decl.id.span.start, type_parameters.span.end))
+            }
+            None => decl.id.name.as_str(),
+        };
+        let mut replacement = String::new();
+        for comment in ctx
+            .comments_range(node_span.start..node_span.end)
+            .filter(|comment| !span.contains_inclusive(comment.span))
+        {
+            replacement.push_str(ctx.source_range(comment.span));
+            replacement.push('\n');
+        }
+        replacement.push_str(keyword);
+        replacement.push(' ');
+        replacement.push_str(type_name);
+        replacement.push_str(" = ");
+        replacement.push_str(&suggestion);
+        replacement.push(';');
+        fixer.replace(node_span, replacement).with_message(CONVERT_TO_FUNCTION_TYPE)
+    });
+}
+
+fn check_type_literal<'a>(literal: &TSTypeLiteral<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    let member = &literal.members[0];
+    let Some((span, suggestion)) = function_type_text(member, ctx) else {
+        return;
+    };
+
+    ctx.diagnostic_with_fix(prefer_function_type_diagnostic(&suggestion, span), |fixer| {
+        let needs_parens = matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::TSUnionType(_)
+                | AstKind::TSIntersectionType(_)
+                | AstKind::TSArrayType(_)
+                | AstKind::TSTypeOperator(_)
+                | AstKind::TSIndexedAccessType(_)
+                | AstKind::TSConditionalType(_)
+                | AstKind::TSOptionalType(_)
+                | AstKind::TSRestType(_)
+        );
+        let mut replacement = String::new();
+        for comment in ctx
+            .comments_range(literal.span.start..span.start)
+            .chain(ctx.comments_range(span.end..literal.span.end))
+        {
+            let between = if comment.span.start < span.start {
+                Span::new(comment.span.start, span.start)
+            } else {
+                Span::new(span.start, comment.span.start)
+            };
+            replacement.push_str(ctx.source_range(comment.span));
+            replacement.push(if ctx.source_range(between).contains(is_line_terminator) {
+                '\n'
+            } else {
+                ' '
+            });
+        }
+        if needs_parens {
+            replacement.push('(');
+            replacement.push_str(&suggestion);
+            replacement.push(')');
+        } else {
+            replacement.push_str(&suggestion);
+        }
+        fixer.replace(literal.span, replacement).with_message(CONVERT_TO_FUNCTION_TYPE)
+    });
+}
+
+#[derive(Default)]
+struct ThisTypeFinder {
+    span: Option<Span>,
+}
+
+impl<'a> Visit<'a> for ThisTypeFinder {
+    fn visit_ts_this_type(&mut self, it: &TSThisType) {
+        self.span.get_or_insert(it.span);
+    }
+
+    fn visit_ts_type_literal(&mut self, _it: &TSTypeLiteral<'a>) {}
 }
 
 impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSInterfaceDeclaration(decl) => {
-                if matches!(
-                    ctx.nodes().parent_kind(node.id()),
-                    AstKind::ExportDefaultDeclaration(_)
-                ) {
-                    return;
-                }
-
-                let body = &decl.body.body;
-
-                if !has_one_super_type(decl) && body.len() == 1 {
-                    check_member(&body[0], node, ctx);
-                }
+            AstKind::TSInterfaceDeclaration(decl)
+                if !has_one_super_type(decl) && decl.body.body.len() == 1 =>
+            {
+                check_interface(decl, node, ctx);
             }
-
-            AstKind::ExportDefaultDeclaration(decl) => {
-                if let ExportDefaultDeclarationKind::TSInterfaceDeclaration(interface_decl) =
-                    &decl.declaration
-                {
-                    let body = &interface_decl.body.body;
-                    if !has_one_super_type(interface_decl) && body.len() == 1 {
-                        check_member(&body[0], node, ctx);
-                    }
-                }
+            AstKind::TSTypeLiteral(literal) if literal.members.len() == 1 => {
+                check_type_literal(literal, node, ctx);
             }
-
-            AstKind::TSTypeAnnotation(ts_type_annotation) => {
-                match &ts_type_annotation.type_annotation {
-                    TSType::TSUnionType(union_type) => {
-                        union_type.types.iter().for_each(|ts_type| {
-                            if let TSType::TSTypeLiteral(literal) = ts_type {
-                                let body = &literal.members;
-                                if body.len() == 1 {
-                                    check_member(&body[0], node, ctx);
-                                }
-                            }
-                        });
-                    }
-
-                    TSType::TSTypeLiteral(literal) => {
-                        let body = &literal.members;
-                        if body.len() == 1 {
-                            check_member(&body[0], node, ctx);
-                        }
-                    }
-
-                    _ => {}
-                }
-            }
-
-            AstKind::TSTypeAliasDeclaration(ts_type_alias_decl) => {
-                match &ts_type_alias_decl.type_annotation {
-                    TSType::TSUnionType(union_type) => {
-                        union_type.types.iter().for_each(|ts_type| {
-                            if let TSType::TSTypeLiteral(literal) = ts_type {
-                                let body = &literal.members;
-                                if body.len() == 1 {
-                                    check_member(&body[0], node, ctx);
-                                }
-                            }
-                        });
-                    }
-
-                    TSType::TSIntersectionType(intersection_type) => {
-                        intersection_type.types.iter().for_each(|ts_type| {
-                            if let TSType::TSTypeLiteral(literal) = ts_type {
-                                let body = &literal.members;
-                                if body.len() == 1 {
-                                    check_member(&body[0], node, ctx);
-                                }
-                            }
-                        });
-                    }
-
-                    TSType::TSTypeLiteral(literal) => {
-                        let body = &literal.members;
-
-                        if body.len() == 1 {
-                            check_member(&body[0], node, ctx);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-
             _ => {}
         }
     }
@@ -491,6 +367,13 @@ fn test() {
         "type X = {} & { (): void; };",
         "type K = { new(): T };",
         "export default interface Foo<T> { (): T }",
+        "interface Factory { (): this; }",
+        "type Result = { (): number; } | { error: string };",
+        "type Callbacks = { (): void }[];",
+        "type Keys = keyof { (): void };",
+        "interface Callback<T> { /* Documents the callback */ (): T; }",
+        "type Callback = { /* Documents the callback */ (): void };",
+        "interface Callback { (/* value */ value: string): void }",
     ];
 
     let fix = vec![
@@ -700,6 +583,25 @@ type X = {} & (() => void);
             "export default interface Foo { /** comment */ (): string; }",
         ),
         ("export default interface Foo<T> { (): T }", "export default interface Foo<T> { (): T }"),
+        ("interface Factory { (): this; }", "interface Factory { (): this; }"),
+        (
+            "type Result = { (): number; } | { error: string };",
+            "type Result = (() => number) | { error: string };",
+        ),
+        ("type Callbacks = { (): void }[];", "type Callbacks = (() => void)[];"),
+        ("type Keys = keyof { (): void };", "type Keys = keyof (() => void);"),
+        (
+            "interface Callback<T> { /* Documents the callback */ (): T; }",
+            "/* Documents the callback */\ntype Callback<T> = () => T;",
+        ),
+        (
+            "type Callback = { /* Documents the callback */ (): void };",
+            "type Callback = /* Documents the callback */ () => void;",
+        ),
+        (
+            "interface Callback { (/* value */ value: string): void }",
+            "type Callback = (/* value */ value: string) => void;",
+        ),
     ];
 
     Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)
