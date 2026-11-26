@@ -132,7 +132,15 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
                 write!(f, ";");
                 return;
             }
-            "supports" if matches!(at_rule.prelude, Some(AtRulePrelude::Supports(_))) => {
+            // Only a comment inside a term takes the source rebuild,
+            // kept for Prettier alignment only (see `write_commented_value_params`);
+            // comments between the terms are the structured printer's to place
+            "supports"
+                if matches!(at_rule.prelude, Some(AtRulePrelude::Supports(_)))
+                    && tokenize(raw, TokenizeMode::SplitComments)
+                        .into_iter()
+                        .any(has_comment_in_parens) =>
+            {
                 let _ = f.context().comments().take_before(region_end);
                 write!(f, space());
                 write_commented_value_params(raw, 10, false, f);
@@ -414,7 +422,7 @@ fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) 
     write!(f, group(&indent(&body)));
 }
 
-/// `@import` / `@supports` params containing comments,
+/// `@import` params containing comments, and `@supports` params with a comment inside a term,
 /// laid out the way Prettier's value parser + fill does.
 /// Separator breaks are simulated with static widths
 /// (Prettier's fill fit-checks the next item; our core fill measures only up to a hardline).
@@ -449,7 +457,7 @@ fn write_commented_value_params<'a>(
                 text: t,
                 comma: ci + 1 < chunks.len() && ti == last,
                 chunk: ci,
-                hard: t.contains('(') && t.contains("/*"),
+                hard: has_comment_in_parens(t),
             });
         }
     }
@@ -590,6 +598,13 @@ fn tokenize(raw: &str, mode: TokenizeMode) -> Vec<&str> {
         tokens.push(&raw[s..]);
     }
     tokens
+}
+
+/// A [`tokenize`] token whose paren group holds a comment (`(/* c */ a: b)`):
+/// a top-level comment is a token of its own, so any other comment is inside the parens.
+fn has_comment_in_parens(token: &str) -> bool {
+    !token.starts_with("/*")
+        && split_verbatim(token).any(|(run, verbatim)| verbatim && run.starts_with("/*"))
 }
 
 /// Re-quotes `'...'` strings in a token to the preferred quote (Prettier's `adjustStrings`).
