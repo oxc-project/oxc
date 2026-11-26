@@ -90,7 +90,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    conditional_fix,
+    conditional_suggestion,
     config = ValidTypeof,
     version = "0.0.3",
     short_description = "Enforce comparing `typeof` expressions against valid strings.",
@@ -154,7 +154,7 @@ impl Rule for ValidTypeof {
             && ident.is_undefined()
             && ctx.is_reference_to_global_variable(ident)
         {
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 if self.require_string_literals {
                     not_string(Some("Use `\"undefined\"` instead of `undefined`."), sibling.span())
                 } else {
@@ -187,7 +187,7 @@ fn get_typo_suggestion(value: &str) -> Option<&'static str> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("typeof foo === 'string'", None),
@@ -272,7 +272,11 @@ fn test() {
         ("typeof foo === 'symol'", None),
     ];
 
-    let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];
+    let fix = vec![
+        ("typeof foo === undefined", r#"typeof foo === "undefined""#, None, FixKind::Suggestion),
+        // `typeof missing === undefined` is `false`, so this must not be applied automatically
+        ("typeof foo === undefined", "typeof foo === undefined", None, FixKind::SafeFix),
+    ];
 
     Tester::new(ValidTypeof::NAME, ValidTypeof::PLUGIN, pass, fail)
         .expect_fix(fix)
