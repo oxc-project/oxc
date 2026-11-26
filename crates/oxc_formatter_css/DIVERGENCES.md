@@ -858,6 +858,33 @@ Prettier moves it past the `{` as the block's first comment for `@media` / `@sup
 the comment crosses the `{`, a grammar-fixed delimiter.
 For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{` / the comment text, bugs on its side.
 
+## own-line-comment-before-block
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+
+```css
+/* input */
+@media screen
+  /* c */{
+}
+
+/* ours */
+@media screen
+/* c */
+{
+}
+
+/* prettier */
+@media screen /* c */ {
+}
+```
+
+A comment on its own line before an at-rule's `{` keeps its line, as before a JS block (`if (a)\n/* c */\n{`);
+Prettier moves it onto the prelude's line: the comment changes line.
+
 ## at-root-line-comment-indent
 
 - Why: uniform-rule (same construct, same output: an `@include` prelude after a `//`)

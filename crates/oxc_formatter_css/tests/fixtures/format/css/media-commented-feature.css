@@ -10,9 +10,6 @@
 }
 @media (/* c */ min-width /* d */ : /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
 }
-@media screen
-  /* c */{
-}
 
 /* DIVERGENCES.md#media-query-comments */
 @media /* c */ (bar:/* d */'b') {

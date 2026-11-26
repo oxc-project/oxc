@@ -783,8 +783,7 @@ fn flush_trailing_comments_while(
 
 /// Comments between a prelude ending at `prelude_end` and its `{` at `block_start`:
 /// a run glued to the prelude stays on its line (`@page :first // c`, the `//` ends it so `{` starts the next),
-/// own-line ones keep their line before the `{` from the first `//` on;
-/// an own-line block comment before it joins the prelude's line, as one does in a fill body.
+/// own-line ones keep their line before the `{` (DIVERGENCES.md#own-line-comment-before-block).
 /// Either way the caller's space before `{` is safe: the printer drops it at the start of a line.
 pub(super) fn write_comments_before_block(
     prelude_end: u32,
@@ -792,7 +791,6 @@ pub(super) fn write_comments_before_block(
     f: &mut CssFormatter<'_, '_>,
 ) {
     flush_glued_comments(prelude_end, block_start, f);
-    flush_trailing_comments_while(0, block_start, LineCommentAs::InPlace, f, |_, c, _| !c.inline);
     let own_line = f.context().comments().take_before(block_start);
     if own_line.is_empty() {
         return;
