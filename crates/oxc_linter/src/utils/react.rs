@@ -366,6 +366,12 @@ const INTERACTIVE_ROLES: [&str; 31] = [
     "treeitem",
 ];
 
+/// Roles for which WAI-ARIA says authors MAY (rather than SHOULD or MUST) manage focus of
+/// descendants, so an element with one of these roles is not required to be focusable itself.
+///
+/// <https://www.w3.org/TR/wai-aria-1.2/#toolbar>
+const MAYBE_INTERACTIVE_ROLES: [&str; 1] = ["toolbar"];
+
 const NON_INTERACTIVE_ROLES: [&str; 43] = [
     "alert",
     "alertdialog",
@@ -542,6 +548,10 @@ pub fn is_interactive_role(role: &str) -> bool {
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
 pub fn is_non_interactive_role(role: &str) -> bool {
     NON_INTERACTIVE_ROLES.contains(&role)
+}
+
+pub fn is_maybe_interactive_role(role: &str) -> bool {
+    MAYBE_INTERACTIVE_ROLES.contains(&role)
 }
 
 pub const MOUSE_EVENT_HANDLERS: &[&str] = &[
