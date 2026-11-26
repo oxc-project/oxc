@@ -95,3 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
    ╰────
   help: Remove this empty export.
+
+  ⚠ typescript(no-useless-empty-export): Empty exports do nothing in module files
+   ╭─[no_useless_empty_export.tsx:1:31]
+ 1 │ const api = {}; export = api; export {};
+   ·                               ──────────
+   ╰────
+  help: Remove this empty export.
