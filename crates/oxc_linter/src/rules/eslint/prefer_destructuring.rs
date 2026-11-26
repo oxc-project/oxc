@@ -223,18 +223,16 @@ impl Rule for PreferDestructuring {
                             if self.assignment_expression.array {
                                 ctx.diagnostic(prefer_array_destructuring(assign_expr.span));
                             }
-                        } else {
-                            if self.enforce_for_renamed_properties
-                                && self.assignment_expression.object
-                            {
-                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
-                            }
-                            if let Expression::StringLiteral(string_literal) = &comp_expr.expression
-                                && get_target_name(&assign_expr.left)
-                                    .is_some_and(|v| v == string_literal.value)
-                            {
-                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
-                            }
+                        } else if self.assignment_expression.object
+                            && (self.enforce_for_renamed_properties
+                                || matches!(
+                                    &comp_expr.expression,
+                                    Expression::StringLiteral(string_literal)
+                                        if get_target_name(&assign_expr.left)
+                                            .is_some_and(|v| v == string_literal.value)
+                                ))
+                        {
+                            ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                         }
                     }
                     MemberExpression::StaticMemberExpression(static_expr)
@@ -283,7 +281,8 @@ impl Rule for PreferDestructuring {
                             } else if self.variable_declarator.object {
                                 if let Expression::StringLiteral(string_literal) =
                                     &comp_expr.expression
-                                    && name.is_some_and(|v| v == string_literal.value)
+                                    && let Some(name) =
+                                        name.filter(|name| *name == string_literal.value)
                                 {
                                     if has_type_annotation {
                                         ctx.diagnostic(prefer_object_destructuring(init.span()));
@@ -294,7 +293,7 @@ impl Rule for PreferDestructuring {
                                                 generate_fix(
                                                     &fixer,
                                                     ctx,
-                                                    string_literal.span.shrink(1),
+                                                    name,
                                                     get_object_span_without_redundant_parentheses(
                                                         &comp_expr.object,
                                                     ),
@@ -311,7 +310,9 @@ impl Rule for PreferDestructuring {
                         MemberExpression::StaticMemberExpression(static_expr)
                             if self.variable_declarator.object =>
                         {
-                            if name.is_some_and(|name| name == static_expr.property.name.as_str()) {
+                            if let Some(name) =
+                                name.filter(|name| *name == static_expr.property.name.as_str())
+                            {
                                 if has_type_annotation {
                                     ctx.diagnostic(prefer_object_destructuring(init.span()));
                                 } else {
@@ -321,7 +322,7 @@ impl Rule for PreferDestructuring {
                                             generate_fix(
                                                 &fixer,
                                                 ctx,
-                                                static_expr.property.span,
+                                                name,
                                                 get_object_span_without_redundant_parentheses(
                                                     &static_expr.object,
                                                 ),
@@ -372,10 +373,13 @@ fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
 }
 
 /// Generate the fix for object destructuring in a variable declaration.
+///
+/// `name` is the declared binding name, which equals the accessed property name and is always a
+/// valid shorthand property, unlike the source text of a string literal key.
 fn generate_fix(
     fixer: &crate::fixer::RuleFixer<'_, '_>,
     ctx: &LintContext<'_>,
-    prop_span: Span,
+    name: &str,
     object_span: Span,
     replacement_span: Span,
 ) -> crate::fixer::RuleFix {
@@ -384,9 +388,8 @@ fn generate_fix(
     {
         return fixer.noop();
     }
-    let prop = fixer.source_range(prop_span);
     let object_text = fixer.source_range(object_span);
-    let replacement = format!("{{{prop}}} = {object_text}");
+    let replacement = format!("{{{name}}} = {object_text}");
     fixer.replace(replacement_span, replacement)
 }
 
@@ -395,6 +398,13 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("foo = obj['foo'];", Some(serde_json::json!([{ "array": true, "object": false }]))),
+        (
+            "foo = obj['foo'];",
+            Some(
+                serde_json::json!([{ "array": true, "object": false }, { "enforceForRenamedProperties": true }]),
+            ),
+        ),
         ("var [foo] = array;", None),
         ("var { foo } = object;", None),
         ("const foo: string = object.foo;", None),
@@ -616,6 +626,11 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"const obj = { x: 42 }; const x = obj["\x78"];"#, None),
+        (
+            "foo = obj['foo'];",
+            Some(serde_json::json!([{ "object": true }, { "enforceForRenamedProperties": true }])),
+        ),
         ("var foo = array[0];", None),
         ("foo = array[0];", None),
         ("var foo = object.foo;", None),
@@ -777,6 +792,9 @@ fn test() {
 
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
         ("var foo = object.foo;", "var {foo} = object;", None),
+        (r#"const x = obj["\x78"];"#, "const {x} = obj;", None),
+        (r#"const x = obj["\u{78}"];"#, "const {x} = obj;", None),
+        ("const x = obj['x'];", "const {x} = obj;", None),
         ("var foo = (a, b).foo;", "var {foo} = (a, b);", None),
         // ("var length = (() => {}).length;", "var {length} = () => {};", None),
         // ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
