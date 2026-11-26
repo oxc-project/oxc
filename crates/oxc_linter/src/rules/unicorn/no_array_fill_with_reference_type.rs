@@ -8,8 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::variable_declaration_kind,
-    ast_util::{get_declaration_of_variable, is_method_call},
+    ast_util::{get_declaration_of_variable, is_method_call, variable_declaration_kind},
     context::LintContext,
     rule::Rule,
     utils::is_regexp_callee,

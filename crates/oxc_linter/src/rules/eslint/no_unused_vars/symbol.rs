@@ -83,6 +83,14 @@ impl<'s, 'a> Symbol<'s, 'a> {
         self.scoping().symbol_scope_id(self.id) == self.scoping().root_scope_id()
     }
 
+    /// Is this [`Symbol`] declared in the global scope of a script?
+    ///
+    /// The root scope of an ES module or CommonJS file is not global.
+    pub fn is_in_global_scope(&self) -> bool {
+        let source_type = self.semantic.source_type();
+        self.is_root() && !source_type.is_module() && !source_type.is_commonjs()
+    }
+
     #[inline]
     fn declaration_id(&self) -> NodeId {
         self.scoping().symbol_declaration(self.id)

@@ -1,6 +1,7 @@
-use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_str::CompactStr;
 
 /// Controls how hoisting is handled when checking for shadowing.
 #[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Serialize, Deserialize)]

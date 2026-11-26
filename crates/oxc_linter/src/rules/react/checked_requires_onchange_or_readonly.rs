@@ -1,12 +1,13 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
-    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
+    ast::{Argument, JSXAttributeItem},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -155,17 +156,17 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     obj_expr.properties.iter().fold(
                         (None, None, true),
                         |(checked_span, default_checked_span, is_missing_property), prop| {
-                            if let ObjectPropertyKind::ObjectProperty(object_prop) = prop
-                                && let Some(name) = object_prop.key.static_name()
+                            if let Some(name) =
+                                prop.key().and_then(oxc_ast::ast::PropertyKey::static_name)
                             {
                                 (
                                     if checked_span.is_none() && name == "checked" {
-                                        Some(object_prop.span)
+                                        Some(prop.span())
                                     } else {
                                         checked_span
                                     },
                                     if default_checked_span.is_none() && name == "defaultChecked" {
-                                        Some(object_prop.span)
+                                        Some(prop.span())
                                     } else {
                                         default_checked_span
                                     },

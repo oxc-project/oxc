@@ -1,4 +1,7 @@
 use memchr::memmem;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::RegExpFlags};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,8 +11,6 @@ use oxc_regular_expression::{
 };
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

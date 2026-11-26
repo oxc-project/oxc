@@ -1,4 +1,5 @@
 use memchr::memchr3_iter;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 

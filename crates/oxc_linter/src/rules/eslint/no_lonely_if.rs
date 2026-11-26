@@ -1,9 +1,12 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::AstKind;
-use oxc_ast::ast::{IfStatement, Statement};
+use oxc_ast::{
+    AstKind,
+    ast::{IfStatement, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_lonely_if_diagnostic(lonely_if: &IfStatement) -> OxcDiagnostic {
     let span = Span::sized(lonely_if.span.start, 2);

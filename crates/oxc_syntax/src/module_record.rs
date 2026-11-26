@@ -196,6 +196,9 @@ pub enum ImportImportName<'a> {
     /// `import defaultExport from "mod"`
     #[estree(via = ImportOrExportNameDefault)]
     Default(Span) = 2,
+    /// `import source x from "mod"`, with the span of the local binding `x`
+    #[estree(via = ImportOrExportNameSource)]
+    Source(Span) = 3,
 }
 
 impl ImportImportName<'_> {
@@ -249,6 +252,7 @@ pub struct ExportEntry<'a> {
     /// null if the ExportDeclaration does not have a ModuleSpecifier.
     /// "all" is used for `export * as ns from "mod"`` declarations.
     /// "all-but-default" is used for `export * from "mod" declarations`.
+    /// "source" is used for re-exports of `import source x from "mod"` bindings.
     pub import_name: ExportImportName<'a>,
 
     /// The name used to export this binding by this module.
@@ -291,6 +295,10 @@ pub enum ExportImportName<'a> {
     #[default]
     #[estree(via = ExportNameNull)]
     Null = 3,
+    /// source is used for re-exports of `import source x from "mod"` bindings,
+    /// with the span of `x` in the import declaration.
+    #[estree(via = ImportOrExportNameSource)]
+    Source(Span) = 4,
 }
 
 /// Export Import Name
@@ -459,7 +467,9 @@ pub trait VisitMutModuleRecord {
         match import_import_name {
             ImportImportName::Name(name_span) => self.visit_name_span(name_span),
             ImportImportName::NamespaceObject => {}
-            ImportImportName::Default(span) => self.visit_span(span),
+            ImportImportName::Default(span) | ImportImportName::Source(span) => {
+                self.visit_span(span);
+            }
         }
     }
 
@@ -477,6 +487,7 @@ pub trait VisitMutModuleRecord {
     fn visit_export_import_name(&mut self, export_import_name: &mut ExportImportName) {
         match export_import_name {
             ExportImportName::Name(name_span) => self.visit_name_span(name_span),
+            ExportImportName::Source(span) => self.visit_span(span),
             ExportImportName::All | ExportImportName::AllButDefault | ExportImportName::Null => {}
         }
     }
@@ -524,10 +535,12 @@ mod test {
         assert!(!ImportImportName::Name(name.clone()).is_default());
         assert!(!ImportImportName::NamespaceObject.is_default());
         assert!(ImportImportName::Default(Span::new(0, 0)).is_default());
+        assert!(!ImportImportName::Source(Span::new(0, 0)).is_default());
 
         assert!(!ImportImportName::Name(name.clone()).is_namespace_object());
         assert!(ImportImportName::NamespaceObject.is_namespace_object());
         assert!(!ImportImportName::Default(Span::new(0, 0)).is_namespace_object());
+        assert!(!ImportImportName::Source(Span::new(0, 0)).is_namespace_object());
     }
 
     #[test]

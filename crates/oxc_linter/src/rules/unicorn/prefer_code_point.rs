@@ -89,8 +89,7 @@ impl Rule for PreferCodePoint {
 
 #[test]
 fn test() {
-    use crate::fixer::FixKind;
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         r#""🦄".codePointAt(0)"#,

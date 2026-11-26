@@ -1113,7 +1113,7 @@ impl RuleRunner for crate::rules::eslint::no_underscore_dangle::NoUnderscoreDang
         AstType::BindingIdentifier,
         AstType::Function,
         AstType::MethodDefinition,
-        AstType::ObjectProperty,
+        AstType::ObjectMethodProperty,
         AstType::PrivateFieldExpression,
         AstType::PropertyDefinition,
         AstType::StaticMemberExpression,
@@ -1243,6 +1243,7 @@ impl RuleRunner for crate::rules::eslint::no_useless_computed_key::NoUselessComp
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::BindingProperty,
         AstType::MethodDefinition,
+        AstType::ObjectMethodProperty,
         AstType::ObjectProperty,
         AstType::PropertyDefinition,
     ]));
@@ -1311,8 +1312,11 @@ impl RuleRunner for crate::rules::eslint::no_with::NoWith {
 }
 
 impl RuleRunner for crate::rules::eslint::object_shorthand::ObjectShorthand {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ObjectExpression, AstType::ObjectProperty]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ObjectExpression,
+        AstType::ObjectMethodProperty,
+        AstType::ObjectProperty,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2077,10 +2081,8 @@ impl RuleRunner for crate::rules::typescript::prefer_for_of::PreferForOf {
 
 impl RuleRunner for crate::rules::typescript::prefer_function_type::PreferFunctionType {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ExportDefaultDeclaration,
         AstType::TSInterfaceDeclaration,
-        AstType::TSTypeAliasDeclaration,
-        AstType::TSTypeAnnotation,
+        AstType::TSTypeLiteral,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
@@ -3033,8 +3035,11 @@ impl RuleRunner for crate::rules::react::no_unknown_property::NoUnknownProperty 
 }
 
 impl RuleRunner for crate::rules::react::no_unsafe::NoUnsafe {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::MethodDefinition, AstType::ObjectProperty]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::MethodDefinition,
+        AstType::ObjectMethodProperty,
+        AstType::ObjectProperty,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -5649,8 +5654,11 @@ impl RuleRunner for crate::rules::vue::no_reserved_component_names::NoReservedCo
 }
 
 impl RuleRunner for crate::rules::vue::no_reserved_keys::NoReservedKeys {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ObjectProperty]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ObjectMethodProperty,
+        AstType::ObjectProperty,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

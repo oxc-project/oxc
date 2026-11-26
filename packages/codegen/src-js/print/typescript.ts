@@ -1,6 +1,6 @@
 // TypeScript (port of `gen.rs` TS sections).
 
-import { typeAssertIs } from "../asserts.ts";
+import { debugAssert, typeAssertIs } from "../asserts.ts";
 import {
   CAT_CLOSE_BRACKET,
   CAT_IDENT,
@@ -69,7 +69,7 @@ export function printTSAsOrSatisfiesExpression(
   write(state, node.type === "TSAsExpression" ? " as " : " satisfies ", CAT_OTHER);
 
   const { typeAnnotation } = node;
-  const wrapType = endsWithAssertsReference(typeAnnotation);
+  const wrapType = endsWithAssertsReference(typeAnnotation, typeAnnotation.type);
   if (wrapType) write(state, "(", CAT_OTHER);
   printTSType(typeAnnotation, state);
   if (wrapType) write(state, ")", CAT_CLOSE_BRACKET);
@@ -813,7 +813,7 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
     checkTypeType === "TSFunctionType"
     || checkTypeType === "TSConstructorType"
     || checkTypeType === "TSConditionalType"
-    || endsWithAssertsReference(checkType);
+    || endsWithAssertsReference(checkType, checkTypeType);
 
   if (checkWrap) write(state, "(", CAT_OTHER);
   printTSType(checkType, state);
@@ -845,12 +845,18 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
  * and the operand of a prefix `?` or `!`. A child the printer parenthesizes anyway may also count,
  * which only adds redundant parentheses.
  *
+ * `tyType` must be the `type` of `ty`.
+ *
  * @param ty - Type
+ * @param tyType - `ty.type`
  */
-function endsWithAssertsReference(ty: ESTree.TSType): boolean {
+function endsWithAssertsReference(ty: ESTree.TSType, tyType: ESTree.TSType["type"]): boolean {
+  debugAssert(tyType === ty.type, "`tyType` must equal `ty.type`");
+
   for (;;) {
-    switch (ty.type) {
+    switch (tyType) {
       case "TSTypeReference":
+        debugAssert(ty.type === tyType);
         return (
           ty.typeArguments == null
           && ty.typeName.type === "Identifier"
@@ -858,35 +864,49 @@ function endsWithAssertsReference(ty: ESTree.TSType): boolean {
         );
       case "TSUnionType":
       case "TSIntersectionType": {
+        debugAssert(ty.type === tyType);
         const { types } = ty;
         if (types.length === 0) return false;
         ty = types[types.length - 1];
+        tyType = ty.type;
         break;
       }
       case "TSTypeOperator":
+        debugAssert(ty.type === tyType);
         ty = ty.typeAnnotation;
+        tyType = ty.type;
         break;
       case "TSFunctionType":
       case "TSConstructorType":
+        debugAssert(ty.type === tyType);
         ty = tsTypeAnnotationOf(ty.returnType);
+        tyType = ty.type;
         break;
       case "TSConditionalType":
+        debugAssert(ty.type === tyType);
         ty = ty.falseType;
+        tyType = ty.type;
         break;
       case "TSTypePredicate":
+        debugAssert(ty.type === tyType);
         if (ty.typeAnnotation == null) return false;
         ty = tsTypeAnnotationOf(ty.typeAnnotation);
+        tyType = ty.type;
         break;
       case "TSInferType": {
+        debugAssert(ty.type === tyType);
         const { constraint } = ty.typeParameter;
         if (constraint == null) return false;
         ty = constraint;
+        tyType = ty.type;
         break;
       }
       case "TSJSDocNullableType":
       case "TSJSDocNonNullableType":
+        debugAssert(ty.type === tyType);
         if (ty.postfix) return false;
         ty = tsTypeAnnotationOf(ty.typeAnnotation);
+        tyType = ty.type;
         break;
       default:
         return false;
@@ -922,7 +942,8 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
   write(state, " in ", CAT_OTHER);
 
   const { constraint } = node;
-  const constraintWrap = node.nameType != null && endsWithAssertsReference(constraint);
+  const constraintWrap =
+    node.nameType != null && endsWithAssertsReference(constraint, constraint.type);
   if (constraintWrap) write(state, "(", CAT_OTHER);
   printTSType(constraint, state);
   if (constraintWrap) write(state, ")", CAT_CLOSE_BRACKET);

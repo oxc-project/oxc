@@ -1,7 +1,7 @@
 use itertools::Itertools;
-use oxc_allocator::{Allocator, BitSet, CloneIn};
 use smallvec::SmallVec;
 
+use oxc_allocator::{Allocator, BitSet, CloneIn};
 use oxc_ast::{
     AstKind,
     ast::{
@@ -20,8 +20,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexVec;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, Reference, ScopeId, SymbolId};
-use oxc_span::GetSpan;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, utils::declarator_initializes};
 

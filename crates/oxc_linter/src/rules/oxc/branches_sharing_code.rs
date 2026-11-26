@@ -1,4 +1,6 @@
 // Inspired by https://github.com/rust-lang/rust-clippy/blob/95f5a00d8628fba223c802251af3c42547927c5a/clippy_lints/src/ifs/branches_sharing_code.rs
+use smallvec::SmallVec;
+
 use oxc_ast::{
     AstKind,
     ast::{IdentifierReference, IfStatement, Statement},
@@ -8,7 +10,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan, Span};
-use smallvec::SmallVec;
 
 use crate::{AstNode, ast_util::get_preceding_indent_str, context::LintContext, rule::Rule};
 

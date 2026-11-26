@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Class, Function, FunctionType, IdentifierReference, NewTarget, StaticBlock,
-        Super, ThisExpression,
+        Argument, CallExpression, Class, ClassElement, Expression, Function, FunctionType,
+        IdentifierReference, NewTarget, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -117,6 +117,7 @@ impl Rule for PreferArrowCallback {
         }
 
         let mut scanner = ScopeScanner { this: false, sup: false, meta: false, arguments: false };
+        scanner.visit_formal_parameters(&func.params);
         scanner.visit_function_body(body);
 
         if scanner.sup || scanner.meta {
@@ -134,10 +135,14 @@ impl Rule for PreferArrowCallback {
         let diagnostic = prefer_arrow_callback_diagnostic(func.span);
 
         let can_fix_this = info.is_lexical_this || !scanner.this;
+        let can_remove_bind = !info.is_lexical_this
+            || info.bind_this_call_span.is_some_and(|call_span| {
+                !ctx.has_comments_between(Span::new(func.span.end, call_span.end))
+            });
         let no_dup_params = !has_duplicate_simple_params(func);
         let first_param_not_this = !first_param_is_this(func);
 
-        if can_fix_this && no_dup_params && first_param_not_this {
+        if can_fix_this && can_remove_bind && no_dup_params && first_param_not_this {
             ctx.diagnostic_with_fix(diagnostic, |fixer| build_fix(fixer, ctx, node, func, &info));
         } else {
             ctx.diagnostic(diagnostic);
@@ -217,7 +222,9 @@ fn get_callback_info<'a>(
                             && matches!(&call.arguments[0], Argument::ThisExpression(_))
                         {
                             info.is_lexical_this = true;
-                            info.bind_this_call_span = Some(call.span);
+                            if binds_function_directly(call, func) {
+                                info.bind_this_call_span = Some(call.span);
+                            }
                         }
                     }
                     current_span = call.span;
@@ -238,6 +245,16 @@ fn get_callback_info<'a>(
         }
     }
     info
+}
+
+/// Whether the callee of `call` is a member expression on `func` itself, ignoring parentheses.
+fn binds_function_directly(call: &CallExpression<'_>, func: &Function<'_>) -> bool {
+    call.callee.without_parentheses().as_member_expression().is_some_and(|member| {
+        matches!(
+            member.object().without_parentheses(),
+            Expression::FunctionExpression(object) if object.span == func.span
+        )
+    })
 }
 
 fn build_fix<'a>(
@@ -353,14 +370,9 @@ fn params_bind(func: &Function<'_>, name: &str) -> bool {
 }
 
 fn references_function_name(func: &Function<'_>, ctx: &LintContext<'_>) -> bool {
-    let Some(id) = &func.id else {
-        return false;
-    };
-    let body_span = func.body.as_ref().map_or(func.span, |body| body.span);
-    ctx.scoping().get_resolved_references(id.symbol_id()).any(|reference| {
-        let ref_node = ctx.nodes().get_node(reference.node_id());
-        body_span.contains_inclusive(ref_node.span())
-    })
+    func.id
+        .as_ref()
+        .is_some_and(|id| !ctx.scoping().get_resolved_reference_ids(id.symbol_id()).is_empty())
 }
 
 struct ScopeScanner {
@@ -391,9 +403,22 @@ impl<'a> Visit<'a> for ScopeScanner {
         }
     }
 
-    fn visit_class(&mut self, _it: &Class<'a>) {}
-
-    fn visit_static_block(&mut self, _it: &StaticBlock<'a>) {}
+    fn visit_class(&mut self, it: &Class<'a>) {
+        self.visit_decorators(&it.decorators);
+        if let Some(heritage) = &it.heritage {
+            self.visit_expression(&heritage.expression);
+        }
+        for element in &it.body.body {
+            let (decorators, key) = match element {
+                ClassElement::MethodDefinition(method) => (&method.decorators, &method.key),
+                ClassElement::PropertyDefinition(property) => (&property.decorators, &property.key),
+                ClassElement::AccessorProperty(property) => (&property.decorators, &property.key),
+                ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => continue,
+            };
+            self.visit_decorators(decorators);
+            self.visit_property_key(key);
+        }
+    }
 }
 
 #[test]
@@ -435,6 +460,13 @@ fn test() {
         ("foo(function() {} || a ? b : c);", None),
         ("new Foo(function() {} ? a : b);", None),
         ("foo(async function() {} ? a : b);", None),
+        ("consume(function (x = new.target) {});", None),
+        ("consume(function (x = this) {});", None),
+        ("consume(function (x = arguments) {});", None),
+        ("const visit = 42; consume(function visit(self = visit) { return self; });", None),
+        ("[0].map(function () { return class extends this.Base {}; }, { Base: class {} });", None),
+        ("foo(function () { return class { [this.key]() {} }; });", None),
+        ("foo(function () { return class { @dec(this) x; }; });", None),
     ];
 
     let fail = vec![
@@ -531,6 +563,12 @@ fn test() {
         ("test('foo', function (this: any) {});", None),
         ("test('foo', function (this: any, x: number) { x; });", None),
         ("foo(function bar<T>(value: T) { return value; });", None),
+        ("foo(function visit(self = 0) { return self; });", None),
+        ("foo(function () { return class extends Base { method() { return this; } }; });", None),
+        (
+            "enqueue(function () { return this.value; }.bind(/* preserve the receiver */ this));",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -688,6 +726,27 @@ fn test() {
         (
             "foo(function bar<T>(value: T) { return value; });",
             "foo(<T,>(value: T) => { return value; });",
+            None,
+        ),
+        (
+            "foo(function visit(self = 0) { return self; });",
+            "foo((self = 0) => { return self; });",
+            None,
+        ),
+        (
+            "foo(function () { return class extends Base { method() { return this; } }; });",
+            "foo(() => { return class extends Base { method() { return this; } }; });",
+            None,
+        ),
+        ("foo((bar || function() {}).bind(this))", "foo((bar || function() {}).bind(this))", None),
+        (
+            "enqueue(function () { return this.value; }.bind(/* preserve the receiver */ this));",
+            "enqueue(function () { return this.value; }.bind(/* preserve the receiver */ this));",
+            None,
+        ),
+        (
+            "enqueue(function () { return this.value; }.bind(this));",
+            "enqueue(() => { return this.value; });",
             None,
         ),
     ];

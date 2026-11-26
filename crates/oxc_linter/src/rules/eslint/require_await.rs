@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, FunctionBody,
-        FunctionType, MethodDefinition, ObjectProperty, PropertyKey, VariableDeclaration,
+        FunctionType, MethodDefinition, ObjectMethodProperty, ObjectProperty, PropertyKey,
+        VariableDeclaration,
     },
 };
 use oxc_ast_visit::{
@@ -141,13 +142,17 @@ impl RequireAwait {
                     } else {
                         let parent_parent_node = ctx.nodes().parent_kind(parent.id());
                         if let AstKind::ObjectProperty(ObjectProperty { span, key, .. })
+                        | AstKind::ObjectMethodProperty(ObjectMethodProperty {
+                            span,
+                            key,
+                            ..
+                        })
                         | AstKind::MethodDefinition(MethodDefinition { span, key, .. }) =
                             parent_parent_node
                         {
                             let need_delete_span = get_delete_span(
                                 ctx,
-                                if matches!(parent_parent_node, AstKind::ObjectProperty(x) if !x.method)
-                                {
+                                if matches!(parent_parent_node, AstKind::ObjectProperty(_)) {
                                     func.span.start
                                 } else {
                                     span.start

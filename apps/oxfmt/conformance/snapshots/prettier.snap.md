@@ -327,14 +327,20 @@
 
 ## css
 
-140/164 (85.37%)
+139/164 (84.76%)
 
 ### Failed
 
 - externals/prettier/css/atrule/supports.css (💥, 95.22%)
-  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-long-value
-- externals/prettier/css/comments/declaration.css (💥, 98.88%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-as-in-rule
+- externals/prettier/css/comments/at-rules.css (💥, 64.23%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#commented-as-uncommented
+  - crates/oxc_formatter_css/DIVERGENCES.md#own-line-comment-before-block
+  - crates/oxc_formatter_css/DIVERGENCES.md#import-media-feature-flat
+  - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-as-in-rule
+- externals/prettier/css/comments/declaration.css (💥, 93.26%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/css/fill-value/fill.css (💥, 93.33%)
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - externals/prettier/css/parens/empty-lines.css (💥, 31.58%)
@@ -382,7 +388,7 @@
 
 ## scss
 
-121/153 (79.08%)
+118/153 (77.12%)
 
 ### Failed
 
@@ -392,6 +398,12 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/4878.scss (💥, 89.39%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
+- externals/prettier/scss/comments/at-rule.scss (💥, 87.50%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#at-root-line-comment-indent
+- externals/prettier/scss/comments/between-decl.scss (💥, 97.01%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+- externals/prettier/scss/comments/custom-properties.scss (💥, 88.89%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/scss/comments/lists.scss (💥, 76.92%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/maps.scss (💥, 66.67%)
@@ -441,10 +453,14 @@
 
 ## less
 
-230/252 (91.27%)
+227/252 (90.08%)
 
 ### Failed
 
+- externals/prettier/less/comments/between-decl.less (💥, 94.44%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+- externals/prettier/less/comments/selectors.less (💥, 88.89%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/less/comments/value-lists.less (💥, 76.92%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/less/less-test-suite/snippet: tests-config/globalVars/extended.less (💥, 78.26%)
@@ -455,7 +471,10 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-lookup-glue
 - externals/prettier/less/less-test-suite/snippet: tests-unit/color-functions/rgba.less (💥, 82.93%)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
-- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less (💥, 87.50%)
+- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments.less (💥, 99.12%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+- externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less (💥, 85.00%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#commented-as-uncommented
   - crates/oxc_formatter_css/DIVERGENCES.md#less-variable-value-comments
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-continuation-indent
 - externals/prettier/less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less (💥, 98.25%)
@@ -582,7 +601,7 @@
 
 ## angular-html
 
-83/128 (64.84%)
+82/128 (64.06%)
 
 ### Failed
 
@@ -606,6 +625,8 @@
 - externals/prettier/angular/bracket-same-line/angularjs.html (💥💥, 73.08%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/control-flow/after-close-tag.html (💥, 90.32%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
 - externals/prettier/angular/control-flow/chid.html (💥, 62.50%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
 - externals/prettier/angular/control-flow/for.html (💥, 85.22%)

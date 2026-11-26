@@ -1,15 +1,18 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_ast::ast::{ArrowFunctionExpression, BlockStatement, Function, FunctionBody, StaticBlock};
-use oxc_ast_visit::VisitJs;
-use oxc_ast_visit::walk_js::{
-    walk_arrow_function_expression, walk_function, walk_function_body, walk_static_block,
+use oxc_ast_visit::{
+    VisitJs,
+    walk_js::{
+        walk_arrow_function_expression, walk_function, walk_function_body, walk_static_block,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::scope::ScopeFlags;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 

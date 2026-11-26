@@ -494,6 +494,11 @@ impl<'a> AstKind<'a> {
                 p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
             )
             .into(),
+            Self::ObjectMethodProperty(p) => format!(
+                "ObjectMethodProperty({})",
+                p.key.name().unwrap_or_else(|| StaticPropertyName::from(COMPUTED)).display()
+            )
+            .into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),

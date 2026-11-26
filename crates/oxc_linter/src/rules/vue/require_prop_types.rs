@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpression, CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
-        Expression, NewExpression, ObjectExpression, ObjectPropertyKind,
+        Expression, NewExpression, ObjectExpression, ObjectPropertyKind, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -173,7 +173,8 @@ impl RequirePropTypes {
     }
 
     fn check_options_props(obj: &ObjectExpression, ctx: &LintContext) {
-        let Some(props_prop) = obj.find_property("props") else {
+        let Some(ObjectPropertyKind::ObjectProperty(props_prop)) = obj.find_property("props")
+        else {
             return;
         };
 
@@ -219,21 +220,26 @@ impl RequirePropTypes {
 
     fn check_props(obj: &ObjectExpression, ctx: &LintContext) {
         for prop in &obj.properties {
-            let ObjectPropertyKind::ObjectProperty(p) = prop else { continue };
-            let Some(key) = p.key.static_name() else {
-                ctx.diagnostic(require_type_diagnostic(p.key.span(), "Unknown prop"));
+            let (key, is_invalid) = match prop {
+                ObjectPropertyKind::ObjectProperty(p) => {
+                    let is_invalid = match p.value.get_inner_expression() {
+                        Expression::ObjectExpression(o) => !prop_value_has_type(o),
+                        Expression::ArrayExpression(a) => a.elements.is_empty(),
+                        Expression::FunctionExpression(_) => true,
+                        _ => false,
+                    };
+                    (&p.key, is_invalid)
+                }
+                ObjectPropertyKind::MethodProperty(p) => (&p.key, true),
+                ObjectPropertyKind::SpreadProperty(_) => continue,
+            };
+            let Some(name) = key.static_name() else {
+                ctx.diagnostic(require_type_diagnostic(key.span(), "Unknown prop"));
                 continue;
             };
 
-            let is_invalid = match p.value.get_inner_expression() {
-                Expression::ObjectExpression(o) => !prop_value_has_type(o),
-                Expression::ArrayExpression(a) => a.elements.is_empty(),
-                Expression::FunctionExpression(_) => true,
-                _ => false,
-            };
-
             if is_invalid {
-                ctx.diagnostic(require_type_diagnostic(p.span(), key.display()));
+                ctx.diagnostic(require_type_diagnostic(prop.span(), name.display()));
             }
         }
     }
@@ -256,19 +262,16 @@ impl RequirePropTypes {
 
 fn prop_value_has_type(obj: &ObjectExpression) -> bool {
     obj.properties.iter().any(|prop| {
-        if let ObjectPropertyKind::ObjectProperty(p) = prop
-            && let Some(key) = p.key.static_name()
-        {
-            if key == "type" {
-                if let Expression::ArrayExpression(a) = p.value.get_inner_expression() {
-                    return !a.elements.is_empty();
-                }
-                return true;
+        let Some(key) = prop.key().and_then(PropertyKey::static_name) else { return false };
+        if key == "type" {
+            if let ObjectPropertyKind::ObjectProperty(p) = prop
+                && let Expression::ArrayExpression(a) = p.value.get_inner_expression()
+            {
+                return !a.elements.is_empty();
             }
-            key == "validator"
-        } else {
-            false
+            return true;
         }
+        key == "validator"
     })
 }
 

@@ -195,6 +195,7 @@ interface StrictVisitorObject {
   Property?: (
     node:
       | ESTree.ObjectProperty
+      | ESTree.ObjectMethodProperty
       | ESTree.AssignmentTargetProperty
       | ESTree.AssignmentTargetPropertyProperty
       | ESTree.BindingProperty,
@@ -202,6 +203,7 @@ interface StrictVisitorObject {
   "Property:exit"?: (
     node:
       | ESTree.ObjectProperty
+      | ESTree.ObjectMethodProperty
       | ESTree.AssignmentTargetProperty
       | ESTree.AssignmentTargetPropertyProperty
       | ESTree.BindingProperty,

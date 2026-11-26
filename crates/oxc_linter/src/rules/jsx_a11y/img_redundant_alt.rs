@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+use schemars::JsonSchema;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
@@ -9,8 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde_json::Value;
 
 use crate::{
     AstNode,

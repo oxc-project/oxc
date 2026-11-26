@@ -1,13 +1,13 @@
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
-use oxc_str::static_ident;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use oxc_str::{CompactStr, static_ident};
 
 use crate::{
     AstNode,

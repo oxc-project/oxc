@@ -110,10 +110,12 @@ impl ConfigDiscovery {
         self.entries.iter().map(|(name, _)| *name).collect()
     }
 
-    /// Find the unique config file directly inside `dir` using a single `read_dir`.
+    /// Find the unique config file directly inside `dir`.
     ///
-    /// Issues one `read_dir()` and matches entry names in memory,
-    /// avoiding the per-candidate `stat` syscalls that a name-by-name probe would incur.
+    /// Most directories have no config, so it first checks each supported name,
+    /// and lists `dir` only when one exists.
+    /// Entry names are then matched exactly,
+    /// so a differently cased name on a case-insensitive file system is not a config.
     ///
     /// Symlinks are followed, so a symlinked config is recognized.
     /// Directories and dangling symlinks are skipped.
@@ -124,10 +126,21 @@ impl ConfigDiscovery {
     /// # Errors
     /// Returns [`ConfigConflict`] when more than one supported config file is found directly inside `dir`.
     /// In Vite+ mode (see [`ConfigDiscovery::vite_plus`]), the first one in Vite's order wins instead.
-    pub fn find_unique_config_by_readdir(
+    pub fn find_unique_config(
         &self,
         dir: &Path,
     ) -> Result<Option<DiscoveredConfigFile>, ConfigConflict> {
+        let mut path = dir.to_path_buf();
+        let has_candidate = self.entries.iter().any(|(name, _)| {
+            path.push(name);
+            let is_file = path.is_file();
+            path.pop();
+            is_file
+        });
+        if !has_candidate {
+            return Ok(None);
+        }
+
         let Ok(entries) = std::fs::read_dir(dir) else {
             return Ok(None);
         };
@@ -286,97 +299,104 @@ mod test {
     }
 
     #[test]
-    fn readdir_returns_none_for_empty_dir() {
+    fn find_unique_config_returns_none_for_empty_dir() {
         let temp_dir = tempfile::tempdir().unwrap();
-        assert!(discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap().is_none());
+        assert!(discovery().find_unique_config(temp_dir.path()).unwrap().is_none());
     }
 
     #[test]
-    fn readdir_returns_none_for_unreadable_dir() {
-        // Pointing at a path that doesn't exist mimics the "read_dir fails" case
-        // without relying on platform-specific permission setups.
-        let missing = std::path::PathBuf::from("/this/path/does/not/exist/__readdir_test__");
-        assert!(discovery().find_unique_config_by_readdir(&missing).unwrap().is_none());
+    fn find_unique_config_returns_none_for_missing_dir() {
+        let missing = std::path::PathBuf::from("/this/path/does/not/exist/__discovery_test__");
+        assert!(discovery().find_unique_config(&missing).unwrap().is_none());
     }
 
     #[test]
-    fn readdir_skips_unrelated_files() {
+    fn find_unique_config_skips_unrelated_files() {
         let temp_dir = tempfile::tempdir().unwrap();
         fs::write(temp_dir.path().join("README.md"), "").unwrap();
         fs::write(temp_dir.path().join("package.json"), "").unwrap();
 
-        assert!(discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap().is_none());
+        assert!(discovery().find_unique_config(temp_dir.path()).unwrap().is_none());
     }
 
     #[test]
-    fn readdir_finds_unique_json_config() {
+    fn find_unique_config_finds_unique_json_config() {
         let temp_dir = tempfile::tempdir().unwrap();
         let cfg_path = temp_dir.path().join(JSON);
         fs::write(&cfg_path, "{}").unwrap();
 
-        let found = discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap();
+        let found = discovery().find_unique_config(temp_dir.path()).unwrap();
         assert!(matches!(found, Some(DiscoveredConfigFile::Json(p)) if p == cfg_path));
     }
 
     #[test]
-    fn readdir_finds_unique_mts_config() {
+    fn find_unique_config_finds_unique_mts_config() {
         let temp_dir = tempfile::tempdir().unwrap();
         let cfg_path = temp_dir.path().join("oxlint.config.mts");
         fs::write(&cfg_path, "export default {};").unwrap();
 
-        let found = discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap();
+        let found = discovery().find_unique_config(temp_dir.path()).unwrap();
         assert!(matches!(found, Some(DiscoveredConfigFile::Js(p)) if p == cfg_path));
     }
 
     #[test]
-    fn readdir_returns_conflict_for_multiple_js_configs() {
+    fn find_unique_config_returns_conflict_for_multiple_js_configs() {
         let temp_dir = tempfile::tempdir().unwrap();
         for name in ["oxlint.config.ts", "oxlint.config.mts"] {
             fs::write(temp_dir.path().join(name), "export default {};").unwrap();
         }
 
-        assert!(discovery().find_unique_config_by_readdir(temp_dir.path()).is_err());
+        assert!(discovery().find_unique_config(temp_dir.path()).is_err());
     }
 
     #[test]
-    fn readdir_returns_conflict_for_multiple_configs() {
+    fn find_unique_config_returns_conflict_for_multiple_configs() {
         let temp_dir = tempfile::tempdir().unwrap();
         fs::write(temp_dir.path().join(JSON), "{}").unwrap();
         fs::write(temp_dir.path().join(".oxlintrc.jsonc"), "{}").unwrap();
 
-        assert!(discovery().find_unique_config_by_readdir(temp_dir.path()).is_err());
+        assert!(discovery().find_unique_config(temp_dir.path()).is_err());
     }
 
     #[test]
-    fn readdir_skips_directory_named_like_config() {
+    fn find_unique_config_requires_exact_name() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        // Case-insensitive file systems match this name when probing, but not when listing.
+        fs::write(temp_dir.path().join(".OXLINTRC.JSON"), "{}").unwrap();
+
+        assert!(discovery().find_unique_config(temp_dir.path()).unwrap().is_none());
+    }
+
+    #[test]
+    fn find_unique_config_skips_directory_named_like_config() {
         let temp_dir = tempfile::tempdir().unwrap();
         // A directory whose name collides with a supported config must not be
         // treated as a config file.
         fs::create_dir(temp_dir.path().join(JSON)).unwrap();
 
-        assert!(discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap().is_none());
+        assert!(discovery().find_unique_config(temp_dir.path()).unwrap().is_none());
     }
 
     #[test]
-    fn readdir_vite_mode_only_recognizes_vite_names() {
+    fn find_unique_config_vite_mode_only_recognizes_vite_names() {
         let temp_dir = tempfile::tempdir().unwrap();
         // JSON config is ignored in Vite+ mode even though it exists.
         fs::write(temp_dir.path().join(JSON), "{}").unwrap();
         fs::write(temp_dir.path().join("vite.config.ts"), "").unwrap();
 
-        let found = vite_discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap();
+        let found = vite_discovery().find_unique_config(temp_dir.path()).unwrap();
         assert!(
             matches!(found, Some(DiscoveredConfigFile::Vite(p)) if p.file_name().unwrap() == "vite.config.ts")
         );
     }
 
     #[test]
-    fn readdir_vite_mode_picks_first_by_vite_order_instead_of_conflict() {
+    fn find_unique_config_vite_mode_picks_first_by_vite_order_instead_of_conflict() {
         let temp_dir = tempfile::tempdir().unwrap();
         fs::write(temp_dir.path().join("vite.config.ts"), "").unwrap();
         fs::write(temp_dir.path().join("vite.config.mjs"), "").unwrap();
 
-        let found = vite_discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap();
+        let found = vite_discovery().find_unique_config(temp_dir.path()).unwrap();
         assert!(
             matches!(found, Some(DiscoveredConfigFile::Vite(p)) if p.file_name().unwrap() == "vite.config.mjs")
         );
@@ -384,7 +404,7 @@ mod test {
 
     #[cfg(unix)]
     #[test]
-    fn readdir_follows_symlinks() {
+    fn find_unique_config_follows_symlinks() {
         use std::os::unix::fs::symlink;
 
         let temp_dir = tempfile::tempdir().unwrap();
@@ -397,19 +417,19 @@ mod test {
         let link = temp_dir.path().join(JSON);
         symlink(&target, &link).unwrap();
 
-        let found = discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap();
+        let found = discovery().find_unique_config(temp_dir.path()).unwrap();
         assert!(matches!(found, Some(DiscoveredConfigFile::Json(p)) if p == link));
     }
 
     #[cfg(unix)]
     #[test]
-    fn readdir_skips_dangling_symlinks() {
+    fn find_unique_config_skips_dangling_symlinks() {
         use std::os::unix::fs::symlink;
 
         let temp_dir = tempfile::tempdir().unwrap();
         // Symlink target does not exist, so this must not be reported as a config file.
         symlink("/nonexistent/target", temp_dir.path().join(JSON)).unwrap();
 
-        assert!(discovery().find_unique_config_by_readdir(temp_dir.path()).unwrap().is_none());
+        assert!(discovery().find_unique_config(temp_dir.path()).unwrap().is_none());
     }
 }

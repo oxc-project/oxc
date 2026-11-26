@@ -896,6 +896,7 @@ macro_rules! impl_property_key_computed {
 
 impl_property_key_computed!(
     ObjectProperty,
+    ObjectMethodProperty,
     BindingProperty,
     MethodDefinition,
     PropertyDefinition,
@@ -903,6 +904,22 @@ impl_property_key_computed!(
     TSPropertySignature,
     TSMethodSignature,
 );
+
+/// Serializer for the derived `method` field of [`ObjectMethodProperty`].
+#[ast_meta]
+#[estree(
+    ts_type = "boolean",
+    raw_deser = "uint8[POS_OFFSET.kind] === 0",
+    raw_deser_inline,
+    raw_deser_lazy
+)]
+pub struct ObjectMethodPropertyMethod<'a, 'b>(pub &'b ObjectMethodProperty<'a>);
+
+impl ESTree for ObjectMethodPropertyMethod<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        (self.0.kind == ObjectMethodKind::Method).serialize(serializer);
+    }
+}
 
 /// Serializer for the derived `computed` field of [`AssignmentTargetPropertyProperty`].
 ///

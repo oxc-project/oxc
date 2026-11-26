@@ -1,9 +1,13 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, LabeledStatement, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::NodeId;
+use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::find_last_meaningful_char, context::LintContext, rule::Rule};
 
 fn no_unused_labels_diagnostic(label_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{label_name}:' is defined but never used.")).with_label(span)
@@ -59,16 +63,48 @@ impl Rule for NoUnusedLabels {
             let AstKind::LabeledStatement(stmt) = node.kind() else {
                 continue;
             };
-            ctx.diagnostic_with_fix(
-                no_unused_labels_diagnostic(stmt.label.name.as_str(), stmt.label.span),
-                |fixer| fixer.replace_with(stmt, &stmt.body),
-            );
+            let diagnostic = no_unused_labels_diagnostic(stmt.label.name.as_str(), stmt.label.span);
+            if is_fixable(stmt, *id, ctx) {
+                ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace_with(stmt, &stmt.body));
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
         ctx.file_extension().is_some_and(|ext| ext != "svelte")
     }
+}
+
+/// Can the label be removed without changing how the body is parsed?
+///
+/// Ported from `isFixable` in ESLint's `no-unused-labels`.
+fn is_fixable(stmt: &LabeledStatement, id: NodeId, ctx: &LintContext) -> bool {
+    // `A: "use strict"` -> `"use strict"` would become a directive
+    if let Statement::ExpressionStatement(expr_stmt) = &stmt.body
+        && match expr_stmt.expression.without_parentheses() {
+            Expression::StringLiteral(_) => true,
+            Expression::TemplateLiteral(tpl) => tpl.is_no_substitution_template(),
+            _ => false,
+        }
+        && ctx
+            .nodes()
+            .ancestor_kinds(id)
+            .find(|kind| !matches!(kind, AstKind::LabeledStatement(_)))
+            .is_some_and(|kind| matches!(kind, AstKind::Program(_) | AstKind::FunctionBody(_)))
+    {
+        return false;
+    }
+
+    // `foo()\nA: [1].forEach(f)` -> `foo()\n[1].forEach(f)` would continue the previous line
+    let source_text = ctx.source_text();
+    source_text[stmt.body.span().start as usize..]
+        .chars()
+        .next()
+        .is_none_or(|c| !matches!(c, '(' | '[' | '-' | '+' | '/' | '`'))
+        || find_last_meaningful_char(source_text, stmt.span.start, ctx)
+            .is_none_or(|c| matches!(c, ':' | ';' | '{'))
 }
 
 #[test]
@@ -111,6 +147,8 @@ fn test() {
         // Ensure inner label in function is still marked as unused when not used
         "A: { function f() { B: { } } break A; }",
         "label: while (true) { (() => { label: while (false) {} })(); }",
+        "run()\nunused: [1].forEach(log)",
+        "function f() { A: 'use strict' }",
     ];
 
     let fix = vec![
@@ -139,6 +177,25 @@ fn test() {
         // ("A: B: C: D: 'foo'", "B: D: 'foo'"),
         // ("A: B: C: D: E: 'foo'", "B: D: E: 'foo'"),
         ("A: 42", "42"),
+        // removing the label would create a directive
+        (r#"A: "use strict""#, r#"A: "use strict""#),
+        (r#""use strict"; foo: "bar""#, r#""use strict"; foo: "bar""#),
+        (r#"A: ("use strict")"#, r#"A: ("use strict")"#),
+        ("A: `use strict`", "A: `use strict`"),
+        ("function f() { A: 'use strict' }", "function f() { A: 'use strict' }"),
+        ("() => { A: 'use strict' }", "() => { A: 'use strict' }"),
+        ("{ A: 'use strict' }", "{ 'use strict' }"),
+        // removing the label would continue the previous statement
+        ("run()\nunused: [1].forEach(log)", "run()\nunused: [1].forEach(log)"),
+        ("run()\nA: (0, f)()", "run()\nA: (0, f)()"),
+        ("run()\nA: `x`", "run()\nA: `x`"),
+        ("run()\nA: /x/.test(s)", "run()\nA: /x/.test(s)"),
+        ("run()\nA: -x", "run()\nA: -x"),
+        ("run() /* c */\nA: +x", "run() /* c */\nA: +x"),
+        ("run();\nunused: [1].forEach(log)", "run();\n[1].forEach(log)"),
+        ("{ A: [1].forEach(log) }", "{ [1].forEach(log) }"),
+        ("unused: [1].forEach(log)", "[1].forEach(log)"),
+        ("run()\nA: foo()", "run()\nfoo()"),
     ];
 
     Tester::new(NoUnusedLabels::NAME, NoUnusedLabels::PLUGIN, pass, fail)

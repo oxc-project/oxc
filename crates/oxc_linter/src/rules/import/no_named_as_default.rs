@@ -148,11 +148,14 @@ fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name
     }
 
     // Both must import the same identifier from that module.
-    let (ExportImportName::Name(default_import), ExportImportName::Name(named_import)) =
-        (&default_entry.import_name, &named_entry.import_name)
-    else {
-        return false;
-    };
+    let (default_import, named_import) =
+        match (&default_entry.import_name, &named_entry.import_name) {
+            (ExportImportName::Name(default_import), ExportImportName::Name(named_import)) => {
+                (default_import, named_import)
+            }
+            (ExportImportName::Source(_), ExportImportName::Source(_)) => return true,
+            _ => return false,
+        };
 
     // For direct re-exports (`export { foo as default } from './source'`), the import_name
     // directly reflects the source binding name and can be compared as-is.
@@ -181,6 +184,7 @@ fn test() {
     let pass = vec![
         r#"import "./malformed.js""#,
         r#"import bar, { foo } from "./bar";"#,
+        r#"import source foo from "./bar";"#,
         r#"import bar, { foo } from "./empty-folder";"#,
         // unsupported syntax
         // r#"export default from "./bar";"#,
@@ -193,6 +197,7 @@ fn test() {
         // Import-then-export of the same named binding as both default and named.
         // Both refer to the same source binding, so this is allowed.
         r#"import userEvent from "./re-export-default-and-named-import-then-export""#,
+        r#"import wasm from "./re-export-source-default-and-named""#,
         // A disable directive for a conflicting local export is used, not unused.
         "// eslint-disable-next-line import/no-named-as-default\nimport PortalPaywall from './portal-paywall'",
     ];
@@ -214,6 +219,7 @@ fn test() {
         // When default and named exports are re-exported from the same source
         // but refer to different bindings, it should still report.
         r#"import userEvent from "./re-export-default-and-named-different-binding""#,
+        r#"import wasm from "./re-export-source-default-and-named-misleading""#,
         // Local exports are reported even when the default and named exports refer to the same
         // binding, matching eslint-plugin-import.
         r#"import PortalPaywall from "./portal-paywall""#,

@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -99,32 +99,31 @@ fn check_react_clone_element<'a>(
         return;
     };
 
-    let mut key_props = obj_expr
-        .properties
-        .iter()
-        .filter_map(|prop_kind| {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else {
-                return None;
-            };
-            let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
-                return None;
-            };
-            (key_ident.name.as_str() == "key").then_some((prop.span, &prop.value))
-        })
-        .peekable();
-
-    if key_props.peek().is_none() {
+    if !obj_expr.properties.iter().any(is_key_property) {
         return;
     }
     let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
 
-    for (span, value) in key_props {
-        if expression_uses_index(ctx, index_param_symbol_id, value) {
-            ctx.diagnostic(no_array_index_key_diagnostic(span));
+    for prop in obj_expr.properties.iter().filter(|prop| is_key_property(prop)) {
+        let uses_index = match prop {
+            ObjectPropertyKind::ObjectProperty(prop) => {
+                expression_uses_index(ctx, index_param_symbol_id, &prop.value)
+            }
+            ObjectPropertyKind::MethodProperty(_) | ObjectPropertyKind::SpreadProperty(_) => false,
+        };
+        if uses_index {
+            ctx.diagnostic(no_array_index_key_diagnostic(prop.span()));
         }
     }
+}
+
+fn is_key_property(property: &ObjectPropertyKind<'_>) -> bool {
+    matches!(
+        property.key(),
+        Some(PropertyKey::StaticIdentifier(key_ident)) if key_ident.name == "key"
+    )
 }
 
 fn is_index_reference(ctx: &LintContext, symbol_id: SymbolId, expr: &Expression) -> bool {

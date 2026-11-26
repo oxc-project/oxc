@@ -2,6 +2,20 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:34]
+ 1 │ const obj = { x: 42 }; const x = obj["\x78"];
+   ·                                  ───────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = obj['foo'];
+   · ────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
   ⚠ eslint(prefer-destructuring): Use Array destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
  1 │ var foo = array[0];

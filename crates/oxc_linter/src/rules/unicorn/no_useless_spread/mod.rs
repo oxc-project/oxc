@@ -1,3 +1,5 @@
+mod const_eval;
+
 use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
     AstKind,
@@ -13,10 +15,6 @@ use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::static_ident;
 
-mod const_eval;
-
-use const_eval::{ConstEval, is_array_from, is_new_typed_array};
-
 use crate::{
     AstNode,
     ast_util::{
@@ -26,6 +24,7 @@ use crate::{
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
 };
+use const_eval::{ConstEval, is_array_from, is_new_typed_array};
 
 fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -571,7 +570,7 @@ fn as_single_obj_spread<'a, 's>(node: &'s ObjectExpression<'a>) -> Option<&'s Sp
     }
     match &node.properties[0] {
         ObjectPropertyKind::SpreadProperty(spread) => Some(spread.as_ref()),
-        ObjectPropertyKind::ObjectProperty(_) => None,
+        ObjectPropertyKind::ObjectProperty(_) | ObjectPropertyKind::MethodProperty(_) => None,
     }
 }
 

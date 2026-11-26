@@ -14,7 +14,7 @@ eslint/default-case-last                                |    284
 eslint/default-param-last                               |  16812
 eslint/eqeqeq                                           |  20604
 eslint/for-direction                                    |    557
-eslint/func-name-matching                               |  83754
+eslint/func-name-matching                               |  83636
 eslint/func-names                                       |  14283
 eslint/func-style                                       |  16812
 eslint/getter-return                                    |  10895
@@ -124,7 +124,7 @@ eslint/no-throw-literal                                 |    224
 eslint/no-unassigned-vars                               |  31363
 eslint/no-undef                                         |      7
 eslint/no-undefined                                     | 282877
-eslint/no-underscore-dangle                             | 200305
+eslint/no-underscore-dangle                             | 167931
 eslint/no-unexpected-multiline                          | 100966
 eslint/no-unmodified-loop-condition                     |    782
 eslint/no-unneeded-ternary                              |   4722
@@ -506,7 +506,7 @@ typescript/parameter-properties                         |   1070
 typescript/prefer-as-const                              |   1054
 typescript/prefer-enum-initializers                     |     23
 typescript/prefer-for-of                                |    557
-typescript/prefer-function-type                         |  14798
+typescript/prefer-function-type                         |    924
 typescript/prefer-literal-enum-member                   |    196
 typescript/prefer-namespace-keyword                     |      5
 typescript/prefer-ts-expect-error                       |      4
@@ -687,7 +687,7 @@ vue/no-deprecated-vue-config-keycodes                   |  76337
 vue/no-dupe-keys                                        |  76731
 vue/no-import-compiler-macros                           |    103
 vue/no-required-prop-with-default                       |  62608
-vue/no-shared-component-data                            |  32492
+vue/no-shared-component-data                            |  32374
 vue/no-side-effects-in-computed-properties              |  94090
 vue/prefer-import-from-vue                              |      7
 vue/prop-name-casing                                    |  76731

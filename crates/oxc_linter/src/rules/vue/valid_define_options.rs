@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        CallExpression, Expression, IdentifierReference, ObjectPropertyKind,
-        VariableDeclarationKind,
-    },
+    ast::{CallExpression, Expression, IdentifierReference, PropertyKey, VariableDeclarationKind},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
@@ -135,10 +132,7 @@ impl<'a> DefineOptionsChecker<'a, '_> {
 
         if let Expression::ObjectExpression(obj) = first_arg_expr {
             for prop in &obj.properties {
-                let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-                    continue;
-                };
-                let Some(name) = obj_prop.key.static_name() else { continue };
+                let Some(name) = prop.key().and_then(PropertyKey::static_name) else { continue };
                 for &(prop_name, instead_macro) in DISALLOWED_PROPS {
                     if name == prop_name {
                         self.ctx.diagnostic(disallow_prop_diagnostic(

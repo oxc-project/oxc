@@ -1,8 +1,7 @@
 use std::path::Path;
 
-use oxc_str::JSStr;
-
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use oxc_ast::{
@@ -12,7 +11,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use serde::Deserialize;
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -171,8 +170,9 @@ fn check_path_is_absolute(path: JSStr) -> bool {
 #[test]
 #[cfg(not(windows))] // `Path::is_absolute` is platform-dependent, so these tests fail on windows. https://doc.rust-lang.org/std/path/struct.Path.html#method.is_absolute
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         // Lone surrogates are part of the value.

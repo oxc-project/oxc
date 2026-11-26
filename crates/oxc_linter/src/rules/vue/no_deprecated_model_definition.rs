@@ -164,8 +164,9 @@ fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

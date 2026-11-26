@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
 

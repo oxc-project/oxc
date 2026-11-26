@@ -1,11 +1,12 @@
 use javascript_globals::{GLOBALS, GLOBALS_BUILTIN};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{reference::Reference, symbol::SymbolFlags};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     config::GlobalValue,

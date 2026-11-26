@@ -1,14 +1,8 @@
 use std::borrow::Cow;
 
-use crate::{
-    FixKind,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    utils::{
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, find_test_callback, get_node_name,
-        parse_general_jest_fn_call,
-    },
-};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -21,8 +15,16 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
+
+use crate::{
+    FixKind,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    utils::{
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, find_test_callback, get_node_name,
+        parse_general_jest_fn_call,
+    },
+};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]

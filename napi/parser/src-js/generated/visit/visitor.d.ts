@@ -189,6 +189,7 @@ export interface VisitorObject {
   Property?: (
     node:
       | ESTree.ObjectProperty
+      | ESTree.ObjectMethodProperty
       | ESTree.AssignmentTargetProperty
       | ESTree.AssignmentTargetPropertyProperty
       | ESTree.BindingProperty,
@@ -196,6 +197,7 @@ export interface VisitorObject {
   "Property:exit"?: (
     node:
       | ESTree.ObjectProperty
+      | ESTree.ObjectMethodProperty
       | ESTree.AssignmentTargetProperty
       | ESTree.AssignmentTargetPropertyProperty
       | ESTree.BindingProperty,

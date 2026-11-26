@@ -290,16 +290,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
 
         // We emit `void 0` here to indicate to `_decorate` that it can invoke `Object.defineProperty` directly.
         let descriptor = Expression::new_void_0(SPAN, ctx);
-        // TypeScript turns a decorated field that it removes into a `declare` field keyed by a value
-        // reference or a literal, which the class doesn't evaluate. Other keys of user-written
-        // `declare` fields hold type references, so they keep the temp var.
+        // The class doesn't evaluate the key of a `declare` field, which TypeScript removes. It has
+        // already replaced a key with side effects by a temp var, which it assigns in order with the
+        // other class keys, so an identifier or literal key is passed to `_decorate` as is.
         let key_is_evaluated = !(prop.declare
-            && prop.key.as_expression().is_some_and(|key| match key {
-                Expression::Identifier(ident) => {
-                    ctx.scoping().get_reference(ident.reference_id()).flags().is_read()
-                }
-                key => key.is_literal(),
-            }));
+            && prop
+                .key
+                .as_expression()
+                .is_some_and(|key| matches!(key, Expression::Identifier(_)) || key.is_literal()));
         self.handle_decorated_class_element(
             prop.r#static,
             &mut prop.key,

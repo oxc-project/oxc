@@ -65,9 +65,12 @@ impl Rule for NoDebugger {
                 match parent.kind() {
                     AstKind::IfStatement(_)
                     | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
                     | AstKind::ForStatement(_)
                     | AstKind::ForInStatement(_)
-                    | AstKind::ForOfStatement(_) => {
+                    | AstKind::ForOfStatement(_)
+                    | AstKind::LabeledStatement(_)
+                    | AstKind::WithStatement(_) => {
                         fixer.replace(stmt.span, "{}").with_message(REMOVE_DEBUGGER)
                     }
                     // NOTE: no need to check for
@@ -92,6 +95,9 @@ fn test() {
         ("if (foo) debugger", "if (foo) {}"),
         ("for (;;) debugger", "for (;;) {}"),
         ("while (i > 0) debugger", "while (i > 0) {}"),
+        ("do debugger; while (false);", "do {} while (false);"),
+        ("foo: debugger;", "foo: {}"),
+        ("with (obj) debugger;", "with (obj) {}"),
         ("if (foo) { debugger; }", "if (foo) {  }"),
         ("if (foo) { debugger }", "if (foo) {  }"),
     ];

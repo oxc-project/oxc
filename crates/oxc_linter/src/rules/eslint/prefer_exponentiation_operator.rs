@@ -6,7 +6,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::precedence::{GetPrecedence, Precedence};
+use oxc_syntax::{
+    identifier::is_identifier_part,
+    precedence::{GetPrecedence, Precedence},
+};
 
 use crate::{
     AstNode,
@@ -128,8 +131,11 @@ impl Rule for PreferExponentiationOperator {
                         None => false,
                     };
 
-                let mut replacement =
-                    if needs_parens { format!("({replacement})") } else { replacement };
+                let mut replacement = if needs_parens {
+                    format!("({replacement})")
+                } else {
+                    pad_adjacent_tokens(ctx.source_text(), call_expr.span, replacement)
+                };
                 if replacement.starts_with(['[', '(', '/', '+', '-', '`'])
                     && could_be_asi_hazard(node, ctx)
                 {
@@ -142,6 +148,33 @@ impl Rule for PreferExponentiationOperator {
             }
         });
     }
+}
+
+/// Pads `replacement` with a space on either side where its edge would merge with the adjacent
+/// source character into a different token, e.g. `a+Math.pow(++b, c)` or `Math.pow(a, b)in c`.
+fn pad_adjacent_tokens(source_text: &str, span: Span, mut replacement: String) -> String {
+    if source_text[..span.start as usize]
+        .chars()
+        .next_back()
+        .zip(replacement.chars().next())
+        .is_some_and(|(before, first)| tokens_merge(before, first))
+    {
+        replacement.insert(0, ' ');
+    }
+    if replacement
+        .chars()
+        .next_back()
+        .zip(source_text[span.end as usize..].chars().next())
+        .is_some_and(|(last, after)| tokens_merge(last, after))
+    {
+        replacement.push(' ');
+    }
+    replacement
+}
+
+fn tokens_merge(left: char, right: char) -> bool {
+    (is_identifier_part(left) && (is_identifier_part(right) || right == '\\'))
+        || matches!((left, right), ('+', '+') | ('-', '-'))
 }
 
 fn does_base_need_parens(expr: &Expression) -> bool {
@@ -408,6 +441,13 @@ fn test() {
             "export default (async function () {}.length ** 2)",
         ),
         ("export default Math.pow({}.a, 2)", "export default {}.a ** 2"),
+        ("const result = Math.pow(a, b)in obj;", "const result = a ** b in obj;"),
+        ("x = Math.pow(a, 2)instanceof B", "x = a ** 2 instanceof B"),
+        ("a+Math.pow(++b, c)", "a+ ++b ** c"),
+        ("a-Math.pow(--b, c)", "a- --b ** c"),
+        ("a+Math.pow(--b, c)", "a+--b ** c"),
+        ("Math.pow(a, b + c)in d", "a ** (b + c)in d"),
+        ("x=Math.pow(a, b)", "x=a ** b"),
     ];
 
     Tester::new(

@@ -421,6 +421,8 @@ function deserializeObjectPropertyKind(pos) {
     case 0:
       return deserializeBoxObjectProperty(pos + 8);
     case 1:
+      return deserializeBoxObjectMethodProperty(pos + 8);
+    case 2:
       return deserializeBoxSpreadElement(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ObjectPropertyKind`);
@@ -435,11 +437,11 @@ function deserializeObjectProperty(pos) {
     node = (parent =
       ((node$0 = Object.create(NodeProto)),
       (node$0.type = "Property"),
-      (node$0.kind = deserializePropertyKind(pos + 12)),
+      (node$0.kind = "init"),
       (node$0.key = null),
       (node$0.value = null),
-      (node$0.method = deserializeBool(pos + 13)),
-      (node$0.shorthand = deserializeBool(pos + 14)),
+      (node$0.method = false),
+      (node$0.shorthand = deserializeBool(pos + 12)),
       (node$0.computed = uint8[pos + 16] < 64),
       (node$0.optional = false),
       (node$0.start = start = deserializeI32(pos)),
@@ -451,6 +453,45 @@ function deserializeObjectProperty(pos) {
   node.value = deserializeExpression(pos + 32);
   parent = previousParent;
   return node;
+}
+
+function deserializeObjectMethodProperty(pos) {
+  let node$0,
+    start,
+    end,
+    previousParent = parent,
+    node = (parent =
+      ((node$0 = Object.create(NodeProto)),
+      (node$0.type = "Property"),
+      (node$0.kind = deserializeObjectMethodKind(pos + 12)),
+      (node$0.key = null),
+      (node$0.value = null),
+      (node$0.method = uint8[pos + 12] === 0),
+      (node$0.shorthand = false),
+      (node$0.computed = uint8[pos + 16] < 64),
+      (node$0.optional = false),
+      (node$0.start = start = deserializeI32(pos)),
+      (node$0.end = end = deserializeI32(pos + 4)),
+      (node$0.range = [start, end]),
+      (node$0.parent = parent),
+      node$0));
+  node.key = deserializePropertyKey(pos + 16);
+  node.value = deserializeBoxFunction(pos + 32);
+  parent = previousParent;
+  return node;
+}
+
+function deserializeObjectMethodKind(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      return "init";
+    case 1:
+      return "get";
+    case 2:
+      return "set";
+    default:
+      throw Error(`Unexpected discriminant ${uint8[pos]} for ObjectMethodKind`);
+  }
 }
 
 function deserializePropertyKey(pos) {
@@ -555,19 +596,6 @@ function deserializePropertyKey(pos) {
       return deserializeBoxPrivateIdentifier(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKey`);
-  }
-}
-
-function deserializePropertyKind(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return "init";
-    case 1:
-      return "get";
-    case 2:
-      return "set";
-    default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for PropertyKind`);
   }
 }
 
@@ -6501,6 +6529,10 @@ function deserializeVecObjectPropertyKind(pos, arr = []) {
 
 function deserializeBoxObjectProperty(pos) {
   return deserializeObjectProperty(int32[pos >> 2]);
+}
+
+function deserializeBoxObjectMethodProperty(pos) {
+  return deserializeObjectMethodProperty(int32[pos >> 2]);
 }
 
 function deserializeBool(pos) {

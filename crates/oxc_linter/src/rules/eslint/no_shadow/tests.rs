@@ -3,8 +3,9 @@ use crate::rule::RuleMeta;
 
 #[test]
 fn test_eslint() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (
@@ -2322,8 +2323,9 @@ fn test_eslint() {
 
 #[test]
 fn test_typescript_eslint() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("function foo<T = (arg: any) => any>(arg: T) {}", None, None, None),

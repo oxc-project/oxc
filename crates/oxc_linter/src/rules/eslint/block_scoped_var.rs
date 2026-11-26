@@ -1,4 +1,3 @@
-use crate::{AstNode, context::LintContext, rule::Rule, utils::declarator_initializes};
 use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
@@ -7,6 +6,8 @@ use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Ident;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+
+use crate::{AstNode, context::LintContext, rule::Rule, utils::declarator_initializes};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is used outside of binding context."))

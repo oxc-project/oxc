@@ -67,7 +67,15 @@ impl Rule for NoEmptyStaticBlock {
             }
             ctx.diagnostic_with_suggestion(
                 no_empty_static_block_diagnostic(static_block.span),
-                |fixer| fixer.delete(&static_block.span),
+                |fixer| {
+                    let span = static_block.span;
+                    let Some(offset) = ctx.find_next_token_within(span.start, span.end, "{") else {
+                        return fixer.noop();
+                    };
+                    fixer
+                        .replace(Span::new(span.start + offset + 1, span.end - 1), " /* empty */ ")
+                        .with_message("Add comment inside empty static block.")
+                },
             );
         }
     }
@@ -96,15 +104,22 @@ fn test() {
     ];
 
     let fix = vec![
-        ("class Foo { static {} }", "class Foo {  }"),
-        ("class Foo { static { } }", "class Foo {  }"),
+        ("class Foo { static {} }", "class Foo { static { /* empty */ } }"),
+        ("class Foo { static { } }", "class Foo { static { /* empty */ } }"),
         (
             "class Foo { static {
 
 			 } }",
-            "class Foo {  }",
+            "class Foo { static { /* empty */ } }",
         ),
-        ("class Foo { static { bar(); } static {} }", "class Foo { static { bar(); }  }"),
+        (
+            "class Foo { static { bar(); } static {} }",
+            "class Foo { static { bar(); } static { /* empty */ } }",
+        ),
+        (
+            "class C { x = value\nstatic {}\n[key]() {} }",
+            "class C { x = value\nstatic { /* empty */ }\n[key]() {} }",
+        ),
     ];
 
     Tester::new(NoEmptyStaticBlock::NAME, NoEmptyStaticBlock::PLUGIN, pass, fail)
