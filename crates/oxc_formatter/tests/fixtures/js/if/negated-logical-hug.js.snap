@@ -1,0 +1,225 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A negated logical chain hugs the head's `(` (Prettier's `shouldInlineCondition`):
+// the chain breaks inside `!(` only, and the `if` / `while` / `do-while` heads add no group.
+function f(light, lights) {
+  if (!(light instanceof DirectionalLight || light instanceof SpotLight || light instanceof PointLight)) {
+    return;
+  }
+
+  while (!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    break;
+  }
+
+  do {
+    light = lights.pop();
+  } while (!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null));
+
+  // `!!` hugs like `!`, `!!!` does not
+  if (!!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    return;
+  }
+  if (!!!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    return;
+  }
+
+  // A logical condition the unary does not wrap keeps the head's group
+  if ((light instanceof DirectionalLight || light instanceof SpotLight || light !== null) && light.visible) {
+    return;
+  }
+
+  // A comment of the condition's own (before it, or before the head's `)`) keeps the head's group
+  if (/* c */ !(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    return;
+  }
+  if (!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null) /* c */) {
+    return;
+  }
+
+  // Comments inside the unary's parens ride the unary's own group and keep the hug
+  if (!(/* c */ light instanceof DirectionalLight || light instanceof SpotLight)) {
+    return;
+  }
+  if (!(light instanceof DirectionalLight || light instanceof SpotLight /* c */)) {
+    return;
+  }
+
+  // The switch discriminant is not a hugged head
+  switch (!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    case true:
+      break;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A negated logical chain hugs the head's `(` (Prettier's `shouldInlineCondition`):
+// the chain breaks inside `!(` only, and the `if` / `while` / `do-while` heads add no group.
+function f(light, lights) {
+  if (!(
+    light instanceof DirectionalLight ||
+    light instanceof SpotLight ||
+    light instanceof PointLight
+  )) {
+    return;
+  }
+
+  while (!(
+    light instanceof DirectionalLight ||
+    light instanceof SpotLight ||
+    light !== null
+  )) {
+    break;
+  }
+
+  do {
+    light = lights.pop();
+  } while (!(
+    light instanceof DirectionalLight ||
+    light instanceof SpotLight ||
+    light !== null
+  ));
+
+  // `!!` hugs like `!`, `!!!` does not
+  if (!!(
+    light instanceof DirectionalLight ||
+    light instanceof SpotLight ||
+    light !== null
+  )) {
+    return;
+  }
+  if (
+    !!!(
+      light instanceof DirectionalLight ||
+      light instanceof SpotLight ||
+      light !== null
+    )
+  ) {
+    return;
+  }
+
+  // A logical condition the unary does not wrap keeps the head's group
+  if (
+    (light instanceof DirectionalLight ||
+      light instanceof SpotLight ||
+      light !== null) &&
+    light.visible
+  ) {
+    return;
+  }
+
+  // A comment of the condition's own (before it, or before the head's `)`) keeps the head's group
+  if (
+    /* c */ !(
+      light instanceof DirectionalLight ||
+      light instanceof SpotLight ||
+      light !== null
+    )
+  ) {
+    return;
+  }
+  if (
+    !(
+      light instanceof DirectionalLight ||
+      light instanceof SpotLight ||
+      light !== null
+    ) /* c */
+  ) {
+    return;
+  }
+
+  // Comments inside the unary's parens ride the unary's own group and keep the hug
+  if (!(
+    /* c */ light instanceof DirectionalLight || light instanceof SpotLight
+  )) {
+    return;
+  }
+  if (!(
+    light instanceof DirectionalLight || light instanceof SpotLight /* c */
+  )) {
+    return;
+  }
+
+  // The switch discriminant is not a hugged head
+  switch (
+    !(
+      light instanceof DirectionalLight ||
+      light instanceof SpotLight ||
+      light !== null
+    )
+  ) {
+    case true:
+      break;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A negated logical chain hugs the head's `(` (Prettier's `shouldInlineCondition`):
+// the chain breaks inside `!(` only, and the `if` / `while` / `do-while` heads add no group.
+function f(light, lights) {
+  if (!(
+    light instanceof DirectionalLight ||
+    light instanceof SpotLight ||
+    light instanceof PointLight
+  )) {
+    return;
+  }
+
+  while (!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    break;
+  }
+
+  do {
+    light = lights.pop();
+  } while (!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null));
+
+  // `!!` hugs like `!`, `!!!` does not
+  if (!!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    return;
+  }
+  if (!!!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    return;
+  }
+
+  // A logical condition the unary does not wrap keeps the head's group
+  if (
+    (light instanceof DirectionalLight || light instanceof SpotLight || light !== null) &&
+    light.visible
+  ) {
+    return;
+  }
+
+  // A comment of the condition's own (before it, or before the head's `)`) keeps the head's group
+  if (
+    /* c */ !(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)
+  ) {
+    return;
+  }
+  if (
+    !(light instanceof DirectionalLight || light instanceof SpotLight || light !== null) /* c */
+  ) {
+    return;
+  }
+
+  // Comments inside the unary's parens ride the unary's own group and keep the hug
+  if (!(/* c */ light instanceof DirectionalLight || light instanceof SpotLight)) {
+    return;
+  }
+  if (!(light instanceof DirectionalLight || light instanceof SpotLight /* c */)) {
+    return;
+  }
+
+  // The switch discriminant is not a hugged head
+  switch (!(light instanceof DirectionalLight || light instanceof SpotLight || light !== null)) {
+    case true:
+      break;
+  }
+}
+
+===================== End =====================

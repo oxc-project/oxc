@@ -721,11 +721,101 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, DoWhileStatement<'a>> {
         } else {
             test_end
         };
+        // The comments between the body and the `while` keyword were printed above,
+        // so the test's own leading comments start after the last of them;
+        // `negated_logical_hugs_head`'s gate mirrors Prettier's own-comment check.
+        let leading_bound = comments.last().map_or(body.span().end, |comment| comment.span.end);
+        let hugs_negated_condition =
+            !f.comments().has_any_comment_in_range(leading_bound, test_end)
+                && !f.comments().has_any_comment_in_range(test_end, rparen_end)
+                && is_negated_logical_condition(self.test().as_ref());
         let content = format_with(|f| {
-            write!(f, ["while", space(), "(", group(&soft_block_indent(&self.test())), ")"]);
+            if hugs_negated_condition {
+                write!(f, ["while", space(), "(", self.test(), ")"]);
+            } else {
+                write!(f, ["while", space(), "(", group(&soft_block_indent(&self.test())), ")"]);
+            }
         });
         write!(f, FormatContentWithSemicolon::new(&content, rparen_end, node_end));
     }
+}
+
+/// A grouped statement-head condition (if / while test, `with` object):
+/// the [`FormatParenHeadExpression`] in the head's break group, which the head drops
+/// when the condition is a comment-free negated logical chain that hugs its `(`.
+///
+/// Prettier's `shouldInlineCondition` (`src/language-js/print/miscellaneous.js`)
+/// prints `if (!(a || b || c))` with only one break group, the one the unary's
+/// parens add around the chain; the head's own `group(indent(softline …))` is
+/// what turns that into the never-printed extra `if (` break.
+struct FormatGroupedHeadCondition<'a, 'b> {
+    expression: &'b AstNode<'b, 'a, Expression<'a>>,
+    /// Start of the statement's body,
+    /// which bounds the head's closing paren ([`FormatParenHeadExpression::body_start`]).
+    body_start: u32,
+    /// Where the condition's leading comments would start: the statement's own start
+    /// (`if` / `while` / `with`), leaving the keyword-to-`(` gap to the gate below.
+    leading_bound: u32,
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedHeadCondition<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let expression = self.expression;
+        let head = FormatParenHeadExpression { expression, body_start: self.body_start };
+        if negated_logical_hugs_head(f, expression, self.leading_bound, self.body_start) {
+            head.fmt(f);
+        } else {
+            write!(f, [group(&soft_block_indent(&head))]);
+        }
+    }
+}
+
+/// Prettier's `shouldInlineCondition` comment gate plus its syntactic test:
+/// the condition hugs the head's `(` when it is a unary `!` (or `!!`) whose
+/// innermost argument is a logical expression, and the condition node has no
+/// comment of its own — one before it (from `leading_bound`) or one between it
+/// and the head's closing `)` (the bound [`FormatParenHeadExpression`] scans to).
+/// Comments inside the unary's parens ride the unary's own group and keep the hug.
+fn negated_logical_hugs_head(
+    f: &JsFormatter<'_, '_>,
+    condition: &AstNode<'_, '_, Expression<'_>>,
+    leading_bound: u32,
+    body_start: u32,
+) -> bool {
+    let comments = f.comments();
+    let end = condition.span().end;
+    // The own-comment gate is the same view `FormatParenHeadExpression` prints from,
+    // so the scan for the head's `)` runs only when a comment makes it necessary.
+    if comments.has_any_comment_in_range(leading_bound, condition.span().start)
+        || (comments.has_any_comment_in_range(end, body_start)
+            && comments.has_any_comment_in_range(
+                end,
+                comments.end_including_source_parens(end, body_start),
+            ))
+    {
+        return false;
+    }
+
+    // `!(a || b)` and `!!(a || b)`, but not `!!!` (Prettier unwraps at most two `!`s)
+    is_negated_logical_condition(condition.as_ref())
+}
+
+/// The syntactic half of Prettier's `shouldInlineCondition`: a unary `!` (or `!!`,
+/// but not `!!!`) whose innermost argument is a logical expression.
+fn is_negated_logical_condition(condition: &Expression<'_>) -> bool {
+    let argument = match condition {
+        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
+            &unary.argument
+        }
+        _ => return false,
+    };
+    let argument = match argument {
+        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
+            &unary.argument
+        }
+        argument => argument,
+    };
+    matches!(argument, Expression::LogicalExpression(_))
 }
 
 /// The rightmost expression inside a statement head's parentheses
@@ -779,10 +869,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WhileStatement<'a>> {
                 "while",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatParenHeadExpression {
+                FormatGroupedHeadCondition {
                     expression: &self.test(),
-                    body_start: body.span().start
-                })),
+                    body_start: body.span().start,
+                    leading_bound: self.span().start,
+                },
                 ")",
                 FormatStatementBody::new(&body)
             ))
@@ -990,10 +1081,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IfStatement<'a>> {
                 "if",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatParenHeadExpression {
+                FormatGroupedHeadCondition {
                     expression: &test,
-                    body_start: consequent.span().start
-                })),
+                    body_start: consequent.span().start,
+                    leading_bound: self.span().start,
+                },
                 ")",
                 format_consequent,
             ))
@@ -1056,10 +1148,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WithStatement<'a>> {
                 "with",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatParenHeadExpression {
+                FormatGroupedHeadCondition {
                     expression: &self.object(),
-                    body_start: body.span().start
-                })),
+                    body_start: body.span().start,
+                    leading_bound: self.span().start,
+                },
                 ")",
                 FormatStatementBody::new(&body)
             ))
