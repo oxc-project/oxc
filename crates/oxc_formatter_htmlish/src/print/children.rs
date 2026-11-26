@@ -192,27 +192,28 @@ pub fn write_children<'a>(
             write_between(prev_between, prev_blank, f);
         }
         let group_id = f.state().group_id("htmlChild");
-        write!(
-            f,
-            group(&format_with(|f| {
-                match leading {
-                    Some(Leading::Between(between)) => write!(f, between),
-                    Some(Leading::IfPrevFlat(prev_id)) => write!(
-                        f,
-                        if_group_fits_on_line(&soft_line_break()).with_group_id(Some(prev_id))
-                    ),
-                    None => {}
-                }
-                write!(
-                    f,
-                    group(&format_with(|f| {
-                        write_child(t, child, f);
-                        write!(f, trailing);
-                    }))
-                    .with_group_id(Some(group_id))
-                );
-            }))
-        );
+        let content = format_with(|f| {
+            write_child(t, child, f);
+            write!(f, trailing);
+        });
+        let child_group = group(&content).with_group_id(Some(group_id));
+        match leading {
+            // A group around the child's alone would decide as the child's does
+            None => write!(f, child_group),
+            Some(leading) => write!(
+                f,
+                group(&format_with(|f| {
+                    match leading {
+                        Leading::Between(between) => write!(f, between),
+                        Leading::IfPrevFlat(prev_id) => write!(
+                            f,
+                            if_group_fits_on_line(&soft_line_break()).with_group_id(Some(prev_id))
+                        ),
+                    }
+                    write!(f, child_group);
+                }))
+            ),
+        }
         prev_group_id = Some(group_id);
         if next_breaks && node.next.is_some_and(|next| t[next].text_like) {
             write_between(next_between, next_blank, f);
