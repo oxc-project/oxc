@@ -25515,6 +25515,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   note: The identifier `await` is reserved in module code
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
+ 2 │ declare var require: any;
+ 3 │ import await = require("./other");
+   ·        ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
  2 │ declare var require: any;
@@ -25617,6 +25624,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   note: The identifier `await` is reserved in module code
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
+ 1 │ // await disallowed in namespace import
+ 2 │ import * as await from "./other";
+   ·             ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
  1 │ // await disallowed in namespace import
@@ -25624,6 +25638,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·             ─────
    ╰────
   note: The identifier `await` is reserved in module code
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.8.ts:2:8]
+ 1 │ // await disallowed in default import
+ 2 │ import await from "./other";
+   ·        ─────
+   ╰────
 
   × The keyword 'await' is reserved
    ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/topLevelAwaitErrors.8.ts:2:8]
@@ -30861,6 +30882,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╭─[typescript/tsc/testdata/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword1.ts:1:1]
  1 │ \u0076ar x = "hello";
    · ────────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword2.ts:1:5]
+ 1 │ var \u0061wait = 12; // ok
+   ·     ──────────
+ 2 │ async function main() {
    ╰────
 
   × Keywords cannot contain escape characters

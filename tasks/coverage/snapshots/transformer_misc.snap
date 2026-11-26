@@ -1,3 +1,13 @@
 transformer_misc Summary:
-AST Parsed     : 178/178 (100.00%)
-Positive Passed: 178/178 (100.00%)
+AST Parsed     : 192/192 (100.00%)
+Positive Passed: 187/192 (97.40%)
+Mismatch: tasks/coverage/misc/pass/unambiguous-await-reparse-pure-shifted.js
+
+Mismatch: tasks/coverage/misc/pass/unambiguous-await-reparse-pure-trivia.js
+
+Mismatch: tasks/coverage/misc/pass/unambiguous-await-reparse-regex-comment.js
+
+Mismatch: tasks/coverage/misc/pass/unambiguous-await-reparse-regex-newline.js
+
+Mismatch: tasks/coverage/misc/pass/unambiguous-await-reparse-trailing-comma.js
+

@@ -1,0 +1,3 @@
+await
+foo()
+export {}

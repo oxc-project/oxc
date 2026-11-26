@@ -1,0 +1,2 @@
+await(import('x'));
+export {};
