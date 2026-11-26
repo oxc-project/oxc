@@ -14481,6 +14481,12 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "when set to `true`, in addition to checking default contexts, checks\nwhether extra boolean casts are present in expressions whose result is\nused in a boolean context. See examples below. Default is `false`,\nmeaning that this rule by default does not warn about extra booleans\ncast inside inner expressions."
+        },
+        "enforceForLogicalOperands": {
+          "description": "Deprecated. When set to `true`, also checks the operands of `&&` and\n`||` expressions whose result is used in a boolean context. Unlike\n`enforceForInnerExpressions`, it does not check conditional branches,\nsequence expressions, or the right operand of `??`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Deprecated. When set to `true`, also checks the operands of `&&` and\n`||` expressions whose result is used in a boolean context. Unlike\n`enforceForInnerExpressions`, it does not check conditional branches,\nsequence expressions, or the right operand of `??`."
         }
       },
       "additionalProperties": false

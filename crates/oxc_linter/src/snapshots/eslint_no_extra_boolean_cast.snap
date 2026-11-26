@@ -2,6 +2,27 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
+   ╭─[no_extra_boolean_cast.tsx:1:12]
+ 1 │ if (flag ? Boolean(x) : y) {}
+   ·            ──────────
+   ╰────
+  help: Remove the Boolean call as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
+   ╭─[no_extra_boolean_cast.tsx:1:5]
+ 1 │ if (Boolean(x) || y) {}
+   ·     ──────────
+   ╰────
+  help: Remove the Boolean call as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
+   ╭─[no_extra_boolean_cast.tsx:1:5]
+ 1 │ if (Boolean(x) || y) {}
+   ·     ──────────
+   ╰────
+  help: Remove the Boolean call as it will already be coerced to a boolean
+
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
  1 │ if (!!foo) {}

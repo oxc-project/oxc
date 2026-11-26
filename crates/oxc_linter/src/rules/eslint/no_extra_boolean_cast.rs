@@ -43,8 +43,12 @@ pub struct NoExtraBooleanCast {
     /// used in a boolean context. See examples below. Default is `false`,
     /// meaning that this rule by default does not warn about extra booleans
     /// cast inside inner expressions.
-    #[serde(alias = "enforceForLogicalOperands")]
     pub enforce_for_inner_expressions: bool,
+    /// Deprecated. When set to `true`, also checks the operands of `&&` and
+    /// `||` expressions whose result is used in a boolean context. Unlike
+    /// `enforceForInnerExpressions`, it does not check conditional branches,
+    /// sequence expressions, or the right operand of `??`.
+    pub enforce_for_logical_operands: bool,
 }
 
 declare_oxc_lint!(
@@ -109,7 +113,7 @@ impl Rule for NoExtraBooleanCast {
                 } else {
                     node
                 };
-                if is_flagged_ctx(node, ctx, self.enforce_for_inner_expressions) {
+                if is_flagged_ctx(node, ctx, self) {
                     report_boolean_call(expr, node, ctx);
                 }
             }
@@ -120,11 +124,14 @@ impl Rule for NoExtraBooleanCast {
                 match parent.kind() {
                     AstKind::UnaryExpression(p)
                         if p.operator == UnaryOperator::LogicalNot
-                            && is_flagged_ctx(parent, ctx, self.enforce_for_inner_expressions) =>
+                            && is_flagged_ctx(parent, ctx, self) =>
                     {
                         ctx.diagnostic_with_suggestion(
                             no_extra_double_negation_cast_diagnostic(parent.kind().span()),
                             |fixer| {
+                                if ctx.has_comments_between(p.span) {
+                                    return fixer.noop();
+                                }
                                 let arg = unary.argument.without_parentheses();
                                 fixer.replace(
                                     p.span,
@@ -156,15 +163,23 @@ fn report_boolean_call<'a>(
         if expr.arguments.is_empty() {
             return if let Some(parent) = parent.filter(|p| is_unary_negation(p)) {
                 let span = parent.kind().span();
+                if ctx.has_comments_between(span) {
+                    return fixer.noop();
+                }
                 let mut replacement = "true".to_string();
                 pad_fix_with_token_boundary(fixer.source_text(), span, &mut replacement);
                 fixer.replace(span, replacement)
+            } else if ctx.has_comments_between(expr.span) {
+                fixer.noop()
             } else {
                 fixer.replace(expr.span, "false")
             };
         }
 
         if expr.arguments.len() != 1 {
+            return fixer.noop();
+        }
+        if ctx.has_comments_between(expr.span) {
             return fixer.noop();
         }
         let Some(arg) = expr.arguments[0]
@@ -181,15 +196,14 @@ fn report_boolean_call<'a>(
 
 // Checks whether the node is a context that should report an error
 // Acts recursively if it is in a logical context
-fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operands: bool) -> bool {
+fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, options: &NoExtraBooleanCast) -> bool {
     let parent = get_real_parent(node, ctx);
     if is_bool_context(node, parent, ctx) {
         return true;
     }
 
     parent.is_some_and(|parent| {
-        is_inner_bool_context(node, parent, enforce_for_logical_operands)
-            && is_flagged_ctx(parent, ctx, enforce_for_logical_operands)
+        is_inner_bool_context(node, parent, options) && is_flagged_ctx(parent, ctx, options)
     })
 }
 
@@ -202,25 +216,22 @@ fn is_bool_context(node: &AstNode, parent: Option<&AstNode>, ctx: &LintContext) 
     })
 }
 
-fn is_inner_bool_context(
-    node: &AstNode,
-    parent: &AstNode,
-    enforce_for_inner_expressions: bool,
-) -> bool {
-    if !enforce_for_inner_expressions {
-        return false;
-    }
-
+fn is_inner_bool_context(node: &AstNode, parent: &AstNode, options: &NoExtraBooleanCast) -> bool {
+    let inner = options.enforce_for_inner_expressions;
     match parent.kind() {
         AstKind::LogicalExpression(expr) => match expr.operator {
-            LogicalOperator::And | LogicalOperator::Or => true,
-            LogicalOperator::Coalesce => is_same_expression(&expr.right, node),
+            LogicalOperator::And | LogicalOperator::Or => {
+                inner || options.enforce_for_logical_operands
+            }
+            LogicalOperator::Coalesce => inner && is_same_expression(&expr.right, node),
         },
         AstKind::ConditionalExpression(expr) => {
-            is_same_expression(&expr.consequent, node) || is_same_expression(&expr.alternate, node)
+            inner
+                && (is_same_expression(&expr.consequent, node)
+                    || is_same_expression(&expr.alternate, node))
         }
         AstKind::SequenceExpression(expr) => {
-            expr.expressions.last().is_some_and(|last| is_same_expression(last, node))
+            inner && expr.expressions.last().is_some_and(|last| is_same_expression(last, node))
         }
         _ => false,
     }
@@ -520,6 +531,15 @@ fn test() {
             "if ((1, Boolean(2), 3)) {}",
             Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
         ),
+        (
+            "if (flag ? Boolean(x) : y) {}",
+            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
+        ),
+        (
+            "if ((foo, Boolean(bar))) {}",
+            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
+        ),
+        ("if (foo ?? !!bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
         ("let Boolean = x => x; if (Boolean(bar)) {}", None),
         ("function foo(Boolean) { return !!Boolean(bar); }", None),
         ("function foo(Boolean) { if (Boolean(!!bar)) {} }", None),
@@ -527,6 +547,18 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "if (flag ? Boolean(x) : y) {}",
+            Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
+        ),
+        (
+            "if (Boolean(x) || y) {}",
+            Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
+        ),
+        (
+            "if (Boolean(x) || y) {}",
+            Some(serde_json::json!([{ "enforceForInnerExpressions": true }])),
+        ),
         ("if (!!foo) {}", None),
         ("do {} while (!!foo)", None),
         ("while (!!foo) {}", None),
@@ -1535,6 +1567,20 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "if (Boolean(/* explain why */ value)) {}",
+            "if (Boolean(/* explain why */ value)) {}",
+            None,
+        ),
+        ("if (Boolean(/* empty */)) {}", "if (Boolean(/* empty */)) {}", None),
+        ("!Boolean(/* empty */)", "!Boolean(/* empty */)", None),
+        ("! /* c */ Boolean()", "! /* c */ Boolean()", None),
+        (
+            "if (!! /* normalize readiness */ ready) start();",
+            "if (!! /* normalize readiness */ ready) start();",
+            None,
+        ),
+        ("if (!!ready) start();", "if (ready) start();", None),
         ("while (Boolean?.(foo)) {}", "while (foo) {}", None),
         ("if (!!foo) {}", "if (foo) {}", None),
         ("do {} while (!!foo)", "do {} while (foo)", None),
