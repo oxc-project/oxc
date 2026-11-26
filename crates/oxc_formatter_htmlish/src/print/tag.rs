@@ -97,13 +97,20 @@ pub fn opening_start_marker<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
                 Marker::one(Span::new(start, start + 9).slice(t.source()))
             }
         }
-        NodeKind::Element(el) => match t[id].condition.map(|start| t.kind(start)) {
-            Some(NodeKind::ConditionalStart(start)) => {
-                Marker(["<!--[if ", t.collapsed(start.condition), "]><!--><", t.name(id)])
+        NodeKind::Element(el) => {
+            if let Some(NodeKind::ConditionalStart(start)) =
+                t[id].condition.map(|start| t.kind(start))
+            {
+                return Marker(["<!--[if ", t.collapsed(start.condition), "]><!--><", t.name(id)]);
             }
-            _ => written_opening_start(t, id, el)
-                .map_or_else(|| Marker::two("<", t.name(id)), Marker::one),
-        },
+            let written = el.name.slice(t.source());
+            let name = t.printed_name(id, el, written);
+            if std::ptr::eq(name, written) {
+                Marker::one(Span::new(el.start_tag.start, el.name.end).slice(t.source()))
+            } else {
+                Marker::two("<", name)
+            }
+        }
         _ => Marker::two("<", t.name(id)),
     }
 }
@@ -152,40 +159,35 @@ pub fn closing_end_marker<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
     }
 }
 
-/// `<name` as written, when the name prints as written.
-fn written_opening_start<'a>(t: &Tree<'a>, id: NodeId, el: &Element<'a>) -> Option<&'a str> {
-    let written = el.name.slice(t.source());
-    (std::ptr::eq(t.printed_name(id, el, written), written)
-        && el.name.start == el.start_tag.start + 1)
-        .then(|| Span::new(el.start_tag.start, el.name.end).slice(t.source()))
+/// Whether the element's name, `written` in its start or end tag, prints as written.
+fn name_as_written<'a>(t: &Tree<'a>, id: NodeId, el: &Element<'a>, written: &'a str) -> bool {
+    std::ptr::eq(t.printed_name(id, el, written), written)
 }
 
-/// The whole start tag `<name>` as written, when it prints so with nothing borrowed: no attributes, no `/`, no condition.
+/// The whole start tag `<name>` as written, when it prints so with nothing borrowed:
+/// - the name as written, with `>` right after it, so no attribute and no `/`
+/// - neither void (`/>`) nor in a condition (`><!--<![endif]-->`)
 fn written_start_tag<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
     let el = t.element(id)?;
-    let plain = el.attributes.is_empty()
-        && !el.self_closing
-        && !el.void
+    let plain = t.source().as_bytes().get(el.name.end as usize) == Some(&b'>')
         && !t[id].self_closing
         && t[id].condition.is_none()
-        && el.start_tag.end == el.name.end + 1
-        && t.source().as_bytes().get(el.name.end as usize) == Some(&b'>')
         && !opening_start_borrowed(t, id)
-        && !opening_end_borrowed(t, id);
-    if !plain {
-        return None;
-    }
-    written_opening_start(t, id, el).map(|_| el.start_tag.slice(t.source()))
+        && !opening_end_borrowed(t, id)
+        && name_as_written(t, id, el, el.name.slice(t.source()));
+    plain.then(|| el.start_tag.slice(t.source()))
 }
 
-/// The whole end tag `</name>` as written, when it prints so: the name as written and the `>` right after it.
+/// The whole end tag `</name>` as written, when it prints so with nothing borrowed:
+/// the name as written, with the `>` right after it (or after what HTML ignores, as [`closing_start_marker`] keeps).
 fn written_end_tag<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
     let el = t.element(id)?;
     let tag = el.end_tag?;
-    let written = tag.name.slice(t.source());
     let end = tag.ignored.map_or(tag.name.end, |ignored| ignored.end);
-    (std::ptr::eq(t.printed_name(id, el, written), written) && tag.span.end == end + 1)
-        .then(|| tag.span.slice(t.source()))
+    (tag.span.end == end + 1
+        && !closing_end_borrowed(t, id)
+        && name_as_written(t, id, el, tag.name.slice(t.source())))
+    .then(|| tag.span.slice(t.source()))
 }
 
 /// What follows a leading `html` word in a doctype's value (`HTML PUBLIC …`), which HTML reads case-insensitively.
@@ -241,9 +243,7 @@ pub fn write_closing_tag<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatt
         if t[id].borrows.last_child_closing_end {
             write!(f, closing_end_marker(t, t[id].last_child.expect("borrowed by the last child")));
         }
-        if !closing_end_borrowed(t, id)
-            && let Some(tag) = written_end_tag(t, id)
-        {
+        if let Some(tag) = written_end_tag(t, id) {
             write!(f, [text(tag), closing_tag_suffix(t, id)]);
             return;
         }
