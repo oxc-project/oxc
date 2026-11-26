@@ -10,6 +10,7 @@ use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
+    ast_util::{find_last_meaningful_char, next_token},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
@@ -133,7 +134,9 @@ impl Rule for NoConsole {
             no_console_diagnostic(diagnostic_span, &self.allow),
             |fixer| {
                 let parent = ctx.nodes().parent_node(node.id());
-                if let AstKind::CallExpression(_) = parent.kind() {
+                if let AstKind::CallExpression(call_expr) = parent.kind()
+                    && call_expr.callee.span() == node.kind().span()
+                {
                     return remove_console(fixer, ctx, parent);
                 }
                 fixer.noop()
@@ -155,10 +158,17 @@ fn remove_console<'c, 'a: 'c>(
             => node_to_delete = parent,
             AstKind::IfStatement(_)
             | AstKind::WhileStatement(_)
+            | AstKind::DoWhileStatement(_)
             | AstKind::ForStatement(_)
             | AstKind::ForInStatement(_)
             | AstKind::ForOfStatement(_)
-            | AstKind::ArrowFunctionExpression(_) => {
+            | AstKind::LabeledStatement(_)
+            | AstKind::WithStatement(_)
+                if matches!(node_to_delete.kind(), AstKind::ExpressionStatement(_)) =>
+            {
+                return fixer.replace(node_to_delete.span(), "{}")
+            }
+            AstKind::ArrowFunctionExpression(_) => {
                 return fixer.replace(node_to_delete.span(), "{}")
             }
             // Arrow function AST nodes do not say whether they have brackets or
@@ -180,7 +190,26 @@ fn remove_console<'c, 'a: 'c>(
             _ => break,
         }
     }
+    if !matches!(node_to_delete.kind(), AstKind::ExpressionStatement(_))
+        || is_asi_hazard(node_to_delete.span(), ctx)
+    {
+        return fixer.noop();
+    }
     fixer.delete(node_to_delete)
+}
+
+/// Whether deleting `statement` would join the code before and after it, e.g.
+/// `a()\nconsole.log();\n[1].forEach(f)`. Ported from `maybeAsiHazard` in ESLint's `no-console`.
+fn is_asi_hazard(statement: Span, ctx: &LintContext) -> bool {
+    let Some((next_start, next_char)) = next_token(statement.end, ctx) else {
+        return false;
+    };
+    let next = &ctx.source_text()[next_start as usize..];
+    matches!(next_char, '[' | '(' | '/' | '+' | '-' | '`')
+        && !next.starts_with("++")
+        && !next.starts_with("--")
+        && find_last_meaningful_char(ctx.source_text(), statement.start, ctx)
+            .is_some_and(|c| !matches!(c, ':' | ';' | '{'))
 }
 
 #[test]
@@ -277,6 +306,30 @@ fn test() {
         ("(console.log(foo), 5)", "(undefined, 5)", None),
         ("(5, console.log(foo))", "(5, undefined)", None),
         ("const x = { foo: console.log(bar) }", "const x = { foo: undefined }", None),
+        ("foo(console.log)", "foo(console.log)", None),
+        ("foo(console.log(bar), 5)", "foo(console.log(bar), 5)", None),
+        ("foo && console.log(bar)", "foo && console.log(bar)", None),
+        ("const x = console.log(foo)", "const x = console.log(foo)", None),
+        ("[console.log(foo)]", "[console.log(foo)]", None),
+        (
+            "if (console.log(foo)) bar(); else baz()",
+            "if (console.log(foo)) bar(); else baz()",
+            None,
+        ),
+        ("while (console.log(foo)) {}", "while (console.log(foo)) {}", None),
+        ("foo: console.log(bar)", "foo: {}", None),
+        ("do console.log(foo); while (bar)", "do {} while (bar)", None),
+        (
+            "a()\nconsole.log(foo);\n[1, 2, 3].forEach(a => doSomething(a))",
+            "a()\nconsole.log(foo);\n[1, 2, 3].forEach(a => doSomething(a))",
+            None,
+        ),
+        ("a++\nconsole.log();\n/b/", "a++\nconsole.log();\n/b/", None),
+        (
+            "a();\nconsole.log(foo);\n[1, 2, 3].forEach(a => doSomething(a));",
+            "a();\n\n[1, 2, 3].forEach(a => doSomething(a));",
+            None,
+        ),
     ];
 
     Tester::new(NoConsole::NAME, NoConsole::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

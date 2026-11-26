@@ -12,7 +12,8 @@ use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Se
 use oxc_span::{GetSpan, Span};
 use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
-    identifier::is_irregular_whitespace,
+    identifier::{is_irregular_whitespace, is_white_space},
+    line_terminator::is_line_terminator,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
@@ -1081,7 +1082,11 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
 }
 
 /// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
-fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
+pub fn find_last_meaningful_char(
+    source_text: &str,
+    end_pos: u32,
+    ctx: &LintContext,
+) -> Option<char> {
     let comments = ctx.semantic().comments();
     let mut idx = comments.partition_point(|c| c.span.start < end_pos);
     let mut text = &source_text[..end_pos as usize];
@@ -1096,6 +1101,22 @@ fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext)
                 idx -= 1;
             }
             _ => return text.chars().next_back(),
+        }
+    }
+}
+
+/// The start and first character of the next token after `pos`, skipping whitespace
+/// and comments.
+pub fn next_token(mut pos: u32, ctx: &LintContext) -> Option<(u32, char)> {
+    loop {
+        let rest = &ctx.source_text()[pos as usize..];
+        let (offset, c) =
+            rest.char_indices().find(|&(_, c)| !is_white_space(c) && !is_line_terminator(c))?;
+        #[expect(clippy::cast_possible_truncation)]
+        let start = pos + offset as u32;
+        match ctx.semantic().get_comment_at(start) {
+            Some(comment) => pos = comment.span.end,
+            None => return Some((start, c)),
         }
     }
 }
