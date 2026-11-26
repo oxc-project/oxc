@@ -678,6 +678,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
                 }
                 CustomMediaValue::True(ident) | CustomMediaValue::False(ident) => {
                     let span = to_span(ident.span());
+                    value::flush_value_comments(span.start, f);
                     write!(f, text(source.text_for(&span)));
                 }
             }
@@ -1888,6 +1889,8 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
                 {
                     let word = oxc_span::Span::new(condition.and.span().start, first.span().end);
                     value::write_adjusted_verbatim(source.text_for(&word), f);
+                    // Its comments are in its text
+                    let _ = f.context().comments().take_before(word.end);
                     write_media_condition_from(&condition.condition, 1, f);
                 } else {
                     write_word(to_span(condition.and.span()), f);
@@ -1946,6 +1949,8 @@ fn write_media_condition_kind<'a>(kind: &MediaConditionKind<'a>, f: &mut CssForm
         if is_glued(keyword.span(), in_parens.span) {
             let word = oxc_span::Span::new(keyword.span().start, in_parens.span.end);
             value::write_adjusted_verbatim(source.text_for(&word), f);
+            // Its comments are in its text
+            let _ = f.context().comments().take_before(word.end);
             return;
         }
         write_maybe_lowercase(source.text_for(&to_span(keyword.span())), f);
@@ -2001,7 +2006,7 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
             // `oxc-css-parser` accepts an unparenthesized ident as <general-enclosed>;
             // the source shape must survive, so only reprint parens that exist.
             if f.context().source_text().text_for(&to_span(in_parens.span)).starts_with('(') {
-                write_general_enclosed(seq, f);
+                write_general_enclosed(seq, in_parens.span.end - 1, f);
             } else {
                 write_tokens_normalized(&seq.tokens, f);
             }
@@ -2015,13 +2020,16 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
 /// Gap-based spacing never splits or fuses tokens the source kept glued or apart
 /// (`and (color)` can't collapse into a function token `and(`, `:hover` stays one pseudo-class).
 /// NOTE: Deliberately more normalized than Prettier.
-fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
+/// `close` is its `)`: the comments before it stay inside.
+fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, close: u32, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
     write_tokens_normalized(&seq.tokens, f);
+    value::flush_trailing_value_comments(close, f);
     write!(f, ")");
 }
 
-/// The `<general-enclosed>` tokens without the surrounding parens.
+/// The `<general-enclosed>` tokens without the surrounding parens,
+/// a comment between two of them kept there (trailing the one before a `)` / `]` / `,` / `;`).
 fn write_tokens_normalized<'a, 'b>(
     tokens: impl IntoIterator<Item = &'b TokenWithSpan<'a>>,
     f: &mut CssFormatter<'_, 'a>,
@@ -2031,18 +2039,21 @@ fn write_tokens_normalized<'a, 'b>(
     let source = f.context().source_text();
     let mut prev: Option<&TokenWithSpan<'a>> = None;
     for tok in tokens {
-        if let Some(prev) = prev {
-            let needs_space = match (&prev.token, &tok.token) {
-                (Token::LParen(_) | Token::LBracket(_), _)
-                | (
-                    _,
-                    Token::RParen(_) | Token::RBracket(_) | Token::Comma(_) | Token::Semicolon(_),
-                ) => false,
-                _ => !is_glued(prev.span, tok.span),
-            };
+        let closes = matches!(
+            tok.token,
+            Token::RParen(_) | Token::RBracket(_) | Token::Comma(_) | Token::Semicolon(_)
+        );
+        if closes {
+            value::flush_trailing_value_comments(tok.span.start, f);
+        } else if let Some(prev) = prev {
+            let needs_space = !matches!(prev.token, Token::LParen(_) | Token::LBracket(_))
+                && !is_glued(prev.span, tok.span);
             if needs_space {
                 write!(f, space());
             }
+        }
+        if !closes {
+            value::flush_value_comments(tok.span.start, f);
         }
         write!(f, text(source.text_for(&to_span(tok.span))));
         prev = Some(tok);
@@ -2304,7 +2315,9 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
         SupportsInParensKind::Function(func) => {
             value::write_function(func, ValueContext::default(), f);
         }
-        SupportsInParensKind::GeneralEnclosed(seq) => write_general_enclosed(seq, f),
+        SupportsInParensKind::GeneralEnclosed(seq) => {
+            write_general_enclosed(seq, in_parens.span.end - 1, f);
+        }
         // Sass only: a lone interpolation as a condition operand
         // (`@supports #{"(a: b)"}`); reprints structurally like other interpolations
         // (inner spaces collapse, string literals re-quote).

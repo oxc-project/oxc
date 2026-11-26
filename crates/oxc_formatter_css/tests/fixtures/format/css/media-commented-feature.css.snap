@@ -14,6 +14,11 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 @media (/* c */ min-width /* d */ : /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
 }
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@custom-media --foo /* c */ true;
 
 /* DIVERGENCES.md#media-query-comments */
 @media /* c */ (bar:/* d */'b') {
@@ -42,6 +47,11 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 @media (/* c */ min-width /* d */: /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
 }
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@custom-media --foo /* c */ true;
 
 /* DIVERGENCES.md#media-query-comments */
 @media /* c */ (bar: /* d */ "b") {
@@ -69,6 +79,11 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 @media (/* c */ min-width /* d */: /* e */ 100px /* f */) and (/* g */ 400px <= /* h */ width) {
 }
+@media screen and(max-width: /* c */1px) and (width: calc(1px /* d */ + 2px)) {
+}
+@media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
+}
+@custom-media --foo /* c */ true;
 
 /* DIVERGENCES.md#media-query-comments */
 @media /* c */ (bar: /* d */ "b") {

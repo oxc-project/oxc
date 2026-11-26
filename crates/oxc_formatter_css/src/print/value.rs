@@ -1706,10 +1706,13 @@ pub(super) fn write_component_value<'a>(
             if !is_glued(ratio.numerator.span, ratio.solidus_span) {
                 write!(f, space());
             }
+            // A comment between the parts stays there
+            flush_value_comments(ratio.solidus_span.start, f);
             write!(f, "/");
             if !is_glued(ratio.solidus_span, ratio.denominator.span) {
                 write!(f, space());
             }
+            flush_value_comments(ratio.denominator.span.start, f);
             write_number(&ratio.denominator, f);
         }
         ComponentValue::HexColor(hex) => {
@@ -2094,7 +2097,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
     // Source-glued runs (`1px+2px`) stay glued.
     enum Piece<'b, 'a> {
         Operand(&'b ComponentValue<'a>),
-        Op(&'static str),
+        Op(&'static str, u32),
         Space,
     }
 
@@ -2115,7 +2118,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
         if !is_glued(calc.left.span(), calc.op.span) {
             current.push(Piece::Space);
         }
-        current.push(Piece::Op(op_str));
+        current.push(Piece::Op(op_str, calc.op.span.start));
         if !is_glued(calc.op.span, calc.right.span()) {
             chunks.push(std::mem::take(current));
         }
@@ -2144,9 +2147,16 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
 
     let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
         for piece in chunk {
+            // A comment between the operands and operators stays there
             match piece {
-                Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Op(op) => write!(f, token(op)),
+                Piece::Operand(operand) => {
+                    flush_value_comments(operand.span().start, f);
+                    write_component_value(operand, ctx, f);
+                }
+                Piece::Op(op, start) => {
+                    flush_value_comments(*start, f);
+                    write!(f, token(op));
+                }
                 Piece::Space => write!(f, " "),
             }
         }
@@ -2536,12 +2546,15 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
     match &url.value {
         Some(UrlValue::Str(InterpolableStr::Literal(str))) => {
+            flush_value_comments(str.span.start, f);
             write_str(str, f);
             for modifier in &url.modifiers {
                 write!(f, " ");
                 let span = to_span(modifier.span());
                 write!(f, text(source.text_for(&span)));
             }
+            // The comments before the `)` stay inside it
+            flush_trailing_value_comments(url.span.end - 1, f);
         }
         // Quoted url with interpolation: requote the outer quotes only
         Some(UrlValue::Str(istr)) => {

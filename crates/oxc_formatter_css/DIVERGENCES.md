@@ -1694,6 +1694,34 @@ A commented `@media` query prints as an uncommented one, each comment kept betwe
 Prettier's media query parser keeps a token touching a comment as written, its source spacing and quotes included.
 Same rule as DIVERGENCES.md#keyframes-name-comment.
 
+## url-string-comment
+
+- Why: uniform-rule (same construct, same output: a comment after a function argument, `calc(1px /* c */)`)
+- Pin: `tests/fixtures/format/css/function-argument-comments.css`
+
+```css
+/* input */
+a {
+  background: url("x" /* c */);
+  width: calc(1px /* c */);
+}
+
+/* ours */
+a {
+  background: url("x" /* c */);
+  width: calc(1px /* c */);
+}
+
+/* prettier */
+a {
+  background: url("x"/* c */);
+  width: calc(1px /* c */);
+}
+```
+
+A comment after a quoted `url()` string is spaced from it, as one after any other function argument;
+Prettier glues it to the string there only.
+
 ## media-feature-comment-case
 
 - Why: invariant
