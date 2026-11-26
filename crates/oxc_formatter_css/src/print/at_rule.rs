@@ -142,7 +142,8 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
                 write_block_or_semicolon(at_rule, f);
                 return;
             }
-            // String params: as written (Prettier's raw `node.params`)
+            // String params: as written (Prettier's raw `node.params`),
+            // kept for Prettier alignment only: unlike `@keyframes`, they hold no string to re-quote
             "page" | "font-feature-values" | "counter-style" | "property" => {
                 let _ = f.context().comments().take_before(region_end);
                 if !raw.is_empty() {
