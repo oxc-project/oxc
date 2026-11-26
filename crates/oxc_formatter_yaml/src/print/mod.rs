@@ -128,12 +128,14 @@ pub fn verbatim_node_span(node: &Node<'_>, f: &YamlFormatter<'_, '_>) -> Option<
     let span = to_span(node.content.span());
     let verbatim = match &node.content {
         Content::Alias(_) => true,
-        Content::Plain(_) => scalar::prints_verbatim(scalar::FlowScalarKind::Plain, span, f),
-        Content::QuoteSingle(_) => {
-            scalar::prints_verbatim(scalar::FlowScalarKind::QuoteSingle, span, f)
+        Content::Plain(p) => {
+            scalar::prints_verbatim(scalar::FlowScalarKind::Plain, span, p.multiline, f)
         }
-        Content::QuoteDouble(_) => {
-            scalar::prints_verbatim(scalar::FlowScalarKind::QuoteDouble, span, f)
+        Content::QuoteSingle(s) => {
+            scalar::prints_verbatim(scalar::FlowScalarKind::QuoteSingle, span, s.multiline, f)
+        }
+        Content::QuoteDouble(d) => {
+            scalar::prints_verbatim(scalar::FlowScalarKind::QuoteDouble, span, d.multiline, f)
         }
         _ => false,
     };

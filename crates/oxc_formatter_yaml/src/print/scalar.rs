@@ -38,7 +38,7 @@ pub fn write_quoted(
     let raw = quoted_inner(span, f);
     let (quote, reencode) = printed_quote(kind, raw, f);
     // Keeping its quote, nothing is re-encoded: the source text itself when the content prints as written
-    if quote == source_quote(kind) && single_line_prints_verbatim(raw, f) {
+    if quote == source_quote(kind) && single_line_prints_verbatim(raw, multiline, f) {
         write!(f, text(f.context().source_text().text_for(&span)));
         return;
     }
@@ -99,21 +99,31 @@ fn source_quote(kind: FlowScalarKind) -> &'static str {
 
 /// Whether a flow scalar spanning `span` (quotes included) prints exactly as its source text:
 /// a quoted one keeping its quote (so nothing is re-encoded), with content [single_line_prints_verbatim].
-pub fn prints_verbatim(kind: FlowScalarKind, span: Span, f: &YamlFormatter<'_, '_>) -> bool {
+pub fn prints_verbatim(
+    kind: FlowScalarKind,
+    span: Span,
+    multiline: bool,
+    f: &YamlFormatter<'_, '_>,
+) -> bool {
     if kind == FlowScalarKind::Plain {
-        return single_line_prints_verbatim(f.context().source_text().text_for(&span), f);
+        return single_line_prints_verbatim(
+            f.context().source_text().text_for(&span),
+            multiline,
+            f,
+        );
     }
     let raw = quoted_inner(span, f);
-    printed_quote(kind, raw, f).0 == source_quote(kind) && single_line_prints_verbatim(raw, f)
+    single_line_prints_verbatim(raw, multiline, f)
+        && printed_quote(kind, raw, f).0 == source_quote(kind)
 }
 
-/// Whether [write_flow_scalar_content] prints `content` as written, on one line:
+/// Whether [write_flow_scalar_content] prints `content` as written, on one line
+/// (`multiline` is the parser's flag, see [write_flow_scalar_content]):
 /// - `preserve`: its verbatim fast path
 /// - `never`: the line's words rejoin with the single spaces they were split at
 /// - `always`: only a single word (no space) is safe from wrapping
-fn single_line_prints_verbatim(content: &str, f: &YamlFormatter<'_, '_>) -> bool {
-    !content.contains('\n')
-        && (f.options().prose_wrap != ProseWrap::Always || !content.contains(' '))
+fn single_line_prints_verbatim(content: &str, multiline: bool, f: &YamlFormatter<'_, '_>) -> bool {
+    !multiline && (f.options().prose_wrap != ProseWrap::Always || !content.contains(' '))
 }
 
 /// Prettier's `printFlowScalarContent`:
