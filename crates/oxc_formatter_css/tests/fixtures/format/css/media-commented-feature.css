@@ -14,6 +14,8 @@
 }
 @media (aspect-ratio: 16 /* c */ / 9) and (not /* d */ all /* e */) {
 }
+@media (width: calc(1px /* c */)) and (width: calc((1px /* d */) + 2px)) {
+}
 @custom-media --foo /* c */ true;
 
 /* DIVERGENCES.md#media-query-comments */

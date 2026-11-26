@@ -1753,7 +1753,9 @@ pub(super) fn write_component_value<'a>(
         }
         ComponentValue::Function(func) => write_function(func, ctx, f),
         ComponentValue::Calc(calc) => write_calc(calc, ctx, f),
-        ComponentValue::CalcParenthesized(paren) => write_parenthesized(&paren.expr, ctx, f),
+        ComponentValue::CalcParenthesized(paren) => {
+            write_parenthesized(&paren.expr, paren.span.end - 1, ctx, f);
+        }
         ComponentValue::SassMap(map) => scss::write_sass_map(map, ctx, f),
         ComponentValue::SassList(list) => scss::write_sass_list(list, ctx, f),
         ComponentValue::SassParenthesizedExpression(paren) => {
@@ -1915,7 +1917,7 @@ pub(super) fn write_component_value<'a>(
         // `+`/`-` as a binary operator (see `write_less_binary_operation`).
         ComponentValue::LessBinaryOperation(op) => write_less_binary_operation(op, ctx, f),
         ComponentValue::LessParenthesizedOperation(paren) => {
-            write_parenthesized(&paren.operation, ctx, f);
+            write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
         }
         // A css-in-js placeholder becomes a typed marker the host replaces with `${expr}`
         ComponentValue::Placeholder(placeholder) => {
@@ -2311,7 +2313,9 @@ fn write_less_binary_operation<'a>(
         for piece in chunk {
             match piece {
                 Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Paren(paren) => write_parenthesized(&paren.operation, ctx, f),
+                Piece::Paren(paren) => {
+                    write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
+                }
                 Piece::Op(op) => write!(f, token(op)),
                 Piece::Space => write!(f, " "),
             }
@@ -2346,12 +2350,17 @@ fn write_less_binary_operation<'a>(
 /// its own group, so when it breaks the `(` / `)` land on their own lines
 /// with the content indented one level (Prettier's `printParenthesizedValueGroup`).
 /// When it fits, it stays inline (`(@a - @b)`).
+/// `(value)`, `close` its `)`: the comments before it stay inside.
 fn write_parenthesized<'a>(
     value: &ComponentValue<'a>,
+    close: u32,
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let content = format_with(move |f| write_component_value(value, ctx, f));
+    let content = format_with(move |f| {
+        write_component_value(value, ctx, f);
+        flush_trailing_value_comments(close, f);
+    });
     if ctx.no_break {
         write!(f, ["(", content, ")"]);
     } else {
@@ -2414,6 +2423,7 @@ pub(super) fn write_function<'a>(
                 write!(f, " ");
             }
         }
+        flush_trailing_value_comments(func.span().end.saturating_sub(1), f);
         write!(f, ")");
         return;
     }

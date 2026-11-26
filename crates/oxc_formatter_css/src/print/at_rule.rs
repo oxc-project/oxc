@@ -677,9 +677,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
                     write_media_query_list(list, f);
                 }
                 CustomMediaValue::True(ident) | CustomMediaValue::False(ident) => {
-                    let span = to_span(ident.span());
-                    value::flush_value_comments(span.start, f);
-                    write!(f, text(source.text_for(&span)));
+                    value::write_text_with_leading_comments(to_span(ident.span()), f);
                 }
             }
         }
@@ -1888,9 +1886,7 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
                     && let Some(first) = condition.condition.conditions.first()
                 {
                     let word = oxc_span::Span::new(condition.and.span().start, first.span().end);
-                    value::write_adjusted_verbatim(source.text_for(&word), f);
-                    // Its comments are in its text
-                    let _ = f.context().comments().take_before(word.end);
+                    write_glued_word(word, f);
                     write_media_condition_from(&condition.condition, 1, f);
                 } else {
                     write_word(to_span(condition.and.span()), f);
@@ -1948,9 +1944,7 @@ fn write_media_condition_kind<'a>(kind: &MediaConditionKind<'a>, f: &mut CssForm
     if let Some(keyword) = keyword {
         if is_glued(keyword.span(), in_parens.span) {
             let word = oxc_span::Span::new(keyword.span().start, in_parens.span.end);
-            value::write_adjusted_verbatim(source.text_for(&word), f);
-            // Its comments are in its text
-            let _ = f.context().comments().take_before(word.end);
+            write_glued_word(word, f);
             return;
         }
         write_maybe_lowercase(source.text_for(&to_span(keyword.span())), f);
@@ -1958,6 +1952,12 @@ fn write_media_condition_kind<'a>(kind: &MediaConditionKind<'a>, f: &mut CssForm
         value::flush_value_comments(in_parens.span.start, f);
     }
     write_media_in_parens(in_parens, f);
+}
+
+/// A glued `and(...)` as written but for its numbers and strings, the comments its text prints claimed.
+fn write_glued_word(word: oxc_span::Span, f: &mut CssFormatter<'_, '_>) {
+    value::write_adjusted_verbatim(f.context().source_text().text_for(&word), f);
+    let _ = f.context().comments().take_before(word.end);
 }
 
 fn split_media_condition_kind<'b, 'a>(
@@ -2045,17 +2045,16 @@ fn write_tokens_normalized<'a, 'b>(
         );
         if closes {
             value::flush_trailing_value_comments(tok.span.start, f);
-        } else if let Some(prev) = prev {
-            let needs_space = !matches!(prev.token, Token::LParen(_) | Token::LBracket(_))
-                && !is_glued(prev.span, tok.span);
-            if needs_space {
+            write!(f, text(source.text_for(&to_span(tok.span))));
+        } else {
+            if prev.is_some_and(|prev| {
+                !matches!(prev.token, Token::LParen(_) | Token::LBracket(_))
+                    && !is_glued(prev.span, tok.span)
+            }) {
                 write!(f, space());
             }
+            value::write_text_with_leading_comments(to_span(tok.span), f);
         }
-        if !closes {
-            value::flush_value_comments(tok.span.start, f);
-        }
-        write!(f, text(source.text_for(&to_span(tok.span))));
         prev = Some(tok);
     }
 }
@@ -2316,7 +2315,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             value::write_function(func, ValueContext::default(), f);
         }
         SupportsInParensKind::GeneralEnclosed(seq) => {
-            write_general_enclosed(seq, in_parens.span.end - 1, f);
+            write_general_enclosed(seq, close, f);
         }
         // Sass only: a lone interpolation as a condition operand
         // (`@supports #{"(a: b)"}`); reprints structurally like other interpolations

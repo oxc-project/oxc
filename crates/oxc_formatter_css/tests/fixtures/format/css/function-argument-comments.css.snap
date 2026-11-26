@@ -6,6 +6,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 a {
   width: calc(1px /* c */ + 2px);
   width: calc(1px + /* c */ 2px);
+  width: calc((1px /* c */) + 2px);
   color: rgb(1 /* c */ 2 3);
   background: image-set("x" /* c */ 1x);
 }
@@ -24,6 +25,7 @@ a {
 a {
   width: calc(1px /* c */ + 2px);
   width: calc(1px + /* c */ 2px);
+  width: calc((1px /* c */) + 2px);
   color: rgb(1 /* c */ 2 3);
   background: image-set("x" /* c */ 1x);
 }
@@ -41,6 +43,7 @@ a {
 a {
   width: calc(1px /* c */ + 2px);
   width: calc(1px + /* c */ 2px);
+  width: calc((1px /* c */) + 2px);
   color: rgb(1 /* c */ 2 3);
   background: image-set("x" /* c */ 1x);
 }
