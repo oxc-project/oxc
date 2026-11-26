@@ -16,7 +16,7 @@ use oxc_str::JSStr;
 
 use crate::{
     AstNode,
-    ast_util::could_be_asi_hazard,
+    ast_util::{could_be_asi_hazard, outermost_paren_parent},
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
     utils::is_same_expression,
@@ -235,8 +235,9 @@ impl Rule for Yoda {
 
         let Yoda(allow_yoda, options) = self;
 
-        let parent_node = ctx.nodes().parent_node(node.id());
-        if let AstKind::LogicalExpression(logical_expr) = parent_node.kind() {
+        if let Some(parent_node) = outermost_paren_parent(node, ctx.semantic())
+            && let AstKind::LogicalExpression(logical_expr) = parent_node.kind()
+        {
             let parent_logical_expr = ctx.nodes().parent_node(parent_node.id());
 
             if options.except_range
@@ -411,10 +412,23 @@ fn starts_with_function_or_class(source: &str) -> bool {
     match &source[..first_len] {
         "function" | "class" => true,
         "async" => {
-            let rest = source[first_len..].trim_start();
+            let rest = skip_whitespace_and_block_comments(&source[first_len..]);
             &rest[..word_len(rest)] == "function"
         }
         _ => false,
+    }
+}
+
+fn skip_whitespace_and_block_comments(mut source: &str) -> &str {
+    loop {
+        source = source.trim_start();
+        let Some(comment) = source.strip_prefix("/*") else {
+            return source;
+        };
+        let Some(end) = comment.find("*/") else {
+            return source;
+        };
+        source = &comment[end + 2..];
     }
 }
 
@@ -461,10 +475,10 @@ fn is_parenthesized(parent_logical_expr: &AstNode) -> bool {
 }
 
 fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
-    let Expression::BinaryExpression(left) = &expr.left else {
+    let Expression::BinaryExpression(left) = expr.left.without_parentheses() else {
         return false;
     };
-    let Expression::BinaryExpression(right) = &expr.right else {
+    let Expression::BinaryExpression(right) = expr.right.without_parentheses() else {
         return false;
     };
 
@@ -629,6 +643,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("if ((0 <= x) && x < 1) {}", Some(serde_json::json!(["never", { "exceptRange": true }]))),
+        (
+            "if (0 <= x && (((x < 1)))) {}",
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
         // A lone surrogate orders by its UTF-16 code unit.
         (
             r#"if ("\uD800" <= x && x <= "\uDBFF") {}"#,
@@ -1375,6 +1394,16 @@ fn test() {
         (
             "export default 1<function(){}[x]in y;",
             "export default (function(){}[x]>1) in y;",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "0 === async /* comment */ function () {};",
+            "(async /* comment */ function () {} === 0);",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "0 === async/* a *//* b */function () {};",
+            "(async/* a *//* b */function () {} === 0);",
             Some(serde_json::json!(["never"])),
         ),
     ];
