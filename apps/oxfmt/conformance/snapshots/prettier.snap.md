@@ -582,7 +582,7 @@
 
 ## angular-html
 
-83/128 (64.84%)
+82/128 (64.06%)
 
 ### Failed
 
@@ -606,6 +606,8 @@
 - externals/prettier/angular/bracket-same-line/angularjs.html (💥💥, 73.08%)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-angularjs-attributes-as-written
+- externals/prettier/angular/control-flow/after-close-tag.html (💥, 90.32%)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
 - externals/prettier/angular/control-flow/chid.html (💥, 62.50%)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#angular-glued-block-markers
 - externals/prettier/angular/control-flow/for.html (💥, 85.22%)
