@@ -40,6 +40,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 @supports ((a: b) /* inner */) {
 }
+@supports selector(A < B /* c */) {
+}
 
 /* DIVERGENCES.md#supports-declaration-comments */
 @supports (display /* c */ : flex) and (gap:1PX) {
@@ -99,6 +101,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 @supports ((a: b) /* inner */) {
 }
+@supports selector(A < B /* c */) {
+}
 
 /* DIVERGENCES.md#supports-declaration-comments */
 @supports (display/* c */ : flex) and (gap: 1px) {
@@ -156,6 +160,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @supports (display: flex !important /* c */) {
 }
 @supports ((a: b) /* inner */) {
+}
+@supports selector(A < B /* c */) {
 }
 
 /* DIVERGENCES.md#supports-declaration-comments */

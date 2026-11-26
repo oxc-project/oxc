@@ -36,6 +36,8 @@
 }
 @supports ((a: b) /* inner */) {
 }
+@supports selector(A < B /* c */) {
+}
 
 /* DIVERGENCES.md#supports-declaration-comments */
 @supports (display /* c */ : flex) and (gap:1PX) {

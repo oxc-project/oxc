@@ -2278,20 +2278,20 @@ fn supports_in_parens_start(in_parens: &SupportsInParens<'_>, f: &CssFormatter<'
 
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    // The term's `)`: the comments before it stay inside (but a `selector()`'s, see below)
+    let close = in_parens.span.end - 1;
     match &in_parens.kind {
         // An over-wide term opens its parens (Prettier's parenthesized value group)
         SupportsInParensKind::SupportsCondition(condition) => {
-            // The comments before the `)` stay inside it
             let content = format_with(|f| {
                 write_supports_condition(condition, f);
-                value::flush_trailing_value_comments(in_parens.span.end - 1, f);
+                value::flush_trailing_value_comments(close, f);
             });
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Feature(feature) => {
             // The comments inside the parens as around a declaration in a rule:
             // a leading one ends its line when the parens open, the trailing ones wrap as before a `;`
-            let close = in_parens.span.end - 1;
             let content = format_with(|f| {
                 for &comment in f.context().comments().take_before(feature.decl.span().start) {
                     write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
@@ -2359,6 +2359,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 }),
                 f,
             );
+            value::flush_trailing_value_comments(close, f);
             write!(f, ")");
         }
         SupportsInParensKind::Function(func) => {
