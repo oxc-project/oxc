@@ -38,10 +38,10 @@
 }
 @supports selector(A < B /* c */) {
 }
-
-/* DIVERGENCES.md#supports-declaration-comments */
 @supports (display /* c */ : flex) and (gap:1PX) {
 }
+
+/* DIVERGENCES.md#supports-declaration-comments */
 @supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
 }
 

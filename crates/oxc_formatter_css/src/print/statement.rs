@@ -377,6 +377,16 @@ pub(super) fn write_declaration_until<'a>(
     let trimmed_between = between.trim_ascii();
     // `lastLineHasInlineComment`: the value drops to the next line,
     // one indent under the prop (`indent([hardline, dedent(value)])`).
+    // Printed as written, as Prettier does, with a `//`, a Less merge marker or a line break inside it
+    // (a comment starting a line after the `:` or alone on its line keeps it, and so does a second pass);
+    // otherwise its block comments are spaced (DIVERGENCES.md#declaration-colon-comments)
+    let verbatim_between = trimmed_between != ":"
+        && (decl.less_property_merge.is_some()
+            || trimmed_between.contains('\n')
+            || f.context()
+                .comments()
+                .iter_before(between_upper)
+                .any(|c| c.inline && c.span.start >= name_span.end));
     let between_breaks = trimmed_between != ":"
         && trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//");
     // A Less merge marker (`prop+: val` / `prop+_: val`)
@@ -393,6 +403,11 @@ pub(super) fn write_declaration_until<'a>(
         write!(f, ":");
     } else if trimmed_between == ":" {
         write!(f, ":");
+    } else if !verbatim_between {
+        // Block comments around the `:` are spaced as in a media feature (`prop /* c */: /* d */ value`)
+        value::flush_trailing_value_comments(decl.colon_span.start, f);
+        write!(f, ":");
+        value::flush_trailing_value_comments(between_upper, f);
     } else {
         let _ = f.context().comments().take_before(between_upper);
         if trimmed_between.starts_with("//") {
@@ -518,7 +533,8 @@ pub(super) fn write_declaration_until<'a>(
                 no_break: prop_lower == "composes",
                 // Prettier's printer counts a multi-line between's FULL width,
                 // so the first trailing comment always wraps.
-                tail_break: trimmed_between.contains('\n'),
+                // (only where it is printed as written)
+                tail_break: verbatim_between && trimmed_between.contains('\n'),
                 ..ValueContext::default()
             };
 
