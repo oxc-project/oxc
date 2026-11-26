@@ -2077,10 +2077,8 @@ impl RuleRunner for crate::rules::typescript::prefer_for_of::PreferForOf {
 
 impl RuleRunner for crate::rules::typescript::prefer_function_type::PreferFunctionType {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ExportDefaultDeclaration,
         AstType::TSInterfaceDeclaration,
-        AstType::TSTypeAliasDeclaration,
-        AstType::TSTypeAnnotation,
+        AstType::TSTypeLiteral,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }

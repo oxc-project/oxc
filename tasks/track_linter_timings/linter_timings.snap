@@ -506,7 +506,7 @@ typescript/parameter-properties                         |   1070
 typescript/prefer-as-const                              |   1054
 typescript/prefer-enum-initializers                     |     23
 typescript/prefer-for-of                                |    557
-typescript/prefer-function-type                         |  14798
+typescript/prefer-function-type                         |    924
 typescript/prefer-literal-enum-member                   |    196
 typescript/prefer-namespace-keyword                     |      5
 typescript/prefer-ts-expect-error                       |      4
