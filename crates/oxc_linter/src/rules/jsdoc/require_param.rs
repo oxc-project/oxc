@@ -62,6 +62,14 @@ struct RequireParamConfig {
     /// Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.
     /// Will check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.
     interface_exempts_params_check: bool,
+    /// Extra AST node names to check, in addition to functions and arrow functions.
+    ///
+    /// Recognized names are `TSMethodSignature`, `TSFunctionType`, `TSDeclareFunction`,
+    /// and `TSCallSignatureDeclaration`. Other names are ignored. For example,
+    /// `{ "contexts": ["TSMethodSignature"] }` also requires `@param` on a documented
+    /// interface method. Defaults to an empty list, which leaves the built-in checks unchanged.
+    #[serde(default)]
+    contexts: Vec<String>,
 }
 
 impl Default for RequireParamConfig {
@@ -78,7 +86,14 @@ impl Default for RequireParamConfig {
             ignore_when_all_params_missing: false,
             interface_exempts_params_check: false,
             use_default_object_properties: false,
+            contexts: Vec::new(),
         }
+    }
+}
+
+impl RequireParam {
+    fn checks_context(&self, name: &str) -> bool {
+        self.0.contexts.iter().any(|context| context == name)
     }
 }
 
@@ -146,6 +161,22 @@ impl Rule for RequireParam {
                 }
 
                 collect_params(&arrow_func.params, self.0.use_default_object_properties)
+            }
+            AstKind::Function(func)
+                if func.is_ts_declare_function() && self.checks_context("TSDeclareFunction") =>
+            {
+                collect_params(&func.params, self.0.use_default_object_properties)
+            }
+            AstKind::TSMethodSignature(signature) if self.checks_context("TSMethodSignature") => {
+                collect_params(&signature.params, self.0.use_default_object_properties)
+            }
+            AstKind::TSFunctionType(func_type) if self.checks_context("TSFunctionType") => {
+                collect_params(&func_type.params, self.0.use_default_object_properties)
+            }
+            AstKind::TSCallSignatureDeclaration(signature)
+                if self.checks_context("TSCallSignatureDeclaration") =>
+            {
+                collect_params(&signature.params, self.0.use_default_object_properties)
             }
             // If not a function, skip
             _ => return,
@@ -993,6 +1024,83 @@ fn test() {
             None,
             Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
         ),
+        // https://github.com/oxc-project/oxc/issues/29096
+        // `contexts` is optional. Without it, interface methods stay unchecked.
+        (
+            "
+            interface Api {
+              /**
+               * Run the request.
+               */
+              run(a: string): void;
+            }
+            ",
+            None,
+            None,
+        ),
+        (
+            "
+            interface Api {
+              /**
+               * @param a
+               */
+              run(a: string): void;
+            }
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSMethodSignature"] }])),
+            None,
+        ),
+        (
+            "
+            interface Api {
+              run(a: string): void;
+            }
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSMethodSignature"] }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * @param id
+             */
+            let test: (id: number) => void;
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSFunctionType"] }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * @param a
+             */
+            declare function run(a: string): void;
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSDeclareFunction"] }])),
+            None,
+        ),
+        (
+            "
+            interface Api {
+              /**
+               * @param a
+               */
+              (a: string): void;
+            }
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSCallSignatureDeclaration"] }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * @param foo
+             */
+            function quux(foo) {}
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSMethodSignature", "NotANode"] }])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1671,6 +1779,61 @@ fn test() {
             ",
             None,
             Some(serde_json::json!({ "settings": { "jsdoc": { "mode": "typescript" } } })),
+        ),
+        // https://github.com/oxc-project/oxc/issues/29096
+        (
+            "
+            interface Api {
+              /**
+               * Run the request.
+               */
+              run(a: string): void;
+            }
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSMethodSignature"] }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * A test function.
+             */
+            let test: (id: number) => void;
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSFunctionType"] }])),
+            None,
+        ),
+        (
+            "
+            /**
+             * Declare a function.
+             */
+            declare function run(a: string): void;
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSDeclareFunction"] }])),
+            None,
+        ),
+        (
+            "
+            interface Api {
+              /**
+               * Call signature.
+               */
+              (a: string): void;
+            }
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSCallSignatureDeclaration"] }])),
+            None,
+        ),
+        (
+            "
+            /**
+             *
+             */
+            function quux(foo) {}
+            ",
+            Some(serde_json::json!([{ "contexts": ["TSMethodSignature"] }])),
+            None,
         ),
     ];
 
