@@ -792,16 +792,13 @@ pub(super) fn write_comments_before_block(
     f: &mut CssFormatter<'_, '_>,
 ) {
     flush_glued_comments(prelude_end, block_start, f);
-    let mut broke = false;
-    for &comment in f.context().comments().take_before(block_start) {
-        if !broke && !comment.inline {
-            write!(f, [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]);
-            continue;
-        }
-        if !broke {
-            write!(f, hard_line_break());
-            broke = true;
-        }
+    flush_trailing_comments_while(0, block_start, LineCommentAs::InPlace, f, |_, c, _| !c.inline);
+    let own_line = f.context().comments().take_before(block_start);
+    if own_line.is_empty() {
+        return;
+    }
+    write!(f, hard_line_break());
+    for &comment in own_line {
         write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
     }
 }
