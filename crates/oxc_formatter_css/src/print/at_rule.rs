@@ -24,7 +24,7 @@ use oxc_formatter_core::{
         empty_line, group, hard_line_break, indent, soft_block_indent, soft_line_break,
         soft_line_break_or_space, space, text,
     },
-    format_args, write,
+    format_args, text_width, write,
 };
 
 use crate::{
@@ -406,10 +406,13 @@ fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) 
 }
 
 /// `@import` params containing comments, and `@supports` params with a comment inside a term,
-/// laid out the way Prettier's value parser + fill does.
-/// Separator breaks are simulated with static widths
-/// (Prettier's fill fit-checks the next item; our core fill measures only up to a hardline).
+/// laid out the way Prettier's value parser + fill does, the breaks simulated with static widths.
 /// `allow_commas`: comma chunks get an extra indent level for their internal wraps.
+///
+/// NOTE: The columns start at the at-rule's `start_col` as if it sat at the root, a known ceiling:
+/// nested in a block, a commented prelude breaks later than it should.
+/// Emitting the layout as core IR (`fill` of tokens, a paren as `group` + `soft_block_indent`) lifts it,
+/// the printer measuring the real columns.
 ///
 /// NOTE: the params are typed (`ImportPrelude` / `SupportsCondition`) and the comments are in the comment store
 /// (the AST holds none), so the structured printers placing them is possible.
@@ -425,9 +428,13 @@ fn write_commented_value_params<'a>(
         text: &'a str,
         comma: bool,
         chunk: usize,
-        hard: bool,
+        /// A paren group, laid out by [`write_paren`]
+        paren: Option<ParenWords<'a>>,
+        /// Flat width, the comma included
+        width: u32,
     }
     let width = u32::from(f.options().line_width.value());
+    let indent_width = f.options().indent_width;
     let chunks: Vec<&str> = if allow_commas { split_top_level(raw, b',') } else { vec![raw] };
     let multi = chunks.len() > 1;
 
@@ -436,71 +443,64 @@ fn write_commented_value_params<'a>(
         let toks = tokenize(chunk.trim(), TokenizeMode::SplitComments);
         let last = toks.len().saturating_sub(1);
         for (ti, t) in toks.into_iter().enumerate() {
-            tokens.push(Tok {
-                text: t,
-                comma: ci + 1 < chunks.len() && ti == last,
-                chunk: ci,
-                hard: has_comment_in_parens(t),
-            });
+            let comma = ci + 1 < chunks.len() && ti == last;
+            let paren = (t.starts_with('(') || has_comment_in_parens(t))
+                .then(|| ParenWords::new(t, f))
+                .flatten();
+            let flat = paren.as_ref().map_or_else(|| text_width(t, indent_width), |p| p.flat);
+            let width = flat + u32::from(comma);
+            tokens.push(Tok { text: t, comma, chunk: ci, paren, width });
         }
     }
 
-    let tok_width =
-        |t: &Tok<'_>| u32::try_from(t.text.len()).unwrap_or(u32::MAX) + u32::from(t.comma);
-    // Per-chunk flat width / hardness (chunk separators compare WHOLE chunks,
+    // Per-chunk flat width (chunk separators compare WHOLE chunks,
     // Prettier's fill over the comma-joined chunk docs).
     let mut chunk_w = vec![0u32; chunks.len()];
-    let mut chunk_hard = vec![false; chunks.len()];
     for t in &tokens {
         if chunk_w[t.chunk] > 0 {
             chunk_w[t.chunk] += 1;
         }
-        chunk_w[t.chunk] += u32::try_from(t.text.len()).unwrap_or(u32::MAX) + u32::from(t.comma);
-        chunk_hard[t.chunk] = chunk_hard[t.chunk] || t.hard;
+        chunk_w[t.chunk] += t.width;
     }
+    // A lone token is no fill item (Prettier's `flattenGroups`): no continuation indent
+    let lone = tokens.len() == 1;
+    let indent_col = if lone { 0 } else { 2 };
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         let mut x = start_col;
+        // Prettier's fill keeps a separator flat when both items around it fit flat from the first one's start
+        let mut start_x = start_col;
         let mut chunk_start_x = start_col;
         for i in 0..tokens.len() {
             let t = &tokens[i];
             if i > 0 {
                 let prev = &tokens[i - 1];
-                if prev.chunk == t.chunk {
-                    let fits = !prev.hard && !t.hard && x + 1 + tok_width(t) <= width;
-                    if fits {
-                        write!(f, space());
-                        x += 1;
-                    } else {
-                        write!(f, hard_line_break());
-                        if multi {
-                            write!(f, text("  "));
-                            x = 4;
-                        } else {
-                            x = 2;
-                        }
-                    }
+                let same_chunk = prev.chunk == t.chunk;
+                let fits = if same_chunk {
+                    start_x + prev.width + 1 + t.width <= width
                 } else {
-                    let fits = !chunk_hard[prev.chunk]
-                        && !chunk_hard[t.chunk]
-                        && chunk_start_x + chunk_w[prev.chunk] + 1 + chunk_w[t.chunk] <= width;
-                    if fits {
-                        write!(f, space());
-                        x += 1;
-                    } else {
-                        write!(f, hard_line_break());
-                        x = 2;
-                    }
+                    chunk_start_x + chunk_w[prev.chunk] + 1 + chunk_w[t.chunk] <= width
+                };
+                if fits {
+                    write!(f, space());
+                    x += 1;
+                } else if same_chunk && multi {
+                    write!(f, [hard_line_break(), text("  ")]);
+                    x = 4;
+                } else {
+                    write!(f, hard_line_break());
+                    x = 2;
+                }
+                if !same_chunk {
                     chunk_start_x = x;
                 }
             }
-            if t.hard {
-                write_structured_paren(t.text, x, f);
-                // `)` lands back at column x
-                x += 1;
+            start_x = x;
+            if let Some(paren) = &t.paren {
+                x = write_paren(paren, x, indent_col, f);
             } else {
                 let printed = requote_token(t.text, f);
                 write!(f, text(printed));
-                x += u32::try_from(printed.len()).unwrap_or(0);
+                x += text_width(printed, indent_width);
             }
             if t.comma {
                 write!(f, ",");
@@ -508,7 +508,11 @@ fn write_commented_value_params<'a>(
             }
         }
     });
-    write!(f, indent(&body));
+    if lone {
+        write!(f, body);
+    } else {
+        write!(f, indent(&body));
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -598,41 +602,106 @@ fn requote_token<'a>(token: &'a str, f: &CssFormatter<'_, 'a>) -> &'a str {
     }
 }
 
-/// A comment-bearing paren group always breaks:
-/// `(` + indented fill of its words (`:` glued left, spaced right) + `)`.
-fn write_structured_paren<'a>(token: &'a str, open_col: u32, f: &mut CssFormatter<'_, 'a>) {
-    let width = u32::from(f.options().line_width.value());
-    let Some(open) = find_outside_comments(token, b'(') else {
-        write!(f, text(token));
-        return;
-    };
-    let Some(close) = token.rfind(')') else {
-        write!(f, text(token));
-        return;
-    };
-    write!(f, text(&token[..=open]));
-    let inner = &token[open + 1..close];
-    // Words, requoted up front; a lone `:` glues to the previous word
-    let sq = f.options().single_quote;
-    let requote = |w: &str| -> String { sq.requote(w).into_owned() };
-    let mut words: Vec<String> = vec![];
-    for w in tokenize(inner.trim(), TokenizeMode::SplitComments) {
-        if (w == ":" || w.starts_with(':'))
-            && let Some(last) = words.last_mut()
-        {
-            last.push(':');
-            if w.len() > 1 {
-                words.push(requote(&w[1..]));
+/// A paren group token of a value-parsed prelude, as Prettier's value parser splits it:
+/// its words, a leading `:` glued left, numbers and strings adjusted;
+/// in a bare `(...)` a feature's `:` is spaced right and keeps its value (`(a:b)` -> `(a: b)`),
+/// in a function's (`selector(a:hover)`) it is the argument's own.
+struct ParenWords<'a> {
+    /// Up to the `(`
+    head: &'a str,
+    words: Vec<String>,
+    /// From the `)`
+    tail: &'a str,
+    /// Flat width
+    flat: u32,
+}
+
+impl<'a> ParenWords<'a> {
+    fn new(token: &'a str, f: &CssFormatter<'_, 'a>) -> Option<Self> {
+        let open = find_outside_comments(token, b'(')?;
+        let close = token.rfind(')').filter(|&close| close > open)?;
+        let feature = open == 0;
+        let adjust =
+            |w| value::adjust_numbers_and_strings(w, f.options(), f.allocator()).into_owned();
+        let mut words: Vec<String> = vec![];
+        // No break after a `:`: `prop: value` is one fill item, as Prettier prints it
+        let push = |words: &mut Vec<String>, w: &'a str| match words.last_mut() {
+            Some(last) if feature && last.ends_with(':') => {
+                last.push(' ');
+                last.push_str(&adjust(w));
             }
-            continue;
+            _ => words.push(adjust(w)),
+        };
+        for mut w in tokenize(token[open + 1..close].trim(), TokenizeMode::SplitComments) {
+            // A leading `:` glues to the previous word
+            if let Some(rest) = w.strip_prefix(':')
+                && let Some(last) = words.last_mut()
+            {
+                last.push(':');
+                w = rest;
+            }
+            // A feature's `:` inside the word ends it
+            if let Some(colon) = top_level_colon(w).filter(|&colon| feature && colon > 0) {
+                push(&mut words, &w[..=colon]);
+                w = &w[colon + 1..];
+            }
+            if !w.is_empty() {
+                push(&mut words, w);
+            }
         }
-        words.push(requote(w));
+        let (head, tail) = (&token[..=open], &token[close..]);
+        let indent_width = f.options().indent_width;
+        let flat = [head, tail]
+            .into_iter()
+            .chain(words.iter().map(String::as_str))
+            .map(|w| text_width(w, indent_width))
+            .sum::<u32>()
+            + u32::try_from(words.len().saturating_sub(1)).unwrap_or(0);
+        Some(Self { head, words, tail, flat })
+    }
+}
+
+/// First `:` of `word` outside parens, strings and comments.
+fn top_level_colon(word: &str) -> Option<usize> {
+    let mut depth = 0i32;
+    let mut offset = 0;
+    for (run, verbatim) in split_verbatim(word) {
+        if !verbatim {
+            for (i, b) in run.bytes().enumerate() {
+                match b {
+                    b'(' => depth += 1,
+                    b')' => depth -= 1,
+                    b':' if depth == 0 => return Some(offset + i),
+                    _ => {}
+                }
+            }
+        }
+        offset += run.len();
+    }
+    None
+}
+
+/// A paren group at `open_col`, flat when it fits as Prettier's group does,
+/// otherwise `(` + indented fill of its words + `)` at `indent_col`. Returns the column after it.
+fn write_paren<'a>(
+    paren: &ParenWords<'a>,
+    open_col: u32,
+    indent_col: u32,
+    f: &mut CssFormatter<'_, 'a>,
+) -> u32 {
+    let width = u32::from(f.options().line_width.value());
+    let indent_width = f.options().indent_width;
+    write!(f, text(paren.head));
+    if open_col + paren.flat <= width {
+        let words = f.allocator().alloc_str(&paren.words.join(" "));
+        write!(f, [text(words), text(paren.tail)]);
+        return open_col + paren.flat;
     }
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write!(f, hard_line_break());
-        let mut x = open_col + 2;
-        for (i, w) in words.iter().enumerate() {
-            let w_len = u32::try_from(w.len()).unwrap_or(0);
+        let mut x = indent_col + 2;
+        for (i, w) in paren.words.iter().enumerate() {
+            let w_len = text_width(w, indent_width);
             if i > 0 {
                 if x + 1 + w_len <= width {
                     write!(f, space());
@@ -640,20 +709,15 @@ fn write_structured_paren<'a>(token: &'a str, open_col: u32, f: &mut CssFormatte
                 } else {
                     write!(f, hard_line_break());
                     write!(f, text("  "));
-                    x = open_col + 4;
+                    x = indent_col + 4;
                 }
             }
             write!(f, text(f.allocator().alloc_str(w)));
             x += w_len;
         }
     });
-    write!(f, indent(&body));
-    write!(f, hard_line_break());
-    write!(f, ")");
-    let suffix = &token[close + 1..];
-    if !suffix.is_empty() {
-        write!(f, text(suffix));
-    }
+    write!(f, [indent(&body), hard_line_break(), text(paren.tail)]);
+    indent_col + text_width(paren.tail, indent_width)
 }
 
 /// Splits on `sep` at paren depth 0, outside comments.
