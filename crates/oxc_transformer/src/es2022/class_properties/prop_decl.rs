@@ -8,7 +8,7 @@ use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
-    common::helper_loader::{Helper, helper_call_expr},
+    common::helper_loader::{Helper, helper_call},
     context::TraverseCtx,
     utils::ast_builder::{
         create_assignment, create_variable_declaration, take_literal_property_key,
@@ -71,7 +71,7 @@ impl<'a> ClassProperties<'a> {
             let this = Expression::new_this_expression(SPAN, ctx);
             self.create_private_init_assignment_loose(ident, value, this, span, ctx)
         } else {
-            self.create_private_instance_init_assignment_not_loose(ident, value, ctx)
+            self.create_private_instance_init_assignment_not_loose(ident, value, span, ctx)
         }
     }
 
@@ -80,6 +80,7 @@ impl<'a> ClassProperties<'a> {
         &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let private_props = self.current_class().private_props.lowered().unwrap();
@@ -92,7 +93,9 @@ impl<'a> ClassProperties<'a> {
             ],
             ctx,
         );
-        helper_call_expr(Helper::ClassPrivateFieldInitSpec, arguments, ctx)
+        let mut call = helper_call(Helper::ClassPrivateFieldInitSpec, arguments, ctx);
+        call.span = span;
+        Expression::CallExpression(call)
     }
 }
 
@@ -351,7 +354,10 @@ impl<'a> ClassProperties<'a> {
             [Argument::from(assignee), Argument::from(key), Argument::from(value)],
             ctx,
         );
-        helper_call_expr(Helper::DefineProperty, arguments, ctx)
+        // Map the call to the property, as the assignment in loose mode is.
+        let mut call = helper_call(Helper::DefineProperty, arguments, ctx);
+        call.span = prop.span;
+        Expression::CallExpression(call)
     }
 
     /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`

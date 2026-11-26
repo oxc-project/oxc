@@ -4,6 +4,7 @@ mod es_target;
 mod helper_call;
 mod needs_transform;
 mod runtime_helpers;
+mod source_map;
 mod targets;
 
 use std::path::Path;
