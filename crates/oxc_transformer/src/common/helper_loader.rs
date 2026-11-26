@@ -96,6 +96,11 @@ pub enum HelperLoaderMode {
     ///
     /// This is the default mode used in Babel tests.
     ///
+    /// Lowered decorators, legacy or standard, call helpers that only `@oxc-project/runtime`
+    /// provides, such as `decoratorStart` and the legacy `decorateParam`, so a Babel
+    /// `babelHelpers` object lacks them. Use [`HelperLoaderMode::Runtime`] when decorators are
+    /// lowered.
+    ///
     /// Example output:
     /// ```js
     /// babelHelpers.helperName(...arguments);
@@ -195,6 +200,11 @@ define_helpers! {
     TaggedTemplateLiteral => "taggedTemplateLiteral",
     SetFunctionName => "setFunctionName",
     SetClassName => "setClassName",
+    DecoratorKey => "decoratorKey",
+    DecoratorStart => "decoratorStart",
+    DecorateElement => "decorateElement",
+    RunInitializers => "runInitializers",
+    DecoratorMetadata => "decoratorMetadata",
 }
 
 impl Helper {

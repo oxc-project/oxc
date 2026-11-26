@@ -148,7 +148,7 @@ export interface DecoratorOptions {
    */
   legacy?: boolean
   /**
-   * Lower standard auto-accessors. Decorated classes are preserved.
+   * Lower standard decorators and auto-accessors.
    *
    * When omitted or `false`, this syntax is preserved for a later transform at any target
    * while TypeScript types are still stripped. Set to `true` to lower it.
@@ -202,6 +202,9 @@ export declare const enum HelperMode {
   /**
    * External mode: Helper functions are accessed from a global `babelHelpers` object.
    *
+   * Lowered decorators, legacy or standard, call helpers that only `@oxc-project/runtime`
+   * provides and Babel's helpers lack, so use the `Runtime` mode when decorators are lowered.
+   *
    * Example:
    *
    * ```js
@@ -212,6 +215,12 @@ export declare const enum HelperMode {
 }
 
 export interface Helpers {
+  /**
+   * How helper functions are loaded. Defaults to `Runtime`.
+   *
+   * Lowered decorators, legacy or standard, call helpers that only `@oxc-project/runtime`
+   * provides and Babel's helpers lack, so use the `Runtime` mode when decorators are lowered.
+   */
   mode?: HelperMode
 }
 

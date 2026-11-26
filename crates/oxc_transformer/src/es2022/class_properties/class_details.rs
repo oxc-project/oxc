@@ -2,7 +2,100 @@ use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_traverse::BoundIdentifier;
 
+use oxc_syntax::{scope::ScopeId, symbol::SymbolFlags};
+
+use crate::{
+    context::TraverseCtx,
+    decorator::standard::ClassDecoratorState,
+    utils::ast_builder::{create_let_declaration, create_variable_declaration},
+};
+
 use super::{ClassBindings, ClassProperties, IdentIndexMap};
+
+/// Where a lowered class declares its temporaries: class temp var, private property bindings,
+/// brand, and so on. Decided once when the class is entered.
+#[derive(Clone, Copy)]
+pub(super) enum ClassTemps {
+    /// `var`s in the enclosing hoist scope.
+    Hoisted(ScopeId),
+    /// `let`s in the enclosing block scope.
+    ///
+    /// Used for classes with per-evaluation standard decorator state (decorator context, or
+    /// auto-accessor storage), so each evaluation of the class, e.g. in a loop body, keeps its
+    /// own temporaries. Such a class also lowers its own static blocks.
+    Block(ScopeId),
+}
+
+impl ClassTemps {
+    pub fn new(per_evaluation: bool, ctx: &TraverseCtx<'_>) -> Self {
+        if per_evaluation {
+            Self::Block(ctx.current_block_scope_id())
+        } else {
+            Self::Hoisted(ctx.current_hoist_scope_id())
+        }
+    }
+
+    pub fn is_per_evaluation(self) -> bool {
+        matches!(self, Self::Block(_))
+    }
+
+    /// Create a temporary binding named after `name`.
+    pub fn create_binding<'a>(self, name: &str, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+        match self {
+            Self::Hoisted(scope_id) => {
+                ctx.generate_uid(name, scope_id, SymbolFlags::FunctionScopedVariable)
+            }
+            Self::Block(scope_id) => {
+                ctx.generate_uid(name, scope_id, SymbolFlags::BlockScopedVariable)
+            }
+        }
+    }
+
+    /// Create the temp var holding the class, named after the class or `Class`.
+    pub fn create_class_binding<'a>(
+        self,
+        class_name: Option<&BoundIdentifier<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        self.create_binding(class_name.map_or("Class", |binding| binding.name.as_str()), ctx)
+    }
+
+    /// Scope and flags for a lowered private method's function binding.
+    pub fn private_method_scope(
+        self,
+        in_class_sequence: bool,
+        ctx: &TraverseCtx<'_>,
+    ) -> (ScopeId, SymbolFlags) {
+        match self {
+            _ if !in_class_sequence => (ctx.current_block_scope_id(), SymbolFlags::Function),
+            Self::Hoisted(scope_id) => (scope_id, SymbolFlags::FunctionScopedVariable),
+            Self::Block(scope_id) => (scope_id, SymbolFlags::BlockScopedVariable),
+        }
+    }
+
+    /// Declare `binding` without an initializer.
+    pub fn declare<'a>(self, binding: &BoundIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.is_per_evaluation() {
+            ctx.state.var_declarations.insert_let(binding, None, &ctx.ast);
+        } else {
+            ctx.state.var_declarations.insert_var(binding, &ctx.ast);
+        }
+    }
+
+    /// `var binding = init` or `let binding = init`.
+    pub fn declaration<'a>(
+        self,
+        binding: &BoundIdentifier<'a>,
+        init: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        if self.is_per_evaluation() {
+            create_let_declaration(binding, init, ctx)
+        } else {
+            create_variable_declaration(binding, init, ctx)
+        }
+    }
+}
 
 /// Details of a class.
 ///
@@ -18,8 +111,12 @@ pub(super) struct ClassDetails<'a> {
     pub private_props: PrivateProps<'a>,
     /// Bindings for class name and temp var for class
     pub bindings: ClassBindings<'a>,
-    /// Class contained auto-accessors before they were lowered.
-    pub has_auto_accessor: bool,
+    /// Standard decorators state. `Some` if class is decorated.
+    ///
+    /// Boxed because decorated classes are rare, and this keeps `ClassDetails` small.
+    pub decorators: Option<Box<ClassDecoratorState<'a>>>,
+    /// Where this class declares its temporaries.
+    pub temps: ClassTemps,
 }
 
 impl ClassDetails<'_> {
@@ -32,8 +129,9 @@ impl ClassDetails<'_> {
             private_method_helpers_in_class_sequence: false,
             is_transform_required: false,
             private_props: PrivateProps::Lowered(IdentIndexMap::default()),
-            bindings: ClassBindings::dummy(),
-            has_auto_accessor: false,
+            bindings: ClassBindings::dummy(false),
+            decorators: None,
+            temps: ClassTemps::Hoisted(ScopeId::new(0)),
         }
     }
 }
@@ -69,6 +167,9 @@ pub(super) struct PrivateProp<'a> {
     pub is_static: bool,
     pub method_kind: Option<MethodDefinitionKind>,
     pub is_accessor: bool,
+    /// Store a static field in a WeakMap, initialized on the final decorated constructor.
+    /// Source staticness is retained in `is_static`; private uses take the instance-field path.
+    pub uses_weakmap: bool,
     // For accessor methods, they have two bindings,
     // one for getter and another for setter.
     pub binding2: Option<BoundIdentifier<'a>>,
@@ -81,7 +182,7 @@ impl<'a> PrivateProp<'a> {
         method_kind: Option<MethodDefinitionKind>,
         is_accessor: bool,
     ) -> Self {
-        Self { binding, is_static, method_kind, is_accessor, binding2: None }
+        Self { binding, is_static, method_kind, is_accessor, uses_weakmap: false, binding2: None }
     }
 
     pub fn is_method(&self) -> bool {
@@ -90,6 +191,12 @@ impl<'a> PrivateProp<'a> {
 
     pub fn is_accessor(&self) -> bool {
         self.is_accessor || self.method_kind.is_some_and(MethodDefinitionKind::is_accessor)
+    }
+
+    /// Whether uses of this private name need static lowering (a static box or the class as
+    /// brand). Static fields stored in a WeakMap take the instance-field path instead.
+    pub fn uses_static_lowering(&self) -> bool {
+        self.is_static && !self.uses_weakmap
     }
 
     pub fn set_binding2(&mut self, binding: BoundIdentifier<'a>) {
@@ -188,6 +295,13 @@ impl<'a> ClassesStack<'a> {
         ret_fn(prop, class_bindings, is_declaration)
     }
 
+    /// Use the owning class's effective private-storage mode.
+    pub fn private_fields_as_properties(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
+        self.lookup_private_prop(ident, |_, class_bindings, _| {
+            class_bindings.private_fields_as_properties()
+        })
+    }
+
     /// Lookup details of private property referred to by `ident`.
     pub fn find_private_prop<'b>(
         &'b mut self,
@@ -197,7 +311,7 @@ impl<'a> ClassesStack<'a> {
             ResolvedPrivateProp {
                 prop_binding: &prop.binding,
                 class_bindings,
-                is_static: prop.is_static,
+                uses_static_lowering: prop.uses_static_lowering(),
                 is_method: prop.is_method(),
                 is_accessor: prop.is_accessor(),
                 is_declaration,
@@ -219,7 +333,7 @@ impl<'a> ClassesStack<'a> {
             prop_binding.map(|prop_binding| ResolvedPrivateProp {
                 prop_binding,
                 class_bindings,
-                is_static: prop.is_static,
+                uses_static_lowering: prop.uses_static_lowering(),
                 is_method: prop.is_method(),
                 is_accessor: prop.is_accessor(),
                 is_declaration,
@@ -243,7 +357,7 @@ impl<'a> ClassesStack<'a> {
             prop_binding.map(|prop_binding| ResolvedPrivateProp {
                 prop_binding,
                 class_bindings,
-                is_static: prop.is_static,
+                uses_static_lowering: prop.uses_static_lowering(),
                 is_method: prop.is_method(),
                 is_accessor: prop.is_accessor(),
                 is_declaration,
@@ -266,7 +380,7 @@ impl<'a> ClassesStack<'a> {
                 get_binding,
                 set_binding,
                 class_bindings,
-                is_static: prop.is_static,
+                uses_static_lowering: prop.uses_static_lowering(),
                 is_method: prop.is_method(),
                 is_accessor: prop.is_accessor(),
                 is_declaration,
@@ -285,8 +399,9 @@ pub(super) struct ResolvedPrivateProp<'a, 'b> {
     pub prop_binding: &'b BoundIdentifier<'a>,
     /// Bindings for class name and temp var for class
     pub class_bindings: &'b mut ClassBindings<'a>,
-    /// `true` if is a static property
-    pub is_static: bool,
+    /// `true` if uses need static lowering (a static box or the class as brand). Static fields
+    /// stored in a WeakMap ([`PrivateProp::uses_weakmap`]) take the instance-field path instead.
+    pub uses_static_lowering: bool,
     /// `true` if is a private method or accessor property
     pub is_method: bool,
     /// `true` if is a private accessor property or [`PrivateProp::method_kind`] is
@@ -306,8 +421,9 @@ pub(super) struct ResolvedGetSetPrivateProp<'a, 'b> {
     pub set_binding: Option<&'b BoundIdentifier<'a>>,
     /// Bindings for class name and temp var for class
     pub class_bindings: &'b mut ClassBindings<'a>,
-    /// `true` if is a static property
-    pub is_static: bool,
+    /// `true` if uses need static lowering (a static box or the class as brand). Static fields
+    /// stored in a WeakMap ([`PrivateProp::uses_weakmap`]) take the instance-field path instead.
+    pub uses_static_lowering: bool,
     /// `true` if is a private method or accessor property
     pub is_method: bool,
     /// `true` if is a private accessor property or [`PrivateProp::method_kind`] is

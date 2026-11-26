@@ -67,18 +67,19 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        if self.private_fields_as_properties {
-            let this = Expression::new_this_expression(SPAN, ctx);
+        let this = Expression::new_this_expression(SPAN, ctx);
+        if self.current_class().bindings.private_fields_as_properties() {
             self.create_private_init_assignment_loose(ident, value, this, span, ctx)
         } else {
-            self.create_private_instance_init_assignment_not_loose(ident, value, span, ctx)
+            self.create_private_field_init_assignment_not_loose(ident, this, value, span, ctx)
         }
     }
 
-    /// `_classPrivateFieldInitSpec(this, _prop, value)`
-    fn create_private_instance_init_assignment_not_loose(
+    /// `_classPrivateFieldInitSpec(receiver, _prop, value)`
+    fn create_private_field_init_assignment_not_loose(
         &self,
         ident: &PrivateIdentifier<'a>,
+        receiver: Expression<'a>,
         value: Expression<'a>,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
@@ -87,7 +88,7 @@ impl<'a> ClassProperties<'a> {
         let prop = &private_props[&ident.name];
         let arguments = ArenaVec::from_array_in(
             [
-                Argument::new_this_expression(SPAN, ctx),
+                Argument::from(receiver),
                 Argument::from(prop.binding.create_read_expression(ctx)),
                 Argument::from(value),
             ],
@@ -167,7 +168,19 @@ impl<'a> ClassProperties<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.private_fields_as_properties {
+        let class_details = self.current_class();
+        let private_prop = &class_details.private_props.lowered().unwrap()[&ident.name];
+        if private_prop.uses_weakmap {
+            let class_binding = if class_details.is_declaration {
+                class_details.bindings.name.as_ref().unwrap()
+            } else {
+                class_details.bindings.temp.as_ref().unwrap()
+            };
+            let receiver = class_binding.create_read_expression(ctx);
+            let init = self
+                .create_private_field_init_assignment_not_loose(ident, receiver, value, span, ctx);
+            self.insert_expr_after_class(init, ctx);
+        } else if class_details.bindings.private_fields_as_properties() {
             self.insert_private_static_init_assignment_loose(ident, value, span, ctx);
         } else {
             self.insert_private_static_init_assignment_not_loose(ident, value, ctx);

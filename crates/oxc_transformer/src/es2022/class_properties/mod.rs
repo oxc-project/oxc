@@ -208,6 +208,7 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
 use crate::{
+    common::class_lowering::ClassLowering,
     context::TraverseCtx,
     decorator::{DecoratorMode, standard::StandardDecoratorState},
     state::TransformState,
@@ -226,8 +227,9 @@ mod private_method;
 mod prop_decl;
 mod static_block_and_prop_init;
 mod super_converter;
+mod unlowered_class;
 mod utils;
-use class_bindings::ClassBindings;
+use class_bindings::{ClassBindings, ClassIdentity};
 use class_details::{
     ClassDetails, ClassesStack, PrivateProp, PrivateProps, ResolvedPrivateName, ResolvedPrivateProp,
 };
@@ -323,6 +325,9 @@ impl ClassProperties<'_> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
+    // `#[inline]` because this runs on every statement and is a no-op unless standard decorator
+    // lowering is enabled
+    #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_anonymous_export_default_class(stmt, ctx);
         self.decorator_state.wrap_decorated_loop_body(stmt, ctx);
@@ -344,10 +349,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
             !self.decorator_state.has_leftover_class_entries(),
             "per-class decorator data outlived its class"
         );
-    }
-
-    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.decorator_state.lower_native_auto_accessors(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -372,16 +373,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         }
     }
 
-    // `#[inline]` for fast exit for expressions which are not any of the transformed types
+    // `#[inline]` for fast exit for expressions which are not any of the transformed types.
+    // Class expressions are entered through `ES2022`, see `enter_class_expression`.
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Private field transforms only act inside a class with private fields, and standard
-        // decorator lowering only acts on class expressions. Test both in one condition, so other
-        // expressions take the fast path.
-        if self.private_field_count != 0
-            || (self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)))
-        {
-            self.enter_expression_slow(expr, ctx);
+        // Private field transforms only act inside a class with private fields
+        if self.private_field_count != 0 {
+            self.enter_expression_with_private_fields(expr, ctx);
         }
     }
 
@@ -467,18 +465,24 @@ impl<'a> ClassProperties<'a> {
         }
     }
 
+    /// Whether standard decorators are lowered, so class expressions may need entering.
+    pub fn lowers_standard_decorators(&self) -> bool {
+        self.decorator_state.enabled()
+    }
+
+    /// Enter a class expression whose fields this transform lowers.
+    pub fn enter_class_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        lowering: ClassLowering,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator_state.wrap_class_in_initializer(expr, lowering, ctx);
+    }
+
     // Keep the rare transform bodies out of the hot expression visitor.
     // Rust 1.97 otherwise inlines these large branches into the generated walker.
     #[inline(never)]
-    fn enter_expression_slow(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.decorator_state.enabled() && matches!(expr, Expression::ClassExpression(_)) {
-            self.decorator_state.wrap_native_accessor_expression(expr, ctx);
-        }
-        if self.private_field_count != 0 {
-            self.enter_expression_with_private_fields(expr, ctx);
-        }
-    }
-
     fn enter_expression_with_private_fields(
         &mut self,
         expr: &mut Expression<'a>,

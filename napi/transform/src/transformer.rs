@@ -413,7 +413,7 @@ pub struct DecoratorOptions {
     /// @default false
     pub legacy: Option<bool>,
 
-    /// Lower standard auto-accessors. Decorated classes are preserved.
+    /// Lower standard decorators and auto-accessors.
     ///
     /// When omitted or `false`, this syntax is preserved for a later transform at any target
     /// while TypeScript types are still stripped. Set to `true` to lower it.
@@ -714,6 +714,10 @@ impl From<Es2015Options> for oxc::transformer::ES2015Options {
 #[napi(object)]
 #[derive(Default)]
 pub struct Helpers {
+    /// How helper functions are loaded. Defaults to `Runtime`.
+    ///
+    /// Lowered decorators, legacy or standard, call helpers that only `@oxc-project/runtime`
+    /// provides and Babel's helpers lack, so use the `Runtime` mode when decorators are lowered.
     pub mode: Option<HelperMode>,
 }
 
@@ -731,6 +735,9 @@ pub enum HelperMode {
     #[default]
     Runtime,
     /// External mode: Helper functions are accessed from a global `babelHelpers` object.
+    ///
+    /// Lowered decorators, legacy or standard, call helpers that only `@oxc-project/runtime`
+    /// provides and Babel's helpers lack, so use the `Runtime` mode when decorators are lowered.
     ///
     /// Example:
     ///
