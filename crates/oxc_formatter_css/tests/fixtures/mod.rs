@@ -16,10 +16,11 @@ use oxc_formatter_tests::{FixtureFormatter, InputVariant, OptionValue, build_fix
 
 struct CssHarness;
 
-/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`.
+/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`:
+/// every comment's text, in source order, so a comment lost, printed twice or moved past another one fails.
 #[derive(Debug, PartialEq)]
 struct Fingerprint {
-    comments: usize,
+    comments: Vec<String>,
 }
 
 impl FixtureFormatter for CssHarness {
@@ -62,14 +63,24 @@ impl FixtureFormatter for CssHarness {
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
         let options = CssFormatOptions { variant: variant_of(path), ..*options };
         let allocator = Allocator::default();
+        // The spans index the source as the parser normalizes it (BOM stripped, line breaks as `\n`)
+        let source =
+            source.trim_start_matches('\u{feff}').replace("\r\n", "\n").replace('\r', "\n");
         let parsed = parse_for_format(
             &allocator,
-            source,
+            &source,
             options,
             if is_embedded(path) { CssRoot::CssInJsTemplate } else { CssRoot::Stylesheet },
         )
         .expect("source should parse");
-        Fingerprint { comments: parsed.comments.len() }
+        let comments = parsed
+            .comments
+            .iter()
+            .map(|comment| {
+                source[comment.span.start as usize..comment.span.end as usize].to_string()
+            })
+            .collect();
+        Fingerprint { comments }
     }
 
     fn input_variants(path: &Path) -> &'static [InputVariant] {
