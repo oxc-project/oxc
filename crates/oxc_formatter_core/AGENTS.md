@@ -25,7 +25,7 @@ A newline inside a `Text` has two readings, and the IR keeps the `Text` one elem
 
 - Raw (the default): it prints as is, at column 0, as Prettier prints a string
 - Inside an `embedded_root` (a host around another language's IR): it resumes at the embedding, as Prettier's `replaceEndOfLine()` makes it a literal line
-  - A host never rewrites a child's `Text` into lines: that would drop its `without_expand_parent()`
+  - A host never rewrites a child's `Text` into lines: that would drop its `without_expand_parent()`, which `map_text_in_ir` keeps on the texts it rewrites
 
 Every Prettier doc primitive its own language printers emit has a counterpart here; composite ones translate rather than port 1:1:
 
