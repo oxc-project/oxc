@@ -41,7 +41,7 @@
 @supports (display /* c */ : flex) and (gap:1PX) {
 }
 
-/* DIVERGENCES.md#supports-declaration-comments */
+/* DIVERGENCES.md#supports-declaration-as-in-rule */
 @supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
 }
 

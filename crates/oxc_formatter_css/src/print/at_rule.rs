@@ -1544,6 +1544,10 @@ fn write_import_href<'a>(href: &ImportPreludeHref<'a>, f: &mut CssFormatter<'_, 
 /// Less `@import (options) href media` (e.g. `@import (reference) "x";`).
 /// oxc-css-parser parses the options form as a dedicated `LessImportPrelude`,
 /// which otherwise falls into the verbatim catch-all and skips quote normalization.
+///
+/// TODO: Any comment sends the prelude to the branch below, unlike a CSS `@import`'s,
+/// whose block comments are words of the same fill as without them (`push_comment_words`);
+/// route a Less one through `write_import_words` the same way.
 fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     if !has_unclaimed_comments_before(import.span.end, f) {
         let mut groups: Vec<Vec<ImportWord<'_, 'a>>> = vec![vec![]];
@@ -1955,9 +1959,9 @@ fn write_supports_term<'a>(
 
 /// Where a term starts, so a comment inside it never reads as leading it.
 ///
-/// NOTE: oxc-css-parser spans a `selector()` term as its selector list only:
+/// TODO: oxc-css-parser spans a `selector()` term as its selector list only:
 /// its start is found back over the pending comments and whitespace after `selector(`.
-/// Fixing the span in the parser removes this.
+/// Fix the span in the parser and remove this.
 fn supports_in_parens_start(in_parens: &SupportsInParens<'_>, f: &CssFormatter<'_, '_>) -> u32 {
     let list_start = in_parens.span.start;
     if !matches!(in_parens.kind, SupportsInParensKind::Selector(_)) {

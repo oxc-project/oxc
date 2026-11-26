@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-/* DIVERGENCES.md#keyframes-name-comment */
+/* DIVERGENCES.md#commented-as-uncommented */
 @keyframes /* c */  foo {
 }
 @keyframes /* c */
@@ -23,7 +23,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-/* DIVERGENCES.md#keyframes-name-comment */
+/* DIVERGENCES.md#commented-as-uncommented */
 @keyframes /* c */ foo {
 }
 @keyframes /* c */ foo {
@@ -42,7 +42,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-/* DIVERGENCES.md#keyframes-name-comment */
+/* DIVERGENCES.md#commented-as-uncommented */
 @keyframes /* c */ foo {
 }
 @keyframes /* c */ foo {
