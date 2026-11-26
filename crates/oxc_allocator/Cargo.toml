@@ -41,6 +41,9 @@ serde = { workspace = true, optional = true }
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { workspace = true, features = ["Win32_System_Memory"], optional = true }
 
+[target.'cfg(unix)'.dependencies]
+libc = { version = "0.2.186", optional = true }
+
 [dev-dependencies]
 oxc_data_structures = { workspace = true, features = ["types"] }
 oxc_estree = { workspace = true, features = ["serialize"] }
@@ -55,7 +58,7 @@ oxc_allocator = { path = ".", features = ["testing"] }
 
 [features]
 bitset = []
-fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros", "dep:windows-sys"]
+fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros", "dep:windows-sys", "dep:libc"]
 from_raw_parts = []
 pool = []
 serialize = ["dep:serde", "oxc_estree/serialize"]

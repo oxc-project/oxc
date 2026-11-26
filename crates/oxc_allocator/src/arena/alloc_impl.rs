@@ -333,19 +333,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         let current_footer_ptr = self.current_chunk_footer_ptr.get();
 
         // Fixed-size arenas (those created via `Arena::from_raw_parts`) cannot add further chunks.
-        // On Windows with `fixed_size` feature enabled, the existing chunk can grow in place by committing more pages.
+        // Platform-backed fixed-size arenas can grow in place by making more pages writable.
         if let Some(footer_ptr) = current_footer_ptr {
             // SAFETY: `footer_ptr` always points to a valid `ChunkFooter`
             let footer = unsafe { footer_ptr.as_ref() };
             if footer.is_fixed_size {
                 // Attempt to grow the chunk in place to accommodate the allocation.
                 //
-                // `is_fixed_size` can only be `true` in 3 circumstances:
-                // * Oxlint: `grow_fixed_size_chunk` will attempt to grow the chunk in place.
-                // * NAPI parser raw transfer: `start_ptr` is aligned on 4 GiB, so `grow_fixed_size_chunk`
-                //   considers the container already grown to maximum size, will always fail to grow the chunk,
-                //   and returns `None`.
-                // * Oxlint's `RuleTester`: Same as NAPI parser raw transfer.
+                // `is_fixed_size` can be `true` in these circumstances:
+                // * Oxlint: `grow_fixed_size_chunk` can grow a platform-backed chunk in place.
+                // * NAPI parser raw transfer and Oxlint's `RuleTester`: imported chunks cannot grow.
                 #[cfg(all(
                     feature = "fixed_size",
                     target_pointer_width = "64",
