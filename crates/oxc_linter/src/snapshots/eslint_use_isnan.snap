@@ -262,6 +262,41 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
+   ╭─[use_isnan.tsx:1:7]
+ 1 │ x === (doStuff(), NaN);
+   ·       ────────────────
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
+   ╭─[use_isnan.tsx:1:7]
+ 1 │ x === (doStuff(), Number.NaN);
+   ·       ───────────────────────
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
+   ╭─[use_isnan.tsx:1:6]
+ 1 │ x == (doStuff(), NaN);
+   ·      ────────────────
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
+   ╭─[use_isnan.tsx:1:6]
+ 1 │ x == (doStuff(), Number.NaN);
+   ·      ───────────────────────
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+   ╭─[use_isnan.tsx:1:5]
+ 1 │ x < (doStuff(), NaN);
+   ·     ────────────────
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
   ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { case foo: break; }
@@ -497,6 +532,27 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[use_isnan.tsx:1:27]
  1 │ switch(Number.NaN) { case Number.NaN: break; }
    ·                           ──────────
+   ╰────
+  help: Use the `isNaN` function instead of the switch.
+
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
+   ╭─[use_isnan.tsx:1:8]
+ 1 │ switch((doStuff(), NaN)) {}
+   ·        ────────────────
+   ╰────
+  help: Use the `isNaN` function instead of the switch.
+
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
+   ╭─[use_isnan.tsx:1:8]
+ 1 │ switch((doStuff(), Number.NaN)) {}
+   ·        ───────────────────────
+   ╰────
+  help: Use the `isNaN` function instead of the switch.
+
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
+   ╭─[use_isnan.tsx:1:20]
+ 1 │ switch(foo) { case (doStuff(), NaN): break; }
+   ·                    ────────────────
    ╰────
   help: Use the `isNaN` function instead of the switch.
 

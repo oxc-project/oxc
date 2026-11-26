@@ -1,7 +1,10 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{BinaryExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -11,6 +14,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{
     AstNode,
     context::LintContext,
+    fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -96,7 +100,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    conditional_fix,
+    conditional_suggestion,
     config = UseIsnan,
     version = "0.0.3",
     short_description = "Disallows checking against `NaN` without using `isNaN()` call.",
@@ -114,25 +118,19 @@ impl Rule for UseIsnan {
                 }
             }
             AstKind::BinaryExpression(expr) if expr.operator.is_equality() => {
-                let negate = matches!(
-                    expr.operator,
-                    BinaryOperator::Inequality | BinaryOperator::StrictInequality
-                );
-                if is_nan_identifier(&expr.left, ctx) {
-                    ctx.diagnostic_with_fix(
-                        comparison_with_nan(expr.left.span(), expr.operator),
-                        |fixer| {
-                            fixer.replace(expr.span, make_equality_fix(&expr.right, negate, ctx))
-                        },
-                    );
-                }
-                if is_nan_identifier(&expr.right, ctx) {
-                    ctx.diagnostic_with_fix(
-                        comparison_with_nan(expr.right.span(), expr.operator),
-                        |fixer| {
-                            fixer.replace(expr.span, make_equality_fix(&expr.left, negate, ctx))
-                        },
-                    );
+                for (nan, compared) in [(&expr.left, &expr.right), (&expr.right, &expr.left)] {
+                    if !is_nan_identifier(nan, ctx) {
+                        continue;
+                    }
+                    let diagnostic = comparison_with_nan(nan.span(), expr.operator);
+                    if matches!(nan.get_inner_expression(), Expression::SequenceExpression(_)) {
+                        ctx.diagnostic(diagnostic);
+                    } else {
+                        ctx.diagnostic_with_suggestions(
+                            diagnostic,
+                            equality_suggestions(expr, compared, ctx),
+                        );
+                    }
                 }
             }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {
@@ -154,9 +152,9 @@ impl Rule for UseIsnan {
                 // Match target array prototype methods whose first argument is NaN
                 let Some(method) = is_target_callee(&call.callee) else { return };
                 if let Some(expr) = call.arguments[0].as_expression()
-                    && let Some((span, _)) = get_nan_in_expression(expr, ctx)
+                    && is_nan_identifier(expr, ctx)
                 {
-                    ctx.diagnostic(index_of_nan(method, span));
+                    ctx.diagnostic(index_of_nan(method, final_operand(expr).span()));
                 }
             }
             _ => (),
@@ -169,6 +167,7 @@ impl Rule for UseIsnan {
 }
 
 /// `NaN` or `Number.NaN`, where `NaN` / `Number` is the global and not a local binding.
+/// A sequence expression matches when its final operand does.
 fn is_nan_identifier<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> bool {
     let is_global = |name: &str, expr: &Expression<'a>| {
         matches!(
@@ -177,7 +176,7 @@ fn is_nan_identifier<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> boo
                 if ident.name == name && ctx.is_reference_to_global_variable(ident)
         )
     };
-    let expr = expr.get_inner_expression();
+    let expr = final_operand(expr);
     if is_global("NaN", expr) {
         return true;
     }
@@ -191,30 +190,16 @@ fn is_nan_identifier<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> boo
     })
 }
 
-/// Check if an expression evaluates to NaN, handling sequence expressions.
-/// Returns the span of the NaN identifier and the expression itself if found.
-fn get_nan_in_expression<'a>(
-    expr: &'a Expression<'a>,
-    ctx: &LintContext<'a>,
-) -> Option<(Span, &'a Expression<'a>)> {
+/// The final operand of a sequence expression, or the expression itself, with parentheses and
+/// TypeScript wrappers removed.
+fn final_operand<'a>(expr: &'a Expression<'a>) -> &'a Expression<'a> {
     let expr = expr.get_inner_expression();
-
-    // Handle sequence expressions like (1, NaN) - the result is the last expression
-    if let Expression::SequenceExpression(seq) = expr {
-        if let Some(last) = seq.expressions.last() {
-            let last = last.get_inner_expression();
-            if is_nan_identifier(last, ctx) {
-                return Some((last.span(), last));
-            }
-        }
-        return None;
+    if let Expression::SequenceExpression(sequence) = expr
+        && let Some(last) = sequence.expressions.last()
+    {
+        return last.get_inner_expression();
     }
-
-    if is_nan_identifier(expr, ctx) {
-        return Some((expr.span(), expr));
-    }
-
-    None
+    expr
 }
 
 /// If callee is calling the `indexOf` or `lastIndexOf` function.
@@ -240,16 +225,37 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
     None
 }
 
-fn make_equality_fix<'a>(non_nan: &Expression<'a>, negate: bool, ctx: &LintContext<'a>) -> String {
-    let non_nan = non_nan.span().source_text(ctx.source_text());
-    let maybe_bang = if negate { "!" } else { "" };
-
-    format!("{maybe_bang}isNaN({non_nan})")
+fn equality_suggestions<'a>(
+    expr: &BinaryExpression<'a>,
+    compared: &Expression<'a>,
+    ctx: &LintContext<'a>,
+) -> Vec<RuleFix> {
+    let fixer = RuleFixer::new(FixKind::Suggestion, ctx);
+    let negation =
+        if matches!(expr.operator, BinaryOperator::Inequality | BinaryOperator::StrictInequality) {
+            "!"
+        } else {
+            ""
+        };
+    let compared = compared.span().source_text(ctx.source_text());
+    let mut suggestions = vec![
+        fixer
+            .replace(expr.span, format!("{negation}Number.isNaN({compared})"))
+            .with_message("Replace with `Number.isNaN`."),
+    ];
+    if matches!(expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
+        suggestions.push(
+            fixer
+                .replace(expr.span, format!("{negation}Number.isNaN(Number({compared}))"))
+                .with_message("Replace with `Number.isNaN` and cast to a number."),
+        );
+    }
+    suggestions
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         ("var x = NaN;", None),
@@ -503,10 +509,11 @@ fn test() {
             None,
         ),
         ("(1, 2) === NaN;", None),
-        // ("x === (doStuff(), NaN);", None),
-        // ("x === (doStuff(), Number.NaN);", None),
-        // ("x == (doStuff(), NaN);", None),
-        // ("x == (doStuff(), Number.NaN);", None),
+        ("x === (doStuff(), NaN);", None),
+        ("x === (doStuff(), Number.NaN);", None),
+        ("x == (doStuff(), NaN);", None),
+        ("x == (doStuff(), Number.NaN);", None),
+        ("x < (doStuff(), NaN);", None),
         ("switch(NaN) { case foo: break; }", None),
         ("switch(foo) { case NaN: break; }", None),
         ("switch(NaN) { case foo: break; }", Some(serde_json::json!([{}]))),
@@ -594,14 +601,18 @@ fn test() {
             "switch(Number.NaN) { case Number.NaN: break; }",
             Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
         ),
-        // (
-        //     "switch((doStuff(), NaN)) {}",
-        //     Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        // ),
-        // (
-        //     "switch((doStuff(), Number.NaN)) {}",
-        //     Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        // ),
+        (
+            "switch((doStuff(), NaN)) {}",
+            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        ),
+        (
+            "switch((doStuff(), Number.NaN)) {}",
+            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        ),
+        (
+            "switch(foo) { case (doStuff(), NaN): break; }",
+            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        ),
         ("foo.indexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.lastIndexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo['indexOf'](NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
@@ -647,19 +658,22 @@ fn test() {
         ("foo.indexOf((1, NaN), 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 }
     ];
 
-    let fix = vec![
-        ("1 == NaN", "isNaN(1)", None),
-        ("1 === NaN", "isNaN(1)", None),
-        ("1 != NaN", "!isNaN(1)", None),
-        ("1 !== NaN", "!isNaN(1)", None),
-        ("NaN == 'foo'", "isNaN('foo')", None),
-        ("NaN === 'foo'", "isNaN('foo')", None),
-        ("NaN != 'foo'", "!isNaN('foo')", None),
-        ("NaN !== 'foo'", "!isNaN('foo')", None),
-        ("1 == Number.NaN", "isNaN(1)", None),
-        ("1 === Number.NaN", "isNaN(1)", None),
-        ("1 != Number.NaN", "!isNaN(1)", None),
-        ("1 !== Number.NaN", "!isNaN(1)", None),
+    let fix: Vec<ExpectFixTestCase> = vec![
+        ("1 == NaN", ("Number.isNaN(1)", "Number.isNaN(Number(1))")).into(),
+        ("1 === NaN", "Number.isNaN(1)", None, FixKind::Suggestion).into(),
+        ("1 != NaN", ("!Number.isNaN(1)", "!Number.isNaN(Number(1))")).into(),
+        ("1 !== NaN", "!Number.isNaN(1)", None, FixKind::Suggestion).into(),
+        ("NaN == 'foo'", ("Number.isNaN('foo')", "Number.isNaN(Number('foo'))")).into(),
+        ("NaN === 'foo'", "Number.isNaN('foo')", None, FixKind::Suggestion).into(),
+        ("NaN != 'foo'", ("!Number.isNaN('foo')", "!Number.isNaN(Number('foo'))")).into(),
+        ("NaN !== 'foo'", "!Number.isNaN('foo')", None, FixKind::Suggestion).into(),
+        ("1 == Number.NaN", ("Number.isNaN(1)", "Number.isNaN(Number(1))")).into(),
+        ("1 === Number.NaN", "Number.isNaN(1)", None, FixKind::Suggestion).into(),
+        ("1 != Number.NaN", ("!Number.isNaN(1)", "!Number.isNaN(Number(1))")).into(),
+        ("1 !== Number.NaN", "!Number.isNaN(1)", None, FixKind::Suggestion).into(),
+        ("(1, 2) === NaN", "Number.isNaN((1, 2))", None, FixKind::Suggestion).into(),
+        ("value === NaN", "value === NaN", None, FixKind::SafeFix).into(),
+        ("x === (doStuff(), NaN)", "x === (doStuff(), NaN)", None, FixKind::Suggestion).into(),
     ];
 
     Tester::new(UseIsnan::NAME, UseIsnan::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
