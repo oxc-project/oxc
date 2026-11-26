@@ -14,6 +14,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
+    utils::pad_fix_with_token_boundary,
 };
 
 fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
@@ -162,9 +163,12 @@ fn remove_console<'c, 'a: 'c>(
         AstKind::ExpressionStatement(_) => {}
         AstKind::ArrowFunctionExpression(_) => return fixer.replace(expression.span(), "{}"),
         _ => {
-            let replacement =
-                if needs_parentheses(expression, parent) { "(void 0)" } else { "void 0" };
-            return fixer.replace(expression.span(), replacement).dangerously();
+            let span = expression.span();
+            let mut replacement =
+                if needs_parentheses(expression, parent) { "(void 0)" } else { "void 0" }
+                    .to_string();
+            pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+            return fixer.replace(span, replacement).dangerously();
         }
     }
 
@@ -302,6 +306,8 @@ fn test() {
         ("do {} while ((console.log(foo)))", "do {} while (void 0)", None),
         ("const result = console.log('debug');", "const result = void 0;", None),
         ("bar(console.log(foo))", "bar(void 0)", None),
+        ("function f(){return(console.log())}", "function f(){return void 0}", None),
+        ("(console.log())in obj", "void 0 in obj", None),
         ("console.log(foo).bar", "(void 0).bar", None),
         ("(console.log(foo)).bar", "(void 0).bar", None),
         ("console.log(foo)[bar]", "(void 0)[bar]", None),
