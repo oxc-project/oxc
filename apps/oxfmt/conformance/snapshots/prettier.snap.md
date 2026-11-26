@@ -338,7 +338,7 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-comments
   - crates/oxc_formatter_css/DIVERGENCES.md#import-media-feature-flat
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-comments
-- externals/prettier/css/comments/declaration.css (💥, 85.88%)
+- externals/prettier/css/comments/declaration.css (💥, 93.26%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/css/fill-value/fill.css (💥, 93.33%)
@@ -400,7 +400,7 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/scss/comments/at-rule.scss (💥, 87.50%)
   - crates/oxc_formatter_css/DIVERGENCES.md#at-root-line-comment-indent
-- externals/prettier/scss/comments/between-decl.scss (💥, 92.42%)
+- externals/prettier/scss/comments/between-decl.scss (💥, 94.74%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/scss/comments/custom-properties.scss (💥, 88.89%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
@@ -457,7 +457,7 @@
 
 ### Failed
 
-- externals/prettier/less/comments/between-decl.less (💥, 85.71%)
+- externals/prettier/less/comments/between-decl.less (💥, 90.14%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/less/comments/selectors.less (💥, 88.89%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
