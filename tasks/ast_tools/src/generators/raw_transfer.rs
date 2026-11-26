@@ -2025,7 +2025,7 @@ impl<'a> LocFieldAdder<'a> {
                 );
                 let args = [
                     Argument::from(Expression::new_identifier(SPAN, temp, &self.ast)),
-                    Argument::from(Expression::new_string_literal(SPAN, key_name, None, &self.ast)),
+                    Argument::from(Expression::new_string_literal(SPAN, key_name, &self.ast)),
                     Argument::from(descriptor),
                 ];
                 Expression::new_call_expression(

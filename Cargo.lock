@@ -1831,6 +1831,7 @@ version = "0.160.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
+ "oxc_estree",
  "oxc_span",
  "oxc_syntax",
 ]

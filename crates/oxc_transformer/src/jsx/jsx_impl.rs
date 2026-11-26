@@ -814,7 +814,7 @@ impl<'a> JsxImpl<'a> {
     ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
-                Expression::new_string_literal(ident.span, ident.name, None, ctx)
+                Expression::new_string_literal(ident.span, ident.name, ctx)
             }
             JSXElementName::IdentifierReference(ident) => Expression::Identifier(ident),
             JSXElementName::MemberExpression(member_expr) => {
@@ -828,7 +828,7 @@ impl<'a> JsxImpl<'a> {
                     [&namespaced.namespace.name, ":", &namespaced.name.name],
                     ctx,
                 );
-                Expression::new_string_literal(namespaced.span, namespace_name, None, ctx)
+                Expression::new_string_literal(namespaced.span, namespace_name, ctx)
             }
             JSXElementName::ThisExpression(expr) => Expression::new_this_expression(expr.span, ctx),
         }
@@ -921,7 +921,7 @@ impl<'a> JsxImpl<'a> {
                     // Use the original value without copying.
                     s.value
                 };
-                Expression::new_string_literal(s.span, jsx_text, None, ctx)
+                Expression::new_string_literal(s.span, jsx_text, ctx)
             }
             Some(JSXAttributeValue::Element(e)) => self.transform_jsx_element(e, ctx),
             Some(JSXAttributeValue::Fragment(e)) => {
@@ -993,21 +993,21 @@ impl<'a> JsxImpl<'a> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name;
                 if ident.name.contains('-') {
-                    PropertyKey::new_static_string_literal(ident.span, name, None, ctx)
+                    PropertyKey::new_static_string_literal(ident.span, name, ctx)
                 } else {
                     PropertyKey::new_static_identifier(ident.span, name, ctx)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = Str::from_str_in(&namespaced.to_string(), ctx);
-                PropertyKey::new_static_string_literal(namespaced.span, name, None, ctx)
+                PropertyKey::new_static_string_literal(namespaced.span, name, ctx)
             }
         }
     }
 
     fn transform_jsx_text(text: &JSXText<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         Self::fixup_whitespace_and_decode_entities(text.value, ctx)
-            .map(|value| Expression::new_string_literal(text.span, value, None, ctx))
+            .map(|value| Expression::new_string_literal(text.span, value, ctx))
     }
 
     /// JSX trims whitespace at the end and beginning of lines, except that the

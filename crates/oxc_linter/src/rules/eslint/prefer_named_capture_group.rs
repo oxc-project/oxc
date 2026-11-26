@@ -153,7 +153,7 @@ fn check_static_arguments(arg0: Option<&Argument>, arg1: Option<&Argument>, ctx:
 
 fn string_literal_source(value: JSStr<'_>, allocator: &Allocator) -> String {
     let expression =
-        Expression::new_string_literal(Span::default(), value, None, &AstBuilder::new(allocator));
+        Expression::new_string_literal(Span::default(), value, &AstBuilder::new(allocator));
     let mut codegen = Codegen::new();
     codegen.print_expression(&expression);
     codegen.into_source_text()

@@ -297,8 +297,8 @@ impl<'t> Utf8ToUtf16Converter<'t> {
 
     /// Convert a single UTF-16 offset back to UTF-8.
     ///
-    /// Note: This method is not optimized. It always performs a binary search.
-    /// It's only intended for use in linter, where it will be called infrequently.
+    /// Each call performs a binary search. ESTree serialization calls this for both
+    /// endpoints of each source-backed string literal when a reverse mapper is provided.
     pub fn convert_offset_back(&self, offset: &mut u32) {
         // Find first translation whose UTF-16 offset is after `utf16_offset`
         let utf16_offset = *offset;

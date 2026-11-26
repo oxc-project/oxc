@@ -622,7 +622,7 @@ impl<'a> PeepholeOptimizations {
                     .merge_within(e.right.span(), e.span)
                     .unwrap_or(SPAN);
                 let value = JSStr::from_js_strs_array_in([left_str, right_str], ctx);
-                let right = Expression::new_string_literal(span, value, None, ctx);
+                let right = Expression::new_string_literal(span, value, ctx);
                 let left = left_binary_expr.left.take_in(ctx);
                 return Some(Expression::new_binary_expression(
                     e.span, left, e.operator, right, ctx,
@@ -985,7 +985,7 @@ impl<'a> PeepholeOptimizations {
                     let new_expr = Expression::new_unary_expression(
                         e.span,
                         UnaryOperator::UnaryPlus,
-                        Expression::new_string_literal(n.span, n.value, n.raw, ctx),
+                        Expression::new_string_literal_with_is_raw(n.span, n.value, n.is_raw, ctx),
                         ctx,
                     );
                     ctx.replace_expression(expr, new_expr);

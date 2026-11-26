@@ -948,7 +948,7 @@ mod tests {
             value.push_utf16(units);
             let value = value.into_js_str();
             // Test actual decoded values, independently of source escape spelling.
-            let string = Expression::new_string_literal(property_span, value, None, &builder);
+            let string = Expression::new_string_literal(property_span, value, &builder);
             let template = Expression::new_template_literal(
                 property_span,
                 [TemplateElement::new(

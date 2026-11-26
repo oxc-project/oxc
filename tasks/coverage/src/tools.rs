@@ -703,8 +703,9 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         |parser_ret| {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
-            Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            program.to_pretty_estree_json(false, false)
+            let span_converter = Utf8ToUtf16::new(source_text);
+            span_converter.convert_program_with_ascending_order_checks(&mut program);
+            program.to_pretty_estree_json(false, false, span_converter.as_utf16_to_utf8())
         },
     )
 }
@@ -799,8 +800,9 @@ pub fn run_estree_acorn_jsx(files: &[AcornJsxFile]) -> Vec<CoverageResult> {
         |parser_ret| {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
-            Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            program.to_pretty_estree_json(false, false)
+            let span_converter = Utf8ToUtf16::new(source_text);
+            span_converter.convert_program_with_ascending_order_checks(&mut program);
+            program.to_pretty_estree_json(false, false, span_converter.as_utf16_to_utf8())
         },
     )
 }
@@ -913,8 +915,9 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
     run_estree_typescript_impl(files, "AST", RuntimeParserConfig::default(), |ret| {
         let mut program = ret.program;
         let source_text = program.source_text;
-        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-        program.to_pretty_estree_json(true, false)
+        let span_converter = Utf8ToUtf16::new(source_text);
+        span_converter.convert_program_with_ascending_order_checks(&mut program);
+        program.to_pretty_estree_json(true, false, span_converter.as_utf16_to_utf8())
     })
 }
 

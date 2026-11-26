@@ -199,6 +199,21 @@ fn run_with_binding_spans(
 }
 
 #[test]
+fn estree_raw_after_compression() {
+    let allocator = Allocator::default();
+    let source = r"use('\x61', 'b' + 'c', 'de'[0]);";
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let mut program = parsed.program;
+    Compressor::new(&allocator).build(&mut program, CompressOptions::smallest());
+
+    let json = program.to_estree_json(false, false, None);
+    assert!(json.contains(r#""value":"a","raw":"'\\x61'""#), "{json}");
+    assert!(json.contains(r#""value":"bc","raw":null"#), "{json}");
+    assert!(json.contains(r#""value":"d","raw":null"#), "{json}");
+}
+
+#[test]
 fn minified_template_dollar_escapes() {
     fn minify(source: &str) -> String {
         let allocator = Allocator::default();

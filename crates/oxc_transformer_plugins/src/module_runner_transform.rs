@@ -469,8 +469,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             let imported_names = ArenaVec::from_iter_in(
                 specifiers.iter().map(|specifier| {
                     let local_name = specifier.local.name();
-                    let local_name_expr =
-                        Expression::new_string_literal(SPAN, local_name, None, ctx);
+                    let local_name_expr = Expression::new_string_literal(SPAN, local_name, ctx);
                     ArrayExpressionElement::from(local_name_expr)
                 }),
                 ctx,
@@ -695,7 +694,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
 
-        ArrayExpressionElement::new_string_literal(span, key, None, ctx)
+        ArrayExpressionElement::new_string_literal(span, key, ctx)
     }
 
     #[inline]
@@ -851,7 +850,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     static_ident!("__vite_ssr_exports__"),
                     ReferenceFlags::Read,
                 )),
-                Argument::new_string_literal(SPAN, exported_name, None, ctx),
+                Argument::new_string_literal(SPAN, exported_name, ctx),
                 Argument::from(object),
             ],
             ctx,
@@ -899,8 +898,7 @@ fn create_compute_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let expression =
-        Expression::new_string_literal(SPAN, Str::from_str_in(property, ctx), None, ctx);
+    let expression = Expression::new_string_literal(SPAN, Str::from_str_in(property, ctx), ctx);
     Expression::new_computed_member_expression(span, object, expression, false, ctx)
 }
 

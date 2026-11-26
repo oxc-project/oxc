@@ -644,7 +644,7 @@ impl<'a> PeepholeOptimizations {
                 && !binary_expr.left.is_specific_string_literal("")
             {
                 let left_span = binary_expr.left.span();
-                let new_left = Expression::new_string_literal(left_span, "", None, ctx);
+                let new_left = Expression::new_string_literal(left_span, "", ctx);
                 ctx.replace_expression(&mut binary_expr.left, new_left);
             }
 
@@ -665,7 +665,7 @@ impl<'a> PeepholeOptimizations {
                 && !binary_expr.right.is_specific_string_literal("")
             {
                 let right_span = binary_expr.right.span();
-                let new_right = Expression::new_string_literal(right_span, "", None, ctx);
+                let new_right = Expression::new_string_literal(right_span, "", ctx);
                 ctx.replace_expression(&mut binary_expr.right, new_right);
             }
             return true;

@@ -3160,7 +3160,7 @@ fn ox_add_imports_to_program<'a>(
             for spec in &sorted_imports {
                 specifiers.push(ox_make_import_specifier(ast, spec, import_span));
             }
-            let source = StringLiteral::new(import_span, ox_atom(ast, module_name), None, ast);
+            let source = StringLiteral::new(import_span, ox_atom(ast, module_name), ast);
             let import = ImportDeclaration::boxed(
                 import_span,
                 Some(specifiers),
@@ -3192,7 +3192,7 @@ fn ox_add_imports_to_program<'a>(
                 import_span,
                 Expression::new_identifier(import_span, "require", ast),
                 None,
-                [Argument::new_string_literal(import_span, ox_atom(ast, module_name), None, ast)],
+                [Argument::new_string_literal(import_span, ox_atom(ast, module_name), ast)],
                 false,
                 ast,
             );

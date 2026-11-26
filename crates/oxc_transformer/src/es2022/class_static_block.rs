@@ -97,7 +97,7 @@ enum InferredName<'a> {
 impl<'a> InferredName<'a> {
     fn expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self {
-            Self::Static(name) => Expression::new_string_literal(SPAN, *name, None, ctx),
+            Self::Static(name) => Expression::new_string_literal(SPAN, *name, ctx),
             Self::Computed(binding) => binding.create_read_expression(ctx),
             Self::Captured(class, key) => Expression::new_private_field_expression(
                 SPAN,
@@ -406,7 +406,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             // A computed key also handles symbols and the special `__proto__` spelling.
             let key = match &name {
                 InferredName::Static(name) if *name != "__proto__" => {
-                    PropertyKey::new_static_string_literal(SPAN, *name, None, ctx)
+                    PropertyKey::new_static_string_literal(SPAN, *name, ctx)
                 }
                 _ => PropertyKey::from(name.expression(ctx)),
             };
@@ -609,7 +609,7 @@ impl<'a> ClassStaticBlock<'a> {
                         SPAN,
                         key.expression(ctx),
                         BinaryOperator::StrictInequality,
-                        Expression::new_string_literal(SPAN, "name", None, ctx),
+                        Expression::new_string_literal(SPAN, "name", ctx),
                         ctx,
                     );
                     condition = Some(if let Some(previous) = condition {

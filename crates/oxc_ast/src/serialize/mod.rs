@@ -1,7 +1,7 @@
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactFixesSerializer, CompactSerializer, Concat2, ESTree, JsonSafeString,
-    PrettyFixesSerializer, PrettySerializer, Serializer, StructSerializer,
+    PrettyFixesSerializer, PrettySerializer, Serializer, StructSerializer, Utf16ToUtf8,
 };
 
 use crate::ast::*;
@@ -42,36 +42,66 @@ const JSON_CAPACITY_RATIO_PRETTY: usize = 80;
 
 impl Program<'_> {
     /// Serialize AST to ESTree JSON.
-    pub fn to_estree_json(&self, include_ts_fields: bool, ranges: bool) -> String {
+    ///
+    /// Pass a `span_converter` if the AST spans have been converted to UTF-16 and
+    /// the offsets differ from UTF-8. The serializer uses it to recover source
+    /// slices such as string literals' `raw` fields. Output spans retain their units.
+    pub fn to_estree_json(
+        &self,
+        include_ts_fields: bool,
+        ranges: bool,
+        span_converter: Option<&dyn Utf16ToUtf8>,
+    ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let mut serializer = CompactSerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let mut serializer = CompactSerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text, span_converter);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to pretty-printed ESTree JSON.
-    pub fn to_pretty_estree_json(&self, include_ts_fields: bool, ranges: bool) -> String {
+    ///
+    /// See [`Self::to_estree_json`] for when to pass a `span_converter`.
+    pub fn to_pretty_estree_json(
+        &self,
+        include_ts_fields: bool,
+        ranges: bool,
+        span_converter: Option<&dyn Utf16ToUtf8>,
+    ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let mut serializer = PrettySerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let mut serializer = PrettySerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text, span_converter);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to ESTree JSON, with list of fixes.
-    pub fn to_estree_json_with_fixes(&self, include_ts_fields: bool, ranges: bool) -> String {
+    ///
+    /// See [`Self::to_estree_json`] for when to pass a `span_converter`.
+    pub fn to_estree_json_with_fixes(
+        &self,
+        include_ts_fields: bool,
+        ranges: bool,
+        span_converter: Option<&dyn Utf16ToUtf8>,
+    ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let serializer = CompactFixesSerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let serializer = CompactFixesSerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text, span_converter);
         serializer.serialize_with_fixes(self)
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, with list of fixes.
+    ///
+    /// See [`Self::to_estree_json`] for when to pass a `span_converter`.
     pub fn to_pretty_estree_json_with_fixes(
         &self,
         include_ts_fields: bool,
         ranges: bool,
+        span_converter: Option<&dyn Utf16ToUtf8>,
     ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let serializer = PrettyFixesSerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let serializer = PrettyFixesSerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text, span_converter);
         serializer.serialize_with_fixes(self)
     }
 }
@@ -136,9 +166,9 @@ impl ESTree for ProgramConverter<'_, '_> {
 
 /// Serialize `value` field of `Comment`.
 ///
-/// This serializer does not work for JSON serializer, because there's no access to source text
-/// in `fn serialize`. But in any case, comments often contain characters which need escaping in JSON,
-/// which is slow, so it's probably faster to transfer comments as NAPI types (which we do).
+/// This serializer is not implemented for JSON serializer. Comments often contain characters
+/// which need escaping in JSON, which is slow, so it's probably faster to transfer comments
+/// as NAPI types (which we do).
 ///
 /// This meta type is only present for raw transfer, which can transfer faster.
 #[ast_meta]

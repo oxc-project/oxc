@@ -272,7 +272,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 let value = format_str!(self.allocator(), "{bigint}");
                 Expression::new_big_int_literal(span, value, None, self)
             }
-            ConstantValue::String(s) => Expression::new_string_literal(span, s, None, self),
+            ConstantValue::String(s) => Expression::new_string_literal(span, s, self),
             ConstantValue::Boolean(b) => Expression::new_boolean_literal(span, b, self),
             ConstantValue::Undefined => Expression::new_void_0(span, self),
             ConstantValue::Null => Expression::new_null_literal(span, self),

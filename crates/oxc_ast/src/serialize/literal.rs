@@ -49,6 +49,32 @@ impl ESTree for NullLiteralRaw<'_> {
     }
 }
 
+/// Serializer for `raw` field of `StringLiteral`.
+///
+/// `StringLiteral` does not store its raw text. If `is_raw` is `true`, `raw` is the slice of source text
+/// covered by the span. Otherwise, `null`.
+///
+/// Rust serializer outputs `null` if it was not given the source text, or span is not within it.
+/// If spans have been converted to UTF-16, it needs a span converter to slice the source text correctly.
+#[ast_meta]
+#[estree(
+    ts_type = "string | null",
+    raw_deser = "DESER[bool](POS_OFFSET.is_raw) && THIS.start < THIS.end ? SOURCE_TEXT.slice(THIS.start, THIS.end) : null",
+    raw_deser_inline
+)]
+pub struct StringLiteralRaw<'a, 'b>(pub &'b StringLiteral<'a>);
+
+impl ESTree for StringLiteralRaw<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let lit = self.0;
+        if lit.is_raw && lit.span.start < lit.span.end {
+            serializer.serialize_source_text_slice(lit.span.start, lit.span.end);
+        } else {
+            Null(()).serialize(serializer);
+        }
+    }
+}
+
 /// Serializer for `value` field of `BigIntLiteral`.
 ///
 /// Serialized as `null` in JSON, but updated on JS side to contain a `BigInt`.

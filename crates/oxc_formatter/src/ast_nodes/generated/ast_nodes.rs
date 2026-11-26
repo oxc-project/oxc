@@ -6381,8 +6381,8 @@ impl<'parent, 'a> AstNode<'parent, 'a, StringLiteral<'a>> {
     }
 
     #[inline]
-    pub fn raw(&self) -> Option<Str<'a>> {
-        self.inner.raw
+    pub fn is_raw(&self) -> bool {
+        self.inner.is_raw
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

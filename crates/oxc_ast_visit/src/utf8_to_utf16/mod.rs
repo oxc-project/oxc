@@ -135,6 +135,12 @@ impl Utf8ToUtf16 {
         }
     }
 
+    /// Get the ESTree serializer's UTF-16 to UTF-8 converter, if offsets need conversion.
+    #[cfg(feature = "serialize")]
+    pub fn as_utf16_to_utf8(&self) -> Option<&dyn oxc_estree::Utf16ToUtf8> {
+        if self.translations.is_empty() { None } else { Some(self) }
+    }
+
     /// Convert a single UTF-16 offset back to UTF-8.
     pub fn convert_offset_back(&self, utf16_offset: &mut u32) {
         if let Some(converter) = self.converter() {
@@ -147,6 +153,14 @@ impl Utf8ToUtf16 {
         if let Some(converter) = self.converter() {
             converter.convert_span_back(span);
         }
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl oxc_estree::Utf16ToUtf8 for Utf8ToUtf16 {
+    fn utf16_to_utf8(&self, mut utf16_offset: u32) -> u32 {
+        self.convert_offset_back(&mut utf16_offset);
+        utf16_offset
     }
 }
 
@@ -174,7 +188,7 @@ mod test {
                 Statement::new_empty_statement(Span::new(0, 1), &ast),
                 Statement::new_expression_statement(
                     Span::new(1, 7),
-                    Expression::new_string_literal(Span::new(1, 7), "🤨", None, &ast),
+                    Expression::new_string_literal(Span::new(1, 7), "🤨", &ast),
                     &ast,
                 ),
             ],

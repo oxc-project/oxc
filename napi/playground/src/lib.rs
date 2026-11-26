@@ -377,7 +377,8 @@ impl Oxc {
         source_type: SourceType,
     ) {
         self.ir = format!("{:#?}", program.body);
-        let mut comments = convert_utf8_to_utf16(source_text, program, module_record, &mut []);
+        let (mut comments, span_converter) =
+            convert_utf8_to_utf16(source_text, program, module_record, &mut []);
 
         if source_type.is_javascript() {
             // Add hashbang to start of comments
@@ -395,7 +396,11 @@ impl Oxc {
         }
 
         let include_ts_fields = !source_type.is_javascript();
-        self.ast_json = program.to_pretty_estree_json_with_fixes(include_ts_fields, false);
+        self.ast_json = program.to_pretty_estree_json_with_fixes(
+            include_ts_fields,
+            false,
+            span_converter.as_utf16_to_utf8(),
+        );
         self.comments = comments;
     }
 

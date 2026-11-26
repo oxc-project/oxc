@@ -257,7 +257,7 @@ impl<'a> PeepholeOptimizations {
             && ctx.is_global_reference(ident)
         {
             e.operator = new_comp_op;
-            Expression::new_string_literal(e.right.span(), "u", None, ctx)
+            Expression::new_string_literal(e.right.span(), "u", ctx)
         } else {
             e.operator = new_eq_op;
             ctx.replace_expression_with(&mut e.left, Self::unwrap_unary);
@@ -1155,7 +1155,7 @@ impl<'a> PeepholeOptimizations {
             "String" => {
                 match arg {
                     // `String()` -> `''`
-                    None => Some(Expression::new_string_literal(span, "", None, ctx)),
+                    None => Some(Expression::new_string_literal(span, "", ctx)),
                     Some(arg) => arg
                         .evaluate_value_to_string(ctx)
                         .filter(|_| !arg.may_have_side_effects(ctx))
@@ -1399,7 +1399,7 @@ impl<'a> PeepholeOptimizations {
         // The cooked value is kept as a `JSStr`, so a template holding a lone surrogate
         // becomes a string literal with the same code units.
         let Some(value) = evaluate_to_js_string(expr, ctx) else { return };
-        let new_value = Expression::new_string_literal(span, value, None, ctx);
+        let new_value = Expression::new_string_literal(span, value, ctx);
         ctx.replace_expression(expr, new_value);
     }
 
@@ -1725,7 +1725,6 @@ impl<'a> PeepholeOptimizations {
                 Expression::new_string_literal(
                     expr.span(),
                     Str::from_str_in(&concatenated_string, ctx),
-                    None,
                     ctx,
                 ),
                 IdentifierName::new(expr.span(), "split", ctx),
@@ -1733,12 +1732,7 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             ),
             None,
-            [Argument::new_string_literal(
-                expr.span(),
-                Str::from_str_in(delimiter, ctx),
-                None,
-                ctx,
-            )],
+            [Argument::new_string_literal(expr.span(), Str::from_str_in(delimiter, ctx), ctx)],
             false,
             true,
             ctx,

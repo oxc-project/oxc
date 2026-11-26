@@ -56,12 +56,7 @@ impl<'a> Directive<'a> {
     pub fn new_use_strict(builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
         let use_strict = Str::from("use strict");
-        Directive::new(
-            SPAN,
-            StringLiteral::new(SPAN, use_strict, None, builder),
-            use_strict,
-            builder,
-        )
+        Directive::new(SPAN, StringLiteral::new(SPAN, use_strict, builder), use_strict, builder)
     }
 }
 

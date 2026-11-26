@@ -126,9 +126,7 @@ impl PreferImportInMock {
         // Use the raw source text so the fix preserves the original quote style
         // and escapes; re-serializing the cooked value can change the module
         // specifier or produce invalid syntax.
-        let raw = import_value
-            .raw
-            .map_or_else(|| ctx.source_range(import_value.span), |raw| raw.as_str());
+        let raw = ctx.source_range(import_value.span);
 
         ctx.diagnostic_with_fix(
             prefer_import_in_mock_diagnostic(call_expr.arguments_span().unwrap(), raw),

@@ -228,8 +228,7 @@ impl<'a> InjectGlobalVariables<'a> {
         let imports = injects.iter().map(|inject| {
             let specifiers =
                 Some(ArenaVec::from_value_in(self.inject_import_to_specifier(inject), self));
-            let source =
-                StringLiteral::new(SPAN, Str::from_str_in(&inject.source, self), None, self);
+            let source = StringLiteral::new(SPAN, Str::from_str_in(&inject.source, self), self);
             let kind = ImportOrExportKind::Value;
             let import_decl = ModuleDeclaration::new_import_declaration(
                 SPAN, specifiers, source, None, None, kind, self,
@@ -249,7 +248,7 @@ impl<'a> InjectGlobalVariables<'a> {
                         if identifier::is_identifier_name(&imported_name) {
                             ModuleExportName::new_identifier_name(SPAN, imported_name, self)
                         } else {
-                            ModuleExportName::new_string_literal(SPAN, imported_name, None, self)
+                            ModuleExportName::new_string_literal(SPAN, imported_name, self)
                         }
                     }
                     None => ModuleExportName::new_identifier_name(SPAN, "default", self),

@@ -253,12 +253,12 @@ impl<'a> ClassProperties<'a> {
             // `{ "na-me": class {} }["na-me"]`.
             // `{ ["__proto__"]: class {} }` is a normal property, unlike `{ __proto__: class {} }`.
             let key = if name == "__proto__" {
-                PropertyKey::new_string_literal(SPAN, name, None, ctx)
+                PropertyKey::new_string_literal(SPAN, name, ctx)
             } else {
-                PropertyKey::new_static_string_literal(SPAN, name, None, ctx)
+                PropertyKey::new_static_string_literal(SPAN, name, ctx)
             };
             let object = create_object(key);
-            let key = Expression::new_string_literal(SPAN, name, None, ctx);
+            let key = Expression::new_string_literal(SPAN, name, ctx);
             Expression::new_computed_member_expression(SPAN, object, key, false, ctx)
         }
     }

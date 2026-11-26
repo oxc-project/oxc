@@ -111,7 +111,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             *expr = match value {
                 ConstantValue::Number(n) => Self::get_initializer_expr(n, ctx),
                 ConstantValue::String(s) => {
-                    Expression::new_string_literal(SPAN, Str::from_str_in(&s, ctx), None, ctx)
+                    Expression::new_string_literal(SPAN, Str::from_str_in(&s, ctx), ctx)
                 }
             };
         }
@@ -375,12 +375,7 @@ impl<'a> TypeScriptEnum {
                         }
                         ConstantValue::String(s) => {
                             prev_constant_number = None;
-                            Expression::new_string_literal(
-                                SPAN,
-                                Str::from_str_in(&s, ctx),
-                                None,
-                                ctx,
-                            )
+                            Expression::new_string_literal(SPAN, Str::from_str_in(&s, ctx), ctx)
                         }
                     },
                 }
@@ -392,7 +387,7 @@ impl<'a> TypeScriptEnum {
             } else if let Some(prev_member_name) = prev_member_name {
                 let self_ref = {
                     let obj = param_binding.create_read_expression(ctx);
-                    let expr = Expression::new_string_literal(SPAN, prev_member_name, None, ctx);
+                    let expr = Expression::new_string_literal(SPAN, prev_member_name, ctx);
                     Expression::new_computed_member_expression(SPAN, obj, expr, false, ctx)
                 };
 
@@ -415,7 +410,7 @@ impl<'a> TypeScriptEnum {
             // Foo["x"] = init
             let member_expr = {
                 let obj = param_binding.create_read_expression(ctx);
-                let expr = Expression::new_string_literal(SPAN, member_name, None, ctx);
+                let expr = Expression::new_string_literal(SPAN, member_name, ctx);
 
                 MemberExpression::new_computed_member_expression(SPAN, obj, expr, false, ctx)
             };
@@ -435,7 +430,7 @@ impl<'a> TypeScriptEnum {
                     MemberExpression::new_computed_member_expression(SPAN, obj, expr, false, ctx)
                 };
                 let left = SimpleAssignmentTarget::from(member_expr);
-                let right = Expression::new_string_literal(SPAN, member_name, None, ctx);
+                let right = Expression::new_string_literal(SPAN, member_name, ctx);
                 expr = Expression::new_assignment_expression(
                     member_span,
                     AssignmentOperator::Assign,

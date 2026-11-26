@@ -160,7 +160,7 @@ impl<'a> TaggedTemplateTransform {
                     if *cooked != quasi.value.raw.as_str() {
                         needs_raw_array = true;
                     }
-                    Expression::new_string_literal(SPAN, *cooked, None, ctx)
+                    Expression::new_string_literal(SPAN, *cooked, ctx)
                 } else {
                     // Invalid escape sequence - cooked is None
                     needs_raw_array = true;
@@ -176,7 +176,7 @@ impl<'a> TaggedTemplateTransform {
         let template_arguments = if needs_raw_array {
             let elements = ArenaVec::from_iter_in(
                 template_lit.quasis.iter().map(|quasi| {
-                    let string = Expression::new_string_literal(SPAN, quasi.value.raw, None, ctx);
+                    let string = Expression::new_string_literal(SPAN, quasi.value.raw, ctx);
                     ArrayExpressionElement::from(string)
                 }),
                 ctx,

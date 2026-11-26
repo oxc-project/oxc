@@ -63,6 +63,16 @@ pub trait Serializer {
     /// "Fix paths" can be used on JS side to locate these nodes and set their `value` fields correctly.
     fn record_fix_path(&mut self);
 
+    /// Serialize the slice `start..end` of the source text as a string.
+    ///
+    /// `start` and `end` are offsets from a span in the AST.
+    /// If the serializer has a span converter, they are converted from UTF-16 to UTF-8 first.
+    ///
+    /// Serializes `null` if the serializer has no source text, or `start..end` is not a valid slice of it.
+    ///
+    /// Used by the serializer for the `raw` field of `StringLiteral`.
+    fn serialize_source_text_slice(self, start: u32, end: u32);
+
     /// Get mutable reference to buffer.
     fn buffer_mut(&mut self) -> &mut CodeBuffer;
 
@@ -70,28 +80,41 @@ pub trait Serializer {
     fn buffer_and_formatter_mut(&mut self) -> (&mut CodeBuffer, &mut Self::Formatter);
 }
 
+/// Converter of UTF-16 offsets back to UTF-8 offsets.
+///
+/// If spans in the AST have been converted to UTF-16 before serializing, the serializer needs
+/// a converter to find the UTF-8 byte offsets in source text which spans refer to.
+pub trait Utf16ToUtf8 {
+    /// Convert a UTF-16 offset to a UTF-8 offset.
+    fn utf16_to_utf8(&self, utf16_offset: u32) -> u32;
+}
+
 /// ESTree serializer which produces compact JSON.
-pub type CompactSerializer = ESTreeSerializer<ConfigNoFixes, CompactFormatter>;
+pub type CompactSerializer<'t> = ESTreeSerializer<'t, ConfigNoFixes, CompactFormatter>;
 
 /// ESTree serializer which produces pretty JSON.
-pub type PrettySerializer = ESTreeSerializer<ConfigNoFixes, PrettyFormatter>;
+pub type PrettySerializer<'t> = ESTreeSerializer<'t, ConfigNoFixes, PrettyFormatter>;
 
 /// ESTree serializer which produces compact JSON.
-pub type CompactFixesSerializer = ESTreeSerializer<ConfigFixes, CompactFormatter>;
+pub type CompactFixesSerializer<'t> = ESTreeSerializer<'t, ConfigFixes, CompactFormatter>;
 
 /// ESTree serializer which produces pretty JSON.
-pub type PrettyFixesSerializer = ESTreeSerializer<ConfigFixes, PrettyFormatter>;
+pub type PrettyFixesSerializer<'t> = ESTreeSerializer<'t, ConfigFixes, PrettyFormatter>;
 
 /// ESTree serializer.
-pub struct ESTreeSerializer<C: Config, F: Formatter> {
+pub struct ESTreeSerializer<'t, C: Config, F: Formatter> {
     buffer: CodeBuffer,
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
     config: C,
+    /// Source text of the AST being serialized. Empty if not provided.
+    source_text: &'t str,
+    /// Converter for spans in the AST, if they have been converted to UTF-16.
+    span_converter: Option<&'t dyn Utf16ToUtf8>,
 }
 
-impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
+impl<'t, C: Config, F: Formatter> ESTreeSerializer<'t, C, F> {
     /// Create new [`ESTreeSerializer`].
     pub fn new(include_ts_fields: bool, ranges: bool) -> Self {
         Self {
@@ -100,6 +123,8 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
             config: C::new(include_ts_fields, ranges),
+            source_text: "",
+            span_converter: None,
         }
     }
 
@@ -111,7 +136,27 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
             config: C::new(include_ts_fields, ranges),
+            source_text: "",
+            span_converter: None,
         }
+    }
+
+    /// Set the source text of the AST being serialized.
+    ///
+    /// Fields which are derived from source text (e.g. `raw` field of `StringLiteral`)
+    /// are serialized as `null` if source text is not provided.
+    ///
+    /// If spans in the AST have been converted to UTF-16, `span_converter` must be provided,
+    /// to convert them back to UTF-8 offsets in `source_text`.
+    #[must_use]
+    pub fn with_source_text(
+        mut self,
+        source_text: &'t str,
+        span_converter: Option<&'t dyn Utf16ToUtf8>,
+    ) -> Self {
+        self.source_text = source_text;
+        self.span_converter = span_converter;
+        self
     }
 
     /// Serialize `node` and output a `JSON` string containing
@@ -157,17 +202,17 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     }
 }
 
-impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
+impl<C: Config, F: Formatter> Default for ESTreeSerializer<'_, C, F> {
     #[inline(always)]
     fn default() -> Self {
         Self::new(true, false)
     }
 }
 
-impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> {
+impl<'s, 't, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<'t, C, F> {
     type Formatter = F;
-    type StructSerializer = ESTreeStructSerializer<'s, C, F>;
-    type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
+    type StructSerializer = ESTreeStructSerializer<'s, 't, C, F>;
+    type SequenceSerializer = ESTreeSequenceSerializer<'s, 't, C, F>;
 
     /// Get whether output should contain TS fields.
     #[inline(always)]
@@ -183,13 +228,13 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
 
     /// Serialize struct.
     #[inline(always)]
-    fn serialize_struct(self) -> ESTreeStructSerializer<'s, C, F> {
+    fn serialize_struct(self) -> ESTreeStructSerializer<'s, 't, C, F> {
         ESTreeStructSerializer::new(self)
     }
 
     /// Serialize sequence.
     #[inline(always)]
-    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'s, C, F> {
+    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'s, 't, C, F> {
         ESTreeSequenceSerializer::new(self)
     }
 
@@ -225,6 +270,23 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
         }
 
         self.fixes_buffer.print_ascii_byte(b']');
+    }
+
+    /// Serialize the slice `start..end` of the source text as a string.
+    ///
+    /// Serializes `null` if the serializer has no source text, or `start..end` is not a valid slice of it.
+    fn serialize_source_text_slice(self, mut start: u32, mut end: u32) {
+        if let Some(span_converter) = self.span_converter {
+            start = span_converter.utf16_to_utf8(start);
+            end = span_converter.utf16_to_utf8(end);
+        }
+
+        let source_text = self.source_text;
+        if let Some(slice) = source_text.get(start as usize..end as usize) {
+            slice.serialize(self);
+        } else {
+            self.buffer.print_str("null");
+        }
     }
 
     /// Get mutable reference to buffer.
