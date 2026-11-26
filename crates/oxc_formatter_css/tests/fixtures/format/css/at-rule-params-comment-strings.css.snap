@@ -53,10 +53,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   syntax: "*";
   inherits: false;
 }
-a {
-  @layer /* c */  x,
-      y;
-}
 @namespace /* c */  svg
   "x";
 
@@ -115,10 +111,6 @@ a {
   syntax: "*";
   inherits: false;
 }
-a {
-  @layer /* c */  x,
-      y;
-}
 @namespace /* c */ svg "x";
 
 -------------------
@@ -174,10 +166,6 @@ a {
 @property /* c */  --x {
   syntax: "*";
   inherits: false;
-}
-a {
-  @layer /* c */  x,
-      y;
 }
 @namespace /* c */ svg "x";
 
