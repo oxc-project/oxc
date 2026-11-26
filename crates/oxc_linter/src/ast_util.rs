@@ -12,7 +12,8 @@ use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Se
 use oxc_span::{GetSpan, Span};
 use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
-    identifier::{is_identifier_part, is_irregular_whitespace},
+    identifier::{is_identifier_part, is_irregular_whitespace, is_white_space},
+    line_terminator::is_line_terminator,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
@@ -990,6 +991,22 @@ pub fn is_node_within_call_argument<'a>(
     let node_span = node.span();
     let arg_span = target_arg.span();
     node_span.start >= arg_span.start && node_span.end <= arg_span.end
+}
+
+/// The start and first character of the next token after `pos`, skipping whitespace
+/// and comments.
+pub fn next_token(mut pos: u32, ctx: &LintContext) -> Option<(u32, char)> {
+    loop {
+        let rest = &ctx.source_text()[pos as usize..];
+        let (offset, c) =
+            rest.char_indices().find(|&(_, c)| !is_white_space(c) && !is_line_terminator(c))?;
+        #[expect(clippy::cast_possible_truncation)]
+        let start = pos + offset as u32;
+        match ctx.semantic().get_comment_at(start) {
+            Some(comment) => pos = comment.span.end,
+            None => return Some((start, c)),
+        }
+    }
 }
 
 /// Determines if a semicolon is needed before inserting code that starts with

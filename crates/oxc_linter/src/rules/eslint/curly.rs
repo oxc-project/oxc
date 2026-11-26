@@ -9,13 +9,11 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::{
-    identifier::{is_identifier_part, is_white_space},
-    line_terminator::is_line_terminator,
-};
+use oxc_syntax::{identifier::is_identifier_part, line_terminator::is_line_terminator};
 
 use crate::{
     AstNode,
+    ast_util::next_token,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{Rule, TupleRuleConfig},
@@ -491,22 +489,6 @@ fn ends_with_block(stmt: &Statement) -> bool {
         Statement::WithStatement(stmt) => ends_with_block(&stmt.body),
         Statement::LabeledStatement(stmt) => ends_with_block(&stmt.body),
         _ => false,
-    }
-}
-
-/// The start and first character of the next token after `pos`, skipping whitespace
-/// and comments.
-fn next_token(mut pos: u32, ctx: &LintContext) -> Option<(u32, char)> {
-    loop {
-        let rest = &ctx.source_text()[pos as usize..];
-        let (offset, c) =
-            rest.char_indices().find(|&(_, c)| !is_white_space(c) && !is_line_terminator(c))?;
-        #[expect(clippy::cast_possible_truncation)]
-        let start = pos + offset as u32;
-        match ctx.semantic().get_comment_at(start) {
-            Some(comment) => pos = comment.span.end,
-            None => return Some((start, c)),
-        }
     }
 }
 
