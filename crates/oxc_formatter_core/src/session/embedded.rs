@@ -120,7 +120,7 @@ pub fn dispatch_ir<'a, C: FormatContext>(
 ///
 /// `map_text` receives each `Text` and `Token` run (a child may print any character as a token, e.g. JS's `` ` ``);
 /// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
-/// The texts replacing a `text(..).without_expand_parent()` keep that flag.
+/// The `Text`s it pushes itself (not inside a pushed subtree) in place of a `text(..).without_expand_parent()` keep that flag.
 /// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
 /// Nothing is rebuilt until the first change, an IR with none is returned as is.
 pub fn map_text_in_ir<'a, F>(
