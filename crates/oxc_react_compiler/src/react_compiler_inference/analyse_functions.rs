@@ -53,14 +53,27 @@ where
 {
     // Collect FunctionIds from FunctionExpression/ObjectMethod instructions.
     // We collect first to avoid borrow conflicts with env.functions.
-    let mut inner_func_ids: Vec<FunctionId> = Vec::new();
+    //
+    // Unlike the TS implementation, also collect the identifiers that `func`
+    // invokes directly via `CallExpression`. A function expression called
+    // directly by its enclosing function (a `useMemo` callback, which
+    // `drop_manual_memoization` rewrites to a plain call) runs during render,
+    // so purity checks must not treat it as an event-time callback
+    // (oxc-project/oxc#29893).
+    let mut inner_funcs: Vec<(FunctionId, Option<IdentifierId>)> = Vec::new();
+    let mut directly_called: FxHashSet<IdentifierId> = FxHashSet::default();
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
-                InstructionValue::FunctionExpression { lowered_func, .. }
-                | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    inner_func_ids.push(lowered_func.func);
+                InstructionValue::FunctionExpression { lowered_func, .. } => {
+                    inner_funcs.push((lowered_func.func, Some(instr.lvalue.identifier)));
+                }
+                InstructionValue::ObjectMethod { lowered_func, .. } => {
+                    inner_funcs.push((lowered_func.func, None));
+                }
+                InstructionValue::CallExpression { callee, .. } => {
+                    directly_called.insert(callee.identifier);
                 }
                 _ => {}
             }
@@ -68,12 +81,13 @@ where
     }
 
     // Process each inner function
-    for func_id in inner_func_ids {
+    for (func_id, def_identifier) in inner_funcs {
         // Take the inner function out of the arena to avoid borrow conflicts
         let mut inner_func =
             replace(&mut env.functions[func_id], placeholder_function(env.allocator));
 
-        lower_with_mutation_aliasing(&mut inner_func, env, debug_logger)?;
+        let invoked_during_render = def_identifier.is_some_and(|id| directly_called.contains(&id));
+        lower_with_mutation_aliasing(&mut inner_func, env, debug_logger, invoked_during_render)?;
 
         // If an invariant error was recorded, put the function back and stop processing
         if env.has_invariant_errors() {
@@ -108,6 +122,7 @@ fn lower_with_mutation_aliasing<'a, F>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
     debug_logger: &mut F,
+    invoked_during_render: bool,
 ) -> Result<(), OxcDiagnostic>
 where
     F: FnMut(&HirFunction, &Environment),
@@ -116,7 +131,7 @@ where
     analyse_functions(func, env, debug_logger)?;
 
     // inferMutationAliasingEffects on the inner function
-    infer_mutation_aliasing_effects(func, env, true)?;
+    infer_mutation_aliasing_effects(func, env, true, invoked_during_render)?;
 
     // Check for invariant errors (e.g., uninitialized value kind)
     // In TS, these throw from within inferMutationAliasingEffects, aborting

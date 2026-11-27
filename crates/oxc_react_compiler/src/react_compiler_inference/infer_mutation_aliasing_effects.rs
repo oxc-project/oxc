@@ -80,12 +80,16 @@ use std::rc::Rc;
 /// Infers mutation/aliasing effects for all instructions and terminals in `func`.
 ///
 /// Corresponds to TS `inferMutationAliasingEffects(fn, {isFunctionExpression})`.
+/// `invoked_during_render` is an Oxlint-only extension: it marks a function
+/// expression that its enclosing function invokes directly (see
+/// `compute_effects_for_legacy_signature`).
 pub fn infer_mutation_aliasing_effects<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
     is_function_expression: bool,
+    invoked_during_render: bool,
 ) -> Result<(), OxcDiagnostic> {
-    let mut initial_state = InferenceState::empty(is_function_expression);
+    let mut initial_state = InferenceState::empty(is_function_expression, invoked_during_render);
 
     // Map of blocks to the last (merged) incoming state that was processed
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
@@ -449,6 +453,10 @@ impl ValueIdSet {
 #[derive(Debug, Clone)]
 struct InferenceState {
     is_function_expression: bool,
+    /// Unlike the TS implementation: whether this function expression is
+    /// invoked directly by its enclosing function (e.g. a `useMemo` callback
+    /// after `drop_manual_memoization`), and therefore runs during render.
+    invoked_during_render: bool,
     /// The kind of each value, based on its allocation site
     values: FxHashMap<ValueId, AbstractValue>,
     /// The set of values pointed to by each identifier.
@@ -461,9 +469,10 @@ struct InferenceState {
 }
 
 impl InferenceState {
-    fn empty(is_function_expression: bool) -> Self {
+    fn empty(is_function_expression: bool, invoked_during_render: bool) -> Self {
         InferenceState {
             is_function_expression,
+            invoked_during_render,
             values: FxHashMap::default(),
             variables: FxHashMap::default(),
             uninitialized_access: Cell::new(None),
@@ -661,6 +670,7 @@ impl InferenceState {
         } else {
             Some(InferenceState {
                 is_function_expression: self.is_function_expression,
+                invoked_during_render: self.invoked_during_render,
                 values: next_values.unwrap_or_else(|| self.values.clone()),
                 variables: next_variables.unwrap_or_else(|| self.variables.clone()),
                 uninitialized_access: Cell::new(None),
@@ -2592,9 +2602,16 @@ fn compute_effects_for_legacy_signature<'a>(
     // flagged `new Date()` in event-time callbacks after it became impure
     // (oxc-project/oxc#29094). Always-impure functions such as `Date.now()` are
     // unchanged.
+    // Unlike the TS implementation, a function expression that its enclosing
+    // function invokes directly also counts as render. `drop_manual_memoization`
+    // replaces `useMemo(fn, deps)` with a direct `fn()` call, so a `useMemo`
+    // callback is guaranteed to run during render even when the IIFE pass
+    // cannot inline it (oxc-project/oxc#29893), while `useCallback` callbacks
+    // become plain references and stay exempt.
     if signature.impure
         && env.config.validate_no_impure_functions_in_render
-        && (!signature.impure_if_no_args || (args.is_empty() && !state.is_function_expression))
+        && (!signature.impure_if_no_args
+            || (args.is_empty() && (!state.is_function_expression || state.invoked_during_render)))
     {
         let diagnostic =
             diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());
