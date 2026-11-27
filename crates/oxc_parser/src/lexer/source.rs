@@ -210,6 +210,16 @@ impl<'a> Source<'a> {
         self.ptr = self.end;
     }
 
+    /// Reset cursor to start of source, so the whole source can be read again.
+    ///
+    /// Only for re-lexing the entire source from the start. Positions of individual tokens
+    /// obtained before the reset are no longer valid cursor locations afterwards (in the
+    /// sense that the lexer's position now precedes them).
+    #[inline]
+    pub(super) fn reset_to_start(&mut self) {
+        self.ptr = self.start;
+    }
+
     /// Advance `Source`'s cursor by one byte if it is equal to the given ASCII value.
     ///
     /// # SAFETY

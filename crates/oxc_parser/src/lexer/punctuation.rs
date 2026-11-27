@@ -47,7 +47,14 @@ impl<C: Config> Lexer<'_, C> {
                         Some(Kind::LAngle)
                     }
                 } else {
-                    self.defer_html_comment_error(4);
+                    // Script or unambiguous mode. In unambiguous mode the module kind is not
+                    // known yet, so `<!--` is lexed as a comment and the error deferred.
+                    // Unlike a comment at the start of a line, the Module goal would lex a
+                    // mid-line `<!--` as `<` `!` `--` instead (e.g. `x = a <!--b` is
+                    // `x = a < !--b`), so the source must be parsed again from the start if it
+                    // resolves to a module.
+                    let needs_module_reparse = !self.pending.is_on_new_line();
+                    self.defer_html_comment_error(4, needs_module_reparse);
                     None
                 }
             }),
@@ -65,7 +72,11 @@ impl<C: Config> Lexer<'_, C> {
                     && !self.source_type.is_strict()
                     && self.next_ascii_byte_eq(b'>')
                 {
-                    self.defer_html_comment_error(3);
+                    // In unambiguous mode the module kind is not known yet, so `-->` is lexed
+                    // as a comment and the error deferred. The Module goal would lex `-->` as
+                    // `--` `>` instead, so the source must be parsed again from the start if it
+                    // resolves to a module.
+                    self.defer_html_comment_error(3, true);
                     None
                 } else {
                     Some(Kind::Minus2)
@@ -79,11 +90,16 @@ impl<C: Config> Lexer<'_, C> {
         }
     }
 
-    /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
-    fn defer_html_comment_error(&mut self, len: u32) {
+    /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module).
+    ///
+    /// `needs_module_reparse` is set when the Module goal would not lex the comment the same
+    /// way (it does not recognize HTML-like comments - Annex B.1.1), so the whole source must
+    /// be parsed again as a module if the file resolves to one.
+    fn defer_html_comment_error(&mut self, len: u32, needs_module_reparse: bool) {
         if self.source_type.is_unambiguous() {
             let span = Span::sized(self.token_start, len);
             self.deferred_module_errors.push(diagnostics::html_comment_in_module(span));
+            self.needs_module_reparse |= needs_module_reparse;
         }
     }
 

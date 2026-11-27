@@ -2,6 +2,4 @@ commit: 51225612
 
 parser_unambiguous_babel Summary:
 AST Parsed     : 4311/4311 (100.00%)
-Positive Passed: 4310/4311 (99.98%)
-AST: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
-
+Positive Passed: 4311/4311 (100.00%)

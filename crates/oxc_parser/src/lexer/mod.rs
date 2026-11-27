@@ -115,6 +115,13 @@ pub struct Lexer<'a, C: Config> {
     /// If resolved to Script → discard these errors.
     pub(crate) deferred_module_errors: Vec<ParserDiagnostic<'a>>,
 
+    /// Set when an HTML-like comment was lexed while `source_type` is
+    /// `ModuleKind::Unambiguous`, which would be lexed differently if the source is
+    /// a module (the Module goal does not recognize HTML-like comments - Annex B.1.1).
+    /// `ParserImpl` must then parse the whole source again as a module, if it resolves
+    /// to one, because the comment has changed the token stream.
+    pub(crate) needs_module_reparse: bool,
+
     pub(crate) trivia_builder: TriviaBuilder<'a>,
 
     /// Decoded identifiers and string literals, indexed by [Token::start] when
@@ -171,6 +178,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             pending: PendingToken::START_OF_FILE,
             errors: vec![],
             deferred_module_errors: vec![],
+            needs_module_reparse: false,
             trivia_builder: TriviaBuilder::new_in(allocator),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
@@ -246,6 +254,28 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Make rewinding to `checkpoint` keep the comments and irregular whitespace lexed after it.
     pub(crate) fn keep_trivia(&self, checkpoint: &mut LexerCheckpoint<'a>) {
         self.trivia_builder.keep_trivia(&mut checkpoint.trivia);
+    }
+
+    /// Reset the lexer to its initial state, to lex the whole source again from the start.
+    ///
+    /// `source_type` is the source type to lex as this time.
+    ///
+    /// Only for when the whole source is lexed and parsed again, and the result of the previous
+    /// parse is discarded - e.g. when a source parsed as `ModuleKind::Unambiguous` resolves to
+    /// a module, but contains an HTML-like comment which the Module goal does not recognize
+    /// (Annex B.1.1), so it changed the token stream.
+    pub(crate) fn reset_to_start(&mut self, source_type: SourceType) {
+        self.source.reset_to_start();
+        self.source_type = source_type;
+        self.token_start = 0;
+        self.pending = PendingToken::START_OF_FILE;
+        self.errors.clear();
+        self.deferred_module_errors.clear();
+        self.needs_module_reparse = false;
+        self.trivia_builder = TriviaBuilder::new_in(self.allocator);
+        self.escaped_strings.clear();
+        self.escaped_templates.clear();
+        self.tokens.truncate(0);
     }
 
     pub fn peek_token(&mut self) -> Token {
