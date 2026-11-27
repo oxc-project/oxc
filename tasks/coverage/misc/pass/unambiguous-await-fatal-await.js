@@ -1,0 +1,2 @@
+await /x/;
+await value;
