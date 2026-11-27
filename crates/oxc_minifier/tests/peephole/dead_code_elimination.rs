@@ -309,6 +309,15 @@ fn dead_after_throw_drop_triggers_unused_declarator_removal() {
 }
 
 #[test]
+fn dead_after_throw_preserves_exported_lexical_declarations() {
+    test_same("throw 0; const v = 1; export { v };");
+    test_same("throw 0; let v = 1; export { v as value };");
+    test_same("throw 0; const { v } = await init(); export { v };");
+    test_same("throw 0; class V {} export { V };");
+    test("throw 0; const unused = init(); export {};", "throw 0; export {};");
+}
+
+#[test]
 fn pure_comment_for_pure_global_constructors() {
     test("var x = new WeakSet; foo(x)", "var x = /* @__PURE__ */ new WeakSet();\nfoo(x)");
     test("var x = new WeakSet(null); foo(x)", "var x = /* @__PURE__ */ new WeakSet(null);\nfoo(x)");

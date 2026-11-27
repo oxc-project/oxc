@@ -61,6 +61,30 @@ impl<'a> PeepholeOptimizations {
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
             {
+                // In modules, exports are the only source of implicit observability for
+                // top-level `let`, `const`, and `class` bindings.
+                if ctx.source_type().is_module()
+                    && ctx.current_scope_id() == ctx.scoping().root_scope_id()
+                    && match &stmt {
+                        Statement::VariableDeclaration(decl) => {
+                            matches!(
+                                decl.kind,
+                                VariableDeclarationKind::Let | VariableDeclarationKind::Const
+                            ) && decl.declarations.iter().any(|declarator| {
+                                declarator.id.any_binding_identifiers(&mut |id| {
+                                    ctx.state.symbols.is_implicitly_observable(id.symbol_id())
+                                })
+                            })
+                        }
+                        Statement::ClassDeclaration(decl) => decl.id.as_ref().is_some_and(|id| {
+                            ctx.state.symbols.is_implicitly_observable(id.symbol_id())
+                        }),
+                        _ => false,
+                    }
+                {
+                    new_stmts.push(stmt);
+                    continue;
+                }
                 // Harvest any `var` bindings so they re-emit at the end of
                 // the block (see `keep_var.get_variable_declaration_statement`
                 // below).
