@@ -77,6 +77,8 @@ pub(super) trait Queue<'a> {
     /// Returns the content of the next entry when it is a single element
     /// (`[StartEntry, element, EndEntry]`, like a word or a separator of a filled paragraph),
     /// not traversing into [FormatElement::Interned].
+    /// It may be a tag (a nested entry's `StartEntry`):
+    /// callers check they handle it before [`Queue::skip_single_element_entry`].
     #[inline]
     fn single_element_entry(&self) -> Option<&'a FormatElement<'a>> {
         match self.current() {

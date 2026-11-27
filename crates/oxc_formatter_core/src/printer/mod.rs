@@ -1307,16 +1307,19 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     /// `None` for any other entry.
     ///
     /// It restates the exits of [`Self::fits`] for one element: `Fits::No` ends the measurement,
-    /// anything else is checked at the end of the entry.
-    /// A multi-line text measures `Fits::No` here, never `Fits::Yes`: fill measurers are `must_be_flat`.
+    /// `Fits::Maybe` is checked at the end of the entry.
+    /// `Fits::Yes` (a multi-line text when not `must_be_flat`) is left to the walk.
     /// The `StartEntry` arm of [`Self::fits_element`] is skipped too,
     /// which is fine as `fill_separator_mode` is always `None` while a fill measures its entries.
     fn simple_fill_entry_fits(&mut self, mode: PrintMode) -> Option<bool> {
-        debug_assert!(self.must_be_flat && self.fill_separator_mode.is_none());
+        debug_assert!(self.fill_separator_mode.is_none());
+        if !self.must_be_flat {
+            return None;
+        }
         let element = self.queue.single_element_entry()?;
         let fits = self.fits_leaf(element, mode)?;
         self.queue.skip_single_element_entry();
-        Some(fits != Fits::No && self.fits_at_entry_end())
+        Some(fits == Fits::Maybe && self.fits_at_entry_end())
     }
 
     /// Measures an element that needs nothing but the print mode:
@@ -1404,8 +1407,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 // on the group. But within the group itself, the content with hardlines
                 // (the `\n<Foo />\n`) _does_ fit, for the same logic in the first case.
                 //
-                // In expanded mode, any line is
-                // reachable if the restQueue contains an element with mode expanded because Expanded
+                // In expanded mode, any line fits.
+                // This is reachable if the restQueue contains an element with mode expanded because Expanded
                 // is what the mode's initialized to by default
                 // This means, the printer is outside of the current element at this point and any
                 // line break should be printed as regular line break -> Fits
@@ -2679,6 +2682,28 @@ two lines`,
         );
 
         assert_eq!("a\n\nb", result.as_code());
+    }
+
+    #[test]
+    fn fill_of_single_token_entries_breaks_at_the_print_width() {
+        // Every item and separator is a single-element entry, measured without the walk:
+        // `aaaa bbbbb` fills the width exactly, `cc dddddddd` is one over it with the separator's space
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            f.fill()
+                .entry(&soft_line_break_or_space(), &token("aaaa"))
+                .entry(&soft_line_break_or_space(), &token("bbbbb"))
+                .entry(&soft_line_break_or_space(), &token("cc"))
+                .entry(&soft_line_break_or_space(), &token("dddddddd"))
+                .finish();
+        });
+        let result = format_simple_with_options(
+            &allocator,
+            &content,
+            PrinterOptions::default().with_print_width(PrintWidth::new(10)),
+        );
+
+        assert_eq!("aaaa bbbbb\ncc\ndddddddd", result.as_code());
     }
 
     #[test]
