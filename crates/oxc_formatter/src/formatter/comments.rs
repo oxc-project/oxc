@@ -127,6 +127,7 @@ pub struct CommentSnapshot {
     type_cast_node_span: Span,
     operator_suppressed_start: Option<u32>,
     view_limit: Option<usize>,
+    checked_body_end: Option<u32>,
 }
 
 #[derive(Debug, Clone)]
@@ -153,6 +154,7 @@ pub struct Comments<'a> {
     /// When set, [`Self::unprinted_comments()`] will only return comments up to this index,
     /// effectively hiding comments beyond this point from the formatter.
     view_limit: Option<usize>,
+    pub(crate) checked_body_end: Option<u32>,
 }
 
 // Construction and the printed cursor / view state
@@ -166,6 +168,7 @@ impl<'a> Comments<'a> {
             type_cast_node_span: Span::default(),
             operator_suppressed_start: None,
             view_limit: None,
+            checked_body_end: None,
         }
     }
 
@@ -226,9 +229,9 @@ impl<'a> Comments<'a> {
     pub fn limit_comments_up_to(&mut self, end_pos: u32) -> Option<usize> {
         let original_limit = self.view_limit;
         let limit_index = self.printed_count
-            + self.inner[self.printed_count..].partition_point(|c| c.span.start < end_pos);
-        // Only update if we're actually limiting the view
-        if limit_index < self.inner.len() {
+            + self.unprinted_comments().partition_point(|c| c.span.start < end_pos);
+        // Only update if we're actually limiting the view (never widen an outer limit)
+        if limit_index < original_limit.unwrap_or(self.inner.len()) {
             self.view_limit = Some(limit_index);
         }
         original_limit
@@ -255,6 +258,7 @@ impl<'a> Comments<'a> {
             type_cast_node_span: self.type_cast_node_span,
             operator_suppressed_start: self.operator_suppressed_start,
             view_limit: self.view_limit,
+            checked_body_end: self.checked_body_end,
         }
     }
 
@@ -268,6 +272,7 @@ impl<'a> Comments<'a> {
         self.type_cast_node_span = snapshot.type_cast_node_span;
         self.operator_suppressed_start = snapshot.operator_suppressed_start;
         self.view_limit = snapshot.view_limit;
+        self.checked_body_end = snapshot.checked_body_end;
     }
 }
 
@@ -315,8 +320,7 @@ impl<'a> Comments<'a> {
     /// Unlike [`Self::all_comments_in_range`], a comment ending exactly at `start` is included.
     pub fn comments_in_range(&self, start: u32, end: u32) -> &'a [Comment] {
         let comments = self.comments_after(start);
-        let end_index = comments.iter().take_while(|c| c.span.end <= end).count();
-        &comments[..end_index]
+        &comments[..comments.partition_point(|c| c.span.end <= end)]
     }
 
     /// Returns end-of-line comments that are after the given position.
@@ -450,7 +454,7 @@ impl<'a> Comments<'a> {
 
             if following_is_outside {
                 // Inside the enclosing node by the check above, so continue checking the next comment.
-            } else if self.is_type_cast_comment(comment) {
+            } else if self.is_type_cast_comment_followed_by_paren(comment) {
                 // `A || /* @type {Number} */ (B)`:
                 //      ^^^^^^^^^^^^^^^^^^^^^^^^
                 // Type cast comments should always be treated as leading comment to the following node
@@ -497,7 +501,7 @@ impl<'a> Comments<'a> {
             Some(from + offset as u32 + 1)
         };
 
-        gap_segments(self.comments_in_range(content_end, node_end), content_end, node_end)
+        gap_segments(self.all_comments_in_range(content_end, node_end), content_end, node_end)
             .filter_map(|(from, to)| position_after_last_close_paren(from, to))
             .last()
             .unwrap_or(content_end)

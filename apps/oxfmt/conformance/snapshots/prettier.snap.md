@@ -58,7 +58,7 @@
   - ❓unclassified
 - externals/prettier/js/for-statement/9812-2.js (💥, 88.89%)
   - ❓unclassified
-- externals/prettier/js/for-statement/continue-and-break-comment-without-blocks.js (💥, 67.59%)
+- externals/prettier/js/for-statement/continue-and-break-comment-without-blocks.js (💥, 81.16%)
   - ❓unclassified
 - externals/prettier/js/function/iife.js (💥, 14.43%)
   - ❓unclassified
@@ -172,7 +172,6 @@
 - externals/prettier/js/comments/first-argument/first-argument.js
 - externals/prettier/js/comments/return-statement.js
 - externals/prettier/js/for-of-statement/comments-before-keyword.js
-- externals/prettier/js/for-statement/continue-and-break-comment-without-blocks.js
 - externals/prettier/js/function/issue-12967.js
 - externals/prettier/js/ignore/semi/class-expression-decorator.js
 - externals/prettier/js/ignore/semi/head-ignored.js

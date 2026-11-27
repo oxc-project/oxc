@@ -48,23 +48,22 @@ pub fn write_suppressed_expression(
     }
 }
 
-/// Prints a suppressed node whose terminator the formatter owns: the source text up to `content_end`,
-/// then the same-line comments before a later-line source `;` (they stay on the content's line),
-/// and returns `true` so the caller prints its terminator per `semi`.
+/// Prints a suppressed node up to `content_end`, `;` if needed, then comments inside `span.end`.
 /// Without a content end (no terminator of its own) the whole span prints and nothing follows.
 pub fn write_suppressed_content(
     span: Span,
     content_end: Option<u32>,
+    needs_semi: bool,
     f: &mut JsFormatter<'_, '_>,
-) -> bool {
+) {
     let Some(content_end) = content_end else {
-        FormatSuppressedNode(span).fmt(f);
-        return false;
+        return FormatSuppressedNode(span).fmt(f);
     };
     FormatSuppressedNode(Span::new(span.start, content_end)).fmt(f);
+    write!(f, [needs_semi.then_some(";")]);
     let comments = f.context().comments().end_of_line_comments_after(content_end);
-    FormatTrailingComments::Comments(comments).fmt(f);
-    true
+    let end = comments.partition_point(|comment| comment.span.end <= span.end);
+    FormatTrailingComments::Comments(&comments[..end]).fmt(f);
 }
 
 pub struct FormatSuppressedNode(pub Span);

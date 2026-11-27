@@ -9,8 +9,10 @@ use crate::{
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
         trivia::{FormatCommentBeforeContent, FormatLeadingComments, FormatTrailingComments},
     },
-    print::semicolon::write_suppressed_statement,
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    print::semicolon::{body_comment_limit, write_suppressed_statement},
+    utils::format_node_without_trailing_comments::{
+        FormatNodeWithoutTrailingComments, format_content_without_comments_after as fmt_limit,
+    },
     write,
 };
 
@@ -262,6 +264,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);
+                    } else if !matches!(self.body.parent(), AstNodes::DoWhileStatement(_))
+                        && f.comments().checked_body_end != Some(body_span.end)
+                    {
+                        let prev = f.comments().checked_body_end;
+                        let limit = body_comment_limit(self.body.as_ref(), f);
+                        f.context_mut().comments_mut().checked_body_end = Some(body_span.end);
+                        if let Some(limit) = limit {
+                            fmt_limit(self.body, limit, f);
+                        } else {
+                            write!(f, self.body);
+                        }
+                        f.context_mut().comments_mut().checked_body_end = prev;
                     } else {
                         write!(f, self.body);
                     }
