@@ -186,3 +186,73 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───────
    ╰────
   help: Did you mean `"symbol"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:20]
+ 1 │ (typeof value) === 'strnig'
+   ·                    ────────
+   ╰────
+  help: Did you mean `"string"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:19]
+ 1 │ typeof value === ('strnig')
+   ·                   ────────
+   ╰────
+  help: Did you mean `"string"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:24]
+ 1 │ ((typeof value)) === (('strnig'))
+   ·                        ────────
+   ╰────
+  help: Did you mean `"string"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:21]
+ 1 │ (typeof value) === (undefined)
+   ·                     ─────────
+   ╰────
+  help: Use `"undefined"` instead of `undefined`.
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:18]
+ 1 │ typeof value === 5
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:18]
+ 1 │ typeof value === true
+   ·                  ────
+   ╰────
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:18]
+ 1 │ typeof value === null
+   ·                  ────
+   ╰────
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:18]
+ 1 │ typeof value === 1n
+   ·                  ──
+   ╰────
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:18]
+ 1 │ typeof value === /a/
+   ·                  ───
+   ╰────
+
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
+   ╭─[valid_typeof.tsx:1:1]
+ 1 │ !flag === typeof value
+   · ─────
+   ╰────
+
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
+   ╭─[valid_typeof.tsx:1:18]
+ 1 │ typeof value === !flag
+   ·                  ─────
+   ╰────
