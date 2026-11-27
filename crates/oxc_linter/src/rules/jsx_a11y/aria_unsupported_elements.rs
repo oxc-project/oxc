@@ -63,17 +63,24 @@ impl Rule for AriaUnsupportedElements {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let el_type = get_element_type(ctx, jsx_el);
             if RESERVED_HTML_TAG.contains(&el_type.as_ref()) {
+                // An explicit attribute overrides an earlier spread, so deleting
+                // it can expose the spread's value for the same prop and change
+                // program behavior. Only offer removal as a suggestion then.
+                let mut has_earlier_spread = false;
                 for attr in &jsx_el.attributes {
                     let attr = match attr {
                         JSXAttributeItem::Attribute(attr) => attr,
-                        JSXAttributeItem::SpreadAttribute(_) => continue,
+                        JSXAttributeItem::SpreadAttribute(_) => {
+                            has_earlier_spread = true;
+                            continue;
+                        }
                     };
                     let attr_name = get_jsx_attribute_name(&attr.name);
                     let attr_name = attr_name.cow_to_ascii_lowercase();
                     if attr_name == "role" || is_valid_aria_property(&attr_name) {
                         let diagnostic =
                             aria_unsupported_elements_diagnostic(attr.span, &attr_name);
-                        if is_safe_to_delete_attribute(attr.value.as_ref()) {
+                        if !has_earlier_spread && is_safe_to_delete_attribute(attr.value.as_ref()) {
                             ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete(&attr.span));
                         } else {
                             ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
@@ -397,6 +404,8 @@ fn test() {
         (r#"<title aria-hidden aria-role="none" {...props} />"#, None),
         (r#"<track aria-hidden aria-role="none" {...props} />"#, None),
         (r"<meta aria-hidden={track()} />", None),
+        (r#"<meta {...props} aria-hidden="true" />"#, None),
+        (r"<meta {...props} role />", None),
     ];
 
     let mut fix = vec![
@@ -424,6 +433,40 @@ fn test() {
             FixKind::SafeFix,
         ),
         (r"<meta aria-hidden={track()} />", r"<meta  />", None, FixKind::Suggestion),
+        // An earlier spread can supply the same prop, so removing the explicit
+        // attribute may change program behavior: no safe fix, only a suggestion.
+        (
+            r#"<meta {...props} aria-hidden="true" />"#,
+            r#"<meta {...props} aria-hidden="true" />"#,
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            r"<meta {...props} aria-hidden />",
+            r"<meta {...props} aria-hidden />",
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            r#"<meta {...props} aria-hidden="true" {...rest} />"#,
+            r#"<meta {...props} aria-hidden="true" {...rest} />"#,
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            r#"<meta {...props} aria-hidden="true" />"#,
+            r"<meta {...props}  />",
+            None,
+            FixKind::Suggestion,
+        ),
+        (r"<meta {...props} aria-hidden />", r"<meta {...props}  />", None, FixKind::Suggestion),
+        (
+            r#"<meta {...props} aria-hidden="true" {...rest} />"#,
+            r"<meta {...props}  {...rest} />",
+            None,
+            FixKind::Suggestion,
+        ),
+        (r"<meta {...props} role />", r"<meta {...props}  />", None, FixKind::Suggestion),
     ];
 
     for (source, suggested) in [
