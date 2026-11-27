@@ -102,6 +102,10 @@ declare_oxc_lint!(
     /// ```jsx
     /// [1, 2, 3].map(x => <App key={x} />);
     /// [1, 2, 3]?.map(x => <ListItem key={x} />)
+    ///
+    /// import { R, Result } from "@praha/byethrow";
+    /// R.map(name => <Page />);
+    /// Result.map(name => <Page />);
     /// ```
     ///
     /// NOTE: This rule's option defaults differ from the defaults in the original ESLint plugin. It is recommended to keep
@@ -308,6 +312,10 @@ fn is_in_array_or_iter<'a, 'b>(
                         return None;
                     }
 
+                    if ident == "map" && is_byethrow_result(member_expr.object(), ctx) {
+                        return None;
+                    }
+
                     // Array.from uses 2nd argument (index 1), others use 1st argument (index 0)
                     let target_arg_index = if ident == "from" { 1 } else { 0 };
                     if is_node_within_call_argument(jsx_node, v, target_arg_index) {
@@ -331,6 +339,28 @@ fn is_in_array_or_iter<'a, 'b>(
     }
 
     None
+}
+
+fn is_byethrow_result(object: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
+    let Expression::Identifier(ident) = object.get_inner_expression() else {
+        return false;
+    };
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let declaration = ctx.semantic().symbol_declaration(symbol_id);
+    let AstKind::ImportSpecifier(specifier) = declaration.kind() else {
+        return false;
+    };
+    if specifier.import_kind.is_type()
+        || !matches!(specifier.imported.name().as_str(), "R" | "Result")
+    {
+        return false;
+    }
+    let AstKind::ImportDeclaration(import) = ctx.nodes().parent_kind(declaration.id()) else {
+        return false;
+    };
+    !import.import_kind.is_type() && import.source.value == "@praha/byethrow"
 }
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
@@ -637,6 +667,19 @@ fn test() {
             Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/28391
+        ("import { R } from '@praha/byethrow'; R.map(name => <Page />);", None, None),
+        ("import { Result } from '@praha/byethrow'; Result.map(name => <Page />);", None, None),
+        ("import { Result } from '@praha/byethrow'; (Result).map(name => <Page />);", None, None),
+        ("import { R } from '@praha/byethrow'; R?.map(name => <Page />);", None, None),
+        ("import { R } from '@praha/byethrow'; R.map(name => { return <Page />; });", None, None),
+        ("import { R } from '@praha/byethrow'; arr.map(x => R.map(name => <Page />));", None, None),
+        ("import { Result as result } from '@praha/byethrow'; result.map(name => <Page />);", None, None),
+        (
+            "import { R as result } from '@praha/byethrow'; result['map'](name => <></>);",
+            Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -655,6 +698,11 @@ fn test() {
         ("[<App key={0}/>, <App />];", None, None),
         ("[1, 2 ,3].map(function(x) { return <App /> });", None, None),
         ("[1, 2 ,3].map(x => <App />);", None, None),
+        // https://github.com/oxc-project/oxc/issues/28391
+        ("[1, 2].map(x => <App />);", None, None),
+        ("arr.map(x => <App />);", None, None),
+        ("ITEMS.map(x => <App />);", None, None),
+        ("import { R } from '@praha/byethrow'; R.map(name => arr.map(x => <App />));", None, None),
         ("[1, 2 ,3].map(x => x && <App x={x} />);", None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} />);"#, None, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} /> : <OtherApp x={x} key="2" />);"#, None, None),
@@ -863,6 +911,28 @@ fn test() {
         ),
         ("[((<App />))];", None, None),
         ("[condition ? [<App />] : null];", None, None),
+        ("const Items = [1, 2]; Items.map(x => <App />);", None, None),
+        ("const R = [1, 2]; R.flatMap(x => <App />);", None, None),
+        (
+            "function render(Result) { return Result.map(x => <></>); }",
+            Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
+            None,
+        ),
+        ("import * as R from 'ramda'; R.map(x => <App />, [1, 2]);", None, None),
+        (
+            "import { R } from '@praha/byethrow'; function render(R) { return R.map(x => <App />); }",
+            None,
+            None,
+        ),
+        ("import { Result } from './data'; Result.map(x => <App />);", None, None),
+        ("import R from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import * as R from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import { pipe as R } from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import type { R } from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import { type R } from '@praha/byethrow'; R.map(x => <App />);", None, None),
+        ("import { R } from '@praha/byethrow'; Array.from(items, x => <App />);", None, None),
+        ("import { R } from '@praha/byethrow'; R.flatMap(x => <App />);", None, None),
+        ("Result.map(x => <App />);", None, None),
     ];
 
     Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();
