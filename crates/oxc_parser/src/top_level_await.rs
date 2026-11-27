@@ -213,7 +213,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Like Babel, the source is still a module.
             self.module_record_builder.set_module_syntax();
             self.parse_top_level_statements(statements, reported_ambient_statement);
-        } else if self.has_errors_since(&self.state.statement_checkpoints[0]) {
+        } else if self.has_script_errors_since(&self.state.statement_checkpoints[0]) {
             self.retry_as_module(statements, reported_ambient_statement);
         } else {
             // A script, so the first parse is kept. Statements with checkpoints skipped the
@@ -384,6 +384,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             || self.errors.len() > checkpoint.parser.errors_len()
             || self.lexer.errors.len() > checkpoint.parser.lexer().errors_len()
             || self.state.cover_initialized_name.keys().any(|&position| position >= start)
+    }
+
+    /// Whether parsing since `checkpoint` had errors which a script reports.
+    ///
+    /// Those are the errors of [`Self::has_errors_since`], and the deferred errors which are only
+    /// errors in a script, such as for `for await` at the top level.
+    fn has_script_errors_since(&self, checkpoint: &StatementCheckpoint<'a>) -> bool {
+        self.has_errors_since(checkpoint)
+            || self.deferred_script_errors.len() > checkpoint.deferred_script_errors_len
     }
 
     /// Parse with `await` as a keyword or not from now on.
