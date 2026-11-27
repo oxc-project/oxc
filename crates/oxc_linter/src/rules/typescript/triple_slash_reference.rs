@@ -1,8 +1,7 @@
-use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_ast::ast::{Statement, TSModuleReference};
+use oxc_ast::{AstKind, ast::TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -105,11 +104,19 @@ impl Rule for TripleSlashReference {
         let program = ctx.nodes().program();
 
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
-        // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
-        let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
-        let mut refs_for_import = FxHashMap::default();
+        // We are trying to get the first directive or statement start position, falling back to the program end if neither exists
+        let comments_range_end = program
+            .directives
+            .first()
+            .map(|directive| directive.span.start)
+            .or_else(|| program.body.first().map(|stmt| stmt.span().start))
+            .unwrap_or(program.span.end);
+        let mut refs_for_import = vec![];
 
         for comment in ctx.comments_range(0..comments_range_end) {
+            if !comment.is_line() {
+                continue;
+            }
             let raw = ctx.source_range(comment.content_span());
             if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)
@@ -120,33 +127,29 @@ impl Rule for TripleSlashReference {
                 }
 
                 if group1 == "types" && self.types == TypesOption::PreferImport {
-                    refs_for_import.insert(group2, comment.span);
+                    refs_for_import.push((group2, comment.span));
                 }
             }
         }
 
-        if !refs_for_import.is_empty() {
-            for stmt in &program.body {
-                match stmt {
-                    Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
-                        TSModuleReference::ExternalModuleReference(mod_ref) => {
-                            if let Some(value) = mod_ref.expression.value.as_str()
-                                && let Some(v) = refs_for_import.get(value)
-                            {
-                                ctx.diagnostic(triple_slash_reference_diagnostic(value, *v));
-                            }
-                        }
-                        TSModuleReference::IdentifierReference(_)
-                        | TSModuleReference::QualifiedName(_) => {}
-                    },
-                    Statement::ImportDeclaration(decl) => {
-                        if let Some(value) = decl.source.value.as_str()
-                            && let Some(v) = refs_for_import.get(value)
-                        {
-                            ctx.diagnostic(triple_slash_reference_diagnostic(value, *v));
-                        }
-                    }
-                    _ => {}
+        if refs_for_import.is_empty() {
+            return;
+        }
+
+        for node in ctx.nodes().iter() {
+            let source = match node.kind() {
+                AstKind::ImportDeclaration(decl) => &decl.source,
+                AstKind::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+                    TSModuleReference::ExternalModuleReference(mod_ref) => &mod_ref.expression,
+                    TSModuleReference::IdentifierReference(_)
+                    | TSModuleReference::QualifiedName(_) => continue,
+                },
+                _ => continue,
+            };
+            let Some(value) = source.value.as_str() else { continue };
+            for &(name, span) in &refs_for_import {
+                if name == value {
+                    ctx.diagnostic(triple_slash_reference_diagnostic(value, span));
                 }
             }
         }
@@ -157,33 +160,16 @@ impl Rule for TripleSlashReference {
     }
 }
 
+/// Parses the attribute of a `/// <reference types|path|lib="..." />` directive from the
+/// content of a line comment.
 fn get_attr_key_and_value(raw: &str) -> Option<(&str, &str)> {
-    if !raw.starts_with('/') {
-        return None;
-    }
-
-    let reference_start = "<reference ";
-    let reference_end = "/>";
-
-    if let Some(start_idx) = raw.find(reference_start)
-        && let Some(end_idx) = raw[start_idx..].find(reference_end)
-    {
-        let reference_str = &raw[start_idx + reference_start.len()..start_idx + end_idx];
-
-        let (key, value) = reference_str
-            .split_whitespace()
-            .find(|part| {
-                part.starts_with("types=") || part.starts_with("path=") || part.starts_with("lib=")
-            })?
-            .split_once('=')?;
-
-        // Preserve rejection of attributes containing additional equals signs.
-        if value.contains('=') {
-            return None;
-        }
-        return Some((key.trim().trim_matches('"'), value.trim_matches('"').trim_end_matches('/')));
-    }
-    None
+    let rest = raw.strip_prefix('/')?.trim_start().strip_prefix("<reference")?.trim_start();
+    let key = ["types", "path", "lib"].into_iter().find(|key| rest.starts_with(key))?;
+    let rest = rest[key.len()..].trim_start().strip_prefix('=')?.trim_start();
+    let quote = rest.chars().next().filter(|ch| matches!(ch, '"' | '\''))?;
+    let value = &rest[1..];
+    let end = value.find(quote)?;
+    Some((key, &value[..end]))
 }
 
 #[test]
@@ -191,6 +177,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("\"use strict\";\n/// <reference path=\"./types.d.ts\" />\nexport {};", None),
+        ("//// <reference path=\"./types.d.ts\" />\nexport {};", None),
+        ("/*/ <reference path=\"./types.d.ts\" /> */\nexport {};", None),
+        ("/// <reference types=\"lodash\" />\nexport import lodash = Foo.Bar;", None),
         (
             r#"
                     // <reference path="foo" />
@@ -284,6 +274,16 @@ fn test() {
     ];
 
     let fail = vec![
+        ("/// <reference path=\"./types.d.ts\" />\n\"use strict\";\nexport {};", None),
+        ("/// <reference types=\"lodash\" />\nexport import lodash = require(\"lodash\");", None),
+        ("/// <reference types='lodash' />\nimport 'lodash';", None),
+        ("/// <reference types=\"foo\" />\ndeclare module \"x\" { import \"foo\"; }", None),
+        ("/// <reference types = \"lodash\" />\nimport 'lodash';", None),
+        (
+            "/// <reference types=\"lodash\" />\n/// <reference types=\"lodash\" />\nimport \"lodash\";",
+            None,
+        ),
+        ("//// <reference path=\"./a.d.ts\" />\n/// <reference path=\"./b.d.ts\" />", None),
         (
             r#"
             /// <reference types="foo" />
@@ -313,7 +313,12 @@ fn test_first_reference_attribute() {
         get_attr_key_and_value(r#"/ <reference types="first" path="second" />"#),
         Some(("types", "first")),
     );
-    assert_eq!(get_attr_key_and_value(r#"/ <reference types="a=b" path="valid" />"#), None);
+    assert_eq!(
+        get_attr_key_and_value(r#"/ <reference types="a=b" path="valid" />"#),
+        Some(("types", "a=b")),
+    );
+    assert_eq!(get_attr_key_and_value(r"/<reference types = 'pkg' />"), Some(("types", "pkg")));
+    assert_eq!(get_attr_key_and_value(r#"/ <reference no-default-lib="true" />"#), None);
     assert_eq!(get_attr_key_and_value(r#"/ <reference unrelated="value" />"#), None);
     assert_eq!(get_attr_key_and_value(r#"/ <reference path="pkg"/>"#), Some(("path", "pkg")),);
 }
