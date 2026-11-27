@@ -11,9 +11,9 @@ use crate::comments::{flush_trailing_comment_before, flush_trailing_inside_comme
 use super::{
     GraphqlFormatter, SeparatorKind, common,
     common::DirectivesStyle,
-    flush_trailing_before_literal, format_with,
+    format_with,
     span::{close_delim_start, to_span},
-    write_sequence,
+    verbatim, write_sequence,
 };
 
 /// `{ selections... }`, always multi-line.
@@ -52,12 +52,10 @@ fn write_selection<'a>(selection: &'a Selection<'a>, f: &mut GraphqlFormatter<'_
 
 fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     let content = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
-        if let Some(alias) = field.alias.as_ref() {
-            common::write_name(alias, f);
-            flush_trailing_before_literal(to_span(alias.span).end, f);
-            write!(f, ": ");
+        match field.alias.as_ref() {
+            Some(alias) => verbatim::write_colon_pair(alias, Some(&field.name), f),
+            None => common::write_name(&field.name, f),
         }
-        common::write_name(&field.name, f);
         common::write_arguments(field.arguments.as_ref(), f);
         common::write_directives(&field.directives, DirectivesStyle::Attached, f);
         if let Some(selection_set) = field.selection_set.as_ref() {
@@ -66,12 +64,19 @@ fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
             write_selection_set(selection_set, f);
         }
     });
-    write!(f, group(&content));
+    // A bare `name` or `alias: name` has no soft break for the group to decide;
+    // a comment's hard break expands the parent, already expanded by the hard-separated selections
+    let bare =
+        field.arguments.is_none() && field.directives.is_empty() && field.selection_set.is_none();
+    if bare {
+        write!(f, content);
+    } else {
+        write!(f, group(&content));
+    }
 }
 
 fn write_fragment_spread<'a>(spread: &'a FragmentSpread<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    write!(f, "...");
-    common::write_name(&spread.name, f);
+    verbatim::write_sigil_name(spread.span, "...", &spread.name, f);
     common::write_arguments(spread.arguments.as_ref(), f);
     common::write_directives(&spread.directives, DirectivesStyle::Attached, f);
 }

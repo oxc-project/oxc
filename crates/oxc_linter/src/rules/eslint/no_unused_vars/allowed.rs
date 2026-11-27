@@ -171,10 +171,6 @@ impl NoUnusedVars {
         let Some(kind) = variable_declaration_kind(decl, ctx.nodes()) else {
             return false;
         };
-        if kind.is_var() && self.vars.is_local() && symbol.is_root() {
-            return true;
-        }
-
         // allow unused iterators, since they're required for valid syntax
         if symbol.is_declared_in_for_of_loop() {
             return true;
@@ -364,7 +360,10 @@ impl NoUnusedVars {
             AstKind::MethodDefinition(MethodDefinition {
                 kind: MethodDefinitionKind::Set, ..
             })
-            | AstKind::ObjectProperty(ObjectProperty { kind: PropertyKind::Set, .. }) => true,
+            | AstKind::ObjectMethodProperty(ObjectMethodProperty {
+                kind: ObjectMethodKind::Set,
+                ..
+            }) => true,
 
             // Allow unused parameters in function overloads
             AstKind::Function(f)

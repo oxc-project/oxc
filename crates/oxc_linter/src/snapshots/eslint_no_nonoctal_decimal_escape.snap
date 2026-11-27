@@ -378,3 +378,26 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──
    ╰────
   help: Use the actual character or a valid escape sequence instead.
+
+  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
+   ╭─[no_nonoctal_decimal_escape.tsx:2:1]
+ 1 │ '\
+ 2 │ \8'
+   · ──
+   ╰────
+  help: Use the actual character or a valid escape sequence instead.
+
+  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
+   ╭─[no_nonoctal_decimal_escape.tsx:2:1]
+ 1 │ '\
+ 2 │ \9'
+   · ──
+   ╰────
+  help: Use the actual character or a valid escape sequence instead.
+
+  ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
+   ╭─[no_nonoctal_decimal_escape.tsx:1:6]
+ 1 │ '\ \8'
+   ·    ──
+   ╰────
+  help: Use the actual character or a valid escape sequence instead.

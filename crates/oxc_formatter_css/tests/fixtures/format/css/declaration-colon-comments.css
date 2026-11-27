@@ -1,0 +1,30 @@
+/* As Prettier prints them: the siblings */
+a {
+  display: /* c */ flex;
+  /* A line break after the `:`: the comments lead the value on its lines, as written */
+  background:
+    /* top */
+    linear-gradient(red 30%, transparent) center top,
+    /* bottom */
+    linear-gradient(transparent, red 70%) center bottom;
+  color:
+    /* c */
+    red;
+  /* A comment alone on its line before the `:` keeps it too */
+  color /* a */
+    /* b */
+    : red;
+}
+@supports (display /* c */ : flex) {
+}
+@media (min-width /* c */ : 100px) {
+}
+
+/* DIVERGENCES.md#declaration-colon-comments */
+a {
+  display /* c */ : flex;
+  display/* c */: /* d */ flex;
+  display :/* c */ flex;
+  display
+    /* c */ : flex;
+}

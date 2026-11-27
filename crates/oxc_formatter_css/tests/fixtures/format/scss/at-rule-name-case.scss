@@ -1,0 +1,6 @@
+// DIVERGENCES.md#scss-at-rule-name-case
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {
+  a { b: c }
+}

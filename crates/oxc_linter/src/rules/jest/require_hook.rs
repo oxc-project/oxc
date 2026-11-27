@@ -1,7 +1,8 @@
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,

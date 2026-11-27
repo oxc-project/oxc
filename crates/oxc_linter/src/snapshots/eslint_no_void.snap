@@ -43,3 +43,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────
    ╰────
   help: Use `undefined` instead
+
+  ⚠ eslint(no-void): Unexpected `void` operator
+   ╭─[no_void.tsx:1:37]
+ 1 │ function discard(callback) { return void callback(); }
+   ·                                     ───────────────
+   ╰────
+  help: Use `undefined` instead

@@ -133,7 +133,9 @@ fn check_define_component_function<'a>(call_expr: &'a CallExpression<'a>, ctx: &
 fn get_watch_object_expression<'a>(
     obj_expr: &'a ObjectExpression<'a>,
 ) -> Option<&'a ObjectExpression<'a>> {
-    let watch_prop = obj_expr.find_property("watch")?;
+    let ObjectPropertyKind::ObjectProperty(watch_prop) = obj_expr.find_property("watch")? else {
+        return None;
+    };
     let Expression::ObjectExpression(watch_obj) = watch_prop.value.get_inner_expression() else {
         return None;
     };
@@ -173,8 +175,9 @@ fn handle_watch_value<'a>(value: &Expression<'a>, ctx: &LintContext<'a>) {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

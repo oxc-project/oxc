@@ -2,13 +2,12 @@ use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 
+use super::prefer_to_be_truthy::prefer_to_be_simply_bool;
 use crate::{
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::PossibleJestNode,
 };
-
-use super::prefer_to_be_truthy::prefer_to_be_simply_bool;
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToBeFalsy;

@@ -489,7 +489,7 @@ fn fix_spread_to_object_assign<'a>(
 
     for prop in &obj.properties {
         match prop {
-            ObjectPropertyKind::ObjectProperty(_) => {
+            ObjectPropertyKind::ObjectProperty(_) | ObjectPropertyKind::MethodProperty(_) => {
                 curr_obj_properties.push(prop.clone_in(&alloc));
             }
             ObjectPropertyKind::SpreadProperty(spread) => {
@@ -549,7 +549,8 @@ impl<'a, 'b> Spread<'a, 'b> {
             Spread::Object(obj) => {
                 Either::Left(obj.properties.iter().filter_map(|prop| match prop {
                     ObjectPropertyKind::SpreadProperty(spread) => Some(spread.span()),
-                    ObjectPropertyKind::ObjectProperty(_) => None,
+                    ObjectPropertyKind::ObjectProperty(_)
+                    | ObjectPropertyKind::MethodProperty(_) => None,
                 }))
             }
             Spread::Array(arr) => {

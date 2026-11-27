@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-/* DIVERGENCES.md#supports-function-args-indent */
+/* DIVERGENCES.md#supports-declaration-as-in-rule */
 @supports not (clip-path: shape(from center left, curve by 200px 0 with 50% -50% from start / 50% 0 from origin, close)) {
 }
 
@@ -10,7 +10,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-/* DIVERGENCES.md#supports-function-args-indent */
+/* DIVERGENCES.md#supports-declaration-as-in-rule */
 @supports not (
   clip-path: shape(
     from center left,
@@ -23,7 +23,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-/* DIVERGENCES.md#supports-function-args-indent */
+/* DIVERGENCES.md#supports-declaration-as-in-rule */
 @supports not (
   clip-path: shape(
     from center left,

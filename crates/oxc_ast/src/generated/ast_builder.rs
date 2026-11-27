@@ -2880,30 +2880,38 @@ impl<'a> ObjectPropertyKind<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `key`
     /// * `value`
-    /// * `method`
     /// * `shorthand`
     #[inline]
     pub fn new_object_property(
         span: Span,
-        kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        method: bool,
         shorthand: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::ObjectProperty(ObjectProperty::boxed(
-            span,
-            kind,
-            key,
-            value,
-            method,
-            shorthand,
-            builder.builder(),
-        ))
+        Self::ObjectProperty(ObjectProperty::boxed(span, key, value, shorthand, builder.builder()))
+    }
+
+    /// Build an [`ObjectPropertyKind::MethodProperty`].
+    ///
+    /// This node contains an [`ObjectMethodProperty`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `kind`
+    /// * `key`
+    /// * `value`
+    #[inline]
+    pub fn new_method_property(
+        span: Span,
+        kind: ObjectMethodKind,
+        key: PropertyKey<'a>,
+        value: ArenaBox<'a, Function<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::MethodProperty(ObjectMethodProperty::boxed(span, kind, key, value, builder.builder()))
     }
 
     /// Build an [`ObjectPropertyKind::SpreadProperty`].
@@ -2931,31 +2939,19 @@ impl<'a> ObjectProperty<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `key`
     /// * `value`
-    /// * `method`
     /// * `shorthand`
     #[inline]
     pub fn new(
         span: Span,
-        kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        method: bool,
         shorthand: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ObjectProperty {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            kind,
-            key,
-            value,
-            method,
-            shorthand,
-        }
+        ObjectProperty { node_id: Cell::new(builder.node_id()), span, key, value, shorthand }
     }
 
     /// Build an [`ObjectProperty`], and store it in the memory arena.
@@ -2965,26 +2961,65 @@ impl<'a> ObjectProperty<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `key`
     /// * `value`
-    /// * `method`
     /// * `shorthand`
     #[inline]
     pub fn boxed(
         span: Span,
-        kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        method: bool,
         shorthand: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(
-            Self::new(span, kind, key, value, method, shorthand, builder),
-            &builder.allocator(),
-        )
+        ArenaBox::new_in(Self::new(span, key, value, shorthand, builder), &builder.allocator())
+    }
+}
+
+impl<'a> ObjectMethodProperty<'a> {
+    /// Build an [`ObjectMethodProperty`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ObjectMethodProperty::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `kind`
+    /// * `key`
+    /// * `value`
+    #[inline]
+    pub fn new(
+        span: Span,
+        kind: ObjectMethodKind,
+        key: PropertyKey<'a>,
+        value: ArenaBox<'a, Function<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        ObjectMethodProperty { node_id: Cell::new(builder.node_id()), span, kind, key, value }
+    }
+
+    /// Build an [`ObjectMethodProperty`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ObjectMethodProperty::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `kind`
+    /// * `key`
+    /// * `value`
+    #[inline]
+    pub fn boxed(
+        span: Span,
+        kind: ObjectMethodKind,
+        key: PropertyKey<'a>,
+        value: ArenaBox<'a, Function<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, kind, key, value, builder), &builder.allocator())
     }
 }
 

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
-use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -14,6 +14,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
+
+use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);
@@ -100,22 +102,28 @@ fn is_invalid_fetch_options<'a>(
             return None;
         }
 
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = property else {
-            continue;
-        };
-        let PropertyKey::StaticIdentifier(key_ident) = &obj_prop.key else {
+        let Some(PropertyKey::StaticIdentifier(key_ident)) = property.key() else {
             continue;
         };
 
         let key_ident_name = key_ident.name.as_str();
 
         if key_ident_name == "body" {
-            if obj_prop.value.is_null_or_undefined() {
+            let is_null_or_undefined = matches!(
+                property,
+                ObjectPropertyKind::ObjectProperty(obj_prop)
+                    if obj_prop.value.is_null_or_undefined()
+            );
+            if is_null_or_undefined {
                 body_span.end = body_span.start;
             } else {
                 body_span = key_ident.span;
             }
         } else if key_ident_name == "method" {
+            let ObjectPropertyKind::ObjectProperty(obj_prop) = property else {
+                method_name = UNKNOWN_METHOD_NAME;
+                continue;
+            };
             match &obj_prop.value {
                 Expression::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();

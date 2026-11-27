@@ -29,6 +29,12 @@ The shared policy applies; YAML specifics:
 - Under-indented multi-line flow scalars (prettier#8602) are one such error
   - Prettier 3.9.6 also rejects them since its `yaml@2` upgrade, so the string corruption reported there cannot happen in either implementation
 
+### Semantics reference
+
+A `semantics` divergence is verified with yaml@2, the version Prettier bundles:
+the parser Prettier's `--debug-check` compares values with, and `oxc-yaml-parser`'s reference.
+Other implementations (libyaml, js-yaml) read some edge cases differently; the entry cites yaml@2's reading.
+
 ### Line endings
 
 The source is normalized to `\n`-only BEFORE parsing (see `parse_root` for why).

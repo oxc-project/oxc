@@ -23,6 +23,7 @@
 mod alloc_fill;
 mod alloc_with;
 mod capacity;
+mod parent_alloc;
 mod quickcheck;
 mod quickchecks;
 mod tests;

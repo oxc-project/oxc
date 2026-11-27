@@ -2,13 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint(eqeqeq): Expected > and instead saw >=
-   ╭─[eqeqeq.tsx:1:1]
- 1 │ null >= 1
-   · ─────────
-   ╰────
-  help: Prefer > operator
-
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:12]
  1 │ typeof foo == 'undefined'

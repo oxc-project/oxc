@@ -36,14 +36,19 @@ Scope: END-OF-LINE positions only (statement-level trailing, SCSS map/config tra
 a value-interior `//` (before `)`, glued to an argument, inside a fill entry) stays inline because tokens still follow on the line.
 Trailing `/* */` comments still count, matching Prettier (self-delimiting comments are inline content).
 
-## keyframe-selector-comment-list
+## commented-as-uncommented
 
 - Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/css/keyframe-selector-comment.css`
+- Pin: `tests/fixtures/format/css/keyframe-selector-comment.css`, `tests/fixtures/format/css/keyframes-name-comment.css`, `tests/fixtures/format/css/media-commented-feature.css`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments2.less`
 
 ```css
 /* input */
 @keyframes x { 60%   /* mid */  ,   70% { opacity: 1; } }
+@keyframes /* c */  foo {}
+@media all and/* c */(max-width:1024px) {}
 
 /* ours */
 @keyframes x {
@@ -52,6 +57,10 @@ Trailing `/* */` comments still count, matching Prettier (self-delimiting commen
     opacity: 1;
   }
 }
+@keyframes /* c */ foo {
+}
+@media all and /* c */ (max-width: 1024px) {
+}
 
 /* prettier */
 @keyframes x {
@@ -59,11 +68,45 @@ Trailing `/* */` comments still count, matching Prettier (self-delimiting commen
     opacity: 1;
   }
 }
+@keyframes /* c */  foo {
+}
+@media all and/* c */(max-width:1024px) {
+}
 ```
 
-Prettier keeps a COMMENTED keyframe selector list verbatim, interior spacing included;
-ours prints commented and uncommented lists with the same structural layout (one selector per line, comments per the separator rule).
-Same rule as `comment-preceded-map-indent`.
+A keyframe selector list, a `@keyframes` name and a `@media` query print the same with or without a comment in them, each comment kept between the tokens it sits between,
+a `@keyframes` string re-quoted as without one (DIVERGENCES.md#prelude-string-requote).
+Prettier keeps each of them as written once it holds a comment, source spacing and quotes included, and normalizes the uncommented ones.
+Same rule as DIVERGENCES.md#comment-preceded-map-indent.
+
+## layer-comma-list
+
+- Why: uniform-rule (same construct, same output: a comma list in `@media` / `@custom-selector`)
+- Pin: `tests/fixtures/format/css/layer-comma-list.css`
+
+```css
+/* input */
+@layer a,b;
+@layer reset, base,
+  components;
+@layer /* c */ a ,  b;
+
+/* ours */
+@layer a, b;
+@layer reset, base, components;
+@layer /* c */ a, b;
+
+/* prettier */
+@layer a,b;
+@layer reset, base,
+  components;
+@layer /* c */ a ,  b;
+```
+
+A `@layer` name list prints `, `-separated on one line, with or without a comment in it,
+as Prettier prints a `@media` query list or a `@custom-selector` list (`screen,print` -> `screen, print`).
+Prettier has no `@layer` case and keeps its params as written.
+A `//` still breaks the list (`tests/fixtures/format/scss/at-rule-prelude-comments.scss`).
 
 ## nest-params-indent
 
@@ -304,7 +347,7 @@ Prettier keeps it glued because it reads the placeholder text and the flag as on
 ```
 
 Selector-position Sass interpolation normalizes inner spaces like value-position interpolation does in both formatters;
-Prettier keeps SELECTOR interpolation verbatim.
+Prettier keeps the spaces inside SELECTOR interpolation, only collapsing each run to one as it does across the selector (`#{   $name   }` -> `#{ $name }`).
 
 ## prelude-string-requote
 
@@ -370,8 +413,8 @@ a {
 ```
 
 A Less escape (`LessEscapedStr`) prints as `~` hugging its re-quoted string wherever it is typed (`value.rs` `write_less_escaped_str`);
-Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see prelude-string-requote).
-The Prettier-compat raw paths keep the source as-is: a selector or at-rule prelude with a comment, and Less mixin call / definition arguments and `when` guards.
+Prettier does so in a declaration value and `url()`, but keeps the space in a media feature and an attribute value, and the `@keyframes` name verbatim (see DIVERGENCES.md#prelude-string-requote).
+The Prettier-compat raw paths keep the source as-is: a selector with a comment, a commented `@page` / `@font-feature-values` / `@counter-style` / `@property` prelude, and Less mixin call / definition arguments and `when` guards.
 
 ## call-after-line-comment-indent
 
@@ -407,7 +450,7 @@ width: pow(
 
 Prettier double-indents a function call directly after a `//` comment in nested-args position, a forgotten leftover of the incomplete prettier/prettier#4878 fix (prettier/prettier#7844 covered only the SCSS-map / direct paren-group child case);
 ours sits at the normal +1 / `)` +0 like every comment-free call.
-Same rule as `comment-preceded-map-indent`.
+Same rule as DIVERGENCES.md#comment-preceded-map-indent.
 
 ## nested-map-context-indent
 
@@ -469,7 +512,7 @@ $m: // c
 A map value after a trailing comment on the `$var:` line keeps its shape under the continuation indent;
 Prettier dedents it, the body level with the `(` and the `)` at the declaration's column,
 because its dedent applies only when the pair doc is a plain `group(indent(fill))` and the comment changes the doc shape.
-Same dedent-skip artifact class as `nested-map-context-indent`.
+Same dedent-skip artifact class as DIVERGENCES.md#nested-map-context-indent.
 
 ## map-item-break-comma-lists-only
 
@@ -547,7 +590,7 @@ A bracketed Sass list is a list like `(1, 2)`; we print it with the paren list's
 Prettier's value parser has no bracket node: `[1,` and `2]` are words of the OUTER comma list,
 so a comment, a sibling token or an overflow hard-breaks that outer list around the brackets
 (and `[1, 2, ]` keeps a trailing comma with a space).
-`[1,]` keeps its comma for the same reason as `(1,)` (see `single-item-list-trailing-comma`).
+`[1,]` keeps its comma for the same reason as `(1,)` (see DIVERGENCES.md#single-item-list-trailing-comma).
 
 ## terminator-gap-normalized
 
@@ -728,7 +771,7 @@ A meaningless glitch.
 A `//` inside `selector()` opens the parens and ends its line, the shape Prettier itself prints for a single selector (`selector(a // c\n)`);
 a comma list holding a `//` it keeps verbatim instead, source whitespace included.
 A second `//` indents like the first; Prettier prints it with a stray leading space and no indent,
-the same `join(line)` + deferred `lineSuffix` artifact as "comment-only-map-indent".
+the same `join(line)` + deferred `lineSuffix` artifact as DIVERGENCES.md#comment-only-map-indent.
 
 ## line-comment-after-comma
 
@@ -802,6 +845,64 @@ Prettier moves it past the `{` as the block's first comment for `@media` / `@sup
 the comment crosses the `{`, a grammar-fixed delimiter.
 For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{` / the comment text, bugs on its side.
 
+## own-line-comment-before-block
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+
+```css
+/* input */
+@media screen
+  /* c */{
+}
+
+/* ours */
+@media screen
+/* c */ {
+}
+
+/* prettier */
+@media screen /* c */ {
+}
+```
+
+A comment starting a line before an at-rule's `{` keeps its line, the `{` on it or on the next as in the source, as before a JS block (`if (a)\n/* c */ {`);
+Prettier moves it onto the prelude's line: the comment changes line.
+
+## at-root-line-comment-indent
+
+- Why: uniform-rule (same construct, same output: an `@include` prelude after a `//`)
+- Pin: `tests/fixtures/format/scss/at-rule-prelude-comments.scss`
+- Conformance:
+  - `externals/prettier/scss/comments/at-rule.scss`
+
+```scss
+/* input */
+@include // c
+foo;
+@at-root // c
+.foo {}
+
+/* ours */
+@include // c
+  foo;
+@at-root // c
+  .foo {
+}
+
+/* prettier */
+@include // c
+  foo;
+@at-root // c
+.foo {
+}
+```
+
+A `//` before an at-rule prelude breaks it, and the prelude continues one level in, as Prettier prints `@include`;
+Prettier keeps an `@at-root` selector after a `//` as written instead.
+
 ## line-comment-before-comma-fill-head
 
 - Why: uniform-rule (same construct, same output: `@each $k in a, // c` with the `//` after the comma)
@@ -864,6 +965,7 @@ and its at-rule printer drops the block comments in there (a trailing one surviv
 - Pin: `tests/fixtures/format/less/extend-rule.less`
 - Conformance:
   - `externals/prettier/less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less`
+  - `externals/prettier/less/less/less.less` (the `extend #7977` rules)
 - Drop when: the selector-list leak is fixed (prettier/prettier#19550 covered only the indentation) and the pin catches up
 
 ```less
@@ -908,6 +1010,54 @@ Mode-independent (measured in Css and Less alike): a unary sign the source SPACE
 Prettier glues the sign to the number (removing the source space, a postcss word-lexing behavior).
 Matching that gluing is ad-hoc work for a torture-test-only shape.
 A sign GLUED in the source never gains a space in either implementation (that direction is the parser's folded-sign handling, not a divergence).
+
+## less-keyword-minus
+
+- Why: semantics
+- Pin: `tests/fixtures/format/less/keyword-minus.less`
+
+```less
+/* input */
+v: -  1;
+
+/* ours */
+v: - 1;
+
+/* prettier */
+v: -1;
+```
+
+less.js negates only a glued `@var`, `$prop` or `(`, so a lone `-` before a number is a keyword, not a sign.
+lessc compiles `- 1` as written and `-1` as the number, so Prettier's glue changes the output.
+
+## scss-at-rule-name-case
+
+- Why: semantics
+- Pin: `tests/fixtures/format/scss/at-rule-name-case.scss`
+- Conformance:
+  - `externals/prettier/scss/case/case.scss` (the at-rule name lines only; the interpolated property name line has no entry)
+
+```scss
+/* input */
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {}
+
+/* ours */
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {}
+
+/* prettier */
+@import Keep;
+@use "x";
+@media (min-width: 700px) {}
+```
+
+dart-sass matches at-rule names case-sensitively: `@IMPORT`, `@USE` and `@MEDIA` are unknown at-rules it compiles as written,
+while `@import Keep;` fails to compile and `@use "x"` loads a module.
+So an SCSS at-rule with an uppercase name prints as written, its params included,
+as every unknown at-rule's (AGENTS.md "Printing raw vs typed").
 
 ## signed-value-resplit
 
@@ -1039,6 +1189,7 @@ A spaced `/` is not part of this: it glues to its left operand and breaks after,
   - `externals/prettier/less/interpolation/interpolation.less`
   - `externals/prettier/less/lookup/lookup-1.less`
   - `externals/prettier/less/no-semicolon/url.less`
+  - `externals/prettier/less/parens/parens.less`
 
 ```less
 /* input */
@@ -1096,7 +1247,7 @@ Prettier (postcss) accepts these and prints them, mostly verbatim.
 SCSS arithmetic in a media prelude prints through the structured `SassExpr` printer with spaced operators,
 identical to the same expression in a declaration value; Prettier's postcss-media-query-parser never value-parses the prelude,
 so it cannot space ANY arithmetic op there (`+` and `-` alike).
-For the glued `-` Prettier also diverges in value positions, via a different artifact: see `value-glued-minus`.
+For the glued `-` Prettier also diverges in value positions, via a different artifact: see DIVERGENCES.md#value-glued-minus.
 
 ## value-glued-minus
 
@@ -1151,6 +1302,111 @@ Scope: value positions where ours structures the glued sign as a binary operatio
 Everywhere else BOTH implementations keep the glue, so there is nothing to diverge;
 where exactly ours keeps it is printer mechanism, documented at `write_less_binary_operation` / `write_sass_binary`
 (and pinned by the same fixtures plus `tests/fixtures/format/scss/calc-glued-minus.scss` for Scss calculation args).
+
+## slash-spacing
+
+- Why: uniform-rule (same construct, same output: a `/` between numbers, glued `1rem/1` or spaced `1rem / 1`; prettier/prettier#10831)
+- Pin: `tests/fixtures/format/scss/slash-spacing.scss`, `tests/fixtures/format/less/slash-spacing.less`
+- Conformance:
+  - `externals/prettier/css/font/font.css`
+  - `externals/prettier/css/parens/parens.css`
+  - `externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-3.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/variables/variables.less`
+
+```scss
+/* input */
+.a {
+  width: f(1px)/2;
+  width: 1px/($b);
+  font: 12px/ 1.5 serif;
+  font: 12px  /1.5 serif;
+  width: $a/ 2;
+}
+
+/* ours */
+.a {
+  width: f(1px)/2;
+  width: 1px/($b);
+  font: 12px / 1.5 serif;
+  font: 12px / 1.5 serif;
+  width: $a / 2;
+}
+
+/* prettier */
+.a {
+  width: f(1px) / 2;
+  width: 1px/ ($b);
+  font: 12px/1.5 serif;
+  font: 12px /1.5 serif;
+  width: $a/ 2;
+}
+```
+
+```less
+/* input */
+.a { width: @a/2; }
+@media @phone and (aspect-ratio: 16/ 9) {}
+
+/* ours */
+.a {
+  width: @a/2;
+}
+@media @phone and (aspect-ratio: 16 / 9) {
+}
+
+/* prettier */
+.a {
+  width: @a / 2;
+}
+@media @phone and (aspect-ratio: 16/ 9) {
+}
+```
+
+A `/` outside a math function keeps the source's choice, made symmetric:
+glued on both sides stays glued, a gap on either side prints one space on both.
+The spacing never changes the meaning: dart-sass and lessc compile `x/y`, `x/ y` and `x / y` alike for every operand kind.
+Prettier decides each gap on its own and by the neighbor's kind:
+
+- a word or function neighbor forces spaces (`f(1px)/2`), numbers and parens keep each gap as written (`1rem/ 1` stays lopsided)
+- `font` and custom properties tighten a `/` after a font-size value (prettier/prettier#18114, whose review asked to "preserve space")
+- a `/` glued after a word is lexed INTO the word by postcss-values-parser 2 (`$a/`, `center/`), so no operator node is left to space and `$a/ 2` stays lopsided
+
+Its own numeric `/` keeping tight or spaced is the rule we apply to every operand.
+Scope: declaration values, Sass / Less operations, media query ratios (a substituted raw prelude's too) and Sass control conditions;
+a Less mixin call / definition / guard prints its source slice (`adjust_numbers_and_strings`, Prettier does too), and a `@container` prelude prints verbatim.
+
+## math-function-operator-spacing
+
+- Why: uniform-rule (same construct, same output: `calc()`'s `*` and `/`)
+- Pin: `tests/fixtures/format/scss/slash-spacing.scss`
+- Conformance:
+  - `externals/prettier/css/font/font.css`
+
+```scss
+/* input */
+.a {
+  width: min(1px/2, 3px);
+  font: calc(var(--size)/2)/2;
+}
+
+/* ours */
+.a {
+  width: min(1px / 2, 3px);
+  font: calc(var(--size) / 2)/2;
+}
+
+/* prettier */
+.a {
+  width: min(1px/2, 3px);
+  font: calc(var(--size)/2)/2;
+}
+```
+
+Inside a math function (the `Calc` node: `calc`, `min`, `max`, `clamp`, `round`, `abs`, ...) `*` and `/` always print spaced;
+`+` / `-` keep the source, they require whitespace and a glued one is invalid, left as written.
+There a `/` is always a division, never a separator, so it is laid out as math:
+css-values-4 serializes a calculation tree with `" * "` / `" / "`, and dart-sass prints `min(var(--x)/2, 3px)` as `min(var(--x) / 2, 3px)`.
+Prettier spaces them inside `calc()` only, and not after a font-size value in `font` and custom properties (its #18114 rule above).
 
 ## paren-group-glued-word
 
@@ -1463,7 +1719,7 @@ less.js (4.9.1) evaluates both forms the same.
 
 ## less-guard-list-inline
 
-- Why: uniform-rule (same construct, same output: guard alternatives are a list, not selectors; the `less-extend-statement-break` leak again)
+- Why: uniform-rule (same construct, same output: guard alternatives are a list, not selectors; the DIVERGENCES.md#less-extend-statement-break leak again)
 - Pin: `tests/fixtures/format/less/mixin-selector-list.less`
 - Conformance:
   - `externals/prettier/less/less-test-suite/snippet: tests-unit/mixins-guards/mixins-guards.less`
@@ -1549,6 +1805,87 @@ At-rule names, property names, media feature names and the prelude keywords next
 Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may be a case-sensitive custom ident (`animation-name`, `grid-area`).
 So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
 Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.
+
+## url-string-comment
+
+- Why: uniform-rule (same construct, same output: a comment after a function argument, `calc(1px /* c */)`)
+- Pin: `tests/fixtures/format/css/function-argument-comments.css`
+
+```css
+/* input */
+a {
+  background: url("x" /* c */);
+  width: calc(1px /* c */);
+}
+
+/* ours */
+a {
+  background: url("x" /* c */);
+  width: calc(1px /* c */);
+}
+
+/* prettier */
+a {
+  background: url("x"/* c */);
+  width: calc(1px /* c */);
+}
+```
+
+A comment after a quoted `url()` string is spaced from it, as one after any other function argument;
+Prettier glues it to the string there only.
+
+## import-media-feature-flat
+
+- Why: uniform-rule (same construct, same output: the media feature in `@media`)
+- Pin: `tests/fixtures/format/css/import-prelude-comments.css`
+- Conformance:
+  - `externals/prettier/css/comments/at-rules.css`
+
+```css
+/* input */
+@import url("a.css") screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy);
+@media screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy) {}
+
+/* ours */
+@import url("a.css") screen and
+  (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy);
+@media screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy) {
+}
+
+/* prettier */
+@import url("a.css") screen and
+  (
+    orientation-something-very-long-name-xxxxxxxxx:
+      landscape-value-quite-long-yyyyyyyy
+  );
+@media screen and (orientation-something-very-long-name-xxxxxxxxx: landscape-value-quite-long-yyyyyyyy) {
+}
+```
+
+An `@import` media feature never breaks inside its parens, however long, as in `@media`:
+both preludes end in the same `<media-query-list>`, which parses to the same nodes and prints through the same printer.
+Prettier value-parses an `@import` prelude, so an over-wide feature there opens its parens and breaks after the `:`.
+
+## media-feature-comment-case
+
+- Why: invariant
+- Pin: `tests/fixtures/format/css/media-commented-feature.css`
+
+```css
+/* input */
+@media (/* A */ COLOR) {}
+
+/* ours */
+@media (/* A */ color) {
+}
+
+/* prettier */
+@media (/* a */ color) {
+}
+```
+
+A comment in a media feature keeps its text, only the code around it lowercases;
+Prettier lowercases the whole feature, so the comment's text is no longer the user's.
 
 ## missed-semicolon-accepted
 
@@ -1667,16 +2004,28 @@ a {
 A `;` in a value glues to what precedes it, in every dialect (`value.rs` `base_separator`);
 Prettier glues it only between SCSS `if()` branches and keeps the source space elsewhere.
 
-## supports-function-args-indent
+## supports-declaration-as-in-rule
 
-- Why: uniform-rule (same construct, same output: the function in a declaration value)
-- Pin: `tests/fixtures/format/css/supports-function-args-indent.css`
+- Why: uniform-rule (same construct, same output: the declaration in a rule)
+- Pin: `tests/fixtures/format/css/supports-declaration-long-value.css`, `tests/fixtures/format/css/supports-function-args-indent.css`, `tests/fixtures/format/css/supports-commented-terms.css`
+- Conformance:
+  - `externals/prettier/css/atrule/supports.css`
+  - `externals/prettier/css/comments/at-rules.css`
 
 ```css
 /* input */
+@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
 @supports not (clip-path: shape(from center left, curve by 200px 0 with 50% -50% from start / 50% 0 from origin, close)) {}
+@supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {}
+a {
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
+}
 
 /* ours */
+@supports (
+  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+) {
+}
 @supports not (
   clip-path: shape(
     from center left,
@@ -1685,38 +2034,9 @@ Prettier glues it only between SCSS `if()` branches and keeps the source space e
   )
 ) {
 }
-
-/* prettier */
-@supports not (
-  clip-path: shape(
-      from center left,
-      curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
-      close
-    )
-) {
-}
-```
-
-A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
-Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.
-
-## supports-declaration-long-value
-
-- Why: uniform-rule (same construct, same output: the declaration in a rule)
-- Pin: `tests/fixtures/format/css/supports-declaration-long-value.css`
-- Conformance:
-  - `externals/prettier/css/atrule/supports.css`
-
-```css
-/* input */
-@supports (text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer) {}
-a {
-  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
-}
-
-/* ours */
 @supports (
-  text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-and-longer
+  /* a comment long enough to break this term */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
 ) {
 }
 a {
@@ -1729,13 +2049,73 @@ a {
     an-experimental-keyword-value-that-is-quite-long-and-longer
 ) {
 }
+@supports not (
+  clip-path: shape(
+      from center left,
+      curve by 200px 0 with 50% -50% from start / 50% 0 from origin,
+      close
+    )
+) {
+}
+@supports (
+  /* a comment long enough to break this term */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+) {
+}
 a {
   text-decoration-skip-ink: an-experimental-keyword-value-that-is-quite-long-long-long;
 }
 ```
 
-An over-wide `@supports` declaration opens its parens and stays on one line, as the same declaration does in a rule;
-Prettier breaks after its `:` there too, its prelude value group allowing a break the declaration printer does not.
+A `@supports` declaration prints as the same declaration does in a rule;
+Prettier prints it through its prelude value parser instead, as a fill of words in a value group adding its own indent:
+
+- An over-wide one opens its parens and stays on one line; Prettier also breaks after its `:`
+- A broken function call indents its arguments one level; Prettier indents them and the `)` one level further
+- A comment leading it ends its line once the parens open, the declaration at the comment's indent; Prettier puts the declaration one level in
+
+## declaration-colon-comments
+
+- Why: uniform-rule (same construct, same output: a `@supports` declaration's and a media feature's `:`)
+- Pin: `tests/fixtures/format/css/declaration-colon-comments.css`
+- Conformance:
+  - `externals/prettier/css/comments/declaration.css`
+  - `externals/prettier/scss/comments/between-decl.scss`
+  - `externals/prettier/scss/comments/custom-properties.scss`
+  - `externals/prettier/less/comments/between-decl.less`
+  - `externals/prettier/less/comments/selectors.less`
+  - `externals/prettier/less/less-test-suite/snippet: tests-unit/comments/comments.less`
+
+```css
+/* input */
+a {
+  display /* c */ : flex;
+  display :/* c */ flex;
+}
+@supports (display /* c */ : flex) {}
+
+/* ours */
+a {
+  display /* c */: flex;
+  display: /* c */ flex;
+}
+@supports (display /* c */: flex) {
+}
+
+/* prettier */
+a {
+  display/* c */ : flex;
+  display:/* c */ flex;
+}
+@supports (display /* c */: flex) {
+}
+```
+
+Block comments around a declaration's `:` are spaced as in a `@supports` declaration or a media feature, where Prettier prints them that way:
+the `:` glued to what precedes it, one space around each comment.
+Prettier prints a rule's `raws.between` as written but for its ends, so the space before the first comment goes, the rest stays, and a line break in it lands at column 0.
+A line break inside the between, a `//` or a Less merge marker keeps it as written, as Prettier prints it (a comment starting a line after the `:` or alone on its line keeps it);
+a line break only at its ends goes (`display\n  /* c */ : flex` -> `display /* c */: flex`).
 
 ## grid-value-broken-in-function
 

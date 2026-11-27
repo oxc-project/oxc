@@ -1,6 +1,6 @@
 commit: 51225612
 
-Passed: 366/487
+Passed: 374/494
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (59/75)
+# babel-plugin-transform-typescript (60/77)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -162,6 +162,11 @@ Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
 
+* oxc/decorated-declare-field-erased/input.ts
+Unresolved references mismatch:
+after transform: ["a", "dec", "g"]
+rebuilt        : ["a", "g"]
+
 * redeclarations/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A"]
@@ -206,7 +211,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (36/118)
+# legacy-decorators (43/123)
 * oxc/accessor/input.ts
 x Output mismatch
 
@@ -455,47 +460,6 @@ Unresolved references mismatch:
 after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
 rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
 
-* oxc/metadata/private-in-expression-in-decorator/input.ts
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Bindings mismatch:
-after transform: ScopeId(1): ["Cls"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["Cls2"]
-rebuilt        : ScopeId(4): []
-Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
-Symbol scope ID mismatch for "Cls":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
-Symbol reference IDs mismatch for "Cls":
-after transform: SymbolId(4): []
-rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(7)]
-Symbol scope ID mismatch for "Cls2":
-after transform: SymbolId(5): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(0)
-Symbol reference IDs mismatch for "Cls2":
-after transform: SymbolId(5): []
-rebuilt        : SymbolId(2): [ReferenceId(11), ReferenceId(17)]
-Reference symbol mismatch for "Cls":
-after transform: SymbolId(1) "Cls"
-rebuilt        : SymbolId(1) "Cls"
-Reference symbol mismatch for "Cls":
-after transform: SymbolId(1) "Cls"
-rebuilt        : SymbolId(1) "Cls"
-Reference symbol mismatch for "Cls2":
-after transform: SymbolId(2) "Cls2"
-rebuilt        : SymbolId(2) "Cls2"
-Reference symbol mismatch for "Cls2":
-after transform: SymbolId(2) "Cls2"
-rebuilt        : SymbolId(2) "Cls2"
-Unresolved reference IDs mismatch for "babelHelpers":
-after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
-rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
-
 * oxc/metadata/readonly-array/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Source", "dec"]
@@ -628,7 +592,15 @@ x Output mismatch
 x Output mismatch
 
 * typescript/constructor/decoratorOnClassConstructor1/input.ts
-x Output mismatch
+
+  x Decorators are not valid here.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/constructor/decoratorOnClassConstructor1/input.ts:6:5]
+ 5 | class C {
+ 6 |     @dec constructor() {}
+   :     ^^^^
+ 7 | }
+   `----
+
 
 * typescript/constructor/decoratorOnClassConstructor4/input.ts
 Bindings mismatch:
@@ -710,14 +682,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["babelHelpers"]
 rebuilt        : ["Something", "babelHelpers"]
-
-* typescript/decoratorChecksFunctionBodies/input.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(4): Some(ScopeId(0))
 
 * typescript/decoratorOnClass1/input.ts
 Bindings mismatch:

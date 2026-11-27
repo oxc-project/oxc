@@ -3,7 +3,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, VisitJs, walk};
-use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, Scoping, SymbolFlags};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str, static_ident};
 use oxc_syntax::operator::{AssignmentOperator, UnaryOperator};
@@ -168,6 +168,7 @@ impl<'a> TypeScript<'a> {
         // not the current traversal scope (which is the scope enclosing the class).
         let class_scope_id = class.scope_id();
 
+        let lowers_decorated_declare_fields = self.lowers_decorated_declare_fields(class);
         let mut constructor_index = None;
         let mut property_assignments = Vec::new();
         let mut computed_key_assignments = Vec::new();
@@ -180,6 +181,18 @@ impl<'a> TypeScript<'a> {
             let mut block_after = None;
             let kept = lowering.keeps_field(element);
             match element {
+                ClassElement::PropertyDefinition(prop)
+                    if lowers_decorated_declare_fields
+                        && !kept
+                        && prop.declare
+                        && !prop.decorators.is_empty() =>
+                {
+                    Self::convert_decorated_declare_field_key(
+                        prop,
+                        &mut computed_key_assignments,
+                        ctx,
+                    );
+                }
                 // Skip static private properties — converting them to static blocks
                 // would lose the private field declaration.
                 ClassElement::PropertyDefinition(prop)
@@ -234,17 +247,15 @@ impl<'a> TypeScript<'a> {
                         // order with the other moved keys.
                         if !prop.declare
                             && let Some(key) = prop.key.as_expression_mut()
-                            && key_needs_temp_var(key, ctx)
                         {
-                            let (assignment, ident) =
-                                create_computed_key_temp_var(key.take_in(ctx), ctx);
-                            computed_key_assignments.push(assignment);
-                            *key = ident;
+                            Self::move_key_to_temp_var(key, &mut computed_key_assignments, ctx);
                         }
                         prop.declare = true;
                     } else if self.remove_class_fields_without_initializer
+                        && !prop.declare
                         && let Some(key) = prop.key.as_expression_mut()
                     {
+                        // A `declare` field is erased along with its key, so the key never runs.
                         // `TypeScript` uses `isSimpleInlineableExpression` to check if the key needs to be kept.
                         // There is a little difference that we treat `BigIntLiteral` and `RegExpLiteral` can be kept, and
                         // `IdentifierReference` without symbol is not kept.
@@ -303,30 +314,13 @@ impl<'a> TypeScript<'a> {
             position += 1;
         }
 
-        let computed_key_assignment_static_block = if computed_key_assignments.is_empty() {
-            None
-        } else {
-            let assignments = ArenaVec::from_iter_in(computed_key_assignments, ctx);
-            let expr = if assignments.iter().any(depends_on_outer_context) {
-                self.append_computed_key_carrier(
-                    class,
-                    assignments,
-                    &property_assignments,
-                    lowering,
-                    ctx,
-                )
-            } else {
-                Some(Expression::new_sequence_expression(SPAN, assignments, ctx))
-            };
-            expr.map(|expr| {
-                let statement = Statement::new_expression_statement(SPAN, expr, ctx);
-                Self::create_class_static_block(
-                    ArenaVec::from_value_in(statement, ctx),
-                    class_scope_id,
-                    ctx,
-                )
-            })
-        };
+        let computed_key_assignment_static_block = self.create_computed_key_static_block(
+            class,
+            computed_key_assignments,
+            &property_assignments,
+            lowering,
+            ctx,
+        );
 
         // Blocks are only inserted after the visited element, and the carrier is appended,
         // so `constructor_index` is still valid.
@@ -543,18 +537,23 @@ impl<'a> TypeScript<'a> {
         }
 
         class.body.body.retain(|element| {
-            if let ClassElement::PropertyDefinition(prop) = element
-                && prop.value.is_none()
-                && prop.decorators.is_empty()
-                && !prop.key.is_private_identifier()
-            {
-                if let Some(key) = prop.key.as_expression() {
-                    return key_needs_temp_var(key, ctx);
-                }
-                return false;
-            }
-            true
+            !matches!(element, ClassElement::PropertyDefinition(prop)
+                if self.removes_uninitialized_field(prop, ctx))
         });
+    }
+
+    /// Whether [`Self::remove_uninitialized_class_fields`] removes `prop`: a field without an
+    /// initializer or decorators, whose key has no side effects.
+    fn removes_uninitialized_field(
+        &self,
+        prop: &PropertyDefinition<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        self.remove_class_fields_without_initializer
+            && prop.value.is_none()
+            && prop.decorators.is_empty()
+            && !prop.key.is_private_identifier()
+            && prop.key.as_expression().is_none_or(|key| !key_needs_temp_var(key, ctx))
     }
 
     /// Transform constructor parameters that include modifier to `this` assignments and
@@ -778,6 +777,132 @@ impl<'a> TypeScript<'a> {
         });
     }
 
+    /// Create `static { _x = x(), _y = y(); }` for computed key `assignments` that no key left in
+    /// the class evaluates. Callers insert it first in the class body, so it runs after the class
+    /// keys and before static initialization.
+    fn create_computed_key_static_block(
+        &mut self,
+        class: &mut Class<'a>,
+        assignments: Vec<Expression<'a>>,
+        property_assignments: &[Statement<'a>],
+        lowering: ClassLowering,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<ClassElement<'a>> {
+        if assignments.is_empty() {
+            return None;
+        }
+        let assignments = ArenaVec::from_iter_in(assignments, ctx);
+        let expr = if assignments.iter().any(depends_on_outer_context) {
+            self.append_computed_key_carrier(
+                class,
+                assignments,
+                property_assignments,
+                lowering,
+                ctx,
+            )
+        } else {
+            Some(Expression::new_sequence_expression(SPAN, assignments, ctx))
+        };
+        expr.map(|expr| {
+            let statement = Statement::new_expression_statement(SPAN, expr, ctx);
+            Self::create_class_static_block(
+                ArenaVec::from_value_in(statement, ctx),
+                class.scope_id(),
+                ctx,
+            )
+        })
+    }
+
+    /// Evaluate the keys of decorated `declare` fields in order with the other class keys, when
+    /// `transform_class_fields` doesn't. See [`Self::convert_decorated_declare_field_key`].
+    pub(super) fn convert_decorated_declare_field_keys(
+        &mut self,
+        class: &mut Class<'a>,
+        lowering: ClassLowering,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let is_decorated_declare_field = |element: &ClassElement<'a>| {
+            matches!(element, ClassElement::PropertyDefinition(prop)
+                if prop.declare && !prop.decorators.is_empty())
+                && !lowering.keeps_field(element)
+        };
+        if !self.lowers_decorated_declare_fields(class)
+            || !class.body.body.iter().any(is_decorated_declare_field)
+        {
+            return;
+        }
+
+        let mut computed_key_assignments = Vec::new();
+        for element in &mut class.body.body {
+            if is_decorated_declare_field(element) {
+                let ClassElement::PropertyDefinition(prop) = element else { unreachable!() };
+                Self::convert_decorated_declare_field_key(prop, &mut computed_key_assignments, ctx);
+                continue;
+            }
+            let key = match element {
+                ClassElement::MethodDefinition(method) => &mut method.key,
+                ClassElement::AccessorProperty(accessor) => &mut accessor.key,
+                ClassElement::PropertyDefinition(prop)
+                    if !prop.declare && !self.removes_uninitialized_field(prop, ctx) =>
+                {
+                    &mut prop.key
+                }
+                _ => continue,
+            };
+            if key.is_computed() {
+                Self::convert_computed_key(key, &mut computed_key_assignments, ctx);
+            }
+        }
+
+        if let Some(block) = self.create_computed_key_static_block(
+            class,
+            computed_key_assignments,
+            &[],
+            lowering,
+            ctx,
+        ) {
+            class.body.body.insert(0, block);
+        }
+    }
+
+    /// Whether legacy decorators lower the decorated `declare` fields of `class`, and so need their
+    /// keys. They leave the members of class expressions as they are, and other decorator modes
+    /// erase `declare` fields together with their decorators.
+    fn lowers_decorated_declare_fields(&self, class: &Class<'a>) -> bool {
+        self.legacy_decorators && !class.is_expression()
+    }
+
+    /// The class removes a `declare` field, and legacy decorators pass its key to `_decorate` after
+    /// the class. A key with side effects is evaluated once, in order with the other class keys:
+    ///
+    /// `@dec declare [x()]: T;` -> `@dec declare [_x]: T;`, and `_x = x()` is pushed to `assignments`.
+    ///
+    /// Semantic resolves the key's references as types where they are read, as in any `declare`
+    /// field, so they become reads.
+    fn convert_decorated_declare_field_key(
+        prop: &mut PropertyDefinition<'a>,
+        assignments: &mut Vec<Expression<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Some(key) = prop.key.as_expression_mut() else { return };
+        ValueReferenceReader(ctx.scoping_mut()).visit_expression(key);
+        Self::move_key_to_temp_var(key, assignments, ctx);
+    }
+
+    /// Move a `key` with side effects to a temp var: `x()` -> `_x`, and `_x = x()` is pushed to
+    /// `assignments`.
+    fn move_key_to_temp_var(
+        key: &mut Expression<'a>,
+        assignments: &mut Vec<Expression<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if key_needs_temp_var(key, ctx) {
+            let (assignment, ident) = create_computed_key_temp_var(key.take_in(ctx), ctx);
+            assignments.push(assignment);
+            *key = ident;
+        }
+    }
+
     /// Evaluate trailing keys after the other class keys and before static initialization.
     fn append_computed_key_carrier(
         &mut self,
@@ -844,6 +969,7 @@ impl<'a> TypeScript<'a> {
         let params =
             FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
         class.body.body.push(create_class_method(
+            SPAN,
             decorators,
             key,
             MethodDefinitionKind::Method,
@@ -991,4 +1117,19 @@ impl<'a> Visit<'a> for OuterContextFinder {
         // Functions have their own `this`, `arguments`, `new.target` and `super`,
         // and `yield` and `await` in them belong to them.
     }
+}
+
+/// Turns the type references of an expression into reads, skipping those in types (`x as T`,
+/// `f<T>()`). References that are already values, such as the `Read | Write` of `x++`, are kept.
+struct ValueReferenceReader<'s>(&'s mut Scoping);
+
+impl<'a> Visit<'a> for ValueReferenceReader<'_> {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        let flags = self.0.get_reference_mut(it.reference_id()).flags_mut();
+        if !flags.is_value() {
+            *flags = ReferenceFlags::Read;
+        }
+    }
+
+    fn visit_ts_type(&mut self, _it: &TSType<'a>) {}
 }

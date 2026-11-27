@@ -1,8 +1,3 @@
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
-};
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression},
@@ -11,6 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
+};
 
 fn prefer_to_have_been_called_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`")

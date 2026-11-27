@@ -99,6 +99,13 @@ impl GetNodeId for ObjectProperty<'_> {
     }
 }
 
+impl GetNodeId for ObjectMethodProperty<'_> {
+    #[inline]
+    fn node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
+
 impl GetNodeId for PropertyKey<'_> {
     #[inline]
     fn node_id(&self) -> NodeId {

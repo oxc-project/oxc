@@ -84,9 +84,9 @@ let foo: { new <T>(t: T): void }
 ----------
 let foo:{new <T>(t:T):void;};
 ########## 19
-function <const T>(){}
+function f<const T>(){}
 ----------
-function<const T>(){}
+function f<const T>(){}
 ########## 20
 class A {m?(): void}
 ----------

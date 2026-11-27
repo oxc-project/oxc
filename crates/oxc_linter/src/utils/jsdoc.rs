@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, FormalParameters, ObjectPropertyKind, PropertyKey},
+    ast::{BindingPattern, Expression, FormalParameters, PropertyKey},
 };
 use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;
@@ -278,11 +278,7 @@ pub fn collect_params(
                     };
 
                     collected.extend(obj.properties.iter().filter_map(|prop| {
-                        let ObjectPropertyKind::ObjectProperty(obj_prop) = &prop else {
-                            return None;
-                        };
-
-                        let PropertyKey::StaticIdentifier(ident) = &obj_prop.key else {
+                        let PropertyKey::StaticIdentifier(ident) = prop.key()? else {
                             return None;
                         };
 

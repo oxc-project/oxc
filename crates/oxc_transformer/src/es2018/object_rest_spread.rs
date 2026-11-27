@@ -664,6 +664,9 @@ impl<'a> ObjectRestSpread<'a> {
                     );
                 });
             }
+            // Scopes within the moved patterns (e.g. functions in default values) now live in
+            // the body scope too.
+            ctx.move_scopes_of_statements(&clause.body.body[..inserted], body_scope_id);
         }
     }
 
@@ -684,6 +687,7 @@ impl<'a> ObjectRestSpread<'a> {
                 let old_scope_id =
                     if decl.kind.is_var() { ctx.current_hoist_scope_id() } else { scope_id };
 
+                let body_len = block.body.len();
                 Self::replace_rest_element(
                     decl.kind,
                     &mut declarator.id,
@@ -691,6 +695,10 @@ impl<'a> ObjectRestSpread<'a> {
                     old_scope_id,
                     ctx,
                 );
+                // The patterns moved out of the loop head are inserted at the start of the body,
+                // so scopes within them (e.g. functions in default values) now live in the body scope.
+                let inserted = block.body.len() - body_len;
+                ctx.move_scopes_of_statements(&block.body[..inserted], new_scope_id);
 
                 // Move the bindings from the for init scope to scope of the loop body.
                 for symbol_id in bound_symbol_ids {
@@ -727,7 +735,7 @@ impl<'a> ObjectRestSpread<'a> {
             ArenaVec::from_value_in(VariableDeclarator::new(SPAN, id, None, None, false, ctx), ctx);
         let decl = VariableDeclaration::boxed(SPAN, kind, declarations, false, ctx);
         *left = ForStatementLeft::VariableDeclaration(decl);
-        Self::try_replace_statement_with_block(body, scope_id, ctx);
+        let body_scope_id = Self::try_replace_statement_with_block(body, scope_id, ctx);
         let Statement::BlockStatement(block) = body else {
             unreachable!();
         };
@@ -736,6 +744,9 @@ impl<'a> ObjectRestSpread<'a> {
         let expr = Expression::new_assignment_expression(SPAN, operator, assign_left, right, ctx);
         let stmt = Statement::new_expression_statement(SPAN, expr, ctx);
         block.body.insert(0, stmt);
+        // The assignment target moved out of the loop head is now in the body, so scopes within
+        // it (e.g. functions in default values) now live in the body scope.
+        ctx.move_scopes_of_statements(&block.body[..1], body_scope_id);
     }
 
     fn try_replace_statement_with_block(
@@ -756,6 +767,10 @@ impl<'a> ObjectRestSpread<'a> {
             };
             Statement::new_block_statement_with_scope_id(span, stmts, scope_id, ctx)
         });
+        // The original body statement is now inside the new block, so its scopes are children
+        // of the block scope.
+        let Statement::BlockStatement(block) = stmt else { unreachable!() };
+        ctx.move_scopes_of_statements(&block.body, scope_id);
         scope_id
     }
 

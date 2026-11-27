@@ -64,6 +64,18 @@ impl LexerCheckpoint<'_> {
     pub(crate) fn errors_len(&self) -> usize {
         self.errors_len
     }
+
+    pub(crate) fn tokens_len(&self) -> usize {
+        self.tokens_len
+    }
+
+    pub(crate) fn comments_len(&self) -> usize {
+        self.trivia.comments_len
+    }
+
+    pub(crate) fn irregular_whitespaces_len(&self) -> usize {
+        self.trivia.irregular_whitespaces_len
+    }
 }
 
 /// Number of bytes which are always available to read from the position passed to a token handler.
@@ -243,9 +255,14 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.trivia_builder.rewind(checkpoint.trivia);
     }
 
-    /// Make rewinding to `checkpoint` keep the comments and irregular whitespace lexed after it.
-    pub(crate) fn keep_trivia(&self, checkpoint: &mut LexerCheckpoint<'a>) {
-        self.trivia_builder.keep_trivia(&mut checkpoint.trivia);
+    /// Continue lexing after the token of `checkpoint`, keeping all output.
+    ///
+    /// The output before `checkpoint` must have been put back, though maybe at different indexes.
+    pub(crate) fn resume(&mut self, checkpoint: &LexerCheckpoint<'a>) {
+        debug_assert_eq!(self.pending, PendingToken::NONE);
+
+        self.source.set_position(checkpoint.source_position);
+        self.trivia_builder.resume(&checkpoint.trivia);
     }
 
     pub fn peek_token(&mut self) -> Token {
@@ -541,8 +558,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         mem::replace(&mut self.tokens, ArenaVec::new_in(&self.allocator))
     }
 
-    pub(crate) fn set_tokens(&mut self, tokens: ArenaVec<'a, Token>) {
-        self.tokens = tokens;
+    /// Collected tokens. Empty if tokens are disabled.
+    pub(crate) fn tokens_mut(&mut self) -> &mut ArenaVec<'a, Token> {
+        &mut self.tokens
     }
 
     /// Finalize tokens and return them.

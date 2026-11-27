@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::outermost_paren, context::LintContext, rule::Rule};
 
 fn no_import_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not assign to imported bindings")
@@ -100,7 +100,8 @@ impl Rule for NoImportAssign {
                                 }
                                 && span != ctx.semantic().reference_span(reference)
                             {
-                                return ctx.diagnostic(no_import_assign_diagnostic(expr.span()));
+                                ctx.diagnostic(no_import_assign_diagnostic(expr.span()));
+                                continue;
                             }
                             // Check for assignment to namespace property
                             match expr {
@@ -165,8 +166,8 @@ impl Rule for NoImportAssign {
 /// - `Reflect.set`
 /// - `Reflect.setPrototypeOf`
 fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    let current_node = ctx.nodes().get_node(node_id);
-    let call_expression_node = ctx.nodes().parent_kind(node_id);
+    let argument_node = outermost_paren(ctx.nodes().get_node(node_id), ctx.semantic());
+    let call_expression_node = ctx.nodes().parent_kind(argument_node.id());
 
     let AstKind::CallExpression(expr) = call_expression_node else {
         return false;
@@ -188,7 +189,7 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
             return expr
                 .arguments
                 .first()
-                .is_some_and(|argument| argument.span() == current_node.kind().span());
+                .is_some_and(|argument| argument.span() == argument_node.kind().span());
         }
     }
 
@@ -326,6 +327,7 @@ fn test() {
         "import {named} from 'mod'; Object.assign(named, obj);",
         "import * as mod from 'mod'; Object.assign(mod.prop, obj);",
         "import * as mod from 'mod'; Object.assign(obj, mod, other);",
+        "import * as ns from 'mod'; Object.assign({}, (ns));",
         "import * as mod from 'mod'; Object[assign](mod, obj);",
         "import * as mod from 'mod'; Object.getPrototypeOf(mod);",
         "import * as mod from 'mod'; Reflect.set(obj, key, mod);",
@@ -396,6 +398,10 @@ fn test() {
         "import * as mod from 'mod'; Object?.defineProperty(mod, key, d)", // { "ecmaVersion": 2020 },
         "import * as mod from 'mod'; (Object?.defineProperty)(mod, key, d)", // { "ecmaVersion": 2020 },
         "import * as mod from 'mod'; delete mod?.prop", // { "ecmaVersion": 2020 }
+        "import * as ns from 'mod'; delete ns.a; delete ns.b;",
+        "import * as ns from 'mod'; delete ns.a; ns.b = 1;",
+        "import * as ns from 'mod'; Object.assign((ns), { value: 1 });",
+        "import * as ns from 'mod'; Reflect.set(((ns)), 'a', 1);",
     ];
 
     Tester::new(NoImportAssign::NAME, NoImportAssign::PLUGIN, pass, fail).test_and_snapshot();

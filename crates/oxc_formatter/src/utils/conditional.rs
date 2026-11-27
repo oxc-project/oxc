@@ -544,9 +544,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatConditionalLike<'a, '_> {
             //      : b // <- enforce line break here if the conditional breaks
             // ).more // or `)[more]`
             // ```
+            // An embedded expression's root, before the host's `)` (`ExpressionRoot::closes_paren`), too
             if !should_extra_indent
                 && !is_jsx_chain
-                && self.parent().is_member_object_span(self.span())
+                && (self.parent().is_member_object_span(self.span())
+                    || (f.context().is_embedded_root(self.parent())
+                        && f.context().expression_root().is_some_and(|root| root.closes_paren)))
             {
                 write!(f, [soft_line_break()]);
             }

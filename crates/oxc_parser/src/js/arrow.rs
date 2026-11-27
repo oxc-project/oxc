@@ -624,8 +624,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         let kind = self.lookahead(|p| {
-            p.bump(Kind::Async);
-            p.is_generic_arrow_function_expression()
+            let is_async = p.eat(Kind::Async);
+            p.is_generic_arrow_function_expression(is_async)
         });
         // Most `<` do not start type parameters. Decide that here, without a call.
         if kind == Tristate::False {
@@ -655,10 +655,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Whether the `<` at the cursor starts the type parameters of an arrow function.
+    /// `is_async` is whether the `<` follows `async`.
     ///
     /// Called in TS, in TSX only after `async`, and in JS only for invalid code.
     /// Never called in JSX.
-    fn is_generic_arrow_function_expression(&mut self) -> Tristate {
+    fn is_generic_arrow_function_expression(&mut self, is_async: bool) -> Tristate {
         debug_assert!(self.at(Kind::LAngle));
         self.bump_any(); // `<`
         let second = self.cur_kind();
@@ -680,19 +681,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // `<T>` may start an arrow function, which is then tried first. The exception is
-        // a type assertion that the next tokens give away, because trying to parse them as
-        // type parameters and parameters is certain to fail: the name of a type parameter is
-        // followed by `,`, `=`, `extends` or `>`, not by the rest of a type as in `<A.B>a`,
-        // `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of type parameters is followed by
-        // `(`, not by an operand as in `<T>a` and `<any>{}`.
+        // a type assertion, or type arguments after `async`, that the next tokens give away,
+        // because trying to parse them as type parameters and parameters is certain to fail:
+        // the name of a type parameter is followed by `,`, `=`, `extends` or `>`, not by the
+        // rest of a type as in `<A.B>a`, `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of
+        // type parameters is followed by `(`, not by an operand as in `<T>a` and `<any>{}`.
         // JS only gets here for invalid code. `Maybe` gives it a better error for `<T,>`.
         if !self.is_ts || second == Kind::Const {
             return Tristate::Maybe;
         }
         self.bump_any(); // the name
         match self.cur_kind() {
-            // `<T,` is not a type, so it can only start type parameters.
-            Kind::Comma => Tristate::True,
+            // `<T,` cannot start a type assertion, but after `async` it can start type
+            // arguments, as in `async<A, B>()` and `async<A, B>;`.
+            Kind::Comma => {
+                if is_async {
+                    Tristate::Maybe
+                } else {
+                    Tristate::True
+                }
+            }
             Kind::Dot | Kind::LBrack | Kind::Pipe | Kind::Amp | Kind::LAngle => Tristate::False,
             Kind::RAngle => {
                 self.bump_any(); // `>`

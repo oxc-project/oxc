@@ -182,6 +182,11 @@ pub(super) fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_,
 /// so splicing the printed `Number` / `Dimension` / `Str` leaves into the verbatim slice is possible
 /// and would retire this byte re-scan, with its comment / `url()` / hash skips.
 /// However, we keep the scan for now: `oxc-css-parser` has no visitor to collect those leaves.
+///
+/// TODO: the slice keeps its source `/` spacing (`.m(@a/ 2)`, `when (@a/ 2 > 1)`), unlike a declaration value's
+/// symmetric `/` (DIVERGENCES.md#slash-spacing); Prettier prints the slice as written too.
+/// Re-spacing `/` here would re-scan bytes it does not own (escapes, detached rulesets, `./`);
+/// the leaf-splicing above, printing the typed operations, is what lifts it.
 pub(super) fn adjust_numbers_and_strings<'a>(
     raw: &'a str,
     options: &CssFormatOptions,
@@ -462,6 +467,44 @@ fn is_solidus(value: &ComponentValue<'_>) -> bool {
     matches!(value, ComponentValue::Delimiter(Delimiter { kind: DelimiterKind::Solidus, .. }))
 }
 
+/// A `/` outside a math function keeps the source's choice, made symmetric (DIVERGENCES.md#slash-spacing):
+/// tight when glued on both sides, otherwise one space on both sides.
+pub(super) fn is_slash_spaced(
+    left: oxc_css_parser::pos::Span,
+    slash: oxc_css_parser::pos::Span,
+    right: oxc_css_parser::pos::Span,
+) -> bool {
+    !is_glued(left, slash) || !is_glued(slash, right)
+}
+
+/// [`is_slash_spaced`] for a component list:
+/// the separator BEFORE `values[i]` when it or `values[i - 1]` is a slash, `None` otherwise.
+fn slash_separator(
+    values: &[ComponentValue<'_>],
+    i: usize,
+    is_slash: impl Fn(&ComponentValue<'_>) -> bool,
+) -> Option<Separator> {
+    let gap = |k: usize| values.get(k).is_some_and(|v| !is_glued(values[k - 1].span(), v.span()));
+    let curr_is_slash = is_slash(&values[i]);
+    if !curr_is_slash && !is_slash(&values[i - 1]) {
+        return None;
+    }
+    // A leading `/` makes the stream path-like (`-fb-url(/a/b.png)`): it never spaces
+    if is_slash(&values[0]) && (i == 1 || !gap(i)) {
+        return Some(Separator::Tight);
+    }
+    // The slash's own two gaps: `values[i]` is the slash, or the one before it
+    let slash = if curr_is_slash { i } else { i - 1 };
+    // A trailing `/` has no right gap
+    let spaced = gap(slash) || gap(slash + 1);
+    Some(match (spaced, curr_is_slash) {
+        (false, _) => Separator::Tight,
+        // A spaced `/` glues to its left operand and breaks after
+        (true, true) => Separator::Space,
+        (true, false) => Separator::Line,
+    })
+}
+
 fn is_semicolon(value: &ComponentValue<'_>) -> bool {
     matches!(value, ComponentValue::Delimiter(Delimiter { kind: DelimiterKind::Semicolon, .. }))
 }
@@ -507,23 +550,6 @@ fn is_number_ish(value: &ComponentValue<'_>) -> bool {
         value,
         ComponentValue::Number(_) | ComponentValue::Dimension(_) | ComponentValue::Percentage(_)
     )
-}
-
-/// Is this number-ish or a font-size-capable function? (Prettier's `isPossibleFontSize`)
-fn is_possible_font_size(value: &ComponentValue<'_>) -> bool {
-    match value {
-        v if is_number_ish(v) => true,
-        ComponentValue::Function(func) => {
-            let name = function_name_text(func);
-            name.eq_ignore_ascii_case("var")
-                || name.eq_ignore_ascii_case("calc")
-                || name.eq_ignore_ascii_case("min")
-                || name.eq_ignore_ascii_case("max")
-                || name.eq_ignore_ascii_case("clamp")
-                || name.starts_with("--")
-        }
-        _ => false,
-    }
 }
 
 pub(super) fn function_name_text<'a>(func: &Function<'a>) -> &'a str {
@@ -572,10 +598,6 @@ impl ValueContext<'_> {
         // inside function arguments (`repeat()`, `minmax()`, `theme()`) the normal separator rules apply.
         !self.in_args
             && self.decl_prop.is_some_and(|p| p == "grid" || p.starts_with("grid-template"))
-    }
-
-    fn is_font_or_custom(&self) -> bool {
-        self.decl_prop.is_some_and(|p| p == "font" || p.starts_with("--"))
     }
 }
 
@@ -783,7 +805,7 @@ fn flush_trailing_comments_while(
 
 /// Comments between a prelude ending at `prelude_end` and its `{` at `block_start`:
 /// a run glued to the prelude stays on its line (`@page :first // c`, the `//` ends it so `{` starts the next),
-/// own-line ones keep their line before the `{`.
+/// own-line ones keep their line before the `{` (DIVERGENCES.md#own-line-comment-before-block).
 /// Either way the caller's space before `{` is safe: the printer drops it at the start of a line.
 pub(super) fn write_comments_before_block(
     prelude_end: u32,
@@ -796,8 +818,19 @@ pub(super) fn write_comments_before_block(
         return;
     }
     write!(f, hard_line_break());
-    for &comment in own_line {
-        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
+    let source = f.context().source_text();
+    let last = own_line.len() - 1;
+    for (i, &comment) in own_line.iter().enumerate() {
+        // The `{` stays on the last comment's line when it is there (`/* c */ {`), as before a JS block
+        let after = if i == last
+            && comments::classify_gap(source.bytes_range(comment.span.end, block_start))
+                == comments::Gap::None
+        {
+            BlockCommentAfter::None
+        } else {
+            BlockCommentAfter::HardLine
+        };
+        write!(f, FormatCommentBeforeContent::new(comment, after));
     }
 }
 
@@ -1253,13 +1286,25 @@ pub(super) fn write_comma_group<'a>(
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 flush_value_comments(start, f);
                 for (j, v) in run.iter().enumerate() {
-                    let is_word_continuation = j > 0 && {
-                        let sep = separator_between(values, run_start + j, ctx, source);
-                        if sep == Separator::Space {
+                    let sep =
+                        (j > 0).then(|| separator_between(values, run_start + j, ctx, source));
+                    if sep == Some(Separator::Space) {
+                        write!(f, " ");
+                    }
+                    let is_word_continuation = sep == Some(Separator::Word);
+                    // A comment inside the run stays where it is (`1px /* c */ / 2`), never past the next member;
+                    // a pair kept tight regardless of its gap still spaces around it (`if($a, 1 /* c */ ; 2)`)
+                    if j > 0
+                        && f.context()
+                            .comments()
+                            .peek()
+                            .is_some_and(|c| c.span.end <= v.span().start)
+                    {
+                        if sep != Some(Separator::Space) {
                             write!(f, " ");
                         }
-                        sep == Separator::Word
-                    };
+                        flush_value_comments(v.span().start, f);
+                    }
                     // A word continuation or a glued number head prints raw, not normalized
                     // (`sandstone.10`, `[0.50]`, `1.20.3` must survive as-is).
                     if is_word_continuation || is_glued_number_head(values, run_start + j) {
@@ -1378,6 +1423,11 @@ fn raw_token<'b, 'a>(value: &'b ComponentValue<'a>) -> Option<&'b Token<'a>> {
     if let ComponentValue::TokenWithSpan(token) = value { Some(&token.token) } else { None }
 }
 
+/// A lone `-` that oxc-css-parser reads as a Less keyword, not an operator or a sign (`1 -"t"`).
+fn is_less_keyword_minus(value: &ComponentValue<'_>) -> bool {
+    matches!(value, ComponentValue::InterpolableIdent(InterpolableIdent::Literal(id)) if id.raw == "-")
+}
+
 /// The end of the run starting at `values[start]`: tight / non-breaking-space components merge into one fill entry.
 fn run_end(
     values: &[ComponentValue<'_>],
@@ -1427,60 +1477,8 @@ fn base_separator(values: &[ComponentValue<'_>], i: usize, ctx: ValueContext<'_>
     let curr = &values[i];
     // `hasEmptyRawBefore(iNextNode)`
     let gap_empty = is_glued(prev.span(), curr.span());
-    // `hasEmptyRawBefore(iNode)`
-    let prev_gap_empty = i >= 2 && is_glued(values[i - 2].span(), prev.span());
-
-    // Solidus (`/`) spacing rules
-    if is_solidus(curr) || is_solidus(prev) {
-        // Path-like streams (`-fb-url(/a/b.png)`): glued tokens stay glued
-        if is_solidus(&values[0]) && gap_empty {
-            return Separator::Tight;
-        }
-        // Fully glued `/` (`center/80%`, `12px/1.5`): one postcss word
-        if is_solidus(curr)
-            && gap_empty
-            && values.get(i + 1).is_none_or(|n| is_glued(curr.span(), n.span()))
-        {
-            return Separator::Tight;
-        }
-        if is_solidus(prev) && gap_empty && prev_gap_empty {
-            return Separator::Tight;
-        }
-        // `font: 12px/1.5` and custom properties:
-        // keep tight when the source is tight around a font-size-capable node.
-        if ctx.is_font_or_custom() {
-            if is_solidus(curr) && gap_empty && is_possible_font_size(prev) {
-                return Separator::Tight;
-            }
-            if is_solidus(prev) && prev_gap_empty && i >= 2 && is_possible_font_size(&values[i - 2])
-            {
-                return Separator::Tight;
-            }
-        }
-        // Leading `/` (e.g. `-fb-url(/abs/path)`)
-        if i == 1 && is_solidus(prev) {
-            return Separator::Tight;
-        }
-
-        let require_space_before = values.get(i + 1).is_some_and(is_word_like)
-            || values.get(i + 1).is_some_and(is_func_like)
-            || is_func_like(prev)
-            || is_word_like(prev);
-        let require_space_after = is_word_like(curr)
-            || is_func_like(curr)
-            || (i >= 2 && (is_word_like(&values[i - 2]) || is_func_like(&values[i - 2])));
-
-        let tight_rule = (is_solidus(curr) && !require_space_before)
-            || (is_solidus(prev) && !require_space_after);
-        // `hasEmptyRawBefore(iNextNode) || (isMathOperator && iPrevNode is math op)`
-        let position_rule =
-            gap_empty || (is_solidus(prev) && (i < 2 || is_solidus(&values[i - 2])));
-
-        if tight_rule && position_rule {
-            return Separator::Tight;
-        }
-        // A spaced `/` glues to its left operand and breaks after (Prettier's math operator chunk)
-        return if is_solidus(curr) { Separator::Space } else { Separator::Line };
+    if let Some(sep) = slash_separator(values, i, is_solidus) {
+        return sep;
     }
 
     // Less lookups: `@var [@result]` loses the gap (`var [@lookup]` rule).
@@ -1562,55 +1560,11 @@ fn base_separator(values: &[ComponentValue<'_>], i: usize, ctx: ValueContext<'_>
             }
             return Separator::Line;
         }
-        // Token-level division, mirroring the structural rules:
-        // tight only when glued in the source and no word/function neighbors.
-        let is_solidus_tok =
-            |v: &ComponentValue<'_>| matches!(raw_token(v), Some(Token::Solidus(_)));
-        // A leading `/` makes the stream path-like (`-fb-url(/a/b.png)`):
-        // glued tokens stay glued.
-        if is_solidus_tok(&values[0]) && gap_empty {
-            return Separator::Tight;
-        }
-        // Token-level font shorthand rule
-        // (`--font: var(--size)/2` in custom properties, where the value is a raw token stream).
-        if ctx.is_font_or_custom() {
-            let font_size_ish = |v: Option<&ComponentValue<'_>>| {
-                v.is_some_and(|v| {
-                    matches!(
-                        raw_token(v),
-                        Some(
-                            Token::Number(_)
-                                | Token::Dimension(_)
-                                | Token::Percentage(_)
-                                | Token::RParen(_)
-                        )
-                    )
-                })
-            };
-            if is_solidus_tok(curr) && gap_empty && font_size_ish(Some(prev)) {
-                return Separator::Tight;
-            }
-            if is_solidus_tok(prev)
-                && prev_gap_empty
-                && font_size_ish(values.get(i.wrapping_sub(2)))
-            {
-                return Separator::Tight;
-            }
-        }
-        let wordish = |v: Option<&ComponentValue<'_>>| {
-            v.is_some_and(|v| {
-                matches!(raw_token(v), Some(Token::Ident(_) | Token::RParen(_)))
-                    || is_word_like(v)
-                    || is_func_like(v)
-            })
-        };
-        if is_solidus_tok(curr) {
-            let require_space = wordish(values.get(i + 1)) || wordish(Some(prev));
-            return if gap_empty && !require_space { Separator::Tight } else { Separator::Space };
-        }
-        if is_solidus_tok(prev) {
-            let require_space = wordish(Some(curr)) || wordish(values.get(i.wrapping_sub(2)));
-            return if gap_empty && !require_space { Separator::Tight } else { Separator::Line };
+        // Token-level division: the same rule as the typed `/`
+        if let Some(sep) =
+            slash_separator(values, i, |v| matches!(raw_token(v), Some(Token::Solidus(_))))
+        {
+            return sep;
         }
     }
 
@@ -1628,11 +1582,14 @@ fn base_separator(values: &[ComponentValue<'_>], i: usize, ctx: ValueContext<'_>
 
     // Raw token fallbacks (postcss-values would have produced operator/word tokens):
     // keep gap-free neighbors tight (`10em+12em`, `-fb-url(/a/b)`).
+    // So does the Less keyword `-` (`1 -"t"`, `1-`): a space after it would make it an operator
     if gap_empty
         && (matches!(prev, ComponentValue::TokenWithSpan(_) | ComponentValue::Placeholder(_))
             || matches!(curr, ComponentValue::TokenWithSpan(_) | ComponentValue::Placeholder(_))
             || matches!(prev, ComponentValue::Delimiter(_))
-            || matches!(curr, ComponentValue::Delimiter(_)))
+            || matches!(curr, ComponentValue::Delimiter(_))
+            || is_less_keyword_minus(prev)
+            || is_less_keyword_minus(curr))
     {
         return Separator::Tight;
     }
@@ -1689,16 +1646,21 @@ pub(super) fn write_component_value<'a>(
             write_number(&percentage.value, f);
             write!(f, "%");
         }
-        // The spacing around `/` prints as written, as in a declaration value
+        // The `/` spacing of a declaration value (DIVERGENCES.md#slash-spacing)
         ComponentValue::Ratio(ratio) => {
+            let spaced =
+                is_slash_spaced(ratio.numerator.span, ratio.solidus_span, ratio.denominator.span);
             write_number(&ratio.numerator, f);
-            if !is_glued(ratio.numerator.span, ratio.solidus_span) {
+            if spaced {
                 write!(f, space());
             }
+            // A comment between the parts stays there
+            flush_value_comments(ratio.solidus_span.start, f);
             write!(f, "/");
-            if !is_glued(ratio.solidus_span, ratio.denominator.span) {
+            if spaced {
                 write!(f, space());
             }
+            flush_value_comments(ratio.denominator.span.start, f);
             write_number(&ratio.denominator, f);
         }
         ComponentValue::HexColor(hex) => {
@@ -1739,7 +1701,9 @@ pub(super) fn write_component_value<'a>(
         }
         ComponentValue::Function(func) => write_function(func, ctx, f),
         ComponentValue::Calc(calc) => write_calc(calc, ctx, f),
-        ComponentValue::CalcParenthesized(paren) => write_parenthesized(&paren.expr, ctx, f),
+        ComponentValue::CalcParenthesized(paren) => {
+            write_parenthesized(&paren.expr, paren.span.end - 1, ctx, f);
+        }
         ComponentValue::SassMap(map) => scss::write_sass_map(map, ctx, f),
         ComponentValue::SassList(list) => scss::write_sass_list(list, ctx, f),
         ComponentValue::SassParenthesizedExpression(paren) => {
@@ -1901,7 +1865,7 @@ pub(super) fn write_component_value<'a>(
         // `+`/`-` as a binary operator (see `write_less_binary_operation`).
         ComponentValue::LessBinaryOperation(op) => write_less_binary_operation(op, ctx, f),
         ComponentValue::LessParenthesizedOperation(paren) => {
-            write_parenthesized(&paren.operation, ctx, f);
+            write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
         }
         // A css-in-js placeholder becomes a typed marker the host replaces with `${expr}`
         ComponentValue::Placeholder(placeholder) => {
@@ -1967,7 +1931,6 @@ fn write_sass_binary<'a>(
             // Word-like operands force spaces on BOTH sides even when glued (`$a+"str"` → `$a + "str"`),
             // so they end the run too.
             let mut run_end = i;
-            let mut division_force_space = false;
             while let Some(op) = parts[run_end].1 {
                 if matches!(op.kind, SassBinaryOperatorKind::Multiply) {
                     break;
@@ -1975,24 +1938,13 @@ fn write_sass_binary<'a>(
                 let op_span = to_span(op.span);
                 let next = &parts[run_end + 1].0;
                 let operand = &parts[run_end].0;
-                // Division mirrors postcss-values lexing:
-                // a word-led chunk absorbs a directly attached `/` (`$w/2`, `$w/ 2` stay verbatim);
-                // otherwise word/func NEIGHBORS force spaces on both sides
-                // (`2/$w` -> `2 / $w`, `$w /2` -> `$w / 2`)
-                // while plain numbers keep the source gap (`10px/8px`, `1/2`).
+                // A glued `/` stays in this run, a spaced one ends it (spaced both sides below)
                 if matches!(op.kind, SassBinaryOperatorKind::Division) {
-                    let wf = |v: &ComponentValue<'_>| is_word_like(v) || is_func_like(v);
-                    let left_absorbs = operand.span().end == op_span.start && wf(operand);
-                    if !left_absorbs {
-                        let near_wordish = wf(operand)
-                            || wf(next)
-                            || run_end.checked_sub(1).is_some_and(|k| wf(parts[k].0))
-                            || parts.get(run_end + 2).is_some_and(|(o, _)| wf(o));
-                        if near_wordish {
-                            division_force_space = true;
-                            break;
-                        }
+                    if is_slash_spaced(operand.span(), op.span, next.span()) {
+                        break;
                     }
+                    run_end += 1;
+                    continue;
                 }
                 let next_start = next.span().start;
                 if matches!(source.text_for(&op_span), "+" | "-")
@@ -2020,6 +1972,8 @@ fn write_sass_binary<'a>(
             let run = &parts[i..=run_end];
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 for (j, (operand, op)) in run.iter().enumerate() {
+                    // A comment between the operands and operators stays there
+                    flush_value_comments(operand.span().start, f);
                     write_component_value(operand, ctx, f);
                     if let Some(op) = op {
                         let op_span = to_span(op.span);
@@ -2036,23 +1990,23 @@ fn write_sass_binary<'a>(
                                 || run.get(j + 1).is_some_and(|(next, _)| {
                                     is_word_like(next) || is_func_like(next)
                                 }));
-                        // Division: space before `/` unless a word-led operand absorbs it
-                        // (see the run-merge rule above).
-                        let division_spaces =
-                            op_text == "/" && division_force_space && j + 1 == run.len();
+                        // Only a spaced `/` ends a run (see the run-merge rule above)
+                        let division_spaces = op_text == "/" && j + 1 == run.len();
                         if operand_end != op_span.start
                             || wordish
                             || division_spaces
                             // `*` always spaces (it also ends its run above)
                             || op_text == "*"
+                            // A glued `/` stays glued whatever follows it (DIVERGENCES.md#slash-spacing)
                             || (fuses_paren
+                                && op_text != "/"
                                 && run.get(j + 1).is_some_and(|(next, _)| {
                                     matches!(next, ComponentValue::SassParenthesizedExpression(_))
                                 }))
                         {
                             write!(f, " ");
                         }
-                        write!(f, text(source.text_for(&op_span)));
+                        write_text_with_leading_comments(op_span, f);
                     }
                 }
             });
@@ -2070,118 +2024,147 @@ fn write_sass_binary<'a>(
     write!(f, group(&indent(&body)));
 }
 
-/// Calc expression (`a + b` inside `calc(...)`):
-/// spaces around `+`/`-` follow the source (invalid syntax otherwise),
-/// with a break opportunity after the operator only.
-fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'_, 'a>) {
-    // Prettier prints calc contents as a FLAT run of word/operator fill chunks
-    // (postcss-values has no expression tree):
-    // every operator glues to its LEFT operand with the break opportunity after it,
-    // and continuation lines share ONE uniform indent,
-    // nested unparenthesized operations do NOT nest groups/indents.
-    // A parenthesized sub-expression stays a single chunk.
-    // Source-glued runs (`1px+2px`) stay glued.
-    enum Piece<'b, 'a> {
-        Operand(&'b ComponentValue<'a>),
-        Op(&'static str),
-        Space,
+/// A piece of a flat operator fill (`write_calc`, `write_less_binary_operation`).
+enum OpPiece<'b, 'a> {
+    Operand(&'b ComponentValue<'a>),
+    /// A Less parenthesized operation: its own nested group (it can break inside its parens)
+    Paren(&'b LessParenthesizedOperation<'a>),
+    /// An operator, printed as its source text
+    Op {
+        span: oxc_css_parser::pos::Span,
+        space_before: bool,
+    },
+}
+
+/// A flat operator fill, mirroring how Prettier prints math (postcss-values has no expression tree):
+/// every operator glues to its LEFT operand with the break opportunity after it,
+/// continuation lines share ONE uniform indent, and nested unparenthesized operations flatten into the same fill.
+#[derive(Default)]
+struct OpChunks<'b, 'a> {
+    chunks: Vec<Vec<OpPiece<'b, 'a>>>,
+    current: Vec<OpPiece<'b, 'a>>,
+}
+
+impl<'b, 'a> OpChunks<'b, 'a> {
+    fn push_operand(&mut self, operand: &'b ComponentValue<'a>) {
+        self.current.push(OpPiece::Operand(operand));
     }
 
-    fn flatten<'b, 'a>(
-        calc: &'b Calc<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
-        let op_str: &'static str = match calc.op.kind {
-            CalcOperatorKind::Plus => "+",
-            CalcOperatorKind::Minus => "-",
-            CalcOperatorKind::Multiply => "*",
-            CalcOperatorKind::Division => "/",
-            // Sass modulo inside a math function's arguments (`max(1px, 7px % 4)`)
-            CalcOperatorKind::Modulo => "%",
+    fn push_paren(&mut self, paren: &'b LessParenthesizedOperation<'a>) {
+        self.current.push(OpPiece::Paren(paren));
+    }
+
+    /// A space after the operator is also the fill's break opportunity
+    fn push_op(&mut self, span: oxc_css_parser::pos::Span, space_before: bool, space_after: bool) {
+        self.current.push(OpPiece::Op { span, space_before });
+        if space_after {
+            self.chunks.push(std::mem::take(&mut self.current));
+        }
+    }
+
+    /// The operand pushed last: the left neighbor of the operator about to be pushed
+    fn last_operand(&self) -> Option<&'b ComponentValue<'a>> {
+        match self.current.last() {
+            Some(OpPiece::Operand(v)) => Some(*v),
+            _ => None,
+        }
+    }
+
+    fn write(mut self, ctx: ValueContext<'a>, f: &mut CssFormatter<'_, 'a>) {
+        if !self.current.is_empty() {
+            self.chunks.push(self.current);
+        }
+        let chunks = self.chunks;
+        let write_chunk = |chunk: &[OpPiece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
+            for piece in chunk {
+                // A comment between the operands and operators stays there
+                match piece {
+                    OpPiece::Operand(operand) => {
+                        flush_value_comments(operand.span().start, f);
+                        write_component_value(operand, ctx, f);
+                    }
+                    OpPiece::Paren(paren) => {
+                        flush_value_comments(paren.span.start, f);
+                        write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
+                    }
+                    OpPiece::Op { span, space_before } => {
+                        if *space_before {
+                            write!(f, " ");
+                        }
+                        write_text_with_leading_comments(to_span(*span), f);
+                    }
+                }
+            }
         };
-        push_operand(&calc.left, chunks, current);
-        if !is_glued(calc.left.span(), calc.op.span) {
-            current.push(Piece::Space);
+
+        if ctx.no_break || chunks.len() == 1 {
+            for (i, chunk) in chunks.iter().enumerate() {
+                if i > 0 {
+                    write!(f, " ");
+                }
+                write_chunk(chunk, f);
+            }
+            return;
         }
-        current.push(Piece::Op(op_str));
-        if !is_glued(calc.op.span, calc.right.span()) {
-            chunks.push(std::mem::take(current));
-        }
-        push_operand(&calc.right, chunks, current);
+
+        let chunks_ref = &chunks;
+        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            let mut filler = f.fill();
+            for chunk in chunks_ref {
+                let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                    write_chunk(chunk, f);
+                });
+                filler.entry(&soft_line_break_or_space(), &content);
+            }
+            filler.finish();
+        });
+        write!(f, group(&indent(&body)));
+    }
+}
+
+/// Calc expression (`a + b` inside `calc(...)`), an [`OpChunks`] fill.
+fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'_, 'a>) {
+    fn flatten<'b, 'a>(calc: &'b Calc<'a>, out: &mut OpChunks<'b, 'a>) {
+        push_operand(&calc.left, out);
+        // `*` and `/` are always spaced (DIVERGENCES.md#math-function-operator-spacing);
+        // `+`/`-` (and a Sass `%`) keep the source: `+`/`-` require whitespace, a glued one is invalid
+        let spaced =
+            matches!(calc.op.kind, CalcOperatorKind::Multiply | CalcOperatorKind::Division);
+        out.push_op(
+            calc.op.span,
+            spaced || !is_glued(calc.left.span(), calc.op.span),
+            spaced || !is_glued(calc.op.span, calc.right.span()),
+        );
+        push_operand(&calc.right, out);
     }
 
     // A parenthesized sub-expression (`CalcParenthesized`) is one operand: its parens come from the AST
-    fn push_operand<'b, 'a>(
-        operand: &'b ComponentValue<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
+    fn push_operand<'b, 'a>(operand: &'b ComponentValue<'a>, out: &mut OpChunks<'b, 'a>) {
         if let ComponentValue::Calc(inner) = operand {
-            flatten(inner, chunks, current);
+            flatten(inner, out);
         } else {
-            current.push(Piece::Operand(operand));
+            out.push_operand(operand);
         }
     }
 
-    let mut chunks: Vec<Vec<Piece<'_, 'a>>> = vec![];
-    let mut current: Vec<Piece<'_, 'a>> = vec![];
-    flatten(calc, &mut chunks, &mut current);
-    if !current.is_empty() {
-        chunks.push(current);
-    }
-
-    let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
-        for piece in chunk {
-            match piece {
-                Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Op(op) => write!(f, token(op)),
-                Piece::Space => write!(f, " "),
-            }
-        }
-    };
-
-    if ctx.no_break || chunks.len() == 1 {
-        for (i, chunk) in chunks.iter().enumerate() {
-            if i > 0 {
-                write!(f, " ");
-            }
-            write_chunk(chunk, f);
-        }
-        return;
-    }
-
-    let chunks_ref = &chunks;
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        let mut filler = f.fill();
-        for chunk in chunks_ref {
-            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write_chunk(chunk, f);
-            });
-            filler.entry(&soft_line_break_or_space(), &content);
-        }
-        filler.finish();
-    });
-    write!(f, group(&indent(&body)));
+    let mut out = OpChunks::default();
+    flatten(calc, &mut out);
+    out.write(ctx, f);
 }
 
-/// Less arithmetic (`@a - 2 * @b - (@c / 2)`):
-/// a flat operator fill matching Prettier (the `printNumber`/`adjustNumbers` math layout, umbrella prettier/prettier#1811).
-/// Every operator glues to its LEFT operand with the break opportunity AFTER it;
-/// continuation lines share one uniform indent.
-/// Nested unparenthesized operations flatten into the SAME fill;
-/// a parenthesized sub-expression is its own nested group (it can break inside its parens).
+/// Less arithmetic (`@a - 2 * @b - (@c / 2)`), an [`OpChunks`] fill
+/// (Prettier's `printNumber`/`adjustNumbers` math layout, umbrella prettier/prettier#1811).
 ///
 /// Operator spacing mirrors Prettier's Less word lexing (postcss-values-parser) plus its math-operator rules:
 /// - `+`/`-` keep the source glue (`10px+20px`, `@a+1`: a glued sign folds into the next word),
 ///   except after a CALL (`fade(@c, 4%)-1` → `fade(@c, 4%) - 1`, a sign the parser split off)
 /// - `*` is always spaced (`2em*1em` → `2em * 1em`), unless an `@word` on its left swallowed it
 ///   (an atword only ends at whitespace / `(` / `)` / `,` / `/` / quotes: `@base*2` stays glued)
-/// - `/` is spaced next to a word-like operand (`@w/2` → `@w / 2`), number-only division
-///   keeps the source glue (`10px/8px`); so does `./`
+/// - `/` keeps the source's choice, made symmetric (DIVERGENCES.md#slash-spacing): `@w/2` stays, `@w/ 2` → `@w / 2`;
+///   `./` keeps the source glue
 ///
 /// Only a parsed operation gets here: outside parens a `/` after a plain number (`font: 12px/1.5`)
-/// is a value delimiter for `oxc-css-parser`, printed with its source glue.
+/// is a value delimiter for `oxc-css-parser`, printed by the same `/` rule (DIVERGENCES.md#slash-spacing).
 ///
 /// Signed values never reach here: `-@b` in a `margin` shorthand stays a separate `LessNegativeValue`, not an operand.
 fn write_less_binary_operation<'a>(
@@ -2189,32 +2172,9 @@ fn write_less_binary_operation<'a>(
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    enum Piece<'b, 'a> {
-        Operand(&'b ComponentValue<'a>),
-        Paren(&'b LessParenthesizedOperation<'a>),
-        Op(&'static str),
-        Space,
-    }
-
-    fn flatten<'b, 'a>(
-        op: &'b LessBinaryOperation<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
-        let op_str: &'static str = match op.op.kind {
-            LessOperationOperatorKind::Multiply => "*",
-            LessOperationOperatorKind::Division => "/",
-            LessOperationOperatorKind::DotDivision => "./",
-            LessOperationOperatorKind::Plus => "+",
-            LessOperationOperatorKind::Minus => "-",
-        };
-
-        push_operand(&op.left, chunks, current);
-        // The left neighbor in the flattened stream is the piece `push_operand` just pushed last
-        let left_operand = match current.last() {
-            Some(Piece::Operand(v)) => Some(*v),
-            _ => None,
-        };
+    fn flatten<'b, 'a>(op: &'b LessBinaryOperation<'a>, out: &mut OpChunks<'b, 'a>) {
+        push_operand(&op.left, out);
+        let left_operand = out.last_operand();
         let source_before = !is_glued(op.left.span(), op.op.span);
         let source_after = !is_glued(op.op.span, op.right.span());
         // Spaces on both sides regardless of the source (see the doc comment), else the source glue
@@ -2223,32 +2183,15 @@ fn write_less_binary_operation<'a>(
                 source_before || !left_operand.is_some_and(is_less_atword)
             }
             LessOperationOperatorKind::Division => {
-                left_operand.is_some_and(is_word_like_division_operand)
-                    || is_word_like_division_operand(leftmost_operand(&op.right))
+                is_slash_spaced(op.left.span(), op.op.span, op.right.span())
             }
             LessOperationOperatorKind::DotDivision => false,
             LessOperationOperatorKind::Plus | LessOperationOperatorKind::Minus => {
                 left_operand.is_some_and(is_func_like)
             }
         };
-        let (space_before, space_after) = (forced || source_before, forced || source_after);
-        if space_before {
-            current.push(Piece::Space);
-        }
-        current.push(Piece::Op(op_str));
-        // Break opportunity where a space follows the operator
-        if space_after {
-            chunks.push(std::mem::take(current));
-        }
-        push_operand(&op.right, chunks, current);
-    }
-
-    /// The operand on the far left of a (possibly nested) operation: the `/`'s right neighbor
-    fn leftmost_operand<'b, 'a>(operand: &'b ComponentValue<'a>) -> &'b ComponentValue<'a> {
-        match operand {
-            ComponentValue::LessBinaryOperation(inner) => leftmost_operand(&inner.left),
-            other => other,
-        }
+        out.push_op(op.op.span, forced || source_before, forced || source_after);
+        push_operand(&op.right, out);
     }
 
     /// postcss-values-parser's `atword`: `@var`, `@@var`, `$prop` and lookups (`@config[key]`)
@@ -2262,75 +2205,34 @@ fn write_less_binary_operation<'a>(
         )
     }
 
-    /// Prettier's `value-word` / `value-atword` / `value-func` (the same neighbors `write_sass_binary` spaces)
-    fn is_word_like_division_operand(value: &ComponentValue<'_>) -> bool {
-        is_word_like(value) || is_func_like(value) || is_less_atword(value)
-    }
-
-    fn push_operand<'b, 'a>(
-        operand: &'b ComponentValue<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
+    fn push_operand<'b, 'a>(operand: &'b ComponentValue<'a>, out: &mut OpChunks<'b, 'a>) {
         match operand {
-            ComponentValue::LessBinaryOperation(inner) => flatten(inner, chunks, current),
-            ComponentValue::LessParenthesizedOperation(paren) => current.push(Piece::Paren(paren)),
-            _ => current.push(Piece::Operand(operand)),
+            ComponentValue::LessBinaryOperation(inner) => flatten(inner, out),
+            ComponentValue::LessParenthesizedOperation(paren) => out.push_paren(paren),
+            _ => out.push_operand(operand),
         }
     }
 
-    let mut chunks: Vec<Vec<Piece<'_, 'a>>> = vec![];
-    let mut current: Vec<Piece<'_, 'a>> = vec![];
-    flatten(op, &mut chunks, &mut current);
-    if !current.is_empty() {
-        chunks.push(current);
-    }
-
-    let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
-        for piece in chunk {
-            match piece {
-                Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Paren(paren) => write_parenthesized(&paren.operation, ctx, f),
-                Piece::Op(op) => write!(f, token(op)),
-                Piece::Space => write!(f, " "),
-            }
-        }
-    };
-
-    if ctx.no_break || chunks.len() == 1 {
-        for (i, chunk) in chunks.iter().enumerate() {
-            if i > 0 {
-                write!(f, " ");
-            }
-            write_chunk(chunk, f);
-        }
-        return;
-    }
-
-    let chunks_ref = &chunks;
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        let mut filler = f.fill();
-        for chunk in chunks_ref {
-            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write_chunk(chunk, f);
-            });
-            filler.entry(&soft_line_break_or_space(), &content);
-        }
-        filler.finish();
-    });
-    write!(f, group(&indent(&body)));
+    let mut out = OpChunks::default();
+    flatten(op, &mut out);
+    out.write(ctx, f);
 }
 
 /// A parenthesized operand (Less operation `(@a - @b)`, `calc()` sub-expression):
 /// its own group, so when it breaks the `(` / `)` land on their own lines
 /// with the content indented one level (Prettier's `printParenthesizedValueGroup`).
 /// When it fits, it stays inline (`(@a - @b)`).
+/// `(value)`, `close` its `)`: the comments before it stay inside.
 fn write_parenthesized<'a>(
     value: &ComponentValue<'a>,
+    close: u32,
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let content = format_with(move |f| write_component_value(value, ctx, f));
+    let content = format_with(move |f| {
+        write_component_value(value, ctx, f);
+        flush_trailing_value_comments(close, f);
+    });
     if ctx.no_break {
         write!(f, ["(", content, ")"]);
     } else {
@@ -2393,6 +2295,7 @@ pub(super) fn write_function<'a>(
                 write!(f, " ");
             }
         }
+        flush_trailing_value_comments(func.span().end.saturating_sub(1), f);
         write!(f, ")");
         return;
     }
@@ -2525,12 +2428,15 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
     match &url.value {
         Some(UrlValue::Str(InterpolableStr::Literal(str))) => {
+            flush_value_comments(str.span.start, f);
             write_str(str, f);
             for modifier in &url.modifiers {
                 write!(f, " ");
                 let span = to_span(modifier.span());
                 write!(f, text(source.text_for(&span)));
             }
+            // The comments before the `)` stay inside it
+            flush_trailing_value_comments(url.span.end - 1, f);
         }
         // Quoted url with interpolation: requote the outer quotes only
         Some(UrlValue::Str(istr)) => {

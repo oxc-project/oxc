@@ -21,6 +21,7 @@ mod selection;
 mod span;
 mod string;
 mod value;
+mod verbatim;
 
 use span::Spanned;
 pub use span::to_span;

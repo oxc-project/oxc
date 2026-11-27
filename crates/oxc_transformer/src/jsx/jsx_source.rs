@@ -92,10 +92,9 @@ impl<'a> JsxSource<'a> {
         column: u32,
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
-        let kind = PropertyKind::Init;
         let key = PropertyKey::new_static_identifier(SPAN, SOURCE, ctx);
         let value = self.get_source_object(line, column, ctx);
-        ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
+        ObjectPropertyKind::new_object_property(SPAN, key, value, false, ctx)
     }
 
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
@@ -137,24 +136,22 @@ impl<'a> JsxSource<'a> {
         column: u32,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let kind = PropertyKind::Init;
-
         let filename = {
             let key = PropertyKey::new_static_identifier(SPAN, "fileName", ctx);
             let value = self.get_filename_var(ctx).create_read_expression(ctx);
-            ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
+            ObjectPropertyKind::new_object_property(SPAN, key, value, false, ctx)
         };
 
         let line_number = {
             let key = PropertyKey::new_static_identifier(SPAN, "lineNumber", ctx);
             let value = Expression::new_numeric_literal(SPAN, line as f64, None, ctx);
-            ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
+            ObjectPropertyKind::new_object_property(SPAN, key, value, false, ctx)
         };
 
         let column_number = {
             let key = PropertyKey::new_static_identifier(SPAN, "columnNumber", ctx);
             let value = Expression::new_numeric_literal(SPAN, column as f64, None, ctx);
-            ObjectPropertyKind::new_object_property(SPAN, kind, key, value, false, false, ctx)
+            ObjectPropertyKind::new_object_property(SPAN, key, value, false, ctx)
         };
 
         Expression::new_object_expression(SPAN, [filename, line_number, column_number], ctx)

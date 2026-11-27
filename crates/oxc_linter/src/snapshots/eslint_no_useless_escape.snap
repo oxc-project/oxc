@@ -44,6 +44,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `\B` with `B`.
 
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
+   ╭─[no_useless_escape.tsx:1:14]
+ 1 │ const s = '\\\a';
+   ·              ──
+   ╰────
+  help: Replace `\a` with `a`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
+   ╭─[no_useless_escape.tsx:1:16]
+ 1 │ const s = '\\\\\a';
+   ·                ──
+   ╰────
+  help: Replace `\a` with `a`.
+
   ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = "\@";

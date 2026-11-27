@@ -2,12 +2,13 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use lazy_regex::{Regex, regex};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,

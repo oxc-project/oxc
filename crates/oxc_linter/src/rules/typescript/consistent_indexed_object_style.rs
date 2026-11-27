@@ -21,6 +21,15 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
+/// Converting to `Record` keeps only the `preserved` spans of `span`, so any other comment
+/// would be lost and the conversion is downgraded to a suggestion.
+fn record_fix_kind(ctx: &LintContext, span: Span, preserved: &[Span]) -> FixKind {
+    let drops_comments = ctx.comments_range(span.start..span.end).any(|comment| {
+        !preserved.iter().any(|preserved| preserved.contains_inclusive(comment.span))
+    });
+    if drops_comments { FixKind::Suggestion } else { FixKind::SafeFix }
+}
+
 fn consistent_indexed_object_style_diagnostic(
     preferred: ConsistentIndexedObjectStyleConfig,
     span: Span,
@@ -110,7 +119,7 @@ declare_oxc_lint!(
     ConsistentIndexedObjectStyle,
     typescript,
     style,
-    conditional_fix,
+    conditional_fix_suggestion,
     config = ConsistentIndexedObjectStyleConfig,
     version = "0.4.2",
     short_description = "Choose between requiring either `Record` type or indexed signature types.",
@@ -168,11 +177,18 @@ impl Rule for ConsistentIndexedObjectStyle {
                 };
 
                 if should_report {
-                    ctx.diagnostic_with_fix(
+                    let mut preserved = vec![
+                        sig.parameter.type_annotation.type_annotation.span(),
+                        sig.type_annotation.type_annotation.span(),
+                    ];
+                    preserved.extend(inf.type_parameters.as_ref().map(|tp| tp.span));
+                    preserved.extend(inf.extends.iter().map(|extend| extend.span));
+                    ctx.diagnostic_with_fix_of_kind(
                         consistent_indexed_object_style_diagnostic(
                             ConsistentIndexedObjectStyleConfig::Record,
                             sig.span,
                         ),
+                        record_fix_kind(ctx, inf.span, &preserved),
                         |fixer| {
                             if matches!(
                                 ctx.nodes().parent_kind(node.id()),
@@ -290,11 +306,14 @@ impl Rule for ConsistentIndexedObjectStyle {
                 };
 
                 if should_report {
-                    ctx.diagnostic_with_fix(
+                    let key_span = sig.parameter.type_annotation.type_annotation.span();
+                    let value_span = sig.type_annotation.type_annotation.span();
+                    ctx.diagnostic_with_fix_of_kind(
                         consistent_indexed_object_style_diagnostic(
                             ConsistentIndexedObjectStyleConfig::Record,
                             sig.span,
                         ),
+                        record_fix_kind(ctx, lit.span, &[key_span, value_span]),
                         |fixer| {
                             let key_type = fixer
                                 .source_range(sig.parameter.type_annotation.type_annotation.span());
@@ -345,13 +364,21 @@ impl Rule for ConsistentIndexedObjectStyle {
                     }
                 }
 
-                ctx.diagnostic_with_fix(
-                    consistent_indexed_object_style_diagnostic(
-                        ConsistentIndexedObjectStyleConfig::Record,
-                        mapped.span,
-                    ),
+                let diagnostic = consistent_indexed_object_style_diagnostic(
+                    ConsistentIndexedObjectStyleConfig::Record,
+                    mapped.span,
+                );
+                if mapped.readonly == Some(TSMappedTypeModifierOperator::Minus) {
+                    ctx.diagnostic(diagnostic);
+                    return;
+                }
+                let unwrapped_constraint = constraint.without_parenthesized();
+                let mut preserved = vec![unwrapped_constraint.span()];
+                preserved.extend(mapped.type_annotation.as_ref().map(GetSpan::span));
+                ctx.diagnostic_with_fix_of_kind(
+                    diagnostic,
+                    record_fix_kind(ctx, mapped.span, &preserved),
                     |fixer| {
-                        let unwrapped_constraint = constraint.without_parenthesized();
                         let key_type = fixer.source_range(unwrapped_constraint.span());
                         let value_type = mapped
                             .type_annotation
@@ -1544,7 +1571,12 @@ fn test() {
             }
                   ", "
             declare type Foo = Record<string, unknown>;
-                  ", None)
+                  ", None),
+("type T = { -readonly [K in 'x']: number };", "type T = { -readonly [K in 'x']: number };", None),
+("type T = { /* important */ [key: string]: number };", "type T = Record<string, number>;", None),
+("interface T { [key: string]: number; // important\n}", "type T = Record<string, number>;", None),
+("type T = { [key: string]: Foo</* value */ number> };", "type T = Record<string, Foo</* value */ number>>;", None),
+("type T = { /* important */ [K in string]: number };", "type T = Record<string, number>;", None),
     ];
     Tester::new(
         ConsistentIndexedObjectStyle::NAME,

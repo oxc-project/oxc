@@ -1,4 +1,7 @@
+use std::collections::BTreeMap;
+
 use itertools::Itertools;
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
@@ -9,7 +12,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
-use std::collections::BTreeMap;
 
 use crate::{
     AstNode,

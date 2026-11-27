@@ -71,18 +71,63 @@ fn block_comment_end(text: &str, start: usize) -> usize {
     text[start + 2..].find("*/").map_or(text.len(), |end| start + end + 4)
 }
 
-/// Collapses any whitespace run in `raw` to a single space.
+/// Collapses any whitespace run in `raw` to a single space, none at its ends,
+/// a string or a block comment as written ([`split_verbatim`]).
 pub fn normalize_whitespace(raw: &str) -> String {
-    let mut out = String::with_capacity(raw.len());
-    let mut iter = raw.split_whitespace();
-    if let Some(first) = iter.next() {
-        out.push_str(first);
-        for word in iter {
+    fn push(out: &mut String, space: &mut bool, word: &str) {
+        if std::mem::take(space) && !out.is_empty() {
             out.push(' ');
-            out.push_str(word);
+        }
+        out.push_str(word);
+    }
+
+    let mut out = String::with_capacity(raw.len());
+    let mut space = false;
+    for (run, verbatim) in split_verbatim(raw) {
+        if verbatim {
+            push(&mut out, &mut space, run);
+            continue;
+        }
+        for (i, c) in run.char_indices() {
+            if c.is_whitespace() {
+                space = true;
+            } else {
+                push(&mut out, &mut space, &run[i..i + c.len_utf8()]);
+            }
         }
     }
     out
+}
+
+/// `raw` split into runs of code and the runs a whitespace collapse never touches (`true`):
+/// a quoted string and a `/* */` comment, delimiters included.
+fn split_verbatim(raw: &str) -> impl Iterator<Item = (&str, bool)> {
+    let bytes = raw.as_bytes();
+    let opens_comment = move |pos: usize| bytes.get(pos..pos + 2) == Some(b"/*");
+    let mut pos = 0;
+    std::iter::from_fn(move || {
+        let start = pos;
+        let first = *bytes.get(pos)?;
+        if opens_comment(pos) {
+            pos = block_comment_end(raw, pos);
+            return Some((&raw[start..pos], true));
+        }
+        let quoted = matches!(first, b'"' | b'\'');
+        pos += usize::from(quoted);
+        // A run ends at an ASCII quote, a `/*` or the end, a char boundary
+        while let Some(&b) = bytes.get(pos) {
+            if !quoted && (matches!(b, b'"' | b'\'') || opens_comment(pos)) {
+                break;
+            }
+            // An escape is skipped in and out of a string (`\"` outside one opens none)
+            pos += 1 + usize::from(b == b'\\');
+            if quoted && b == first {
+                break;
+            }
+        }
+        pos = pos.min(bytes.len());
+        Some((&raw[start..pos], quoted))
+    })
 }
 
 /// Mirrors Prettier's `maybeToLowerCase`.

@@ -1,5 +1,8 @@
 use std::fmt::Display;
 
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -8,8 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::static_ident;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -72,7 +73,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// ESM modules or Typescript uses `import` and `export` syntax instead of CommonJS syntax.
+    /// ESM modules or TypeScript uses `import` and `export` syntax instead of CommonJS syntax.
     /// This rule enforces the use of more modern module systems to improve maintainability and consistency across the codebase.
     ///
     /// ### Examples

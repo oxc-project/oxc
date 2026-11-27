@@ -290,6 +290,24 @@ impl<'a> Expression<'a> {
         }
     }
 
+    /// Returns `true` if this [`Expression`] is a `DecoratorMemberExpression`: an identifier
+    /// followed by any number of `.name` or `.#name` accesses, e.g. `a`, `a.b`, `a.#b.c`.
+    ///
+    /// Only that, or a single call of it (`DecoratorCallExpression`), may follow `@` without
+    /// parentheses. See <https://github.com/tc39/proposal-decorators>.
+    pub fn is_decorator_member_expression(&self) -> bool {
+        match self {
+            Expression::Identifier(_) => true,
+            Expression::StaticMemberExpression(member) => {
+                member.object.is_decorator_member_expression()
+            }
+            Expression::PrivateFieldExpression(field) => {
+                field.object.is_decorator_member_expression()
+            }
+            _ => false,
+        }
+    }
+
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
@@ -448,13 +466,12 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
 }
 
 impl<'a> ObjectExpression<'a> {
-    /// Finds the first [`ObjectProperty`] whose static key matches `name`.
+    /// Finds the first property or method whose static key matches `name`.
     /// Spread properties are skipped.
-    pub fn find_property(&self, name: &str) -> Option<&ObjectProperty<'a>> {
-        self.properties.iter().find_map(|prop| {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else { return None };
-            prop.key.is_specific_static_name(name).then_some(prop.as_ref())
-        })
+    pub fn find_property(&self, name: &str) -> Option<&ObjectPropertyKind<'a>> {
+        self.properties
+            .iter()
+            .find(|prop| prop.key().is_some_and(|key| key.is_specific_static_name(name)))
     }
 }
 
@@ -465,11 +482,25 @@ impl<'a> ObjectPropertyKind<'a> {
         matches!(self, Self::SpreadProperty(_))
     }
 
-    /// Returns [`Some`] for non-spread [object properties](ObjectProperty).
+    /// Returns [`Some`] for [object properties](ObjectProperty).
+    ///
+    /// Returns `None` for methods and spread properties.
     #[inline]
     pub fn as_property(&self) -> Option<&ObjectProperty<'a>> {
         match self {
             Self::ObjectProperty(prop) => Some(prop),
+            Self::MethodProperty(_) | Self::SpreadProperty(_) => None,
+        }
+    }
+
+    /// Returns the key of a property or method.
+    ///
+    /// Returns `None` for spread properties.
+    #[inline]
+    pub fn key(&self) -> Option<&PropertyKey<'a>> {
+        match self {
+            Self::ObjectProperty(prop) => Some(&prop.key),
+            Self::MethodProperty(prop) => Some(&prop.key),
             Self::SpreadProperty(_) => None,
         }
     }
@@ -613,7 +644,7 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
-impl PropertyKind {
+impl ObjectMethodKind {
     /// Returns `true` if this property is a getter or setter.
     ///
     /// Analogous to [`MethodDefinitionKind::is_accessor`].
@@ -1970,7 +2001,7 @@ impl MethodDefinitionKind {
 
     /// Returns `true` if this method is a getter or a setter.
     ///
-    /// Analogous to [`PropertyKind::is_accessor`].
+    /// Analogous to [`ObjectMethodKind::is_accessor`].
     pub fn is_accessor(self) -> bool {
         matches!(self, Self::Get | Self::Set)
     }

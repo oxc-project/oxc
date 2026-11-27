@@ -1,3 +1,5 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -8,9 +10,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::node::NodeId;
-use oxc_syntax::symbol::SymbolId;
-use rustc_hash::FxHashSet;
+use oxc_syntax::{node::NodeId, symbol::SymbolId};
 
 use crate::{ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 

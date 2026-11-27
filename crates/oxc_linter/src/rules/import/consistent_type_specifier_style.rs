@@ -1,5 +1,9 @@
 use std::{path::Path, str::FromStr};
 
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
     AstKind,
@@ -11,9 +15,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{FileExtension, GetSpan, SPAN, Span};
 use oxc_str::JSStr;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -350,8 +351,9 @@ fn is_declaration_file_js_path(source: JSStr) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         // Lone surrogates are part of the value.

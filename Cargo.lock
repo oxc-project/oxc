@@ -600,9 +600,9 @@ checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
 name = "editorconfig-parser"
-version = "0.0.4"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e587c7336689e4dbb79157eb50ca5de9b3f75a48b85f17c1297d9c31e9d3bbc3"
+checksum = "e21e2686beeae825c6bdd3ac5df5ec57d4f8992683016f771cab360157a4cdfb"
 dependencies = [
  "globset",
 ]
@@ -1679,9 +1679,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-css-parser"
-version = "0.0.22"
+version = "0.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e5e8f4fcfe5796d4e23bec581cf049823c9303cb27bbcbbaa31342bce0d48bd"
+checksum = "398ea9a6754e2ebf0225b4f80dedb03a9836d5cbd1397fbb0701479db99c786c"
 dependencies = [
  "oxc_allocator",
 ]
@@ -1699,9 +1699,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-htmlish-parser"
-version = "0.0.9"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09d54b6b0b217d473573d14269ae2cec0f4f115f4034a45b9830aac05925a714"
+checksum = "618be6f20e56c955ef9f8781bccde65403cb19b5d6ec016f630cfd653cf45109"
 dependencies = [
  "memchr",
  "oxc_allocator",
@@ -1738,9 +1738,9 @@ checksum = "f137e7a0d5b6c4086d78375fdb706dfb437524ecb507867471696894845c3c1c"
 
 [[package]]
 name = "oxc-yaml-parser"
-version = "0.0.8"
+version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7909b626031c9f06dc94fdcdf16b439196d209399fa094db85148c4098c6fc3"
+checksum = "bc01004cb7510c55ca63cacff6222877f1a9e57af40f2bf08a1b125f887504ee"
 dependencies = [
  "oxc_allocator",
 ]
@@ -1996,6 +1996,7 @@ version = "0.160.0"
 dependencies = [
  "bytecount",
  "cow-utils",
+ "insta",
  "itoa",
  "memchr",
  "oxc_span",
@@ -2047,6 +2048,7 @@ dependencies = [
  "oxc_estree",
  "oxc_parser",
  "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]
@@ -2674,9 +2676,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "10.0.0"
+version = "10.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ca9998ccb8eabb05099c5827ce983cca9f5dfc008c6c47d7dcc034cee301e91"
+checksum = "3d35ba24711b3dbf3d1e0f41c59244e35be418042088ffee2f632c92b47820e4"
 dependencies = [
  "base64-simd",
  "json-escape-simd",

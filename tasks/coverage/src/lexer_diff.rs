@@ -89,9 +89,29 @@ pub fn run_lexer_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
 }
 
 pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
-    // Both need unambiguous mode, which `oxc_lexer` doesn't support. The parser switches
-    // to module mode when it finds `export`, and that turns `await /x/` into a regex.
-    const SKIP: &[&str] = &["babel-16776-m.js", "unambiguous-await-regex.js"];
+    // These need unambiguous mode, which `oxc_lexer` doesn't support. The parser switches
+    // to module mode when it finds module syntax, and that turns `await /x/` into a regex.
+    const SKIP: &[&str] = &[
+        "babel-16776-m.js",
+        "oxc-26742-1.js",
+        "pass/unambiguous-await-fatal-await.js",
+        "pass/unambiguous-await-fatal-module.js",
+        "unambiguous-await-lexer-error-module.js",
+        "unambiguous-await-regex.js",
+        "unambiguous-await-reparse-ambient.d.ts",
+        "unambiguous-await-reparse-import-meta.js",
+        "unambiguous-await-reparse-irregular-whitespace.js",
+        "unambiguous-await-reparse-kept-errors.js",
+        "unambiguous-await-reparse-pure-kept.js",
+        "unambiguous-await-reparse-pure-shifted.js",
+        "unambiguous-await-reparse-pure-trivia.js",
+        "unambiguous-await-reparse-regex-comment.js",
+        "unambiguous-await-reparse-regex-export.js",
+        "unambiguous-await-reparse-regex-newline.js",
+        "unambiguous-await-reparse-regex-statements.js",
+        "unambiguous-await-reparse-regex-string.js",
+        "unambiguous-await-reparse-trailing-comma.js",
+    ];
 
     files
         .par_iter()

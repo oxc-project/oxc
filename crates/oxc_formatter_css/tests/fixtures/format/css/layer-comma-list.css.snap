@@ -1,0 +1,60 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* DIVERGENCES.md#layer-comma-list */
+@layer a,b;
+@layer a ,  b;
+@layer reset, base,
+  components;
+@layer /* c */ a,b;
+@layer /* c */
+  a,
+  b;
+
+/* A comment stays where it is */
+@layer a, b /* c */;
+@layer /* c */ a {
+  b {
+    color: red;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* DIVERGENCES.md#layer-comma-list */
+@layer a, b;
+@layer a, b;
+@layer reset, base, components;
+@layer /* c */ a, b;
+@layer /* c */ a, b;
+
+/* A comment stays where it is */
+@layer a, b /* c */;
+@layer /* c */ a {
+  b {
+    color: red;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* DIVERGENCES.md#layer-comma-list */
+@layer a, b;
+@layer a, b;
+@layer reset, base, components;
+@layer /* c */ a, b;
+@layer /* c */ a, b;
+
+/* A comment stays where it is */
+@layer a, b /* c */;
+@layer /* c */ a {
+  b {
+    color: red;
+  }
+}
+
+===================== End =====================

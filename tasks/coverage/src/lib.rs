@@ -341,6 +341,7 @@ impl AppArgs {
         self.run_codegen(data);
         self.run_formatter(data);
         self.run_transformer(data);
+        self.run_transpiler();
         self.run_minifier(data);
         self.run_estree(data);
         self.run_estree_tokens(data);
@@ -353,10 +354,14 @@ impl AppArgs {
         data: &[T],
         runner: fn(&[T]) -> Vec<CoverageResult>,
     ) {
-        let results = runner(data);
-        print_coverage(name, &results, self.detail || self.filter.is_some());
+        self.report(name, Path::new(test_root), &runner(data));
+    }
+
+    /// Print `results`, and snapshot them unless a filter selects only some tests.
+    fn report(&self, name: &str, test_root: &Path, results: &[CoverageResult]) {
+        print_coverage(name, results, self.detail || self.filter.is_some());
         if self.filter.is_none() {
-            snapshot_results(name, Path::new(test_root), &results);
+            snapshot_results(name, test_root, results);
         }
     }
 
@@ -543,7 +548,11 @@ impl AppArgs {
 
     /// Run transpiler tests (isolated declarations)
     pub fn run_transpiler(&self) {
-        typescript::transpile_runner::run(self.filter.as_deref(), self.detail);
+        self.report(
+            "transpile",
+            &Path::new(TYPESCRIPT_PATH).join("transpile"),
+            &typescript::transpile_runner::run(self.filter.as_deref()),
+        );
     }
 
     /// Run runtime tests (requires Node.js subprocess).

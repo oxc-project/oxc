@@ -12,9 +12,8 @@ use oxc_graphql_parser::ast::{ListValue, ObjectValue, Value};
 use crate::comments::{flush_leading_comments, flush_trailing_inside_comments};
 
 use super::{
-    GraphqlFormatter, SeparatorKind, common, flush_trailing_before_literal, format_with,
-    span::{close_delim_start, to_span},
-    string, write_sequence,
+    GraphqlFormatter, SeparatorKind, common, format_with, span::close_delim_start, string,
+    verbatim, write_sequence,
 };
 
 pub(super) fn write_value<'a>(value: &'a Value<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
@@ -70,13 +69,7 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
     let bracket_spacing = f.context().options().bracket_spacing.value();
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, fields, SeparatorKind::CommaSoftline, false, |i, f| {
-            let field = &fields[i];
-            common::write_name(&field.name, f);
-            flush_trailing_before_literal(to_span(field.name.span).end, f);
-            write!(f, ": ");
-            if let Some(v) = field.value.as_ref() {
-                write_value(v, f);
-            }
+            verbatim::write_colon_pair(&fields[i].name, fields[i].value.as_ref(), f);
         });
         if let Some(last_end) = last_end {
             flush_trailing_inside_comments(last_end, r_curly, f);

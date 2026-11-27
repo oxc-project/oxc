@@ -676,8 +676,9 @@ fn default_style_for(module_name: &str) -> Option<StyleSet> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let options = json!([{
         "checkExportFrom": true,

@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ExpressionStatement, Function, ObjectExpression,
+        Expression, ExpressionStatement, Function, ObjectExpression, ObjectPropertyKind,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -13,8 +13,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
 
-use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    module_record::{ImportEntry, ImportImportName},
+    rule::Rule,
+};
 
 fn no_watch_after_await_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{name}` is forbidden after an `await` expression."))
@@ -109,10 +114,14 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let function = match &setup_prop.value {
-        Expression::FunctionExpression(func) => FunctionKind::Function(func),
-        Expression::ArrowFunctionExpression(arrow) => FunctionKind::Arrow(arrow),
-        _ => return,
+    let function = match setup_prop {
+        ObjectPropertyKind::ObjectProperty(prop) => match &prop.value {
+            Expression::FunctionExpression(func) => FunctionKind::Function(func),
+            Expression::ArrowFunctionExpression(arrow) => FunctionKind::Arrow(arrow),
+            _ => return,
+        },
+        ObjectPropertyKind::MethodProperty(prop) => FunctionKind::Function(&prop.value),
+        ObjectPropertyKind::SpreadProperty(_) => return,
     };
 
     let module_record = ctx.module_record();

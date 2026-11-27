@@ -1,0 +1,81 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.a {
+  // glued on both sides stays glued
+  font: 12px/1.5 serif;
+  width: $a/2;
+  width: f(1px)/2;
+  width: 1px/($b);
+  // any gap spaces both sides
+  font: 12px/ 1.5 serif;
+  font: 12px  /1.5 serif;
+  width: $a/ 2;
+  width: (1px)/   2;
+  // a math function always spaces `*` and `/`, `+` / `-` keep the source
+  width: calc(1px/2);
+  width: min(1px/2, 3px);
+  width: calc(1px+2px);
+  font: calc(var(--size)/2)/2;
+  // a comment stays where it is
+  width: $a /* c */ / 2;
+  width: 1px/* c */  /2;
+}
+@if $a/ 2 > 1 {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.a {
+  // glued on both sides stays glued
+  font: 12px/1.5 serif;
+  width: $a/2;
+  width: f(1px)/2;
+  width: 1px/($b);
+  // any gap spaces both sides
+  font: 12px / 1.5 serif;
+  font: 12px / 1.5 serif;
+  width: $a / 2;
+  width: (1px) / 2;
+  // a math function always spaces `*` and `/`, `+` / `-` keep the source
+  width: calc(1px / 2);
+  width: min(1px / 2, 3px);
+  width: calc(1px+2px);
+  font: calc(var(--size) / 2)/2;
+  // a comment stays where it is
+  width: $a /* c */ / 2;
+  width: 1px /* c */ / 2;
+}
+@if $a / 2 > 1 {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.a {
+  // glued on both sides stays glued
+  font: 12px/1.5 serif;
+  width: $a/2;
+  width: f(1px)/2;
+  width: 1px/($b);
+  // any gap spaces both sides
+  font: 12px / 1.5 serif;
+  font: 12px / 1.5 serif;
+  width: $a / 2;
+  width: (1px) / 2;
+  // a math function always spaces `*` and `/`, `+` / `-` keep the source
+  width: calc(1px / 2);
+  width: min(1px / 2, 3px);
+  width: calc(1px+2px);
+  font: calc(var(--size) / 2)/2;
+  // a comment stays where it is
+  width: $a /* c */ / 2;
+  width: 1px /* c */ / 2;
+}
+@if $a / 2 > 1 {
+}
+
+===================== End =====================

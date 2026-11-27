@@ -103,6 +103,9 @@ impl Rule for RequireRenderReturn {
                 AstKind::ObjectProperty(property) => {
                     ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
                 }
+                AstKind::ObjectMethodProperty(property) => {
+                    ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
+                }
                 _ => {}
             }
         }
@@ -186,6 +189,11 @@ fn is_render_fn(node: &AstNode) -> bool {
         AstKind::ObjectProperty(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
                 && property.value.is_function() =>
+        {
+            return true;
+        }
+        AstKind::ObjectMethodProperty(property)
+            if property.key.is_specific_static_name(RENDER_METHOD_NAME) =>
         {
             return true;
         }

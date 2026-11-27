@@ -7,7 +7,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
+    AstNode,
+    ast_util::{is_method_call, variable_declaration_kind},
+    context::LintContext,
     rule::Rule,
 };
 
@@ -190,8 +192,9 @@ impl Rule for PreferTopLevelAwait {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("a()", None, None, None),

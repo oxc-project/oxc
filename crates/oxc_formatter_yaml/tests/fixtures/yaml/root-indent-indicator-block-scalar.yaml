@@ -1,3 +1,5 @@
-# A root block scalar with indentation indicator 1 puts its content in column 0:
-# the printer asks for a zero-width `align`, which used to panic.
+# A root block scalar's indentation indicator counts from column 0 (as yaml@2 and libyaml):
+# its content stays at that column.
 --- |1-
+--- |2
+   more-indented

@@ -54,7 +54,6 @@ pub fn write_block_scalar<'a>(
     is_folded: bool,
     f: &mut YamlFormatter<'_, 'a>,
 ) {
-    let parent_indent = f.context().collection_depth().get();
     let is_last_descendant = block.span.end >= f.context().last_descendant_end();
 
     // Header: indicator, explicit indent digit, chomping indicator
@@ -94,7 +93,7 @@ pub fn write_block_scalar<'a>(
     }
 
     let line_groups: Vec<Vec<&'a str>> =
-        block_value_line_contents(block, is_folded, parent_indent, is_last_descendant, f);
+        block_value_line_contents(block, is_folded, is_last_descendant, f);
 
     // Blank runs are the scalar's VALUE
     let chomping_keep = block.chomping == Chomping::Keep;
@@ -138,12 +137,17 @@ pub fn write_block_scalar<'a>(
         }
     });
 
-    if let Some(indent) = block.indent {
-        let width = u8::try_from(indent - 1 + parent_indent).unwrap_or(u8::MAX);
-        write!(f, dedent_to_root(&align(width, &contents)));
+    // An explicit indicator counts from the enclosing collection's items (YAML's `n + m`), where `dedent` returns:
+    // the content moves with them (DIVERGENCES.md#block-scalar-explicit-indent).
+    // At the root it counts from column 0, the YAML's own under an embedding host (hence `dedent_to_root`).
+    let width = block
+        .indent
+        .map_or(f.options().indent_width.value(), |indent| u8::try_from(indent).unwrap_or(u8::MAX));
+    let contents = align(width, &contents);
+    if block.indent.is_some() && f.context().collection_depth().get() == 0 {
+        write!(f, dedent_to_root(&contents));
     } else {
-        let tab_width = f.options().indent_width.value();
-        write!(f, dedent(&align(tab_width, &contents)));
+        write!(f, dedent(&contents));
     }
 }
 
@@ -156,7 +160,6 @@ pub fn write_block_scalar<'a>(
 fn block_value_line_contents<'s>(
     block: &BlockScalar,
     is_folded: bool,
-    parent_indent: u32,
     is_last_descendant: bool,
     f: &YamlFormatter<'_, 's>,
 ) -> Vec<Vec<&'s str>> {
@@ -169,20 +172,7 @@ fn block_value_line_contents<'s>(
         end: block.span.end,
     }));
 
-    // Leading indentation to strip from every line
-    let leading_space_count = if let Some(indent) = block.indent {
-        (indent - 1 + parent_indent) as usize
-    } else {
-        content
-            .split('\n')
-            .find_map(|l| {
-                let spaces = l.len() - l.trim_start_matches(' ').len();
-                // First line containing a non-space, non-CR character
-                l[spaces..].chars().next().filter(|c| *c != '\r').map(|_| spaces)
-            })
-            .unwrap_or(usize::MAX)
-    };
-    let strip = |l: &'s str| l.get(leading_space_count.min(l.len())..).unwrap_or("");
+    let strip = |l: &'s str| l.get((block.content_indent as usize).min(l.len())..).unwrap_or("");
 
     let prose_wrap = f.options().prose_wrap;
     // Literal blocks (`|`) are never re-flowed;
@@ -280,11 +270,13 @@ fn remove_unnecessary_trailing_newlines<'s>(
 ) -> Vec<Vec<&'s str>> {
     if block.chomping == Chomping::Keep {
         // NOTE: The fragment after the last break holds no line break, so it is not a kept line:
-        // either the empty artifact `split('\n')` yields after a final break,
-        // or a break-less EOF line of at-or-below-indent spaces
-        // (known divergence: Prettier counts it and prints one newline too many);
-        // a more-indented space run stays a content group.
-        lines.pop_if(|words| words.is_empty());
+        // the empty artifact `split('\n')` yields after a final break,
+        // or an EOF line of at-or-below-indent spaces (DIVERGENCES.md#keep-chomped-space-only-eof-line).
+        // A lone fragment has no break before it: it is one kept line, as yaml@2 reads it.
+        // A more-indented space run stays a content group.
+        if lines.len() > 1 {
+            lines.pop_if(|words| words.is_empty());
+        }
         return lines;
     }
 
@@ -301,23 +293,15 @@ fn remove_unnecessary_trailing_newlines<'s>(
 /// so the caller must not append the usual final `hard_line_break()`
 /// (mirrors Prettier's `shouldPrintHardline` gate).
 ///
-/// Returns `false` when the scalar emits no tail of its own,
-/// no content characters and no kept line break (empty, or one break-less EOF line of at-or-below-indent spaces);
-/// the caller's final newline stands.
-pub fn ends_with_keep_chomped_block(root: &Root<'_>, f: &YamlFormatter<'_, '_>) -> bool {
+/// Returns `false` for an empty content region, the only scalar emitting no tail of its own
+/// (any line leaves one, see `remove_unnecessary_trailing_newlines`); the caller's final newline stands.
+pub fn ends_with_keep_chomped_block(root: &Root<'_>) -> bool {
     root.children
         .last()
         .and_then(|document| document.body.content.as_deref())
         .and_then(last_descendant_block_scalar)
         .is_some_and(|block| {
-            // Content characters guarantee a tail;
-            // an empty content region emits one exactly when its trailing run holds a line break.
-            block.chomping == Chomping::Keep
-                && (block.content_end > block.content_start
-                    || f.context()
-                        .source_text()
-                        .bytes_range(block.content_end, block.span.end)
-                        .contains(&b'\n'))
+            block.chomping == Chomping::Keep && block.span.end > block.content_start
         })
 }
 

@@ -75,6 +75,7 @@ mod list;
 mod modifiers;
 mod module_record;
 mod state;
+mod top_level_await;
 
 mod js;
 mod jsx;
@@ -91,7 +92,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    ast::{Expression, Program, Statement},
+    ast::{Expression, Program},
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_data_structures::brands::{BrandOrigin, BrandScope, Unbranded};
@@ -102,9 +103,7 @@ use oxc_syntax::module_record::ModuleRecord;
 pub use crate::lexer::{Kind, Token};
 use crate::{
     ast_builder::ParserAstBuilder,
-    config::{
-        LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
-    },
+    config::{NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig},
     context::{Context, StatementContext},
     diagnostics::ParserDiagnostic,
     error_handler::FatalError,
@@ -786,21 +785,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
-        let (directives, mut statements) =
+        let (directives, statements) =
             self.parse_directives_and_statements(/* in_ts_namespace_body */ false);
-
-        // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
-        // we need to reparse statements that were originally parsed with `await` as identifier.
-        // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
-        // await expression with regex when ESM is detected.
-        // Preserve a fatal error from the initial parse instead of rewinding past it.
-        if self.fatal_error.is_none()
-            && self.source_type.is_unambiguous()
-            && self.module_record_builder.has_module_syntax()
-            && !self.state.potential_await_reparse.is_empty()
-        {
-            self.reparse_potential_top_level_awaits(&mut statements);
-        }
 
         let span = Span::new(0, self.source_text.len() as u32);
         Program::new(
@@ -816,108 +802,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             // ParserAstBuilder starts at one, keeping every child ID distinct.
             &AstBuilder::new(self.allocator()),
         )
-    }
-
-    /// Reparse statements that may contain top-level await expressions.
-    ///
-    /// In unambiguous mode, statements like `await /x/u` are initially parsed as
-    /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
-    /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        let original_tokens =
-            if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
-        let original = original_tokens.as_ref().map_or(&[][..], |tokens| tokens.as_slice());
-        let mut original_index = 0;
-        let mut replacements = ArenaVec::new_in(self);
-
-        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
-        // Ranges refer to the original tokens and to the flat replacement buffer
-        let mut edits = ArenaVec::with_capacity_in(
-            if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
-            self,
-        );
-        for (stmt_index, checkpoint) in checkpoints {
-            // Only the statement is parsed again, so trivia after it is not lexed again.
-            self.rewind_keeping_trivia(checkpoint);
-            let replacement_start = replacements.len();
-
-            if self.lexer.config.tokens() {
-                original_index += original[original_index..]
-                    .iter()
-                    .position(|token| token.start() >= self.token.start())
-                    .unwrap_or(original.len() - original_index);
-                // The checkpoint's current token has already been lexed
-                replacements.push(self.token);
-                self.lexer.set_tokens(std::mem::replace(&mut replacements, ArenaVec::new_in(self)));
-            }
-            let edit_start = original_index;
-
-            // Parse the statement with await context enabled (TopLevel context is already set)
-            let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::Program)
-            });
-
-            // Replace the statement if the index is valid
-            if stmt_index < statements.len() {
-                statements[stmt_index] = stmt;
-            }
-
-            if self.lexer.config.tokens() {
-                replacements = self.lexer.take_tokens();
-                // Exclude the next statement's token (or EOF)
-                replacements.pop();
-                // An earlier reparse can consume a later candidate, as in `await\nawait /x/u`.
-                // Record overlapping source ranges only once.
-                let end = replacements[..replacement_start].last().map_or(0, Token::end);
-                let overlap_len =
-                    replacements[replacement_start..].partition_point(|token| token.start() < end);
-                if overlap_len != 0 {
-                    replacements.copy_within(replacement_start + overlap_len.., replacement_start);
-                    let len = replacements.len() - overlap_len;
-                    replacements.truncate(len);
-                }
-                original_index += original[original_index..]
-                    .iter()
-                    .position(|token| token.start() >= self.token.start())
-                    .unwrap_or(original.len() - original_index);
-                edits.push((edit_start..original_index, replacement_start..replacements.len()));
-            }
-        }
-
-        if let Some(mut tokens) = original_tokens {
-            let mut read = 0;
-            if edits.iter().all(|(range, replacement)| replacement.len() <= range.len()) {
-                // Compact in place. Original indices remain valid because the write cursor
-                // never overtakes the read cursor.
-                let mut write = 0;
-                for (range, replacement) in edits {
-                    tokens.copy_within(read..range.start, write);
-                    write += range.start - read;
-                    let replacement = &replacements[replacement];
-                    tokens[write..write + replacement.len()].copy_from_slice(replacement);
-                    write += replacement.len();
-                    read = range.end;
-                }
-                let tail_len = tokens.len() - read;
-                tokens.copy_within(read.., write);
-                tokens.truncate(write + tail_len);
-                self.lexer.set_tokens(tokens);
-            } else {
-                // A growing replacement could overwrite unread tokens.
-                // Use a separate output buffer, still applying all edits in one forward pass.
-                let len = edits.iter().fold(tokens.len(), |len, (range, replacement)| {
-                    len - range.len() + replacement.len()
-                });
-                let mut output = ArenaVec::with_capacity_in(len, self);
-                for (range, replacement) in edits {
-                    output.extend_from_slice(&tokens[read..range.start]);
-                    output.extend_from_slice(&replacements[replacement]);
-                    read = range.end;
-                }
-                output.extend_from_slice(&tokens[read..]);
-                self.lexer.set_tokens(output);
-            }
-        }
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {

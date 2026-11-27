@@ -19,6 +19,9 @@ use super::{
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {
+        if self.ctx.intersects(Context::Await | Context::Yield) {
+            return self.context_remove(Context::Await | Context::Yield, Self::parse_ts_type);
+        }
         if self.is_start_of_function_type_or_constructor_type() {
             return self.parse_function_or_constructor_type();
         }
@@ -1540,10 +1543,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Create the outer `with: { ... }` property
         let with_property = ObjectPropertyKind::new_object_property(
             self.end_span(with_key_start),
-            PropertyKind::Init,
             PropertyKey::StaticIdentifier(with_key),
             value,
-            false,
             false,
             self,
         );
@@ -1612,10 +1613,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let property = ObjectPropertyKind::new_object_property(
                 self.end_span(prop_start),
-                PropertyKind::Init,
                 key,
                 value,
-                false,
                 false,
                 self,
             );
@@ -1639,7 +1638,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_return_type(&mut self, separator: Kind) -> TSType<'a> {
         self.expect(separator);
-        self.context_remove(Context::DisallowConditionalTypes, Self::parse_type_or_type_predicate)
+        self.context_remove(
+            Context::DisallowConditionalTypes | Context::Await | Context::Yield,
+            Self::parse_type_or_type_predicate,
+        )
     }
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {

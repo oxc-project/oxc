@@ -1,14 +1,15 @@
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span, best_match};
 use oxc_syntax::operator::UnaryOperator;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
+    ast_util::outermost_paren_parent,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -90,7 +91,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    conditional_fix,
+    conditional_suggestion,
     config = ValidTypeof,
     version = "0.0.3",
     short_description = "Enforce comparing `typeof` expressions against valid strings.",
@@ -103,7 +104,7 @@ impl Rule for ValidTypeof {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // match on `typeof` unary expression for better performance
-        let _unary_expr = match node.kind() {
+        let unary_expr = match node.kind() {
             AstKind::UnaryExpression(unary_expr)
                 if unary_expr.operator == UnaryOperator::Typeof =>
             {
@@ -112,18 +113,19 @@ impl Rule for ValidTypeof {
             _ => return,
         };
 
-        let binary_expr = match ctx.nodes().parent_kind(node.id()) {
-            AstKind::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
+        let binary_expr = match outermost_paren_parent(node, ctx).map(AstNode::kind) {
+            Some(AstKind::BinaryExpression(binary_expr)) if binary_expr.operator.is_equality() => {
                 binary_expr
             }
             _ => return,
         };
 
-        let ((Expression::UnaryExpression(_), sibling) | (sibling, Expression::UnaryExpression(_))) =
-            (&binary_expr.left, &binary_expr.right)
-        else {
-            return;
-        };
+        let sibling = if binary_expr.left.without_parentheses().span() == unary_expr.span {
+            &binary_expr.right
+        } else {
+            &binary_expr.left
+        }
+        .without_parentheses();
 
         if let Expression::StringLiteral(lit) = sibling {
             if lit.value.as_str().is_none_or(|value| !VALID_TYPES.contains(&value)) {
@@ -150,11 +152,16 @@ impl Rule for ValidTypeof {
             return;
         }
 
+        if sibling.is_literal() {
+            ctx.diagnostic(invalid_value(None, sibling.span()));
+            return;
+        }
+
         if let Expression::Identifier(ident) = sibling
             && ident.is_undefined()
             && ctx.is_reference_to_global_variable(ident)
         {
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 if self.require_string_literals {
                     not_string(Some("Use `\"undefined\"` instead of `undefined`."), sibling.span())
                 } else {
@@ -187,7 +194,7 @@ fn get_typo_suggestion(value: &str) -> Option<&'static str> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("typeof foo === 'string'", None),
@@ -230,6 +237,8 @@ fn test() {
             "function f(x, u) { const undefined = u; return typeof x === undefined; }; var y = undefined;",
             None,
         ),
+        ("(typeof value) === ('string')", None),
+        ("(typeof a) === (typeof b)", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
     ];
 
     let fail = vec![
@@ -270,9 +279,24 @@ fn test() {
         ("typeof foo === 'nunber'", None),
         ("typeof foo === 'obejct'", None),
         ("typeof foo === 'symol'", None),
+        ("(typeof value) === 'strnig'", None),
+        ("typeof value === ('strnig')", None),
+        ("((typeof value)) === (('strnig'))", None),
+        ("(typeof value) === (undefined)", None),
+        ("typeof value === 5", None),
+        ("typeof value === true", None),
+        ("typeof value === null", None),
+        ("typeof value === 1n", None),
+        ("typeof value === /a/", None),
+        ("!flag === typeof value", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
+        ("typeof value === !flag", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
     ];
 
-    let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];
+    let fix = vec![
+        ("typeof foo === undefined", r#"typeof foo === "undefined""#, None, FixKind::Suggestion),
+        // `typeof missing === undefined` is `false`, so this must not be applied automatically
+        ("typeof foo === undefined", "typeof foo === undefined", None, FixKind::SafeFix),
+    ];
 
     Tester::new(ValidTypeof::NAME, ValidTypeof::PLUGIN, pass, fail)
         .expect_fix(fix)

@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils as _;
 use lazy_regex::Regex;
-use oxc_syntax::module_record::RequestedModule;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{
     JsonSchema, SchemaGenerator,
@@ -21,6 +20,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use oxc_syntax::module_record::RequestedModule;
 
 use crate::{
     ModuleRecord,
@@ -765,6 +765,9 @@ impl RestrictedPath {
                 }
             }
             ImportImportName::NamespaceObject => Some(ImportNameViolation::Default),
+            ImportImportName::Source(_) => {
+                self.import_names.is_none().then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -789,6 +792,9 @@ impl RestrictedPath {
                 Some(ImportNameViolation::Default)
             }
             ExportImportName::Null => None,
+            ExportImportName::Source(_) => {
+                self.import_names.is_none().then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -880,6 +886,9 @@ impl RestrictedPattern {
                 }
             }
             ImportImportName::NamespaceObject => Some(ImportNameViolation::Default),
+            ImportImportName::Source(_) => {
+                self.restricts_unnamed_bindings().then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -904,6 +913,9 @@ impl RestrictedPattern {
                 Some(ImportNameViolation::Default)
             }
             ExportImportName::Null => None,
+            ExportImportName::Source(_) => {
+                self.restricts_unnamed_bindings().then_some(ImportNameViolation::General)
+            }
         }
     }
 
@@ -929,6 +941,10 @@ impl RestrictedPattern {
             NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
             NameSpanAllowedResult::Allowed => None,
         }
+    }
+
+    fn restricts_unnamed_bindings(&self) -> bool {
+        self.import_names.is_none() && self.import_name_pattern.is_none()
     }
 
     fn is_side_effect_import_allowed(&self) -> bool {
@@ -3702,6 +3718,44 @@ fn test() {
             Some(serde_json::json!([{ "paths": [{ "name": "zod", "importNames": ["default"] }] }])),
         ),
         ("import { z } from 'zod'; export { z } from 'zod';", Some(restricted_z_name)),
+    ]);
+
+    pass.extend([
+        (
+            "import source wasm from 'foo'; export { wasm };",
+            Some(serde_json::json!([{ "paths": [{ "name": "foo", "importNames": ["default"] }] }])),
+        ),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNames": ["default"] }] }]),
+            ),
+        ),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNamePattern": "^__" }] }]),
+            ),
+        ),
+    ]);
+    fail.extend([
+        ("import source wasm from 'foo'; export { wasm };", Some(serde_json::json!(["foo"]))),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "paths": [{ "name": "foo", "allowImportNames": ["bar"] }] }]),
+            ),
+        ),
+        (
+            "import source wasm from 'foo';",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo"] }] }])),
+        ),
+        (
+            "import source wasm from 'foo';",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "allowImportNamePattern": "^__" }] }]),
+            ),
+        ),
     ]);
 
     Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::PLUGIN, pass, fail)

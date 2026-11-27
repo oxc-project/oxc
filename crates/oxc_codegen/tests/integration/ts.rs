@@ -196,7 +196,7 @@ fn ts() {
         "class A {readonly type = 'frame'}",
         "let foo: { <T>(t: T): void }",
         "let foo: { new <T>(t: T): void }",
-        "function <const T>(){}",
+        "function f<const T>(){}",
         "class A {m?(): void}",
         "class A {constructor(public readonly a: number) {}}",
         "abstract class A {protected abstract m()}",

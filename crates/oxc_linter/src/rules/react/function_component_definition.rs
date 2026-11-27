@@ -159,7 +159,10 @@ impl Rule for FunctionComponentDefinition {
 }
 
 fn is_function_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    if matches!(component_parent_kind(node, ctx), Some(AstKind::ObjectProperty(_))) {
+    if matches!(
+        component_parent_kind(node, ctx),
+        Some(AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_))
+    ) {
         return false;
     }
 

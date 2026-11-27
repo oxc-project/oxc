@@ -1,8 +1,6 @@
 //! At-rule printing.
 //! Ports Prettier's `css-atrule` case and the `postcss-media-query-parser` printing (`media-*` cases).
 
-use std::borrow::Cow;
-
 use cow_utils::CowUtils;
 use oxc_css_parser::{
     ast::{
@@ -32,22 +30,31 @@ use crate::{
     context::CssFormatContext,
     format::to_span,
     print::{
-        CssFormatter, block_comment_end, format_with, is_glued, normalize_whitespace, scss,
-        selector, statement,
+        CssFormatter, format_with, is_glued, scss, selector, statement,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
 };
 
+/// `@` and an at-rule name, lowercased except in SCSS (DIVERGENCES.md#scss-at-rule-name-case).
+pub(super) fn write_at_rule_name(span: oxc_span::Span, f: &mut CssFormatter<'_, '_>) {
+    let name = f.context().source_text().text_for(&span);
+    write!(f, "@");
+    if matches!(f.options().variant, crate::options::CssVariant::Scss) {
+        write!(f, text(name));
+    } else {
+        write_maybe_lowercase(name, f);
+    }
+}
+
 /// Mirrors Prettier's `css-atrule`.
 pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
-    write!(f, "@");
     let name_span = to_span(at_rule.name.span());
-    write_maybe_lowercase(source.text_for(&name_span), f);
+    write_at_rule_name(name_span, f);
 
-    // Comments inside the params:
-    // postcss keeps them embedded in the params string / media tokens; reconstruct from the source.
+    // Comments inside the params: the structured printers place them,
+    // a commented String-params prelude prints them as written (below).
     let region_end = statement::params_region_end(at_rule.block.as_ref(), at_rule.span().end, f);
     let has_params_comments = f
         .context()
@@ -83,7 +90,10 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         // The exception: SCSS-family names parsed AS CSS
         // (oxc-css-parser: Unknown, Prettier: parseValue/parseSelector) keep the structural printers below.
         let unknown_string_params = matches!(prelude, AtRulePrelude::Unknown(_))
-            && !is_value_parsed_at_rule(at_rule.name.raw);
+            && !is_value_parsed_at_rule(
+                at_rule.name.raw,
+                matches!(f.options().variant, crate::options::CssVariant::Scss),
+            );
         // NOTE: Prettier also keeps `@warn` / `@error` params as a raw string (`media-unknown`),
         // but `oxc-css-parser` parses their prelude structurally (`SassExpr`),
         // so we route them through the normal structured printer
@@ -101,65 +111,28 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         }
     }
 
-    // `//` comments have their own layout rules (e.g. less `selector(...)`)
-    // handled by the structural printers below
-    // (which place their comments themselves; a verbatim prelude prints them as part of its text).
-    let has_inline_params_comment = f
-        .context()
-        .comments()
-        .iter_before(region_end)
-        .any(|c| c.inline && c.span.start >= name_span.end);
-    if has_params_comments && !has_inline_params_comment {
-        let lowercased = at_rule.name.raw.cow_to_ascii_lowercase();
+    // String params with a comment: as written (Prettier's raw `node.params`),
+    // kept for Prettier alignment only: unlike `@keyframes`, they hold no string to re-quote.
+    // A `//` leaves them to the structured printers below, which place it.
+    if has_params_comments
+        && matches!(
+            &*at_rule.name.raw.cow_to_ascii_lowercase(),
+            "page" | "font-feature-values" | "counter-style" | "property"
+        )
+        && !f
+            .context()
+            .comments()
+            .iter_before(region_end)
+            .any(|c| c.inline && c.span.start >= name_span.end)
+    {
         let raw = source.slice_range(name_span.end, region_end).trim();
-        // `@-webkit-keyframes` takes the `@keyframes` path
-        let unprefixed = ["-webkit-", "-moz-", "-o-", "-ms-"]
-            .iter()
-            .find_map(|prefix| lowercased.strip_prefix(prefix))
-            .unwrap_or(&lowercased);
-        match unprefixed {
-            "media" | "custom-media" if !raw.contains("#{") => {
-                let _ = f.context().comments().take_before(region_end);
-                write!(f, space());
-                write_commented_media_params(raw, f);
-                write_block_or_semicolon(at_rule, f);
-                return;
-            }
-            "import" if matches!(at_rule.prelude, Some(AtRulePrelude::Import(_))) => {
-                let _ = f.context().comments().take_before(region_end);
-                write!(f, space());
-                write_commented_value_params(raw, 8, true, f);
-                write!(f, ";");
-                return;
-            }
-            "supports" if matches!(at_rule.prelude, Some(AtRulePrelude::Supports(_))) => {
-                let _ = f.context().comments().take_before(region_end);
-                write!(f, space());
-                write_commented_value_params(raw, 10, false, f);
-                write_block_or_semicolon(at_rule, f);
-                return;
-            }
-            // String params: whitespace-normalized verbatim, one line
-            "keyframes"
-            | "page"
-            | "font-feature-values"
-            | "counter-style"
-            | "viewport"
-            | "namespace"
-            | "styleset"
-            | "property"
-            | "layer" => {
-                let _ = f.context().comments().take_before(region_end);
-                if !raw.is_empty() {
-                    write!(f, space());
-                    let normalized = normalize_whitespace(raw);
-                    write!(f, text(f.allocator().alloc_str(&normalized)));
-                }
-                write_block_or_semicolon(at_rule, f);
-                return;
-            }
-            _ => {}
+        let _ = f.context().comments().take_before(region_end);
+        if !raw.is_empty() {
+            write!(f, space());
+            write!(f, text(raw));
         }
+        write_block_or_semicolon(at_rule, f);
+        return;
     }
 
     // SCSS control directives wrap the prelude and the gap before `{` in one group:
@@ -308,8 +281,9 @@ fn split_important_tail(raw: &str) -> Option<(&str, &str)> {
 /// so a `oxc-css-parser` Unknown prelude for them must keep the structural printers.
 ///
 /// Case-sensitivity mirrors Prettier:
-/// bare `name` comparisons for the SCSS family, lowercased for module/media rules.
-fn is_value_parsed_at_rule(name: &str) -> bool {
+/// bare `name` comparisons for the SCSS family, lowercased for module/media rules
+/// except in SCSS, which keeps `@MEDIA` unknown (DIVERGENCES.md#scss-at-rule-name-case).
+fn is_value_parsed_at_rule(name: &str, scss: bool) -> bool {
     matches!(
         name,
         "extend"
@@ -331,7 +305,7 @@ fn is_value_parsed_at_rule(name: &str) -> bool {
             | "add-mixin"
             | "custom-selector"
     ) || matches!(
-        &*name.cow_to_ascii_lowercase(),
+        &*if scss { name.into() } else { name.cow_to_ascii_lowercase() },
         "import" | "use" | "forward" | "media" | "custom-media"
     )
 }
@@ -382,361 +356,20 @@ fn write_block_or_semicolon<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     }
 }
 
-/// `@media` params containing comments, rebuilt the way
-/// `postcss-media-query-parser` + Prettier's `media-*` cases lay them out:
-/// queries split on top-level commas (`,` + line in a group),
-/// tokens joined by single spaces, `( feature : value )` re-spaced
-/// when the parser would have recognized it (spaces around the `:`), kept verbatim otherwise.
-///
-/// NOTE: the params are a typed `MediaQueryList` and the comments are in the comment store,
-/// so the structured printer placing them (`value::write_with_comments`) is possible.
-/// However, we rebuild from source for Prettier alignment (its layout follows postcss-media-query-parser tokens).
-fn write_commented_media_params<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    let queries = split_top_level(raw, b',');
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        for (i, query) in queries.iter().enumerate() {
-            if i > 0 {
-                write!(f, ",");
-                write!(f, soft_line_break_or_space());
-            }
-            let tokens = tokenize(query.trim(), TokenizeMode::AbsorbComments);
-            for (j, token) in tokens.iter().enumerate() {
-                if j > 0 {
-                    write!(f, space());
-                }
-                write_media_token(token, f);
-            }
-        }
-    });
-    write!(f, group(&indent(&body)));
-}
-
-/// `@import` / `@supports` params containing comments,
-/// laid out the way Prettier's value parser + fill does.
-/// Separator breaks are simulated with static widths
-/// (Prettier's fill fit-checks the next item; our core fill measures only up to a hardline).
-/// `allow_commas`: comma chunks get an extra indent level for their internal wraps.
-///
-/// NOTE: the params are typed (`ImportPrelude` / `SupportsCondition`) and the comments are in the comment store
-/// (the AST holds none), so the structured printers placing them is possible.
-/// However, we rebuild from source for Prettier alignment (its layout follows postcss-value-parser tokens).
-fn write_commented_value_params<'a>(
-    raw: &'a str,
-    start_col: u32,
-    allow_commas: bool,
-    f: &mut CssFormatter<'_, 'a>,
-) {
-    // One value-parser token (the comma glues to its chunk's tail)
-    struct Tok<'a> {
-        text: &'a str,
-        comma: bool,
-        chunk: usize,
-        hard: bool,
+/// The comments before `start` lead what follows; after a `//`, it continues one level in.
+fn write_leading_comments(start: u32, f: &mut CssFormatter<'_, '_>) {
+    // Guarded: an empty `indent` is an error
+    if has_unclaimed_comments_before(start, f) {
+        write!(f, indent(&format_with(|f| _ = value::flush_value_comments(start, f))));
     }
-    let width = u32::from(f.options().line_width.value());
-    let chunks: Vec<&str> = if allow_commas { split_top_level(raw, b',') } else { vec![raw] };
-    let multi = chunks.len() > 1;
-
-    let mut tokens: Vec<Tok<'a>> = vec![];
-    for (ci, chunk) in chunks.iter().enumerate() {
-        let toks = tokenize(chunk.trim(), TokenizeMode::SplitComments);
-        let last = toks.len().saturating_sub(1);
-        for (ti, t) in toks.into_iter().enumerate() {
-            tokens.push(Tok {
-                text: t,
-                comma: ci + 1 < chunks.len() && ti == last,
-                chunk: ci,
-                hard: t.contains('(') && t.contains("/*"),
-            });
-        }
-    }
-
-    let tok_width =
-        |t: &Tok<'_>| u32::try_from(t.text.len()).unwrap_or(u32::MAX) + u32::from(t.comma);
-    // Per-chunk flat width / hardness (chunk separators compare WHOLE chunks,
-    // Prettier's fill over the comma-joined chunk docs).
-    let mut chunk_w = vec![0u32; chunks.len()];
-    let mut chunk_hard = vec![false; chunks.len()];
-    for t in &tokens {
-        if chunk_w[t.chunk] > 0 {
-            chunk_w[t.chunk] += 1;
-        }
-        chunk_w[t.chunk] += u32::try_from(t.text.len()).unwrap_or(u32::MAX) + u32::from(t.comma);
-        chunk_hard[t.chunk] = chunk_hard[t.chunk] || t.hard;
-    }
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        let mut x = start_col;
-        let mut chunk_start_x = start_col;
-        for i in 0..tokens.len() {
-            let t = &tokens[i];
-            if i > 0 {
-                let prev = &tokens[i - 1];
-                if prev.chunk == t.chunk {
-                    let fits = !prev.hard && !t.hard && x + 1 + tok_width(t) <= width;
-                    if fits {
-                        write!(f, space());
-                        x += 1;
-                    } else {
-                        write!(f, hard_line_break());
-                        if multi {
-                            write!(f, text("  "));
-                            x = 4;
-                        } else {
-                            x = 2;
-                        }
-                    }
-                } else {
-                    let fits = !chunk_hard[prev.chunk]
-                        && !chunk_hard[t.chunk]
-                        && chunk_start_x + chunk_w[prev.chunk] + 1 + chunk_w[t.chunk] <= width;
-                    if fits {
-                        write!(f, space());
-                        x += 1;
-                    } else {
-                        write!(f, hard_line_break());
-                        x = 2;
-                    }
-                    chunk_start_x = x;
-                }
-            }
-            if t.hard {
-                write_structured_paren(t.text, x, f);
-                // `)` lands back at column x
-                x += 1;
-            } else {
-                let printed = requote_token(t.text, f);
-                write!(f, text(printed));
-                x += u32::try_from(printed.len()).unwrap_or(0);
-            }
-            if t.comma {
-                write!(f, ",");
-                x += 1;
-            }
-        }
-    });
-    write!(f, indent(&body));
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum TokenizeMode {
-    /// `@import` / `@supports` values:
-    /// a top-level `/* ... */` is its own token (postcss-values splits comments out).
-    SplitComments,
-    /// `@media` queries:
-    /// a top-level `/* ... */` absorbs into the surrounding /// token
-    /// (`postcss-media-query-parser` keeps comments inline).
-    AbsorbComments,
-}
-
-/// Whitespace-separated tokens;
-/// comments and balanced paren regions glue to adjacent touching text.
-/// A `)` closing a single-line paren region ends the token (postcss-media-query-parser splits there);
-/// a multi-line region is a `media-unknown` and keeps its touching suffix.
-fn tokenize(raw: &str, mode: TokenizeMode) -> Vec<&str> {
-    let bytes = raw.as_bytes();
-    let mut tokens = vec![];
-    let mut depth = 0i32;
-    let mut start: Option<usize> = None;
-    let mut i = 0usize;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'/' if bytes.get(i + 1) == Some(&b'*') => {
-                if depth == 0 && mode == TokenizeMode::SplitComments {
-                    if let Some(s) = start.take() {
-                        tokens.push(&raw[s..i]);
-                    }
-                    let end = block_comment_end(raw, i);
-                    tokens.push(&raw[i..end]);
-                    i = end - 1;
-                } else {
-                    // depth > 0 OR AbsorbComments at depth 0:
-                    // comment becomes part of the current token (or starts one if between tokens).
-                    if start.is_none() {
-                        start = Some(i);
-                    }
-                    i = block_comment_end(raw, i) - 1;
-                }
-            }
-            b'(' => {
-                if start.is_none() {
-                    start = Some(i);
-                }
-                depth += 1;
-            }
-            b')' => {
-                depth -= 1;
-                if depth == 0
-                    && let Some(s) = start.take()
-                {
-                    tokens.push(&raw[s..=i]);
-                }
-            }
-            b' ' | b'\t' | b'\n' | b'\r' if depth == 0 => {
-                if let Some(s) = start.take() {
-                    tokens.push(&raw[s..i]);
-                }
-            }
-            _ => {
-                if start.is_none() {
-                    start = Some(i);
-                }
-            }
-        }
-        i += 1;
-    }
-    if let Some(s) = start {
-        tokens.push(&raw[s..]);
-    }
-    tokens
-}
-
-/// Re-quotes `'...'` strings in a token to the preferred quote (Prettier's `adjustStrings`).
-fn requote_token<'a>(token: &'a str, f: &CssFormatter<'_, 'a>) -> &'a str {
-    match f.options().single_quote.requote(token) {
-        Cow::Borrowed(s) => s,
-        Cow::Owned(s) => f.allocator().alloc_str(&s),
-    }
-}
-
-/// A comment-bearing paren group always breaks:
-/// `(` + indented fill of its words (`:` glued left, spaced right) + `)`.
-fn write_structured_paren<'a>(token: &'a str, open_col: u32, f: &mut CssFormatter<'_, 'a>) {
-    let width = u32::from(f.options().line_width.value());
-    let Some(open) = find_outside_comments(token, b'(') else {
-        write!(f, text(token));
-        return;
-    };
-    let Some(close) = token.rfind(')') else {
-        write!(f, text(token));
-        return;
-    };
-    write!(f, text(&token[..=open]));
-    let inner = &token[open + 1..close];
-    // Words, requoted up front; a lone `:` glues to the previous word
-    let sq = f.options().single_quote;
-    let requote = |w: &str| -> String { sq.requote(w).into_owned() };
-    let mut words: Vec<String> = vec![];
-    for w in tokenize(inner.trim(), TokenizeMode::SplitComments) {
-        if (w == ":" || w.starts_with(':'))
-            && let Some(last) = words.last_mut()
-        {
-            last.push(':');
-            if w.len() > 1 {
-                words.push(requote(&w[1..]));
-            }
-            continue;
-        }
-        words.push(requote(w));
-    }
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        write!(f, hard_line_break());
-        let mut x = open_col + 2;
-        for (i, w) in words.iter().enumerate() {
-            let w_len = u32::try_from(w.len()).unwrap_or(0);
-            if i > 0 {
-                if x + 1 + w_len <= width {
-                    write!(f, space());
-                    x += 1;
-                } else {
-                    write!(f, hard_line_break());
-                    write!(f, text("  "));
-                    x = open_col + 4;
-                }
-            }
-            write!(f, text(f.allocator().alloc_str(w)));
-            x += w_len;
-        }
-    });
-    write!(f, indent(&body));
-    write!(f, hard_line_break());
-    write!(f, ")");
-    let suffix = &token[close + 1..];
-    if !suffix.is_empty() {
-        write!(f, text(suffix));
-    }
-}
-
-/// Splits on `sep` at paren depth 0, outside comments.
-fn split_top_level(raw: &str, sep: u8) -> Vec<&str> {
-    let bytes = raw.as_bytes();
-    let mut parts = vec![];
-    let mut depth = 0i32;
-    let mut start = 0usize;
-    let mut i = 0usize;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'/' if bytes.get(i + 1) == Some(&b'*') => {
-                i = block_comment_end(raw, i) - 1;
-            }
-            b'(' => depth += 1,
-            b')' => depth -= 1,
-            b if b == sep && depth == 0 => {
-                parts.push(&raw[start..i]);
-                start = i + 1;
-            }
-            _ => {}
-        }
-        i += 1;
-    }
-    parts.push(&raw[start..]);
-    parts
-}
-
-/// One media token: a paren region (with glued prefix/suffix) gets the
-/// `( feature: value )` re-spacing when the `:` has space around it.
-fn write_media_token<'a>(token: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    let Some(open) = find_outside_comments(token, b'(') else {
-        write!(f, text(token));
-        return;
-    };
-    let Some(close) = token.rfind(')') else {
-        write!(f, text(token));
-        return;
-    };
-    let inner = &token[open + 1..close];
-    let colon = find_outside_comments(inner, b':');
-    let respace = colon.is_some_and(|c| {
-        let before_ws = inner[..c].ends_with([' ', '\t', '\n', '\r']);
-        let after_ws = inner[c + 1..].starts_with([' ', '\t', '\n', '\r']);
-        before_ws || after_ws
-    });
-    if !respace {
-        // Unparsable for postcss-media-query-parser: verbatim
-        write!(f, text(token));
-        return;
-    }
-    let colon = colon.unwrap();
-    write!(f, text(&token[..=open]));
-    let feature = inner[..colon].trim();
-    let value = inner[colon + 1..].trim();
-    let normalized = f.allocator().alloc_concat_strs_array([
-        &normalize_whitespace(feature),
-        ": ",
-        &normalize_whitespace(value),
-    ]);
-    write!(f, text(normalized));
-    write!(f, text(&token[close..]));
-}
-
-/// First position of `needle` outside `/* */` comments.
-fn find_outside_comments(raw: &str, needle: u8) -> Option<usize> {
-    let bytes = raw.as_bytes();
-    let mut i = 0usize;
-    while i < bytes.len() {
-        if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            i = block_comment_end(raw, i);
-            continue;
-        }
-        if bytes[i] == needle {
-            return Some(i);
-        }
-        i += 1;
-    }
-    None
 }
 
 fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    // `@import` places its own: one fuses with the path after it (`write_import_path_list`)
+    if !matches!(prelude, AtRulePrelude::Import(_) | AtRulePrelude::SassImport(_)) {
+        write_leading_comments(prelude.span().start, f);
+    }
     match prelude {
         AtRulePrelude::Media(media) => write_media_query_list(media, f),
         AtRulePrelude::CustomMedia(custom) => {
@@ -748,8 +381,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
                     write_media_query_list(list, f);
                 }
                 CustomMediaValue::True(ident) | CustomMediaValue::False(ident) => {
-                    let span = to_span(ident.span());
-                    write!(f, text(source.text_for(&span)));
+                    value::write_text_with_leading_comments(to_span(ident.span()), f);
                 }
             }
         }
@@ -1208,8 +840,9 @@ fn write_token_comma_group_after<'a>(
         }
         let run = &tokens[i..run_end];
         let run_start = i;
+        let followed = run_end < tokens.len();
         let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-            write_token_run(run, run_start == 0 && hug_lparen, f);
+            write_token_run(run, run_start == 0 && hug_lparen, followed, f);
         });
         filler.entry(&soft_line_break_or_space(), &content);
         i = run_end;
@@ -1267,7 +900,13 @@ fn write_token_comma_group_grouped<'a>(
 }
 
 /// One run: spacing normalized; paren regions recurse as breakable groups.
-fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssFormatter<'_, 'a>) {
+/// `followed`: more tokens come after the run (a `/` ending it has a gap after it).
+fn write_token_run<'a>(
+    run: &[TokenWithSpan<'a>],
+    hug_lparen: bool,
+    followed: bool,
+    f: &mut CssFormatter<'_, 'a>,
+) {
     let source = f.context().source_text();
     let mut j = 0;
     while j < run.len() {
@@ -1286,7 +925,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
             // Unbalanced region: print the opener verbatim and move on
             if depth != 0 || k < j + 2 {
                 if j > 0 {
-                    write_token_pair_space(run, j, hug_lparen, f);
+                    write_token_pair_space(run, j, hug_lparen, followed, f);
                 }
                 let span = to_span(tok.span);
                 write!(f, text(source.text_for(&span)));
@@ -1300,7 +939,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
                 _ => ("{", "}"),
             };
             if j > 0 {
-                write_token_pair_space(run, j, hug_lparen, f);
+                write_token_pair_space(run, j, hug_lparen, followed, f);
             }
             if inner.is_empty() {
                 write!(f, [text(open), text(close)]);
@@ -1323,7 +962,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
             continue;
         }
         if j > 0 {
-            write_token_pair_space(run, j, hug_lparen, f);
+            write_token_pair_space(run, j, hug_lparen, followed, f);
         }
         let span = to_span(tok.span);
         match &tok.token {
@@ -1356,6 +995,7 @@ fn write_token_pair_space<'a>(
     run: &[TokenWithSpan<'a>],
     j: usize,
     hug_lparen: bool,
+    followed: bool,
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
@@ -1399,6 +1039,15 @@ fn write_token_pair_space<'a>(
             | Token::EqualEqual(_)
             | Token::ExclamationEqual(_),
         ) => true,
+        // A `/` takes both of its gaps together (DIVERGENCES.md#slash-spacing);
+        // it glues to its left operand, so a gap after it ends the run
+        (_, Token::Solidus(_)) => match run.get(j + 1) {
+            Some(next) => value::is_slash_spaced(prev.span, tok.span, next.span),
+            None => gap || followed,
+        },
+        (Token::Solidus(_), _) if j >= 2 => {
+            value::is_slash_spaced(run[j - 2].span, prev.span, tok.span)
+        }
         _ => gap,
     };
     if space {
@@ -1455,7 +1104,8 @@ fn write_import_prelude<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_,
         return;
     }
 
-    if !has_unclaimed_comments_before(prelude_end, f) {
+    // A block comment is a word of its own, as in Prettier's value parser
+    if !f.context().comments().iter_before(prelude_end).any(|c| c.inline) {
         let mut groups: Vec<Vec<ImportWord<'_, 'a>>> = vec![vec![ImportWord::Href(&import.href)]];
         if let Some(layer) = &import.layer {
             groups[0].push(ImportWord::Verbatim(to_span(layer.span())));
@@ -1466,11 +1116,15 @@ fn write_import_prelude<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_,
         if let Some(media) = &import.media {
             push_media_query_list_words(media, &mut groups);
         }
+        let commas = import.media.as_ref().map_or(&[][..], |media| &media.comma_spans[..]);
+        // The prelude's span ends at its last word: the comments before the `;` are its too
+        let end = statement::params_region_end(None, prelude_end, f);
+        push_comment_words(&mut groups, commas, end, f);
         write_import_words(&groups, f);
         return;
     }
 
-    // With comments the structured printers place them; the whole prelude is one group:
+    // With a `//` the structured printers place the comments; the whole prelude is one group:
     // a long `@import url(...) media, list;` breaks after the url and puts one query per line, all one indent in.
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write_import_prelude_inner(import, f);
@@ -1493,6 +1147,45 @@ enum ImportWord<'b, 'a> {
     GluedCall(&'b Ident<'a>, &'b MediaInParens<'a>),
     /// `layer(...)`, or a whole query the media printer has no structure for
     Verbatim(oxc_span::Span),
+    /// A block comment
+    Comment(comments::CssComment),
+}
+
+impl ImportWord<'_, '_> {
+    fn span(&self) -> oxc_span::Span {
+        match self {
+            Self::LessOptions(options) => to_span(options.span),
+            Self::Href(href) => to_span(href.span()),
+            Self::Supports(supports) => to_span(supports.span()),
+            Self::Keyword(span) | Self::Verbatim(span) => *span,
+            Self::MediaType(media_type) => to_span(media_type.span()),
+            Self::InParens(in_parens) => to_span(in_parens.span),
+            Self::GluedCall(keyword, in_parens) => {
+                oxc_span::Span::new(keyword.span().start, in_parens.span.end)
+            }
+            Self::Comment(comment) => comment.span,
+        }
+    }
+}
+
+/// The block comments pending before `end` and outside every word, up to a `//` (which rides past the `;`),
+/// each a word where it sits: in the comma group its position among the `commas` gives, before the first word after it.
+fn push_comment_words<'a>(
+    groups: &mut [Vec<ImportWord<'_, 'a>>],
+    commas: &[oxc_css_parser::Span],
+    end: u32,
+    f: &CssFormatter<'_, 'a>,
+) {
+    for &comment in f.context().comments().iter_before(end).take_while(|c| !c.inline) {
+        // A word's own comments are its printer's (`(/* c */ a: b)`)
+        if groups.iter().flatten().any(|word| word.span().contains_inclusive(comment.span)) {
+            continue;
+        }
+        let group = commas.iter().filter(|comma| comma.start < comment.span.start).count();
+        let words = &mut groups[group.min(groups.len() - 1)];
+        let at = words.iter().position(|word| word.span().start >= comment.span.end);
+        words.insert(at.unwrap_or(words.len()), ImportWord::Comment(comment));
+    }
 }
 
 /// Any comment still unclaimed before `end` (for a prelude: between the at-rule name and the prelude end)
@@ -1506,7 +1199,7 @@ fn has_unclaimed_comments_before(end: u32, f: &CssFormatter<'_, '_>) -> bool {
 /// - several: `indent(group(fill(<comma group + ",">...)))`, each comma group per `write_import_comma_group`
 ///
 /// So a long prelude breaks wherever the width runs out (`screen and\n  (max-width: 601px)`),
-/// not at a structural seam. Comment-free preludes only: the structured printers place comments themselves.
+/// not at a structural seam. A block comment is a word of its own; a `//` takes the structured printers instead.
 fn write_import_words<'a>(comma_groups: &[Vec<ImportWord<'_, 'a>>], f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     let write_words = move |words: &[ImportWord<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
@@ -1523,7 +1216,19 @@ fn write_import_words<'a>(comma_groups: &[Vec<ImportWord<'_, 'a>>], f: &mut CssF
                     write_maybe_lowercase(source.text_for(&to_span(keyword.span())), f);
                     write_media_in_parens(in_parens, f);
                 }
-                ImportWord::Verbatim(span) => write!(f, text(source.text_for(span))),
+                // Its comments are in its text
+                ImportWord::Verbatim(span) => {
+                    write!(f, text(source.text_for(span)));
+                    let _ = f.context().comments().take_before(span.end);
+                }
+                ImportWord::Comment(comment) => {
+                    for &comment in f.context().comments().take_before(comment.span.end) {
+                        write!(
+                            f,
+                            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                        );
+                    }
+                }
             });
             filler.entry(&soft_line_break_or_space(), &content);
         }
@@ -1730,7 +1435,8 @@ fn write_import_supports<'a>(supports: &ImportPreludeSupports<'a>, f: &mut CssFo
         }
         // `supports(display: flex)`: a bare declaration (no inner parens)
         ImportPreludeSupportsKind::Declaration(decl) => {
-            statement::write_declaration(decl, f);
+            let close = supports.span().end - 1;
+            write!(f, group(&format_with(|f| write_supports_declaration(decl, close, f))));
         }
     }
     write!(f, ")");
@@ -1859,6 +1565,10 @@ fn write_import_href<'a>(href: &ImportPreludeHref<'a>, f: &mut CssFormatter<'_, 
 /// Less `@import (options) href media` (e.g. `@import (reference) "x";`).
 /// oxc-css-parser parses the options form as a dedicated `LessImportPrelude`,
 /// which otherwise falls into the verbatim catch-all and skips quote normalization.
+///
+/// TODO: Any comment sends the prelude to the branch below, unlike a CSS `@import`'s,
+/// whose block comments are words of the same fill as without them (`push_comment_words`);
+/// route a Less one through `write_import_words` the same way.
 fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssFormatter<'_, 'a>) {
     if !has_unclaimed_comments_before(import.span.end, f) {
         let mut groups: Vec<Vec<ImportWord<'_, 'a>>> = vec![vec![]];
@@ -1872,11 +1582,13 @@ fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssForm
         write_import_words(&groups, f);
         return;
     }
+    if !import.options.names.is_empty() {
+        write_less_import_options(&import.options, f);
+        write!(f, space());
+    }
+    // A comment after the options leads the href, outside the group: its `//` breaks no media query
+    write_leading_comments(import.href.span().start, f);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        if !import.options.names.is_empty() {
-            write_less_import_options(&import.options, f);
-            write!(f, space());
-        }
         write_import_href(&import.href, f);
         if let Some(media) = &import.media {
             write!(f, soft_line_break_or_space());
@@ -1886,17 +1598,17 @@ fn write_less_import_prelude<'a>(import: &LessImportPrelude<'a>, f: &mut CssForm
     write!(f, group(&indent(&body)));
 }
 
-/// `(reference, optional)`
+/// `(reference, optional)`, its comments placed like a `@layer` list's
 fn write_less_import_options<'a>(options: &LessImportOptions<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let source = f.context().source_text();
     write!(f, "(");
     for (i, name) in options.names.iter().enumerate() {
         if i > 0 {
-            write!(f, ", ");
+            value::write_group_comma(options.comma_spans.get(i - 1).map(|sp| sp.start), f);
+            write!(f, space());
         }
-        let span = to_span(name.span());
-        write!(f, text(source.text_for(&span)));
+        value::write_text_with_leading_comments(to_span(name.span()), f);
     }
+    value::flush_trailing_value_comments(to_span(options.span).end, f);
     write!(f, ")");
 }
 
@@ -1956,7 +1668,7 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
                     && let Some(first) = condition.condition.conditions.first()
                 {
                     let word = oxc_span::Span::new(condition.and.span().start, first.span().end);
-                    value::write_adjusted_verbatim(source.text_for(&word), f);
+                    write_glued_word(word, f);
                     write_media_condition_from(&condition.condition, 1, f);
                 } else {
                     write_word(to_span(condition.and.span()), f);
@@ -2014,13 +1726,20 @@ fn write_media_condition_kind<'a>(kind: &MediaConditionKind<'a>, f: &mut CssForm
     if let Some(keyword) = keyword {
         if is_glued(keyword.span(), in_parens.span) {
             let word = oxc_span::Span::new(keyword.span().start, in_parens.span.end);
-            value::write_adjusted_verbatim(source.text_for(&word), f);
+            write_glued_word(word, f);
             return;
         }
         write_maybe_lowercase(source.text_for(&to_span(keyword.span())), f);
         write!(f, space());
+        value::flush_value_comments(in_parens.span.start, f);
     }
     write_media_in_parens(in_parens, f);
+}
+
+/// A glued `and(...)` as written but for its numbers and strings, the comments its text prints claimed.
+fn write_glued_word(word: oxc_span::Span, f: &mut CssFormatter<'_, '_>) {
+    value::write_adjusted_verbatim(f.context().source_text().text_for(&word), f);
+    let _ = f.context().comments().take_before(word.end);
 }
 
 fn split_media_condition_kind<'b, 'a>(
@@ -2038,17 +1757,22 @@ fn is_glued_media_type_and(condition: &MediaConditionAfterMediaType<'_>) -> bool
     is_glued(condition.and.span(), condition.condition.span)
 }
 
+/// A comment inside the parens stays there: before the content it leads it, after it trails it
 fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let in_parens_of =
+        |start: u32, write: &dyn Fn(&mut CssFormatter<'_, 'a>), f: &mut CssFormatter<'_, 'a>| {
+            write!(f, "(");
+            value::flush_value_comments(start, f);
+            write(f);
+            value::flush_trailing_value_comments(in_parens.span.end, f);
+            write!(f, ")");
+        };
     match &in_parens.kind {
         MediaInParensKind::MediaCondition(condition) => {
-            write!(f, "(");
-            write_media_condition(condition, f);
-            write!(f, ")");
+            in_parens_of(condition.span.start, &|f| write_media_condition(condition, f), f);
         }
         MediaInParensKind::MediaFeature(feature) => {
-            write!(f, "(");
-            write_media_feature(feature, f);
-            write!(f, ")");
+            in_parens_of(feature.span().start, &|f| write_media_feature(feature, f), f);
         }
         // `@media screen and #{$query}` — the interpolation prints verbatim,
         // like Prettier (no parens of its own).
@@ -2064,7 +1788,7 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
             // `oxc-css-parser` accepts an unparenthesized ident as <general-enclosed>;
             // the source shape must survive, so only reprint parens that exist.
             if f.context().source_text().text_for(&to_span(in_parens.span)).starts_with('(') {
-                write_general_enclosed(seq, f);
+                write_general_enclosed(seq, in_parens.span.end - 1, f);
             } else {
                 write_tokens_normalized(&seq.tokens, f);
             }
@@ -2078,13 +1802,16 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
 /// Gap-based spacing never splits or fuses tokens the source kept glued or apart
 /// (`and (color)` can't collapse into a function token `and(`, `:hover` stays one pseudo-class).
 /// NOTE: Deliberately more normalized than Prettier.
-fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, f: &mut CssFormatter<'_, 'a>) {
+/// `close` is its `)`: the comments before it stay inside.
+fn write_general_enclosed<'a>(seq: &TokenSeq<'a>, close: u32, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
     write_tokens_normalized(&seq.tokens, f);
+    value::flush_trailing_value_comments(close, f);
     write!(f, ")");
 }
 
-/// The `<general-enclosed>` tokens without the surrounding parens.
+/// The `<general-enclosed>` tokens without the surrounding parens,
+/// a comment between two of them kept there (trailing the one before a `)` / `]` / `,` / `;`).
 fn write_tokens_normalized<'a, 'b>(
     tokens: impl IntoIterator<Item = &'b TokenWithSpan<'a>>,
     f: &mut CssFormatter<'_, 'a>,
@@ -2094,20 +1821,22 @@ fn write_tokens_normalized<'a, 'b>(
     let source = f.context().source_text();
     let mut prev: Option<&TokenWithSpan<'a>> = None;
     for tok in tokens {
-        if let Some(prev) = prev {
-            let needs_space = match (&prev.token, &tok.token) {
-                (Token::LParen(_) | Token::LBracket(_), _)
-                | (
-                    _,
-                    Token::RParen(_) | Token::RBracket(_) | Token::Comma(_) | Token::Semicolon(_),
-                ) => false,
-                _ => !is_glued(prev.span, tok.span),
-            };
-            if needs_space {
+        let closes = matches!(
+            tok.token,
+            Token::RParen(_) | Token::RBracket(_) | Token::Comma(_) | Token::Semicolon(_)
+        );
+        if closes {
+            value::flush_trailing_value_comments(tok.span.start, f);
+            write!(f, text(source.text_for(&to_span(tok.span))));
+        } else {
+            if prev.is_some_and(|prev| {
+                !matches!(prev.token, Token::LParen(_) | Token::LBracket(_))
+                    && !is_glued(prev.span, tok.span)
+            }) {
                 write!(f, space());
             }
+            value::write_text_with_leading_comments(to_span(tok.span), f);
         }
-        write!(f, text(source.text_for(&to_span(tok.span))));
         prev = Some(tok);
     }
 }
@@ -2121,6 +1850,19 @@ fn write_media_feature_name<'a>(name: &MediaFeatureName<'a>, f: &mut CssFormatte
             write!(f, text(source.text_for(&span)));
         }
     }
+}
+
+/// ` <= ` between two range operands, the comments around it in place (`next` starts the operand after it)
+fn write_media_comparison(
+    comparison: &oxc_css_parser::ast::MediaFeatureComparison,
+    next: u32,
+    f: &mut CssFormatter<'_, '_>,
+) {
+    value::flush_trailing_value_comments(comparison.span.start, f);
+    write!(f, space());
+    write_comparison(&comparison.kind, f);
+    write!(f, space());
+    value::flush_value_comments(next, f);
 }
 
 fn write_comparison(kind: &MediaFeatureComparisonKind, f: &mut CssFormatter<'_, '_>) {
@@ -2143,7 +1885,9 @@ fn write_media_feature<'a>(feature: &MediaFeature<'a>, f: &mut CssFormatter<'_, 
     match feature {
         MediaFeature::Plain(plain) => {
             write_media_feature_name(&plain.name, f);
+            value::flush_trailing_value_comments(plain.colon_span.start, f);
             write!(f, [":", space()]);
+            value::flush_value_comments(plain.value.span().start, f);
             write_media_feature_value(&plain.value, f);
         }
         MediaFeature::Boolean(boolean) => {
@@ -2151,20 +1895,14 @@ fn write_media_feature<'a>(feature: &MediaFeature<'a>, f: &mut CssFormatter<'_, 
         }
         MediaFeature::Range(range) => {
             write_media_feature_value(&range.left, f);
-            write!(f, space());
-            write_comparison(&range.comparison.kind, f);
-            write!(f, space());
+            write_media_comparison(&range.comparison, range.right.span().start, f);
             write_media_feature_value(&range.right, f);
         }
         MediaFeature::RangeInterval(interval) => {
             write_media_feature_value(&interval.left, f);
-            write!(f, space());
-            write_comparison(&interval.left_comparison.kind, f);
-            write!(f, space());
+            write_media_comparison(&interval.left_comparison, interval.name.span().start, f);
             write_media_feature_name(&interval.name, f);
-            write!(f, space());
-            write_comparison(&interval.right_comparison.kind, f);
-            write!(f, space());
+            write_media_comparison(&interval.right_comparison, interval.right.span().start, f);
             write_media_feature_value(&interval.right, f);
         }
     }
@@ -2238,36 +1976,51 @@ fn write_supports_term<'a>(
     });
 }
 
+/// A `@supports` declaration with the comments inside its parens (`close` is the `)`), as around one in a rule:
+/// a leading one ends its line when the parens open, the trailing ones wrap as before a `;`.
+fn write_supports_declaration<'a>(
+    decl: &oxc_css_parser::ast::Declaration<'a>,
+    close: u32,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    for &comment in f.context().comments().take_before(decl.span().start) {
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
+        if !comment.inline {
+            write!(f, soft_line_break_or_space());
+        }
+    }
+    statement::write_declaration_until(decl, Some(close), f);
+    // What the declaration's tail left (after an `!important`) stays inside the `)` too
+    value::flush_trailing_value_comments(close, f);
+}
+
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    // The term's `)`: the comments before it stay inside
+    let close = in_parens.span.end - 1;
     match &in_parens.kind {
         // An over-wide term opens its parens (Prettier's parenthesized value group)
         SupportsInParensKind::SupportsCondition(condition) => {
-            let content = format_with(|f| write_supports_condition(condition, f));
+            let content = format_with(|f| {
+                write_supports_condition(condition, f);
+                value::flush_trailing_value_comments(close, f);
+            });
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Feature(feature) => {
-            let content = format_with(|f| statement::write_declaration(&feature.decl, f));
+            let content = format_with(|f| write_supports_declaration(&feature.decl, close, f));
             write!(f, group(&format_args!("(", soft_block_indent(&content), ")")));
         }
         SupportsInParensKind::Selector(list) => {
             write!(f, "selector(");
             // An inline comment inside `selector(...)` forces the parens
             // open and trails the selector.
-            // oxc-css-parser's span may stop at the selector; scan to the `)`.
-            let span_end = in_parens.span().end;
-            let bytes = source.as_bytes();
-            let mut scan = span_end.saturating_sub(1) as usize;
-            while scan < bytes.len() && bytes[scan] != b')' {
-                scan += 1;
-            }
-            let r_paren = u32::try_from(scan).unwrap_or(span_end);
-            let has_inline_inside = f.context().comments().iter_before(r_paren).any(|c| c.inline);
+            let has_inline_inside = f.context().comments().iter_before(close).any(|c| c.inline);
             if has_inline_inside {
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, hard_line_break());
                     selector::write_selector_list(list, selector::SelectorListStyle::Line, f);
-                    for &comment in f.context().comments().take_before(r_paren) {
+                    for &comment in f.context().comments().take_before(close) {
                         write!(f, space());
                         write!(
                             f,
@@ -2277,9 +2030,12 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 });
                 write!(f, [indent(&body), hard_line_break(), ")"]);
             } else {
-                // As a rule's selectors: one per line, the parens open when broken
+                // As a rule's selectors: one per line, the parens open when broken;
+                // a comment after `selector(` leads the first one on its line
                 let content = format_with(|f| {
+                    value::flush_value_comments(list.span.start, f);
                     selector::write_selector_list(list, selector::SelectorListStyle::Hard, f);
+                    value::flush_trailing_value_comments(close, f);
                 });
                 write!(f, group(&format_args!(soft_block_indent(&content), ")")));
             }
@@ -2297,12 +2053,15 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 }),
                 f,
             );
+            value::flush_trailing_value_comments(close, f);
             write!(f, ")");
         }
         SupportsInParensKind::Function(func) => {
             value::write_function(func, ValueContext::default(), f);
         }
-        SupportsInParensKind::GeneralEnclosed(seq) => write_general_enclosed(seq, f),
+        SupportsInParensKind::GeneralEnclosed(seq) => {
+            write_general_enclosed(seq, close, f);
+        }
         // Sass only: a lone interpolation as a condition operand
         // (`@supports #{"(a: b)"}`); reprints structurally like other interpolations
         // (inner spaces collapse, string literals re-quote).

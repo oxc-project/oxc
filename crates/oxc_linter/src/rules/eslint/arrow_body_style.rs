@@ -15,6 +15,7 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
     AstNode,
+    ast_util::next_token,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{Rule, TupleRuleConfig},
@@ -322,8 +323,12 @@ impl ArrowBodyStyle {
 
         // Only the parens around the object literal can be dropped; a type assertion wrapping it
         // must be kept: `() => ({ ... }) as T` → `() => { return { ... } as T }`
-        if let Some(paren) = Self::leading_parenthesized_object(expr) {
-            let object_text = ctx.source_range(paren.expression.without_parentheses().span());
+        if let Some(paren) = Self::leading_parenthesized_object(expr)
+            && let object_span = paren.expression.without_parentheses().span()
+            && !ctx.has_comments_between(Span::new(paren.span.start, object_span.start))
+            && !ctx.has_comments_between(Span::new(object_span.end, paren.span.end))
+        {
+            let object_text = ctx.source_range(object_span);
             let rest_text = ctx.source_range(Span::new(paren.span.end, expr.span().end));
             return fixer.replace(body.span(), format!("{{return {object_text}{rest_text}}}"));
         }
@@ -361,8 +366,12 @@ impl ArrowBodyStyle {
         fixer: RuleFixer<'_, 'a>,
         ctx: &LintContext<'a>,
     ) -> RuleFix {
-        // Get the inner expression to handle cases like `return ({ ... })`
-        // where the return value is already parenthesized
+        if next_token(arrow_func_expr.body.span().end, ctx)
+            .is_some_and(|(_, c)| matches!(c, '(' | '[' | '/' | '`' | '+' | '-'))
+        {
+            return fixer.noop();
+        }
+
         let inner_expr = return_arg.get_inner_expression();
         let is_already_parenthesized = matches!(return_arg, Expression::ParenthesizedExpression(_));
 
@@ -370,7 +379,7 @@ impl ArrowBodyStyle {
         // Sequence expressions need parentheses: `{ return a, b }` → `(a, b)`
         // Check if we need to wrap in parentheses for `in` operator in for-loop init
         let needs_parens = !is_already_parenthesized
-            && (Self::starts_with_object_literal(inner_expr)
+            && (ctx.source_text().as_bytes()[inner_expr.span().start as usize] == b'{'
                 || matches!(inner_expr, Expression::SequenceExpression(_))
                 || Self::needs_parens_for_concise_body(return_arg, node, ctx));
 
@@ -401,31 +410,6 @@ impl ArrowBodyStyle {
         ));
 
         fix
-    }
-
-    /// Check if an expression starts with an object literal.
-    /// This includes direct ObjectExpression and expressions that have an
-    /// object literal as their leftmost child (e.g., `{ a: 1 }.b`, `{a: 1}.b + c`)
-    fn starts_with_object_literal(expr: &Expression) -> bool {
-        match expr {
-            Expression::ObjectExpression(_) => true,
-            Expression::StaticMemberExpression(member) => {
-                Self::starts_with_object_literal(&member.object)
-            }
-            Expression::ComputedMemberExpression(member) => {
-                Self::starts_with_object_literal(&member.object)
-            }
-            Expression::CallExpression(call) => Self::starts_with_object_literal(&call.callee),
-            Expression::TaggedTemplateExpression(tagged) => {
-                Self::starts_with_object_literal(&tagged.tag)
-            }
-            // Binary/logical expressions: check the leftmost operand
-            Expression::BinaryExpression(bin) => Self::starts_with_object_literal(&bin.left),
-            Expression::LogicalExpression(log) => Self::starts_with_object_literal(&log.left),
-            // Conditional expression: check the test (leftmost part)
-            Expression::ConditionalExpression(cond) => Self::starts_with_object_literal(&cond.test),
-            _ => false,
-        }
     }
 
     /// Check if the expression needs parentheses when converting to concise body.
@@ -574,6 +558,10 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "const f = () => { return 0; }\n[1].forEach(log);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
         (
             "for (var foo = () => { return a in b ? bar : () => {} } ;;);",
             Some(serde_json::json!(["as-needed"])),
@@ -739,6 +727,41 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "const f = () => { return 0; }\n[1].forEach(log);",
+            "const f = () => { return 0; }\n[1].forEach(log);",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "const f = () => { return 0 }\n/* gap */ (x)",
+            "const f = () => { return 0 }\n/* gap */ (x)",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const f = () => { return {x: 1}?.x; };",
+            "const f = () => ( {x: 1}?.x );",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "const f = () => { return {a} = b; };",
+            "const f = () => ( {a} = b );",
+            Some(serde_json::json!(["as-needed"])),
+        ),
+        (
+            "const f = () => (/* keep */ {});",
+            "const f = () => {return (/* keep */ {})};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "const f = () => ({} /* keep */);",
+            "const f = () => {return ({} /* keep */)};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "const f = () => ({ /* inner */ });",
+            "const f = () => {return { /* inner */ }};",
+            Some(serde_json::json!(["always"])),
+        ),
         (
             "for (var foo = () => { return a in b ? bar : () => {} } ;;);",
             "for (var foo = () => ( a in b ? bar : () => {} ) ;;);",

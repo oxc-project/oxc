@@ -1,5 +1,6 @@
-use oxc_macros::declare_oxc_lint;
 use serde::Deserialize;
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::{
     context::LintContext, rule::Rule, rules::shared::consistent_test_it::ConsistentTestItConfig,

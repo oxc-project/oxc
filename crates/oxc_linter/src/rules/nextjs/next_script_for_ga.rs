@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression,
-        JSXOpeningElement, ObjectProperty, ObjectPropertyKind,
+        JSXOpeningElement, ObjectPropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -114,7 +114,9 @@ impl Rule for NextScriptForGa {
         // Check if inline script is being used to add GA.
         // https://developers.google.com/analytics/devguides/collection/analyticsjs#the_google_analytics_tag
         // https://developers.google.com/tag-manager/quickstart
-        if let Some(danger_value) = get_dangerously_set_inner_html_prop_value(jsx_opening_element) {
+        if let Some(ObjectPropertyKind::ObjectProperty(danger_value)) =
+            get_dangerously_set_inner_html_prop_value(jsx_opening_element)
+        {
             let Expression::TemplateLiteral(template_literal) = &danger_value.value else {
                 return;
             };
@@ -134,7 +136,7 @@ const SUPPORTED_HTML_CONTENT_URLS: [&str; 2] =
 
 fn get_dangerously_set_inner_html_prop_value<'a>(
     jsx_opening_element: &'a JSXOpeningElement<'a>,
-) -> Option<&'a ObjectProperty<'a>> {
+) -> Option<&'a ObjectPropertyKind<'a>> {
     let Some(JSXAttributeItem::Attribute(dangerously_set_inner_html_prop)) =
         has_jsx_prop_ignore_case(jsx_opening_element, "dangerouslysetinnerhtml")
     else {
@@ -149,15 +151,10 @@ fn get_dangerously_set_inner_html_prop_value<'a>(
         return None;
     };
 
-    object_expr.properties.iter().find_map(|prop| {
-        if let ObjectPropertyKind::ObjectProperty(html_prop) = prop
-            && html_prop.key.is_specific_id("__html")
-        {
-            Some(&**html_prop)
-        } else {
-            None
-        }
-    })
+    object_expr
+        .properties
+        .iter()
+        .find(|prop| prop.key().is_some_and(|key| key.is_specific_id("__html")))
 }
 
 #[test]

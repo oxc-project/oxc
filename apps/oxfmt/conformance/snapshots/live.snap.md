@@ -183,7 +183,7 @@
 
 ## angular
 
-### Option 1: 472/477 (98.95%)
+### Option 1: 790/804 (98.26%)
 
 ```json
 {"printWidth":80}
@@ -199,8 +199,26 @@
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
 - [externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html](diffs/angular/externals__angular-devtools__src__app__demo-app__todo__home__todos.component.html.md)
   - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/auth/sso/sso-manage.component.html](diffs/angular/externals__bitwarden-license-web__auth__sso__sso-manage.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/pam/approvals/withdraw-approval-dialog/withdraw-approval-dialog.component.html](diffs/angular/externals__bitwarden-license-web__pam__approvals__withdraw-approval-dialog__withdraw-approval-dialog.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-history.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-history.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#interpolation-in-broken-parent
+- [externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-job-drawer/rotation-job-drawer.component.html](diffs/angular/externals__bitwarden-license-web__pam__rotation__managed-credentials__rotation-job-drawer__rotation-job-drawer.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#interpolation-in-broken-parent
+- [externals/bitwarden-web/admin-console/organizations/shared/components/collection-dialog/collection-dialog.component.html](diffs/angular/externals__bitwarden-web__admin-console__organizations__shared__components__collection-dialog__collection-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-root-chain-not-indented
+- [externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__change-plan-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
+- [externals/bitwarden-web/billing/organizations/churn-mitigation-offer-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__churn-mitigation-offer-dialog.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
+- [externals/bitwarden-web/billing/organizations/organization-plans.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-plans.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
+- [externals/bitwarden-web/billing/organizations/organization-subscription-cloud.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__organization-subscription-cloud.component.html.md)
+  - crates/oxc_formatter_htmlish/DIVERGENCES.md#interpolation-element-as-text
 
-### Option 2: 476/477 (99.79%)
+### Option 2: 802/804 (99.75%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -208,6 +226,8 @@
 
 - [externals/angular-components/dev-app/input/input-demo.component.html](diffs/angular/externals__angular-components__dev-app__input__input-demo.component.html.md)
   - apps/oxfmt/DIVERGENCES.md#js-in-angular-action-without-parens
+- [externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html](diffs/angular/externals__bitwarden-web__billing__organizations__change-plan-dialog.component.html.md)
+  - apps/oxfmt/DIVERGENCES.md#js-in-angular-pipe-operand-as-root
 
 ## svelte
 
@@ -393,12 +413,14 @@
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
 
-### Option 2: 301/302 (99.67%)
+### Option 2: 300/302 (99.34%)
 
 ```json
 {"printWidth":100,"tabWidth":4,"proseWrap":"always"}
 ```
 
+- [externals/aws-cloudformation-templates/EC2/ec2_with_waitcondition_template.yaml](diffs/yaml/externals__aws-cloudformation-templates__EC2__ec2_with_waitcondition_template.yaml.md)
+  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-explicit-indent
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
 
@@ -481,11 +503,8 @@
 
 ## jsdoc
 
-### Option 1: 369/370 (99.73%)
+### Option 1: 370/370 (100.00%)
 
 ```json
 {"printWidth":100}
 ```
-
-- [externals/svelte/compiler/print/index.js](diffs/jsdoc/externals__svelte__compiler__print__index.js.md)
-  - ❓unclassified

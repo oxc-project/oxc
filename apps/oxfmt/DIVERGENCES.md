@@ -612,10 +612,13 @@ Prettier prints it in parens, which makes it the one value `b`, or makes the cod
 In parens, it is one value, and formats as Prettier does (`(a, b)`):
 the source's (`{{ (a,b) }}`), or Vue's own, around `v-if`, `v-else-if` and an event handler's expression (`$event => (…)`).
 
-## js-in-vue-interpolation-in-broken-parent
+## interpolation-in-broken-parent
 
 - Why: uniform-rule (same construct, same output: `{{ }}` in a `<div>`; prettier/prettier#11406)
 - Pin: `conformance/fixtures/js-in-vue/interpolation-in-broken-parent.vue`
+- Conformance:
+  - `externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-history.component.html`
+  - `externals/bitwarden-license-web/pam/rotation/managed-credentials/rotation-job-drawer/rotation-job-drawer.component.html`
 
 ```vue
 <!-- input -->
@@ -651,9 +654,54 @@ the source's (`{{ (a,b) }}`), or Vue's own, around `v-if`, `v-else-if` and an ev
 </template>
 ```
 
-`{{ }}` keeps its expression on its line when it fits, in an element that puts each child on its own line
-(`ul`, `ol`, `select`, `display: table*`) as in any other.
+`{{ }}` (Vue's and Angular's) keeps its expression on its line when it fits, in an element that puts each child on its own line
+(`ul`, `ol`, `select`, `display: table*`: Angular's `<caption>` too) as in any other.
 Prettier lays out such children in the parent's group, which always breaks, so its interpolation always breaks too.
+
+## interpolation-own-group
+
+- Why: invariant
+- Pin: `conformance/fixtures/js-in-vue/interpolation-own-group.vue`
+- Conformance:
+  - `externals/prettier/angular/control-flow/for.html` (`first={{ first }}`)
+
+```vue
+<!-- input (printWidth: 80) -->
+<template>
+  <div>
+    <div>
+      {{ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }} &times;
+      {{ b }} =
+    </div>
+  </div>
+</template>
+
+<!-- ours -->
+<template>
+  <div>
+    <div>
+      {{ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }}
+      &times; {{ b }} =
+    </div>
+  </div>
+</template>
+
+<!-- prettier -->
+<template>
+  <div>
+    <div>
+      {{
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      }}
+      &times; {{ b }} =
+    </div>
+  </div>
+</template>
+```
+
+A `{{ }}` in Vue or Angular breaks only when it does not fit on its own, whatever follows it.
+Prettier groups it with the separator after it, so a following word that does not fit breaks the `{{ }}` too; the next pass joins it again: not a fixpoint.
+Where Prettier's output is a fixpoint (`for.html`, where the separator before it breaks instead), the same rule holds: uniform-rule (same construct, same output: a `{{ }}` a line break follows, which Prettier prints on one line).
 
 ## js-in-vue-object-before-double-brace
 
@@ -715,6 +763,7 @@ Prettier does it for a property's value only.
   - `externals/prettier/angular/angular/real-world.component.html` (`printWidth: 1`)
   - `externals/prettier/angular/expression/logical-expressions.html`
   - `externals/ng-zorro-antd/components/transfer/transfer-list.component.ts`
+  - `externals/bitwarden-web/admin-console/organizations/shared/components/collection-dialog/collection-dialog.component.html`
 
 ```html
 <!-- input -->
@@ -771,6 +820,9 @@ Prettier indents it in Angular's `{{ }}` and actions only (an action's in the pa
 
 - Why: uniform-rule (same construct, same output: the chain without the pipe)
 - Pin: `conformance/fixtures/js-in-angular/pipe-operand-as-root.component.html`
+- Conformance:
+  - `externals/bitwarden-web/billing/organizations/change-plan-dialog.component.html`
+  - `externals/bitwarden-web/billing/organizations/organization-plans.component.html`
 
 ```html
 <!-- input -->
@@ -1537,14 +1589,14 @@ Prettier keeps it in html-in-js, css-in-js and markdown-in-js, but a gql-in-js p
 ```
 
 A `style` attribute's last declaration prints its `;` only when the attribute breaks, whether a comment follows or not.
-Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#keyframe-selector-comment-list`;
+Same rule as `crates/oxc_formatter_css/DIVERGENCES.md#commented-as-uncommented`;
 the `;` is a terminator, so the comment may sit where it was (`crates/oxc_formatter_css/AGENTS.md` "Placement invariants").
 Prettier prints the `;` when a comment follows: its last-declaration check counts the comment as a node.
 
 ## character-reference-in-code-as-written
 
 - Why: semantics (the HTML parser reads `&amp;` as `&` before the code runs)
-- Pin: `conformance/fixtures/html/character-reference-in-code-as-written.html`
+- Pin: `conformance/fixtures/html/character-reference-in-code-as-written.html`, `conformance/fixtures/js-in-vue/character-reference-in-interpolation-as-written.vue`
 
 ```html
 <!-- input -->
@@ -1567,6 +1619,8 @@ Prettier prints the `;` when a comment follows: its last-declaration check count
 An attribute value formatted as code (`style`, `on*`, a Vue directive, an Angular `[x]`) prints as written when it holds a character reference, `&name;` or `&#…`:
 its reader decodes the reference first (`x = a & b`), and the child would format its text as code.
 `&quot;` and `&apos;` are read back before, so they still format.
+A Vue or Angular `{{ }}` prints as written when it holds a reference to a quote (`&quot;`, `&apos;`, `&#34;`, `&#39;`), which its reader decodes first too, as the parser reads it (`Interpolation::decodes_quote`: Angular's with its `;`, Vue's as HTML's, `&quot` too):
+a string re-quoted around one reads otherwise (`'&quot;'` printed `"&quot;"` reads `"""`); any other reference is text in a string, and no code elsewhere.
 Prettier formats the text, which makes `amp` a name and its `;` the end of a statement.
 
 ## doctype-case-in-script

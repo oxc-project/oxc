@@ -76,9 +76,17 @@ fn test_vars_simple() {
         ("console.log(a ? function b() {} : c)", None),
         ("console.log(a ? b : function c() {})", None),
         ("cb => (cb(), 0)", None),
+        // `vars: local` skips the global scope of a script
+        (
+            "var unused = 1; let unusedLet; function unusedFn() {} class UnusedClass {}",
+            Some(json!([{ "vars": "local" }])),
+        ),
     ];
     let fail = vec![
         ("let a = 1", None),
+        // the root scope of a module is not global
+        ("var unused = 1; export {};", Some(json!([{ "vars": "local" }]))),
+        ("let unused;", Some(json!([{ "varsIgnorePattern": "" }]))),
         ("let a: number = 1", None),
         ("let a = 1; a = 2", None),
         (
@@ -155,6 +163,12 @@ fn test_vars_simple() {
         ),
         // type annotations do not get clobbered
         ("let x: number = 1; x = 2;", "let _x: number = 1; _x = 2;", None, FixKind::DangerousFix),
+        // statement bodies are replaced with an empty statement
+        ("if (true) var a = 1;", "if (true) ;", None, FixKind::DangerousSuggestion),
+        ("if (x) f(); else var a = 1;", "if (x) f(); else ;", None, FixKind::DangerousSuggestion),
+        ("while (x) var a = 1;", "while (x) ;", None, FixKind::DangerousSuggestion),
+        ("for (;;) var a = 1;", "for (;;) ;", None, FixKind::DangerousSuggestion),
+        ("label: var a = 1;", "label: ;", None, FixKind::DangerousSuggestion),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
@@ -507,6 +521,18 @@ fn test_vars_destructure() {
         ),
         ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
         (
+            "const { a\u{feff}, b } = obj; f(b)",
+            "const { b } = obj; f(b)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const [a,\u{feff}b] = arr; f(a)",
+            "const [a] = arr; f(a)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
             "const [a, b, c, d, e] = arr; f(a, e)",
             "const [a, ,c, ,e] = arr; f(a, e)",
             None,
@@ -560,6 +586,13 @@ fn test_vars_catch() {
             "try {} catch(_e) { }",
             Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }])),
         ),
+        // a defaulted element is not a direct array destructure
+        (
+            "try { throw [1] } catch ([error = 0]) { console.log(error) }",
+            Some(
+                json!([{ "caughtErrors": "none", "destructuredArrayIgnorePattern": "^error$", "reportUsedIgnorePattern": true }]),
+            ),
+        ),
     ];
 
     let fail = vec![
@@ -583,6 +616,7 @@ fn test_vars_catch() {
         ("function f() { try { throw 0 } catch (e) { var e = 1; console.log(e) } } f();", None),
         // The catch parameter is unused, but the `var` initializer writes it.
         ("function f() { try { throw 0 } catch (e) { var e = 1 } return e } f();", None),
+        ("try { throw { keep: 1 } } catch ({ unused, keep }) { console.log(keep) }", None),
     ];
 
     // these suggestion fixes are safe
@@ -594,7 +628,14 @@ fn test_vars_catch() {
             None,
             FixKind::Suggestion,
         ),
-        ("try {} catch ({ msg }) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        // destructuring patterns are kept, since they bind other names and can throw
+        ("try {} catch ({ msg }) { }", "try {} catch ({ msg }) { }", None, FixKind::Suggestion),
+        (
+            "try { throw { keep: 1 } } catch ({ unused, keep }) { console.log(keep) }",
+            "try { throw { keep: 1 } } catch ({ unused, keep }) { console.log(keep) }",
+            None,
+            FixKind::Suggestion,
+        ),
         // spacing
         ("try {} catch (e) { }", "try {} catch  { }", None, FixKind::Suggestion),
         ("try {} catch(e){ }", "try {} catch{ }", None, FixKind::Suggestion),
@@ -1269,6 +1310,15 @@ fn test_arguments() {
                 json!([{ "args": "after-used", "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }]),
             ),
         ),
+        // ignored bindings in later parameters do not make earlier parameters used
+        (
+            "export function f(unused, [_ignored]) {}",
+            Some(json!([{ "args": "after-used", "destructuredArrayIgnorePattern": "^_" }])),
+        ),
+        (
+            "export function f(unused, { a, ...rest }) {}",
+            Some(json!([{ "args": "after-used", "ignoreRestSiblings": true }])),
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
@@ -1870,9 +1920,14 @@ fn test_loops() {
         "for (let len = 10;; len++) {}",
         "for (let len = 10; len < 0; len += 1) {}",
         "for (const _unused of []) {}",
+        "export function f(rows) { let x; for (x of rows) return; }",
     ];
 
-    let fail: Vec<&str> = vec!["for (let len = 10;;) {}"];
+    let fail: Vec<&str> = vec![
+        "for (let len = 10;;) {}",
+        "export function f(rows) { let x; for ([x] of rows) return; }",
+        "export function f(rows) { let x; for ({ x } of rows) return; }",
+    ];
     let fix = vec![
         ("for (const unused of arr) {}", "for (const _unused of arr) {}"),
         ("for (const unused in arr) {}", "for (const _unused in arr) {}"),
@@ -2017,6 +2072,15 @@ fn test_ignore() {
         // top-level var matches default _ prefix and is used — but reportUsedIgnorePattern
         // only fires when varsIgnorePattern is explicitly set, not the default prefix
         ("const _x = 1; console.log(_x)", Some(json!([{ "reportUsedIgnorePattern": true }]))),
+        // exporting a declaration does not use it
+        (
+            "export const _api = 1;",
+            Some(json!([{ "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true }])),
+        ),
+        (
+            "export function _api() {}",
+            Some(json!([{ "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -2064,6 +2128,19 @@ fn test_ignore() {
         (
             "try { foo() } catch (_err) { console.error(_err) }",
             Some(json!([{ "reportUsedIgnorePattern": true, "caughtErrorsIgnorePattern": "^_" }])),
+        ),
+        (
+            "export const _api = 1; console.log(_api);",
+            Some(json!([{ "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true }])),
+        ),
+        (
+            "const _api = 1; export { _api };",
+            Some(json!([{ "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true }])),
+        ),
+        // a defaulted element is not a direct array destructure
+        (
+            "const [_a = 0, b] = arr; console.log(b)",
+            Some(json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ),
     ];
 

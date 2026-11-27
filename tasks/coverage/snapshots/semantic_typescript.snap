@@ -2,7 +2,7 @@ commit: 01f1a759
 
 semantic_typescript Summary:
 AST Parsed     : 5856/5856 (100.00%)
-Positive Passed: 4208/5856 (71.86%)
+Positive Passed: 4214/5856 (71.96%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -25975,20 +25975,6 @@ Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Mup", "require"]
 
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(7): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(7): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(8): Some(ScopeId(0))
-
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/controlFlow/constLocalsInFunctionExpressions.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["f1", "f2", "f3", "f4", "f5", "getStringOrNumber"]
@@ -26402,11 +26388,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Something"]
 
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/class/decoratorInstantiateModulesInFunctionBodies.ts
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(5): Some(ScopeId(0))
-
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/class/decoratorOnClass1.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "dec"]
@@ -26546,18 +26527,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/d
 Bindings mismatch:
 after transform: ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_decorateParam", "_x", "_x2", "decorator"]
 rebuilt        : ScopeId(0): ["C1", "C2", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_decorateParam", "_x", "_x2"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(4): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(4))
-rebuilt        : ScopeId(8): Some(ScopeId(0))
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -26702,11 +26671,8 @@ rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/decoratorInAmbientContext.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_b", "_decorate", "_decorateMetadata", "b", "decorator"]
-rebuilt        : ScopeId(0): ["Foo", "_b", "_decorate", "_decorateMetadata", "b"]
-Symbol reference IDs mismatch for "_b":
-after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12)]
-rebuilt        : SymbolId(2): [ReferenceId(13)]
+after transform: ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "b", "decorator"]
+rebuilt        : ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "b"]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -26744,74 +26710,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Function", "Object"]
 rebuilt        : ["Function", "Object", "decorator"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(15): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(12): Some(ScopeId(2))
-rebuilt        : ScopeId(15): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(14): Some(ScopeId(2))
-rebuilt        : ScopeId(16): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(17): Some(ScopeId(2))
-rebuilt        : ScopeId(17): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(2))
-rebuilt        : ScopeId(18): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(22): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(19): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(22): Some(ScopeId(2))
-rebuilt        : ScopeId(19): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(2))
-rebuilt        : ScopeId(20): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(21): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(2))
-rebuilt        : ScopeId(21): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(10): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(22): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(10): Some(ScopeId(2))
-rebuilt        : ScopeId(22): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(2))
-rebuilt        : ScopeId(23): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(20): Some(ScopeId(2))
-rebuilt        : ScopeId(24): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(2))
-rebuilt        : ScopeId(26): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/dynamicImport/importCallExpression4ES2020.ts
 Bindings mismatch:
@@ -28072,12 +27970,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/e
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_f2", "dec", "f"]
 rebuilt        : ScopeId(0): ["A", "B", "C", "_a", "_classPrivateFieldGet", "_classPrivateFieldInitSpec", "_decorate", "_decorateMetadata", "_defineProperty", "_f", "_f2"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(7): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(7): Some(ScopeId(0))
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -28806,128 +28698,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["module"]
 rebuilt        : ["dec", "module"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
-Scope flags mismatch:
-after transform: ScopeId(19): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(19): Some(ScopeId(2))
-rebuilt        : ScopeId(23): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(21): Some(ScopeId(2))
-rebuilt        : ScopeId(24): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(23): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(25): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(23): Some(ScopeId(2))
-rebuilt        : ScopeId(25): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(25): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(25): Some(ScopeId(2))
-rebuilt        : ScopeId(26): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(27): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(27): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(27): Some(ScopeId(2))
-rebuilt        : ScopeId(27): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(29): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(28): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(29): Some(ScopeId(2))
-rebuilt        : ScopeId(28): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(31): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(29): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(31): Some(ScopeId(2))
-rebuilt        : ScopeId(29): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(32): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(30): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(32): Some(ScopeId(2))
-rebuilt        : ScopeId(30): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(33): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(31): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(33): Some(ScopeId(2))
-rebuilt        : ScopeId(31): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(34): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(32): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(34): Some(ScopeId(2))
-rebuilt        : ScopeId(32): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(33): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(33): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(34): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(2))
-rebuilt        : ScopeId(34): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(35): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(7): Some(ScopeId(2))
-rebuilt        : ScopeId(35): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(9): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(36): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(9): Some(ScopeId(2))
-rebuilt        : ScopeId(36): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(37): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(11): Some(ScopeId(2))
-rebuilt        : ScopeId(37): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(38): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(13): Some(ScopeId(2))
-rebuilt        : ScopeId(38): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(39): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(15): Some(ScopeId(2))
-rebuilt        : ScopeId(39): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(40): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(16): Some(ScopeId(2))
-rebuilt        : ScopeId(40): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(41): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(17): Some(ScopeId(2))
-rebuilt        : ScopeId(41): Some(ScopeId(0))
-Scope flags mismatch:
-after transform: ScopeId(18): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(42): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(18): Some(ScopeId(2))
-rebuilt        : ScopeId(42): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.2.ts
 Bindings mismatch:
@@ -32537,16 +32307,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/s
 Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.ts
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(2))
-rebuilt        : ScopeId(8): Some(ScopeId(5))
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForAwaitOf.ts
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsNamedEvaluationDecoratorsAndClassFields.ts
 Bindings mismatch:

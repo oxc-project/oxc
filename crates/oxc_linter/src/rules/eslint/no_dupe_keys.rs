@@ -1,14 +1,15 @@
 use std::borrow::Cow;
 
+use rustc_hash::{FxBuildHasher, FxHashMap};
+use smallvec::SmallVec;
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind},
+    ast::{ObjectMethodKind, ObjectProperty, ObjectPropertyKind, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxBuildHasher, FxHashMap};
-use smallvec::SmallVec;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -17,7 +18,7 @@ fn no_dupe_keys_diagnostic(first: Span, second: Span, key: &str) -> OxcDiagnosti
         .with_help("Consider removing the duplicated key")
         .with_labels([
             first.label("Key is first defined here"),
-            second.label("and duplicated here"),
+            second.primary_label("and duplicated here"),
         ])
 }
 
@@ -74,6 +75,16 @@ declare_oxc_lint!(
 
 const INLINE_CAPACITY: usize = 8;
 
+/// Spans of the latest keys defining the getter and setter of a property name. Properties that
+/// are not accessors define both.
+#[derive(Debug, Default, Clone, Copy)]
+struct Definitions {
+    get: Option<Span>,
+    set: Option<Span>,
+}
+
+type KeyEntry<'a> = (StaticPropertyName<'a>, Definitions);
+
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ObjectExpression(obj_expr) = node.kind() else {
@@ -83,53 +94,65 @@ impl Rule for NoDupeKeys {
         if len <= 1 {
             return;
         }
-        let mut inline: SmallVec<
-            [(StaticPropertyName<'_>, (PropertyKind, Span)); INLINE_CAPACITY],
-        > = SmallVec::new();
+        let mut inline: SmallVec<[KeyEntry<'_>; INLINE_CAPACITY]> = SmallVec::new();
         // Bound linear searches to small objects; retain hashing for larger ones.
         let mut map = FxHashMap::with_capacity_and_hasher(
             if len > INLINE_CAPACITY { len } else { 0 },
             FxBuildHasher,
         );
         for prop in &obj_expr.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+            let (key, defines_get, defines_set) = match prop {
+                ObjectPropertyKind::ObjectProperty(prop) => (&prop.key, true, true),
+                ObjectPropertyKind::MethodProperty(prop) => match prop.kind {
+                    ObjectMethodKind::Method => (&prop.key, true, true),
+                    ObjectMethodKind::Get => (&prop.key, true, false),
+                    ObjectMethodKind::Set => (&prop.key, false, true),
+                },
+                ObjectPropertyKind::SpreadProperty(_) => continue,
+            };
+            let name = if let PropertyKey::BooleanLiteral(lit) = key {
+                StaticPropertyName::from(lit.as_str())
+            } else if let Some(name) = key.static_name() {
+                name
+            } else {
                 continue;
             };
-            let Some(name) = prop.key.static_name() else {
-                continue;
-            };
-            if is_proto_setter_property(prop, &name) {
+            if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                && is_proto_setter_property(prop, &name)
+            {
                 continue;
             }
-            let value = (prop.kind, prop.key.span());
-            let previous = if len <= INLINE_CAPACITY {
-                if let Some((_, previous)) = inline.iter_mut().find(|(key, _)| *key == name) {
-                    Some(std::mem::replace(previous, value))
-                } else {
-                    inline.push((name, value));
-                    None
-                }
+            let definitions = if len <= INLINE_CAPACITY {
+                let index = inline.iter().position(|(key, _)| *key == name).unwrap_or_else(|| {
+                    inline.push((name, Definitions::default()));
+                    inline.len() - 1
+                });
+                &mut inline[index].1
             } else {
-                map.insert(name, value)
+                map.entry(name).or_default()
             };
-            if let Some((prev_kind, prev_span)) = previous
-                && (prev_kind == PropertyKind::Init
-                    || prop.kind == PropertyKind::Init
-                    || prev_kind == prop.kind)
-            {
-                let name = prop_key_name(&prop.key, ctx);
-                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), &name));
+            let previous =
+                [definitions.get.filter(|_| defines_get), definitions.set.filter(|_| defines_set)]
+                    .into_iter()
+                    .flatten()
+                    .max_by_key(|span| span.start);
+            let span = key.span();
+            if defines_get {
+                definitions.get = Some(span);
+            }
+            if defines_set {
+                definitions.set = Some(span);
+            }
+            if let Some(previous) = previous {
+                let name = prop_key_name(key, ctx);
+                ctx.diagnostic(no_dupe_keys_diagnostic(previous, span, &name));
             }
         }
     }
 }
 
 fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &StaticPropertyName<'_>) -> bool {
-    name == "__proto__"
-        && prop.kind == PropertyKind::Init
-        && !prop.key.is_computed()
-        && !prop.shorthand
-        && !prop.method
+    name == "__proto__" && !prop.key.is_computed() && !prop.shorthand
 }
 
 /// Display spelling for the diagnostic.
@@ -191,6 +214,12 @@ fn test() {
         r#"var x = { "\uD800": 1, "\uD800\uDC00": 2 };"#,
         r#"var x = { "\uD800": 1, "\\uD800": 2 };"#,
         r#"var x = { "\uDC00\uD800": 1, "𐀀": 2 };"#,
+        r#"var x = { "true": 0, [false]: 1 };"#,
+        "var x = {
+            a: 1,
+            // eslint-disable-next-line no-dupe-keys
+            a: 2,
+        };",
     ];
 
     let fail = vec![
@@ -226,6 +255,17 @@ fn test() {
         r#"var x = { "\uDC00": 1, ["\uDC00"]: 2 };"#,
         r#"var x = { "a\uD800b": 1, [`a\uD800b`]: 2 };"#,
         r#"var x = { "\uD800\uDC00": 1, "𐀀": 2 };"#,
+        "var x = { get x() {}, set x(v) {}, get x() {} };",
+        "var x = { set x(v) {}, get x() {}, set x(v) {} };",
+        "var x = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, get x() {}, set x(v) {}, get x() {} };",
+        "var x = { get a() {}, set a(v) {}, a: 1 };",
+        r#"var x = { "true": 0, [true]: 1 };"#,
+        "var x = { false: 0, [false]: 1 };",
+        "var x = {
+            // eslint-disable-next-line no-dupe-keys
+            a: 1,
+            a: 2,
+        };",
     ];
 
     Tester::new(NoDupeKeys::NAME, NoDupeKeys::PLUGIN, pass, fail).test_and_snapshot();

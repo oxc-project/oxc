@@ -852,7 +852,7 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
 
 ## interpolation-element-as-text
 
-- Why: uniform-rule (same construct, same output: an inline element holding text; prettier/prettier#20134, prettier/prettier#9913, prettier/prettier#14315)
+- Why: uniform-rule (same construct, same output: an inline element holding text; prettier/prettier#20134, prettier/prettier#20440, prettier/prettier#9913, prettier/prettier#14315)
 - Pin: `tests/fixtures/vue/interpolation-element-as-text.vue`
 - Conformance:
   - `externals/prettier/vue/interpolation/ng-non-bindable.vue` (`<template><span>{{ }}</span></template>`)
@@ -860,6 +860,10 @@ Where the render layer ignores the gap (next to a block), and at text edges, the
   - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/profiler/recording-timeline/visualizer-controls/visualizer-controls.component.html`
   - `externals/angular-devtools/projects/ng-devtools/src/lib/devtools-tabs/router-tree/router-details-row/route-details-row.component.html`
   - `externals/angular-devtools/src/app/demo-app/todo/home/todos.component.html`
+  - `externals/bitwarden-license-web/auth/sso/sso-manage.component.html`
+  - `externals/bitwarden-license-web/pam/approvals/withdraw-approval-dialog/withdraw-approval-dialog.component.html`
+  - `externals/bitwarden-web/billing/organizations/churn-mitigation-offer-dialog.component.html`
+  - `externals/bitwarden-web/billing/organizations/organization-subscription-cloud.component.html`
 
 ```vue
 <!-- input -->
@@ -978,16 +982,24 @@ Prettier empties it when it holds only JS whitespace (`/^\s*$/`), and drops a ch
 - Why: semantics (whitespace added around a block marker renders between the content it joins; prettier/prettier#16577, prettier/prettier#19020)
 - Pin: `tests/fixtures/angular/angular-glued-block-markers.component.html`
 - Conformance:
+  - `externals/prettier/angular/control-flow/after-close-tag.html` (`</app-tweet-item>@if`)
   - `externals/prettier/angular/control-flow/chid.html`
+  - `externals/prettier/angular/let-declaration/valid-from-tokenizer-test.html` (`@defer {@let foo = 123 + 456;}`)
 
 ```html
 <!-- input -->
 <p>a@if (x) {b}c</p>
 <span>@if (test) {text}</span>
+<span>
+  @if (test) {text}
+</span>
 
 <!-- ours -->
 <p>a@if (x) {b}c</p>
 <span>@if (test) {text}</span>
+<span>
+  @if (test) {text}
+</span>
 
 <!-- prettier -->
 <p>
@@ -1002,15 +1014,63 @@ Prettier empties it when it holds only JS whitespace (`/^\s*$/`), and drops a ch
     text
   }
 </span>
+<span>
+  @if (test) {
+    text
+  }
+</span>
 ```
 
 An Angular control flow block makes no box: its markers (`@if (x) {`, `}`) render nothing,
 so the whitespace on both sides of a marker is one run between the content around it.
 Where that run is significant and empty, the markers stay glued to their neighbors;
 otherwise a block is laid out on its own lines, as Prettier does.
+The whitespace outside a marker is in the run only in a text next to the block: Angular drops a whitespace-only text (`preserveWhitespaces: false`),
+so `<span>⏎  @if (test) {text}` renders `text` with no space, and its body stays glued; under `preserveWhitespaces: true` (invisible to the formatter) it renders the same.
+A body's edge is outside a marker the same way: Angular drops a whitespace-only text there too,
+so `@if (x) {<icon-x />⏎  }{{ label }}` keeps `}` glued to `{{ label }}`; a text's own edge whitespace is not dropped, so `a@if (x) {b }c` stays on its own lines.
 An empty block's body is in the run too: whitespace there renders only when the block does,
 so it is kept (`a@if (x) { }b`) unless the run has whitespace outside the block, and none is added (`a@if (x) {}@else {}b`).
 Prettier always breaks around a block, which turns `abc` into `a b c` (and adds spaces inside the `span`).
+
+## angular-time-parameter-before-paren
+
+- Why: semantics (Angular reads the whitespace before the `)` as part of the last parameter, and reports a time with it: `Could not parse time value`)
+- Pin: `tests/fixtures/angular/angular-time-parameter-before-paren.component.html`
+- Drop when: `@angular/compiler`'s `parseDeferredTime` trims its value
+
+```html
+<!-- input (printWidth: 80) -->
+@defer (on viewport) {
+  <p>x</p>
+} @loading (after 100000000000000000000000000000ms; minimum 1000000000000000000000000000000000ms) {
+  <p>loading</p>
+}
+
+<!-- ours -->
+@defer (on viewport) {
+  <p>x</p>
+} @loading (
+  after 100000000000000000000000000000ms;
+  minimum 1000000000000000000000000000000000ms) {
+  <p>loading</p>
+}
+
+<!-- prettier -->
+@defer (on viewport) {
+  <p>x</p>
+} @loading (
+  after 100000000000000000000000000000ms;
+  minimum 1000000000000000000000000000000000ms
+) {
+  <p>loading</p>
+}
+```
+
+The parameters of `@placeholder` and `@loading` break as other blocks' do, but the `)` stays right after the last one.
+Angular's lexer ends the last parameter at the `)`, the whitespace before it included,
+and these two blocks read their times with an anchored pattern (`@angular/compiler` 22.2.5's `parseDeferredTime`), so Prettier's output does not compile.
+Other blocks read their parameters through a lexer that skips the whitespace, and keep the `)` on a line of its own.
 
 ## angular-block-name-with-line-break
 
@@ -1176,7 +1236,7 @@ One right after the tag name (`<div // c`) moves to its own line, as after any o
 ```
 
 The content of an element with `i18n` prints as written, a custom ID (`i18n="@@id"`) or not; its start tag is formatted.
-The message's ID is a hash of its text, whitespace included (`@angular/compiler` 22.2.3's `parseTemplate`):
+The message's ID is a hash of its text, whitespace included (`@angular/compiler` 22.2.5's `parseTemplate`):
 `<p i18n>Hello <b>world</b></p>` and `<p i18n>⏎  Hello <b>world</b>⏎</p>` are two messages,
 so reformatting the content silently drops its existing translations.
 So does an attribute's value marked by `i18n-x` (`i18n-title` for `title`), its `{{ }}` too,

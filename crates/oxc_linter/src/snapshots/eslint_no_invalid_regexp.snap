@@ -2,6 +2,52 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:13]
+ 1 │ RegExp(".", "\u0067\u0067");
+   ·             ───────┬──────
+   ·                    ╰── flag 'g' already specified
+   ╰────
+  help: Remove the duplicated 'g' flag from the regular expression flags
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:13]
+ 1 │ RegExp(".", "g\u007a");
+   ·             ────┬────
+   ·                 ╰── flag 'z' is not a valid regular expression flag
+   ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:20]
+ 1 │ new RegExp('.', ('gg'));
+   ·                    ▲
+   ·                    ╰── flag 'g' already specified
+   ╰────
+  help: Remove the duplicated 'g' flag from the regular expression flags
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ new RegExp(('['));
+   ·              ─
+   ╰────
+  help: Add the missing closing delimiter
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:39]
+ 1 │ function make(flags) { return RegExp('[', flags); }
+   ·                                       ─
+   ╰────
+  help: Add the missing closing delimiter
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
+   ╭─[no_invalid_regexp.tsx:1:9]
+ 1 │ RegExp(')', ...flags);
+   ·         ▲
+   ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
+
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
    ╭─[no_invalid_regexp.tsx:1:9]
  1 │ RegExp('[');
