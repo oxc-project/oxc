@@ -4,11 +4,12 @@ use serde::Deserialize;
 use oxc_ast::{AstKind, ast::BlockStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
     context::LintContext,
+    fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -77,32 +78,91 @@ impl Rule for NoEmpty {
                     return;
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
-                    if let AstKind::TryStatement(try_stmt) = parent
-                        && let Some(try_block_stmt) = &try_stmt.finalizer
-                        && try_block_stmt.span == block.span
-                    {
-                        return if try_stmt.handler.is_some()
-                            && let Some(finally_kw_start) = find_finally_start(ctx, block)
+                    match parent {
+                        AstKind::TryStatement(try_stmt)
+                            if try_stmt
+                                .finalizer
+                                .as_ref()
+                                .is_some_and(|finalizer| finalizer.span == block.span) =>
                         {
-                            fixer.delete_range(Span::new(finally_kw_start, block.span.end))
-                        } else {
+                            if try_stmt.handler.is_some()
+                                && let Some(finally_kw_start) = find_finally_start(ctx, block)
+                            {
+                                fixer.delete_range(Span::new(finally_kw_start, block.span.end))
+                            } else {
+                                fixer.noop()
+                            }
+                        }
+                        AstKind::TryStatement(try_stmt)
+                            if try_stmt
+                                .finalizer
+                                .as_ref()
+                                .is_some_and(|finalizer| !finalizer.body.is_empty()) =>
+                        {
                             fixer.noop()
-                        };
+                        }
+                        AstKind::IfStatement(if_stmt) if if_stmt.alternate.is_some() => {
+                            if if_stmt.consequent.span() == block.span {
+                                fixer.noop()
+                            } else {
+                                delete_statement(node, ctx, fixer)
+                            }
+                        }
+                        AstKind::CatchClause(_) => fixer.noop(),
+                        AstKind::TryStatement(_)
+                        | AstKind::IfStatement(_)
+                        | AstKind::WhileStatement(_)
+                        | AstKind::DoWhileStatement(_)
+                        | AstKind::ForStatement(_)
+                        | AstKind::ForInStatement(_)
+                        | AstKind::ForOfStatement(_)
+                        | AstKind::LabeledStatement(_)
+                        | AstKind::WithStatement(_) => {
+                            delete_statement(ctx.nodes().parent_node(node.id()), ctx, fixer)
+                        }
+                        _ => delete_statement(node, ctx, fixer),
                     }
-                    if matches!(parent, AstKind::CatchClause(_)) {
-                        return fixer.noop();
-                    }
-                    fixer.delete(&parent)
                 });
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
                 ctx.diagnostic_with_suggestion(
                     no_empty_diagnostic("switch", switch.span),
-                    |fixer| fixer.delete(switch),
+                    |fixer| delete_statement(node, ctx, fixer),
                 );
             }
             _ => {}
         }
+    }
+}
+
+/// Deletes the statement `node`, keeping the enclosing statement valid:
+/// `if (a) b(); else {}` -> `if (a) b();` and `if (a) while (b) {}` -> `if (a) {}`.
+fn delete_statement<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    fixer: RuleFixer<'_, 'a>,
+) -> RuleFix {
+    let span = node.span();
+    match ctx.nodes().parent_kind(node.id()) {
+        AstKind::IfStatement(if_stmt)
+            if if_stmt.alternate.as_ref().is_some_and(|alternate| alternate.span() == span) =>
+        {
+            let else_span = Span::new(if_stmt.consequent.span().end, span.start);
+            if ctx.has_comments_between(else_span) {
+                fixer.noop()
+            } else {
+                fixer.delete_range(Span::new(else_span.start, span.end))
+            }
+        }
+        AstKind::IfStatement(_)
+        | AstKind::WhileStatement(_)
+        | AstKind::DoWhileStatement(_)
+        | AstKind::ForStatement(_)
+        | AstKind::ForInStatement(_)
+        | AstKind::ForOfStatement(_)
+        | AstKind::LabeledStatement(_)
+        | AstKind::WithStatement(_) => fixer.replace(span, "{}"),
+        _ => fixer.delete_range(span),
     }
 }
 
@@ -221,6 +281,16 @@ fn test() {
             None,
         ),
         ("try{a()}catch(e){b()}//finally\nfinally{}", "try{a()}catch(e){b()}//finally\n", None),
+        ("if (ready) { start(); } else {}", "if (ready) { start(); }", None),
+        ("if (ready) start(); else {}", "if (ready) start();", None),
+        ("if (a) {} else { b(); }", "if (a) {} else { b(); }", None),
+        ("if (a) { b(); } else if (c) {}", "if (a) { b(); }", None),
+        ("if (a) b(); /* c */ else {}", "if (a) b(); /* c */ else {}", None),
+        ("if (a) while (b) {}", "if (a) {}", None),
+        ("if (a) switch (b) {}", "if (a) {}", None),
+        ("function f() { g(); {} }", "function f() { g();  }", None),
+        ("{ g(); {} }", "{ g();  }", None),
+        ("try {} finally { g(); }", "try {} finally { g(); }", None),
     ];
 
     Tester::new(NoEmpty::NAME, NoEmpty::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
