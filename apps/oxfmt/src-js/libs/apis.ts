@@ -37,7 +37,7 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   return loadCached("prettier", async () => {
     const prettier = await import("prettier");
 
-    // NOTE: This is needed for xxx-in-js and xxx-in-md formatting to work correctly.
+    // NOTE: This is needed for `formatEmbeddedDoc()` to work correctly.
     //
     // Prettier internally extends `options` with hidden fields for embedded-formatters during printing.
     // However, `__debug.printToDoc()` runs `normalizeFormatOptions()` which strips unknown keys.
@@ -50,20 +50,13 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
     // there should be no side effects on other calls that don't set these fields.
     // @ts-expect-error: Use internal API
     const { formatOptionsHiddenDefaults } = prettier.__internal;
-    // For every embedded call (angular-in-js, xxx-in-md), as Prettier's `textToDoc()` always sets it.
+    // For every embedded call, as Prettier's `textToDoc()` always sets it.
     // For html-family children, this prevents attribute level formatting from running.
     // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
     // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
     // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
     // but Prettier's `!options.parentParser` check is all-or-nothing.
     formatOptionsHiddenDefaults.parentParser = null;
-    // For angular-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
-    // This is used to decide whether to wrap content with `indent`.
-    // Without this, we'd need either:
-    // - double parse AST
-    // - or flaky traversal of the `Doc` output
-    // to extract the same information, since this hooks into the AST.
-    formatOptionsHiddenDefaults.__onHtmlRoot = null;
 
     return prettier;
   });
@@ -105,8 +98,13 @@ export type FormatEmbeddedDocParam = {
 };
 
 /**
- * Format a non-js code snippet into a Prettier `Doc` JSON string.
- * This makes our printer correctly handle `printWidth` even for embedded code.
+ * Format a part of another file into a Prettier `Doc` JSON string,
+ * which the Rust side converts into its IR, so the part is laid out at its place in the host (`printWidth`, indentation).
+ *
+ * Only for the languages without a Rust formatter (Svelte, Astro, Handlebars, MDX: `PrettierLanguage` on the Rust side),
+ * when another file holds them:
+ * - a Markdown code block (` ```svelte `, ` ```hbs `), Markdown in JS included
+ * - a `<script type="text/x-handlebars-template">` in HTML / Vue, or a Vue block whose `lang` names one
  *
  * @returns `Doc` JSON string
  */
@@ -121,21 +119,12 @@ export async function formatEmbeddedDoc({
   if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
   // Add `astro` parser for ` ```astro ` code blocks in Markdown
   if ("_useAstroPlugin" in options) await setupAstroPlugin(options);
-  // Enable Tailwind CSS plugin for embedded code (e.g., Angular `@Component({ template })` in JS) if needed
+  // Enable Tailwind CSS plugin for embedded code (e.g., a ` ```svelte ` code block in Markdown) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
 
-  const metadata: Record<string, unknown> = {};
-
-  // Every caller is an embedding parent (JS, Markdown), as Prettier's `textToDoc()` sets it:
+  // Every caller is an embedding parent (Markdown, HTML, Vue), as Prettier's `textToDoc()` sets it:
   // see the comment in `loadPrettier()` for rationale. Any truthy value works
   options.parentParser = "OXFMT";
-
-  // angular-in-js specific options
-  if (options.parser === "angular") {
-    // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
-    options.__onHtmlRoot = (root: { children?: unknown[] }) =>
-      (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
-  }
 
   // NOTE: This will throw if:
   // - Specified parser is not available
@@ -144,12 +133,12 @@ export async function formatEmbeddedDoc({
   // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
   const doc = await prettier.__debug.printToDoc(code, options);
 
-  // Serialize as [doc, metadata], handling special values:
+  // Serialize, handling special values:
   // - Symbol group IDs → numeric counters
   // - -Infinity (dedentToRoot) → marker string
   const symbolToNumber = new Map<symbol, number>();
   let nextId = 1;
-  return JSON.stringify([doc, metadata], (_key, value) => {
+  return JSON.stringify(doc, (_key, value) => {
     if (typeof value === "symbol") {
       if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
       return symbolToNumber.get(value);

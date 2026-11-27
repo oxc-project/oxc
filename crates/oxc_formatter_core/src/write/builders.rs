@@ -131,12 +131,20 @@ impl Line {
     /// (see the [if_group_breaks] docs) and for layouts like markdown tables
     /// that break lines without expanding the surrounding structure.
     ///
-    /// Must only be called on [hard_line_break] (debug-asserted).
+    /// On [empty_line], the blank line a broken group keeps without expanding it
+    /// (Prettier's `softline` after a `line`):
+    /// `if_group_breaks(&empty_line().without_expand_parent())`.
+    ///
+    /// Must only be called on [hard_line_break] or [empty_line] (debug-asserted).
     #[must_use]
     pub const fn without_expand_parent(mut self) -> Self {
         match self.mode {
             LineMode::Hard => self.mode = LineMode::HardWithoutExpand,
-            _ => debug_assert!(false, "without_expand_parent is only valid on hard_line_break()"),
+            LineMode::Empty => self.mode = LineMode::EmptyWithoutExpand,
+            _ => debug_assert!(
+                false,
+                "without_expand_parent is only valid on hard_line_break() or empty_line()"
+            ),
         }
         self
     }
@@ -549,17 +557,41 @@ pub fn mark_as_root<'ast, C, Content>(content: &Content) -> MarkAsRoot<'_, 'ast,
 where
     Content: Format<'ast, C>,
 {
-    MarkAsRoot { content: Argument::new(content) }
+    MarkAsRoot { content: Argument::new(content), embedded: false }
+}
+
+/// A [mark_as_root] for another language's IR embedded in `content` (a Markdown code block's, a `markdown` template's).
+///
+/// The child's column 0 is this indention, so a newline inside a `Text` resumes here
+/// (Prettier's `markAsRoot` around `replaceEndOfLine(doc)`).
+///
+/// Only for a child whose source text is relative to this column,
+/// i.e. the host strips the embedding's indentation before dispatching (a code block's fence, a `markdown` template's common indentation).
+/// A child given its text with the absolute indentation (`css` / `html` templates) must not be wrapped:
+/// its `Text` already carries those columns, and resuming here would add the indention on every pass.
+///
+/// - Outside one, a newline inside a `Text` prints as is (column 0)
+/// - The `Text` stays one element, so a `text(..).without_expand_parent()` still expands nothing
+/// - A `mark_as_root` the child opens moves only where its [literal_line_break] and [dedent_to_root] return,
+///   its `Text` newlines still resume here (Prettier's markdown roots only the embedding)
+/// - A nested `embedded_root` takes over
+#[inline]
+pub fn embedded_root<'ast, C, Content>(content: &Content) -> MarkAsRoot<'_, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    MarkAsRoot { content: Argument::new(content), embedded: true }
 }
 
 #[derive(Copy, Clone)]
 pub struct MarkAsRoot<'a, 'ast, C> {
     content: Argument<'a, 'ast, C>,
+    embedded: bool,
 }
 
 impl<'ast, C> Format<'ast, C> for MarkAsRoot<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        f.write_element(FormatElement::Tag(Tag::StartMarkAsRoot));
+        f.write_element(FormatElement::Tag(Tag::StartMarkAsRoot(self.embedded)));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(Tag::EndMarkAsRoot));
     }

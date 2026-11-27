@@ -1,5 +1,4 @@
 use rustc_hash::{FxHashMap, FxHashSet};
-
 use schemars::JsonSchema;
 use serde::Deserialize;
 use smallvec::SmallVec;
@@ -65,7 +64,8 @@ declare_oxc_lint!(
     suspicious,
     config = NoUnmodifiedLoopCondition,
     version = "1.48.0",
-    short_description = "Disallow references in loop conditions that are never modified within the loop.",
+    short_description =
+        "Disallow references in loop conditions that are never modified within the loop.",
 );
 
 impl Rule for NoUnmodifiedLoopCondition {

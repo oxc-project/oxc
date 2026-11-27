@@ -5,7 +5,18 @@ function useFoo(props: {value: {x: string; y: string} | null}) {
   return useNoAlias(value?.x, value?.y) ? {} : null;
 }
 
-export const FIXTURE_ENTRYPONT = {
-  fn: useFoo,
-  props: [{value: null}],
+
+
+
+const sproutInputs = [
+  [{value:null}],
+  [{value:{x:"a",y:"b"}}],
+];
+export const FIXTURE_ENTRYPOINT = {
+  fn: args => {
+    "use no memo";
+    return useFoo(args[0]);
+  },
+  params: [sproutInputs[0]],
+  sequentialRenders: [sproutInputs[0], sproutInputs[0], ...sproutInputs.slice(1), sproutInputs.at(-1), sproutInputs[0]],
 };

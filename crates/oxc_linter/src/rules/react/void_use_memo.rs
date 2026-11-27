@@ -48,7 +48,8 @@ declare_react_compiler_lint!(
     react,
     correctness,
     version = "1.79.0",
-    short_description = "Validates that `useMemo()` callbacks return a value and the result is used.",
+    short_description =
+        "Validates that `useMemo()` callbacks return a value and the result is used.",
 );
 
 impl Rule for VoidUseMemo {

@@ -12,6 +12,7 @@ use oxc_ast::{
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{
     context::LintContext,
@@ -215,7 +216,7 @@ impl Rule for NoDuplicates {
                             match import_entry.import_name {
                                 ImportImportName::Name(_) => u8::from(!self.prefer_inline),
                                 ImportImportName::NamespaceObject => 2,
-                                ImportImportName::Default(_) => 3,
+                                ImportImportName::Default(_) | ImportImportName::Source(_) => 3,
                             }
                         } else {
                             match import_entry.import_name {
@@ -466,7 +467,10 @@ fn merge_imports_fix<'a>(
         Some((open, close)) => ctx.source_range(Span::new(open + 1, close)),
         None => "",
     };
-    let first_has_trailing_comma = !first_is_empty && first_brace_content.trim_end().ends_with(',');
+    let first_has_trailing_comma = !first_is_empty
+        && braces.is_some_and(|(open, close)| {
+            ctx.source_range(Span::new(open + 1, last_token_end(ctx, open, close))).ends_with(',')
+        });
 
     let mut existing: FxHashSet<&str> = FxHashSet::default();
     if !first_is_empty {
@@ -566,6 +570,15 @@ fn build_specifiers_text<'a>(
             if trimmed.is_empty() {
                 continue;
             }
+            if is_only_comments(trimmed) {
+                if existing.insert(trimmed) {
+                    specifier_text.push_str(trimmed);
+                    if ends_with_line_comment(trimmed) {
+                        specifier_text.push('\n');
+                    }
+                }
+                continue;
+            }
             let with_type: Cow<str> = if inline_type_imports && specifier.is_type {
                 if ends_with_line_comment(trimmed) {
                     Cow::Owned(format!("type {trimmed}\n"))
@@ -607,6 +620,38 @@ fn ends_with_line_comment(text: &str) -> bool {
     text.rsplit('\n').next().unwrap_or(text).contains("//")
 }
 
+/// The end of the last token before `close`, skipping whitespace and comments, like
+/// `getTokenBefore(closeBrace)` in eslint-plugin-import. E.g. the `,` in `{ a, /* b */ }`.
+fn last_token_end(ctx: &LintContext, open: u32, close: u32) -> u32 {
+    let mut end = close;
+    loop {
+        let text = ctx.source_range(Span::new(open + 1, end)).trim_end();
+        let text_end = open + 1 + u32::try_from(text.len()).unwrap();
+        match ctx.semantic().comments_range(open + 1..text_end).next_back() {
+            Some(comment) if comment.span.end >= text_end => end = comment.span.start,
+            _ => return text_end,
+        }
+    }
+}
+
+/// Whether `text` is only comments, e.g. after the trailing comma in `{ a, /* b */ }`.
+fn is_only_comments(text: &str) -> bool {
+    let mut rest = text.trim_start();
+    while !rest.is_empty() {
+        if let Some(after) = rest.strip_prefix("/*") {
+            let Some(end) = after.find("*/") else {
+                return false;
+            };
+            rest = after[end + 2..].trim_start();
+        } else if let Some(after) = rest.strip_prefix("//") {
+            rest = after.find(is_line_terminator).map_or("", |i| &after[i..]).trim_start();
+        } else {
+            return false;
+        }
+    }
+    true
+}
+
 fn strip_leading_inline_whitespace(text: &str) -> &str {
     text.trim_start_matches(|c: char| c.is_whitespace() && c != '\n')
 }
@@ -624,9 +669,23 @@ fn merge_into_braces<'a>(
         fixer.replace(Span::new(open + 1, close), specifiers_text.to_string())
     } else if trailing_whitespace_len > 0 {
         let trailing = &content[content.len() - trailing_whitespace_len..];
+        let content_end = close - u32::try_from(trailing_whitespace_len).unwrap();
+        let after_line_comment = ctx
+            .semantic()
+            .comments_range(open + 1..content_end)
+            .next_back()
+            .is_some_and(|comment| comment.is_line() && comment.span.end >= content_end);
+        let separator = if after_line_comment
+            && !specifiers_text.is_empty()
+            && !specifiers_text.starts_with('\n')
+        {
+            "\n"
+        } else {
+            ""
+        };
         fixer.replace(
-            Span::new(close - u32::try_from(trailing_whitespace_len).unwrap(), close + 1),
-            format!("{specifiers_text}{trailing}}}"),
+            Span::new(content_end, close + 1),
+            format!("{separator}{specifiers_text}{trailing}}}"),
         )
     } else {
         fixer.insert_text_before_range(Span::empty(close), specifiers_text.to_string())
@@ -1147,6 +1206,66 @@ import type {Bar // comment
 import { /* }{ */ y } from '}{';",
             r"import {x,/* }{ */ y} from '}{';
 ",
+            None,
+        ),
+        (
+            "import {\n  a, // comment\n} from 'foo';\nimport { b } from 'foo';",
+            "import {\n  a, // comment\nb\n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import {\n  a, /* comment */\n} from 'foo';\nimport { b } from 'foo';",
+            "import {\n  a, /* comment */b\n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, // comment  \n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, // comment\nb  \n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, //   \n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, //\nb   \n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a, /* first */ // comment \t\n} from 'foo';\nimport { b } from 'foo';",
+            "import { a, /* first */ // comment\nb \t\n} from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\n} from 'foo';\nimport { c } from 'foo';",
+            "import { a,b// note\n,c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, /* note */ } from 'foo';\n\nimport { c } from 'foo';",
+            "import { a,b/* note */,c } from 'foo';\n\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\n c } from 'foo';",
+            "import { a,b,// note\n c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\r c } from 'foo';",
+            "import { a,b,// note\r c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\r\n c } from 'foo';",
+            "import { a,b,// note\r\n c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\u{2028} c } from 'foo';",
+            "import { a,b,// note\u{2028} c\n } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, // note\u{2029} c } from 'foo';",
+            "import { a,b,// note\u{2029} c\n } from 'foo';\n",
             None,
         ),
     ];

@@ -15,7 +15,7 @@ use crate::{
     utils::{
         JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
         PossibleJestNode, collect_possible_jest_call_node, get_node_name,
-        parse_expect_jest_fn_call, parse_general_jest_fn_call, resolve_extended_vitest_test,
+        parse_expect_jest_fn_call, parse_general_jest_fn_call,
     },
 };
 
@@ -215,18 +215,6 @@ fn is_var_declarator_or_test_block<'a>(
                 return matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
             }
 
-            // Support test functions that were extended
-            if let Some(original) = resolve_extended_vitest_test(&call_expr.callee, ctx.semantic())
-            {
-                let jest_node = PossibleJestNode { node, original: Some(original) };
-                if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &jest_node, ctx) {
-                    return matches!(
-                        jest_fn_call.kind,
-                        JestFnKind::General(JestGeneralFnKind::Test)
-                    );
-                }
-            }
-
             let parent = ctx.nodes().parent_node(node.id());
             if matches!(parent.kind(), AstKind::CallExpression(_)) {
                 return is_var_declarator_or_test_block(
@@ -237,7 +225,10 @@ fn is_var_declarator_or_test_block<'a>(
                 );
             }
         }
-        AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_) => {
+        AstKind::ArrayExpression(_)
+        | AstKind::ObjectExpression(_)
+        | AstKind::ObjectProperty(_)
+        | AstKind::ObjectMethodProperty(_) => {
             let mut current = node;
             loop {
                 let parent = ctx.nodes().parent_node(current.id());

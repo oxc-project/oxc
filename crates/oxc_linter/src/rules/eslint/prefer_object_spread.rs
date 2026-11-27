@@ -1,13 +1,22 @@
 use std::cmp::max;
 
 use oxc_allocator::ArenaBox;
-use oxc_ast::AstKind;
-use oxc_ast::ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKind};
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression, ObjectExpression, ObjectPropertyKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::{could_be_asi_hazard, is_method_call},
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn prefer_object_spread_diagnostic(span: Span, for_use_literal: bool) -> OxcDiagnostic {
     let help_message = if for_use_literal {
@@ -70,7 +79,7 @@ declare_oxc_lint!(
     PreferObjectSpread,
     eslint,
     style,
-    fix,
+    fix = fix_or_suggestion,
     version = "0.15.9",
     short_description = "Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.",
 );
@@ -112,6 +121,10 @@ impl Rule for PreferObjectSpread {
         }
 
         let arguments_len = call_expr.arguments.len();
+        let mut needs_suggestion = !matches!(
+            call_expr.arguments[0].as_expression(),
+            Some(Expression::ObjectExpression(_))
+        );
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
             let Some(Expression::ObjectExpression(obj_expr)) =
@@ -125,108 +138,154 @@ impl Rule for PreferObjectSpread {
                     return;
                 }
 
+                needs_suggestion = true;
                 continue;
             };
 
-            if arguments_len > 1 && has_get_or_set_property(obj_expr) {
-                return;
+            if arguments_len > 1 {
+                if has_get_or_set_property(obj_expr) {
+                    return;
+                }
+
+                if idx > 0 && has_proto_property(obj_expr) {
+                    return;
+                }
+
+                needs_suggestion |= !is_plain_data_object(obj_expr);
             }
         }
 
-        ctx.diagnostic_with_fix(
-            prefer_object_spread_diagnostic(call_expr.span(), arguments_len == 1),
-            |fixer| {
-                let fixer = fixer.for_multifix();
-                let mut rule_fixes = fixer.new_fix_with_capacity(2 + call_expr.arguments.len() * 5);
+        let diagnostic = prefer_object_spread_diagnostic(call_expr.span(), arguments_len == 1);
+        let fix = |fixer: RuleFixer<'_, 'a>| fix_object_assign(call_expr, node, ctx, fixer);
 
-                let parent_kind = ctx.nodes().parent_kind(node.id());
-                let needs_paren = !matches!(
-                    parent_kind,
-                    AstKind::VariableDeclarator(_)
-                        | AstKind::ArrayExpression(_)
-                        | AstKind::ReturnStatement(_)
-                        | AstKind::CallExpression(_)
-                        | AstKind::ObjectProperty(_)
-                        | AstKind::AssignmentExpression(_)
-                );
-
-                let Some(paren_offset) = ctx.find_next_token_within(
-                    call_expr.callee.span().end,
-                    call_expr.span.end,
-                    "(",
-                ) else {
-                    return fixer.noop();
-                };
-                let callee_left_paren_span =
-                    Span::sized(call_expr.callee.span().end + paren_offset, 1);
-
-                let (left, right) = if needs_paren { ("({", "})") } else { ("{", "}") };
-
-                rule_fixes.push(
-                    fixer
-                        .replace(Span::new(call_expr.span.start, callee_left_paren_span.end), left),
-                );
-                rule_fixes.push(
-                    fixer.replace(Span::new(call_expr.span.end - 1, call_expr.span.end), right),
-                );
-
-                for arg in &call_expr.arguments {
-                    let Some(expression) = arg.as_expression() else {
-                        return fixer.noop();
-                    };
-
-                    if let Expression::ObjectExpression(obj_expr) = expression {
-                        let delete_span_of_left = get_delete_span_of_left(obj_expr, ctx);
-
-                        let delete_span_of_right = Span::new(
-                            max(
-                                get_delete_span_start_of_right(obj_expr, ctx),
-                                delete_span_of_left.end,
-                            ),
-                            obj_expr.span.end,
-                        );
-
-                        rule_fixes.push(fixer.delete_range(delete_span_of_left));
-                        rule_fixes.push(fixer.delete_range(delete_span_of_right));
-
-                        if (obj_expr.properties.is_empty()
-                            || ctx.source_range(get_last_char_span(expression, 1, ctx).unwrap())
-                                == ",")
-                            && let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
-                            && ctx.source_range(maybe_arg_comma_span) == ","
-                        {
-                            rule_fixes.push(fixer.delete_range(maybe_arg_comma_span));
-                        }
-                    } else {
-                        let span = expression.span();
-                        let replacement = if matches!(
-                            expression,
-                            Expression::ArrowFunctionExpression(_)
-                                | Expression::AssignmentExpression(_)
-                                | Expression::ConditionalExpression(_)
-                        ) {
-                            format!("...({})", ctx.source_range(span))
-                        } else {
-                            format!("...{}", ctx.source_range(span))
-                        };
-
-                        rule_fixes.push(fixer.replace(span, replacement));
-                    }
-                }
-
-                rule_fixes.with_message("Replace with object spread")
-            },
-        );
+        if needs_suggestion {
+            ctx.diagnostic_with_suggestion(diagnostic, fix);
+        } else {
+            ctx.diagnostic_with_fix(diagnostic, fix);
+        }
     }
+}
+
+fn fix_object_assign<'c, 'a: 'c>(
+    call_expr: &CallExpression<'a>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    fixer: RuleFixer<'c, 'a>,
+) -> RuleFix {
+    let fixer = fixer.for_multifix();
+    let mut rule_fixes = fixer.new_fix_with_capacity(2 + call_expr.arguments.len() * 5);
+
+    let parent_kind = ctx.nodes().parent_kind(node.id());
+    let needs_paren = !matches!(
+        parent_kind,
+        AstKind::VariableDeclarator(_)
+            | AstKind::ArrayExpression(_)
+            | AstKind::ReturnStatement(_)
+            | AstKind::CallExpression(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::ObjectMethodProperty(_)
+            | AstKind::AssignmentExpression(_)
+    );
+
+    let Some(paren_offset) =
+        ctx.find_next_token_within(call_expr.callee.span().end, call_expr.span.end, "(")
+    else {
+        return fixer.noop();
+    };
+    let callee_left_paren_span = Span::sized(call_expr.callee.span().end + paren_offset, 1);
+
+    let (left, right) = if needs_paren {
+        if could_be_asi_hazard(node, ctx) { (";({", "})") } else { ("({", "})") }
+    } else {
+        ("{", "}")
+    };
+
+    rule_fixes
+        .push(fixer.replace(Span::new(call_expr.span.start, callee_left_paren_span.end), left));
+    rule_fixes.push(fixer.replace(Span::new(call_expr.span.end - 1, call_expr.span.end), right));
+
+    for arg in &call_expr.arguments {
+        let Some(expression) = arg.as_expression() else {
+            return fixer.noop();
+        };
+
+        if let Expression::ObjectExpression(obj_expr) = expression.without_parentheses() {
+            let mut inner = expression;
+            while let Expression::ParenthesizedExpression(paren_expr) = inner {
+                rule_fixes.push(fixer.delete_range(Span::sized(paren_expr.span.start, 1)));
+                rule_fixes.push(fixer.delete_range(Span::sized(paren_expr.span.end - 1, 1)));
+                inner = &paren_expr.expression;
+            }
+
+            let delete_span_of_left = get_delete_span_of_left(obj_expr, ctx);
+
+            let delete_span_of_right = Span::new(
+                max(get_delete_span_start_of_right(obj_expr, ctx), delete_span_of_left.end),
+                obj_expr.span.end,
+            );
+
+            rule_fixes.push(fixer.delete_range(delete_span_of_left));
+            rule_fixes.push(fixer.delete_range(delete_span_of_right));
+
+            if (obj_expr.properties.is_empty()
+                || ctx.source_range(get_last_char_span(inner, 1, ctx).unwrap()) == ",")
+                && let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
+                && ctx.source_range(maybe_arg_comma_span) == ","
+            {
+                rule_fixes.push(fixer.delete_range(maybe_arg_comma_span));
+            }
+        } else {
+            let span = expression.span();
+            let replacement = if matches!(
+                expression,
+                Expression::ArrowFunctionExpression(_)
+                    | Expression::AssignmentExpression(_)
+                    | Expression::ConditionalExpression(_)
+            ) {
+                format!("...({})", ctx.source_range(span))
+            } else {
+                format!("...{}", ctx.source_range(span))
+            };
+
+            rule_fixes.push(fixer.replace(span, replacement));
+        }
+    }
+
+    rule_fixes.with_message("Replace with object spread")
+}
+
+fn is_js_whitespace(c: char) -> bool {
+    is_white_space(c) || is_line_terminator(c)
 }
 
 fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
     obj_expr.properties.iter().any(|p| {
-        let ObjectPropertyKind::ObjectProperty(p) = p else {
+        let ObjectPropertyKind::MethodProperty(p) = p else {
             return false;
         };
+        p.kind.is_accessor()
+    })
+}
 
-        p.kind == PropertyKind::Get || p.kind == PropertyKind::Set
+/// Returns `true` if the object expression has a `__proto__` property.
+/// `__proto__:` in a source object literal does not create an own property, so
+/// `Object.assign` does not copy it, but unwrapping it into the target literal
+/// would set the target's prototype. Any other rewrite semantics (computed
+/// `__["__proto__"]`, method `__proto__()`, etc.) also differ between copying
+/// with `[[Set]]` and defining an own property, so they are treated the same.
+fn has_proto_property(obj_expr: &ObjectExpression) -> bool {
+    obj_expr.properties.iter().any(|p| match p {
+        ObjectPropertyKind::ObjectProperty(p) => p.key.is_specific_static_name("__proto__"),
+        ObjectPropertyKind::MethodProperty(p) => p.key.is_specific_static_name("__proto__"),
+        ObjectPropertyKind::SpreadProperty(_) => false,
+    })
+}
+
+fn is_plain_data_object(obj_expr: &ObjectExpression) -> bool {
+    obj_expr.properties.iter().all(|p| {
+        matches!(p, ObjectPropertyKind::ObjectProperty(p)
+            if !p.key.is_computed()
+                && !p.key.is_specific_literal_name("__proto__"))
     })
 }
 
@@ -241,7 +300,7 @@ fn get_char_span_before(start_char_span: Span, ctx: &LintContext) -> Option<Span
         let c_size = u32::try_from(c.len_utf8()).unwrap();
         span_start -= c_size;
 
-        if c.is_whitespace() {
+        if is_js_whitespace(c) {
             continue;
         }
 
@@ -261,7 +320,7 @@ fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> O
         let c_size = u32::try_from(c.len_utf8()).unwrap();
         span_start -= c_size;
 
-        if c.is_whitespace() {
+        if is_js_whitespace(c) {
             continue;
         }
 
@@ -291,7 +350,7 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
         let c_size = u32::try_from(c.len_utf8()).unwrap();
         span_end += c_size;
 
-        if c.is_whitespace() {
+        if is_js_whitespace(c) {
             continue;
         }
 
@@ -313,7 +372,7 @@ fn get_delete_span_of_left(
 ) -> Span {
     let mut span_end = obj_expr.span.start;
     for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
-        if i != 0 && !c.is_whitespace() {
+        if i != 0 && !is_js_whitespace(c) {
             break;
         }
 
@@ -347,7 +406,7 @@ fn get_delete_span_start_of_right(
 
     let mut span_start: u32 = obj_expr.span.end;
     for (i, c) in ctx.source_range(obj_expr.span).chars().rev().enumerate() {
-        if i != 0 && !c.is_whitespace() {
+        if i != 0 && !is_js_whitespace(c) {
             break;
         }
 
@@ -360,7 +419,7 @@ fn get_delete_span_start_of_right(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "Object.assign()",
@@ -421,6 +480,14 @@ fn test() {
         "Object.assign({}, { foo: 'bar', get a() {} }, {})",
         "Object.assign({ foo }, bar, {}, { baz: 'quux', set a(val) {}, quuux }, {})",
         "function f(MyObject, a) { const Object = MyObject; return Object.assign({}, a) }; Object.keys(x)",
+        // `__proto__:` in a source literal sets the prototype but creates no own property, so
+        // inlining it into the target literal changes semantics. Match ESLint and skip the call.
+        "Object.assign({}, { __proto__: p })",
+        "Object.assign({ foo: 'bar' }, { __proto__: p })",
+        "Object.assign({}, { ['__proto__']: p })",
+        "Object.assign({}, { __proto__ })",
+        "Object.assign({}, { __proto__() {} })",
+        "Object.assign({}, { '__proto__': p })",
     ];
 
     let fail = vec![
@@ -587,36 +654,54 @@ fn test() {
     ];
 
     let fix = vec![
-        ("Object.assign({}, foo)", "({ ...foo})", None),
-        ("Object.assign  ({}, foo)", "({ ...foo})", None),
-        ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None),
-        ("Object.assign({}, baz, { foo: 'bar' })", "({ ...baz, foo: 'bar'})", None),
-        ("Object.assign({}, { foo: 'bar', baz: 'foo' })", "({ foo: 'bar', baz: 'foo'})", None),
+        // Non-literal sources are only offered as suggestions because the rewrite can change
+        // observable semantics (getter evaluation order, own `__proto__` handling, etc.).
+        ("Object.assign({}, foo)", "({ ...foo})", None, FixKind::Suggestion),
+        ("Object.assign({}, src)", "({ ...src})", None, FixKind::Suggestion),
+        ("Object.assign({}, foo)", "({ ...foo})", None, FixKind::All),
+        ("Object.assign  ({}, foo)", "({ ...foo})", None, FixKind::All),
+        ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None, FixKind::Fix),
+        ("Object.assign({}, baz, { foo: 'bar' })", "({ ...baz, foo: 'bar'})", None, FixKind::All),
+        (
+            "Object.assign({}, { foo: 'bar', baz: 'foo' })",
+            "({ foo: 'bar', baz: 'foo'})",
+            None,
+            FixKind::All,
+        ),
         (
             r"Object.assign/** comment with multi byte 😀 */({}, { '😀': '😀', '😆': '💪' })",
             r"({ '😀': '😀', '😆': '💪'})",
             None,
+            FixKind::All,
         ),
-        ("Object.assign({ foo: 'bar' }, baz)", "({foo: 'bar', ...baz})", None),
+        ("Object.assign({ foo: 'bar' }, baz)", "({foo: 'bar', ...baz})", None, FixKind::All),
         (
             "Object.assign({ foo: 'bar' }, cats, dogs, trees, birds)",
             "({foo: 'bar', ...cats, ...dogs, ...trees, ...birds})",
             None,
+            FixKind::All,
         ),
         (
             "Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, baz))",
             "({foo: 'bar', ...Object.assign({ bar: 'foo' }, baz)})",
             None,
+            FixKind::All,
         ),
         (
             "Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' })))",
             "({foo: 'bar', ...Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' }))})",
             None,
+            FixKind::All,
         ),
-        ("Object.assign({foo: 'bar', ...bar}, baz)", "({foo: 'bar', ...bar, ...baz})", None),
-        ("Object.assign({}, { foo, bar, baz })", "({ foo, bar, baz})", None),
-        ("Object.assign({}, { [bar]: 'foo' })", "({ [bar]: 'foo'})", None),
-        ("Object.assign({ ...bar }, { ...baz })", "({...bar, ...baz})", None),
+        (
+            "Object.assign({foo: 'bar', ...bar}, baz)",
+            "({foo: 'bar', ...bar, ...baz})",
+            None,
+            FixKind::All,
+        ),
+        ("Object.assign({}, { foo, bar, baz })", "({ foo, bar, baz})", None, FixKind::All),
+        ("Object.assign({}, { [bar]: 'foo' })", "({ [bar]: 'foo'})", None, FixKind::All),
+        ("Object.assign({ ...bar }, { ...baz })", "({...bar, ...baz})", None, FixKind::All),
         (
             r#"
             Object.assign({ ...bar }, {
@@ -631,6 +716,7 @@ fn test() {
                 baz: "cats"})
             "#,
             None,
+            FixKind::All,
         ),
         (
             r#"
@@ -652,6 +738,7 @@ fn test() {
                 baz: "cats"})
             "#,
             None,
+            FixKind::All,
         ),
         (
             r#"
@@ -669,6 +756,7 @@ fn test() {
                 */ weird}
             "#,
             None,
+            FixKind::All,
         ),
         (
             r#"
@@ -682,6 +770,7 @@ fn test() {
                 baz: "cats"}
             "#,
             None,
+            FixKind::All,
         ),
         (
             r#"
@@ -701,9 +790,10 @@ fn test() {
                 baz: "cats"}
             "#,
             None,
+            FixKind::All,
         ),
-        ("Object.assign({})", "({})", None),
-        ("Object.assign({ foo: bar })", "({foo: bar})", None),
+        ("Object.assign({})", "({})", None, FixKind::All),
+        ("Object.assign({ foo: bar })", "({foo: bar})", None, FixKind::All),
         (
             "
             const foo = 'bar';
@@ -714,6 +804,7 @@ fn test() {
             ({foo: bar})
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -725,16 +816,18 @@ fn test() {
             ({foo: bar})
             ",
             None,
+            FixKind::All,
         ),
-        ("let a = Object.assign({})", "let a = {}", None),
-        ("let a = Object.assign({}, a)", "let a = { ...a}", None),
-        ("let a = Object.assign   ({}, a)", "let a = { ...a}", None),
-        ("let a = Object.assign({ a: 1 }, b)", "let a = {a: 1, ...b}", None),
-        ("Object.assign(  {},  a,      b,   )", "({    ...a,      ...b,   })", None),
+        ("let a = Object.assign({})", "let a = {}", None, FixKind::All),
+        ("let a = Object.assign({}, a)", "let a = { ...a}", None, FixKind::All),
+        ("let a = Object.assign   ({}, a)", "let a = { ...a}", None, FixKind::All),
+        ("let a = Object.assign({ a: 1 }, b)", "let a = {a: 1, ...b}", None, FixKind::All),
+        ("Object.assign(  {},  a,      b,   )", "({    ...a,      ...b,   })", None, FixKind::All),
         (
             "Object.assign({}, a ? b : {}, b => c, a = 2)",
             "({ ...(a ? b : {}), ...(b => c), ...(a = 2)})",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -746,6 +839,7 @@ fn test() {
             ({ ...(a ? b : {}), ...(b => c), ...(a = 2)})
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -757,19 +851,22 @@ fn test() {
             ({ ...(a ? b : {}), ...(b => c), ...(a = 2)})
             ",
             None,
+            FixKind::All,
         ),
-        ("[1, 2, Object.assign({}, a)]", "[1, 2, { ...a}]", None),
-        ("const foo = Object.assign({}, a)", "const foo = { ...a}", None),
+        ("[1, 2, Object.assign({}, a)]", "[1, 2, { ...a}]", None, FixKind::All),
+        ("const foo = Object.assign({}, a)", "const foo = { ...a}", None, FixKind::All),
         (
             "function foo() { return Object.assign({}, a) }",
             "function foo() { return { ...a} }",
             None,
+            FixKind::All,
         ),
-        ("foo(Object.assign({}, a));", "foo({ ...a});", None),
+        ("foo(Object.assign({}, a));", "foo({ ...a});", None, FixKind::All),
         (
             "const x = { foo: 'bar', baz: Object.assign({}, a) }",
             "const x = { foo: 'bar', baz: { ...a} }",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -781,6 +878,7 @@ fn test() {
             ({foo: Foo});
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -792,6 +890,7 @@ fn test() {
             ({ ...Foo});
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -803,6 +902,7 @@ fn test() {
             ({foo: Foo});
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -814,6 +914,7 @@ fn test() {
             ({ ...somethingelse});
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -825,6 +926,7 @@ fn test() {
             ({foo: Foo});
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -836,6 +938,7 @@ fn test() {
             ({ ...Foo});
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -853,6 +956,7 @@ fn test() {
             };
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -871,6 +975,7 @@ fn test() {
             };
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -889,6 +994,7 @@ fn test() {
             };
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -905,27 +1011,27 @@ fn test() {
             ",
             "
             const actions = {
-                ...(
-                    {
-                        onChangeInput: this.handleChangeInput
-                    }
-                ),
+               \x20
+                    onChangeInput: this.handleChangeInput
+                ,
                 ...(
                     this.props.actions
                 )
             };
             ",
             None,
+            FixKind::All,
         ),
         (
             "eventData = Object.assign({}, eventData, { outsideLocality: `${originLocality} - ${destinationLocality}` })",
             "eventData = { ...eventData, outsideLocality: `${originLocality} - ${destinationLocality}`}",
             None,
+            FixKind::All,
         ),
-        ("Object.assign({ });", "({});", None),
-        ("Object.assign({\n});", "({});", None),
-        ("globalThis.Object.assign({ });", "({});", None),
-        ("globalThis.Object.assign({\n});", "({});", None),
+        ("Object.assign({ });", "({});", None, FixKind::All),
+        ("Object.assign({\n});", "({});", None, FixKind::All),
+        ("globalThis.Object.assign({ });", "({});", None, FixKind::All),
+        ("globalThis.Object.assign({\n});", "({});", None, FixKind::All),
         (
             "
             function foo () { var globalThis = bar; }
@@ -933,9 +1039,10 @@ fn test() {
             ",
             "
             function foo () { var globalThis = bar; }
-            ({});
+            ;({});
             ",
             None,
+            FixKind::All,
         ),
         (
             "
@@ -947,14 +1054,139 @@ fn test() {
             ({foo: Foo});
             ",
             None,
+            FixKind::All,
         ),
-        ("Object.assign({ get a() {}, set b(val) {} })", "({get a() {}, set b(val) {}})", None),
+        (
+            "Object.assign({ get a() {}, set b(val) {} })",
+            "({get a() {}, set b(val) {}})",
+            None,
+            FixKind::All,
+        ),
         (
             "const obj = Object.assign<{}, Record<string, string[]>>({}, getObject());",
             "const obj = { ...getObject()};",
             None,
+            FixKind::All,
         ),
-        ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None),
+        ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None, FixKind::All),
+        ("Object.assign({}, foo)", "Object.assign({}, foo)", None, FixKind::Fix),
+        ("Object.assign({}, a, b())", "Object.assign({}, a, b())", None, FixKind::Fix),
+        ("Object.assign({}, a, b())", "({ ...a, ...b()})", None, FixKind::Suggestion),
+        ("Object.assign({}, { ...src })", "({ ...src})", None, FixKind::Suggestion),
+        ("Object.assign({}, { ...src })", "Object.assign({}, { ...src })", None, FixKind::Fix),
+        ("Object.assign({}, { [key]: p })", "({ [key]: p})", None, FixKind::Suggestion),
+        ("Object.assign({}, { [key]: p })", "Object.assign({}, { [key]: p })", None, FixKind::Fix),
+        (
+            "Object.assign({ __proto__: proto }, { x: 42 })",
+            "({__proto__: proto, x: 42})",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "Object.assign({ __proto__: proto }, { x: 42 })",
+            "Object.assign({ __proto__: proto }, { x: 42 })",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign({}, { m() { return super.x } })",
+            "({ m() { return super.x }})",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "Object.assign({}, { m() { return super.x } })",
+            "Object.assign({}, { m() { return super.x } })",
+            None,
+            FixKind::Fix,
+        ),
+        ("Object.assign({ a: 1 }, { b })", "({a: 1, b})", None, FixKind::Fix),
+        (
+            "Object.assign({ get a() {}, set b(val) {} })",
+            "({get a() {}, set b(val) {}})",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign(({ __proto__: proto }))",
+            "Object.assign(({ __proto__: proto }))",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "Object.assign(({ __proto__: proto }))",
+            "({__proto__: proto})",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("Object.assign(({ get x() {} }))", "Object.assign(({ get x() {} }))", None, FixKind::Fix),
+        ("Object.assign(({ get x() {} }))", "({get x() {}})", None, FixKind::Suggestion),
+        (
+            "let reads = 0; const obj = Object.assign(({ get value() { return ++reads; } }));",
+            "let reads = 0; const obj = {get value() { return ++reads; }};",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const obj = Object.assign((({ a: 1 })), b);",
+            "const obj = {a: 1, ...b};",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("Object.assign({}, ({ a: 1 }))", "({ a: 1})", None, FixKind::Fix),
+        ("Object.assign(({}), ({ a: 1 }))", "({ a: 1})", None, FixKind::Suggestion),
+        (
+            "const x = Object.assign({}\u{feff}, {a: 1});",
+            "const x = {\u{feff} a: 1};",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "const x = Object.assign({a: 1,}\u{feff}, {b: 2});",
+            "const x = {a: 1,\u{feff} b: 2};",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, { a: 1 });
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "
+            const f = (x) => x
+            const result = f
+            Object.assign({}, foo);
+            ",
+            "
+            const f = (x) => x
+            const result = f
+            ;({ ...foo});
+            ",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "
+            const f = (x) => x
+            if (f) Object.assign({ a: 1 });
+            ",
+            "
+            const f = (x) => x
+            if (f) ({a: 1});
+            ",
+            None,
+            FixKind::Fix,
+        ),
     ];
     Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

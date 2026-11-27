@@ -7,6 +7,20 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 <p><b>a</b>@for (i of items; track i) {<i>{{ i }}</i>}<b>z</b></p>
 <span>a@if (x) {}b</span>
 <span>a@case (1)@case (2) {b}c</span>
+<span>a@if (x) { }b</span>
+<span>a@if (x) {}@else {}b</span>
+<span>a@if (x) {}@else { }b</span>
+<span>a @if (x) { } b</span>
+<span>
+  @if (test) {text}
+</span>
+<p>a @if (x) {b} c</p>
+<li>@if (done) {
+    <icon-x />
+  }{{ label }}</li>
+<li>@if (x) { <icon-x /> }{{ title }}</li>
+<li>{{ label }}@if (x) { <icon-x /> } more</li>
+<p>a@if (x) {b }c</p>
 
 ==================== Output ====================
 ------------------
@@ -19,6 +33,45 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 </p>
 <span>a@if (x) {}b</span>
 <span>a@case (1)@case (2) {b}c</span>
+<span>a@if (x) { }b</span>
+<span>a@if (x) {}@else {}b</span>
+<span>a@if (x) {}@else { }b</span>
+<span
+  >a
+  @if (x) {}
+  b</span
+>
+<span>
+  @if (test) {text}
+</span>
+<p>
+  a
+  @if (x) {
+    b
+  }
+  c
+</p>
+<li>
+  @if (done) {
+    <icon-x />
+  }{{ label }}
+</li>
+<li>
+  @if (x) {
+    <icon-x />
+  }{{ title }}
+</li>
+<li>
+  {{ label }}@if (x) {
+    <icon-x />
+  }
+  more
+</li>
+<p>
+  a@if (x) {b
+  }
+  c
+</p>
 
 -------------------
 { printWidth: 100 }
@@ -30,5 +83,44 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 </p>
 <span>a@if (x) {}b</span>
 <span>a@case (1)@case (2) {b}c</span>
+<span>a@if (x) { }b</span>
+<span>a@if (x) {}@else {}b</span>
+<span>a@if (x) {}@else { }b</span>
+<span
+  >a
+  @if (x) {}
+  b</span
+>
+<span>
+  @if (test) {text}
+</span>
+<p>
+  a
+  @if (x) {
+    b
+  }
+  c
+</p>
+<li>
+  @if (done) {
+    <icon-x />
+  }{{ label }}
+</li>
+<li>
+  @if (x) {
+    <icon-x />
+  }{{ title }}
+</li>
+<li>
+  {{ label }}@if (x) {
+    <icon-x />
+  }
+  more
+</li>
+<p>
+  a@if (x) {b
+  }
+  c
+</p>
 
 ===================== End =====================

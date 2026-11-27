@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
@@ -5,8 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -101,7 +102,8 @@ declare_oxc_lint!(
     recommended,
     config = AriaRoleConfig,
     version = "0.1.1",
-    short_description = "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
+    short_description =
+        "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
 );
 
 impl Rule for AriaRole {

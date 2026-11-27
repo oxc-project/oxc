@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, MemberExpression},
@@ -6,8 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{CompactStr, JSStr};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

@@ -1,3 +1,7 @@
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue},
@@ -6,9 +10,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -143,7 +144,8 @@ declare_oxc_lint!(
     recommended,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
     version = "1.64.0",
-    short_description = "Disallow using an interactive WAI-ARIA role on a non-interactive HTML element.",
+    short_description =
+        "Disallow using an interactive WAI-ARIA role on a non-interactive HTML element.",
 );
 
 impl Rule for NoNoninteractiveElementToInteractiveRole {

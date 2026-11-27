@@ -130,7 +130,7 @@ impl ConfigLoader {
     fn load_in_dir(&self, dir: &Path) -> Result<Option<ConfigResolver>, String> {
         let Some(config_file) = self
             .discovery
-            .find_unique_config_by_readdir(dir)
+            .find_unique_config(dir)
             .map_err(|e| Into::<oxc_diagnostics::OxcDiagnostic>::into(e).to_string())?
         else {
             return Ok(None);

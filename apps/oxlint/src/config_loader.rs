@@ -6,17 +6,19 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::DirEntry;
+use rayon::prelude::*;
 
 use oxc_config::{
     ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
-    Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
+    Config, ConfigBuilderError, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    LintFilter, Oxlintrc,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::utils::normalize_path;
+use crate::{command::EnablePlugins, utils::normalize_path};
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
@@ -54,46 +56,42 @@ pub fn config_file_names() -> Vec<&'static str> {
 ///
 /// In Vite+ mode, only `vite.config.*` is discovered.
 ///
+/// Directories are deduplicated in memory, then checked in parallel.
+/// Each upward walk stops at the root config directory, which the root config already covers.
+///
 /// Conflicts (multiple configs in the same dir) are returned in the second
 /// tuple element so callers can surface them as load errors alongside other
 /// parse/build failures.
-pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
-    files: &[P],
+pub fn discover_configs_in_ancestors<'a>(
+    files: impl IntoIterator<Item = &'a Path>,
     base_config_path: &Path,
 ) -> (FxHashSet<DiscoveredConfigFile>, Vec<ConfigConflict>) {
     let discovery = config_discovery();
-    let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
-    let mut visited_dirs = FxHashSet::default();
-    let mut conflicts = Vec::new();
+    let base_config_dir = base_config_path.parent();
+    let mut visited_dirs = FxHashSet::<&Path>::default();
+    let mut dirs = Vec::new();
 
     for file in files {
-        let path = file.as_ref();
-        let mut base_config_found = false;
-        // Start from the file's parent directory and walk up the tree
-        let mut current = path.parent();
-        while let Some(dir) = current {
-            if base_config_found {
-                // Stop if we've reached the base config file (e.g., root oxlintrc)
-                // to avoid duplicate loading and filling nested config with configs outside from the root config.
+        for dir in file.ancestors().skip(1) {
+            if !visited_dirs.insert(dir) || Some(dir) == base_config_dir {
                 break;
             }
-            // Stop if we've already checked this directory (and its ancestors)
-            let inserted = visited_dirs.insert(dir.to_path_buf());
-            if !inserted {
-                break;
+            dirs.push(dir);
+        }
+    }
+
+    let results =
+        dirs.into_par_iter().map(|dir| discovery.find_unique_config(dir)).collect::<Vec<_>>();
+
+    let mut config_paths = FxHashSet::<DiscoveredConfigFile>::default();
+    let mut conflicts = Vec::new();
+    for result in results {
+        match result {
+            Ok(Some(config)) => {
+                config_paths.insert(config);
             }
-            match discovery.find_unique_config_by_readdir(dir) {
-                Ok(Some(config)) => {
-                    if config.path() == base_config_path {
-                        base_config_found = true;
-                    } else {
-                        config_paths.insert(config);
-                    }
-                }
-                Ok(None) => {}
-                Err(conflict) => conflicts.push(conflict),
-            }
-            current = dir.parent();
+            Ok(None) => {}
+            Err(conflict) => conflicts.push(conflict),
         }
     }
 
@@ -227,16 +225,20 @@ pub enum ConfigLoadError {
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.
     RootConfig(OxcDiagnostic),
+    /// An error that occurred while preparing the root configuration.
+    RootConfigBuild(ConfigBuilderError),
     /// One or more errors that occurred while loading nested configuration files.
     NestedConfigs(Vec<ConfigLoadError>),
 }
 
-/// Collection of the root configuration and all successfully loaded nested configs.
+/// Collection of the prepared root configuration and all successfully loaded nested configs.
 ///
 /// Returned by [`ConfigLoader::load_root_and_nested`].
 pub struct LoadedConfigs {
     /// The root `oxlintrc` configuration used as the base for all linting.
     pub root: Oxlintrc,
+    /// The root configuration builder with CLI plugin overrides and rule filters applied.
+    pub root_builder: ConfigStoreBuilder,
     /// Mapping from directory paths to the effective [`Config`] for that directory.
     pub nested: FxHashMap<PathBuf, Config>,
     /// Ignore patterns from nested configs, paired with the directory they apply to.
@@ -292,6 +294,20 @@ impl<'a> ConfigLoader<'a> {
         }
 
         self
+    }
+
+    pub(crate) fn create_config_builder(
+        &mut self,
+        config: Oxlintrc,
+    ) -> Result<ConfigStoreBuilder, ConfigBuilderError> {
+        ConfigStoreBuilder::from_oxlintrc(
+            false,
+            config,
+            self.external_linter,
+            self.external_plugin_store,
+            self.workspace_uri,
+        )
+        .map(|builder| builder.with_filters(self.filters))
     }
 
     /// Load a single config from a file path
@@ -361,7 +377,7 @@ impl<'a> ConfigLoader<'a> {
         for (dir, config_files) in by_dir {
             if config_files.len() > 1 {
                 errors.push(ConfigLoadError::Diagnostic(
-                    ConfigConflict::new(dir.clone(), config_files).into(),
+                    ConfigConflict::new(dir, config_files).into(),
                 ));
                 continue;
             }
@@ -443,13 +459,7 @@ impl<'a> ConfigLoader<'a> {
                 }
             }
 
-            let builder = match ConfigStoreBuilder::from_oxlintrc(
-                false,
-                config,
-                self.external_linter,
-                self.external_plugin_store,
-                self.workspace_uri,
-            ) {
+            let builder = match self.create_config_builder(config) {
                 Ok(builder) => builder,
                 Err(e) => {
                     errors.push(ConfigLoadError::Build { path, error: e.to_string() });
@@ -460,7 +470,6 @@ impl<'a> ConfigLoader<'a> {
             let extended_paths = builder.extended_paths.clone();
 
             match builder
-                .with_filters(self.filters)
                 .build(self.external_plugin_store)
                 .map_err(|e| ConfigLoadError::Build { path: path.clone(), error: e.to_string() })
             {
@@ -495,8 +504,7 @@ impl<'a> ConfigLoader<'a> {
         discovery: &ConfigDiscovery,
         dir: &Path,
     ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let config_file =
-            discovery.find_unique_config_by_readdir(dir).map_err(OxcDiagnostic::from)?;
+        let config_file = discovery.find_unique_config(dir).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
@@ -596,64 +604,80 @@ impl<'a> ConfigLoader<'a> {
         }
     }
 
-    /// Load the root configuration and optionally discover and load nested configs.
+    /// Load root and nested configs, then prepare the root configuration builder.
     ///
     /// This is the main entry point for CLI config loading. It first loads the root
     /// `oxlintrc` configuration, then optionally discovers and loads nested configs
-    /// by walking up from each file path's directory.
+    /// by walking up from each file path's directory. Finally, it applies CLI plugin
+    /// overrides and prepares the root configuration builder.
     ///
     /// # Arguments
     /// * `cwd` - Current working directory for resolving relative paths
     /// * `config_path` - Optional explicit path to the root config file
     /// * `paths` - File paths to lint (used for discovering nested configs)
     /// * `search_for_nested_configs` - Whether to discover nested configs in ancestor directories
+    /// * `enable_plugins` - CLI plugin overrides to apply to the root config
     ///
     /// # Errors
     /// Returns [`CliConfigLoadError::RootConfig`] if the root config fails to load,
-    /// or [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load.
+    /// [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load,
+    /// or [`CliConfigLoadError::RootConfigBuild`] if the root builder cannot be prepared.
     pub fn load_root_and_nested(
         &mut self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
         paths: &[Arc<OsStr>],
         search_for_nested_configs: bool,
+        enable_plugins: &EnablePlugins,
     ) -> Result<LoadedConfigs, CliConfigLoadError> {
-        let oxlintrc = match self.load_root_config(cwd, config_path) {
+        let mut oxlintrc = match self.load_root_config(cwd, config_path) {
             Ok(config) => config,
             Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
         };
 
-        if !search_for_nested_configs {
-            return Ok(LoadedConfigs {
-                root: oxlintrc,
-                nested: FxHashMap::default(),
-                nested_ignore_patterns: vec![],
-            });
-        }
+        let configs = if search_for_nested_configs {
+            // Discover config files by walking up from each file's directory
+            let (discovered_configs, conflicts) = discover_configs_in_ancestors(
+                paths.iter().map(|path| Path::new(path.as_ref())),
+                &oxlintrc.path,
+            );
 
-        // Discover config files by walking up from each file's directory
-        let config_paths: Vec<_> =
-            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let (discovered_configs, conflicts) =
-            discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
+            let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
 
-        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
+            // Propagate upstream conflicts as load errors alongside parse/build failures.
+            for conflict in conflicts {
+                errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+            }
 
-        // Propagate upstream conflicts as load errors alongside parse/build failures.
-        for conflict in conflicts {
-            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
-        }
+            // Fail if any config failed (CLI requires all configs to be valid)
+            if !errors.is_empty() {
+                return Err(CliConfigLoadError::NestedConfigs(errors));
+            }
 
-        // Fail if any config failed (CLI requires all configs to be valid)
-        if !errors.is_empty() {
-            return Err(CliConfigLoadError::NestedConfigs(errors));
-        }
+            configs
+        } else {
+            Vec::new()
+        };
 
         // Convert loaded configs to nested config format
         let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
         let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
 
-        Ok(LoadedConfigs { root: oxlintrc, nested: nested_configs, nested_ignore_patterns })
+        materialize_default_plugins(&mut oxlintrc);
+        let mut plugins = oxlintrc.plugins.unwrap_or_default();
+        enable_plugins.apply_overrides(&mut plugins);
+        oxlintrc.plugins = Some(plugins);
+
+        let root_builder = self
+            .create_config_builder(oxlintrc.clone())
+            .map_err(CliConfigLoadError::RootConfigBuild)?;
+
+        Ok(LoadedConfigs {
+            root: oxlintrc,
+            root_builder,
+            nested: nested_configs,
+            nested_ignore_patterns,
+        })
     }
 }
 
@@ -746,7 +770,7 @@ fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDia
 mod test {
     use std::path::PathBuf;
 
-    use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
+    use oxc_linter::ExternalPluginStore;
 
     use super::{ConfigLoadError, ConfigLoader};
     #[cfg(feature = "napi")]
@@ -1022,22 +1046,13 @@ mod test {
             }
         });
 
-        let oxlintrc = {
-            let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-            let loader = loader.with_js_config_loader(Some(&js_loader));
-            loader
-                .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
-                .unwrap()
-        };
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let mut loader = loader.with_js_config_loader(Some(&js_loader));
+        let oxlintrc = loader
+            .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+            .unwrap();
 
-        let err = ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
-            None,
-            &mut external_plugin_store,
-            None,
-        )
-        .unwrap_err();
+        let err = loader.create_config_builder(oxlintrc).unwrap_err();
 
         assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
     }

@@ -182,6 +182,7 @@ impl GetSpan for ObjectPropertyKind<'_> {
     fn span(&self) -> Span {
         match self {
             Self::ObjectProperty(it) => GetSpan::span(&**it),
+            Self::MethodProperty(it) => GetSpan::span(&**it),
             Self::SpreadProperty(it) => GetSpan::span(&**it),
         }
     }
@@ -194,10 +195,20 @@ impl GetSpan for ObjectProperty<'_> {
     }
 }
 
+impl GetSpan for ObjectMethodProperty<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for PropertyKey<'_> {
     fn span(&self) -> Span {
         match self {
             Self::StaticIdentifier(it) => GetSpan::span(&**it),
+            Self::StaticStringLiteral(it) => GetSpan::span(&**it),
+            Self::StaticNumericLiteral(it) => GetSpan::span(&**it),
+            Self::StaticBigIntLiteral(it) => GetSpan::span(&**it),
             Self::PrivateIdentifier(it) => GetSpan::span(&**it),
             Self::BooleanLiteral(it) => GetSpan::span(&**it),
             Self::NullLiteral(it) => GetSpan::span(&**it),

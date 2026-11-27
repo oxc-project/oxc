@@ -1,13 +1,14 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind},
+    ast::{Expression, MemberExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -109,7 +110,9 @@ impl Rule for PreferObjectFromEntries {
             return;
         }
 
-        if call_expr.optional || call_expr.callee.to_member_expression().optional() {
+        if call_expr.optional
+            || call_expr.callee.get_member_expr().is_none_or(MemberExpression::optional)
+        {
             return;
         }
 
@@ -190,10 +193,7 @@ impl Rule for PreferObjectFromEntries {
                 return;
             }
 
-            let ObjectPropertyKind::ObjectProperty(k) = &source.properties[0] else { return };
-            if k.kind != PropertyKind::Init || k.method {
-                return;
-            }
+            let ObjectPropertyKind::ObjectProperty(_) = &source.properties[0] else { return };
 
             ctx.diagnostic(prefer_object_from_entries_diagnostic(
                 call_expr_member_expr_property_span(call_expr),
@@ -215,13 +215,9 @@ impl Rule for PreferObjectFromEntries {
             if spread_symbol_id != accumulator_ident.symbol_id() {
                 return;
             }
-            let ObjectPropertyKind::ObjectProperty(object_prop) = &object_expr.properties[1] else {
+            let ObjectPropertyKind::ObjectProperty(_) = &object_expr.properties[1] else {
                 return;
             };
-
-            if object_prop.kind != PropertyKind::Init || object_prop.method {
-                return;
-            }
 
             ctx.diagnostic(prefer_object_from_entries_diagnostic(
                 call_expr_member_expr_property_span(call_expr),
@@ -265,6 +261,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("(x.reduce)(0,0);", None),
+        ("(pairs.reduce!)(0,0);", None),
         ("pairs.reduce(object => ({...object, key}));", None),
         ("pairs.reduce(object => ({...object, key}), {}, extraArgument);", None),
         ("pairs.reduce({}, object => ({...object, key}));", None),
@@ -272,6 +270,9 @@ fn test() {
         ("new reduce(object => ({...object, key}), {});", None),
         ("pairs.reduce?.(object => ({...object, key}), {});", None),
         ("pairs?.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)?.(object => ({...object, key}), {});", None),
+        ("(pairs?.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs?.['reduce']))(object => ({...object, key}), {});", None),
         ("pairs.notReduce(object => ({...object, key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {notEmpty});", None),
         ("pairs.reduce(object => ({...object, key}), []);", None),
@@ -353,6 +354,10 @@ fn test() {
 
     let fail = vec![
         ("pairs.reduce(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => ({...object, key}), {});", None),
+        ("((pairs['reduce']))(object => ({...object, key}), {});", None),
+        ("(pairs.reduce!)(object => ({...object, key}), {});", None),
+        ("(pairs.reduce)(object => Object.assign(object, {key}), {});", None),
         ("pairs.reduce(object => ({...object, key}), {},);", None),
         ("pairs.reduce(object => ({...object, key,}), {});", None),
         ("pairs.reduce(object => ({...object, key}), Object.create(null));", None),

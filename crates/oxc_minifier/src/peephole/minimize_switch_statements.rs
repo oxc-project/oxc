@@ -1,13 +1,143 @@
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, minimize_statements::FindNestedBreak};
 use crate::keep_var::KeepVar;
 use crate::{TraverseCtx, is_terminated::IsTerminated};
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::ast::{Expression, Statement};
-use oxc_ast_visit::VisitJs;
+use oxc_ast::ast::{
+    BinaryOperator, Expression, Statement, SwitchStatement, TaggedTemplateExpression,
+    VariableDeclaration,
+};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
-use oxc_span::SPAN;
+use oxc_span::{ContentEq, SPAN};
 
 impl<'a> PeepholeOptimizations {
+    /// Empties a terminated case body that matches the next non-empty body, so the
+    /// case falls through to it instead. Bodies that declare `var`s or top-level
+    /// bindings, or contain tagged templates, are left in place.
+    ///
+    /// `case 1: f(); break; case 2: f(); break;` => `case 1: case 2: f(); break;`
+    pub fn merge_identical_switch_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::SwitchStatement(switch_stmt) = stmt else { return };
+        let cases = &mut switch_stmt.cases;
+        let Some(last_body_index) = cases.iter().rposition(|case| !case.consequent.is_empty())
+        else {
+            return;
+        };
+
+        let mut next_body_index = last_body_index;
+        for index in (0..last_body_index).rev() {
+            let body = &cases[index].consequent;
+            if body.is_empty() {
+                continue;
+            }
+            let next = &cases[next_body_index].consequent;
+            // Falling off the end of the last body exits the switch like a trailing `break`.
+            let (body_stmts, next_stmts) = if next_body_index == last_body_index {
+                (Self::without_trailing_break(body), Self::without_trailing_break(next))
+            } else {
+                (&body[..], &next[..])
+            };
+
+            if body.is_terminated()
+                && !body.iter().any(Self::statement_cares_about_scope)
+                && Self::statements_content_eq(body_stmts, next_stmts)
+                && !FindVarOrTaggedTemplate::has_var_or_tagged_template(body)
+            {
+                for dropped in cases[index].consequent.drain(..) {
+                    ctx.drop_statement(&dropped);
+                }
+            } else {
+                next_body_index = index;
+            }
+        }
+    }
+
+    fn without_trailing_break<'s>(stmts: &'s [Statement<'a>]) -> &'s [Statement<'a>] {
+        match stmts.split_last() {
+            Some((Statement::BreakStatement(break_stmt), rest)) if break_stmt.label.is_none() => {
+                rest
+            }
+            _ => stmts,
+        }
+    }
+
+    /// Lowers a switch with one case and a default to an `if` statement when
+    /// the first clause cannot fall through and neither clause declares a
+    /// switch-scoped binding.
+    ///
+    /// `switch (a) { case 1: b(); break; default: c() }` => `if (a === 1) { b(); } else { c(); }`
+    pub fn fold_switch_with_default_to_if(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::SwitchStatement(switch_stmt) = stmt else { return };
+        if ctx.parent().is_labeled_statement() {
+            return;
+        }
+        let [first, second] = switch_stmt.cases.as_slice() else { return };
+        let default_is_first = match (first.is_default_case(), second.is_default_case()) {
+            (true, false) => true,
+            (false, true) => false,
+            _ => return,
+        };
+        if !first.consequent.is_terminated()
+            || [first, second].into_iter().any(|case| {
+                let consequent = Self::without_trailing_break(&case.consequent);
+                consequent.iter().any(Self::statement_cares_about_scope)
+                    || FindNestedBreak::has_unlabelled_break(consequent)
+            })
+        {
+            return;
+        }
+
+        ctx.replace_statement_with(stmt, |stmt, ctx| {
+            let Statement::SwitchStatement(switch_stmt) = stmt else { unreachable!() };
+            let scope_id = switch_stmt.scope_id();
+            let SwitchStatement { span, discriminant, mut cases, .. } = switch_stmt.unbox();
+            let mut second = cases.pop().unwrap();
+            let mut first = cases.pop().unwrap();
+            for case in [&mut first, &mut second] {
+                if matches!(
+                    case.consequent.last(),
+                    Some(Statement::BreakStatement(break_stmt)) if break_stmt.label.is_none()
+                ) {
+                    ctx.drop_statement(&case.consequent.pop().unwrap());
+                }
+            }
+            let (case, default) = if default_is_first { (second, first) } else { (first, second) };
+
+            let test = Expression::new_binary_expression(
+                SPAN,
+                discriminant,
+                BinaryOperator::StrictEquality,
+                case.test.unwrap(),
+                ctx,
+            );
+            let consequent = Statement::new_block_statement_with_scope_id(
+                case.span,
+                case.consequent,
+                scope_id,
+                ctx,
+            );
+            let alternate = if default.consequent.is_empty() {
+                None
+            } else {
+                let flags = ctx.scoping().scope_flags(scope_id);
+                let alternate_scope_id =
+                    ctx.insert_scope_below_statements(&default.consequent, flags);
+                Some(Statement::new_block_statement_with_scope_id(
+                    default.span,
+                    default.consequent,
+                    alternate_scope_id,
+                    ctx,
+                ))
+            };
+            Statement::new_if_statement(span, test, consequent, alternate, ctx)
+        });
+    }
+
+    fn statements_content_eq(left: &[Statement<'a>], right: &[Statement<'a>]) -> bool {
+        left.len() == right.len()
+            && left.iter().zip(right).all(|(left, right)| left.content_eq(right))
+    }
+
     /// Drops cases that cannot run for the chosen discriminant while preserving any
     /// observable case tests and hoisted `var` bindings.
     pub fn drop_unreachable_switch_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -136,5 +266,38 @@ impl<'a> PeepholeOptimizations {
         } else {
             Expression::new_sequence_expression(SPAN, expressions, ctx)
         }
+    }
+}
+
+/// Finds content that an identical case body cannot share with the next one: a
+/// tagged template, whose call site owns its template object, or a `var`
+/// declaration, whose dropped declarator would stay among the symbol's
+/// redeclarations.
+#[derive(Default)]
+struct FindVarOrTaggedTemplate {
+    found: bool,
+}
+
+impl FindVarOrTaggedTemplate {
+    fn has_var_or_tagged_template(stmts: &[Statement]) -> bool {
+        let mut visitor = Self::default();
+        for stmt in stmts {
+            visitor.visit_statement(stmt);
+        }
+        visitor.found
+    }
+}
+
+impl<'a> VisitJs<'a> for FindVarOrTaggedTemplate {
+    fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
+        if it.kind.is_var() {
+            self.found = true;
+        } else {
+            walk_js::walk_variable_declaration(self, it);
+        }
+    }
+
+    fn visit_tagged_template_expression(&mut self, _it: &TaggedTemplateExpression<'a>) {
+        self.found = true;
     }
 }

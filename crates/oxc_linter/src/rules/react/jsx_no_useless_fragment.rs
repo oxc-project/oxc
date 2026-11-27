@@ -1,10 +1,6 @@
-use crate::{
-    AstNode,
-    context::{ContextHost, LintContext},
-    fixer::{RuleFix, RuleFixer},
-    rule::{DefaultRuleConfig, Rule},
-    utils::{is_jsx_fragment, is_jsx_multiline_whitespace},
-};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
@@ -17,8 +13,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
+
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    fixer::{RuleFix, RuleFixer},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{is_jsx_fragment, is_jsx_multiline_whitespace},
+};
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)

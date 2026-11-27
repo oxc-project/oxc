@@ -68,6 +68,7 @@ impl GetAddress for ObjectPropertyKind<'_> {
     fn address(&self) -> Address {
         match self {
             Self::ObjectProperty(it) => GetAddress::address(it),
+            Self::MethodProperty(it) => GetAddress::address(it),
             Self::SpreadProperty(it) => GetAddress::address(it),
         }
     }
@@ -79,6 +80,9 @@ impl GetAddress for PropertyKey<'_> {
     fn address(&self) -> Address {
         match self {
             Self::StaticIdentifier(it) => GetAddress::address(it),
+            Self::StaticStringLiteral(it) => GetAddress::address(it),
+            Self::StaticNumericLiteral(it) => GetAddress::address(it),
+            Self::StaticBigIntLiteral(it) => GetAddress::address(it),
             Self::PrivateIdentifier(it) => GetAddress::address(it),
             Self::BooleanLiteral(it) => GetAddress::address(it),
             Self::NullLiteral(it) => GetAddress::address(it),

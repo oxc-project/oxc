@@ -5,9 +5,8 @@ use oxc_semantic::{Reference, ScopeId, Scoping};
 use oxc_span::GetSpan;
 use oxc_str::{CompactStr, Ident};
 
-use crate::rules::eslint::no_unused_vars::options::IgnorePattern;
-
 use super::{NoUnusedVars, Symbol};
+use crate::rules::eslint::no_unused_vars::options::IgnorePattern;
 
 impl NoUnusedVars {
     pub(super) fn get_unused_arg_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
@@ -143,7 +142,8 @@ impl NoUnusedVars {
         nodes.ancestors(reference.node_id()).any(|node| match node.kind() {
             AstKind::TSTypeQuery(_) => true,
             AstKind::TSPropertySignature(signature) => {
-                signature.computed && signature.key.span().contains_inclusive(reference_span)
+                signature.key.is_computed()
+                    && signature.key.span().contains_inclusive(reference_span)
             }
             _ => false,
         })

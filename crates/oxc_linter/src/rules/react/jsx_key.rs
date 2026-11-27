@@ -20,7 +20,7 @@ use oxc_str::JSStr;
 
 use crate::{
     AstNode,
-    ast_util::is_node_within_call_argument,
+    ast_util::{is_node_within_call_argument, outermost_paren},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::default_true,
@@ -266,7 +266,9 @@ fn is_in_array_or_iter<'a, 'b>(
                     return None;
                 }
 
-                if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
+                if let AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_) =
+                    ctx.nodes().parent_kind(parent.id())
+                {
                     return None;
                 }
                 if is_outside_containing_function {
@@ -276,7 +278,9 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::Function(_) => {
-                if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
+                if let AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_) =
+                    ctx.nodes().parent_kind(parent.id())
+                {
                     return None;
                 }
                 if is_outside_containing_function {
@@ -286,7 +290,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::ArrayExpression(_) => {
-                if is_outside_containing_function {
+                if node.id() != outermost_paren(jsx_node, ctx).id() {
                     return None;
                 }
 
@@ -316,6 +320,7 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::JSXElement(_)
             | AstKind::JSXOpeningElement(_)
             | AstKind::ObjectProperty(_)
+            | AstKind::ObjectMethodProperty(_)
             | AstKind::JSXFragment(_) => return None,
             AstKind::ReturnStatement(_) => {
                 is_explicit_return = true;
@@ -614,7 +619,24 @@ fn test() {
         ("[1, 2, 3].map((item) => {
             return item === 'bar' ? <div key={item}>{item}</div> : <span key={item}>{item}</span>;
           })", None, None
-        )
+        ),
+        (
+            "declare const Counter: (props: { onCount: (n: number) => void }) => React.ReactNode;
+             export const useCount = (needed: boolean, set: (n: number) => void) =>
+               [needed ? 1 : undefined, needed ? <Counter onCount={set} /> : null] as const;",
+            None,
+            None,
+        ),
+        ("[condition ? <App /> : null];", None, None),
+        ("[condition ? null : <App />];", None, None),
+        ("[condition ? <App /> : <Other />];", None, None),
+        ("[condition && <App />];", None, None),
+        ("[(condition ? (<App />) : null)];", None, None),
+        (
+            "[condition ? <></> : null];",
+            Some(serde_json::json!([{ "checkFragmentShorthand": true }])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -839,6 +861,8 @@ fn test() {
             None,
             None,
         ),
+        ("[((<App />))];", None, None),
+        ("[condition ? [<App />] : null];", None, None),
     ];
 
     Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();

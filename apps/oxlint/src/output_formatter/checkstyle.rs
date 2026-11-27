@@ -58,7 +58,7 @@ fn format_checkstyle(diagnostics: &[Error]) -> String {
                  acc.push_str(&line);
                  acc
              });
-         let filename = &infos[0].filename;
+         let filename = xml_escape(&infos[0].filename);
          format!(r#"<file name="{filename}">{messages}</file>"#)
      }).collect::<Vec<_>>().join(" ");
     format!(
@@ -96,6 +96,23 @@ mod test {
         assert_eq!(
             second_result.unwrap(),
             "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>\n"
+        );
+    }
+
+    #[test]
+    fn reporter_escapes_filename() {
+        let mut reporter = CheckstyleReporter::default();
+
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("a&b<\"c\".ts", "debugger;"));
+
+        reporter.render_error(error);
+        let result = reporter.finish(&DiagnosticResult::default()).unwrap();
+
+        assert_eq!(
+            result,
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"a&amp;b&lt;&quot;c&quot;.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>\n"
         );
     }
 }

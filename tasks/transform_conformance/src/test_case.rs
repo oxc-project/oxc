@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write as _,
     fs,
     path::{Path, PathBuf},
 };
@@ -7,6 +8,7 @@ use cow_utils::CowUtils;
 
 use oxc::{
     allocator::Allocator,
+    ast::ast::Statement,
     codegen::{Codegen, CodegenOptions, CommentOptions, IndentChar},
     diagnostics::{Diagnostics, NamedSource, OxcDiagnostic},
     parser::{ParseOptions, Parser},
@@ -19,7 +21,7 @@ use crate::{
     TestRunnerOptions,
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
     driver::Driver,
-    fixture_root, override_root, oxc_test_root, packages_root,
+    expanded_test_root, fixture_root, override_root, oxc_test_root, packages_root,
 };
 
 #[derive(Debug)]
@@ -73,7 +75,16 @@ impl TestCase {
             return None;
         };
 
-        let source_type = Self::source_type(&path, &options);
+        let mut source_type = Self::source_type(&path, &options);
+        // Babel's runner executes exec fixtures as sloppy-mode scripts unless they set
+        // `sourceType`.
+        if matches!(kind, TestCaseKind::Exec)
+            && options.source_type.is_none()
+            && path.starts_with(packages_root())
+            && path.extension().is_some_and(|ext| ext != "mjs")
+        {
+            source_type = source_type.with_script(true);
+        }
 
         Some(Self {
             kind,
@@ -178,6 +189,21 @@ impl TestCase {
 
         // Skip some Babel tests.
         if let Ok(path) = self.path.strip_prefix(packages_root()) {
+            // Standard decorator lowering uses esbuild's helper protocol, so Babel's output
+            // cannot match. Keep exec tests and expected transform errors in these suites.
+            if self.kind == TestCaseKind::Conformance
+                && options.throws.is_none()
+                && path.strip_prefix("babel-plugin-proposal-decorators/test/fixtures").is_ok_and(
+                    |path| {
+                        path.components().next().is_some_and(|component| {
+                            component.as_os_str().to_string_lossy().starts_with("2023-")
+                        })
+                    },
+                )
+            {
+                return true;
+            }
+
             // babel skip test cases that in a directory starting with a dot
             // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
             if path.components().any(|c| c.as_os_str().to_str().unwrap().starts_with('.')) {
@@ -257,11 +283,11 @@ impl TestCase {
         if !errors.is_empty() {
             let source = NamedSource::new(
                 path.strip_prefix(project_root).unwrap().to_string_lossy(),
-                source_text,
+                source_text.as_str(),
             );
             return Err(errors
                 .into_iter()
-                .map(|err| err.render_with_source_code(source.clone()))
+                .map(|err| err.render_with_source_code(&source))
                 .collect::<Vec<_>>()
                 .join("\n"));
         }
@@ -437,7 +463,11 @@ impl TestCase {
         let unprefixed_path = if let Ok(p) = self.path.strip_prefix(packages_root()) {
             name = "babel";
             p
-        } else if let Ok(p) = self.path.strip_prefix(oxc_test_root()) {
+        } else if let Ok(p) = self
+            .path
+            .strip_prefix(oxc_test_root())
+            .or_else(|_| self.path.strip_prefix(expanded_test_root()))
+        {
             name = "oxc";
             p
         } else {
@@ -447,8 +477,81 @@ impl TestCase {
             normalize_path(unprefixed_path).split('/').collect::<Vec<&str>>().join("-");
         let mut target_path = fixture_root().join(name).join(new_file_name);
         target_path.set_extension("test.js");
-        let content = Self::template(content);
+        let content = if self.source_type.is_script() {
+            Self::script_template(content)
+        } else {
+            Self::exec_template(content)
+        };
         fs::write(&target_path, content).unwrap();
+    }
+
+    fn exec_template(code: &str) -> String {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, code, SourceType::mjs())
+            .with_options(ParseOptions {
+                allow_return_outside_function: true,
+                ..Default::default()
+            })
+            .parse();
+        let has_exports = ret.program.body.iter().any(|statement| {
+            matches!(
+                statement,
+                Statement::ExportAllDeclaration(_)
+                    | Statement::ExportDeclaration(_)
+                    | Statement::ExportDefaultDeclaration(_)
+                    | Statement::ExportNamedDeclaration(_)
+            )
+        });
+        if has_exports {
+            // Keep module declarations and their assertions at module scope. The
+            // reporter records module evaluation errors as fixture failures too.
+            format!("import {{expect, test}} from 'vitest';\n{code}\ntest(\"exec\", () => {{}});")
+        } else {
+            Self::template(code)
+        }
+    }
+
+    /// Run a script in sloppy mode with `this` bound to the global object, as Babel does.
+    ///
+    /// The test module imports the runtime helpers, so they resolve to this checkout, and hands
+    /// them to the script through its `require`.
+    fn script_template(code: &str) -> String {
+        const HELPER_PREFIX: &str = "require(\"@oxc-project/runtime/helpers/";
+        let mut helpers = vec![];
+        let mut rest = code;
+        while let Some(start) = rest.find(HELPER_PREFIX) {
+            rest = &rest[start + HELPER_PREFIX.len()..];
+            let Some(end) = rest.find('"') else { break };
+            let name = &rest[..end];
+            if !helpers.contains(&name) {
+                helpers.push(name);
+            }
+            rest = &rest[end..];
+        }
+        let mut imports = String::new();
+        let mut entries = String::new();
+        for (i, name) in helpers.iter().enumerate() {
+            let _ =
+                writeln!(imports, "import helper{i} from \"@oxc-project/runtime/helpers/{name}\";");
+            let _ = writeln!(entries, "  \"@oxc-project/runtime/helpers/{name}\": helper{i},");
+        }
+        let code = js_string(code);
+        format!(
+            r#"import {{expect, test}} from 'vitest';
+import {{createRequire}} from 'node:module';
+import {{Script}} from 'node:vm';
+{imports}const helpers = {{
+{entries}}};
+const nodeRequire = createRequire(import.meta.url);
+const require = (id) => (Object.hasOwn(helpers, id) ? helpers[id] : nodeRequire(id));
+const code = {code};
+test("exec", () => {{
+  const run = new Script(`(function (require, expect) {{\n${{code}}\n}})`, {{
+    filename: import.meta.filename,
+  }}).runInThisContext();
+  run.call(globalThis, require, expect);
+}})"#
+        )
     }
 
     fn template(code: &str) -> String {
@@ -488,6 +591,28 @@ fn record_conformance_failure(
     errors.push(OxcDiagnostic::error(error));
 }
 
+/// Quote `s` as a JavaScript string literal.
+fn js_string(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('"');
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\u{2028}' => out.push_str("\\u2028"),
+            '\u{2029}' => out.push_str("\\u2029"),
+            c if c.is_control() => {
+                let _ = write!(out, "\\u{:04x}", c as u32);
+            }
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
+}
+
 fn get_babel_error(error: &str) -> String {
     match error {
         "transform-react-jsx: unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
@@ -499,6 +624,86 @@ fn get_babel_error(error: &str) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn babel_standard_decorators_keep_exec_errors_and_local_outputs() {
+        let fixture_path = "babel-plugin-proposal-decorators/test/fixtures";
+        for root in [packages_root(), oxc_test_root()] {
+            for (relative_path, kind, skip_babel_output) in [
+                ("2023-11-harness/combined/input.js", TestCaseKind::Conformance, true),
+                ("2023-11-harness/combined/exec.js", TestCaseKind::Exec, false),
+                ("2023-11-harness/combined/exec.ts", TestCaseKind::Exec, false),
+                ("2023-11-harness/combined/exec.mjs", TestCaseKind::Exec, false),
+                ("2023-11-harness/exec/input.js", TestCaseKind::Exec, false),
+                ("2023-05-harness/typescript/input.ts", TestCaseKind::Conformance, true),
+                ("legacy-harness/example/input.js", TestCaseKind::Conformance, false),
+                ("metadata-harness/example/input.js", TestCaseKind::Conformance, false),
+                ("oxc/2023-11-harness/input.js", TestCaseKind::Conformance, false),
+            ] {
+                let path = root.join(fixture_path).join(relative_path);
+                let mut case = TestCase::new(&root, &path).unwrap();
+                assert_eq!(case.kind, kind, "{}", path.display());
+                assert_eq!(
+                    case.skip_test_case(),
+                    root == packages_root() && skip_babel_output,
+                    "{}",
+                    path.display()
+                );
+
+                // Keep expected transform errors eligible when Babel output comparison is skipped.
+                case.options.throws = Some("expected transform error".to_string());
+                assert!(!case.skip_test_case(), "{}", path.display());
+            }
+        }
+
+        for root in [packages_root(), oxc_test_root()] {
+            for fixture_path in [
+                "babel-plugin-transform-typescript/test/fixtures/2023-11-harness/example/input.ts",
+                "legacy-decorators/test/fixtures/2023-11-harness/example/input.ts",
+            ] {
+                let case = TestCase::new(&root, &root.join(fixture_path)).unwrap();
+                assert!(!case.skip_test_case());
+            }
+        }
+    }
+
+    #[test]
+    fn exec_exports_keep_module_scope() {
+        let code = "import helper from './helper.js';\nexport default class C {}\nexport const value = await Promise.resolve(1);\nexpect(value).toBe(1);";
+        let module = TestCase::exec_template(code);
+        assert!(module.contains(code), "keep the original imports, exports, and statements");
+
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, &module, SourceType::mjs()).parse();
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+        assert_eq!(
+            ret.program
+                .body
+                .iter()
+                .filter(|statement| matches!(
+                    statement,
+                    Statement::ExportDefaultDeclaration(_)
+                        | Statement::ExportDeclaration(_)
+                        | Statement::ExportNamedDeclaration(_)
+                ))
+                .count(),
+            2
+        );
+        for code in ["export const x = 1;", "export * from './other.js';"] {
+            let module = TestCase::exec_template(code);
+            assert!(module.contains(&format!("\n{code}\n")));
+        }
+    }
+
+    #[test]
+    fn exec_without_exports_keeps_callback_semantics() {
+        for code in [
+            "'use strict';\nexpect(this).toBeUndefined();\nreturn;",
+            "const text = 'export default';\nexpect(text).toBe('export default');",
+        ] {
+            assert_eq!(TestCase::exec_template(code), TestCase::template(code));
+        }
+    }
 
     #[test]
     fn records_missing_expected_transform_error() {

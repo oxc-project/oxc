@@ -46,6 +46,7 @@ Every reason is OUR decision factor; Prettier's mechanism (comment attachment, `
   - The usual trigger is Prettier's internal inconsistency, one construct printed differently by context:
     - `uniform-rule (same construct, same output: <sibling>)`, we print the sibling's shape everywhere
     - The sibling is a construct Prettier ITSELF prints that way (measured), never a shape of our own; an entry that cannot name it is not admitted under this rule
+      - Measure it with a source layout unlike the claimed output (e.g. off its print indent): Prettier printing a raw slice as written looks like the claimed rule otherwise
   - The rarer trigger is Prettier being consistent but sidestepping one of our rules (a user option governs everywhere, the `line_suffix` width rule, ...):
     - `uniform-rule (<rule>)`, and the entry body cites where the rule already applies (a section of this document, another crate, another construct)
     - A rule with no other application is not uniform; it needs a second application first

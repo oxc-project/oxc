@@ -210,8 +210,14 @@
   },
   "customHelpers": [
     "decorate.js",
+    "decorateElement.js",
     "decorateMetadata.js",
-    "decorateParam.js"
+    "decorateParam.js",
+    "decoratorKey.js",
+    "decoratorMetadata.js",
+    "decoratorStart.js",
+    "runInitializers.js",
+    "setClassName.js"
   ],
   "legacyHelpers": [
     "AwaitValue.js",

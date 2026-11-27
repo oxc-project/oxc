@@ -1,4 +1,8 @@
 use itertools::Itertools;
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, BindingPattern, Expression},
@@ -6,9 +10,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     context::LintContext,
@@ -232,7 +233,11 @@ fn try_merge_esm_import<'a>(
     let first_span = module_record
         .import_entries
         .iter()
-        .find(|e| e.module_request.name() == IMPORT_SOURCE && !e.is_type)?
+        .find(|e| {
+            e.module_request.name() == IMPORT_SOURCE
+                && !e.is_type
+                && !matches!(e.import_name, ImportImportName::Source(_))
+        })?
         .statement_span;
 
     // Merge only entries belonging to that same import statement
@@ -254,7 +259,7 @@ fn try_merge_esm_import<'a>(
             ImportImportName::Default(_) => {
                 functions_to_import.insert(entry.local_name.name.to_string());
             }
-            ImportImportName::NamespaceObject => {}
+            ImportImportName::NamespaceObject | ImportImportName::Source(_) => {}
         }
     }
 
@@ -300,10 +305,7 @@ fn try_merge_cjs_require<'a>(
         // Merge existing destructured properties
         if let BindingPattern::ObjectPattern(pattern) = &declarator.id {
             for prop in &pattern.properties {
-                if prop.computed {
-                    continue;
-                }
-                let Some(key_name) = prop.key.static_name() else { continue };
+                let Some(key_name) = prop.key.literal_name() else { continue };
                 let BindingPattern::BindingIdentifier(value_ident) = &prop.value else {
                     continue;
                 };
@@ -1052,6 +1054,21 @@ fn test() {
               expect(true).toBeDefined();
             })"#,
             r#"const { describe, expect, test } = require('@jest/globals');
+            describe("suite", () => {
+              test("foo");
+              expect(true).toBeDefined();
+            })"#,
+            None,
+            None,
+        ),
+        (
+            r#"import source wasm from '@jest/globals';
+            describe("suite", () => {
+              test("foo");
+              expect(true).toBeDefined();
+            })"#,
+            r#"import { describe, expect, test } from '@jest/globals';
+import source wasm from '@jest/globals';
             describe("suite", () => {
               test("foo");
               expect(true).toBeDefined();

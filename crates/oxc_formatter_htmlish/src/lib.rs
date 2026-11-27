@@ -16,5 +16,8 @@ pub use crate::{
         parse_for_format,
     },
     options::{HtmlishFormatOptions, HtmlishVariant, WhitespaceSensitivity},
-    print::{CssInHtmlStyleAttribute, JsInHtmlEventHandler, JsInVueTemplate},
+    print::{
+        CssInHtmlStyleAttribute, JsInAngularPiece, JsInAngularTemplate, JsInHtmlEventHandler,
+        JsInVueTemplate,
+    },
 };

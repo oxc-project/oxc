@@ -1,12 +1,12 @@
 use itertools::Itertools;
 use javascript_globals::GLOBALS_BUILTIN;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::symbol::SymbolFlags;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -93,6 +93,11 @@ impl Rule for NoRedeclare {
         };
 
         for symbol_id in ctx.scoping().symbol_ids() {
+            // A `var` redeclaring a catch parameter is allowed, and it also redeclares
+            // the enclosing binding, which is checked on its own. Skip the catch parameter.
+            if ctx.scoping().catch_var_binding(symbol_id).is_some() {
+                continue;
+            }
             let name = ctx.scoping().symbol_name(symbol_id);
             let decl_span = ctx.scoping().symbol_span(symbol_id);
             let is_builtin = builtin_globals.is_some_and(|builtin_globals| {
@@ -166,8 +171,9 @@ impl Rule for NoRedeclare {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let defaults = NoRedeclare::default();
     assert!(defaults.builtin_globals);
@@ -247,6 +253,7 @@ fn test() {
             "function A(): string; function A(): number; function A() {} namespace A {}",
             Some(json!([{ "ignoreDeclarationMerge": true }])),
         ),
+        ("function f() { try {} catch (e) { var e = 2; } }", None),
     ];
 
     let fail = vec![
@@ -254,6 +261,7 @@ fn test() {
         ("var a = 3; var a = 10;", None),
         ("var a = {}; var a = [];", None),
         ("var a; function a() {}", None),
+        ("function f() { try {} catch (e) { var e; var e; } }", None),
         ("function a() {} function a() {}", None),
         ("var a = function() { }; var a = function() { }", None),
         ("var a = function() { }; var a = new Date();", None),

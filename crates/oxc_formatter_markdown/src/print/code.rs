@@ -5,11 +5,12 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    DispatchRequest, Document, FormatElement, FormatOptions, InputKind, PrintWidth, arena_cow_str,
+    DispatchRequest, Document, FormatElement, FormatOptions, InputKind, PrintWidth, any_text_in_ir,
+    arena_cow_str,
     builders::{
-        FormatOnce, exact_line_breaks, hard_line_break, mark_as_root, space_align, text, token,
+        FormatOnce, embedded_root, exact_line_breaks, hard_line_break, space_align, text, token,
     },
-    dispatch_ir, map_text_in_ir, push_text_with_literal_lines, write,
+    dispatch_ir, write,
 };
 use oxc_markdown_parser::{
     ast::{CodeBlock, CodeBlockKind},
@@ -76,9 +77,9 @@ pub fn write_code_block<'a>(code: &'a CodeBlock<'a>, f: &mut MarkdownFormatter<'
                     write!(f, [exact_line_breaks(1), text(fence)]);
                 }
             });
-            // The child's literal lines (a template literal, a block scalar) stay relative to the fence,
+            // The child's literal lines and text newlines (a template literal, a block scalar) stay relative to the fence,
             // not column 0 (inside a blockquote, that would lose the `> `).
-            write!(f, mark_as_root(&fenced));
+            write!(f, embedded_root(&fenced));
         }
     }
 }
@@ -122,18 +123,7 @@ fn format_embedded<'a>(
         },
     )?;
 
-    // Newline inside a text (a template literal, a block comment) becomes a literal line,
-    // which `mark_as_root` keeps at the fence's column
-    let indent_width = f.options().indent_width();
-    let mut has_fence_char = false;
-    let ir = map_text_in_ir(ir, f.allocator(), &mut |text, out| {
-        has_fence_char |= text.as_bytes().contains(&fence_char);
-        text.contains('\n') && {
-            push_text_with_literal_lines(out, text, indent_width);
-            true
-        }
-    });
-    if !has_fence_char {
+    if !any_text_in_ir(&ir, &mut |text| text.as_bytes().contains(&fence_char)) {
         return Some((ir, 0));
     }
 

@@ -72,7 +72,6 @@ pub fn source_starts_with_document_marker(offset: u32, f: &YamlFormatter<'_, '_>
 }
 
 /// Emits a node's properties (anchor/tag) in their source order.
-/// NOTE: Prettier 3.9.5 normalizes to `tag anchor` order; we keep the source order instead.
 ///
 /// The separator after the props is a hard line for block collections and a space otherwise.
 fn write_props(props: &Props, is_block_collection: bool, f: &mut YamlFormatter<'_, '_>) {

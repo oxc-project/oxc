@@ -1,6 +1,8 @@
+use std::cmp::Reverse;
+
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, UnaryOperator},
+    ast::{Argument, Expression, ObjectPropertyKind, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -139,11 +141,9 @@ impl RequireTestTimeout {
                     };
 
                     config_positions.push(call_expr.span);
-                    config_positions.sort_by(|config_a, config_b| {
-                        (config_a.end - config_b.end).cmp(&config_a.end)
-                    });
+                    config_positions.sort_by_key(|config| Reverse(config.end));
 
-                    parse_timeout_value(&property.value, property.value.span(), ctx);
+                    parse_timeout_property(property, ctx);
                 } else {
                     ctx.diagnostic(config_missing_timeout_object(call_expr.span()));
                 }
@@ -170,7 +170,7 @@ impl RequireTestTimeout {
                         return;
                     };
 
-                    parse_timeout_value(&property.value, property.value.span(), ctx);
+                    parse_timeout_property(property, ctx);
                 } else if let Some(last_argument) = call_expr.arguments.get(2) {
                     let Some(argument_expression) = last_argument.as_expression() else {
                         return;
@@ -195,6 +195,18 @@ impl RequireTestTimeout {
 
 fn is_todo_or_skipped(member: &KnownMemberExpressionProperty<'_>) -> bool {
     member.is_name_equal("todo") || member.is_name_equal("skip")
+}
+
+fn parse_timeout_property(property: &ObjectPropertyKind<'_>, ctx: &LintContext<'_>) {
+    match property {
+        ObjectPropertyKind::ObjectProperty(property) => {
+            parse_timeout_value(&property.value, property.value.span(), ctx);
+        }
+        ObjectPropertyKind::MethodProperty(property) => {
+            ctx.diagnostic(timeout_must_be_a_number(property.value.span));
+        }
+        ObjectPropertyKind::SpreadProperty(_) => {}
+    }
 }
 
 fn parse_timeout_value(expression: &Expression<'_>, span: Span, ctx: &LintContext<'_>) {
@@ -249,6 +261,8 @@ fn test() {
         r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}); vi.setConfig({ testTimeout: 2000 }); test("b", () => {})"#,
         r#"vi.setConfig({ testTimeout: 1000 }); test("a", () => {}, 500)"#,
         r#"describe("suite", () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000 }); vi.setConfig({ testTimeout: 2000 }); vi.setConfig({ testTimeout: 3000 }); test("a", () => {})"#,
+        r#"vi.setConfig({ testTimeout: 1000, nested: [vi.setConfig({ testTimeout: 2000 }), test("a", () => {})] })"#,
     ];
 
     let fail = vec![

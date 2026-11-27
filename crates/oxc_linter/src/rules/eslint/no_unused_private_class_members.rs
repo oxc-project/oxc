@@ -1,4 +1,5 @@
 use itertools::Itertools;
+
 use oxc_ast::{AstKind, ast::AssignmentOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -189,7 +190,7 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 AstKind::PrivateFieldExpression(_),
                 AstKind::AssignmentTargetPropertyProperty(prop),
             ) => {
-                if prop.computed && prop.name.span() == curr.span() {
+                if prop.name.is_computed() && prop.name.span() == curr.span() {
                     return true;
                 }
             }
@@ -231,6 +232,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::PropertyDefinition(_)
         | AstKind::ArrayExpression(_)
         | AstKind::ObjectProperty(_)
+        | AstKind::ObjectMethodProperty(_)
         | AstKind::JSXExpressionContainer(_)
         | AstKind::ChainExpression(_)
         | AstKind::StaticMemberExpression(_)
@@ -511,6 +513,17 @@ fn test() {
         r"export class Foo { #fetch: typeof fetch; constructor() { this.#fetch = fetch; } async bar() { return (0, this.#fetch)('https://example.com'); } }",
         r"export class StateMachine { #state = 'idle'; step() { switch (this.#state) { case 'idle': { this.#state = 'running'; break; } case 'running': { this.#state = 'done'; break; } } } }",
         r"class Stopper { #promise; async stop() { this.#promise ??= this.makePromise(); await this.#promise; } makePromise() { return Promise.resolve(); } }",
+        "class C {
+            #usedInInnerClass;
+
+            method(a) {
+                return class {
+                    foo = a.#usedInInnerClass;
+                }
+            }
+        }",
+        "class C { #x; m() { return class { #y; n(o) { return o.#x + this.#y; } }; } }",
+        "class C { #m() {} run(o) { return class { go() { o.#m(); } }; } }",
     ];
 
     let fail = vec![
@@ -661,6 +674,7 @@ fn test() {
         r"class Foo { #x; #y; method(a, b, c) { a ? (b ? this.#x : c) : this.#y; } }",
         r"class Foo { #x; method() { a && (b ? this.#x : c); } }",
         r"class Foo { #a; #b; #c; method() { this.#a ? this.#b : this.#c; } }",
+        "class C { #x; m() { return class { #x; n(o) { return o.#x; } }; } }",
     ];
 
     Tester::new(NoUnusedPrivateClassMembers::NAME, NoUnusedPrivateClassMembers::PLUGIN, pass, fail)

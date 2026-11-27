@@ -266,7 +266,7 @@ fn get_angular_component_property<'a>(
         _ => return None,
     };
 
-    if prop.computed {
+    if prop.key.is_computed() {
         return None;
     }
     let PropertyKey::StaticIdentifier(key) = &prop.key else {
@@ -296,79 +296,6 @@ fn get_angular_component_property<'a>(
 }
 
 // ---
-
-/// Split text on placeholder patterns, returning alternating parts:
-/// `[literal, index_str, literal, index_str, ...]`
-///
-/// Handles both:
-/// - CSS: `` `PLACEHOLDER-{N}` ``
-/// - HTML: `PRETTIER_HTML_PLACEHOLDER_{depth}_{N}_IN_JS`, the `{depth}_` passed as part of `prefix`
-///
-/// The prefix and suffix match ASCII case-insensitively: a child may change their case
-/// (CSS lowercases a property name holding an HTML placeholder).
-fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&'a str> {
-    let mut result = vec![];
-    let mut remaining = text;
-
-    loop {
-        let Some(start) = find_ignore_ascii_case(remaining, prefix) else {
-            result.push(remaining);
-            break;
-        };
-
-        // Push the literal before the placeholder
-        result.push(&remaining[..start]);
-
-        // Skip past the prefix
-        let after_prefix = &remaining[start + prefix.len()..];
-
-        // Find the index digits
-        let digit_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-
-        if digit_end == 0 {
-            // No digits found after prefix — not a valid placeholder, treat as literal
-            if let Some(last) = result.last_mut() {
-                let end = start + prefix.len();
-                *last = &remaining[..end];
-            }
-            remaining = &remaining[start + prefix.len()..];
-            continue;
-        }
-
-        let digits = &after_prefix[..digit_end];
-        let after_digits = &after_prefix[digit_end..];
-
-        // Check for the suffix
-        let after_suffix = after_digits
-            .get(..suffix.len())
-            .filter(|s| s.eq_ignore_ascii_case(suffix))
-            .map(|_| &after_digits[suffix.len()..]);
-        if let Some(after_suffix) = after_suffix {
-            // Valid placeholder — push the digit index
-            result.push(digits);
-            remaining = after_suffix;
-        } else {
-            // Not a valid placeholder, include in the literal
-            let end = start + prefix.len() + digit_end;
-            if let Some(last) = result.last_mut() {
-                *last = &remaining[..end];
-            }
-            remaining = &remaining[end..];
-        }
-    }
-
-    result
-}
-
-/// `haystack.find(needle)`, ASCII case-insensitively.
-fn find_ignore_ascii_case(haystack: &str, needle: &str) -> Option<usize> {
-    let (haystack, needle) = (haystack.as_bytes(), needle.as_bytes());
-    let first = *needle.first()?;
-    memchr::memchr2_iter(first.to_ascii_lowercase(), first.to_ascii_uppercase(), haystack).find(
-        |&i| haystack.get(i..i + needle.len()).is_some_and(|w| w.eq_ignore_ascii_case(needle)),
-    )
-}
 
 // ---
 

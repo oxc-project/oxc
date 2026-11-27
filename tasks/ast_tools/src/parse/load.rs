@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
-    Attribute, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Visibility,
+    Attribute, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Type, Visibility, braced,
     parse::ParseBuffer, parse_file, parse_quote, punctuated::Punctuated,
 };
 
@@ -39,7 +39,7 @@ fn parse_item(item: Item, file_id: FileId) -> Option<Skeleton> {
 
 fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<Skeleton> {
     let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
-    let skeleton = StructSkeleton { name, file_id, is_foreign, is_meta, item };
+    let skeleton = StructSkeleton { name, file_id, is_foreign, is_meta, is_bitflags: false, item };
     Some(Skeleton::Struct(skeleton))
 }
 
@@ -53,6 +53,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
     item.mac.path.get_ident().and_then(|macro_name| match macro_name.to_string().as_str() {
         "define_nonmax_u32_index_type" => parse_index_type_macro(item, file_id, true),
         "define_index_type" => parse_index_type_macro(item, file_id, false),
+        "bitflags" => parse_bitflags_macro(item, file_id),
         _ => None,
     })
 }
@@ -91,7 +92,76 @@ fn parse_index_type_macro(
                 #vis struct #ident (#ty_ident);
             };
 
-            Ok(Some(Skeleton::Struct(StructSkeleton { name, file_id, is_foreign, is_meta, item })))
+            let skeleton =
+                StructSkeleton { name, file_id, is_foreign, is_meta, is_bitflags: false, item };
+            Ok(Some(Skeleton::Struct(skeleton)))
+        })
+        .unwrap()
+}
+
+/// Parse a `bitflags!` macro which defines an AST type, and convert it to a tuple struct.
+///
+/// ```ignore
+/// bitflags! {
+///     #[ast]
+///     #[derive(Clone, Copy)]
+///     pub struct Foo: u8 {
+///         const A = 1 << 0;
+///         const B = 1 << 1;
+///     }
+/// }
+/// ```
+///
+/// is converted to:
+///
+/// ```ignore
+/// #[ast]
+/// #[derive(Clone, Copy)]
+/// pub struct Foo(u8);
+/// ```
+///
+/// Returns `None` if the type has no `#[ast]` attribute.
+///
+/// # Panics
+/// Panics if the macro defines an AST type and defines more than 1 type.
+fn parse_bitflags_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
+    item.mac
+        .parse_body_with(|input: &ParseBuffer| {
+            let attrs = input.call(Attribute::parse_outer)?;
+
+            // Skip types which aren't AST types, without parsing the rest of the macro.
+            // They can use syntax which is not supported below e.g. `impl Foo: u8 { ... }`.
+            if !attrs.iter().any(|attr| attr.path().is_ident("ast")) {
+                input.parse::<TokenStream>()?;
+                return Ok(None);
+            }
+
+            let vis = input.parse::<Visibility>()?;
+            input.parse::<Token![struct]>()?;
+            let ident = input.parse::<Ident>()?;
+            input.parse::<Token![:]>()?;
+            let ty = input.parse::<Type>()?;
+
+            // Skip the flags
+            let flags;
+            braced!(flags in input);
+            flags.parse::<TokenStream>()?;
+
+            assert!(
+                input.is_empty(),
+                "`bitflags!` macro defining an AST type cannot define other types: `{ident}`"
+            );
+
+            let (name, is_foreign, is_meta) = get_type_name(&attrs, &ident).unwrap();
+
+            let item = parse_quote! {
+                #(#attrs)*
+                #vis struct #ident (#ty);
+            };
+
+            let skeleton =
+                StructSkeleton { name, file_id, is_foreign, is_meta, item, is_bitflags: true };
+            Ok(Some(Skeleton::Struct(skeleton)))
         })
         .unwrap()
 }

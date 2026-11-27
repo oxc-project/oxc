@@ -1,7 +1,8 @@
+use serde_json::Value;
+
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use serde_json::Value;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -223,7 +224,7 @@ fn test() {
                 ],
             })
 
-            test('', () => {})",
+            test('foo', () => {})",
             None,
         ),
         // https://github.com/oxc-project/oxc/issues/22268
@@ -658,6 +659,24 @@ fn test() {
         // https://github.com/oxc-project/oxc/issues/22268
         ("it(Object.raw`foo`, () => {})", None),
         ("it(String.raw(`foo`), () => {})", None),
+        // Vitest-specific tests with .extend()
+        (
+            "import { it } from 'vitest'
+
+            const test = it.extend({
+                fixture: [
+                    async ({}, use) => {
+                        setup()
+                        await use()
+                        teardown()
+                    },
+                    { auto: true }
+                ],
+            })
+
+            test('', () => {})",
+            None,
+        ),
     ];
 
     let fix = vec![

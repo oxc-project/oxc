@@ -50,6 +50,44 @@ export const sources = [
     repo: "gitlabhq/gitlabhq/app/assets",
     version: "v16.9.0",
   },
+  // angular
+  {
+    name: "angular-adev",
+    repo: "angular/angular/adev/src",
+    // Pin to a commit (2026-11 main), whose templates use the syntax of the next release
+    version: "ca92b968b8ec43ec2037302ac5e1104948aea924",
+  },
+  {
+    name: "angular-devtools",
+    repo: "angular/angular/devtools",
+    version: "ca92b968b8ec43ec2037302ac5e1104948aea924",
+  },
+  {
+    name: "angular-components",
+    repo: "angular/components/src",
+    // Pin to a commit (2026-11 main), as angular/angular
+    version: "5eb7a34a082e5f9736711938972cc2984265f5a9",
+  },
+  {
+    name: "bitwarden-components",
+    repo: "bitwarden/clients/libs/components",
+    version: "web-v2026.11.0",
+  },
+  {
+    name: "bitwarden-angular",
+    repo: "bitwarden/clients/libs/angular",
+    version: "web-v2026.11.0",
+  },
+  {
+    name: "bitwarden-web",
+    repo: "bitwarden/clients/apps/web/src/app",
+    version: "web-v2026.11.0",
+  },
+  {
+    name: "bitwarden-license-web",
+    repo: "bitwarden/clients/bitwarden_license/bit-web/src/app",
+    version: "web-v2026.11.0",
+  },
   // less
   {
     name: "ng-zorro-antd",

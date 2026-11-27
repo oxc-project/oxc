@@ -1,8 +1,12 @@
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType, PropertyKind,
-        ReturnStatement,
+        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType,
+        ObjectMethodKind, ReturnStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -10,9 +14,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -135,7 +136,8 @@ declare_oxc_lint!(
     restriction,
     config = ExplicitFunctionReturnTypeConfig,
     version = "0.4.4",
-    short_description = "This rule enforces that functions have an explicit return type annotation.",
+    short_description =
+        "This rule enforces that functions have an explicit return type annotation.",
 );
 
 fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
@@ -208,6 +210,13 @@ impl Rule for ExplicitFunctionReturnType {
 
                             return;
                         }
+                        AstKind::ObjectMethodProperty(prop) => {
+                            ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
+                                prop.span.start,
+                                func.params.span.start,
+                            )));
+                            return;
+                        }
                         _ => {}
                     }
                 }
@@ -275,6 +284,13 @@ impl Rule for ExplicitFunctionReturnType {
                                 func.params.span.start,
                             )));
 
+                            return;
+                        }
+                        AstKind::ObjectMethodProperty(prop) => {
+                            ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
+                                prop.span.start,
+                                func.params.span.start,
+                            )));
                             return;
                         }
                         _ => {}
@@ -358,25 +374,25 @@ impl ExplicitFunctionReturnType {
                 let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
                     return false;
                 };
-                def.key.is_identifier()
-                    && !def.computed
-                    && self.allowed_names.contains(name.as_ref())
+                def.key.is_identifier() && self.allowed_names.contains(name.as_ref())
             }
             AstKind::PropertyDefinition(def) => {
                 let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
                     return false;
                 };
-                def.key.is_identifier()
-                    && !def.computed
-                    && self.allowed_names.contains(name.as_ref())
+                def.key.is_identifier() && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
                 let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
                     return false;
                 };
-                prop.key.is_identifier()
-                    && !prop.computed
-                    && self.allowed_names.contains(name.as_ref())
+                prop.key.is_identifier() && self.allowed_names.contains(name.as_ref())
+            }
+            AstKind::ObjectMethodProperty(prop) => {
+                let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
+                prop.key.is_identifier() && self.allowed_names.contains(name.as_ref())
             }
             _ => false,
         }
@@ -479,24 +495,22 @@ fn is_constructor(node: &AstNode) -> bool {
 fn is_setter(node: &AstNode) -> bool {
     match node.kind() {
         AstKind::MethodDefinition(method_def) => method_def.kind.is_set(),
-        AstKind::ObjectProperty(obj_prop) => {
-            matches!(obj_prop.kind, PropertyKind::Set)
-        }
+        AstKind::ObjectMethodProperty(method) => method.kind == ObjectMethodKind::Set,
         _ => false,
     }
 }
 
 fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
-    is_typed_parent(parent, Some(node), ctx)
+    is_typed_parent(parent, Some(node))
         || is_property_of_object_with_type(parent, ctx)
         || is_constructor_argument(parent)
 }
 
-fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>, ctx: &LintContext) -> bool {
+fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>) -> bool {
     is_type_assertion(parent)
         || is_variable_declarator_with_type_annotation(parent)
-        || is_default_function_parameter_with_type_annotation(parent, ctx)
+        || is_default_function_parameter_with_type_annotation(parent)
         || is_property_definition_with_type_annotation(parent)
         || is_function_argument(parent, callee)
         || is_typed_jsx(parent)
@@ -534,13 +548,8 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
 fn is_type_assertion(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::TSAsExpression(_) | AstKind::TSTypeAssertion(_))
 }
-fn is_default_function_parameter_with_type_annotation(node: &AstNode, ctx: &LintContext) -> bool {
-    let AstKind::AssignmentPattern(_assign) = node.kind() else { return false };
-    match ctx.nodes().parent_kind(node.id()) {
-        AstKind::FormalParameter(f) => f.type_annotation.is_some(),
-        AstKind::FormalParameterRest(f) => f.type_annotation.is_some(),
-        _ => false,
-    }
+fn is_default_function_parameter_with_type_annotation(node: &AstNode) -> bool {
+    matches!(node.kind(), AstKind::FormalParameter(param) if param.type_annotation.is_some())
 }
 
 /**
@@ -569,12 +578,17 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
-    if let AstKind::ObjectProperty(prop) = parent.kind()
-        && let Expression::ArrowFunctionExpression(func) = &prop.value
-        && func.get_function_body().is_some_and(|body| !body.statements.is_empty())
-        && func.return_type.is_some()
-    {
-        return true;
+    let can_inherit_return_type = match parent.kind() {
+        AstKind::ReturnStatement(_) => true,
+        AstKind::ArrowFunctionExpression(func) => func.get_expression().is_some(),
+        AstKind::ObjectProperty(prop) => matches!(
+            prop.value.without_parentheses(),
+            Expression::ArrowFunctionExpression(func) if func.get_expression().is_some()
+        ),
+        _ => false,
+    };
+    if !can_inherit_return_type {
+        return false;
     }
 
     for ancestor in ctx.nodes().ancestors(node.id()) {
@@ -655,7 +669,7 @@ impl<'a> VisitJs<'a> for ReturnStatementChecker {
  * ```
  */
 fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
-    if !matches!(node.kind(), AstKind::ObjectProperty(_)) {
+    if !matches!(node.kind(), AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_)) {
         return false;
     }
     let parent = ctx.nodes().parent_node(node.id());
@@ -665,8 +679,7 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     let Some(obj_expr_parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
-    is_typed_parent(obj_expr_parent, None, ctx)
-        || is_property_of_object_with_type(obj_expr_parent, ctx)
+    is_typed_parent(obj_expr_parent, None) || is_property_of_object_with_type(obj_expr_parent, ctx)
 }
 
 #[test]
@@ -1493,6 +1506,17 @@ fn test() {
             None,
             None,
         ),
+        (
+            "
+            type R = { run: () => Promise<number> };
+            export function f(): R {
+              return { run: async () => 1 };
+            }
+            ",
+            None,
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -2106,6 +2130,21 @@ fn test() {
         (
             "export function myFunction3() { try { throw new Error('some error'); } catch (error) { throw error; } }",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
+            None,
+            None,
+        ),
+        (
+            "
+            type R = { run: () => Promise<number> };
+            export function f(): R {
+              return {
+                run: async () => {
+                  return 1;
+                },
+              };
+            }
+            ",
+            None,
             None,
             None,
         ),

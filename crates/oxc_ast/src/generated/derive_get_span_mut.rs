@@ -181,6 +181,7 @@ impl GetSpanMut for ObjectPropertyKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::ObjectProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::MethodProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::SpreadProperty(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
@@ -193,10 +194,20 @@ impl GetSpanMut for ObjectProperty<'_> {
     }
 }
 
+impl GetSpanMut for ObjectMethodProperty<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for PropertyKey<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::StaticIdentifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticStringLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticNumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticBigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateIdentifier(it) => GetSpanMut::span_mut(&mut **it),
             Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),

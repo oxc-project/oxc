@@ -22,8 +22,8 @@ use crate::{
     },
     format::to_span,
     print::{
-        CssFormatter, at_rule, format_with, has_comments_between, is_glued, less,
-        postcss_simple_vars, scss, selector,
+        CssFormatter, at_rule, block_comment_end, format_with, has_comments_between, is_glued,
+        less, postcss_simple_vars, scss, selector,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -37,6 +37,9 @@ pub(super) fn stmt_end(stmt: &Statement<'_>, f: &CssFormatter<'_, '_>) -> u32 {
 }
 
 /// Extends `end` over any whitespace, comments and a final `;` in the source.
+///
+/// NOTE: `oxc-css-parser` records no `;` span, so this scans the source.
+/// Recording it in the parser would retire the scan (the comments are in the comment store too).
 /// End of an at-rule's params region: the block start, or (without a block) the span end,
 /// extended over a trailing `;` and shrunk back so the `;` itself stays outside the region.
 pub(super) fn params_region_end<'a>(
@@ -63,13 +66,8 @@ pub(super) fn end_with_semicolon(end: u32, f: &CssFormatter<'_, '_>) -> u32 {
         }
         // Skip a block comment between the statement and its `;`
         if i + 1 < bytes.len() && bytes[i] == b'/' && bytes[i + 1] == b'*' {
-            match source[i + 2..].find("*/") {
-                Some(close) => {
-                    i = i + 2 + close + 2;
-                    continue;
-                }
-                None => break,
-            }
+            i = block_comment_end(&source, i);
+            continue;
         }
         break;
     }
@@ -335,8 +333,18 @@ pub(super) fn write_verbatim_prelude_rule<'a>(
 }
 
 /// Mirrors Prettier's `css-decl`.
-/// Used without a trailing semicolon for `@supports (...)` features (the caller skips the `;`).
+/// Writes no `;`: the caller does.
 pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
+    write_declaration_until(decl, None, f);
+}
+
+/// [`write_declaration`] whose trailing comments wrap up to `tail_end` instead of its `;`
+/// (a `@supports` declaration's `)`).
+pub(super) fn write_declaration_until<'a>(
+    decl: &Declaration<'a>,
+    tail_end: Option<u32>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
@@ -369,11 +377,21 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     let trimmed_between = between.trim_ascii();
     // `lastLineHasInlineComment`: the value drops to the next line,
     // one indent under the prop (`indent([hardline, dedent(value)])`).
+    // Printed as written, as Prettier does, with a `//`, a Less merge marker or a line break inside it
+    // (a comment starting a line after the `:` or alone on its line keeps it, and so does a second pass);
+    // otherwise its block comments are spaced (DIVERGENCES.md#declaration-colon-comments)
+    let verbatim_between = trimmed_between != ":"
+        && (decl.less_property_merge.is_some()
+            || trimmed_between.contains('\n')
+            || f.context()
+                .comments()
+                .iter_before(between_upper)
+                .any(|c| c.inline && c.span.start >= name_span.end));
     let between_breaks = trimmed_between != ":"
         && trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//");
     // A Less merge marker (`prop+: val` / `prop+_: val`)
     // glues to the property name and its spaces drop, leaving only `:`
-    // (Prettier 3.9.5 #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).
+    // (as Prettier since #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).
     // Comments around the marker keep the verbatim path.
     let merge_marker =
         decl.less_property_merge.as_ref().map(|merge| to_span(merge.span)).filter(|span| {
@@ -385,6 +403,11 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         write!(f, ":");
     } else if trimmed_between == ":" {
         write!(f, ":");
+    } else if !verbatim_between {
+        // Block comments around the `:` are spaced as in a media feature (`prop /* c */: /* d */ value`).
+        value::flush_trailing_value_comments(decl.colon_span.start, f);
+        write!(f, ":");
+        value::flush_trailing_value_comments(between_upper, f);
     } else {
         let _ = f.context().comments().take_before(between_upper);
         if trimmed_between.starts_with("//") {
@@ -415,10 +438,12 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             write!(f, text(trimmed_between));
         }
     }
+    // A custom property's whitespace-only value is printed as written, `!important` glued to it
+    let mut verbatim_empty_value = false;
     if decl.value.is_empty() {
         // An empty value prints as `prop:;`, except a custom property's whitespace-only value,
         // which is its value: `--x: ;` substitutes a space where `--x:;` substitutes nothing, so it is kept verbatim.
-        // Scan up to the `;` in the source.
+        // Scan up to the `;` (or the `!important`) in the source.
         if is_custom_property {
             let colon_end = decl.colon_span.end;
             let bytes = source.as_bytes();
@@ -426,7 +451,11 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
                 i += 1;
             }
-            if i < bytes.len() && bytes[i] == b';' && i > colon_end as usize {
+            verbatim_empty_value = match &decl.important {
+                Some(important) => i == important.span.start as usize,
+                None => i < bytes.len() && bytes[i] == b';',
+            };
+            if verbatim_empty_value && i > colon_end as usize {
                 write!(f, text(source.slice_range(colon_end, u32::try_from(i).unwrap())));
             }
         }
@@ -504,15 +533,18 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
                 no_break: prop_lower == "composes",
                 // Prettier's printer counts a multi-line between's FULL width,
                 // so the first trailing comment always wraps.
-                tail_break: trimmed_between.contains('\n'),
+                // (only where it is printed as written)
+                tail_break: verbatim_between && trimmed_between.contains('\n'),
                 ..ValueContext::default()
             };
 
             // The `;` position bounds wrapped trailing comments.
             // Only when such comments exist (keeps simple declarations on the single-component fast path).
             let decl_end_pre = decl.span().end;
-            let semi = end_with_semicolon(decl_end_pre, f);
-            let bound = if semi > decl_end_pre { semi - 1 } else { decl_end_pre };
+            let bound = tail_end.unwrap_or_else(|| {
+                let semi = end_with_semicolon(decl_end_pre, f);
+                if semi > decl_end_pre { semi - 1 } else { decl_end_pre }
+            });
             // A single interpolated component is exempt,
             // its fill-chunk fit ignores the line tail (see `is_single_sass_interpolation`).
             let has_tail = decl.important.is_none()
@@ -546,7 +578,11 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         }
     }
     if let Some(important) = &decl.important {
-        value::write_trailing_important(important, f);
+        if verbatim_empty_value {
+            value::write_important_annotation(important, f);
+        } else {
+            value::write_trailing_important(important, f);
+        }
     }
     write_terminator_tail_comments(decl.span().end, f);
 }
@@ -655,10 +691,7 @@ fn find_colon_outside_comments(line: &str) -> Option<usize> {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            match line[i + 2..].find("*/") {
-                Some(close) => i = i + 2 + close + 2,
-                None => return None,
-            }
+            i = block_comment_end(line, i);
             continue;
         }
         if bytes[i] == b':' {
@@ -682,10 +715,7 @@ fn respace_value_tokens(v: &str) -> String {
         }
         let start = i;
         if bytes[i] == b'/' && bytes.get(i + 1) == Some(&b'*') {
-            match v[i + 2..].find("*/") {
-                Some(close) => i = i + 2 + close + 2,
-                None => i = bytes.len(),
-            }
+            i = block_comment_end(v, i);
         } else {
             while i < bytes.len()
                 && !bytes[i].is_ascii_whitespace()

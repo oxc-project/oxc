@@ -1,0 +1,15 @@
+a = 1
+  
+b = 2
+#c
+ 	
+c = 3
+ 
+
+d = 4
+e = 5 # trailing spaces after this comment   
+arr = [
+  1, # c
+  
+  2,
+]

@@ -59,13 +59,14 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
-    utils::ast_builder::{
-        create_assignment, wrap_expression_in_arrow_function_iife,
-        wrap_statements_in_arrow_function_iife,
+    utils::{
+        ast_builder::{
+            create_assignment, take_literal_property_key, wrap_expression_in_arrow_function_iife,
+            wrap_statements_in_arrow_function_iife,
+        },
+        class_name::contextual_class_name,
     },
 };
-
-use super::class_name::contextual_class_name;
 
 pub struct ClassStaticBlock<'a> {
     classes: Vec<ClassState<'a>>,
@@ -188,12 +189,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                     let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
                     let prop = &mut **prop;
                     // A prototype setter does not perform NamedEvaluation.
-                    if !prop.computed && prop.key.is_specific_static_name("__proto__") {
+                    if prop.key.is_specific_literal_name("__proto__") {
                         continue;
                     }
                     if let Some(class) = Self::anonymous_deferred_class(&prop.value) {
                         let address = class.body.address();
-                        let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
+                        let name = Self::property_name(&mut prop.key, ctx);
                         self.pending_classes.entry(address).or_default().inferred_name = Some(name);
                     }
                 }
@@ -246,7 +247,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             // A folded initializer has already supplied the original name.
             let pending = self.pending_classes.entry(address).or_default();
             if pending.inferred_name.is_none() {
-                let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
+                let name = Self::property_name(&mut prop.key, ctx);
                 pending.inferred_name = Some(name);
             }
         }
@@ -372,7 +373,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             key,
             None,
             Some(assignment),
-            false,
             true,
             false,
             false,
@@ -404,18 +404,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             // Let the engine perform NamedEvaluation before static initialization. Setting
             // `.name` afterwards is too late, and would overwrite a user-defined static name.
             // A computed key also handles symbols and the special `__proto__` spelling.
-            let key = PropertyKey::from(name.expression(ctx));
-            let computed = !matches!(&name, InferredName::Static(name) if *name != "__proto__");
-            let property = ObjectPropertyKind::new_object_property(
-                SPAN,
-                PropertyKind::Init,
-                key,
-                expr.take_in(ctx),
-                false,
-                false,
-                computed,
-                ctx,
-            );
+            let key = match &name {
+                InferredName::Static(name) if *name != "__proto__" => {
+                    PropertyKey::new_static_string_literal(SPAN, *name, None, ctx)
+                }
+                _ => PropertyKey::from(name.expression(ctx)),
+            };
+            let property =
+                ObjectPropertyKind::new_object_property(SPAN, key, expr.take_in(ctx), false, ctx);
             let object = Expression::new_object_expression(SPAN, [property], ctx);
             let key = name.expression(ctx);
             *expr = if matches!(name, InferredName::Computed(_)) {
@@ -516,7 +512,7 @@ impl<'a> ClassStaticBlock<'a> {
             .enumerate()
             .filter_map(|(index, element)| {
                 let ClassElement::PropertyDefinition(prop) = element else { return None };
-                if prop.r#static || !prop.computed {
+                if prop.r#static || !prop.key.is_computed() {
                     return None;
                 }
                 let Expression::ClassExpression(value) =
@@ -553,7 +549,7 @@ impl<'a> ClassStaticBlock<'a> {
                 unreachable!();
             };
             let prop = &mut **prop;
-            let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
+            let name = Self::property_name(&mut prop.key, ctx);
             let Expression::ClassExpression(value) =
                 prop.value.as_ref().unwrap().get_inner_expression()
             else {
@@ -569,7 +565,6 @@ impl<'a> ClassStaticBlock<'a> {
                 PropertyKey::new_private_identifier(SPAN, key, ctx),
                 None,
                 Some(name.expression(ctx)),
-                false,
                 true,
                 false,
                 false,
@@ -601,8 +596,8 @@ impl<'a> ClassStaticBlock<'a> {
                     has_name_method = true;
                     break;
                 }
-                if method.computed {
-                    let key = Self::property_name(&mut method.key, &mut method.computed, ctx);
+                if method.key.is_computed() {
+                    let key = Self::property_name(&mut method.key, ctx);
                     let check = Expression::new_binary_expression(
                         SPAN,
                         key.expression(ctx),
@@ -720,6 +715,7 @@ impl<'a> ClassStaticBlock<'a> {
             prop.key,
             PropertyKey::StaticIdentifier(_)
                 | PropertyKey::PrivateIdentifier(_)
+                | PropertyKey::StaticStringLiteral(_)
                 | PropertyKey::StringLiteral(_)
         ) && prop
             .value
@@ -749,17 +745,15 @@ impl<'a> ClassStaticBlock<'a> {
             .expect("an enclosing statement list")
     }
 
-    fn property_name(
-        key: &mut PropertyKey<'a>,
-        computed: &mut bool,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> InferredName<'a> {
+    fn property_name(key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) -> InferredName<'a> {
         let name = match key {
             PropertyKey::PrivateIdentifier(ident) => {
                 Some(JSStr::from(Str::from_strs_array_in(["#", ident.name.as_str()], ctx)))
             }
             PropertyKey::StaticIdentifier(ident) => Some(JSStr::from(ident.name)),
-            PropertyKey::StringLiteral(lit) => Some(lit.value),
+            PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
+                Some(lit.value)
+            }
             _ => None,
         };
         if let Some(name) = name {
@@ -767,8 +761,10 @@ impl<'a> ClassStaticBlock<'a> {
         }
         // Capture even an identifier: later keys/initializers can mutate its value. Coercion
         // belongs here too, since ToPropertyKey can have side effects or produce a symbol.
-        *computed = true;
-        let value = key.take_in(ctx).into_expression();
+        let value = match take_literal_property_key(key, ctx) {
+            Some(value) => value,
+            None => key.take_in(ctx).into_expression(),
+        };
         let value = helper_call_expr(
             Helper::ToPropertyKey,
             ArenaVec::from_value_in(Argument::from(value), ctx),
@@ -805,7 +801,7 @@ impl<'a> ClassStaticBlock<'a> {
     ) -> Expression<'a> {
         if let Some(mut value) = prop.value.take() {
             if value.get_inner_expression().is_anonymous_function_definition() {
-                let name = Self::property_name(&mut prop.key, &mut prop.computed, ctx);
+                let name = Self::property_name(&mut prop.key, ctx);
                 if let Expression::ClassExpression(class) = value.get_inner_expression() {
                     self.pending_classes.entry(class.body.address()).or_default().inferred_name =
                         Some(name);
@@ -1055,11 +1051,8 @@ impl<'a> Visit<'a> for ContainsSuspension {
 impl<'a> Visit<'a> for ClassBindingRebinder<'a, '_> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         let reference_id = ident.reference_id();
-        let scoping = self.ctx.scoping_mut();
-        if scoping.get_reference(reference_id).symbol_id() == Some(self.outer_symbol) {
-            scoping.get_reference_mut(reference_id).set_symbol_id(self.inner_symbol);
-            scoping.delete_resolved_reference(self.outer_symbol, reference_id);
-            scoping.add_resolved_reference(self.inner_symbol, reference_id);
+        if self.ctx.scoping().get_reference(reference_id).symbol_id() == Some(self.outer_symbol) {
+            self.ctx.rebind_reference(reference_id, ident.name, self.inner_symbol);
         }
     }
 }

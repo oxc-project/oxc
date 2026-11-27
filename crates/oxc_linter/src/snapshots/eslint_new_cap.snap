@@ -283,3 +283,59 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ╰── This should be called with `new`
    ╰────
   help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:33]
+ 1 │ const Date = { UTC() {} }; Date.UTC(2000, 0);
+   ·                                 ─┬─
+   ·                                  ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:34]
+ 1 │ function foo(Date) { return Date.UTC(2000, 0); }
+   ·                                  ─┬─
+   ·                                   ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:35]
+ 1 │ import { Date } from 'foo'; Date?.UTC(2000, 0);
+   ·                                   ─┬─
+   ·                                    ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:51]
+ 1 │ function foo(globalThis) { return globalThis.Date.UTC(2000, 0); }
+   ·                                                   ─┬─
+   ·                                                    ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:16]
+ 1 │ globalThis.foo.UTC(2000, 0);
+   ·                ─┬─
+   ·                 ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:28]
+ 1 │ function foo(Date) { Date[('UTC')](2000, 0); }
+   ·                            ──┬──
+   ·                              ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:49]
+ 1 │ function foo(globalThis) { globalThis[('Date')].UTC(2000, 0); }
+   ·                                                 ─┬─
+   ·                                                  ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.

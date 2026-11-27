@@ -1,5 +1,9 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{AssignmentTarget, Expression, Statement},
@@ -15,9 +19,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -186,7 +187,8 @@ declare_oxc_lint!(
     recommended,
     config = AlwaysReturnConfig,
     version = "1.13.0",
-    short_description = "Require returning inside each `then()` to create readable and reusable Promise chains.",
+    short_description =
+        "Require returning inside each `then()` to create readable and reusable Promise chains.",
 );
 
 const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];

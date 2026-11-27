@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
@@ -99,7 +100,8 @@ declare_oxc_lint!(
     recommended,
     config = UnboundMethodConfig,
     version = "1.12.0",
-    short_description = "This rule enforces that unbound methods are called with their expected scope.",
+    short_description =
+        "This rule enforces that unbound methods are called with their expected scope.",
 );
 
 impl Rule for UnboundMethod {

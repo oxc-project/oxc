@@ -1,32 +1,32 @@
-`PLACEHOLDER-0` `PLACEHOLDER-1`
+`oxfmt_css_0` `oxfmt_css_1`
 html {
   margin: 0;
 }
 
-`PLACEHOLDER-2`:hover {
+`oxfmt_css_2`:hover {
   fill: rebeccapurple;
 }
 
-`PLACEHOLDER-3`: `PLACEHOLDER-4`;
+`oxfmt_css_3`: `oxfmt_css_4`;
 
-`PLACEHOLDER-5`:
-`PLACEHOLDER-6`;
+`oxfmt_css_5`:
+`oxfmt_css_6`;
 
-`PLACEHOLDER-7`
+`oxfmt_css_7`
 /* a comment */
 
 .aRule {
   color: red;
 }
 
-`PLACEHOLDER-8`
+`oxfmt_css_8`
 
 :disabled {
   cursor: not-allowed;
 }
 
 // DIVERGES: the declaration swallowed by the `;`-less placeholder above it is formatted (Prettier keeps it verbatim); see DIVERGENCES.md#placeholder-swallow-run
-`PLACEHOLDER-9`
+`oxfmt_css_9`
 color   :   red;
 
-`PLACEHOLDER-10``PLACEHOLDER-11`
+`oxfmt_css_10``oxfmt_css_11`

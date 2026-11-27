@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{AssignmentTarget, match_assignment_target_pattern},
@@ -7,8 +10,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -64,7 +65,8 @@ declare_oxc_lint!(
     recommended,
     config = NoUnsafeOptionalChaining,
     version = "0.0.5",
-    short_description = "Disallow use of optional chaining in contexts where the `undefined` value is not allowed.",
+    short_description =
+        "Disallow use of optional chaining in contexts where the `undefined` value is not allowed.",
 );
 
 impl Rule for NoUnsafeOptionalChaining {

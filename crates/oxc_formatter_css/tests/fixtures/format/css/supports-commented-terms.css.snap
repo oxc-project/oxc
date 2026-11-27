@@ -1,0 +1,180 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* Comments between the terms: the terms print as they do without them */
+@supports /* c */ (display:flex) and (gap:1PX) {
+}
+@supports /* c */ not ( display : flex ) {
+}
+@supports (a:b) /* c */ and (c:'d') {
+}
+@supports /* c */ ((display:flex) or (display:grid)) and selector(a:hover) {
+}
+@supports /* c */ (display: flex) and (gap: 1rem) and (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+/* A paren in a comment, a comment opener in a string */
+@supports /* (c) */ (display:flex) {
+}
+@supports /* c */ (content:'/*') {
+}
+
+/* A comment inside a term: the declaration prints as in a rule, its comments in place */
+@supports (/* c */ a:b) and (c:d) {
+}
+@supports not (/* c */ display:flex) {
+}
+@supports (/* c */ display:flex) and (gap:1rem) and (grid-template-columns:repeat(auto-fill, minmax(100px, 1fr))) {
+}
+@supports (display: /* c */ flex /* d is a long comment */ /* e is a long comment too */) and (gap: 1rem) {
+}
+@supports (/* d */ a:b) and selector(/* e */ a:hover) {
+}
+@supports selector(/* e */ a:hover) {
+}
+@supports selector(/* a /* b */ a:hover) {
+}
+@supports selector(a /* c */) {
+}
+@supports (display: flex !important /* c */) {
+}
+@supports ((a: b) /* inner */) {
+}
+@supports selector(A < B /* c */) {
+}
+@supports (display /* c */ : flex) and (gap:1PX) {
+}
+
+/* DIVERGENCES.md#supports-declaration-as-in-rule */
+@supports (/* a comment long enough to break this term */ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+
+/* DIVERGENCES.md#prelude-keyword-case */
+@supports /* c */ (DISPLAY:FLEX) {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* Comments between the terms: the terms print as they do without them */
+@supports /* c */ (display: flex) and (gap: 1px) {
+}
+@supports /* c */ not (display: flex) {
+}
+@supports (a: b) /* c */ and (c: "d") {
+}
+@supports /* c */ ((display: flex) or (display: grid)) and selector(a:hover) {
+}
+@supports /* c */ (display: flex) and (gap: 1rem) and
+  (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+/* A paren in a comment, a comment opener in a string */
+@supports /* (c) */ (display: flex) {
+}
+@supports /* c */ (content: "/*") {
+}
+
+/* A comment inside a term: the declaration prints as in a rule, its comments in place */
+@supports (/* c */ a: b) and (c: d) {
+}
+@supports not (/* c */ display: flex) {
+}
+@supports (/* c */ display: flex) and (gap: 1rem) and
+  (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+@supports (
+    display: /* c */ flex /* d is a long comment */
+      /* e is a long comment too */
+  )
+  and (gap: 1rem) {
+}
+@supports (/* d */ a: b) and selector(/* e */ a:hover) {
+}
+@supports selector(/* e */ a:hover) {
+}
+@supports selector(/* a /* b */ a:hover) {
+}
+@supports selector(a /* c */) {
+}
+@supports (display: flex !important /* c */) {
+}
+@supports ((a: b) /* inner */) {
+}
+@supports selector(A < B /* c */) {
+}
+@supports (display /* c */: flex) and (gap: 1px) {
+}
+
+/* DIVERGENCES.md#supports-declaration-as-in-rule */
+@supports (
+  /* a comment long enough to break this term */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+) {
+}
+
+/* DIVERGENCES.md#prelude-keyword-case */
+@supports /* c */ (display: FLEX) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* Comments between the terms: the terms print as they do without them */
+@supports /* c */ (display: flex) and (gap: 1px) {
+}
+@supports /* c */ not (display: flex) {
+}
+@supports (a: b) /* c */ and (c: "d") {
+}
+@supports /* c */ ((display: flex) or (display: grid)) and selector(a:hover) {
+}
+@supports /* c */ (display: flex) and (gap: 1rem) and
+  (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+/* A paren in a comment, a comment opener in a string */
+@supports /* (c) */ (display: flex) {
+}
+@supports /* c */ (content: "/*") {
+}
+
+/* A comment inside a term: the declaration prints as in a rule, its comments in place */
+@supports (/* c */ a: b) and (c: d) {
+}
+@supports not (/* c */ display: flex) {
+}
+@supports (/* c */ display: flex) and (gap: 1rem) and
+  (grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))) {
+}
+@supports (display: /* c */ flex /* d is a long comment */ /* e is a long comment too */) and
+  (gap: 1rem) {
+}
+@supports (/* d */ a: b) and selector(/* e */ a:hover) {
+}
+@supports selector(/* e */ a:hover) {
+}
+@supports selector(/* a /* b */ a:hover) {
+}
+@supports selector(a /* c */) {
+}
+@supports (display: flex !important /* c */) {
+}
+@supports ((a: b) /* inner */) {
+}
+@supports selector(A < B /* c */) {
+}
+@supports (display /* c */: flex) and (gap: 1px) {
+}
+
+/* DIVERGENCES.md#supports-declaration-as-in-rule */
+@supports (
+  /* a comment long enough to break this term */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+) {
+}
+
+/* DIVERGENCES.md#prelude-keyword-case */
+@supports /* c */ (display: FLEX) {
+}
+
+===================== End =====================

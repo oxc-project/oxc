@@ -4,13 +4,14 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, Comment,
     ast::{ExportDefaultDeclarationKind, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 use crate::{
     AstNode,
@@ -89,7 +90,8 @@ declare_oxc_lint!(
     conditional_fix_dangerous,
     config = ConsistentTypeDefinitionsConfig,
     version = "0.2.17",
-    short_description = "Enforce type definitions to consistently use either `interface` or `type`.",
+    short_description =
+        "Enforce type definitions to consistently use either `interface` or `type`.",
 );
 
 impl Rule for ConsistentTypeDefinitions {
@@ -115,34 +117,57 @@ impl Rule for ConsistentTypeDefinitions {
                             decl.span.start
                         };
 
-                        let name_span_start = &decl.id.span.start;
-                        let mut name_span_end = &decl.id.span.end;
+                        let header_end = decl
+                            .type_parameters
+                            .as_ref()
+                            .map_or(decl.id.span.end, |params| params.span.end);
+                        let body_span = type_annotation.span();
 
-                        if let Some(params) = &decl.type_parameters {
-                            name_span_end = &params.span.end;
-                        }
+                        ctx.diagnostic_with_fix(
+                            consistent_type_definitions_diagnostic(
+                                ConsistentTypeDefinitionsConfig::Interface,
+                                Span::sized(start, 4),
+                            ),
+                            |fixer| {
+                                let Some(equals_offset) =
+                                    ctx.find_next_token_within(header_end, body_span.start, "=")
+                                else {
+                                    return fixer.noop();
+                                };
+                                let equals_start = header_end + equals_offset;
+                                #[expect(clippy::cast_possible_truncation)]
+                                let before_equals_end = header_end
+                                    + ctx
+                                        .source_range(Span::new(header_end, equals_start))
+                                        .trim_end_matches(|c| {
+                                            is_white_space(c) || is_line_terminator(c)
+                                        })
+                                        .len() as u32;
+                                let follows_line_comment = ctx
+                                    .semantic()
+                                    .get_comment_at(before_equals_end - 1)
+                                    .is_some_and(Comment::is_line);
 
-                        let name =
-                            &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
-
-                        if let TSType::TSTypeLiteral(type_ann) = type_annotation {
-                            let body_span = type_ann.span;
-                            let body = &ctx.source_text()
-                                [body_span.start as usize..body_span.end as usize];
-
-                            ctx.diagnostic_with_fix(
-                                consistent_type_definitions_diagnostic(
-                                    ConsistentTypeDefinitionsConfig::Interface,
-                                    Span::sized(start, 4),
-                                ),
-                                |fixer| {
-                                    fixer.replace(
-                                        Span::new(start, decl.span.end),
-                                        format!("interface {name} {body}"),
-                                    )
-                                },
-                            );
-                        }
+                                let fixer = fixer.for_multifix();
+                                let mut fix = fixer.new_fix_with_capacity(3);
+                                fix.push(fixer.replace(Span::sized(start, 4), "interface"));
+                                if follows_line_comment {
+                                    fix.push(
+                                        fixer
+                                            .delete_range(Span::new(equals_start, body_span.start)),
+                                    );
+                                } else {
+                                    fix.push(fixer.replace(
+                                        Span::new(before_equals_end, body_span.start),
+                                        " ",
+                                    ));
+                                }
+                                fix.push(
+                                    fixer.delete_range(Span::new(body_span.end, decl.span.end)),
+                                );
+                                fix.with_message("Convert this type alias to an interface.")
+                            },
+                        );
                     }
                     _ => {}
                 }
@@ -175,10 +200,14 @@ impl Rule for ConsistentTypeDefinitions {
                         Span::sized(decl.span.start, 9),
                     );
 
+                    let semicolon = if needs_semicolon_after(exp.span.end, ctx) { ";" } else { "" };
                     let fix = |fixer: RuleFixer<'_, 'a>| {
                         fixer.replace(
                             exp.span,
-                            format!("type {name} = {body}{extends}\nexport default {name}"),
+                            format!(
+                                "type {name} = {body}{extends}\nexport default {}{semicolon}",
+                                decl.id.name
+                            ),
                         )
                     };
                     if is_within_declare_global_block(ctx, node.id()) {
@@ -225,10 +254,11 @@ impl Rule for ConsistentTypeDefinitions {
                     Span::sized(start, 9),
                 );
 
+                let semicolon = if needs_semicolon_after(decl.span.end, ctx) { ";" } else { "" };
                 let fix = |fixer: RuleFixer<'_, 'a>| {
                     fixer.replace(
                         Span::new(start, decl.span.end),
-                        format!("type {name} = {body}{extends}"),
+                        format!("type {name} = {body}{extends}{semicolon}"),
                     )
                 };
                 if is_within_declare_global_block(ctx, node.id()) {
@@ -250,6 +280,30 @@ fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
     ctx.nodes()
         .ancestors(node_id)
         .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
+}
+
+/// Whether the code after `end` is on the same line, so a type alias that ends at `end`
+/// needs a `;`: `interface A {} foo()` becomes `type A = {}; foo()`.
+fn needs_semicolon_after(end: u32, ctx: &LintContext) -> bool {
+    let mut pos = end;
+    loop {
+        let rest = &ctx.source_text()[pos as usize..];
+        let Some((offset, c)) = rest.char_indices().find(|&(_, c)| !is_white_space(c)) else {
+            return false;
+        };
+        #[expect(clippy::cast_possible_truncation)]
+        let start = pos + offset as u32;
+        match ctx.semantic().get_comment_at(start) {
+            Some(comment)
+                if comment.is_block()
+                    && !ctx.source_range(comment.span).contains(is_line_terminator) =>
+            {
+                pos = comment.span.end;
+            }
+            Some(_) => return false,
+            None => return !is_line_terminator(c) && !matches!(c, ';' | '}'),
+        }
+    }
 }
 
 #[test]
@@ -553,11 +607,73 @@ export declare type Test = {
             Some(serde_json::json!(["type"])),
         ),
         ("type foo = ({});", "interface foo {}", Some(serde_json::json!(["interface"]))),
+        (
+            "type /* public API */ Box /* shape */ = { x: number };",
+            "interface /* public API */ Box /* shape */ { x: number }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "type Box<T> /* c */ = { x: T };",
+            "interface Box<T> /* c */ { x: T }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "type Box // shape\n= { x: number };",
+            "interface Box // shape\n{ x: number }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "declare type /* c */ A = { x: number };",
+            "declare interface /* c */ A { x: number }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "export default interface Box<T> { value: T }",
+            "type Box<T> = { value: T }\nexport default Box",
+            Some(serde_json::json!(["type"])),
+        ),
         ("type foo = (({}));", "interface foo {}", Some(serde_json::json!(["interface"]))),
         (
             "type foo = ({ x: number });",
             "interface foo { x: number }",
             Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "interface A { x: number } export const y = 1",
+            "type A = { x: number }; export const y = 1",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "interface A extends B { x: number } let y = 1",
+            "type A = { x: number } & B; let y = 1",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "export interface A {} /* c */ export const y = 1",
+            "export type A = {}; /* c */ export const y = 1",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "export default interface A { x: number } foo()",
+            "type A = { x: number }\nexport default A; foo()",
+            Some(serde_json::json!(["type"])),
+        ),
+        ("interface A {}\nfoo()", "type A = {}\nfoo()", Some(serde_json::json!(["type"]))),
+        (
+            "interface A {} // c\nfoo()",
+            "type A = {} // c\nfoo()",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "interface A {} /* a\n */ foo()",
+            "type A = {} /* a\n */ foo()",
+            Some(serde_json::json!(["type"])),
+        ),
+        ("interface A {}; foo()", "type A = {}; foo()", Some(serde_json::json!(["type"]))),
+        (
+            "namespace N { interface A {} }",
+            "namespace N { type A = {} }",
+            Some(serde_json::json!(["type"])),
         ),
     ];
 

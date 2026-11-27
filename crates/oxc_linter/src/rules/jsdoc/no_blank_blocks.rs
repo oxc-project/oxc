@@ -1,8 +1,10 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+use oxc_ast::ast::CommentContent;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -69,15 +71,18 @@ impl Rule for NoBlankBlocks {
     fn run_once(&self, ctx: &LintContext) {
         let source_text = ctx.source_text();
 
-        for jsdoc in ctx.jsdoc().iter_all() {
-            let content = &source_text[jsdoc.span.start as usize..jsdoc.span.end as usize];
-            if !is_blank_jsdoc(content) {
+        for comment in ctx.semantic().comments() {
+            if !matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal) {
+                continue;
+            }
+            let content_span = Span::new(comment.span.start + 3, comment.span.end - 2);
+            if !is_blank_jsdoc(ctx.source_range(content_span)) {
                 continue;
             }
 
-            let diagnostic = no_blank_blocks_diagnostic(jsdoc.span);
+            let diagnostic = no_blank_blocks_diagnostic(content_span);
             if self.enable_fixer
-                && let Some(span) = fix_span(jsdoc.span, source_text)
+                && let Some(span) = fix_span(comment.span, source_text)
             {
                 ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete_range(span));
             } else {
@@ -96,8 +101,7 @@ fn is_blank_jsdoc(content: &str) -> bool {
 }
 
 /// Expands a standalone JSDoc block to include its indentation and following line ending.
-fn fix_span(jsdoc_span: Span, source_text: &str) -> Option<Span> {
-    let comment_span = Span::new(jsdoc_span.start - 3, jsdoc_span.end + 2);
+fn fix_span(comment_span: Span, source_text: &str) -> Option<Span> {
     let prefix = &source_text[..comment_span.start as usize];
     let line_start = prefix.rfind('\n').map_or(0, |index| index + 1);
 
@@ -128,6 +132,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("function example() {} /* */", None),
+        ("function example() {} /** @tag */", None),
+        ("function example() {} /****/", None),
         (
             "
                     /** @tag */
@@ -153,6 +160,7 @@ fn test() {
     ];
 
     let fail = vec![
+        ("function example() {} /** */", None),
         (
             "
                     /** */

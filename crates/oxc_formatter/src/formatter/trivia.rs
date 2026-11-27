@@ -451,14 +451,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
                         should_nestle_adjacent_comments(previous_comment, comment, f.source_text())
                     });
 
-                    write!(
-                        f,
-                        [
-                            (previous_comment.is_some() && !should_nestle)
-                                .then_some(hard_line_break()),
-                            format_comment_text(comment)
-                        ]
-                    );
+                    // A blank line between them is kept, as between statements
+                    let separator = (previous_comment.is_some() && !should_nestle).then(|| {
+                        if f.lines_before(comment.span) > 1 {
+                            empty_line()
+                        } else {
+                            hard_line_break()
+                        }
+                    });
+                    write!(f, [separator, format_comment_text(comment)]);
 
                     previous_comment = Some(comment);
                 }

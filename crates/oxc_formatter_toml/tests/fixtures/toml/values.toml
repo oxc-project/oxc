@@ -1,0 +1,14 @@
+int=+99
+hex = 0xDEAD_BEEF
+oct = 0o755
+bin = 0b1101
+float = 6.626e-34
+inf = -inf
+nan = nan
+bool = true
+odt = 1979-05-27T07:32:00Z
+odt_space = 1979-05-27 07:32:00-07:00
+ldt = 1979-05-27T07:32:00
+ld = 1979-05-27
+lt = 07:32:00.999
+  indented   =   "value"

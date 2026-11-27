@@ -6,6 +6,7 @@ mod tests;
 use std::path::Path;
 
 use javascript_globals::GLOBALS;
+
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
@@ -102,7 +103,8 @@ declare_oxc_lint!(
     suspicious,
     config = NoShadowConfig,
     version = "1.48.0",
-    short_description = "Disallows variable declarations from shadowing variables declared in the outer scope.",
+    short_description =
+        "Disallows variable declarations from shadowing variables declared in the outer scope.",
 );
 
 impl Rule for NoShadow {

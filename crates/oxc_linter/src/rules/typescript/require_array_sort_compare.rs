@@ -1,8 +1,9 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct RequireArraySortCompare(Box<RequireArraySortCompareConfig>);
@@ -75,7 +76,8 @@ declare_oxc_lint!(
     correctness,
     config = RequireArraySortCompareConfig,
     version = "1.12.0",
-    short_description = "This rule requires `Array#sort()` to be called with a comparison function.",
+    short_description =
+        "This rule requires `Array#sort()` to be called with a comparison function.",
 );
 
 impl Rule for RequireArraySortCompare {

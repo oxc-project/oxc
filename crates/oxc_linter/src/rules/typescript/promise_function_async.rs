@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
@@ -106,7 +107,8 @@ declare_oxc_lint!(
     conditional_fix,
     config = PromiseFunctionAsyncConfig,
     version = "1.12.0",
-    short_description = "This rule requires any function or method that returns a Promise to be marked as async.",
+    short_description =
+        "This rule requires any function or method that returns a Promise to be marked as async.",
 );
 
 impl Rule for PromiseFunctionAsync {

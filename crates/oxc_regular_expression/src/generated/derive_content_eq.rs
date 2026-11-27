@@ -189,6 +189,12 @@ impl ContentEq for Modifiers {
     }
 }
 
+impl ContentEq for Modifier {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 impl ContentEq for IndexedReference {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.index, &other.index)

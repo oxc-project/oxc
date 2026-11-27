@@ -327,7 +327,7 @@ impl<'c> Parser<'c> {
 
     /// Parse [`StructSkeleton`] to yield a [`TypeDef`].
     fn parse_struct(&mut self, type_id: TypeId, skeleton: StructSkeleton) -> TypeDef {
-        let StructSkeleton { name, file_id, is_foreign, item, .. } = skeleton;
+        let StructSkeleton { name, file_id, is_foreign, is_bitflags, item, .. } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
         let visibility = convert_visibility(&item.vis);
@@ -340,6 +340,7 @@ impl<'c> Parser<'c> {
             plural_name,
             has_lifetime,
             is_foreign,
+            is_bitflags,
             file_id,
             visibility,
             derives,

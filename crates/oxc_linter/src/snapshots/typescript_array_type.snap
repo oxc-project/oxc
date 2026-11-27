@@ -1064,3 +1064,38 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript(array-type): Array type using 'Readonly<string[]>' is forbidden. Use 'readonly string[]' instead.
+   ╭─[array_type.ts:1:17]
+ 1 │ export const a: Readonly<string[]> = [];
+   ·                 ──────────────────
+   ╰────
+  help: Replace `Readonly<string[]>` with `readonly string[]`.
+
+  ⚠ typescript(array-type): Array type using 'Readonly<string[]>' is forbidden for simple types. Use 'readonly string[]' instead.
+   ╭─[array_type.ts:1:32]
+ 1 │ declare function foo<E extends Readonly<string[]>>(extra: E): E;
+   ·                                ──────────────────
+   ╰────
+  help: Replace `Readonly<string[]>` with `readonly string[]`.
+
+  ⚠ typescript(array-type): Array type using 'Readonly<string[]>' is forbidden. Use 'readonly string[]' instead.
+   ╭─[array_type.ts:1:10]
+ 1 │ type A = Readonly<string[]>;
+   ·          ──────────────────
+   ╰────
+  help: Replace `Readonly<string[]>` with `readonly string[]`.
+
+  ⚠ typescript(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:1:19]
+ 1 │ type A = Readonly<string[]>;
+   ·                   ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:1:19]
+ 1 │ type A = Readonly<string[]>;
+   ·                   ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.

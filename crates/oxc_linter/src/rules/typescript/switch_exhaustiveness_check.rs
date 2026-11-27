@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
@@ -139,7 +140,8 @@ declare_oxc_lint!(
     conditional_suggestion,
     config = SwitchExhaustivenessCheckConfig,
     version = "1.12.0",
-    short_description = "This rule requires switch statements to be exhaustive when switching on union types.",
+    short_description =
+        "This rule requires switch statements to be exhaustive when switching on union types.",
 );
 
 impl Rule for SwitchExhaustivenessCheck {

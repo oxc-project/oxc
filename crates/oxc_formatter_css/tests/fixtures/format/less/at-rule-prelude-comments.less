@@ -3,6 +3,15 @@
   "a";
 @import (reference) "a" // c
 ;
+@import (reference) // c
+  "a";
+@import (reference, optional) // c
+  url(a.css) screen;
+@import (reference) /* c */ "a";
+@import (/* c */ reference) "a";
+@import (reference /* c */) "a";
+@import (reference /* c */, optional) "a";
+@import (reference, /* c */ optional) "a";
 // A vendor-prefixed keyframes prelude keeps its comments in place like `@keyframes`
 @-webkit-keyframes /* Safari */ hover /* and Chrome */ {
   from {

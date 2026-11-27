@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::{
     error::Diagnostic,
-    pipeline::TokenLanes,
+    pipeline::Lanes,
     token::{SPAN_SENTINELS, StringSpan, TokenKind},
 };
 
@@ -11,7 +11,7 @@ use crate::{
 pub struct Tokens {
     pub(crate) kinds: Vec<TokenKind>,
     pub(crate) spans: Vec<Span>,
-    pub(crate) lanes: TokenLanes,
+    pub(crate) lanes: Lanes,
 }
 
 impl Tokens {
@@ -37,8 +37,14 @@ impl Tokens {
         &self.lanes.diags
     }
 
+    /// Values of the Number tokens, in token order.
     pub fn numbers(&self) -> &[f64] {
         &self.lanes.numbers
+    }
+
+    /// BigInt values in token order, as decimal digits in the cooked bytes without `_` or `n`.
+    pub fn bigints(&self) -> &[StringSpan] {
+        &self.lanes.bigints
     }
 
     pub fn strings(&self) -> &[StringSpan] {
@@ -53,6 +59,8 @@ impl Tokens {
         &self.lanes.templates
     }
 
+    /// Escaped identifier values in token order, in the cooked bytes (private names without `#`).
+    /// An invalid escape adds nothing, so a value is UTF-8 whenever the source is.
     pub fn atoms(&self) -> &[StringSpan] {
         &self.lanes.atoms
     }

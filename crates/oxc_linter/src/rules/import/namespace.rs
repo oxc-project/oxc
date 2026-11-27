@@ -1,5 +1,8 @@
 use std::{fmt::Debug, sync::Arc};
 
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingPattern, ObjectPattern},
@@ -8,8 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -113,7 +114,8 @@ declare_oxc_lint!(
     recommended,
     config = Namespace,
     version = "0.2.11",
-    short_description = "Ensure imported namespaces contain dereferenced properties as they are dereferenced.",
+    short_description =
+        "Ensure imported namespaces contain dereferenced properties as they are dereferenced.",
 );
 
 impl Rule for Namespace {
@@ -157,6 +159,7 @@ impl Rule for Namespace {
                     // TODO: Hard to confirm if it's a namespace object
                     continue;
                 }
+                ImportImportName::Source(_) => continue,
             };
 
             if !module.has_module_syntax {

@@ -1,4 +1,7 @@
 use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, FunctionBody, Statement},
@@ -8,8 +11,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::{ContextHost, LintContext},

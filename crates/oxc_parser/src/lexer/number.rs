@@ -414,10 +414,10 @@ pub fn parse_big_int<'a>(
 
     let radix = match kind {
         // Skip parsing with `BigInt` - it's already in decimal form, and underscores are removed
-        Kind::Decimal => return Str::from_cow_in(&s, &allocator),
-        Kind::Binary => 2,
-        Kind::Octal => 8,
-        Kind::Hex => 16,
+        Kind::DecimalBigInt => return Str::from_cow_in(&s, &allocator),
+        Kind::BinaryBigInt => 2,
+        Kind::OctalBigInt => 8,
+        Kind::HexBigInt => 16,
         _ => unreachable!(),
     };
 
@@ -548,7 +548,11 @@ mod test {
     #[test]
     #[expect(clippy::cast_precision_loss)]
     fn test_nondecimal_rounding_boundaries() {
-        for bits in 54..128 {
+        // Under Miri, the full sweep takes over 7 minutes. Check only the smallest and largest widths,
+        // and widths on both sides of each radix's fast path length limit (octal 62/63, binary/hex 63/64).
+        let widths =
+            (54..128).filter(|bits| !cfg!(miri) || matches!(bits, 54 | 62 | 63 | 64 | 127));
+        for bits in widths {
             let base = 1_u128 << bits;
             let half_ulp = 1_u128 << (bits - 53);
             // Both even and odd significands, immediately below, at, and above halfway.

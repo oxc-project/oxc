@@ -3,7 +3,7 @@ use std::str::FromStr;
 use oxc_span::SourceType;
 use oxc_transformer::{ESTarget, TransformOptions};
 
-use crate::{codegen, test};
+use crate::{codegen, test, test_with_source_type};
 
 #[test]
 fn es_target() {
@@ -42,7 +42,7 @@ fn es_target() {
                 Ok(code) => code,
                 Err(errors) => errors
                     .into_iter()
-                    .map(|error| error.render_with_source_code(case.to_string()))
+                    .map(|error| error.render_with_source_code(case))
                     .collect::<Vec<_>>()
                     .join("\n"),
             };
@@ -56,6 +56,69 @@ fn es_target() {
             insta::assert_snapshot!("es_target", snapshot);
         });
     }
+}
+
+#[test]
+fn standard_decorators_opt_out() {
+    let cases = [
+        (
+            "@decorate class Example<T> { @decorate value: number = 1; @decorate accessor count: number = 2; @decorate method(value: T): T { return value; } }",
+            "@decorate class Example { @decorate value = 1; @decorate accessor count = 2; @decorate method(value) { return value; } }",
+        ),
+        ("class Plain { accessor value: number = 1; }", "class Plain { accessor value = 1; }"),
+        (
+            "class Example { @decorate static value: number = 1; @decorate item: number = 2; }",
+            "class Example { @decorate static value = 1; @decorate item = 2; }",
+        ),
+        (
+            "@decorate class Example { #value: number = 1; read(obj: Example) { obj.#value = 4; return obj.#value; } }",
+            "@decorate class Example { #value = 1; read(obj) { obj.#value = 4; return obj.#value; } }",
+        ),
+    ];
+    {
+        for target in [ESTarget::ES2015, ESTarget::ES2020, ESTarget::ES2022, ESTarget::ESNext] {
+            for set_public_class_fields in [false, true] {
+                let mut options = TransformOptions::from(target);
+                options.assumptions.set_public_class_fields = set_public_class_fields;
+                for (source, expected) in cases {
+                    assert_eq!(
+                        test_with_source_type(source, SourceType::ts(), &options),
+                        Ok(codegen(expected, SourceType::mjs())),
+                        "{target}, set_public_class_fields={set_public_class_fields}",
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn standard_decorators_opt_out_keeps_other_transforms() {
+    let source = "function run() { using resource = acquire(); @decorate class Example { @decorate method() {} } return Example; }";
+    let options = TransformOptions::from(ESTarget::ES2022);
+    let output = test(source, &options).unwrap();
+    assert!(output.contains("@decorate"));
+    assert!(!output.contains("using resource"));
+    assert!(!output.contains("decorateElement"));
+}
+
+#[test]
+fn standard_decorators_opt_out_keeps_plain_class_field_lowering() {
+    let options = TransformOptions::from(ESTarget::ES2015);
+    let output =
+        test("class Plain { value = 1; } class Example { @decorate value = 1; }", &options)
+            .unwrap();
+    assert!(output.contains("constructor()"));
+    assert!(output.contains("@decorate value = 1;"));
+    let output = test_with_source_type(
+        "class Outer { #value = 1; make() { return class Inner { accessor x = 2; #value = 3; read(obj: Inner) { obj.#value = 4; return obj.#value; } }; } }",
+        SourceType::ts(),
+        &options,
+    ).unwrap();
+    assert!(output.contains("accessor x = 2;"));
+    assert!(output.contains("#value = 3;"));
+    assert!(output.contains("obj.#value = 4;"));
+    assert!(output.contains("return obj.#value;"));
 }
 
 #[test]
@@ -83,6 +146,6 @@ fn target_list_fail() {
 
     for (target, expected) in targets {
         let result = TransformOptions::from_target(target);
-        assert_eq!(result.unwrap_err().clone(), expected);
+        assert_eq!(result.unwrap_err(), expected);
     }
 }

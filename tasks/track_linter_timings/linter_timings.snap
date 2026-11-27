@@ -14,7 +14,7 @@ eslint/default-case-last                                |    284
 eslint/default-param-last                               |  16812
 eslint/eqeqeq                                           |  20604
 eslint/for-direction                                    |    557
-eslint/func-name-matching                               |  83754
+eslint/func-name-matching                               |  83636
 eslint/func-names                                       |  14283
 eslint/func-style                                       |  16812
 eslint/getter-return                                    |  10895
@@ -124,7 +124,7 @@ eslint/no-throw-literal                                 |    224
 eslint/no-unassigned-vars                               |  31363
 eslint/no-undef                                         |      7
 eslint/no-undefined                                     | 282877
-eslint/no-underscore-dangle                             | 200305
+eslint/no-underscore-dangle                             | 167931
 eslint/no-unexpected-multiline                          | 100966
 eslint/no-unmodified-loop-condition                     |    782
 eslint/no-unneeded-ternary                              |   4722
@@ -260,6 +260,7 @@ jsdoc/require-property-type                             |      7
 jsdoc/require-returns                                   |      7
 jsdoc/require-returns-description                       |  16812
 jsdoc/require-returns-type                              |  16812
+jsdoc/require-template-description                      |      7
 jsdoc/require-throws-description                        |      7
 jsdoc/require-throws-type                               |      7
 jsdoc/require-yields                                    |  14339
@@ -442,7 +443,7 @@ react/preserve-manual-memoization                       |      4
 react/purity                                            |      4
 react/react-in-jsx-scope                                |    459
 react/refs                                              |      4
-react/require-render-return                             |   2604
+react/require-render-return                             |  16812
 react/rule-suppression                                  |      4
 react/rules-of-hooks                                    |  62606
 react/self-closing-comp                                 |    452
@@ -505,7 +506,7 @@ typescript/parameter-properties                         |   1070
 typescript/prefer-as-const                              |   1054
 typescript/prefer-enum-initializers                     |     23
 typescript/prefer-for-of                                |    557
-typescript/prefer-function-type                         |  14798
+typescript/prefer-function-type                         |    924
 typescript/prefer-literal-enum-member                   |    196
 typescript/prefer-namespace-keyword                     |      5
 typescript/prefer-ts-expect-error                       |      4
@@ -576,7 +577,7 @@ unicorn/no-useless-collection-argument                  |   1421
 unicorn/no-useless-error-capture-stack-trace            |  62606
 unicorn/no-useless-fallback-in-spread                   |    454
 unicorn/no-useless-iterator-to-array                    |  65257
-unicorn/no-useless-length-check                         |  12119
+unicorn/no-useless-length-check                         |  12839
 unicorn/no-useless-promise-resolve-reject               |  62606
 unicorn/no-useless-spread                               |  18240
 unicorn/no-useless-switch-case                          |    284
@@ -610,13 +611,13 @@ unicorn/prefer-includes                                 |  20604
 unicorn/prefer-keyboard-event-key                       |  77225
 unicorn/prefer-logical-operator-over-ternary            |   4722
 unicorn/prefer-math-min-max                             |   4722
-unicorn/prefer-math-trunc                               |  42715
-unicorn/prefer-modern-dom-apis                          |  62606
+unicorn/prefer-math-trunc                               | 105321
+unicorn/prefer-modern-dom-apis                          |  62817
 unicorn/prefer-modern-math-apis                         |  83210
 unicorn/prefer-module                                   | 226148
 unicorn/prefer-native-coercion-functions                |  16812
 unicorn/prefer-negative-index                           |  62606
-unicorn/prefer-node-protocol                            |  62732
+unicorn/prefer-node-protocol                            |  62735
 unicorn/prefer-number-coercion                          |  62606
 unicorn/prefer-number-properties                        | 157910
 unicorn/prefer-object-from-entries                      |  62606
@@ -686,7 +687,7 @@ vue/no-deprecated-vue-config-keycodes                   |  76337
 vue/no-dupe-keys                                        |  76731
 vue/no-import-compiler-macros                           |    103
 vue/no-required-prop-with-default                       |  62608
-vue/no-shared-component-data                            |  32492
+vue/no-shared-component-data                            |  32374
 vue/no-side-effects-in-computed-properties              |  94090
 vue/prefer-import-from-vue                              |      7
 vue/prop-name-casing                                    |  76731

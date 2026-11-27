@@ -1,7 +1,9 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression, ObjectProperty,
+        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
         ObjectPropertyKind, PropertyKey,
     },
 };
@@ -9,7 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::JSStr;
-use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -110,21 +111,15 @@ fn check_define_component<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<
 fn check_object_properties<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
     let mut existing_keys = FxHashSet::default();
     for prop in &obj_expr.properties {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            continue;
-        };
-        if let Some(name) = obj_prop.key.static_name().and_then(StaticPropertyName::into_cow_str) {
+        if let Some(name) =
+            prop.key().and_then(PropertyKey::static_name).and_then(StaticPropertyName::into_cow_str)
+        {
             existing_keys.insert(name.into_owned());
         }
     }
 
     for prop in &obj_expr.properties {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            continue;
-        };
-
-        let Some((key_name, key_span, is_shorthand, key_type)) = get_property_key_info(obj_prop)
-        else {
+        let Some((key_name, key_span, is_shorthand, key_type)) = get_property_key_info(prop) else {
             continue;
         };
 
@@ -185,12 +180,18 @@ enum KeyType {
 }
 
 /// Get the property key name, span, whether it's a shorthand property, and key type
-fn get_property_key_info(prop: &ObjectProperty) -> Option<(String, Span, bool, KeyType)> {
-    match &prop.key {
+fn get_property_key_info(prop: &ObjectPropertyKind<'_>) -> Option<(String, Span, bool, KeyType)> {
+    if let ObjectPropertyKind::ObjectProperty(prop) = prop
+        && prop.shorthand
+    {
+        let PropertyKey::StaticIdentifier(ident) = &prop.key else { return None };
+        return Some((ident.name.to_string(), ident.span, true, KeyType::Identifier));
+    }
+    match prop.key()? {
         PropertyKey::StaticIdentifier(ident) => {
-            Some((ident.name.to_string(), ident.span, prop.shorthand, KeyType::Identifier))
+            Some((ident.name.to_string(), ident.span, false, KeyType::Identifier))
         }
-        PropertyKey::StringLiteral(lit) => {
+        PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
             Some((lit.value.as_str()?.to_owned(), lit.span, false, KeyType::StringLiteral))
         }
         PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => tpl
@@ -203,8 +204,9 @@ fn get_property_key_info(prop: &ObjectProperty) -> Option<(String, Span, bool, K
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

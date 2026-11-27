@@ -1,3 +1,9 @@
+use std::ops::Deref;
+
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -13,10 +19,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::ops::Deref;
 
 use crate::{
     AstNode,

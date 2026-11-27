@@ -71,7 +71,8 @@ declare_oxc_lint!(
     suspicious,
     suggestion,
     version = "0.5.0",
-    short_description = "Disallow non-null assertions in the left operand of a nullish coalescing operator.",
+    short_description =
+        "Disallow non-null assertions in the left operand of a nullish coalescing operator.",
 );
 
 impl Rule for NoNonNullAssertedNullishCoalescing {

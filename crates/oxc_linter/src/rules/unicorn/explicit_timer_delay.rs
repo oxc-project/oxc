@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, UnaryOperator},
@@ -5,8 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -99,7 +100,8 @@ declare_oxc_lint!(
     fix,
     config = ExplicitTimerDelayMode,
     version = "1.73.0",
-    short_description = "Enforce or disallow explicit `delay` argument for `setTimeout()` and `setInterval()`.",
+    short_description =
+        "Enforce or disallow explicit `delay` argument for `setTimeout()` and `setInterval()`.",
 );
 
 impl Rule for ExplicitTimerDelay {

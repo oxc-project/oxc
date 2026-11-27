@@ -153,8 +153,9 @@ fn requires_generic_declaration_disambiguation(ctx: &LintContext<'_>) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::{ExpectFixTestCase, Tester};
     use std::path::PathBuf;
+
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         "function data() {}",

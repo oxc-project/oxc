@@ -1,15 +1,10 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
-
-fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()")
-        .with_help("Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.")
-        .with_label(span)
-}
 
 use crate::{
     AstNode,
@@ -17,6 +12,12 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::is_promise_with_context,
 };
+
+fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()")
+        .with_help("Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.")
+        .with_label(span)
+}
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct PreferAwaitToThen(PreferAwaitToThenConfig);
@@ -69,7 +70,8 @@ declare_oxc_lint!(
     style,
     config = PreferAwaitToThenConfig,
     version = "0.7.1",
-    short_description = "Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.",
+    short_description =
+        "Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.",
 );
 
 fn is_inside_yield_or_await(node: &AstNode) -> bool {

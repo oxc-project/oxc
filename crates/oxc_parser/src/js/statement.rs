@@ -423,8 +423,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // `for (let`
                 let decl_start = self.cur_start();
                 // disallow `for (let in ...`
-                if self.lexer.peek_token().kind().is_after_let() {
-                    self.bump_any(); // bump `let`
+                if self.eat_if_next(|next| next.kind().is_after_let()) {
                     return self.parse_variable_declaration_for_statement(
                         for_start,
                         decl_start,
@@ -457,8 +456,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 let kind = token.kind();
                 // `for (using of` is only a using declaration if followed by `=`, `;`, or `:`
-                // to distinguish from `for (using of collection)` which is a for-of loop
-                if kind == Kind::Of {
+                // to distinguish from `for (using of collection)` which is a for-of loop.
+                // An escaped `of` cannot be the delimiter, so it is parsed as the binding.
+                if kind == Kind::Of && !token.escaped() {
                     p.bump_any(); // bump `of`
                     return matches!(p.cur_kind(), Kind::Eq | Kind::Semicolon | Kind::Colon);
                 }
@@ -911,12 +911,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse import statement or import expression.
     fn parse_import_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
-        if matches!(self.lexer.peek_token().kind(), Kind::Dot | Kind::LParen) {
+        // An `import` which starts a statement nearly always starts a declaration.
+        // Keep the token read after it, instead of reading it again.
+        let checkpoint = self.lexer.checkpoint();
+        let next = self.lexer.next_token();
+        if matches!(next.kind(), Kind::Dot | Kind::LParen) {
+            self.lexer.rewind(checkpoint);
             // Parse the whole expression `import.meta.url`.
             self.parse_expression_or_labeled_statement()
         } else {
             self.check_module_declaration(stmt_ctx);
-            self.bump_any(); // bump `import`
+            self.advance_to(next); // bump `import`
             self.parse_import_declaration(start, self.ctx.has_top_level())
         }
     }

@@ -1,10 +1,11 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -56,7 +57,8 @@ declare_oxc_lint!(
     restriction,
     config = PreferLiteralEnumMember,
     version = "0.3.2",
-    short_description = "Explicit enum values must only be literal values (string, number, boolean, etc.).",
+    short_description =
+        "Explicit enum values must only be literal values (string, number, boolean, etc.).",
 );
 
 impl Rule for PreferLiteralEnumMember {

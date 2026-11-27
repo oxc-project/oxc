@@ -1,5 +1,9 @@
 use std::ops::Deref;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde_json::Value;
+
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{
     AstKind,
@@ -9,9 +13,6 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::{CompactStr, Str};
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils};
 
@@ -189,8 +190,9 @@ impl Rule for NoAsyncEndpointHandlers {
             .and_then(Value::as_object)
             .and_then(|config| config.get("allowedNames"))
             .and_then(Value::as_array)
-            .map(|names| names.iter().filter_map(Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
+            .map_or_default(|names| {
+                names.iter().filter_map(Value::as_str).map(CompactStr::from).collect()
+            });
         allowed_names.sort_unstable();
         allowed_names.dedup();
 

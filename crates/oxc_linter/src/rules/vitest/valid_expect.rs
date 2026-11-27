@@ -11,7 +11,7 @@ pub struct ValidExpect(Box<ValidExpectConfig>);
 
 impl Default for ValidExpect {
     fn default() -> Self {
-        Self(Box::new(ValidExpectConfig::default().allow_string_message_arg()))
+        Self(Box::new(ValidExpectConfig::default().for_vitest()))
     }
 }
 
@@ -29,7 +29,7 @@ declare_oxc_lint!(
 
 impl Rule for ValidExpect {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(Self(Box::new(ValidExpectConfig::from_configuration(&value).allow_string_message_arg())))
+        Ok(Self(Box::new(ValidExpectConfig::from_configuration(&value).for_vitest())))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -692,4 +692,78 @@ fn test() {
         .expect_fix(fix)
         .with_vitest_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn type_assertions() {
+    use std::path::PathBuf;
+
+    use serde_json::json;
+
+    use crate::tester::Tester;
+
+    // https://github.com/vitest-dev/eslint-plugin-vitest/blob/c5df1054a25044a7ca5baf07461b7aee1f15f5f2/tests/valid-expect.test.ts
+    let upstream_pass = [
+        "expectTypeOf().returns.toMatchTypeOf();",
+        "expectTypeOf().branded.toMatchTypeOf();",
+        "expectTypeOf().asserts.toMatchTypeOf();",
+        "expectTypeOf().constructorParameters.toMatchTypeOf();",
+        "expectTypeOf().parameters.toMatchTypeOf();",
+        "expectTypeOf().thisParameter.toMatchTypeOf();",
+        "expectTypeOf().guards.toMatchTypeOf();",
+        "expectTypeOf().instance.toMatchTypeOf();",
+        "expectTypeOf().items.toMatchTypeOf();",
+        "expectTypeOf(Promise.resolve(1)).resolves.toEqualTypeOf<number>();",
+        "expectTypeOf(Promise.resolve({ a: 1 })).resolves.not.toEqualTypeOf<string>();",
+    ];
+    let upstream_fail = ["expectTypeOf(value).to.toMatchTypeOf();"];
+
+    let pass = [
+        "expectTypeOf<number>().toEqualTypeOf<number>();",
+        "(expectTypeOf<number>()).toBeNumber();",
+        "(expectTypeOf<number>().toBeNumber)();",
+        "(expectTypeOf<number>().toEqualTypeOf<number>)();",
+        "(expectTypeOf<number>().toBeNumber as () => void)();",
+        "(expectTypeOf<number>() satisfies unknown).toBeNumber();",
+        "expectTypeOf<number>()!.toBeNumber();",
+        "(<() => void>expectTypeOf<number>().toBeNumber)();",
+        "import { expectTypeOf as assertType } from 'vitest'; (assertType<number>)().toBeNumber();",
+        "import { expectTypeOf as assertType } from 'vitest'; ((assertType)<number>()).toBeNumber();",
+        "consume(expectTypeOf<number>()['toEqualTypeOf']<number>());",
+        "expectTypeOf<() => Promise<number>>().returns.resolves.not.toEqualTypeOf<string>();",
+        "expectTypeOf<number[]>().items.branded.toEqualTypeOf<number>();",
+        "import { expectTypeOf as assertType } from 'vitest'; assertType<number>().toBeNumber();",
+        "function expectTypeOf() {} expectTypeOf();",
+    ];
+    let fail = [
+        "expectTypeOf<number>();",
+        "(expectTypeOf)<number>();",
+        "(expectTypeOf<number>)();",
+        "expectTypeOf<number>().toEqualTypeOf<number>;",
+        "consume(expectTypeOf<number>() satisfies unknown);",
+        "(expectTypeOf<number>()).toBeNumber;",
+        "expectTypeOf<number>()!.toBeNumber;",
+        "(expectTypeOf<number>().returns as unknown).toBeNumber;",
+        "consume((expectTypeOf<number>()));",
+        "consume(expectTypeOf<number>());",
+        "expectTypeOf(value).toEqualTypeOf;",
+        "expectTypeOf(value).returns();",
+        "expectTypeOf(value).not.returns.not.toBeNumber();",
+        "import { expectTypeOf as assertType } from 'vitest'; assertType(value);",
+    ];
+    let settings = json!({ "settings": { "vitest": { "typecheck": true } } });
+    let type_test_case = |source| {
+        (source, None, Some(settings.clone()), Some(PathBuf::from("valid-expect.test-d.ts")))
+    };
+
+    Tester::new(
+        ValidExpect::NAME,
+        ValidExpect::PLUGIN,
+        upstream_pass.into_iter().chain(pass).map(type_test_case).collect(),
+        upstream_fail.into_iter().chain(fail).map(type_test_case).collect(),
+    )
+    .with_vitest_plugin(true)
+    .intentionally_allow_no_fix_tests()
+    .with_snapshot_suffix("type_assertions")
+    .test_and_snapshot();
 }

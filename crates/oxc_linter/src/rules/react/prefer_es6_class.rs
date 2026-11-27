@@ -1,8 +1,9 @@
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -52,7 +53,8 @@ declare_oxc_lint!(
     style,
     config = AlwaysNever,
     version = "0.5.0",
-    short_description = "Enforce consistent React class style, preferring ES2015 classes over `createReactClass`.",
+    short_description =
+        "Enforce consistent React class style, preferring ES2015 classes over `createReactClass`.",
 );
 
 impl Rule for PreferEs6Class {

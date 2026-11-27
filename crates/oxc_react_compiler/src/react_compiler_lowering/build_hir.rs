@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::diagnostics;
-use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::environment::{Environment, OutputMode};
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::{FxIndexMap, FxIndexSet, IdentIndexMap};
 use crate::scope::BindingKind as AstBindingKind;
@@ -576,6 +576,19 @@ pub fn lower<'a>(
     // Pre-compute context identifiers: variables captured across function boundaries
     let context_identifiers = find_context_identifiers(func, scope, &identifier_spans)?;
 
+    // Unlike the TS implementation, we support updates to captured parameters.
+    // A nested factory can return a closure that mutates its own parameter cell,
+    // though: caching that factory call would retain the cell across renders.
+    // Preserve the source until inference can model these fresh mutable cells.
+    if env.output_mode != OutputMode::Lint
+        && context_identifiers.iter().any(|&symbol| {
+            scope.binding_kind(symbol) == AstBindingKind::Param
+                && scope.symbol_scope(symbol) != scope_id
+        })
+    {
+        env.skip_compilation = true;
+    }
+
     // For top-level functions, context is empty (no captured refs)
     let context_map: FxIndexMap<SymbolId, Option<Span>> = FxIndexMap::default();
 
@@ -734,7 +747,21 @@ fn lower_inner<'a>(
         promote_temporary(&mut builder, place.identifier);
         hir_params.push(ParamPattern::Place(Place { span: None, ..place }));
         let value = if let Some(initializer) = &param.initializer {
-            lower_default_to_temp(&mut builder, param_span, initializer, place)?
+            if builder.environment().output_mode != OutputMode::Lint
+                && matches!(
+                    &**initializer,
+                    oxc::Expression::JSXElement(_) | oxc::Expression::JSXFragment(_)
+                )
+            {
+                // Unlike the TS implementation, retain JSX defaults in their
+                // parameter environment. Moving them into the body can change
+                // which binding a tag resolves to (including fbt/fbs imports).
+                // Lint still lowers the default and validates the function.
+                builder.environment_mut().skip_compilation = true;
+                place
+            } else {
+                lower_default_to_temp(&mut builder, param_span, initializer, place)?
+            }
         } else {
             place
         };
@@ -1621,14 +1648,14 @@ fn lower_binding_assignment<'a>(
                 // Computed string literals can be normalized to static property keys. Other
                 // computed keys need to remain expressions, which destructuring does not support
                 // yet.
-                if prop.computed && !is_static_property_key(&prop.key) {
+                if prop.key.is_computed() && !is_static_property_key(&prop.key) {
                     builder.record_error(
                         diagnostics::todo_build_hir_lower_assignment_handle_computed_properties_object_pattern(prop.span),
                     )?;
                     continue;
                 }
 
-                let key = match lower_object_property_key(builder, &prop.key, prop.computed)? {
+                let key = match lower_object_property_key(builder, &prop.key)? {
                     Some(k) => k,
                     None => continue,
                 };
@@ -2407,13 +2434,13 @@ fn lower_assignment_target<'a>(
                         }
                     }
                     oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                        if p.computed && !is_static_property_key(&p.name) {
+                        if p.name.is_computed() && !is_static_property_key(&p.name) {
                             builder.record_error(
                                 diagnostics::todo_build_hir_lower_assignment_handle_computed_properties_object_pattern_2(p.span),
                             )?;
                             continue;
                         }
-                        let key = match lower_object_property_key(builder, &p.name, p.computed)? {
+                        let key = match lower_object_property_key(builder, &p.name)? {
                             Some(k) => k,
                             None => continue,
                         };
@@ -3672,23 +3699,19 @@ impl<'a> Visit<'a> for TSEnumCaptureVisitor<'_, 'a> {
     }
 }
 
-/// Whether preserving an enum as an opaque node would hide a capture from the
-/// nested function's HIR. Top-level component enums cannot capture component
-/// state, and module bindings are outside the captured scope range.
+/// Whether an opaque enum would hide reads or writes of function-local bindings
+/// from HIR analysis. Module bindings remain outside the captured scope range.
 fn ts_enum_has_captured_reference<'a>(
     builder: &HirBuilder<'a, '_>,
     declaration: &oxc::TSEnumDeclaration<'a>,
 ) -> bool {
     let function_scope = builder.function_scope();
-    if function_scope == builder.component_scope() {
-        return false;
-    }
-    let Some(parent_scope) = builder.scope().scope_parent(function_scope) else {
-        return false;
-    };
     let mut visitor = TSEnumCaptureVisitor {
         scope: builder.scope(),
-        captured_scopes: capture_scopes(builder.scope(), parent_scope, builder.component_scope()),
+        // Unlike the TS implementation, include the current function's locals:
+        // opaque enum initializers can read or write them, and HIR optimization
+        // must not erase those bindings or fold values across hidden writes.
+        captured_scopes: capture_scopes(builder.scope(), function_scope, builder.component_scope()),
         found: false,
     };
     visitor.visit_ts_enum_declaration(declaration);
@@ -3730,7 +3753,7 @@ fn lower_expression<'a>(
             span: Some(lit.span),
         }),
         oxc::Expression::BigIntLiteral(lit) => Ok(InstructionValue::Primitive {
-            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw, base: lit.base },
+            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw },
             span: Some(lit.span),
         }),
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
@@ -4355,20 +4378,13 @@ fn lower_expression<'a>(
             let mut properties = ArenaVec::new_in(&alloc);
             for prop in &obj.properties {
                 match prop {
-                    oxc::ObjectPropertyKind::ObjectProperty(p) => {
-                        // In oxc, getters/setters/methods are encoded as an
-                        // `ObjectProperty` whose value is a `FunctionExpression`
-                        // (the Babel AST instead carried a separate `ObjectMethod`
-                        // node). Route those through `lower_object_method`.
-                        if p.method
-                            || matches!(p.kind, oxc::PropertyKind::Get | oxc::PropertyKind::Set)
-                        {
-                            if let Some(method_prop) = lower_object_method(builder, p)? {
-                                properties.push(ObjectPropertyOrSpread::Property(method_prop));
-                            }
-                            continue;
+                    oxc::ObjectPropertyKind::MethodProperty(p) => {
+                        if let Some(method_prop) = lower_object_method(builder, p)? {
+                            properties.push(ObjectPropertyOrSpread::Property(method_prop));
                         }
-                        let key = lower_object_property_key(builder, &p.key, p.computed)?;
+                    }
+                    oxc::ObjectPropertyKind::ObjectProperty(p) => {
+                        let key = lower_object_property_key(builder, &p.key)?;
                         let key = match key {
                             Some(k) => k,
                             None => continue,
@@ -5809,24 +5825,21 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
     }
 }
 
-/// Lower an oxc object getter/setter/method (`ObjectProperty` whose value is a
-/// `FunctionExpression`). Faithful to the original `lower_object_method`:
-/// `get`/`set` record a Todo error and are skipped. The `method` case lowers the
-/// key and the nested function (`lower_function_for_object_method`) and emits an
-/// `ObjectMethod` instruction value.
+/// Lower an oxc object getter/setter/method. Faithful to the original
+/// `lower_object_method`: `get`/`set` record a Todo error and are skipped. The
+/// `method` case lowers the key and the nested function
+/// (`lower_function_for_object_method`) and emits an `ObjectMethod` instruction
+/// value.
 fn lower_object_method<'a>(
     builder: &mut HirBuilder<'a, '_>,
-    method: &oxc::ObjectProperty<'a>,
+    method: &oxc::ObjectMethodProperty<'a>,
 ) -> Result<Option<ObjectProperty<'a>>, OxcDiagnostic> {
-    // In oxc, a shorthand method is encoded as `kind: Init, method: true`; only
-    // getters/setters carry a non-`Init` `PropertyKind`.
-    let is_method = method.method && matches!(method.kind, oxc::PropertyKind::Init);
-    if !is_method {
-        let kind_str = match method.kind {
-            oxc::PropertyKind::Get => "get",
-            oxc::PropertyKind::Set => "set",
-            oxc::PropertyKind::Init => "method",
-        };
+    let kind_str = match method.kind {
+        oxc::ObjectMethodKind::Method => None,
+        oxc::ObjectMethodKind::Get => Some("get"),
+        oxc::ObjectMethodKind::Set => Some("set"),
+    };
+    if let Some(kind_str) = kind_str {
         let kind_span = Span::new(
             method.span.start,
             method.span.start.saturating_add(kind_str.len() as u32).min(method.span.end),
@@ -5835,13 +5848,10 @@ fn lower_object_method<'a>(
         return Ok(None);
     }
 
-    let key = lower_object_property_key(builder, &method.key, method.computed)?
+    let key = lower_object_property_key(builder, &method.key)?
         .unwrap_or(ObjectPropertyKey::String { name: Ident::empty(), span: None });
 
-    let func = match &method.value {
-        oxc::Expression::FunctionExpression(func) => func,
-        _ => unreachable!("object method value is always a FunctionExpression in oxc"),
-    };
+    let func = &method.value;
     let body = func.body.as_ref().expect("object method always has a body");
     let lowered_func = lower_function_for_object_method(
         builder,
@@ -5864,12 +5874,13 @@ fn lower_object_method<'a>(
 fn lower_object_property_key<'a>(
     builder: &mut HirBuilder<'a, '_>,
     key: &oxc::PropertyKey<'a>,
-    computed: bool,
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
         // `{ ["__proto__"]: v }` defines an own property, while the non-computed
         // `"__proto__": v` sets the prototype, so the key must stay computed.
-        oxc::PropertyKey::StringLiteral(lit) if !(computed && lit.value == "__proto__") => {
+        oxc::PropertyKey::StaticStringLiteral(lit) | oxc::PropertyKey::StringLiteral(lit)
+            if !(key.is_computed() && lit.value == "__proto__") =>
+        {
             let Some(name) = lit.value.as_str() else {
                 // Record the diagnostic so the compiler discards this function's partial HIR.
                 let error =
@@ -5879,37 +5890,29 @@ fn lower_object_property_key<'a>(
             };
             Ok(Some(ObjectPropertyKey::String { name: Ident::from(name), span: Some(lit.span) }))
         }
-        oxc::PropertyKey::StaticIdentifier(ident) if !computed => {
+        oxc::PropertyKey::StaticIdentifier(ident) => {
             Ok(Some(ObjectPropertyKey::Identifier { name: ident.name, span: Some(ident.span) }))
         }
-        oxc::PropertyKey::Identifier(ident) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name, span: Some(ident.span) }))
-        }
-        oxc::PropertyKey::NumericLiteral(lit) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier {
-                name: format_ident!(builder.environment().allocator, "{}", lit.value),
-                span: Some(lit.span),
-            }))
-        }
+        oxc::PropertyKey::StaticNumericLiteral(lit) => Ok(Some(ObjectPropertyKey::Identifier {
+            name: format_ident!(builder.environment().allocator, "{}", lit.value),
+            span: Some(lit.span),
+        })),
         // BigInt property keys are coerced to their canonical decimal string at
         // runtime. Preserve that value rather than the source spelling so keys
         // such as `0x10n` and `16n` remain equivalent.
-        oxc::PropertyKey::BigIntLiteral(lit) if !computed => Ok(Some(ObjectPropertyKey::String {
+        oxc::PropertyKey::StaticBigIntLiteral(lit) => Ok(Some(ObjectPropertyKey::String {
             name: Ident::from(lit.value.as_str()),
             span: Some(lit.span),
         })),
-        _ if computed => {
-            let place = lower_expression_to_temporary(builder, key.to_expression())?;
-            Ok(Some(ObjectPropertyKey::Computed { name: place, span: Some(key.span()) }))
+        oxc::PropertyKey::PrivateIdentifier(_) => {
+            builder.record_error(diagnostics::todo_unsupported_key_type_object_expression(
+                None::<Span>,
+            ))?;
+            Ok(None)
         }
         _ => {
-            let span = match key {
-                oxc::PropertyKey::StaticIdentifier(i) => Some(i.span),
-                oxc::PropertyKey::Identifier(i) => Some(i.span),
-                _ => None,
-            };
-            builder.record_error(diagnostics::todo_unsupported_key_type_object_expression(span))?;
-            Ok(None)
+            let place = lower_expression_to_temporary(builder, key.to_expression())?;
+            Ok(Some(ObjectPropertyKey::Computed { name: place, span: Some(key.span()) }))
         }
     }
 }
@@ -6005,9 +6008,7 @@ fn is_reorderable_expression(
         }),
         oxc::Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
             oxc::ObjectPropertyKind::ObjectProperty(p) => {
-                !p.computed
-                    && !p.method
-                    && matches!(p.kind, oxc::PropertyKind::Init)
+                !p.key.is_computed()
                     && is_reorderable_expression(builder, &p.value, allow_local_identifiers)
             }
             _ => false,

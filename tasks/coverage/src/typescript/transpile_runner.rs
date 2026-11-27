@@ -17,17 +17,9 @@ use super::{
     BASELINES_PATH, CASES_PATH,
     meta::{Baseline, BaselineFile, TestCaseContent},
 };
-use crate::{CoverageResult, TestResult, print_coverage, snapshot_results, workspace_root};
+use crate::{CoverageResult, TestResult, workspace_root};
 
-pub fn run(filter: Option<&str>, detail: bool) {
-    let results = run_transpile(filter);
-    print_coverage("transpile", &results, detail);
-    if filter.is_none() {
-        snapshot_results("transpile", &Path::new(CASES_PATH).join("transpile"), &results);
-    }
-}
-
-fn run_transpile(filter: Option<&str>) -> Vec<CoverageResult> {
+pub fn run(filter: Option<&str>) -> Vec<CoverageResult> {
     let test_root = workspace_root().join(CASES_PATH).join("transpile");
 
     let paths: Vec<_> = WalkDir::new(&test_root)

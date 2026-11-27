@@ -300,6 +300,28 @@ impl<'a, State> TraverseCtx<'a, State> {
         self.scoping.insert_scope_below_expression(expr, flags)
     }
 
+    /// Move the scopes of statements which have been moved to a new location in the AST.
+    ///
+    /// All child scopes of the statements are reassigned to be children of `parent_id`,
+    /// and their strict mode is updated to match.
+    ///
+    /// This is a shortcut for `ctx.scoping.move_scopes_of_statements`.
+    #[inline]
+    pub fn move_scopes_of_statements(&mut self, stmts: &[Statement<'a>], parent_id: ScopeId) {
+        self.scoping.move_scopes_of_statements(stmts, parent_id);
+    }
+
+    /// Move the scopes of expressions which have been moved to a new location in the AST.
+    ///
+    /// All child scopes of the expressions are reassigned to be children of `parent_id`,
+    /// and their strict mode is updated to match.
+    ///
+    /// This is a shortcut for `ctx.scoping.move_scopes_of_expressions`.
+    #[inline]
+    pub fn move_scopes_of_expressions(&mut self, exprs: &[Expression<'a>], parent_id: ScopeId) {
+        self.scoping.move_scopes_of_expressions(exprs, parent_id);
+    }
+
     /// Insert a scope into scope tree below a `Vec` of statements.
     ///
     /// Statements must be in current scope.
@@ -659,6 +681,33 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// This is a shortcut for `ctx.scoping.delete_reference_for_identifier`.
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.scoping.delete_reference_for_identifier(ident);
+    }
+
+    /// Rebind an existing reference to `symbol_id`, keeping its `ReferenceId` and flags.
+    ///
+    /// Provided `name` must be the current name of `reference_id`.
+    ///
+    /// This is a shortcut for `ctx.scoping.rebind_reference`.
+    #[inline]
+    pub fn rebind_reference(
+        &mut self,
+        reference_id: ReferenceId,
+        name: Ident<'_>,
+        symbol_id: SymbolId,
+    ) {
+        self.scoping.rebind_reference(reference_id, name, symbol_id);
+    }
+
+    /// Rebind an `IdentifierReference` to `binding`, renaming it to `binding`'s name.
+    ///
+    /// The reference keeps its `ReferenceId` and flags. See [`TraverseScoping::rebind_reference`].
+    pub fn rebind_identifier_reference(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        binding: &BoundIdentifier<'a>,
+    ) {
+        self.scoping.rebind_reference(ident.reference_id(), ident.name, binding.symbol_id);
+        ident.name = binding.name;
     }
 }
 

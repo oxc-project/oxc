@@ -1,9 +1,12 @@
+use std::mem;
+
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::VisitJs;
+use oxc_ast_visit::{VisitJs, VisitJsMut, walk_js_mut};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
+use oxc_str::Ident;
 
 use crate::{TraverseCtx, keep_var::KeepVar, symbol_metadata::FunctionSummary};
 
@@ -105,7 +108,6 @@ impl<'a> PeepholeOptimizations {
                     if_stmt.test.span(),
                     if boolean { 1.0 } else { 0.0 },
                     None,
-                    NumberBase::Decimal,
                     ctx,
                 );
                 ctx.replace_expression(&mut if_stmt.test, new_test);
@@ -119,7 +121,7 @@ impl<'a> PeepholeOptimizations {
                 keep_var.visit_statement(&if_stmt.consequent);
             }
             let var_stmt = keep_var
-                .get_variable_declaration_statement(&ctx.ast)
+                .get_variable_declaration_statement(ctx)
                 .and_then(|stmt| Self::remove_unused_variable_declaration(stmt, ctx));
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {
@@ -229,9 +231,7 @@ impl<'a> PeepholeOptimizations {
                         }
                         let mut statements =
                             ArenaVec::from_array_in([Statement::VariableDeclaration(decl)], ctx);
-                        if let Some(var_stmt) =
-                            keep_var.get_variable_declaration_statement(&ctx.ast)
-                        {
+                        if let Some(var_stmt) = keep_var.get_variable_declaration_statement(ctx) {
                             statements.push(var_stmt);
                         }
                         // The initializer still runs, including destructuring effects and TDZ
@@ -244,7 +244,7 @@ impl<'a> PeepholeOptimizations {
                 Some(ForStatementInit::VariableDeclaration(_)) => {
                     let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
-                    let mut var_decl = keep_var.get_variable_declaration(&ctx.ast);
+                    let mut var_decl = keep_var.get_variable_declaration(ctx);
                     let init_is_var = matches!(
                         &for_stmt.init,
                         Some(ForStatementInit::VariableDeclaration(var_init)) if var_init.kind.is_var()
@@ -275,7 +275,7 @@ impl<'a> PeepholeOptimizations {
                 None => {
                     let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
-                    let new_stmt = keep_var.get_variable_declaration(&ctx.ast).map_or_else(
+                    let new_stmt = keep_var.get_variable_declaration(ctx).map_or_else(
                         || Statement::new_empty_statement(for_stmt.span, ctx),
                         Statement::VariableDeclaration,
                     );
@@ -322,9 +322,33 @@ impl<'a> PeepholeOptimizations {
         }
         let mut var = KeepVar::new();
         var.visit_statement(&s.body);
-        let var_decl = var.get_variable_declaration_statement(&ctx.ast);
+        let var_decl = var.get_variable_declaration_statement(ctx);
         let new_stmt = var_decl.unwrap_or_else(|| Statement::new_empty_statement(s.span, ctx));
         ctx.replace_statement(stmt, new_stmt);
+    }
+
+    /// Remove labels after rewriting jumps that do not need them.
+    ///
+    /// ```js
+    /// a: for (;;) break a; // for (;;) break;
+    /// a: foo();            // foo();
+    /// ```
+    ///
+    /// Labeled function declarations are kept to preserve their sloppy-mode hoisting.
+    pub fn remove_unused_label(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::LabeledStatement(labeled) = stmt else { return };
+        let label = labeled.label.name;
+        let rewriter = LabelJumpRewriter::rewrite(&mut labeled.body, label);
+        if rewriter.referenced || matches!(labeled.body, Statement::FunctionDeclaration(_)) {
+            if rewriter.rewritten {
+                ctx.notice_change();
+            }
+            return;
+        }
+        ctx.replace_statement_with(stmt, |stmt, _ctx| {
+            let Statement::LabeledStatement(labeled) = stmt else { unreachable!() };
+            labeled.unbox().body
+        });
     }
 
     pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -438,7 +462,10 @@ impl<'a> PeepholeOptimizations {
                 for dropped in handler.body.body.take_in(ctx) {
                     ctx.drop_statement(&dropped);
                 }
-                if let Some(var_decl) = var.get_variable_declaration_statement(&ctx.ast) {
+                // The declaration stays inside the catch body.
+                if let Some(var_decl) =
+                    var.get_variable_declaration_statement_in(handler.body.scope_id(), ctx)
+                {
                     handler.body.body.push(var_decl);
                 }
             }
@@ -679,13 +706,28 @@ impl<'a> PeepholeOptimizations {
     /// Whether the indirect access should be kept.
     /// For example, `(0, foo.bar)()` should not be transformed to `foo.bar()`.
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
+    /// Also applies to decorators: `@((0, foo.bar))` should not be
+    /// transformed to `@(foo.bar)`, as the decorator's `this` differs.
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
     pub fn should_keep_indirect_access(
         access_value: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
+        // Example case: `x = (0, class {})` (`x.name === ""`) -> `x = class {}` (`x.name === "x"`)
+        if ctx.is_expression_whose_name_needs_to_be_kept(access_value)
+            && Self::is_named_evaluation_position(ctx)
+        {
+            return true;
+        }
         match ctx.parent() {
+            Ancestor::CallExpressionCallee(call)
+                if !call.optional()
+                    && access_value.is_specific_id("eval")
+                    && access_value.evaluate_value(ctx).is_none() =>
+            {
+                true
+            }
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {
                     Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
@@ -697,6 +739,17 @@ impl<'a> PeepholeOptimizations {
                     _ => false,
                 }
             }
+            Ancestor::DecoratorExpression(_) => match access_value {
+                // Example case: `@((0, foo.bar))` (decorator `this` is `undefined`)
+                // -> `@(foo.bar)` (decorator `this` is `foo`)
+                match_member_expression!(Expression) => true,
+                // Example case: `@((0, foo?.bar))` (decorator `this` is `undefined`)
+                // -> `@(foo?.bar)` (decorator `this` is `foo`)
+                Expression::ChainExpression(chain) => {
+                    matches!(&chain.expression, match_member_expression!(ChainElement))
+                }
+                _ => false,
+            },
             Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
                 UnaryOperator::Typeof => {
                     // Example case: `typeof (0, foo)` (error) -> `typeof foo` (no error)
@@ -728,13 +781,38 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether an anonymous function or class in the current position would be
+    /// named by NamedEvaluation, e.g. `x = class {}` names the class `x`.
+    ///
+    /// Destructuring targets and member assignments do not name the value.
+    /// `__proto__: class {}` does not either, but it is kept for simplicity.
+    fn is_named_evaluation_position(ctx: &TraverseCtx<'a>) -> bool {
+        match ctx.parent() {
+            Ancestor::AssignmentExpressionRight(assign) => {
+                let operator = *assign.operator();
+                (operator.is_assign() || operator.is_logical())
+                    && matches!(assign.left(), AssignmentTarget::AssignmentTargetIdentifier(_))
+            }
+            Ancestor::VariableDeclaratorInit(decl) => decl.id().is_binding_identifier(),
+            Ancestor::AssignmentPatternRight(pattern) => pattern.left().is_binding_identifier(),
+            Ancestor::FormalParameterInitializer(param) => param.pattern().is_binding_identifier(),
+            Ancestor::AssignmentTargetWithDefaultInit(target) => {
+                matches!(target.binding(), AssignmentTarget::AssignmentTargetIdentifier(_))
+            }
+            Ancestor::AssignmentTargetPropertyIdentifierInit(_)
+            | Ancestor::ObjectPropertyValue(_)
+            | Ancestor::PropertyDefinitionValue(_)
+            | Ancestor::AccessorPropertyValue(_)
+            | Ancestor::ExportDefaultDeclarationDeclaration(_) => true,
+            _ => false,
+        }
+    }
+
     /// Wrap `expr` as `(0, expr)` so an access that
     /// [`Self::should_keep_indirect_access`] flagged stays indirect.
     ///
     /// The shape is load-bearing: `remove_sequence_expression`'s idempotency
     /// gate recognizes exactly a 2-element sequence whose head `is_number_0`.
-    /// Sibling fold sites in `fold_constants.rs` / `try_fold_conditional_expression`
-    /// still build it inline; migrating them here is welcome.
     pub fn preserve_indirect_access(
         span: Span,
         expr: Expression<'a>,
@@ -772,6 +850,92 @@ impl<'a> PeepholeOptimizations {
         let Expression::ArrayExpression(e) = &e.argument else { return };
         if e.elements.is_empty() {
             args.drain(..);
+        }
+    }
+}
+
+/// Rewrites `break label` and `continue label` when the unlabeled jump has the same target.
+struct LabelJumpRewriter<'a> {
+    label: Ident<'a>,
+    break_is_redundant: bool,
+    continue_is_redundant: bool,
+    rewritten: bool,
+    referenced: bool,
+}
+
+impl<'a> LabelJumpRewriter<'a> {
+    fn rewrite(body: &mut Statement<'a>, label: Ident<'a>) -> Self {
+        let mut rewriter = Self {
+            label,
+            break_is_redundant: false,
+            continue_is_redundant: false,
+            rewritten: false,
+            referenced: false,
+        };
+        let mut target = body;
+        while let Statement::LabeledStatement(labeled) = target {
+            target = &mut labeled.body;
+        }
+        match target {
+            Statement::SwitchStatement(switch) => {
+                rewriter.break_is_redundant = true;
+                for case in &mut switch.cases {
+                    rewriter.visit_statements(&mut case.consequent);
+                }
+            }
+            Statement::DoWhileStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::ForInStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::ForOfStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::ForStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            Statement::WhileStatement(stmt) => rewriter.visit_loop_body(&mut stmt.body),
+            _ => rewriter.visit_statement(target),
+        }
+        rewriter
+    }
+
+    fn visit_loop_body(&mut self, body: &mut Statement<'a>) {
+        self.break_is_redundant = true;
+        self.continue_is_redundant = true;
+        self.visit_statement(body);
+    }
+
+    fn visit_jump(&mut self, label: &mut Option<LabelIdentifier<'a>>, is_redundant: bool) {
+        if label.as_ref().is_some_and(|label| label.name == self.label) {
+            if is_redundant {
+                *label = None;
+                self.rewritten = true;
+            } else {
+                self.referenced = true;
+            }
+        }
+    }
+}
+
+impl<'a> VisitJsMut<'a> for LabelJumpRewriter<'a> {
+    fn visit_expression(&mut self, _it: &mut Expression<'a>) {}
+
+    fn visit_statement(&mut self, it: &mut Statement<'a>) {
+        match it {
+            Statement::BreakStatement(stmt) => {
+                self.visit_jump(&mut stmt.label, self.break_is_redundant);
+            }
+            Statement::ContinueStatement(stmt) => {
+                self.visit_jump(&mut stmt.label, self.continue_is_redundant);
+            }
+            Statement::SwitchStatement(_) => {
+                let break_is_redundant = mem::replace(&mut self.break_is_redundant, false);
+                walk_js_mut::walk_statement(self, it);
+                self.break_is_redundant = break_is_redundant;
+            }
+            _ if it.is_iteration_statement() => {
+                let break_is_redundant = mem::replace(&mut self.break_is_redundant, false);
+                let continue_is_redundant = mem::replace(&mut self.continue_is_redundant, false);
+                walk_js_mut::walk_statement(self, it);
+                self.break_is_redundant = break_is_redundant;
+                self.continue_is_redundant = continue_is_redundant;
+            }
+            _ if it.is_declaration() => {}
+            _ => walk_js_mut::walk_statement(self, it),
         }
     }
 }

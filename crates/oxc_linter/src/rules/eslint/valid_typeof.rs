@@ -1,11 +1,11 @@
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span, best_match};
 use oxc_syntax::operator::UnaryOperator;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -75,8 +75,8 @@ declare_oxc_lint!(
     /// ```js
     /// typeof foo === "strnig"
     /// typeof foo == "undefimed"
-    /// typeof bar != "nunber"     // spellchecker:disable-line
-    /// typeof bar !== "fucntion"     // spellchecker:disable-line
+    /// typeof bar != "nunber"
+    /// typeof bar !== "fucntion"
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -90,7 +90,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     recommended,
-    conditional_fix,
+    conditional_suggestion,
     config = ValidTypeof,
     version = "0.0.3",
     short_description = "Enforce comparing `typeof` expressions against valid strings.",
@@ -154,7 +154,7 @@ impl Rule for ValidTypeof {
             && ident.is_undefined()
             && ctx.is_reference_to_global_variable(ident)
         {
-            ctx.diagnostic_with_fix(
+            ctx.diagnostic_with_suggestion(
                 if self.require_string_literals {
                     not_string(Some("Use `\"undefined\"` instead of `undefined`."), sibling.span())
                 } else {
@@ -187,7 +187,7 @@ fn get_typo_suggestion(value: &str) -> Option<&'static str> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("typeof foo === 'string'", None),
@@ -264,15 +264,19 @@ fn test() {
             Some(serde_json::json!([{ "requireStringLiterals": true }])),
         ),
         // Typo suggestions for each valid typeof type
-        ("typeof foo === 'biigint'", None), // spellchecker:disable-line
-        ("typeof foo === 'bolean'", None),  // spellchecker:disable-line
-        ("typeof foo === 'fucntion'", None), // spellchecker:disable-line
-        ("typeof foo === 'nunber'", None),  // spellchecker:disable-line
-        ("typeof foo === 'obejct'", None),  // spellchecker:disable-line
-        ("typeof foo === 'symol'", None),   // spellchecker:disable-line
+        ("typeof foo === 'biigint'", None),
+        ("typeof foo === 'bolean'", None),
+        ("typeof foo === 'fucntion'", None),
+        ("typeof foo === 'nunber'", None),
+        ("typeof foo === 'obejct'", None),
+        ("typeof foo === 'symol'", None),
     ];
 
-    let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];
+    let fix = vec![
+        ("typeof foo === undefined", r#"typeof foo === "undefined""#, None, FixKind::Suggestion),
+        // `typeof missing === undefined` is `false`, so this must not be applied automatically
+        ("typeof foo === undefined", "typeof foo === undefined", None, FixKind::SafeFix),
+    ];
 
     Tester::new(ValidTypeof::NAME, ValidTypeof::PLUGIN, pass, fail)
         .expect_fix(fix)

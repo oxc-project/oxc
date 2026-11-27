@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue},
@@ -5,8 +7,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-
-use itertools::Itertools;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case};
 
@@ -46,7 +46,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "0.2.0",
-    short_description = "Enforces that elements with ARIA roles must have all required attributes for that role.",
+    short_description =
+        "Enforces that elements with ARIA roles must have all required attributes for that role.",
 );
 
 static ROLE_TO_REQUIRED_ARIA_PROPS: &[(&str, &[&str])] = &[
@@ -148,7 +149,7 @@ fn test() {
         ("<div role='slider' aria-valuemax aria-valuemin />", None, None),
         ("<div role='checkbox' />", None, None),
         ("<div role='checkbox' checked />", None, None),
-        ("<div role='checkbox' aria-chcked />", None, None), // spellchecker:disable-line
+        ("<div role='checkbox' aria-chcked />", None, None),
         ("<span role='checkbox' aria-labelledby='foo' tabindex='0'></span>", None, None),
         ("<div role='combobox' />", None, None),
         ("<div role='combobox' expanded />", None, None),

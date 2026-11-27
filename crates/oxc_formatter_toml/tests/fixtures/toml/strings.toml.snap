@@ -1,0 +1,123 @@
+---
+source: crates/oxc_formatter_toml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+basic = "basic \"escaped\" \t \u00E9"
+literal = 'C:\Users\path'
+multi_basic = """
+Roses are red
+Violets are blue"""
+multi_basic_continuation = """\
+  The quick brown \
+  fox."""
+multi_literal = '''
+first line
+  indented line
+'''
+array_of_multiline = ["""
+a
+b""", 'c']
+
+# A nested array after it is measured on its own line
+nested_after = ["""x
+y""", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]
+# Inside an inline table too
+in_inline_table = [{ x = """a
+b""" }, 1]
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+basic = "basic \"escaped\" \t \u00E9"
+literal = 'C:\Users\path'
+multi_basic = """
+Roses are red
+Violets are blue"""
+multi_basic_continuation = """\
+  The quick brown \
+  fox."""
+multi_literal = '''
+first line
+  indented line
+'''
+array_of_multiline = [
+  """
+a
+b""",
+  'c',
+]
+
+# A nested array after it is measured on its own line
+nested_after = [
+  """x
+y""",
+  [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+  ],
+]
+# Inside an inline table too
+in_inline_table = [
+  { x = """a
+b""" },
+  1,
+]
+
+-------------------
+{ printWidth: 100 }
+-------------------
+basic = "basic \"escaped\" \t \u00E9"
+literal = 'C:\Users\path'
+multi_basic = """
+Roses are red
+Violets are blue"""
+multi_basic_continuation = """\
+  The quick brown \
+  fox."""
+multi_literal = '''
+first line
+  indented line
+'''
+array_of_multiline = [
+  """
+a
+b""",
+  'c',
+]
+
+# A nested array after it is measured on its own line
+nested_after = [
+  """x
+y""",
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+]
+# Inside an inline table too
+in_inline_table = [
+  { x = """a
+b""" },
+  1,
+]
+
+===================== End =====================

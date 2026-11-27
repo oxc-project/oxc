@@ -1,11 +1,11 @@
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -168,6 +168,7 @@ impl Rule for NoDuplicateImports {
                 ImportImportName::Name(_) => ImportType::Named,
                 ImportImportName::NamespaceObject => ImportType::Namespace,
                 ImportImportName::Default(_) => ImportType::Default,
+                ImportImportName::Source(_) => continue,
             };
 
             if previous_span != Some(span) {
@@ -398,6 +399,14 @@ impl Rule for NoDuplicateImports {
                     if existing.iter().any(|(t, import_span, module_type, _)| {
                         // import { a } from 'foo'; export { a as t };
                         if matches!(t, ImportType::Named) && module_request.span != *import_span {
+                            // Multiple named specifiers in one `export { a, b } from 'mod'` share
+                            // a module request but have distinct specifier spans. That is one
+                            // statement, not a duplicate export (oxc-project/oxc#26857).
+                            if *module_type == ModuleType::Export
+                                && entry.statement_span.contains_inclusive(*import_span)
+                            {
+                                return false;
+                            }
                             return true;
                         }
                         (matches!(
@@ -502,6 +511,7 @@ fn can_merge_imports(
             has_namespace || has_default
         }
         ImportImportName::Default(_) => has_default || has_namespace || has_named,
+        ImportImportName::Source(_) => false,
     }
 }
 
@@ -735,6 +745,20 @@ fn test() {
             r#"import { type Foo } from "module";
             export type * as Bar from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
+        ),
+        (
+            r#"export { value1, value2 } from "some-module";"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
+        (
+            r#"import source wasm from "module";
+            import value from "module";"#,
+            None,
+        ),
+        (
+            r#"import source wasm from "module";
+            export * as ns from "module";"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
         ),
     ];
 

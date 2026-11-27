@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, Statement},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -106,100 +103,46 @@ impl Rule for NoAwaitInLoop {
 }
 
 impl NoAwaitInLoop {
-    fn node_matches_stmt_span(span: Span, stmt: &Statement) -> bool {
-        match stmt {
-            Statement::BlockStatement(block) => block.span.contains_inclusive(span),
-            Statement::ExpressionStatement(expr_statement) => {
-                expr_statement.span.contains_inclusive(span)
-            }
-            _ => false,
-        }
-    }
-
-    fn node_matches_expr_span(span: Span, expr: &Expression) -> bool {
-        match expr {
-            Expression::TemplateLiteral(expr) => expr.span.contains_inclusive(span),
-            Expression::ArrayExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ArrowFunctionExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::AssignmentExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::AwaitExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::BinaryExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::CallExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ChainExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ClassExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ConditionalExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::FunctionExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ImportExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::LogicalExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::NewExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ObjectExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ParenthesizedExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::SequenceExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::TaggedTemplateExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ThisExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::UnaryExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::UpdateExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::YieldExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::PrivateInExpression(expr) => expr.span.contains_inclusive(span),
-            _ => false,
-        }
-    }
-
     fn is_looped(node: &AstNode, parent: &AstNode) -> bool {
         let span = node.kind().span();
+        let contains = |outer: Span| outer.contains_inclusive(span);
         match parent.kind() {
             AstKind::ForStatement(stmt) => {
-                let mut result = Self::node_matches_stmt_span(span, &stmt.body);
-                if result {
-                    return result;
-                }
-
-                if let Some(test) = &stmt.test {
-                    result = Self::node_matches_expr_span(span, test);
-                    if result {
-                        return result;
-                    }
-                }
-
-                if let Some(update) = &stmt.update {
-                    result = Self::node_matches_expr_span(span, update);
-                }
-
-                result
+                contains(stmt.body.span())
+                    || stmt.test.as_ref().is_some_and(|test| contains(test.span()))
+                    || stmt.update.as_ref().is_some_and(|update| contains(update.span()))
             }
             AstKind::ForInStatement(stmt) => {
-                if Self::node_matches_stmt_span(span, &stmt.body) {
+                if contains(stmt.body.span()) {
                     return true;
                 }
                 // Check if this is `await using` in the left position
                 if let AstKind::VariableDeclaration(decl) = node.kind()
                     && decl.kind.is_await_using()
-                    && stmt.left.span().contains_inclusive(span)
+                    && contains(stmt.left.span())
                 {
                     return true;
                 }
                 false
             }
             AstKind::ForOfStatement(stmt) => {
-                if Self::node_matches_stmt_span(span, &stmt.body) {
+                if contains(stmt.body.span()) {
                     return true;
                 }
                 // Check if this is `await using` in the left position
                 if let AstKind::VariableDeclaration(decl) = node.kind()
                     && decl.kind.is_await_using()
-                    && stmt.left.span().contains_inclusive(span)
+                    && contains(stmt.left.span())
                 {
                     return true;
                 }
                 false
             }
             AstKind::WhileStatement(stmt) => {
-                Self::node_matches_stmt_span(span, &stmt.body)
-                    || Self::node_matches_expr_span(span, &stmt.test)
+                contains(stmt.body.span()) || contains(stmt.test.span())
             }
             AstKind::DoWhileStatement(stmt) => {
-                Self::node_matches_stmt_span(span, &stmt.body)
-                    || Self::node_matches_expr_span(span, &stmt.test)
+                contains(stmt.body.span()) || contains(stmt.test.span())
             }
             _ => false,
         }
@@ -276,6 +219,15 @@ fn test() {
         "while (true) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
         "for (;;) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
         "for (await using resource of resources) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "async function foo() { for (var bar of baz) if (bar) await bar; }",
+        "async function foo() { for (var bar of baz) if (bar) { await bar; } }",
+        "async function foo() { for (var bar of baz) if (bar) foo(); else await bar; }",
+        "async function foo() { for (var bar of baz) switch (bar) { case 1: await bar; } }",
+        "async function foo() { for (var bar of baz) try { await bar; } catch {} }",
+        "async function foo() { while (baz) if (baz) await bar; }",
+        "async function foo() { for (var bar in baz) if (bar) await bar; }",
+        "async function foo() { for (;;) if (baz) await bar; }",
+        "async function foo() { while (await bar as boolean) {} }",
     ];
 
     Tester::new(NoAwaitInLoop::NAME, NoAwaitInLoop::PLUGIN, pass, fail).test_and_snapshot();

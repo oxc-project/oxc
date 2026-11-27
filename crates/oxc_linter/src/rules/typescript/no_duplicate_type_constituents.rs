@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
@@ -67,7 +68,8 @@ declare_oxc_lint!(
     fix,
     config = NoDuplicateTypeConstituentsConfig,
     version = "1.12.0",
-    short_description = "This rule disallows duplicate constituents of union or intersection types.",
+    short_description =
+        "This rule disallows duplicate constituents of union or intersection types.",
 );
 
 impl Rule for NoDuplicateTypeConstituents {

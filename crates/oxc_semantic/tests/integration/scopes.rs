@@ -165,6 +165,13 @@ fn test_catch_clause_parameters() {
 }
 
 #[test]
+fn test_catch_parameter_redeclaration_reported_once() {
+    // The `let` clashes with both the hoisted `var` and the catch parameter.
+    let tester = SemanticTester::js("try {} catch (e) { var e; let e; }");
+    assert_eq!(tester.build_with_errors().diagnostics.len(), 1);
+}
+
+#[test]
 fn test_enums() {
     let test = SemanticTester::ts(
         "

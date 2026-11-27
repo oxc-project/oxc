@@ -1,4 +1,4 @@
-use crate::es2022::{ClassPropertiesOptions, ES2022Options};
+use crate::{es2022::ClassPropertiesOptions, options::EnvOptions};
 
 /// Program-wide ownership of class field and static block lowering.
 ///
@@ -18,7 +18,8 @@ pub enum ClassTransform {
 }
 
 impl ClassTransform {
-    pub fn new(options: ES2022Options) -> Self {
+    pub fn new(env: &EnvOptions) -> Self {
+        let options = env.es2022;
         if let Some(properties_options) = options.class_properties {
             Self::ClassProperties {
                 options: properties_options,
@@ -29,13 +30,5 @@ impl ClassTransform {
         } else {
             Self::None
         }
-    }
-
-    /// Whether class-properties owns field lowering and initialization order.
-    ///
-    /// TypeScript must leave field lowering to it, and legacy decorators must leave class-alias
-    /// initialization to it instead of inserting an alias assignment in a static block.
-    pub fn transforms_fields(self) -> bool {
-        matches!(self, Self::ClassProperties { .. })
     }
 }

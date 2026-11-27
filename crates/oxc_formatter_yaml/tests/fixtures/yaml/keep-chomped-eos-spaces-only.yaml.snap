@@ -2,26 +2,25 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# DIVERGES from Prettier (and yaml@2's reading; see DIVERGENCES.md#keep-chomped-space-only-eof-line): a space-only EOF line alone
-# materializes no kept break -- the value is "" (psych/PyYAML agree), so the
-# scalar has no verbatim tail and the file gets the standard final newline.
+# A break-less EOF line of spaces as a keep-chomped scalar's only line is one kept line break,
+# as yaml@2 reads it: the value is "\n", printed as an empty line (as Prettier does).
 key: |+
   
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-# DIVERGES from Prettier (and yaml@2's reading; see DIVERGENCES.md#keep-chomped-space-only-eof-line): a space-only EOF line alone
-# materializes no kept break -- the value is "" (psych/PyYAML agree), so the
-# scalar has no verbatim tail and the file gets the standard final newline.
+# A break-less EOF line of spaces as a keep-chomped scalar's only line is one kept line break,
+# as yaml@2 reads it: the value is "\n", printed as an empty line (as Prettier does).
 key: |+
+
 
 -------------------
 { printWidth: 100 }
 -------------------
-# DIVERGES from Prettier (and yaml@2's reading; see DIVERGENCES.md#keep-chomped-space-only-eof-line): a space-only EOF line alone
-# materializes no kept break -- the value is "" (psych/PyYAML agree), so the
-# scalar has no verbatim tail and the file gets the standard final newline.
+# A break-less EOF line of spaces as a keep-chomped scalar's only line is one kept line break,
+# as yaml@2 reads it: the value is "\n", printed as an empty line (as Prettier does).
 key: |+
+
 
 ===================== End =====================

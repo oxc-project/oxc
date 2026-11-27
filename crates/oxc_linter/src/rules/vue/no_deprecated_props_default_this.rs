@@ -67,7 +67,8 @@ declare_oxc_lint!(
     recommended,
     pending,
     version = "1.67.0",
-    short_description = "Disallow deprecated `this` access in props default function (in Vue.js 3.0.0+).",
+    short_description =
+        "Disallow deprecated `this` access in props default function (in Vue.js 3.0.0+).",
 );
 
 impl Rule for NoDeprecatedPropsDefaultThis {
@@ -87,9 +88,10 @@ impl Rule for NoDeprecatedPropsDefaultThis {
         };
 
         let prop_node = nodes.parent_node(fn_id);
-        let AstKind::ObjectProperty(default_prop) = prop_node.kind() else { return };
-        if !default_prop.key.is_specific_static_name("default") {
-            return;
+        match prop_node.kind() {
+            AstKind::ObjectProperty(prop) if prop.key.is_specific_static_name("default") => {}
+            AstKind::ObjectMethodProperty(prop) if prop.key.is_specific_static_name("default") => {}
+            _ => return,
         }
 
         // `type: Function` means `default` is the function value itself, not a
@@ -154,8 +156,9 @@ fn is_function_identifier(expr: &Expression<'_>) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

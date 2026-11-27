@@ -2,62 +2,6 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-## anchor-tag-props-order
-
-- Why: uniform-rule (source order of user tokens is preserved; prettier/prettier#19524, prettier/prettier#19599)
-- Pin: `tests/fixtures/yaml/anchor-tag-order.yaml`
-- Conformance:
-  - `externals/prettier/yaml/spec/anchors-and-tags.yml`
-  - `externals/prettier/yaml/spec/node-anchor-and-tag-on-seperate-lines.yml`
-  - `externals/prettier/yaml/spec/various-combinations-of-tags-and-anchors.yml`
-  - `externals/prettier/yaml/yaml-test-suite/snippet: 9KAX.yaml*`
-  - `externals/prettier/yaml/yaml-test-suite/snippet: BU8L.yaml*`
-  - `externals/prettier/yaml/yaml-test-suite/snippet: F2C7.yaml*`
-
-```yaml
-# input
-- &a2 !!str two
-
-# ours
-- &a2 !!str two
-
-# prettier
-- !!str &a2 two
-```
-
-Anchor/tag source order is preserved, never reordered, as mapping keys and sequence items are.
-
-## block-scalar-trailing-whitespace
-
-- Why: semantics (prettier/prettier#19764)
-- Pin: `tests/fixtures/yaml/block-scalar-trailing-spaces.yaml`, `tests/fixtures/yaml/prose-wrap/trailing-spaces.yaml`
-- Conformance:
-  - `externals/prettier/yaml/block-folded/block-folded-strip.yml`
-  - `externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n   \n*`
-  - `externals/prettier/yaml/block-value/snippet: "foo: >\n  x\n  \t\n*`
-  - `externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n   \n*`
-  - `externals/prettier/yaml/block-value/snippet: "foo: >-\n  x\n  \t\n*`
-  - `externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n   \n*`
-  - `externals/prettier/yaml/block-value/snippet: "foo: |\n  x\n  \t\n*`
-  - `externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n   \n*`
-  - `externals/prettier/yaml/block-value/snippet: "foo: |-\n  x\n  \t\n*`
-  - `externals/prettier/yaml/yaml-test-suite/snippet: L24T.yaml*` (its JSON keeps that line as content)
-  - `externals/prettier/yaml/yaml-test-suite/snippet: L24T-2.yaml*` (its JSON keeps that line as content)
-  - `externals/prettier/yaml/yaml-test-suite/snippet: Y79Y-2.yaml*` (its JSON keeps that line as content)
-
-```yaml
-# input ("␣" marks a real space)
-strip: |-
-  value␣␣
-
-# ours: both spaces stay
-# prettier: drops them, changing the value
-```
-
-Trailing whitespace in a block scalar is part of the VALUE:
-the last content line's spaces/tabs, and space-only lines more-indented than the block (content per YAML).
-When converging, keep the blank line after such a scalar: post-prettier/prettier#19764 Prettier eats it; the unified blank-line rule ("blank-lines" below) wins.
-
 ## eof-blank-lines
 
 - Why: uniform-rule (one final newline)
@@ -84,20 +28,21 @@ After a contentless keep-chomped scalar (its conformance failures), Prettier pri
 ## keep-chomped-space-only-eof-line
 
 - Why: semantics (prettier/prettier#19256)
-- Pin: `tests/fixtures/yaml/keep-chomped-eos-spaces-only.yaml`, `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
-- Conformance:
-  - `externals/prettier/yaml/yaml-test-suite/snippet: JEF9-3.yaml*` (the suite asserts no JSON value, only yaml@2's dump)
+- Pin: `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
 
 ```yaml
 # input (no final newline; the last line is two spaces)
 key: |+
+
 ␣␣
 
-# ours: value "" (the break-less space-only line adds nothing to the kept tail)
-# prettier: prints one newline too many, value "\n"
+# ours: value "\n" (the break-less space-only line adds nothing after the blank line)
+# prettier: prints one newline too many, value "\n\n"
 ```
 
-A space-only EOF line at-or-below the block's indent holds no line break, so it adds nothing to the kept tail (psych/PyYAML agree).
+A break-less EOF line of at-or-below-indent spaces adds nothing to the kept tail after another line.
+As the scalar's only line it is one kept line, which Prettier prints too.
+Values as yaml@2 reads them.
 
 ## empty-document-end-marker
 
@@ -194,8 +139,7 @@ A suppression comment freezes exactly ONE node, never everything after it; the s
 
 One unified rule: a blank line right after a node is preserved (normalized to one) if the source had one, never invented, identical for every node kind and context.
 Prettier's matrix (block collections only between documents; mappings only before end comments; unconditional insertion after block scalars) is not ported.
-This also keeps `proseWrap: never` idempotent where Prettier is not (prettier/prettier#10776),
-and covers the blank DOUBLED in front of stream-end comments when the last item carries a trailing comment (the prettier/prettier#9130 shape, resurfaced: one source blank comes out as two).
+This also keeps `proseWrap: never` idempotent where Prettier is not (prettier/prettier#10776).
 Same rule in `oxc_formatter` (statements, members) and `oxc_formatter_css` (declarations, rules).
 
 ## folded-more-indented-reflow
@@ -214,6 +158,34 @@ folded: >
 ```
 
 More-indented lines in a folded scalar are never re-flowed under `proseWrap: always`: their line breaks are literal per YAML folding, so wrapping breaks idempotency and the value.
+
+## block-scalar-explicit-indent
+
+- Why: semantics
+- Pin: `tests/fixtures/yaml/block-scalar-explicit-indent.yaml`
+- Conformance:
+  - `externals/aws-cloudformation-templates/EC2/ec2_with_waitcondition_template.yaml`
+
+```yaml
+# input: value "  x\n"
+a:
+    b: |2
+        x
+
+# ours: value "  x\n"
+a:
+  b: |2
+      x
+
+# prettier: the content stays at its source column, value "    x\n"
+a:
+  b: |2
+        x
+```
+
+An indentation indicator counts from the enclosing collection's items (YAML's `n + m`), so the content is re-indented with them.
+Prettier keeps it at its source column: the value changes when the items move left, and the output fails to re-parse when they move right (a wider `tabWidth`, or a source indented narrower than the output).
+Values and parse errors as yaml@2 reads them.
 
 ## flow-flat-with-newline
 

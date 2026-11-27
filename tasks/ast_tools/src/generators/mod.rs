@@ -10,6 +10,7 @@ mod ast_kind;
 #[cfg(feature = "generate-js")]
 mod estree_visit;
 mod formatter;
+mod full_eq;
 mod get_id;
 mod inherit_variants;
 mod minifier_traverse;
@@ -33,6 +34,7 @@ pub use ast_kind::AstKindGenerator;
 #[cfg(feature = "generate-js")]
 pub use estree_visit::ESTreeVisitGenerator;
 pub use formatter::{FormatterAstNodesGenerator, FormatterFormatGenerator};
+pub use full_eq::FullEqGenerator;
 pub use get_id::GetIdGenerator;
 pub use inherit_variants::InheritVariantsGenerator;
 pub use minifier_traverse::MinifierTraverseGenerator;

@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
@@ -102,7 +103,8 @@ declare_oxc_lint!(
     fix_suggestion,
     config = ReturnAwaitOption,
     version = "1.12.0",
-    short_description = "This rule enforces consistent returning of awaited values from async functions.",
+    short_description =
+        "This rule enforces consistent returning of awaited values from async functions.",
 );
 
 impl Rule for ReturnAwait {

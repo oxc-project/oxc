@@ -274,6 +274,10 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let for_statement_scope_id =
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
 
+            // The iterable is moved out of the for-of statement into the init of the new
+            // for statement, so its scopes now live in the for statement's scope.
+            ctx.move_scopes_of_expressions(std::slice::from_ref(&iterator), for_statement_scope_id);
+
             let for_statement = Statement::new_for_statement_with_scope_id(
                 span,
                 Some(ForStatementInit::new_variable_declaration(
@@ -376,7 +380,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
                 static_ident!("err"),
-                block_scope_id,
+                catch_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
             Some(CatchClause::boxed_with_scope_id(

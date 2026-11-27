@@ -367,6 +367,9 @@ unsafe fn walk_object_property_kind<'a, State, Tr: Traverse<'a, State>>(
         ObjectPropertyKind::ObjectProperty(node) => {
             walk_object_property(traverser, (&mut **node) as *mut _, ctx)
         }
+        ObjectPropertyKind::MethodProperty(node) => {
+            walk_object_method_property(traverser, (&mut **node) as *mut _, ctx)
+        }
         ObjectPropertyKind::SpreadProperty(node) => {
             walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -398,6 +401,31 @@ unsafe fn walk_object_property<'a, State, Tr: Traverse<'a, State>>(
     traverser.exit_object_property(&mut *node, ctx);
 }
 
+unsafe fn walk_object_method_property<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut ObjectMethodProperty<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_object_method_property(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ObjectMethodPropertyKey(
+        ancestor::ObjectMethodPropertyWithoutKey(node, PhantomData),
+    ));
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_OBJECT_METHOD_PROPERTY_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ObjectMethodPropertyValue);
+    walk_function(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_OBJECT_METHOD_PROPERTY_VALUE)
+            as *mut ArenaBox<Function>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_object_method_property(&mut *node, ctx);
+}
+
 unsafe fn walk_property_key<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
     node: *mut PropertyKey<'a>,
@@ -407,6 +435,15 @@ unsafe fn walk_property_key<'a, State, Tr: Traverse<'a, State>>(
     match &mut *node {
         PropertyKey::StaticIdentifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        PropertyKey::StaticStringLiteral(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        PropertyKey::StaticNumericLiteral(node) => {
+            walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        PropertyKey::StaticBigIntLiteral(node) => {
+            walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
         }
         PropertyKey::PrivateIdentifier(node) => {
             walk_private_identifier(traverser, (&mut **node) as *mut _, ctx)

@@ -249,3 +249,239 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const foo = { bar: referenceNode.insertAdjacentElement("beforebegin", newNode) }
    ·                                  ─────────────────────
    ╰────
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (node.firstChild) { node.firstChild.remove(); }
+   · ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.lastChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (node.lastChild) { node.lastChild.remove(); }
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (node.firstChild) node.firstChild.remove();
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.lastChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (node.lastChild) node.lastChild.remove();
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `this.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (this.firstChild) { this.firstChild.remove(); }
+   · ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `this.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `this.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:40]
+ 1 │ class Foo extends Element { method() { while (this.firstChild) { this.firstChild.remove(); } } }
+   ·                                        ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `this.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `super.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:40]
+ 1 │ class Foo extends Element { method() { while (super.firstChild) { super.firstChild.remove(); } } }
+   ·                                        ───────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `super.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `this.#node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:40]
+ 1 │ class Foo { #node: Element; method() { while (this.#node.firstChild) { this.#node.firstChild.remove(); } } }
+   ·                                        ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `this.#node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `parent.node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (parent.node.firstChild) { parent.node.firstChild.remove(); }
+   · ───────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `parent.node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `nodes[0].replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (nodes[0].firstChild) { nodes[0].firstChild.remove(); }
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `nodes[0].replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:31]
+ 1 │ function foo(node: Element) { while (node.firstChild) { node.firstChild.remove(); } }
+   ·                               ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:43]
+ 1 │ function foo(node: Element | undefined) { while (node.firstChild) { node.firstChild.remove(); } }
+   ·                                           ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:51]
+ 1 │ function foo(node: Element & { extra: number }) { while (node.firstChild) { node.firstChild.remove(); } }
+   ·                                                   ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:34]
+ 1 │ const node: Element = getNode(); while (node.firstChild) { node.firstChild.remove(); }
+   ·                                  ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `this.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:31]
+ 1 │ function foo(this: Element) { while (this.firstChild) { this.firstChild.remove(); } }
+   ·                               ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `this.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `this.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:45]
+ 1 │ const obj = { clear(this: HTMLDivElement) { while (this.firstChild) { this.firstChild.remove(); } } };
+   ·                                             ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `this.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `this.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:56]
+ 1 │ class Sub extends Node { clear(this: HTMLDivElement) { while (this.firstChild) { this.firstChild.remove(); } } }
+   ·                                                        ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `this.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node as Element).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:28]
+ 1 │ function foo(node: Node) { while ((node as Element).firstChild) { (node as Element).firstChild.remove(); } }
+   ·                            ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `(node as Element).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node satisfies Node).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:31]
+ 1 │ function foo(node: Element) { while ((node satisfies Node).firstChild) { (node satisfies Node).firstChild.remove(); } }
+   ·                               ───────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `(node satisfies Node).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node!.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:38]
+ 1 │ function foo(node: Element | null) { while (node!.firstChild) { node!.firstChild.remove(); } }
+   ·                                      ───────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node!.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node as Element).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:2:1]
+ 1 │     foo()
+ 2 │ ╭─▶ while ((node as Element).firstChild) {
+ 3 │ │       (node as Element).firstChild.remove();
+ 4 │ ╰─▶ }
+   ╰────
+  help: Replace the loop with `(node as Element).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node as Element).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:2:1]
+ 1 │     foo();
+ 2 │ ╭─▶ while ((node as Element).firstChild) {
+ 3 │ │       (node as Element).firstChild.remove();
+ 4 │ ╰─▶ }
+   ╰────
+  help: Replace the loop with `(node as Element).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node as Element).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:2:1]
+ 1 │     export const x = foo
+ 2 │ ╭─▶ while ((node as Element).firstChild) {
+ 3 │ │       (node as Element).firstChild.remove();
+ 4 │ ╰─▶ }
+   ╰────
+  help: Replace the loop with `(node as Element).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node as Element).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:3:2]
+ 2 │         "use strict"
+ 3 │ ╭─▶     while ((node as Element).firstChild) {
+ 4 │ │           (node as Element).firstChild.remove();
+ 5 │ ╰─▶     }
+ 6 │     }
+   ╰────
+  help: Replace the loop with `(node as Element).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node as Element).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:3:2]
+ 2 │         "use strict"
+ 3 │ ╭─▶     while ((node as Element).firstChild) {
+ 4 │ │           (node as Element).firstChild.remove();
+ 5 │ ╰─▶     }
+ 6 │     }
+   ╰────
+  help: Replace the loop with `(node as Element).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node as Element).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:3:2]
+ 2 │         const x = bar
+ 3 │ ╭─▶     while ((node as Element).firstChild) {
+ 4 │ │           (node as Element).firstChild.remove();
+ 5 │ ╰─▶     }
+ 6 │     }
+   ╰────
+  help: Replace the loop with `(node as Element).replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:2:1]
+ 1 │     const array = []
+ 2 │ ╭─▶ while ((node).firstChild) {
+ 3 │ │       (node).firstChild.remove();
+ 4 │ ╰─▶ }
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ ╭─▶ while (node.firstChild) {
+ 2 │ │       // Keep this comment.
+ 3 │ │       node.firstChild.remove();
+ 4 │ ╰─▶ }
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `node.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while (/* keep */ node.firstChild) { node.firstChild.remove(); }
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `node.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `window.replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:22]
+ 1 │ function f(window) { while (window.firstChild) { window.firstChild.remove(); } }
+   ·                      ─────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `window.replaceChildren()`.
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer `(node satisfies Node).replaceChildren()` over directly removing `.firstChild` in a loop.
+   ╭─[prefer_modern_dom_apis.tsx:1:1]
+ 1 │ while ((node satisfies Node).firstChild) { (node satisfies Node).firstChild.remove(); }
+   · ───────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace the loop with `(node satisfies Node).replaceChildren()`.

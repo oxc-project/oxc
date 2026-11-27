@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
-    ast::{
-        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
-        PropertyKind, match_member_expression,
-    },
+    ast::{Argument, CallExpression, Expression, MethodDefinitionKind, ObjectMethodKind},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind, ReturnInstructionKind,
@@ -14,10 +15,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -38,12 +36,13 @@ pub struct GetterReturn {
     pub allow_implicit: bool,
 }
 
-const METHODS_TO_WATCH_FOR: [(&str, &str); 4] = [
-    ("Object", "defineProperty"),
-    ("Reflect", "defineProperty"),
-    ("Object", "create"),
-    ("Object", "defineProperties"),
-];
+/// Methods that take a property descriptor as their third argument.
+const DESCRIPTOR_METHODS: [(&str, &str); 2] =
+    [("Object", "defineProperty"), ("Reflect", "defineProperty")];
+
+/// Methods that take an object of property descriptors as their second argument.
+const DESCRIPTOR_MAP_METHODS: [(&str, &str); 2] =
+    [("Object", "create"), ("Object", "defineProperties")];
 
 declare_oxc_lint!(
     /// ### What it does
@@ -119,40 +118,6 @@ impl Rule for GetterReturn {
 }
 
 impl GetterReturn {
-    fn handle_member_expression<'a>(member_expression: &'a MemberExpression<'a>) -> bool {
-        for (a, b) in METHODS_TO_WATCH_FOR {
-            if member_expression.through_optional_is_specific_member_access(a, b) {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
-        match callee.without_parentheses() {
-            expr @ match_member_expression!(Expression) => {
-                Self::handle_member_expression(expr.to_member_expression())
-            }
-            Expression::ChainExpression(ce) => match &ce.expression {
-                match_member_expression!(ChainElement) => {
-                    Self::handle_member_expression(ce.expression.to_member_expression())
-                }
-                ChainElement::CallExpression(_) | ChainElement::TSNonNullExpression(_) => {
-                    false // todo: make a test for this
-                }
-            },
-            _ => false,
-        }
-    }
-
-    fn handle_paren_expr<'a>(expr: &'a Expression<'a>) -> bool {
-        match expr.without_parentheses() {
-            Expression::CallExpression(ce) => Self::handle_actual_expression(&ce.callee),
-            _ => false,
-        }
-    }
-
     /// Checks whether it is necessary to check the node
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
         // TypeScript reports a class or object literal getter without a `return`
@@ -162,55 +127,21 @@ impl GetterReturn {
         let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => {
-                if matches!(mdef.kind, MethodDefinitionKind::Get) {
+                !is_typescript && matches!(mdef.kind, MethodDefinitionKind::Get)
+            }
+            AstKind::ObjectMethodProperty(prop) => {
+                if matches!(prop.kind, ObjectMethodKind::Get) {
                     return !is_typescript;
                 }
+                prop.key.is_specific_static_name("get")
+                    && is_property_descriptor(ctx.nodes().parent_node(parent.id()), ctx)
             }
-            AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
-                if matches!(kind, PropertyKind::Get) {
-                    return !is_typescript;
-                }
-                if prop_key.name().is_some_and(|key| key != "get") {
-                    return false;
-                }
-
-                let parent_2 = ctx.nodes().parent_node(parent.id());
-                let parent_3 = ctx.nodes().parent_node(parent_2.id());
-                // handle (X())
-                match parent_3.kind() {
-                    AstKind::ParenthesizedExpression(p)
-                        if Self::handle_paren_expr(&p.expression) =>
-                    {
-                        return true;
-                    }
-                    AstKind::CallExpression(ce) if Self::handle_actual_expression(&ce.callee) => {
-                        return true;
-                    }
-                    _ => {}
-                }
-
-                let parent_4 = ctx.nodes().parent_node(parent_3.id());
-                let parent_5 = ctx.nodes().parent_node(parent_4.id());
-                match parent_5.kind() {
-                    AstKind::ParenthesizedExpression(p) => {
-                        if Self::handle_paren_expr(&p.expression) {
-                            return true;
-                        }
-                    }
-                    AstKind::CallExpression(ce) => {
-                        if Self::handle_actual_expression(&ce.callee) {
-                            return true;
-                        }
-                    }
-                    _ => {
-                        return false;
-                    }
-                }
+            AstKind::ObjectProperty(prop) => {
+                prop.key.is_specific_static_name("get")
+                    && is_property_descriptor(ctx.nodes().parent_node(parent.id()), ctx)
             }
-            _ => {}
+            _ => false,
         }
-
-        false
     }
 
     fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, span: Span) {
@@ -320,6 +251,75 @@ impl GetterReturn {
     }
 }
 
+/// Is `node` an object expression used as a property descriptor?
+///
+/// Port of ESLint's `isPropertyDescriptor`.
+fn is_property_descriptor<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let AstKind::ObjectExpression(descriptor) = node.kind() else {
+        return false;
+    };
+    let parent = parent_skipping_parens(node, ctx);
+    match parent.kind() {
+        AstKind::CallExpression(call) => {
+            is_argument_of_global_method_call(call, descriptor.span, 2, &DESCRIPTOR_METHODS, ctx)
+        }
+        AstKind::ObjectProperty(prop)
+            if prop.value.without_parentheses().span() == descriptor.span =>
+        {
+            let map = ctx.nodes().parent_node(parent.id());
+            let AstKind::ObjectExpression(map_expr) = map.kind() else {
+                return false;
+            };
+            let AstKind::CallExpression(call) = parent_skipping_parens(map, ctx).kind() else {
+                return false;
+            };
+            is_argument_of_global_method_call(call, map_expr.span, 1, &DESCRIPTOR_MAP_METHODS, ctx)
+        }
+        _ => false,
+    }
+}
+
+fn parent_skipping_parens<'s, 'a>(node: &AstNode<'a>, ctx: &'s LintContext<'a>) -> &'s AstNode<'a> {
+    let mut parent = ctx.nodes().parent_node(node.id());
+    while let AstKind::ParenthesizedExpression(_) = parent.kind() {
+        parent = ctx.nodes().parent_node(parent.id());
+    }
+    parent
+}
+
+/// Is the expression at `span` argument `index` of a call to one of `methods` on a global object?
+fn is_argument_of_global_method_call(
+    call: &CallExpression<'_>,
+    span: Span,
+    index: usize,
+    methods: &[(&str, &str)],
+    ctx: &LintContext<'_>,
+) -> bool {
+    if call
+        .arguments
+        .get(index)
+        .and_then(Argument::as_expression)
+        .is_none_or(|arg| arg.without_parentheses().span() != span)
+    {
+        return false;
+    }
+    let member = match call.callee.without_parentheses() {
+        Expression::ChainExpression(chain) => chain.expression.member_expression(),
+        callee => callee.as_member_expression(),
+    };
+    let Some(member) = member else {
+        return false;
+    };
+    let Expression::Identifier(object) = member.object().without_parentheses() else {
+        return false;
+    };
+    let Some(property) = member.static_property_name() else {
+        return false;
+    };
+    methods.iter().any(|&(object_name, method)| object.name == object_name && property == method)
+        && ctx.is_reference_to_global_variable(object)
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -363,6 +363,14 @@ fn test() {
         ("foo.defineProperty(null, { get() {} });", None),
         ("foo.defineProperties(null, { bar: { get() {} } });", None),
         ("foo.create(null, { bar: { get() {} } });", None),
+        // not a property descriptor
+        ("Object.create({ get() {} });", None),
+        ("Object.create(foo, { get() {} });", None),
+        ("Object.defineProperty(foo, { get() {} }, 'bar');", None),
+        ("const key = 'value'; Object.defineProperty({}, 'x', { [key]: function () {} });", None),
+        // `Object` and `Reflect` must be the globals
+        ("function register(Reflect) { Reflect.defineProperty({}, 'item', { get: function () {} }); }", None),
+        ("function create(Object) { Object.create(null, { x: { get() {} } }); }", None),
         ("var foo = { get willThrowSoValid() { throw MyException() } };", None),
         (
             "const originalClearTimeout = targetWindow.clearTimeout;
@@ -465,6 +473,10 @@ fn test() {
         ("Object.create(foo, { bar: { get: function() {} } })", None),
         ("Object.create(foo, { bar: { get() {} } })", None),
         ("Object.create(foo, { bar: { get: () => {} } })", None),
+        ("Object.create(null, { x: { get() {} } });", None),
+        ("Object.defineProperty({}, 'x', { ['get']: function () {} });", None),
+        ("Object.defineProperty(foo, 'bar', ({ get: function () {} }));", None),
+        ("Object.defineProperties(foo, { bar: ({ get() {} }) });", None),
         (
             "Object.defineProperties(foo, { bar: { get: function () {}} });",
             Some(serde_json::json!([{ "allowImplicit": true }])),

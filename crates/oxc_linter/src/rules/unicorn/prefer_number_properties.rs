@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, UnaryExpression, UnaryOperator, match_member_expression},
@@ -6,8 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -195,7 +196,10 @@ impl Rule for PreferNumberProperties {
                 let is_method_shorthand =
                     matches!(name, "isNaN" | "isFinite" | "parseFloat" | "parseInt");
                 if is_method_shorthand
-                    && !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                    && !matches!(
+                        ctx.nodes().parent_kind(node.id()),
+                        AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_)
+                    )
                 {
                     continue;
                 }
@@ -278,8 +282,9 @@ fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (r#"Number.parseInt("10", 2);"#, None),
@@ -529,6 +534,7 @@ function inner() {
         ("const foo = {NaN: NaN};", "const foo = {NaN: Number.NaN};", None),
         ("const {foo = NaN} = {};", "const {foo = Number.NaN} = {};", None),
         ("const foo = NaN.toString();", "const foo = Number.NaN.toString();", None),
+        ("const foo = {[isNaN]() {}}", "const foo = {[Number.isNaN]() {}}", None),
         ("class Foo3 {[NaN] = 1}", "class Foo3 {[Number.NaN] = 1}", None),
         ("class Foo2 {[NaN] = 1}", "class Foo2 {[Number.NaN] = 1}", None),
         ("class Foo {[NaN] = 1}", "class Foo {[Number.NaN] = 1}", None),

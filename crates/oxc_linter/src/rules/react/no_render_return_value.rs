@@ -51,7 +51,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "0.0.15",
-    short_description = "This rule will warn you if you try to use the `ReactDOM.render()` return value.",
+    short_description =
+        "This rule will warn you if you try to use the `ReactDOM.render()` return value.",
 );
 
 impl Rule for NoRenderReturnValue {
@@ -74,6 +75,7 @@ impl Rule for NoRenderReturnValue {
                 parent_node.kind(),
                 AstKind::VariableDeclarator(_)
                     | AstKind::ObjectProperty(_)
+                    | AstKind::ObjectMethodProperty(_)
                     | AstKind::ReturnStatement(_)
                     | AstKind::AssignmentExpression(_)
                     | AstKind::ArrowFunctionExpression(_)

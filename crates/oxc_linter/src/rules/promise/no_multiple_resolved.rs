@@ -1,5 +1,7 @@
 use std::hash::Hash;
 
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, BindingIdentifier, CallExpression, Expression, Function},
@@ -16,7 +18,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{Scoping, SymbolId};
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     AstNode, context::LintContext, rule::Rule, utils::get_promise_constructor_inline_executor,

@@ -1,19 +1,20 @@
 use itertools::Either;
 use lazy_regex::Regex;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, Expression, Function, IdentifierReference, NewTarget,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind, Super, ThisExpression,
+        AccessorProperty, ArrowFunctionExpression, Expression, Function, IdentifierReference,
+        NewTarget, ObjectExpression, ObjectMethodKind, ObjectMethodProperty, ObjectProperty,
+        ObjectPropertyKind, PropertyDefinition, PropertyKey, StaticBlock, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -157,7 +158,8 @@ declare_oxc_lint!(
     fix,
     config = ObjectShorthandTupleConfig,
     version = "1.59.0",
-    short_description = "Require or disallow method and property shorthand syntax for object literals.",
+    short_description =
+        "Require or disallow method and property shorthand syntax for object literals.",
 );
 
 impl Rule for ObjectShorthand {
@@ -175,6 +177,9 @@ impl Rule for ObjectShorthand {
                 }
             }
             AstKind::ObjectProperty(property) => check_object_property(self, ctx, property),
+            AstKind::ObjectMethodProperty(property) => {
+                check_method_property(self, ctx, property);
+            }
             _ => {}
         }
     }
@@ -225,7 +230,7 @@ fn make_function_shorthand<'a>(
         };
 
         let property_key_span = property.key.span();
-        let key_text = if property.computed {
+        let key_text = if property.key.is_computed() {
             let (Some(paren_start_offset), Some(paren_end_offset)) = (
                 ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
                 ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
@@ -307,7 +312,7 @@ fn make_function_shorthand<'a>(
 fn make_function_long_form<'a>(
     rule: &ObjectShorthand,
     ctx: &LintContext<'a>,
-    property: &ObjectProperty<'a>,
+    property: &ObjectMethodProperty<'a>,
 ) {
     let diagnostic = if rule.apply_never {
         expected_method_longform(property.span)
@@ -316,7 +321,7 @@ fn make_function_long_form<'a>(
     };
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let property_key_span = property.key.span();
-        let key_text_range = if property.computed {
+        let key_text_range = if property.key.is_computed() {
             let (Some(paren_start_offset), Some(paren_end_offset)) = (
                 ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
                 ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
@@ -332,9 +337,7 @@ fn make_function_long_form<'a>(
         };
         let key_text = ctx.source_range(key_text_range);
 
-        let Expression::FunctionExpression(func) = &property.value.without_parentheses() else {
-            return fixer.noop();
-        };
+        let func = &property.value;
         let function_header = match (func.r#async, func.generator) {
             (true, true) => "async function*",
             (true, false) => "async function",
@@ -370,7 +373,7 @@ fn check_longform_methods<'a>(
         return;
     }
 
-    let is_key_string_literal = is_property_key_string_literal(property);
+    let is_key_string_literal = is_property_key_string_literal(&property.key);
     if rule.avoid_quotes && is_key_string_literal {
         return;
     }
@@ -401,7 +404,7 @@ fn check_longform_properties<'a>(
     ctx: &LintContext<'a>,
     property: &ObjectProperty<'a>,
 ) {
-    if rule.avoid_quotes && is_property_key_string_literal(property) {
+    if rule.avoid_quotes && is_property_key_string_literal(&property.key) {
         return;
     }
 
@@ -422,10 +425,7 @@ fn check_longform_properties<'a>(
         && property_name == value_identifier.name
     {
         ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
-            if ctx.semantic().has_comments_between(Span::new(
-                property.key.span().start,
-                value_identifier.span.end,
-            )) {
+            if ctx.semantic().has_comments_between(property.span) {
                 return fixer.noop();
             }
             fixer.replace(property.span, property_name.to_string())
@@ -438,12 +438,8 @@ fn check_consistency<'a>(
     obj_expr: &ObjectExpression<'a>,
     check_redundancy: bool,
 ) {
-    let properties = obj_expr.properties.iter().filter_map(|property_kind| match property_kind {
-        ObjectPropertyKind::ObjectProperty(property) => {
-            can_property_have_shorthand(property).then_some(property)
-        }
-        ObjectPropertyKind::SpreadProperty(_) => None,
-    });
+    let properties =
+        obj_expr.properties.iter().filter(|property| is_consistency_candidate(property));
 
     let properties_count = properties.clone().count();
     if properties_count > 0 {
@@ -465,24 +461,70 @@ fn check_object_property<'a>(
     ctx: &LintContext<'a>,
     property: &ObjectProperty<'a>,
 ) {
-    let is_concise_property = property.shorthand || property.method;
+    let is_concise_property = property.shorthand;
 
-    if !can_property_have_shorthand(property) {
+    if !can_key_value_property_have_shorthand(property) {
         return;
     }
 
     if is_concise_property {
-        if property.method
-            && (rule.apply_never || rule.avoid_quotes && is_property_key_string_literal(property))
-        {
-            make_function_long_form(rule, ctx, property);
-        } else if rule.apply_never {
+        if rule.apply_never {
             check_shorthand_properties(ctx, property);
         }
     } else if rule.apply_to_methods && is_property_value_anonymous_function(property) {
         check_longform_methods(rule, ctx, property);
     } else if rule.apply_to_properties {
         check_longform_properties(rule, ctx, property);
+    }
+}
+
+fn check_method_property<'a>(
+    rule: &ObjectShorthand,
+    ctx: &LintContext<'a>,
+    property: &ObjectMethodProperty<'a>,
+) {
+    if property.kind == ObjectMethodKind::Method
+        && !property.key.is_specific_literal_name("__proto__")
+        && (rule.apply_never || rule.avoid_quotes && is_property_key_string_literal(&property.key))
+        && !method_uses_super(&property.value)
+    {
+        make_function_long_form(rule, ctx, property);
+    }
+}
+
+/// Returns whether a method references `super` through its own home object, which a
+/// function expression cannot do.
+fn method_uses_super(method: &Function<'_>) -> bool {
+    let mut finder = SuperFinder::default();
+    finder.visit_formal_parameters(&method.params);
+    if let Some(body) = &method.body {
+        finder.visit_function_body(body);
+    }
+    finder.found
+}
+
+#[derive(Default)]
+struct SuperFinder {
+    found: bool,
+}
+
+impl<'a> Visit<'a> for SuperFinder {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
+
+    fn visit_property_definition(&mut self, it: &PropertyDefinition<'a>) {
+        self.visit_decorators(&it.decorators);
+        self.visit_property_key(&it.key);
+    }
+
+    fn visit_accessor_property(&mut self, it: &AccessorProperty<'a>) {
+        self.visit_decorators(&it.decorators);
+        self.visit_property_key(&it.key);
+    }
+
+    fn visit_static_block(&mut self, _it: &StaticBlock<'a>) {}
+
+    fn visit_super(&mut self, _it: &Super) {
+        self.found = true;
     }
 }
 
@@ -578,15 +620,22 @@ fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
     }
 }
 
-fn is_property_key_string_literal(property: &ObjectProperty) -> bool {
-    matches!(property.key.as_expression(), Some(Expression::StringLiteral(_)))
+fn is_property_key_string_literal(key: &PropertyKey) -> bool {
+    matches!(key, PropertyKey::StaticStringLiteral(_) | PropertyKey::StringLiteral(_))
 }
 
-fn is_shorthand_property(property: &ObjectProperty) -> bool {
-    property.shorthand || property.method
+fn is_shorthand_property(property: &ObjectPropertyKind) -> bool {
+    matches!(property, ObjectPropertyKind::MethodProperty(_))
+        || matches!(property, ObjectPropertyKind::ObjectProperty(property) if property.shorthand)
 }
 
-fn is_redundant_property(property: &ObjectProperty) -> bool {
+fn is_redundant_property(property: &ObjectPropertyKind) -> bool {
+    let ObjectPropertyKind::ObjectProperty(property) = property else {
+        return matches!(property, ObjectPropertyKind::MethodProperty(_));
+    };
+    if property.key.is_specific_literal_name("__proto__") {
+        return false;
+    }
     match &property.value {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::Identifier(value_identifier) => {
@@ -602,12 +651,19 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
     }
 }
 
-fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
-    property.kind == PropertyKind::Init
-        && (property.computed
-            || (!property.key.is_specific_id("__proto__")
-                && !property.key.is_specific_string_literal("__proto__")))
-        && (!property.computed || is_property_value_function(property))
+/// Returns whether a property counts toward `consistent` and `consistent-as-needed`, which
+/// consider every property except getters, setters, and spreads.
+fn is_consistency_candidate(property: &ObjectPropertyKind) -> bool {
+    match property {
+        ObjectPropertyKind::ObjectProperty(_) => true,
+        ObjectPropertyKind::MethodProperty(property) => property.kind == ObjectMethodKind::Method,
+        ObjectPropertyKind::SpreadProperty(_) => false,
+    }
+}
+
+fn can_key_value_property_have_shorthand(property: &ObjectProperty) -> bool {
+    !property.key.is_specific_literal_name("__proto__")
+        && (!property.key.is_computed() || is_property_value_function(property))
 }
 
 #[test]
@@ -615,6 +671,22 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("const obj = { m() { return super.m(); } };", Some(serde_json::json!(["never"]))),
+        ("const obj = { m() { return () => super.m(); } };", Some(serde_json::json!(["never"]))),
+        ("const obj = { m(a = super.x) { return a; } };", Some(serde_json::json!(["never"]))),
+        ("const obj = { m() { class A extends super.B {} } };", Some(serde_json::json!(["never"]))),
+        (
+            r#"const obj = { "m"() { return super.m(); } };"#,
+            Some(serde_json::json!(["always", { "avoidQuotes": true }])),
+        ),
+        (
+            "const obj = { x: x, __proto__: foo };",
+            Some(serde_json::json!(["consistent-as-needed"])),
+        ),
+        (
+            "const obj = { __proto__: __proto__ };",
+            Some(serde_json::json!(["consistent-as-needed"])),
+        ),
         ("var x = {y() {}}", None),
         ("var x = {y}", None),
         ("var x = {a: b}", None),
@@ -988,6 +1060,17 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "const obj = { m() { return { n() { return super.n(); } }; } };",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const obj = { m() { class A extends B { x = super.y; } } };",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("const obj = { x: (x /* keep */) };", Some(serde_json::json!(["always"]))),
+        ("const obj = { x, [key]: value };", Some(serde_json::json!(["consistent"]))),
+        ("const obj = { x, __proto__: foo };", Some(serde_json::json!(["consistent"]))),
         ("var x = {x: x}", None),
         ("var x = {'x': x}", None),
         ("var x = {y: y, x: x}", None),
@@ -1425,6 +1508,16 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "const obj = { x: (x /* keep */) };",
+            "const obj = { x: (x /* keep */) };",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "const obj = { m() { return { n() { return super.n(); } }; } };",
+            "const obj = { m: function() { return { n() { return super.n(); } }; } };",
+            Some(serde_json::json!(["never"])),
+        ),
         ("var x = {x: x}", "var x = {x}", None),
         ("var x = {'x': x}", "var x = {x}", None),
         ("var x = {y: y, x: x}", "var x = {y, x}", None),

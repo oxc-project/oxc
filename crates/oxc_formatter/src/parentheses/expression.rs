@@ -77,9 +77,9 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, IdentifierReference<'_>> {
         if f.comments().is_marked_as_type_cast_node(self) {
             return false;
         }
-        // An html-in-js placeholder (reaching JS through HTML's `<script>` or `on*` attributes)
+        // An html-in-js placeholder (reaching JS through HTML's `<script>` or Angular's bindings, a dispatch deep)
         // stands in for an expression of any precedence: the parens around it in the source stay
-        if is_html_placeholder(self.name.as_str()) {
+        if f.session().dispatch_depth() > 0 && is_html_placeholder(self.name.as_str()) {
             return is_parenthesized_in_source(self, f);
         }
 
@@ -696,8 +696,10 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, SequenceExpression<'_>> {
         }
 
         match self.parent() {
+            // These print the parentheses themselves
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
+            | AstNodes::YieldExpression(_)
             | AstNodes::ArrowFunctionExpression(_)
             // There's a precedence for writing `x++, y++`
             | AstNodes::ForStatement(_) => false,
@@ -977,9 +979,12 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
             AstNodes::TSNonNullExpression(_) | AstNodes::TSInstantiationExpression(_) => {
                 return true;
             }
-            AstNodes::CallExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
-            AstNodes::NewExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
-            AstNodes::TaggedTemplateExpression(expr) if expr.type_arguments.is_some() => &expr.tag,
+            // `(f<T>)()`, `new (f<T>)()`, `` (f<T>)`` `` and `extends (f<T>)`,
+            // since `f<T>()` and the others take `<T>` as their own type arguments
+            AstNodes::CallExpression(expr) => &expr.callee,
+            AstNodes::NewExpression(expr) => &expr.callee,
+            AstNodes::TaggedTemplateExpression(expr) => &expr.tag,
+            parent if is_class_extends(self.span, parent) => return true,
             _ => return is_followed_by_comparison_or_sign(self, f),
         };
 

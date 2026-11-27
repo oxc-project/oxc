@@ -66,3 +66,42 @@ source: crates/oxc_linter/src/tester.rs
  7 │             }
    ╰────
   help: Give D a unique value
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `'A'`
+   ╭─[no_duplicate_enum_values.tsx:3:19]
+ 2 │             enum E {
+ 3 │               A = 'A',
+   ·                   ─┬─
+   ·                    ╰── 'A' is first used as an initializer here
+ 4 │               B = `A`,
+   ·                   ─┬─
+   ·                    ╰── and is re-used here
+ 5 │             }
+   ╰────
+  help: Give B a unique value
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `'A'`
+   ╭─[no_duplicate_enum_values.tsx:3:19]
+ 2 │             enum E {
+ 3 │               A = `A`,
+   ·                   ─┬─
+   ·                    ╰── 'A' is first used as an initializer here
+ 4 │               B = `A`,
+   ·                   ─┬─
+   ·                    ╰── and is re-used here
+ 5 │             }
+   ╰────
+  help: Give B a unique value
+
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `'A'`
+   ╭─[no_duplicate_enum_values.tsx:3:19]
+ 2 │             enum E {
+ 3 │               A = `\u0041`,
+   ·                   ────┬───
+   ·                       ╰── 'A' is first used as an initializer here
+ 4 │               B = 'A',
+   ·                   ─┬─
+   ·                    ╰── and is re-used here
+ 5 │             }
+   ╰────
+  help: Give B a unique value

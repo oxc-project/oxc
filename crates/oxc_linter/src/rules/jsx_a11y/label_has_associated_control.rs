@@ -1,5 +1,8 @@
 use std::ops::Deref;
 
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
@@ -12,8 +15,6 @@ use oxc_str::{CompactStr, JSStr};
 use oxc_syntax::{
     identifier::is_white_space, line_terminator::is_line_terminator, operator::UnaryOperator,
 };
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,

@@ -1,3 +1,7 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{TSFunctionType, TSType},
@@ -5,9 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -160,7 +161,8 @@ declare_oxc_lint!(
     style,
     config = MaxParamsConfigEnum,
     version = "0.2.14",
-    short_description = "Enforce a maximum number of parameters in function definitions which by default is three.",
+    short_description =
+        "Enforce a maximum number of parameters in function definitions which by default is three.",
 );
 
 impl Rule for MaxParams {

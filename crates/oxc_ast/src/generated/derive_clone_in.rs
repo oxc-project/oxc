@@ -279,6 +279,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for LabelIdentifier<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             name: CloneIn::clone_in_impl(&self.name, with_semantic_ids, allocator),
+            label_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
+                &self.label_id,
+                with_semantic_ids,
+            ),
         }
     }
 }
@@ -426,6 +430,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for ObjectPropertyKind<'_> {
                 with_semantic_ids,
                 allocator,
             )),
+            Self::MethodProperty(it) => ObjectPropertyKind::MethodProperty(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
             Self::SpreadProperty(it) => ObjectPropertyKind::SpreadProperty(CloneIn::clone_in_impl(
                 it,
                 with_semantic_ids,
@@ -446,13 +455,41 @@ impl<'new_alloc> CloneIn<'new_alloc> for ObjectProperty<'_> {
         ObjectProperty {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
+            value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
+            shorthand: CloneIn::clone_in_impl(&self.shorthand, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ObjectMethodProperty<'_> {
+    type Cloned = ObjectMethodProperty<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ObjectMethodProperty {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
-            method: CloneIn::clone_in_impl(&self.method, with_semantic_ids, allocator),
-            shorthand: CloneIn::clone_in_impl(&self.shorthand, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
         }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ObjectMethodKind {
+    type Cloned = ObjectMethodKind;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
     }
 }
 
@@ -470,6 +507,15 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
                 with_semantic_ids,
                 allocator,
             )),
+            Self::StaticStringLiteral(it) => PropertyKey::StaticStringLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::StaticNumericLiteral(it) => PropertyKey::StaticNumericLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::StaticBigIntLiteral(it) => PropertyKey::StaticBigIntLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
             Self::PrivateIdentifier(it) => PropertyKey::PrivateIdentifier(CloneIn::clone_in_impl(
                 it,
                 with_semantic_ids,
@@ -524,19 +570,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
                 allocator,
             )),
         }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for PropertyKind {
-    type Cloned = PropertyKind;
-
-    #[inline(always)]
-    fn clone_in_impl(
-        &self,
-        _with_semantic_ids: CloneInSemanticIds,
-        allocator: &'new_alloc Allocator,
-    ) -> Self::Cloned {
-        *self
     }
 }
 
@@ -1210,7 +1243,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetPropertyProperty<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             name: CloneIn::clone_in_impl(&self.name, with_semantic_ids, allocator),
             binding: CloneIn::clone_in_impl(&self.binding, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
         }
     }
 }
@@ -2114,7 +2146,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for BindingProperty<'_> {
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             shorthand: CloneIn::clone_in_impl(&self.shorthand, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
         }
     }
 }
@@ -2544,7 +2575,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for MethodDefinition<'_> {
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             r#override: CloneIn::clone_in_impl(&self.r#override, with_semantic_ids, allocator),
             optional: CloneIn::clone_in_impl(&self.optional, with_semantic_ids, allocator),
@@ -2590,7 +2620,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
                 allocator,
             ),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
             r#override: CloneIn::clone_in_impl(&self.r#override, with_semantic_ids, allocator),
@@ -2742,7 +2771,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AccessorProperty<'_> {
                 allocator,
             ),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             r#override: CloneIn::clone_in_impl(&self.r#override, with_semantic_ids, allocator),
             definite: CloneIn::clone_in_impl(&self.definite, with_semantic_ids, allocator),
@@ -3216,7 +3244,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for NumericLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            base: CloneIn::clone_in_impl(&self.base, with_semantic_ids, allocator),
         }
     }
 }
@@ -3251,7 +3278,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            base: CloneIn::clone_in_impl(&self.base, with_semantic_ids, allocator),
         }
     }
 }
@@ -3300,6 +3326,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'_> {
             text: CloneIn::clone_in_impl(&self.text, with_semantic_ids, allocator),
             pattern: CloneIn::clone_in_impl(&self.pattern, with_semantic_ids, allocator),
         }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for RegExpFlags {
+    type Cloned = RegExpFlags;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
     }
 }
 
@@ -4825,7 +4864,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSPropertySignature<'_> {
         TSPropertySignature {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             optional: CloneIn::clone_in_impl(&self.optional, with_semantic_ids, allocator),
             readonly: CloneIn::clone_in_impl(&self.readonly, with_semantic_ids, allocator),
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
@@ -4949,7 +4987,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSMethodSignature<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
-            computed: CloneIn::clone_in_impl(&self.computed, with_semantic_ids, allocator),
             optional: CloneIn::clone_in_impl(&self.optional, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             type_parameters: CloneIn::clone_in_impl(
@@ -5763,6 +5800,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for CommentPosition {
 
 impl<'new_alloc> CloneIn<'new_alloc> for CommentContent {
     type Cloned = CommentContent;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for CommentNewlines {
+    type Cloned = CommentNewlines;
 
     #[inline(always)]
     fn clone_in_impl(

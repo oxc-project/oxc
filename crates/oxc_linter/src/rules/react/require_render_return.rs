@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
 };
@@ -72,13 +72,15 @@ declare_oxc_lint!(
     nursery,
     recommended,
     version = "0.2.0",
-    short_description = "Require render methods in ES5 and ES2015 React components to return a value.",
+    short_description =
+        "Require render methods in ES5 and ES2015 React components to return a value.",
 );
 
 impl Rule for RequireRenderReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {}
+            AstKind::ArrowFunctionExpression(_) => {}
+            AstKind::Function(function) if function.body.is_some() => {}
             _ => return,
         }
 
@@ -101,13 +103,12 @@ impl Rule for RequireRenderReturn {
                 AstKind::ObjectProperty(property) => {
                     ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
                 }
+                AstKind::ObjectMethodProperty(property) => {
+                    ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
+                }
                 _ => {}
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 
@@ -188,6 +189,11 @@ fn is_render_fn(node: &AstNode) -> bool {
         AstKind::ObjectProperty(property)
             if property.key.is_specific_static_name(RENDER_METHOD_NAME)
                 && property.value.is_function() =>
+        {
+            return true;
+        }
+        AstKind::ObjectMethodProperty(property)
+            if property.key.is_specific_static_name(RENDER_METHOD_NAME) =>
         {
             return true;
         }
@@ -360,5 +366,52 @@ fn test() {
     ];
 
     Tester::new(RequireRenderReturn::NAME, RequireRenderReturn::PLUGIN, pass, fail)
+        .test_and_snapshot();
+}
+
+/// Regression test for <https://github.com/oxc-project/oxc/issues/29697>.
+/// The rule must also run on non-JSX source types, e.g. `.ts` files.
+/// JSX syntax is not used because it is a parse error in plain TypeScript.
+#[test]
+fn test_non_jsx_source_type() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        r"
+                    class Hello extends React.Component {
+                      render() {
+                        return 'Hello';
+                      }
+                    }
+                  ",
+        r"
+                    class Hello {
+                      render() {}
+                    }
+                  ",
+        "declare class Hello extends React.Component { render(): string; }",
+        "abstract class Hello extends React.Component { abstract render(): string; }",
+        "class Hello extends React.Component { render(): string; render() { return 'Hello'; } }",
+    ];
+
+    let fail = vec![
+        r"
+                    class Hello extends React.Component {
+                      render() {}
+                    }
+                  ",
+        r"
+                    import { Component } from 'react';
+                    export class Example extends Component {
+                      render() {
+                        console.log('render');
+                      }
+                    }
+                  ",
+    ];
+
+    Tester::new(RequireRenderReturn::NAME, RequireRenderReturn::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .with_snapshot_suffix("ts")
         .test_and_snapshot();
 }

@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div ngNonBindable>   @if   (   foo   ){   bar   }   </div>
+<span ngNonBindable>@if(foo){bar} @let   foo   =    bar+baz; {{foo   +bar}}</span>
+<div ngNonBindable>
+  <p>   {{ a }}   </p>
+</div>
+<div ngnonbindable>   text   </div>
+<div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div ngNonBindable>@if ( foo ){ bar }</div>
+<span ngNonBindable>@if(foo){bar} @let foo = bar+baz; {{foo +bar}}</span>
+<div ngNonBindable>
+  <p>{{ a }}</p>
+</div>
+<div ngnonbindable>text</div>
+<div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div ngNonBindable>@if ( foo ){ bar }</div>
+<span ngNonBindable>@if(foo){bar} @let foo = bar+baz; {{foo +bar}}</span>
+<div ngNonBindable>
+  <p>{{ a }}</p>
+</div>
+<div ngnonbindable>text</div>
+<div ngNonBindable><span [x]="a+b" title="{{a+b}}">@if(foo){bar}</span></div>
+
+===================== End =====================

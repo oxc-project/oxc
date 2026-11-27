@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -9,8 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -85,7 +86,8 @@ declare_oxc_lint!(
     suspicious,
     config = StylePropObjectConfig,
     version = "0.11.0",
-    short_description = "Require that the value of the prop `style` be an object or a variable that is an object.",
+    short_description =
+        "Require that the value of the prop `style` be an object or a variable that is an object.",
 );
 
 fn is_invalid_type(ty: &TSType) -> bool {
@@ -207,9 +209,10 @@ impl Rule for StylePropObject {
                 };
 
                 for prop in &obj_expr.properties {
-                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                        && let Some(prop_name) = obj_prop.key.static_name()
+                    if let Some(prop_name) =
+                        prop.key().and_then(oxc_ast::ast::PropertyKey::static_name)
                         && prop_name == "style"
+                        && let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
                         && is_invalid_expression(Some(&obj_prop.value), ctx)
                     {
                         ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));

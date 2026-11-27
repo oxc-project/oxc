@@ -1,9 +1,10 @@
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ReferenceId};
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     context::LintContext,

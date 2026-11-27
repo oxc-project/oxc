@@ -977,6 +977,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectPropertyKind<
                 }
                 .fmt(f);
             }
+            ObjectPropertyKind::MethodProperty(inner) => {
+                AstNode::<ObjectMethodProperty> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
             ObjectPropertyKind::SpreadProperty(inner) => {
                 AstNode::<SpreadElement> {
                     inner,
@@ -1011,6 +1019,28 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectProperty<'a>>
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectMethodProperty<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PropertyKey<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -1018,6 +1048,30 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PropertyKey<'a>> {
         match self.inner {
             PropertyKey::StaticIdentifier(inner) => {
                 AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            PropertyKey::StaticStringLiteral(inner) => {
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            PropertyKey::StaticNumericLiteral(inner) => {
+                AstNode::<NumericLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            PropertyKey::StaticBigIntLiteral(inner) => {
+                AstNode::<BigIntLiteral> {
                     inner,
                     parent,
                     following_span_start: self.following_span_start,

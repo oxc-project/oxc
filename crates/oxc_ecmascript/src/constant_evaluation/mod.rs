@@ -167,6 +167,11 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
     ) -> Option<ConstantValue<'a>> {
         let result = match target_ty {
             Some(ValueType::Boolean) => self.to_boolean(ctx).map(ConstantValue::Boolean),
+            // Trying `ToNumber` before the unary evaluator would rescan each suffix of an
+            // arithmetic unary chain with an unknown operand.
+            Some(ValueType::Number) if matches!(self, Expression::UnaryExpression(unary) if unary.operator.is_arithmetic()) => {
+                None
+            }
             Some(ValueType::Number) => self.to_number(ctx).map(ConstantValue::Number),
             Some(ValueType::BigInt) => self.to_big_int(ctx).map(ConstantValue::BigInt),
             Some(ValueType::String) => evaluate_to_js_string(self, ctx).map(ConstantValue::String),

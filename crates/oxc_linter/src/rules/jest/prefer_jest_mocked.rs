@@ -61,7 +61,8 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.5.0",
-    short_description = "Prefer the `jest.mocked()` helper over type assertions for typing mocked functions.",
+    short_description =
+        "Prefer the `jest.mocked()` helper over type assertions for typing mocked functions.",
 );
 
 impl Rule for PreferJestMocked {
@@ -161,7 +162,7 @@ fn is_left_hand_side_of_assignment(assignment_target: &AssignmentTarget, node: &
 fn test() {
     use std::path::PathBuf;
 
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         ("foo();", None, None, None),
@@ -268,70 +269,86 @@ fn test() {
         ),
     ];
 
-    let fix = vec![
-        ("(foo as jest.Mock).mockReturnValue(1);", "(jest.mocked(foo)).mockReturnValue(1);"),
+    let fix: Vec<ExpectFixTestCase> = vec![
+        ("(foo as jest.Mock).mockReturnValue(1);", "(jest.mocked(foo)).mockReturnValue(1);").into(),
         (
             "(foo as unknown as string as unknown as jest.Mock).mockReturnValue(1);",
             "(jest.mocked(foo)).mockReturnValue(1);",
-        ),
+        )
+            .into(),
         (
             "(foo as unknown as jest.Mock as unknown as jest.Mock).mockReturnValue(1);",
             "(jest.mocked(foo)).mockReturnValue(1);",
-        ),
-        // Note: couldn't fix
-        // Todo: this need to fixer support option configuration.
-        // (
-        //     "(<jest.Mock>foo).mockReturnValue(1);",
-        //     "(jest.mocked(foo)).mockReturnValue(1);",
-        // ),
-        ("(foo as jest.Mock).mockImplementation(1);", "(jest.mocked(foo)).mockImplementation(1);"),
+        )
+            .into(),
+        (
+            "(<jest.Mock>foo).mockReturnValue(1);",
+            "(jest.mocked(foo)).mockReturnValue(1);",
+            None,
+            Some(PathBuf::from("/prefer-jest-mocked.ts")),
+        )
+            .into(),
+        ("(foo as jest.Mock).mockImplementation(1);", "(jest.mocked(foo)).mockImplementation(1);")
+            .into(),
         (
             "(foo as unknown as jest.Mock).mockReturnValue(1);",
             "(jest.mocked(foo)).mockReturnValue(1);",
-        ),
-        // Note: couldn't fix
-        // Todo: this need to fixer support option configuration.
-        // (
-        //     "(<jest.Mock>foo as unknown).mockReturnValue(1);",
-        //     "(jest.mocked(foo) as unknown).mockReturnValue(1);",
-        // ),
+        )
+            .into(),
+        (
+            "(<jest.Mock>foo as unknown).mockReturnValue(1);",
+            "(jest.mocked(foo) as unknown).mockReturnValue(1);",
+            None,
+            Some(PathBuf::from("/prefer-jest-mocked.ts")),
+        )
+            .into(),
         (
             "(Obj.foo as jest.Mock).mockReturnValue(1);",
             "(jest.mocked(Obj.foo)).mockReturnValue(1);",
-        ),
-        ("([].foo as jest.Mock).mockReturnValue(1);", "(jest.mocked([].foo)).mockReturnValue(1);"),
+        )
+            .into(),
+        ("([].foo as jest.Mock).mockReturnValue(1);", "(jest.mocked([].foo)).mockReturnValue(1);")
+            .into(),
         (
             "(foo as jest.MockedFunction).mockReturnValue(1);",
             "(jest.mocked(foo)).mockReturnValue(1);",
-        ),
+        )
+            .into(),
         (
             "(foo as jest.MockedFunction).mockImplementation(1);",
             "(jest.mocked(foo)).mockImplementation(1);",
-        ),
+        )
+            .into(),
         (
             "(foo as unknown as jest.MockedFunction).mockReturnValue(1);",
             "(jest.mocked(foo)).mockReturnValue(1);",
-        ),
+        )
+            .into(),
         (
             "(Obj.foo as jest.MockedFunction).mockReturnValue(1);",
             "(jest.mocked(Obj.foo)).mockReturnValue(1);",
-        ),
+        )
+            .into(),
         (
             "(new Array(0).fill(null).foo as jest.MockedFunction).mockReturnValue(1);",
             "(jest.mocked(new Array(0).fill(null).foo)).mockReturnValue(1);",
-        ),
+        )
+            .into(),
         (
             "(jest.fn(() => foo) as jest.MockedFunction).mockReturnValue(1);",
             "(jest.mocked(jest.fn(() => foo))).mockReturnValue(1);",
-        ),
+        )
+            .into(),
         (
             "const mockedUseFocused = useFocused as jest.MockedFunction<typeof useFocused>;",
             "const mockedUseFocused = jest.mocked(useFocused);",
-        ),
+        )
+            .into(),
         (
             "const filter = (MessageService.getMessage as jest.Mock).mock.calls[0][0];",
             "const filter = (jest.mocked(MessageService.getMessage)).mock.calls[0][0];",
-        ),
+        )
+            .into(),
         (
             "
                 class A {}
@@ -341,12 +358,14 @@ fn test() {
                 class A {}
                 (jest.mocked(foo))
             ",
-        ),
-        ("(foo as jest.MockedObject<{method: () => void}>)", "(jest.mocked(foo))"),
+        )
+            .into(),
+        ("(foo as jest.MockedObject<{method: () => void}>)", "(jest.mocked(foo))").into(),
         (
             "(Obj['foo'] as jest.MockedFunction).mockReturnValue(1);",
             "(jest.mocked(Obj['foo'])).mockReturnValue(1);",
-        ),
+        )
+            .into(),
         (
             "
                 (
@@ -366,10 +385,11 @@ fn test() {
                     .filter(v => !!v).myProperty)
                 ).mockReturnValue(1);
             ",
-        ),
+        )
+            .into(),
         // we can't fix this case, as fixing it would result in a syntax error
         // (we'd be attempting attempting to assign `jest.fn()` to invalid left-hand side)
-        ("(foo as jest.Mock) = jest.fn();", "(foo as jest.Mock) = jest.fn();"),
+        ("(foo as jest.Mock) = jest.fn();", "(foo as jest.Mock) = jest.fn();").into(),
     ];
 
     Tester::new(PreferJestMocked::NAME, PreferJestMocked::PLUGIN, pass, fail)

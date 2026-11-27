@@ -1,7 +1,8 @@
+use serde::Deserialize;
+
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -261,6 +262,13 @@ fn tests() {
             ",
             None,
         ),
+        (
+            r"import { describe as suite, test as customTest } from '@jest/globals';
+            suite('suite', () => {
+                customTest('foo', () => { setup(); });
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -410,6 +418,11 @@ fn tests() {
                     setup();
                 });
             ",
+            None,
+        ),
+        (
+            r"import { describe as suite } from '@jest/globals';
+            suite('suite', () => { setup(); });",
             None,
         ),
     ];

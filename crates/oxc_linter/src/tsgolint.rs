@@ -193,7 +193,7 @@ impl TsGoLintState {
             for path in paths {
                 if SourceType::from_path(Path::new(path)).is_ok() {
                     let path_buf = PathBuf::from(path);
-                    paths_buff.push(path_buf.clone());
+                    paths_buff.push(path_buf);
                 }
             }
             paths_buff
@@ -313,7 +313,7 @@ impl TsGoLintRun {
                                                         rule.is_tsgolint_rule()
                                                             && rule.name() == tsgolint_diagnostic.rule
                                                     })
-                                                    .map(|(_, status)| *status)
+                                                    .map(|(_, config)| config.severity)
                                             })
                                             .or_else(|| {
                                                 debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
@@ -451,8 +451,8 @@ impl TsGoLintRun {
                 }
                 Ok(())
             }
-            Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
-            Err(err) => Err(format!("Error running tsgolint: {err:?}")),
+            Ok(Err(err)) => Err(format!("Error running type-aware linter: {err:?}")),
+            Err(err) => Err(format!("Error running type-aware linter: {err:?}")),
         }
     }
 }
@@ -506,7 +506,7 @@ impl TsGoLintState {
             Ok(c) => c,
             Err(e) => {
                 return Err(format!(
-                    "Failed to spawn tsgolint from path `{}`, with error: {e}",
+                    "Failed to spawn type-aware linter from path `{}`, with error: {e}",
                     self.executable_path.display()
                 ));
             }
@@ -518,7 +518,7 @@ impl TsGoLintState {
         if let Err(e) = stdin.write_all(json.as_bytes())
             && e.kind() != ErrorKind::BrokenPipe
         {
-            return Err(format!("Failed to write to tsgolint stdin: {e}"));
+            return Err(format!("Failed to write to type-aware linter stdin: {e}"));
         }
         drop(stdin);
 
@@ -587,11 +587,11 @@ impl TsGoLintState {
                                 };
 
                                 let severity =
-                                    resolved_config.rules.iter().find_map(|(rule, status)| {
+                                    resolved_config.rules.iter().find_map(|(rule, config)| {
                                         if rule.is_tsgolint_rule()
                                             && rule.name() == tsgolint_diagnostic.rule
                                         {
-                                            Some(*status)
+                                            Some(config.severity)
                                         } else {
                                             None
                                         }
@@ -720,8 +720,8 @@ impl TsGoLintState {
                 let rules: BTreeSet<Rule> = resolved_config
                     .rules
                     .iter()
-                    .filter_map(|(rule, status)| {
-                        if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                    .filter_map(|(rule, config)| {
+                        if config.severity.is_warn_deny() && rule.is_tsgolint_rule() {
                             let rule_name = rule.name().to_string();
                             let options = match rule.to_configuration() {
                                 Some(Ok(config)) => Some(config),
@@ -1121,7 +1121,7 @@ impl Iterator for TsGoLintMessageStream {
                     self.buffer.extend_from_slice(&read_buf[..n]);
                 }
                 Err(e) => {
-                    return Some(Err(format!("Failed to read from tsgolint stdout: {e}")));
+                    return Some(Err(format!("Failed to read from type-aware linter stdout: {e}")));
                 }
             }
         }
@@ -1142,13 +1142,13 @@ impl std::fmt::Display for TsGoLintMessageParseError {
             TsGoLintMessageParseError::IncompleteData => write!(f, "Incomplete data"),
             TsGoLintMessageParseError::InvalidMessageType(e) => write!(f, "{e}"),
             TsGoLintMessageParseError::InvalidErrorPayload(e) => {
-                write!(f, "Failed to parse tsgolint error payload: {e}")
+                write!(f, "Failed to parse type-aware linter error payload: {e}")
             }
             TsGoLintMessageParseError::InvalidDiagnosticPayload(e) => {
-                write!(f, "Failed to parse tsgolint diagnostic payload: {e}")
+                write!(f, "Failed to parse type-aware linter diagnostic payload: {e}")
             }
             TsGoLintMessageParseError::InvalidTimingPayload(e) => {
-                write!(f, "Failed to parse tsgolint timing payload: {e}")
+                write!(f, "Failed to parse type-aware linter timing payload: {e}")
             }
         }
     }
@@ -1488,11 +1488,19 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     .any(|name| std::env::var(name).is_ok());
 
     // Package managers on Windows provide CMD shims or, in Bun's case, EXE shims.
+    // npm writes `.cmd`, while pnpm and Yarn Berry copy the `.CMD` casing from `PATHEXT`.
     #[cfg(windows)]
     let files: &[&str] = if go_profiling {
-        &["tsgolint.CMD", "tsgolint.exe"]
+        &["tsgolint.cmd", "tsgolint.CMD", "tsgolint.exe"]
     } else {
-        &["tsrs-lint.CMD", "tsrs-lint.exe", "tsgolint.CMD", "tsgolint.exe"]
+        &[
+            "tsrs-lint.cmd",
+            "tsrs-lint.CMD",
+            "tsrs-lint.exe",
+            "tsgolint.cmd",
+            "tsgolint.CMD",
+            "tsgolint.exe",
+        ]
     };
     #[cfg(not(windows))]
     let files: &[&str] = if go_profiling { &["tsgolint"] } else { &["tsrs-lint", "tsgolint"] };
@@ -1515,7 +1523,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
             return Ok(path);
         }
         return Err(format!(
-            "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to '{path_str}' which does not exist"
+            "Failed to find type-aware linter executable: OXLINT_TSGOLINT_PATH points to '{path_str}' which does not exist"
         ));
     }
 

@@ -1,6 +1,7 @@
-use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_macros::declare_oxc_lint;
 
 use crate::rule::{DefaultRuleConfig, Rule};
 
@@ -85,7 +86,8 @@ declare_oxc_lint!(
     fix,
     config = NoUnnecessaryBooleanLiteralCompareConfig,
     version = "1.12.0",
-    short_description = "This rule disallows unnecessary equality comparisons with boolean literals.",
+    short_description =
+        "This rule disallows unnecessary equality comparisons with boolean literals.",
 );
 
 impl Rule for NoUnnecessaryBooleanLiteralCompare {

@@ -38,8 +38,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(n) = TraverseCtx::string_to_equivalent_number_value(v) {
-            let new_expr =
-                Expression::new_numeric_literal(s.span, n, None, NumberBase::Decimal, ctx);
+            let new_expr = Expression::new_numeric_literal(s.span, n, None, ctx);
             ctx.replace_expression(&mut e.expression, new_expr);
         }
     }

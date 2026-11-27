@@ -169,7 +169,7 @@ impl ReplaceGlobalDefinesConfig {
             let key = key.as_ref();
 
             let value = value.as_ref();
-            Self::check_value(&allocator, value)?;
+            Self::check_value(&allocator, key, value)?;
 
             match Self::check_key(key)? {
                 IdentifierType::Identifier => {
@@ -286,11 +286,28 @@ impl ReplaceGlobalDefinesConfig {
         Ok(parts.iter().map(|part| CompactStr::new(part)).collect())
     }
 
-    fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Diagnostics> {
-        // This expression is only validated, then discarded.
-        Parser::new(allocator, source_text, SourceType::default())
+    fn check_value(allocator: &Allocator, key: &str, value: &str) -> Result<(), Diagnostics> {
+        // This expression is only validated, then discarded
+        let result = Parser::new(allocator, value, SourceType::default())
             .with_options(ParseOptions { enable_ident_hashes: false, ..ParseOptions::default() })
-            .parse_expression()?;
+            .parse_expression();
+
+        if let Err(errors) = result {
+            // Add which define the errors are in
+            let errors = errors
+                .into_iter()
+                .map(|mut error| {
+                    error.message = format!(
+                        "The define value `{value}` for key `{key}` is not a valid expression: {}",
+                        error.message
+                    )
+                    .into();
+                    error
+                })
+                .collect();
+            return Err(errors);
+        }
+
         Ok(())
     }
 }
@@ -1024,17 +1041,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
         // cpu is faster than memory allocation
         let mut should_preserved_keys = Vec::with_capacity(obj.properties.len());
         for prop in &obj.properties {
-            let v = match prop {
-                ObjectPropertyKind::ObjectProperty(prop) => {
+            let v = match prop.key() {
+                Some(key) => {
                     // not static key just preserve it
-                    if let Some(name) = prop.key.name() {
-                        needed_keys.contains(&name)
-                    } else {
-                        true
-                    }
+                    if let Some(name) = key.name() { needed_keys.contains(&name) } else { true }
                 }
-                // not static key
-                ObjectPropertyKind::SpreadProperty(_) => true,
+                // spread property
+                None => true,
             };
             should_preserved_keys.push(v);
         }

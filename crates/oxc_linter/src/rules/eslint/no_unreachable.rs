@@ -6,7 +6,9 @@ use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::ContextHost, context::LintContext, rule::Rule, utils::effective_unreachable_blocks,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::effective_unreachable_blocks,
 };
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
@@ -63,7 +65,8 @@ declare_oxc_lint!(
     correctness,
     recommended,
     version = "0.4.4",
-    short_description = "Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.",
+    short_description =
+        "Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements.",
 );
 
 impl Rule for NoUnreachable {

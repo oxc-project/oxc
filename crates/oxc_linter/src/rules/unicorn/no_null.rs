@@ -1,3 +1,7 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -9,9 +13,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -69,7 +70,8 @@ declare_oxc_lint!(
     conditional_dangerous_fix,
     config = NoNull,
     version = "0.0.21",
-    short_description = "Disallow the use of the `null` literal, to encourage using `undefined` instead.",
+    short_description =
+        "Disallow the use of the `null` literal, to encourage using `undefined` instead.",
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {

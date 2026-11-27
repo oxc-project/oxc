@@ -31,9 +31,9 @@ use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     AstNode,
-    ast_util::variable_declaration_kind,
     ast_util::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
+        variable_declaration_kind,
     },
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
@@ -277,7 +277,7 @@ declare_oxc_lint!(
     react,
     correctness,
     recommended,
-    safe_fixes_and_dangerous_suggestions,
+    dangerous_suggestion,
     config = ExhaustiveDepsConfig,
     version = "0.12.0",
     short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
@@ -323,10 +323,7 @@ impl Rule for ExhaustiveDeps {
 
         if dependencies_node.is_none() && !is_effect {
             if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name) {
-                ctx.diagnostic_with_fix(
-                    dependency_array_required_diagnostic(hook_name, call_expr.span()),
-                    |fixer| fixer.insert_text_after(callback_node, ", []"),
-                );
+                ctx.diagnostic(dependency_array_required_diagnostic(hook_name, call_expr.span()));
             }
             return;
         }
@@ -776,11 +773,7 @@ fn is_symbol_declaration_referentially_unique(symbol_id: SymbolId, ctx: &LintCon
 
             let Some(init) = &decl.init else { return false };
 
-            if is_expression_referentially_unique(init) {
-                return true;
-            }
-
-            false
+            is_expression_referentially_unique(init)
         }
         _ => false,
     }
@@ -1189,7 +1182,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            if (init_name == "useState"
+            (init_name == "useState"
                 || init_name == "useReducer"
                 || init_name == "useTransition"
                 || init_name == "useActionState")
@@ -1210,11 +1203,6 @@ fn is_stable_value<'a, 'b>(
                             false
                         }
                     })
-            {
-                return true;
-            }
-
-            false
         }
         AstKind::ArrowFunctionExpression(arrow_func) => is_function_stable(
             CallbackBody::Arrow(&arrow_func.body),
@@ -1377,6 +1365,19 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Ok(source) = analyze_property_chain(&it.object, self.semantic) {
             if let Some(source) = source {
                 if is_parent_call_expr {
+                    // For method calls on `ref.current` (e.g. `ref.current.focus()`),
+                    // also track the base object (`ref`), same as for `.current` reads.
+                    if source.chain.last().is_some_and(|part| part == "current") {
+                        let mut base_chain = source.chain.clone();
+                        base_chain.pop();
+                        self.found_dependencies.insert(Dependency {
+                            name: source.name,
+                            reference_id: source.reference_id,
+                            span: source.span,
+                            chain: base_chain,
+                            symbol_id: source.symbol_id,
+                        });
+                    }
                     self.found_dependencies.insert(source);
                 } else {
                     let new_chain = Vec::from([Str::from(it.property.name)]);
@@ -1418,23 +1419,31 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        if self.skip_reporting_dependency {
-            return;
+        if !self.skip_reporting_dependency {
+            let reference_id = ident.reference_id();
+            let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
+            self.found_dependencies.insert(Dependency {
+                name: ident.name.into(),
+                reference_id,
+                span: ident.span,
+                chain: vec![],
+                symbol_id,
+            });
         }
-        let reference_id = ident.reference_id();
-        let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
-        self.found_dependencies.insert(Dependency {
-            name: ident.name.into(),
-            reference_id,
-            span: ident.span,
-            chain: vec![],
-            symbol_id,
-        });
 
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(Expression::CallExpression(call_expr)) = &var_decl.init else {
+                    let Some(init) = &var_decl.init else {
+                        return;
+                    };
+
+                    let mut init = init.without_parentheses();
+                    while let Expression::TSAsExpression(as_expr) = init {
+                        init = as_expr.expression.without_parentheses();
+                    }
+
+                    let Expression::CallExpression(call_expr) = init else {
                         return;
                     };
 
@@ -1442,7 +1451,7 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     };
 
-                    if name != "useState" && name != "useReducer" {
+                    if name != "useState" {
                         return;
                     }
 
@@ -1490,7 +1499,6 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 }
 
 mod fix {
-    use super::Name;
     use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::{
         ast::{ArrayExpression, Expression},
@@ -1499,6 +1507,7 @@ mod fix {
     use oxc_span::{GetSpan, SPAN, Span};
     use oxc_str::Str;
 
+    use super::Name;
     use crate::{
         context::LintContext,
         fixer::{RuleFix, RuleFixer},
@@ -1682,6 +1691,13 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // https://github.com/oxc-project/oxc/issues/27269
+        r"function MyComponent({ x }) {
+          const ref = useCustomRef();
+          useLayoutEffect(() => {
+            ref.current?.setValue(x);
+          }, [ref, x]);
+        }",
         r"function MyComponent() {
           const local = {};
           useEffect(() => {
@@ -2878,6 +2894,14 @@ const Component = ({ filter }) => {
           const isError = props.value instanceof Error;
           useMemo(() => isError, [isError]);
         }",
+        r"import { useLayoutEffect, useReducer } from 'react';
+        export function useRerenderWhen(swapped) {
+          const [, bump] = useReducer((n) => n + 1, 0);
+          useLayoutEffect(() => {
+            if (!swapped) return;
+            bump();
+          });
+        }",
     ];
 
     let fail = vec![
@@ -3408,6 +3432,19 @@ const Component = ({ filter }) => {
           useEffect(() => {
             console.log(ref.current);
           }, [ref.current, ref]);
+        }",
+        // https://github.com/oxc-project/oxc/issues/27269
+        r"function MyComponent({ x }) {
+          const ref = useCustomRef();
+          useLayoutEffect(() => {
+            ref.current?.setValue(x);
+          }, [ref.current, x]);
+        }",
+        r"function MyComponent({ x }) {
+          const ref = useCustomRef();
+          useLayoutEffect(() => {
+            ref.current.setValue(x);
+          }, [ref.current, x]);
         }",
         r"const MyComponent = forwardRef((props, ref) => {
           useImperativeHandle(ref, () => ({
@@ -4415,6 +4452,30 @@ const Component = ({ filter }) => {
           const [, setState] = useState(0);
           useCallback(() => setState(1), [setState.foo]);
         }",
+        r"function MyComponent() {
+          const [, setState] = (useState(0));
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = useState(0) as [number, (value: number) => void];
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = (useState(0)) as [number, (value: number) => void];
+          useEffect(() => {
+            setState(1);
+          });
+        }",
+        r"function MyComponent() {
+          const [, setState] = useState(0);
+          useEffect(() => {
+            setState.call(null, 1);
+          });
+        }",
     ];
 
     let pass_additional_hooks = vec![(
@@ -4447,17 +4508,10 @@ const Component = ({ filter }) => {
     )];
 
     let fix = vec![
-        (
-            "const useHook = x => useCallback(() => x)",
-            "const useHook = x => useCallback(() => x, [])",
-            // None,
-            // FixKind::SafeFix,
-        ),
+        ("const useHook = x => useCallback(() => x)", "const useHook = x => useCallback(() => x)"),
         (
             "const useHook = x => useCallback(() => { return x; })",
-            "const useHook = x => useCallback(() => { return x; }, [])",
-            // None,
-            // FixKind::SafeFix,
+            "const useHook = x => useCallback(() => { return x; })",
         ),
         (
             r"const useHook = () => {
@@ -4547,14 +4601,13 @@ const Component = ({ filter }) => {
             "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo]); }",
             "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo, local]); }",
         ),
-        // Test dependency array creation for hooks that require it
         (
             "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
-            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }, []); }",
+            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
         ),
         (
             "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
-            "function MyComponent() { const value = useMemo(() => { return 2*2; }, []); }",
+            "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
         ),
         // Test unnecessary dependency removal for non-effect hooks
         (
@@ -4590,4 +4643,37 @@ const Component = ({ filter }) => {
     )
     .expect_fix(fix)
     .test_and_snapshot();
+}
+
+#[test]
+fn test_missing_dependency_array() {
+    use crate::{fixer::FixKind, tester::Tester};
+
+    let fail = vec![
+        r#"import { useCallback, useMemo } from "react";
+        export const useThing = (compute: () => number, onDone: () => void) => {
+          const value = useMemo(() => compute());
+          const done = useCallback(() => onDone());
+          return { done, value };
+        };"#,
+        r"function MyComponent({ compute, onDone }) {
+          const value = React.useMemo(() => compute(),);
+          const done = React.useCallback(() => onDone(),);
+          return { done, value };
+        }",
+        r"function MyComponent({ compute, onDone }) {
+          const value = useMemo(compute);
+          const done = useCallback(onDone);
+          return { done, value };
+        }",
+    ];
+
+    let fix = fail
+        .iter()
+        .flat_map(|&source| {
+            [FixKind::SafeFix, FixKind::All].map(|kind| (source, source, None, kind))
+        })
+        .collect::<Vec<_>>();
+
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, vec![], fail).expect_fix(fix).test();
 }

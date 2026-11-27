@@ -77,6 +77,12 @@ impl EngineTargets {
     /// Use [`Self::supports_es_feature`] for a strict positive capability query.
     pub fn has_feature(&self, feature: ESFeature) -> bool {
         let feature_engine_targets = &features()[&feature];
+        // Proposals have no ES edition of their own. An unspecified target and `esnext` assume
+        // the runtime will support them; concrete targets lower them until the table records
+        // support.
+        if !feature_engine_targets.contains_key(&Engine::Es) {
+            return !self.assumes_latest_edition() && !self.supports_es_feature(feature);
+        }
         for (engine, feature_version) in feature_engine_targets.iter() {
             if let Some(target_version) = self.get(engine) {
                 if *engine == Engine::Es {
@@ -90,17 +96,42 @@ impl EngineTargets {
         false
     }
 
+    /// Whether every configured target is an ES edition at least as new as `esnext`.
+    ///
+    /// An empty target set names no runtime, so it is treated the same as `esnext`.
+    fn assumes_latest_edition(&self) -> bool {
+        self.iter().all(|(engine, version)| {
+            *engine == Engine::Es && version.0 >= ESTarget::ESNext.version().0
+        })
+    }
+
     /// Check whether every target engine is known to support the given ES feature.
     ///
     /// Unlike [`Self::has_feature`], this is a strict capability query: an empty target or an
     /// engine missing from the compatibility table is treated as unsupported.
     pub fn supports_es_feature(&self, feature: ESFeature) -> bool {
+        self.supports_feature_targets(&features()[&feature])
+    }
+
+    /// [`Self::supports_es_feature`] against an explicit compatibility table entry.
+    fn supports_feature_targets(&self, feature_engine_targets: &EngineTargets) -> bool {
         if self.is_any_target() {
             return false;
         }
 
-        let feature_engine_targets = &features()[&feature];
+        let has_es_entry = feature_engine_targets.contains_key(&Engine::Es);
+        let has_other_engine = self.keys().any(|engine| *engine != Engine::Es);
         self.iter().all(|(engine, target_version)| {
+            // Browser targets include an implicit `esnext`. A proposal has no ES edition, so only
+            // the engines decide support. An explicitly requested older edition (`es2015,chrome100`)
+            // still applies: it cannot support an unstandardized feature.
+            if *engine == Engine::Es
+                && !has_es_entry
+                && has_other_engine
+                && target_version.0 >= ESTarget::ESNext.version().0
+            {
+                return true;
+            }
             feature_engine_targets.get(engine).is_some_and(|feature_version| {
                 if *engine == Engine::Es {
                     target_version.0 >= feature_version.0
@@ -183,6 +214,78 @@ fn test_displayed_value_is_parsable() {
     let s = target.to_string();
     let parsed = EngineTargets::from_target(&s).unwrap();
     assert_eq!(target.0, parsed.0);
+}
+
+#[test]
+fn test_standard_decorators_follow_target() {
+    // No target and `esnext` assume the runtime supports proposals.
+    for target in [None, Some("esnext")] {
+        let targets = match target {
+            Some(target) => EngineTargets::from_target(target).unwrap(),
+            None => EngineTargets::default(),
+        };
+        assert!(!targets.has_feature(ESFeature::StandardDecorators), "{target:?}");
+        assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{target:?}");
+    }
+    // Concrete targets lower until the table records support.
+    for target in [
+        "es2015",
+        "es2026",
+        "safari16",
+        "chrome999",
+        "es2022,node16",
+        "es2015,chrome999",
+        "esnext,chrome999",
+    ] {
+        let targets = EngineTargets::from_target(target).unwrap();
+        assert!(targets.has_feature(ESFeature::StandardDecorators), "{target}");
+        assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{target}");
+    }
+
+    // Engine maps from browserslist or Babel need not contain an ES edition.
+    for engine in [Engine::Chrome, Engine::Rhino] {
+        let targets = EngineTargets::new(FxHashMap::from_iter([(engine, Version(999, 0, 0))]));
+        assert!(targets.has_feature(ESFeature::StandardDecorators), "{engine:?}");
+        assert!(!targets.supports_es_feature(ESFeature::StandardDecorators), "{engine:?}");
+    }
+
+    // Standardized features keep their ES edition requirements.
+    for (target, needs_transform) in [("es2019", true), ("es2020", false), ("esnext", false)] {
+        let targets = EngineTargets::from_target(target).unwrap();
+        assert_eq!(
+            targets.has_feature(ESFeature::ES2020OptionalChaining),
+            needs_transform,
+            "{target}"
+        );
+        assert_eq!(
+            targets.supports_es_feature(ESFeature::ES2020OptionalChaining),
+            !needs_transform,
+            "{target}"
+        );
+    }
+}
+
+#[test]
+fn test_proposal_support_respects_explicit_edition() {
+    // A proposal recorded as supported by an engine, but without an ES edition.
+    let proposal = EngineTargets::new(FxHashMap::from_iter([(Engine::Chrome, Version(100, 0, 0))]));
+
+    for (target, supported) in [
+        ("chrome100", true),
+        ("esnext,chrome100", true),
+        ("chrome99", false),
+        ("esnext", false),
+        ("es2015,chrome100", false),
+        ("es2024,chrome100", false),
+        ("es2015", false),
+    ] {
+        let targets = EngineTargets::from_target(target).unwrap();
+        assert_eq!(targets.supports_feature_targets(&proposal), supported, "{target}");
+    }
+
+    // Engine maps from browserslist or Babel need not contain an ES edition.
+    let chrome = EngineTargets::new(FxHashMap::from_iter([(Engine::Chrome, Version(100, 0, 0))]));
+    assert!(chrome.supports_feature_targets(&proposal));
 }
 
 #[test]

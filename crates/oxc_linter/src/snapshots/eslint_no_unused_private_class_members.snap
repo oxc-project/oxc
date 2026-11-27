@@ -230,3 +230,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──
    ╰────
   help: Remove the declaration or use it in the code.
+
+  ⚠ eslint(no-unused-private-class-members): 'x' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:11]
+ 1 │ class C { #x; m() { return class { #x; n(o) { return o.#x; } }; } }
+   ·           ──
+   ╰────
+  help: Remove the declaration or use it in the code.

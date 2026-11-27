@@ -1,4 +1,5 @@
 use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, MemberExpression},
@@ -10,7 +11,9 @@ use oxc_span::Span;
 use oxc_str::JSStr;
 
 use crate::{
-    AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
+    AstNode,
+    ast_util::{is_method_call, variable_declaration_kind},
+    context::LintContext,
     rule::Rule,
 };
 
@@ -73,7 +76,8 @@ declare_oxc_lint!(
     recommended,
     dangerous_fix,
     version = "0.13.2",
-    short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
+    short_description =
+        "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
 );
 
 fn is_array_of_or_from(callee: &MemberExpression) -> bool {

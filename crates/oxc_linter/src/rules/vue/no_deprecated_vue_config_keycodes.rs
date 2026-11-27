@@ -75,8 +75,9 @@ impl Rule for NoDeprecatedVueConfigKeycodes {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("Vue.config.silent = true", None, None, Some(PathBuf::from("test.js"))),

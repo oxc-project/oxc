@@ -1,10 +1,11 @@
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::ast::{Statement, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -91,7 +92,8 @@ declare_oxc_lint!(
     recommended,
     config = TripleSlashReferenceConfig,
     version = "0.2.0",
-    short_description = "Disallow certain triple slash directives in favor of ES module import declarations.",
+    short_description =
+        "Disallow certain triple slash directives in favor of ES module import declarations.",
 );
 
 impl Rule for TripleSlashReference {

@@ -1,5 +1,9 @@
 use std::ops::Deref;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
@@ -14,9 +18,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -163,7 +164,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)
         {
-            if !method.decorators.is_empty() {
+            if !method.decorators.is_empty() || !ctx.source_type().is_typescript() {
                 ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
                 continue;
             }
@@ -176,7 +177,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                     push_member_key(
                         &mut replacement,
                         fixer.source_range(method.key.span()),
-                        method.computed,
+                        method.key.is_computed(),
                     );
                     if let Some(return_type) = &method.value.return_type {
                         replacement.push_str(fixer.source_range(return_type.span));
@@ -230,7 +231,7 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
                     push_member_key(
                         &mut replacement,
                         fixer.source_range(property.key.span()),
-                        property.computed,
+                        property.key.is_computed(),
                     );
                     replacement.push_str("()");
                     if let Some(type_annotation) = &property.type_annotation {
@@ -367,7 +368,9 @@ impl<'a> VisitJs<'a> for ConstructorAssignmentCollector<'_, 'a> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         (
@@ -1299,6 +1302,10 @@ fn test() {
             Some(serde_json::json!(["getters"])),
         ),
     ];
+
+    let js = "class Mx { get p1() { return 'hello world'; } }";
+    let mut fix: Vec<ExpectFixTestCase> = fix.into_iter().map(Into::into).collect();
+    fix.push((js, js, None, Some(PathBuf::from("class_literal_property_style.js"))).into());
 
     Tester::new(ClassLiteralPropertyStyle::NAME, ClassLiteralPropertyStyle::PLUGIN, pass, fail)
         .expect_fix(fix)

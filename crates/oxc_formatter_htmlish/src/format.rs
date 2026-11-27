@@ -141,7 +141,7 @@ pub fn format_to_ir<'a>(
 
 /// What the HTML is embedded in, for the print rules that depend on it.
 ///
-/// The host translates the parent's request into this;
+/// The host translates the parent's request into this, or takes it as is from a `<script type="text/html">` body's parent, whose placeholders it keeps;
 /// `None` is a part formatted on its own (e.g. a JSDoc code block).
 /// Embedded HTML leaves `style`, `on*`, `class` and `allow` values as written, as Prettier does.
 #[derive(Clone, Copy, Debug, Default)]
@@ -153,11 +153,11 @@ pub struct HtmlishEmbeddedIn {
     /// a value that is one stays unquoted (`attr=${value}` passes a value, not a string),
     /// a value holding one is no class list to sort,
     /// and a tag named by one is a component (`<${Tag} />`, `<${Tag}>…</${Tag}>`).
-    pub placeholder: Option<Placeholder>,
+    pub placeholder: Option<ParentPlaceholder>,
 }
 
 /// A placeholder's prefix, and the parent's test for a whole one.
-pub type Placeholder = (&'static str, fn(&str) -> bool);
+pub type ParentPlaceholder = (&'static str, fn(&str) -> bool);
 
 impl HtmlishEmbeddedIn {
     /// `value` is the parent's placeholder as a whole.
@@ -216,6 +216,7 @@ fn build_context<'a>(
         options.whitespace_sensitivity,
         options.variant,
         standalone,
+        options.sort_tailwindcss.as_deref(),
     ));
     HtmlishFormatContext::new(options, tree, embedded_in)
 }

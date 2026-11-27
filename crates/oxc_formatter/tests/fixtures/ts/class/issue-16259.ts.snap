@@ -67,9 +67,7 @@ letlonglongRunningProvider = class
 
 letlonglongRunningProvider2 = class extends languages.SignatureHelpProvider {};
 
-letlonglongRunningProvider3 = class extends (
-  languages.SignatureHelpProvider<Hello>
-) {};
+letlonglongRunningProvider3 = class extends languages.SignatureHelpProvider<Hello> {};
 
 letlonglongRunningProvider4 = class implements languages.SignatureHelpProvider<Hello> {};
 

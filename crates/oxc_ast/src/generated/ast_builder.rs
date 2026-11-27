@@ -17,7 +17,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, IntoIn};
 use oxc_str::{Ident, JSStr, Str};
-use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::{label::LabelId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::{
     ast::*,
@@ -130,16 +130,14 @@ impl<'a> Expression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Expression::BigIntLiteral`].
@@ -150,16 +148,14 @@ impl<'a> Expression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Expression::RegExpLiteral`].
@@ -1499,7 +1495,34 @@ impl<'a> LabelIdentifier<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Ident<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        LabelIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() }
+        LabelIdentifier {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            name: name.into(),
+            label_id: Default::default(),
+        }
+    }
+
+    /// Build a [`LabelIdentifier`] with `label_id`.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `label_id`: Unique identifier for the label this identifier declares or targets.
+    #[inline]
+    pub fn new_with_label_id(
+        span: Span,
+        name: impl Into<Ident<'a>>,
+        label_id: LabelId,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        LabelIdentifier {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            name: name.into(),
+            label_id: Cell::new(Some(label_id)),
+        }
     }
 }
 
@@ -1632,16 +1655,14 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::BigIntLiteral`].
@@ -1652,16 +1673,14 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrayExpressionElement::RegExpLiteral`].
@@ -2861,33 +2880,38 @@ impl<'a> ObjectPropertyKind<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `key`
     /// * `value`
-    /// * `method`
     /// * `shorthand`
-    /// * `computed`
     #[inline]
     pub fn new_object_property(
         span: Span,
-        kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        method: bool,
         shorthand: bool,
-        computed: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::ObjectProperty(ObjectProperty::boxed(
-            span,
-            kind,
-            key,
-            value,
-            method,
-            shorthand,
-            computed,
-            builder.builder(),
-        ))
+        Self::ObjectProperty(ObjectProperty::boxed(span, key, value, shorthand, builder.builder()))
+    }
+
+    /// Build an [`ObjectPropertyKind::MethodProperty`].
+    ///
+    /// This node contains an [`ObjectMethodProperty`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `kind`
+    /// * `key`
+    /// * `value`
+    #[inline]
+    pub fn new_method_property(
+        span: Span,
+        kind: ObjectMethodKind,
+        key: PropertyKey<'a>,
+        value: ArenaBox<'a, Function<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::MethodProperty(ObjectMethodProperty::boxed(span, kind, key, value, builder.builder()))
     }
 
     /// Build an [`ObjectPropertyKind::SpreadProperty`].
@@ -2915,34 +2939,19 @@ impl<'a> ObjectProperty<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `key`
     /// * `value`
-    /// * `method`
     /// * `shorthand`
-    /// * `computed`
     #[inline]
     pub fn new(
         span: Span,
-        kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        method: bool,
         shorthand: bool,
-        computed: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ObjectProperty {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            kind,
-            key,
-            value,
-            method,
-            shorthand,
-            computed,
-        }
+        ObjectProperty { node_id: Cell::new(builder.node_id()), span, key, value, shorthand }
     }
 
     /// Build an [`ObjectProperty`], and store it in the memory arena.
@@ -2952,28 +2961,65 @@ impl<'a> ObjectProperty<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `key`
     /// * `value`
-    /// * `method`
     /// * `shorthand`
-    /// * `computed`
     #[inline]
     pub fn boxed(
         span: Span,
-        kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        method: bool,
         shorthand: bool,
-        computed: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(
-            Self::new(span, kind, key, value, method, shorthand, computed, builder),
-            &builder.allocator(),
-        )
+        ArenaBox::new_in(Self::new(span, key, value, shorthand, builder), &builder.allocator())
+    }
+}
+
+impl<'a> ObjectMethodProperty<'a> {
+    /// Build an [`ObjectMethodProperty`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ObjectMethodProperty::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `kind`
+    /// * `key`
+    /// * `value`
+    #[inline]
+    pub fn new(
+        span: Span,
+        kind: ObjectMethodKind,
+        key: PropertyKey<'a>,
+        value: ArenaBox<'a, Function<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        ObjectMethodProperty { node_id: Cell::new(builder.node_id()), span, kind, key, value }
+    }
+
+    /// Build an [`ObjectMethodProperty`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ObjectMethodProperty::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `kind`
+    /// * `key`
+    /// * `value`
+    #[inline]
+    pub fn boxed(
+        span: Span,
+        kind: ObjectMethodKind,
+        key: PropertyKey<'a>,
+        value: ArenaBox<'a, Function<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, kind, key, value, builder), &builder.allocator())
     }
 }
 
@@ -2992,6 +3038,60 @@ impl<'a> PropertyKey<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StaticIdentifier(IdentifierName::boxed(span, name, builder.builder()))
+    }
+
+    /// Build a [`PropertyKey::StaticStringLiteral`].
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn new_static_string_literal(
+        span: Span,
+        value: impl Into<JSStr<'a>>,
+        raw: Option<Str<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StaticStringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+    }
+
+    /// Build a [`PropertyKey::StaticNumericLiteral`].
+    ///
+    /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the number, converted into base 10
+    /// * `raw`: The number as it appears in source code
+    #[inline]
+    pub fn new_static_numeric_literal(
+        span: Span,
+        value: f64,
+        raw: Option<Str<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StaticNumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
+    }
+
+    /// Build a [`PropertyKey::StaticBigIntLiteral`].
+    ///
+    /// This node contains a [`BigIntLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: Bigint value in base 10 with no underscores
+    /// * `raw`: The bigint as it appears in source code
+    #[inline]
+    pub fn new_static_big_int_literal(
+        span: Span,
+        value: impl Into<Str<'a>>,
+        raw: Option<Str<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StaticBigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`PropertyKey::PrivateIdentifier`].
@@ -3041,16 +3141,14 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`PropertyKey::BigIntLiteral`].
@@ -3061,16 +3159,14 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`PropertyKey::RegExpLiteral`].
@@ -4926,16 +5022,14 @@ impl<'a> Argument<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Argument::BigIntLiteral`].
@@ -4946,16 +5040,14 @@ impl<'a> Argument<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`Argument::RegExpLiteral`].
@@ -7378,20 +7470,17 @@ impl<'a> AssignmentTargetProperty<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The property key
     /// * `binding`: The binding part of the property
-    /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn new_assignment_target_property_property(
         span: Span,
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
-        computed: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::AssignmentTargetPropertyProperty(AssignmentTargetPropertyProperty::boxed(
             span,
             name,
             binding,
-            computed,
             builder.builder(),
         ))
     }
@@ -7454,13 +7543,11 @@ impl<'a> AssignmentTargetPropertyProperty<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The property key
     /// * `binding`: The binding part of the property
-    /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn new(
         span: Span,
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
-        computed: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
@@ -7469,7 +7556,6 @@ impl<'a> AssignmentTargetPropertyProperty<'a> {
             span,
             name,
             binding,
-            computed,
         }
     }
 
@@ -7482,17 +7568,15 @@ impl<'a> AssignmentTargetPropertyProperty<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The property key
     /// * `binding`: The binding part of the property
-    /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn boxed(
         span: Span,
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
-        computed: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, name, binding, computed, builder), &builder.allocator())
+        ArenaBox::new_in(Self::new(span, name, binding, builder), &builder.allocator())
     }
 }
 
@@ -10236,16 +10320,14 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::BigIntLiteral`].
@@ -10256,16 +10338,14 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`ForStatementInit::RegExpLiteral`].
@@ -12698,25 +12778,16 @@ impl<'a> BindingProperty<'a> {
     /// * `key`
     /// * `value`
     /// * `shorthand`
-    /// * `computed`
     #[inline]
     pub fn new(
         span: Span,
         key: PropertyKey<'a>,
         value: BindingPattern<'a>,
         shorthand: bool,
-        computed: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BindingProperty {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            key,
-            value,
-            shorthand,
-            computed,
-        }
+        BindingProperty { node_id: Cell::new(builder.node_id()), span, key, value, shorthand }
     }
 }
 
@@ -13272,16 +13343,14 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrowFunctionBody::BigIntLiteral`].
@@ -13292,16 +13361,14 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ArrowFunctionBody::RegExpLiteral`].
@@ -14928,7 +14995,6 @@ impl<'a> ClassElement<'a> {
     /// * `key`
     /// * `value`
     /// * `kind`
-    /// * `computed`
     /// * `static`
     /// * `override`
     /// * `optional`
@@ -14941,7 +15007,6 @@ impl<'a> ClassElement<'a> {
         key: PropertyKey<'a>,
         value: ArenaBox<'a, Function<'a>>,
         kind: MethodDefinitionKind,
-        computed: bool,
         r#static: bool,
         r#override: bool,
         optional: bool,
@@ -14955,7 +15020,6 @@ impl<'a> ClassElement<'a> {
             key,
             value,
             kind,
-            computed,
             r#static,
             r#override,
             optional,
@@ -14975,7 +15039,6 @@ impl<'a> ClassElement<'a> {
     /// * `key`: The expression used to declare the property.
     /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
-    /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `declare`: Property is declared with a `declare` modifier.
     /// * `override`
@@ -14991,7 +15054,6 @@ impl<'a> ClassElement<'a> {
         key: PropertyKey<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
-        computed: bool,
         r#static: bool,
         declare: bool,
         r#override: bool,
@@ -15008,7 +15070,6 @@ impl<'a> ClassElement<'a> {
             key,
             type_annotation,
             value,
-            computed,
             r#static,
             declare,
             r#override,
@@ -15031,7 +15092,6 @@ impl<'a> ClassElement<'a> {
     /// * `key`: The expression used to declare the property.
     /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
-    /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
@@ -15044,7 +15104,6 @@ impl<'a> ClassElement<'a> {
         key: PropertyKey<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
-        computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
@@ -15058,7 +15117,6 @@ impl<'a> ClassElement<'a> {
             key,
             type_annotation,
             value,
-            computed,
             r#static,
             r#override,
             definite,
@@ -15110,7 +15168,6 @@ impl<'a> MethodDefinition<'a> {
     /// * `key`
     /// * `value`
     /// * `kind`
-    /// * `computed`
     /// * `static`
     /// * `override`
     /// * `optional`
@@ -15123,7 +15180,6 @@ impl<'a> MethodDefinition<'a> {
         key: PropertyKey<'a>,
         value: ArenaBox<'a, Function<'a>>,
         kind: MethodDefinitionKind,
-        computed: bool,
         r#static: bool,
         r#override: bool,
         optional: bool,
@@ -15139,7 +15195,6 @@ impl<'a> MethodDefinition<'a> {
             key,
             value,
             kind,
-            computed,
             r#static,
             r#override,
             optional,
@@ -15159,7 +15214,6 @@ impl<'a> MethodDefinition<'a> {
     /// * `key`
     /// * `value`
     /// * `kind`
-    /// * `computed`
     /// * `static`
     /// * `override`
     /// * `optional`
@@ -15172,7 +15226,6 @@ impl<'a> MethodDefinition<'a> {
         key: PropertyKey<'a>,
         value: ArenaBox<'a, Function<'a>>,
         kind: MethodDefinitionKind,
-        computed: bool,
         r#static: bool,
         r#override: bool,
         optional: bool,
@@ -15188,7 +15241,6 @@ impl<'a> MethodDefinition<'a> {
                 key,
                 value,
                 kind,
-                computed,
                 r#static,
                 r#override,
                 optional,
@@ -15213,7 +15265,6 @@ impl<'a> PropertyDefinition<'a> {
     /// * `key`: The expression used to declare the property.
     /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
-    /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `declare`: Property is declared with a `declare` modifier.
     /// * `override`
@@ -15229,7 +15280,6 @@ impl<'a> PropertyDefinition<'a> {
         key: PropertyKey<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
-        computed: bool,
         r#static: bool,
         declare: bool,
         r#override: bool,
@@ -15248,7 +15298,6 @@ impl<'a> PropertyDefinition<'a> {
             key,
             type_annotation,
             value,
-            computed,
             r#static,
             declare,
             r#override,
@@ -15271,7 +15320,6 @@ impl<'a> PropertyDefinition<'a> {
     /// * `key`: The expression used to declare the property.
     /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration.
-    /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `declare`: Property is declared with a `declare` modifier.
     /// * `override`
@@ -15287,7 +15335,6 @@ impl<'a> PropertyDefinition<'a> {
         key: PropertyKey<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
-        computed: bool,
         r#static: bool,
         declare: bool,
         r#override: bool,
@@ -15306,7 +15353,6 @@ impl<'a> PropertyDefinition<'a> {
                 key,
                 type_annotation,
                 value,
-                computed,
                 r#static,
                 declare,
                 r#override,
@@ -15646,7 +15692,6 @@ impl<'a> AccessorProperty<'a> {
     /// * `key`: The expression used to declare the property.
     /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
-    /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
@@ -15659,7 +15704,6 @@ impl<'a> AccessorProperty<'a> {
         key: PropertyKey<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
-        computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
@@ -15675,7 +15719,6 @@ impl<'a> AccessorProperty<'a> {
             key,
             type_annotation,
             value,
-            computed,
             r#static,
             r#override,
             definite,
@@ -15695,7 +15738,6 @@ impl<'a> AccessorProperty<'a> {
     /// * `key`: The expression used to declare the property.
     /// * `type_annotation`: Type annotation on the property.
     /// * `value`: Initialized value in the declaration, if present.
-    /// * `computed`: Property was declared with a computed key
     /// * `static`: Property was declared with a `static` modifier
     /// * `override`: Property was declared with a `override` modifier
     /// * `definite`: Property has a `!` after its key.
@@ -15708,7 +15750,6 @@ impl<'a> AccessorProperty<'a> {
         key: PropertyKey<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
-        computed: bool,
         r#static: bool,
         r#override: bool,
         definite: bool,
@@ -15724,7 +15765,6 @@ impl<'a> AccessorProperty<'a> {
                 key,
                 type_annotation,
                 value,
-                computed,
                 r#static,
                 r#override,
                 definite,
@@ -16691,16 +16731,14 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::BigIntLiteral`].
@@ -16711,16 +16749,14 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::RegExpLiteral`].
@@ -18029,17 +18065,15 @@ impl<'a> NumericLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        NumericLiteral { node_id: Cell::new(builder.node_id()), span, value, raw, base }
+        NumericLiteral { node_id: Cell::new(builder.node_id()), span, value, raw }
     }
 
     /// Build a [`NumericLiteral`], and store it in the memory arena.
@@ -18051,17 +18085,15 @@ impl<'a> NumericLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn boxed(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), &builder.allocator())
+        ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
     }
 }
 
@@ -18117,23 +18149,15 @@ impl<'a> BigIntLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BigIntLiteral {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value: value.into(),
-            raw,
-            base,
-        }
+        BigIntLiteral { node_id: Cell::new(builder.node_id()), span, value: value.into(), raw }
     }
 
     /// Build a [`BigIntLiteral`], and store it in the memory arena.
@@ -18145,17 +18169,15 @@ impl<'a> BigIntLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn boxed(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, value, raw, base, builder), &builder.allocator())
+        ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
     }
 }
 
@@ -18773,16 +18795,14 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`JSXExpression::BigIntLiteral`].
@@ -18793,16 +18813,14 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`JSXExpression::RegExpLiteral`].
@@ -20739,16 +20757,14 @@ impl<'a> TSLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: The value of the number, converted into base 10
     /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_numeric_literal(
         span: Span,
         value: f64,
         raw: Option<Str<'a>>,
-        base: NumberBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::NumericLiteral(NumericLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSLiteral::BigIntLiteral`].
@@ -20759,16 +20775,14 @@ impl<'a> TSLiteral<'a> {
     /// * `span`: Node location in source code.
     /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn new_big_int_literal(
         span: Span,
         value: impl Into<Str<'a>>,
         raw: Option<Str<'a>>,
-        base: BigintBase,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, base, builder.builder()))
+        Self::BigIntLiteral(BigIntLiteral::boxed(span, value, raw, builder.builder()))
     }
 
     /// Build a [`TSLiteral::StringLiteral`].
@@ -24024,7 +24038,6 @@ impl<'a> TSPropertySignature<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `computed`
     /// * `optional`
     /// * `readonly`
     /// * `key`
@@ -24032,7 +24045,6 @@ impl<'a> TSPropertySignature<'a> {
     #[inline]
     pub fn new(
         span: Span,
-        computed: bool,
         optional: bool,
         readonly: bool,
         key: PropertyKey<'a>,
@@ -24043,7 +24055,6 @@ impl<'a> TSPropertySignature<'a> {
         TSPropertySignature {
             node_id: Cell::new(builder.node_id()),
             span,
-            computed,
             optional,
             readonly,
             key,
@@ -24058,7 +24069,6 @@ impl<'a> TSPropertySignature<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `computed`
     /// * `optional`
     /// * `readonly`
     /// * `key`
@@ -24066,7 +24076,6 @@ impl<'a> TSPropertySignature<'a> {
     #[inline]
     pub fn boxed(
         span: Span,
-        computed: bool,
         optional: bool,
         readonly: bool,
         key: PropertyKey<'a>,
@@ -24075,7 +24084,7 @@ impl<'a> TSPropertySignature<'a> {
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new(span, computed, optional, readonly, key, type_annotation, builder),
+            Self::new(span, optional, readonly, key, type_annotation, builder),
             &builder.allocator(),
         )
     }
@@ -24117,7 +24126,6 @@ impl<'a> TSSignature<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `computed`
     /// * `optional`
     /// * `readonly`
     /// * `key`
@@ -24125,7 +24133,6 @@ impl<'a> TSSignature<'a> {
     #[inline]
     pub fn new_ts_property_signature(
         span: Span,
-        computed: bool,
         optional: bool,
         readonly: bool,
         key: PropertyKey<'a>,
@@ -24134,7 +24141,6 @@ impl<'a> TSSignature<'a> {
     ) -> Self {
         Self::TSPropertySignature(TSPropertySignature::boxed(
             span,
-            computed,
             optional,
             readonly,
             key,
@@ -24266,7 +24272,6 @@ impl<'a> TSSignature<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `key`
-    /// * `computed`
     /// * `optional`
     /// * `kind`
     /// * `type_parameters`
@@ -24277,7 +24282,6 @@ impl<'a> TSSignature<'a> {
     pub fn new_ts_method_signature(
         span: Span,
         key: PropertyKey<'a>,
-        computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -24289,7 +24293,6 @@ impl<'a> TSSignature<'a> {
         Self::TSMethodSignature(TSMethodSignature::boxed(
             span,
             key,
-            computed,
             optional,
             kind,
             type_parameters,
@@ -24307,7 +24310,6 @@ impl<'a> TSSignature<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `key`
-    /// * `computed`
     /// * `optional`
     /// * `kind`
     /// * `type_parameters`
@@ -24319,7 +24321,6 @@ impl<'a> TSSignature<'a> {
     pub fn new_ts_method_signature_with_scope_id(
         span: Span,
         key: PropertyKey<'a>,
-        computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -24332,7 +24333,6 @@ impl<'a> TSSignature<'a> {
         Self::TSMethodSignature(TSMethodSignature::boxed_with_scope_id(
             span,
             key,
-            computed,
             optional,
             kind,
             type_parameters,
@@ -24546,7 +24546,6 @@ impl<'a> TSMethodSignature<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `key`
-    /// * `computed`
     /// * `optional`
     /// * `kind`
     /// * `type_parameters`
@@ -24557,7 +24556,6 @@ impl<'a> TSMethodSignature<'a> {
     pub fn new(
         span: Span,
         key: PropertyKey<'a>,
-        computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -24571,7 +24569,6 @@ impl<'a> TSMethodSignature<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             key,
-            computed,
             optional,
             kind,
             type_parameters,
@@ -24590,7 +24587,6 @@ impl<'a> TSMethodSignature<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `key`
-    /// * `computed`
     /// * `optional`
     /// * `kind`
     /// * `type_parameters`
@@ -24601,7 +24597,6 @@ impl<'a> TSMethodSignature<'a> {
     pub fn boxed(
         span: Span,
         key: PropertyKey<'a>,
-        computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -24615,7 +24610,6 @@ impl<'a> TSMethodSignature<'a> {
             Self::new(
                 span,
                 key,
-                computed,
                 optional,
                 kind,
                 type_parameters,
@@ -24636,7 +24630,6 @@ impl<'a> TSMethodSignature<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `key`
-    /// * `computed`
     /// * `optional`
     /// * `kind`
     /// * `type_parameters`
@@ -24648,7 +24641,6 @@ impl<'a> TSMethodSignature<'a> {
     pub fn new_with_scope_id(
         span: Span,
         key: PropertyKey<'a>,
-        computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -24663,7 +24655,6 @@ impl<'a> TSMethodSignature<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             key,
-            computed,
             optional,
             kind,
             type_parameters,
@@ -24682,7 +24673,6 @@ impl<'a> TSMethodSignature<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `key`
-    /// * `computed`
     /// * `optional`
     /// * `kind`
     /// * `type_parameters`
@@ -24694,7 +24684,6 @@ impl<'a> TSMethodSignature<'a> {
     pub fn boxed_with_scope_id(
         span: Span,
         key: PropertyKey<'a>,
-        computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
@@ -24709,7 +24698,6 @@ impl<'a> TSMethodSignature<'a> {
             Self::new_with_scope_id(
                 span,
                 key,
-                computed,
                 optional,
                 kind,
                 type_parameters,

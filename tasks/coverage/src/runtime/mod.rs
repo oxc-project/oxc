@@ -71,7 +71,6 @@ static SKIP_FEATURES: &[&str] = &[
     // stage 2
     "Intl.DurationFormat",
     // stage 3
-    "decorators",
     "explicit-resource-management",
     "source-phase-imports",
     "import-defer",
@@ -261,13 +260,50 @@ fn run_case(
     CoverageResult { path: file.path.clone(), should_fail: false, result }
 }
 
+/// Features which Node.js cannot run natively, so tests using them only run after transform.
+static TRANSFORM_ONLY_FEATURES: &[&str] = &["decorators"];
+
+fn is_transform_only(file: &Test262File) -> bool {
+    file.meta.features.iter().any(|feature| TRANSFORM_ONLY_FEATURES.contains(&feature.as_ref()))
+}
+
 /// Run the three code-production variants in order, stopping at the first failure.
+///
+/// Tests using a feature in [`TRANSFORM_ONLY_FEATURES`] skip the codegen variant,
+/// and minify the transformed code.
 fn run_variants(
     file: &Test262File,
     import_dir: &str,
     port: u16,
     send: &impl Fn(u16, &RunRequest) -> Result<String, String>,
 ) -> TestResult {
+    if is_transform_only(file) {
+        let flags = &file.meta.flags;
+        let strict_modes: &[bool] = if flags.contains(&TestFlag::OnlyStrict) {
+            &[true]
+        } else if flags
+            .iter()
+            .any(|flag| matches!(flag, TestFlag::NoStrict | TestFlag::Raw | TestFlag::Module))
+        {
+            &[false]
+        } else {
+            &[false, true]
+        };
+        for &strict in strict_modes {
+            let code = get_code_with_strict(file, true, false, strict);
+            let result = run_test_code(file, "transform", code, import_dir, port, send);
+            if result != TestResult::Passed {
+                return result;
+            }
+            let code = get_code_with_strict(file, true, true, strict);
+            let result = run_test_code(file, "minify", code, import_dir, port, send);
+            if result != TestResult::Passed {
+                return result;
+            }
+        }
+        return TestResult::Passed;
+    }
+
     let code = get_code(file, false, false);
     let result = run_test_code(file, "codegen", code, import_dir, port, send);
     if result != TestResult::Passed {
@@ -348,7 +384,18 @@ fn run_test_code(
 /// * `transform` runs the full transformer pipeline (down-levelling syntax).
 /// * `minify` runs the compressor and property mangler, then prints minified output.
 fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
-    let source_text = file.code.as_str();
+    get_code_with_strict(file, transform, minify, false)
+}
+
+fn get_code_with_strict(file: &Test262File, transform: bool, minify: bool, strict: bool) -> String {
+    // Strictness must be visible to parsing and lowering, not just execution.
+    let strict_source;
+    let source_text = if strict {
+        strict_source = format!("\"use strict\";\n{}", file.code);
+        strict_source.as_str()
+    } else {
+        file.code.as_str()
+    };
     let flags = &file.meta.flags;
     let is_module = flags.contains(&TestFlag::Module);
     let is_only_strict = flags.contains(&TestFlag::OnlyStrict);
@@ -362,6 +409,8 @@ fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
         options.jsx.refresh = None;
         options.helper_loader.mode = HelperLoaderMode::External;
         options.typescript.only_remove_type_imports = true;
+        // Test262 tests standard decorators, not TypeScript's legacy decorators.
+        options.decorator.legacy = false;
         Transformer::new(&allocator, &file.path, &options)
             .build_with_scoping(scoping, &mut program);
     }
@@ -383,7 +432,7 @@ fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
         .with_scoping(scoping)
         .build(&program)
         .code;
-    if is_only_strict {
+    if is_only_strict && !strict {
         text = format!("\"use strict\";\n{text}");
     }
     if is_module {
@@ -407,6 +456,10 @@ fn property_mangle_options(file: &Test262File) -> Option<ManglePropertiesOptions
 /// These lists encode years of test262 triage and are ported verbatim from the
 /// original runner.
 fn skip_case(file: &Test262File) -> bool {
+    skip_case_with_v8_failures(file, get_v8_test262_failure_paths())
+}
+
+fn skip_case_with_v8_failures(file: &Test262File, v8_failures: &[String]) -> bool {
     let base_path = file.path.to_string_lossy();
     let test262_path = base_path.trim_start_matches("test262/test/");
     let meta = &file.meta;
@@ -422,7 +475,19 @@ fn skip_case(file: &Test262File) -> bool {
         || includes.iter().any(|include| SKIP_INCLUDES.contains(&include.as_ref()))
         || features.iter().any(|feature| SKIP_FEATURES.contains(&feature.as_ref()))
         || SKIP_TEST_CASES.iter().any(|path| test262_path.starts_with(path))
-        || get_v8_test262_failure_paths().iter().any(|path| {
+        || v8_failures.iter().any(|path| {
+            // Native V8 cannot parse decorator syntax. These syntax cases execute
+            // only after lowering, but unrelated engine failures must stay skipped.
+            if is_transform_only(file)
+                && [
+                    "language/expressions/class/decorator/syntax/",
+                    "language/statements/class/decorator/syntax/",
+                ]
+                .iter()
+                .any(|prefix| path.starts_with(prefix))
+            {
+                return false;
+            }
             if let Some(path) = path.strip_suffix('*') {
                 test262_path.starts_with(path)
             } else {
@@ -431,4 +496,83 @@ fn skip_case(file: &Test262File) -> bool {
         })
         || file.code.contains("$262")
         || file.code.contains("$DONOTEVALUATE()")
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::{Cell, RefCell};
+
+    use super::*;
+    use crate::test262::parse_meta;
+
+    fn decorator_case(path: &str) -> Test262File {
+        Test262File {
+            path: format!("test262/test/{path}.js").into(),
+            code: "class C {}".into(),
+            meta: parse_meta("/*---\nfeatures: [decorators]\n---*/"),
+        }
+    }
+
+    #[test]
+    fn lowered_decorator_syntax_ignores_native_syntax_exclusions() {
+        for path in [
+            "language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference",
+            "language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference",
+        ] {
+            let mut file = decorator_case(path);
+            let failures = [path.to_string()];
+            assert!(!skip_case_with_v8_failures(&file, &failures));
+
+            let executions = Cell::new(0);
+            let result = run_variants(&file, "", 0, &|_, _| {
+                executions.set(executions.get() + 1);
+                Ok(String::new())
+            });
+            assert_eq!(result, TestResult::Passed);
+            assert_eq!(executions.get(), 4, "transform and minify in sloppy and strict modes");
+
+            file.meta.features = Box::default();
+            assert!(skip_case_with_v8_failures(&file, &failures));
+        }
+    }
+
+    #[test]
+    fn lowered_decorators_respect_strictness_flags() {
+        for (flags, strict_modes) in [
+            ("", vec![false, false, true, true]),
+            ("noStrict", vec![false, false]),
+            ("onlyStrict", vec![true, true]),
+            ("raw", vec![false, false]),
+            ("module", vec![false, false]),
+        ] {
+            let mut file =
+                decorator_case("language/statements/class/decorator/syntax/valid/example");
+            file.meta =
+                parse_meta(&format!("/*---\nfeatures: [decorators]\nflags: [{flags}]\n---*/"));
+            let executions = RefCell::new(Vec::new());
+            let result = run_variants(&file, "", 0, &|_, request| {
+                executions.borrow_mut().push(request.code.starts_with("\"use strict\""));
+                Ok(String::new())
+            });
+            assert_eq!(result, TestResult::Passed);
+            assert_eq!(*executions.borrow(), strict_modes, "{flags}");
+        }
+    }
+
+    #[test]
+    fn lowered_decorators_keep_unrelated_runtime_exclusions() {
+        let path = "language/statements/class/decorator/syntax/valid/example";
+        let mut file = decorator_case(path);
+        assert!(skip_case_with_v8_failures(&file, &["language/statements/class/*".into()]));
+
+        file.meta.includes = vec!["nativeFunctionMatcher.js".into()].into_boxed_slice();
+        assert!(skip_case_with_v8_failures(&file, &[path.into()]));
+        file.meta.includes = Box::default();
+        file.code = "$262.createRealm()".into();
+        assert!(skip_case_with_v8_failures(&file, &[path.into()]));
+
+        let path = "language/statements/class/elements/unrelated-engine-failure";
+        let file = decorator_case(path);
+        assert!(skip_case_with_v8_failures(&file, &[path.into()]));
+    }
 }

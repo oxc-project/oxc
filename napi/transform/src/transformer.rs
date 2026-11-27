@@ -183,20 +183,13 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             _ => EnvOptions::default(),
         };
         Ok(Self {
-            cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
-            assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
+            cwd: options.cwd.map_or_default(PathBuf::from),
+            assumptions: options.assumptions.map_or_default(Into::into),
             typescript: options
                 .typescript
-                .map(oxc::transformer::TypeScriptOptions::from)
-                .unwrap_or_default(),
-            decorator: options
-                .decorator
-                .map(oxc::transformer::DecoratorOptions::from)
-                .unwrap_or_default(),
-            plugins: options
-                .plugins
-                .map(oxc::transformer::PluginsOptions::from)
-                .unwrap_or_default(),
+                .map_or_default(oxc::transformer::TypeScriptOptions::from),
+            decorator: options.decorator.map_or_default(oxc::transformer::DecoratorOptions::from),
+            plugins: options.plugins.map_or_default(oxc::transformer::PluginsOptions::from),
             jsx: match options.jsx {
                 Some(Either::A(s)) => {
                     if s == "preserve" {
@@ -739,7 +732,7 @@ pub enum HelperMode {
 impl From<Helpers> for HelperLoaderOptions {
     fn from(value: Helpers) -> Self {
         Self {
-            mode: value.mode.map(HelperLoaderMode::from).unwrap_or_default(),
+            mode: value.mode.map_or_default(HelperLoaderMode::from),
             ..HelperLoaderOptions::default()
         }
     }
@@ -923,10 +916,12 @@ pub fn transform_sync(
     let mut compiler = match Compiler::new(options) {
         Ok(compiler) => compiler,
         Err(errors) => {
-            return TransformResult {
-                errors: OxcError::from_diagnostics(&filename, &source_text, errors),
-                ..Default::default()
-            };
+            // Options errors are not errors in the source text. If they have labels
+            // (e.g. a syntax error in a `define` value), the labels are offsets into
+            // the option's value, so don't produce a codeframe.
+            // They're also unrelated to this specific file, so don't include file path.
+            let errors = errors.iter().map(OxcError::from).collect();
+            return TransformResult { errors, ..Default::default() };
         }
     };
 
@@ -965,10 +960,12 @@ impl Task for TransformTask {
         let mut compiler = match Compiler::new(self.options.take()) {
             Ok(compiler) => compiler,
             Err(errors) => {
-                return Ok(TransformResult {
-                    errors: OxcError::from_diagnostics(&self.filename, &self.source_text, errors),
-                    ..Default::default()
-                });
+                // Options errors are not errors in the source text. If they have labels
+                // (e.g. a syntax error in a `define` value), the labels are offsets into
+                // the option's value, so don't produce a codeframe.
+                // They're also unrelated to this specific file, so don't include file path.
+                let errors = errors.iter().map(OxcError::from).collect();
+                return Ok(TransformResult { errors, ..Default::default() });
             }
         };
 

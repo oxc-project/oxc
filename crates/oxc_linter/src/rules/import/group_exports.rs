@@ -1,3 +1,5 @@
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
     AstKind,
     ast::{ImportOrExportKind, MemberExpression},
@@ -6,7 +8,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::JSStr;
-use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -62,7 +63,8 @@ declare_oxc_lint!(
     import,
     style,
     version = "0.16.6",
-    short_description = "Reports when named exports are not grouped together in a single export declaration.",
+    short_description =
+        "Reports when named exports are not grouped together in a single export declaration.",
 );
 
 impl Rule for GroupExports {
@@ -156,10 +158,7 @@ fn check_module_export(member_expr: &MemberExpression) -> bool {
     let Some(property_name) = member_expr.static_property_name() else {
         return false;
     };
-    if member_expr.object().is_specific_id("module") && property_name == "exports" {
-        return true;
-    }
-    false
+    member_expr.object().is_specific_id("module") && property_name == "exports"
 }
 
 #[test]

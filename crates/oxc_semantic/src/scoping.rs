@@ -9,6 +9,7 @@ use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident, JSStr};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
+    label::LabelId,
     node::NodeId,
     reference::{Reference, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -20,6 +21,10 @@ use crate::multi_index_vec::multi_index_vec;
 pub type Bindings<'a> = ArenaIdentHashMap<'a, SymbolId>;
 pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, ReferenceId>>;
 
+/// One declaration of a symbol that is declared more than once.
+///
+/// A `var` redeclaring a catch parameter also links that parameter to the separate
+/// enclosing var binding; see [`Scoping::catch_var_binding`].
 #[derive(Clone, Debug)]
 pub struct Redeclaration {
     pub span: Span,
@@ -118,18 +123,77 @@ impl fmt::Debug for Scoping {
 
 impl Default for Scoping {
     fn default() -> Self {
+        Self::new_with_allocator(Allocator::default())
+    }
+}
+
+impl Scoping {
+    /// Create an empty [`Scoping`] with capacity for the given number of symbols, references and scopes.
+    ///
+    /// For a small file, the arena which holds symbol names, bindings, and resolved references is created
+    /// with a size estimated from those counts, instead of [`Allocator`]'s default chunk size (16 KiB).
+    /// This matters to consumers which keep the `Scoping`s of many files alive at the same time:
+    /// the default chunk size is far more than most files need.
+    ///
+    /// Larger files are unaffected. Their arena starts with the default chunk size and grows from there.
+    pub(crate) fn with_capacity(symbols: usize, references: usize, scopes: usize) -> Self {
+        // Estimate of bytes the arena needs, fitted to arena usage across the 46k modules of
+        // a large application build.
+        //
+        // * Per symbol: Name (`Ident` + the string itself), `Vec` of resolved references,
+        //   entry in a bindings hash map (including the smaller tables which are discarded as the map grows).
+        // * Per reference: `ReferenceId` in a `Vec` of resolved references (including the smaller
+        //   buffers which are discarded as the `Vec` grows).
+        // * Per scope: Minimum size of a bindings hash table.
+        const BYTES_PER_SYMBOL: usize = 160;
+        const BYTES_PER_REFERENCE: usize = 16;
+        const BYTES_PER_SCOPE: usize = 64;
+
+        // Lower bound on the estimate. `Allocator` rounds this up to a 1 KiB chunk.
+        //
+        // Consumers add symbols and bindings after `SemanticBuilder` has finished
+        // (e.g. a bundler creating a namespace symbol for every module). If the arena has no room
+        // for them, it adds another chunk, which is 16 KiB at minimum. Without this lower bound,
+        // a few symbols added to a file which has next to none of its own would do that.
+        const MIN_ARENA_CAPACITY: usize = 512;
+
+        // `Allocator`'s default chunk size. Only use the estimate if it's smaller than this,
+        // so that the arena's first chunk is never larger than it would be by default.
+        const DEFAULT_ARENA_CAPACITY: usize = 16 * 1024;
+
+        let arena_capacity = symbols
+            .saturating_mul(BYTES_PER_SYMBOL)
+            .saturating_add(references.saturating_mul(BYTES_PER_REFERENCE))
+            .saturating_add(scopes.saturating_mul(BYTES_PER_SCOPE))
+            .max(MIN_ARENA_CAPACITY);
+
+        let allocator = if arena_capacity < DEFAULT_ARENA_CAPACITY {
+            Allocator::with_capacity(arena_capacity)
+        } else {
+            Allocator::default()
+        };
+
+        let mut scoping = Self::new_with_allocator(allocator);
+        scoping.reserve(symbols, references, scopes);
+        scoping
+    }
+
+    fn new_with_allocator(allocator: Allocator) -> Self {
         Self {
             symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             enum_data: EnumData::default(),
             scope_table: ScopeTable::new(),
-            cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
+            cell: ScopingCell::new(allocator, |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(&allocator),
                 resolved_references: ArenaVec::new_in(&allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
+                label_names: ArenaVec::new_in(&allocator),
+                label_depths: ArenaVec::new_in(&allocator),
+                has_unresolved_labels: false,
             }),
         }
     }
@@ -288,6 +352,8 @@ pub struct ScopingInner<'cell> {
     /// Once a symbol is redeclared, there are at least two entries here. The first
     /// entry is the original symbol information, and the rest are redeclarations.
     /// i.e. `symbol_redeclarations[symbol_id].len() >= 2` always.
+    ///
+    /// This also encodes catch/var links: see [`Scoping::catch_var_binding`].
     symbol_redeclarations: FxHashMap<SymbolId, ArenaVec<'cell, Redeclaration>>,
     /* Scope Tree Fields */
     /// Symbol bindings in a scope.
@@ -296,6 +362,11 @@ pub struct ScopingInner<'cell> {
     pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
 
     pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
+
+    /* Label Table Fields */
+    label_names: ArenaVec<'cell, Ident<'cell>>,
+    label_depths: ArenaVec<'cell, u32>,
+    has_unresolved_labels: bool,
 }
 
 // Symbol Table Methods
@@ -414,6 +485,67 @@ impl Scoping {
             },
             |v| v.as_slice(),
         )
+    }
+
+    /// Iterate redeclared symbols with their declarations, in unspecified order.
+    /// See [`Scoping::symbol_redeclarations`].
+    pub fn redeclared_symbols(&self) -> impl Iterator<Item = (SymbolId, &[Redeclaration])> + '_ {
+        self.cell
+            .borrow_dependent()
+            .symbol_redeclarations
+            .iter()
+            .map(|(&symbol_id, redeclarations)| (symbol_id, redeclarations.as_slice()))
+    }
+
+    /// Get the enclosing var binding declared by a `var` that redeclares this catch parameter.
+    ///
+    /// In `catch (e) { var e = 1 }`, the `var` declares a binding in the enclosing var scope,
+    /// but its initializer assigns to the catch parameter, so the declarator's identifier
+    /// carries the catch symbol. See <https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks>.
+    ///
+    /// The link is derived rather than stored: the catch parameter has a `var` redeclaration,
+    /// and the enclosing binding has the same name in the nearest var scope. Both symbols
+    /// print through one identifier, so they must be renamed together.
+    #[inline]
+    pub fn catch_var_binding(&self, symbol_id: SymbolId) -> Option<SymbolId> {
+        if !self.symbol_flags(symbol_id).is_catch_variable() {
+            return None;
+        }
+        self.catch_var_binding_of(symbol_id, self.symbol_redeclarations(symbol_id))
+    }
+
+    /// Iterate `(catch parameter, enclosing var binding)` pairs in unspecified order.
+    /// See [`Scoping::catch_var_binding`].
+    pub fn catch_var_bindings(&self) -> impl Iterator<Item = (SymbolId, SymbolId)> + '_ {
+        self.cell.borrow_dependent().symbol_redeclarations.iter().filter_map(
+            |(&symbol_id, declarations)| {
+                if !self.symbol_flags(symbol_id).is_catch_variable() {
+                    return None;
+                }
+                Some((symbol_id, self.catch_var_binding_of(symbol_id, declarations)?))
+            },
+        )
+    }
+
+    /// [`Scoping::catch_var_binding`], with the symbol's redeclarations already looked up.
+    fn catch_var_binding_of(
+        &self,
+        symbol_id: SymbolId,
+        declarations: &[Redeclaration],
+    ) -> Option<SymbolId> {
+        // Only a `var` can redeclare a catch parameter: a lexical or function declaration with the
+        // same name in the catch block is a syntax error. The parameter's own declaration is
+        // function-scoped too, so exclude it by its catch flag.
+        if !declarations.iter().any(|declaration| {
+            declaration.flags.contains(SymbolFlags::FunctionScopedVariable)
+                && !declaration.flags.is_catch_variable()
+        }) {
+            return None;
+        }
+        let var_scope_id = self
+            .scope_ancestors(self.symbol_scope_id(symbol_id))
+            .find(|&scope_id| self.scope_flags(scope_id).is_var())?;
+        self.get_binding(var_scope_id, self.symbol_ident(symbol_id))
     }
 
     #[inline]
@@ -1126,6 +1258,66 @@ impl Scoping {
     }
 }
 
+// Label Table Methods
+impl Scoping {
+    /// Returns the number of labels in this table.
+    #[inline]
+    pub fn labels_len(&self) -> usize {
+        self.cell.borrow_dependent().label_names.len()
+    }
+
+    /// Iterate over all label IDs in creation order.
+    pub fn label_ids(&self) -> impl ExactSizeIterator<Item = LabelId> + '_ {
+        (0..self.labels_len()).map(LabelId::from_usize)
+    }
+
+    /// Get the name of a label.
+    #[inline]
+    pub fn label_name(&self, label_id: LabelId) -> &str {
+        self.cell.borrow_dependent().label_names[label_id.index()].as_str()
+    }
+
+    /// Get the number of labels enclosing a label.
+    ///
+    /// Labels are nested across function boundaries, so this also counts enclosing labels
+    /// outside the function containing `label_id`.
+    #[inline]
+    pub fn label_depth(&self, label_id: LabelId) -> u32 {
+        self.cell.borrow_dependent().label_depths[label_id.index()]
+    }
+
+    /// Create a new label enclosed by `depth` other labels.
+    pub fn create_label(&mut self, name: Ident<'_>, depth: u32) -> LabelId {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let label_id = LabelId::from_usize(cell.label_names.len());
+            cell.label_names.push(name.clone_in(allocator));
+            cell.label_depths.push(depth);
+            label_id
+        })
+    }
+
+    /// Rename a label.
+    #[inline]
+    pub fn set_label_name(&mut self, label_id: LabelId, name: Ident<'_>) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.label_names[label_id.index()] = name.clone_in(allocator);
+        });
+    }
+
+    /// Whether a `break` or `continue` label does not resolve to an enclosing label.
+    ///
+    /// This only happens in invalid code. Codegen prints such labels unchanged.
+    #[inline]
+    pub fn has_unresolved_labels(&self) -> bool {
+        self.cell.borrow_dependent().has_unresolved_labels
+    }
+
+    /// Record that a `break` or `continue` label does not resolve to an enclosing label.
+    pub fn set_has_unresolved_labels(&mut self) {
+        self.cell.with_dependent_mut(|_, cell| cell.has_unresolved_labels = true);
+    }
+}
+
 impl Scoping {
     /// Clone all semantic data. Used in `Rolldown`.
     #[must_use]
@@ -1159,6 +1351,9 @@ impl Scoping {
                     root_unresolved_references: cell
                         .root_unresolved_references
                         .clone_in_with_semantic_ids(allocator),
+                    label_names: cell.label_names.clone_in_with_semantic_ids(allocator),
+                    label_depths: cell.label_depths.clone_in_with_semantic_ids(allocator),
+                    has_unresolved_labels: cell.has_unresolved_labels,
                 })
             },
         }

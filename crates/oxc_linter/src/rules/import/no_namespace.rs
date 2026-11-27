@@ -1,11 +1,11 @@
 use fast_glob::glob_match;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -114,7 +114,9 @@ impl Rule for NoNamespace {
                     ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
                 }
             }
-            ImportImportName::Name(_) | ImportImportName::Default(_) => {}
+            ImportImportName::Name(_)
+            | ImportImportName::Default(_)
+            | ImportImportName::Source(_) => {}
         });
     }
 }

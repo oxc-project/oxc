@@ -1361,6 +1361,40 @@
       },
       "additionalProperties": false
     },
+    "ChecksConditionals": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/ChecksConditionalsOptions"
+        }
+      ]
+    },
+    "ChecksConditionalsFlagUnions": {
+      "type": "string",
+      "enum": [
+        "none",
+        "strict",
+        "all"
+      ]
+    },
+    "ChecksConditionalsOptions": {
+      "type": "object",
+      "properties": {
+        "flagUnions": {
+          "description": "Controls which union types are reported in conditionals.\n- `\"none\"` only reports values that are always Promise-like.\n- `\"strict\"` also reports unions where the non-Promise types match the awaited Promise types,\nsuch as `Promise<number> | number`.\n- `\"all\"` reports any union containing a Promise-like type.",
+          "default": "none",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ChecksConditionalsFlagUnions"
+            }
+          ],
+          "markdownDescription": "Controls which union types are reported in conditionals.\n- `\"none\"` only reports values that are always Promise-like.\n- `\"strict\"` also reports unions where the non-Promise types match the awaited Promise types,\nsuch as `Promise<number> | number`.\n- `\"all\"` reports any union containing a Promise-like type."
+        }
+      },
+      "additionalProperties": false
+    },
     "ChecksVoidReturn": {
       "anyOf": [
         {
@@ -3332,6 +3366,24 @@
         "jest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-all": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-before-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-before-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-describe-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jest/padding-around-expect-groups": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jest/padding-around-test-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -3749,6 +3801,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsdoc/require-returns-type": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jsdoc/require-template-description": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jsdoc/require-throws-description": {
@@ -8405,6 +8460,9 @@
         "typescript/no-unsafe-call": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-unsafe-class-instance-assignment": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-unsafe-declaration-merging": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -10114,6 +10172,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-after-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-after-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-all": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-before-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-before-each-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-describe-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-expect-groups": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-test-blocks": {
@@ -14997,10 +15073,14 @@
       "type": "object",
       "properties": {
         "checksConditionals": {
-          "description": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected.",
+          "description": "Whether to check if Promises are used in conditionals.\nCan be a boolean to enable/disable the check, or an object to control union types.",
           "default": true,
-          "type": "boolean",
-          "markdownDescription": "Whether to check if Promises are used in conditionals.\nWhen true, disallows using Promises in conditions where a boolean is expected."
+          "allOf": [
+            {
+              "$ref": "#/definitions/ChecksConditionals"
+            }
+          ],
+          "markdownDescription": "Whether to check if Promises are used in conditionals.\nCan be a boolean to enable/disable the check, or an object to control union types."
         },
         "checksSpreads": {
           "description": "Whether to check if Promises are used in spread syntax.\nWhen true, disallows spreading Promise values.",
@@ -17243,22 +17323,22 @@
           "markdownDescription": "Environments enable and disable collections of global variables."
         },
         "excludeFiles": {
-          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`",
+          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\nExample: `[ \"*.generated.ts\", \"fixtures/**\" ]`",
           "allOf": [
             {
               "$ref": "#/definitions/GlobSet"
             }
           ],
-          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`"
+          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\nExample: `[ \"*.generated.ts\", \"fixtures/**\" ]`"
         },
         "files": {
-          "description": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`",
+          "description": "A list of glob patterns to override.\n\nExample: `[ \"*.test.ts\", \"*.spec.ts\" ]`",
           "allOf": [
             {
               "$ref": "#/definitions/GlobSet"
             }
           ],
-          "markdownDescription": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`"
+          "markdownDescription": "A list of glob patterns to override.\n\nExample: `[ \"*.test.ts\", \"*.spec.ts\" ]`"
         },
         "globals": {
           "description": "Enabled or disabled specific global variables.",
@@ -18276,10 +18356,10 @@
       "type": "object",
       "properties": {
         "requireCatchParameter": {
-          "description": "When set to `true`, requires that catch clauses always have a parameter.",
+          "description": "When set to `true`, requires catch clauses that throw a new error to have a\ncaught error parameter, so the caught error is not discarded when re-throwing.",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "When set to `true`, requires that catch clauses always have a parameter."
+          "markdownDescription": "When set to `true`, requires catch clauses that throw a new error to have a\ncaught error parameter, so the caught error is not discarded when re-throwing."
         }
       },
       "additionalProperties": false

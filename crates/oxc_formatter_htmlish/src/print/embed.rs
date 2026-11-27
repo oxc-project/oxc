@@ -1,17 +1,24 @@
 //! Content written in another language, formatted by the session's dispatcher:
-//! `<script>` and `<style>` bodies, `style` and event handler attribute values.
+//! `<script>` and `<style>` bodies, `style` and event handler attribute values, and `{{ }}`.
 //! A part the dispatcher does not format prints as written.
 
 use std::any::Any;
 
 use oxc_allocator::{ArenaVec, StringBuilder};
 use oxc_formatter_core::{
-    Format, FormatElement, FormatOptions, builders::group, dispatch_fragment_ir, map_text_in_ir,
-    write,
+    Format, FormatElement, FormatOptions,
+    builders::{
+        exact_line_breaks, expand_parent, group, soft_line_indent_or_space,
+        soft_space_or_block_indent, space, text,
+    },
+    dispatch_fragment_ir, map_text_in_ir, write,
 };
 use oxc_htmlish_parser::ast::NodeId;
 
-use super::{HtmlishFormatter, attribute::quoted_piece, format_ir, text::dedent_string};
+use super::{
+    HtmlishFormatter, attribute::quoted_piece, format_ir, tag::closing_end_borrowed,
+    text::dedent_string,
+};
 use crate::{context::HtmlishFormatContext, tree::Tree};
 
 /// Parent→child context for CSS dispatched from a `style` attribute's value (css-in-html),
@@ -151,13 +158,17 @@ pub fn write_quoted<'a>(
 }
 
 /// An attribute's (unescaped) `value` formatted in `language`, for `"` quotes: every `"` as `&quot;`;
-/// `None` when the dispatcher leaves it as written.
+/// `None` when the dispatcher leaves it as written,
+/// or it holds a character reference (apps/oxfmt/DIVERGENCES.md#character-reference-in-code-as-written).
 pub fn dispatch_attribute_value<'a>(
     language: &str,
     parent_context: &dyn Any,
     value: &str,
     f: &HtmlishFormatter<'_, 'a>,
 ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    if holds_character_reference(value) {
+        return None;
+    }
     let ir = dispatch_fragment_ir(f, language, value, Some(parent_context))?;
     let indent_width = f.options().indent_width();
     Some(map_text_in_ir(ir, f.allocator(), &mut |text, out| {
@@ -167,6 +178,16 @@ pub fn dispatch_attribute_value<'a>(
         out.push(FormatElement::text(quoted_piece(text, f), indent_width));
         true
     }))
+}
+
+/// `value` holds a character reference (`&amp;`, `&#38;`), which HTML decodes before the code is read:
+/// formatted as code, `&amp;` would print `& amp;`.
+/// A legacy name without its `;` (`a&&copy`) is missed: only HTML's table of names tells one apart.
+fn holds_character_reference(value: &str) -> bool {
+    value.split('&').skip(1).any(|rest| {
+        let name = rest.bytes().take_while(u8::is_ascii_alphanumeric).count();
+        rest.starts_with('#') || (name > 0 && rest.as_bytes().get(name) == Some(&b';'))
+    })
 }
 
 /// Writes the body of `<script>` / `<style>` element `id` formatted in its language;
@@ -188,7 +209,12 @@ pub fn write_embedded_content<'a>(
     } else {
         value
     };
-    let Some(ir) = dispatch_fragment_ir(f, language, value, None) else { return false };
+    // An HTML body reads the parent's placeholders as this part does (html-in-js's `${}` in a `<script type="text/html">`);
+    // a Markdown body's HTML fences do not: a known limit, three embeddings deep
+    let embedded_in =
+        f.context().embedded_in().filter(|e| language == "html" && e.placeholder.is_some());
+    let context = embedded_in.as_ref().map(|e| e as &dyn Any);
+    let Some(ir) = dispatch_fragment_ir(f, language, value, context) else { return false };
     let ir = if t.tag(id) == "script" { escape_script_end(ir, value, f) } else { ir };
     f.write_elements(ir);
     true
@@ -210,7 +236,7 @@ fn escape_script_end<'a>(
     let source = body.as_bytes();
     let spells_script = memchr::memchr(b'\\', source).is_some()
         || memchr::memchr2_iter(b's', b'S', source).any(|i| {
-            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript")) // spellchecker:disable-line
+            source.get(i + 1..i + 6).is_some_and(|rest| rest.eq_ignore_ascii_case(b"cript"))
         });
     if !spells_script {
         return ir;
@@ -278,4 +304,50 @@ fn script_type_language(kind: &str) -> Option<&str> {
         }
         _ => return None,
     })
+}
+
+/// Writes `{{ }}`'s expression between its markers: `formatted` by its language, or as written (as Prettier does).
+pub fn write_interpolation<'a>(
+    t: &Tree<'_>,
+    id: NodeId,
+    expression: &'a str,
+    formatted: Option<&dyn Format<'a, HtmlishFormatContext<'a>>>,
+    f: &mut HtmlishFormatter<'_, 'a>,
+) {
+    // The next sibling prints the `}}` right after this
+    let borrowed = closing_end_borrowed(t, id);
+    if let Some(formatted) = formatted {
+        if borrowed {
+            write!(f, [soft_line_indent_or_space(&formatted), space()]);
+        } else {
+            // A group of its own: the separator after it breaking does not break it (apps/oxfmt/DIVERGENCES.md#interpolation-own-group)
+            write!(f, group(&soft_space_or_block_indent(&formatted)));
+        }
+        return;
+    }
+    // Whitespace only prints nothing (`{{}}`)
+    if expression.trim_ascii().is_empty() {
+        return;
+    }
+    // A trailing line break prints at the indentation: the next line's `}}` lines up with the `{{`
+    let Some(lf) =
+        expression.rfind('\n').filter(|&lf| expression[lf + 1..].trim_ascii().is_empty())
+    else {
+        // One trailing space before a borrowed `}}` prints as a separator's, which the line break before it drops.
+        // More stay text, the printer's space being one: as written, at the line's end when a line break follows
+        match expression.strip_suffix(' ') {
+            Some(content) if borrowed && !content.ends_with(' ') => {
+                write!(f, [text(content), space()]);
+            }
+            _ => write!(f, text(expression)),
+        }
+        return;
+    };
+    let content = expression[..lf].trim_end_matches('\n');
+    write!(f, text(content));
+    // A borrowed `}}`'s line break, the one between the siblings, prints nothing after these
+    write!(f, exact_line_breaks(lf - content.len() + 1));
+    if borrowed {
+        write!(f, expand_parent());
+    }
 }
