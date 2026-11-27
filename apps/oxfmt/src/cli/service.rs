@@ -51,6 +51,14 @@ impl FormatService {
             let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
             let path = Arc::clone(&plan.path);
+            // Before reading, see `stat_key`.
+            let stat_key = self.cache.as_ref().and_then(|cache| cache.stat_key(&plan));
+            if let (Some(cache), Some(key)) = (&self.cache, stat_key)
+                && cache.is_formatted(key)
+            {
+                let _ = tx_success.send(SuccessResult::Unchanged);
+                return;
+            }
             let Ok(source_text) = debug_span!("oxfmt::read", path = %path.display())
                 .in_scope(|| utils::read_to_string(&path))
             else {
@@ -74,7 +82,11 @@ impl FormatService {
 
             let key =
                 self.cache.as_ref().map(|cache| (cache, FormatCache::key(&plan, &source_text)));
-            if key.is_some_and(|(cache, key)| cache.is_formatted(key)) {
+            if let Some((cache, key)) = key
+                && cache.is_formatted(key)
+            {
+                // Known by its `stat` from now on.
+                cache.set_formatted(stat_key);
                 let _ = tx_success.send(SuccessResult::Unchanged);
                 return;
             }
@@ -84,7 +96,7 @@ impl FormatService {
                 && !with_node
                 && matches!(result, FormatResult::Success { is_changed: false, .. })
             {
-                cache.set_formatted(key);
+                cache.set_formatted(std::iter::once(key).chain(stat_key));
             }
             let (code, is_changed) = match result {
                 FormatResult::Success { code, is_changed } => (code, is_changed),
