@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::static_ident;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{AstNode, ast_util::iter_outer_expressions, context::LintContext, rule::Rule};
@@ -95,7 +96,13 @@ impl Rule for NoCompareNegZero {
                 if neg_zero.span() != unary.span {
                     return;
                 }
-                if expr.operator == BinaryOperator::StrictEquality {
+                let can_use_object_is = expr.operator == BinaryOperator::StrictEquality
+                    && !ctx.has_comments_between(expr.span)
+                    && ctx
+                        .scoping()
+                        .find_binding(node.scope_id(), static_ident!("Object"))
+                        .is_none();
+                if can_use_object_is {
                     ctx.diagnostic_with_suggestion(
                         no_compare_neg_zero_diagnostic(op, expr.span),
                         |fixer| {
@@ -140,7 +147,7 @@ fn is_neg_zero(expr: &Expression) -> bool {
     if unary.operator != UnaryOperator::UnaryNegation {
         return false;
     }
-    match &unary.argument {
+    match unary.argument.without_parentheses() {
         Expression::NumericLiteral(number) => number.value == 0.0,
         _ => false,
     }
@@ -179,7 +186,6 @@ fn test() {
         ("0 !== x", None),
         ("Object.is(x, -0)", None),
         ("x === -(-0)", None),
-        ("x === -(0)", None),
         ("-0 + x", None),
         // BigInt has only one zero value, so there is no negative zero to distinguish.
         ("x === -0n", None),
@@ -223,6 +229,9 @@ fn test() {
         ("-0 === -0n", None),
         ("-0 === -0", None),
         ("(-0 as number) < (-0 satisfies number)", None),
+        ("x === -(0)", None),
+        ("function isZero(Object, x) { return x === -0; }", None),
+        ("x /* signed zero */ === -0", None),
     ];
 
     let fix = vec![
@@ -251,6 +260,14 @@ fn test() {
         ("-0 < -0", "0 < -0", None),
         ("-1 > -0", "-1 > 0", None),
         ("(-0 as number) < (-0 satisfies number)", "(0 as number) < (-0 satisfies number)", None),
+        ("x === -(0)", "Object.is(x, -0)", None),
+        ("x > -(0)", "x > (0)", None),
+        (
+            "function isZero(Object, x) { return x === -0; }",
+            "function isZero(Object, x) { return x === 0; }",
+            None,
+        ),
+        ("x /* signed zero */ === -0", "x /* signed zero */ === 0", None),
     ];
 
     Tester::new(NoCompareNegZero::NAME, NoCompareNegZero::PLUGIN, pass, fail)
