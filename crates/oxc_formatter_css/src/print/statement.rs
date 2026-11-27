@@ -226,10 +226,8 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
         Statement::UnknownSassAtRule(unknown) => {
             // Same string-params contract as the Unknown prelude in `write_at_rule`:
             // Prettier prints unknown at-rule params verbatim.
-            let source = f.context().source_text();
-            write!(f, "@");
             let name_span = to_span(unknown.name.span());
-            write_maybe_lowercase(source.text_for(&name_span), f);
+            at_rule::write_at_rule_name(name_span, f);
             let region_end = params_region_end(unknown.block.as_ref(), unknown.span.end, f);
             let prelude_start =
                 unknown.prelude.as_ref().map_or(region_end, |prelude| prelude.span().start);

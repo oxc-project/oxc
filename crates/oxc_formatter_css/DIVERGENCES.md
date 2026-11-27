@@ -1029,6 +1029,35 @@ v: -1;
 less.js negates only a glued `@var`, `$prop` or `(`, so a lone `-` before a number is a keyword, not a sign.
 lessc compiles `- 1` as written and `-1` as the number, so Prettier's glue changes the output.
 
+## scss-at-rule-name-case
+
+- Why: semantics
+- Pin: `tests/fixtures/format/scss/at-rule-name-case.scss`
+- Conformance:
+  - `externals/prettier/scss/case/case.scss` (the at-rule name lines only; the interpolated property name line has no entry)
+
+```scss
+/* input */
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {}
+
+/* ours */
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {}
+
+/* prettier */
+@import Keep;
+@use "x";
+@media (min-width: 700px) {}
+```
+
+dart-sass matches at-rule names case-sensitively: `@IMPORT`, `@USE` and `@MEDIA` are unknown at-rules it compiles as written,
+while `@import Keep;` fails to compile and `@use "x"` loads a module.
+So an SCSS at-rule with an uppercase name prints as written, its params included,
+as every unknown at-rule's (AGENTS.md "Printing raw vs typed").
+
 ## signed-value-resplit
 
 - Why: uniform-rule (same construct, same output: the item in first position, an unsigned item)

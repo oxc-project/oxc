@@ -36,12 +36,22 @@ use crate::{
     },
 };
 
+/// `@` and an at-rule name, lowercased except in SCSS (DIVERGENCES.md#scss-at-rule-name-case).
+pub(super) fn write_at_rule_name(span: oxc_span::Span, f: &mut CssFormatter<'_, '_>) {
+    let name = f.context().source_text().text_for(&span);
+    write!(f, "@");
+    if matches!(f.options().variant, crate::options::CssVariant::Scss) {
+        write!(f, text(name));
+    } else {
+        write_maybe_lowercase(name, f);
+    }
+}
+
 /// Mirrors Prettier's `css-atrule`.
 pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
-    write!(f, "@");
     let name_span = to_span(at_rule.name.span());
-    write_maybe_lowercase(source.text_for(&name_span), f);
+    write_at_rule_name(name_span, f);
 
     // Comments inside the params: the structured printers place them,
     // a commented String-params prelude prints them as written (below).
@@ -80,7 +90,10 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         // The exception: SCSS-family names parsed AS CSS
         // (oxc-css-parser: Unknown, Prettier: parseValue/parseSelector) keep the structural printers below.
         let unknown_string_params = matches!(prelude, AtRulePrelude::Unknown(_))
-            && !is_value_parsed_at_rule(at_rule.name.raw);
+            && !is_value_parsed_at_rule(
+                at_rule.name.raw,
+                matches!(f.options().variant, crate::options::CssVariant::Scss),
+            );
         // NOTE: Prettier also keeps `@warn` / `@error` params as a raw string (`media-unknown`),
         // but `oxc-css-parser` parses their prelude structurally (`SassExpr`),
         // so we route them through the normal structured printer
@@ -268,8 +281,9 @@ fn split_important_tail(raw: &str) -> Option<(&str, &str)> {
 /// so a `oxc-css-parser` Unknown prelude for them must keep the structural printers.
 ///
 /// Case-sensitivity mirrors Prettier:
-/// bare `name` comparisons for the SCSS family, lowercased for module/media rules.
-fn is_value_parsed_at_rule(name: &str) -> bool {
+/// bare `name` comparisons for the SCSS family, lowercased for module/media rules
+/// except in SCSS, which keeps `@MEDIA` unknown (DIVERGENCES.md#scss-at-rule-name-case).
+fn is_value_parsed_at_rule(name: &str, scss: bool) -> bool {
     matches!(
         name,
         "extend"
@@ -291,7 +305,7 @@ fn is_value_parsed_at_rule(name: &str) -> bool {
             | "add-mixin"
             | "custom-selector"
     ) || matches!(
-        &*name.cow_to_ascii_lowercase(),
+        &*if scss { name.into() } else { name.cow_to_ascii_lowercase() },
         "import" | "use" | "forward" | "media" | "custom-media"
     )
 }

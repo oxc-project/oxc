@@ -1,0 +1,37 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#scss-at-rule-name-case
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {
+  a { b: c }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// DIVERGENCES.md#scss-at-rule-name-case
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {
+  a {
+    b: c;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// DIVERGENCES.md#scss-at-rule-name-case
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {
+  a {
+    b: c;
+  }
+}
+
+===================== End =====================

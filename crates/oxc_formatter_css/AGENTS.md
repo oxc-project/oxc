@@ -171,7 +171,8 @@ What the formatter relies on per shape:
 ### Case
 
 Lowercased: what the spec makes ASCII case-insensitive AND that can only be a keyword in its position.
-e.g. at-rule names, property names (a `@supports` declaration's included), media feature names, media types,
+e.g. at-rule names (not in SCSS: DIVERGENCES.md#scss-at-rule-name-case),
+property names (a `@supports` declaration's included), media feature names, media types,
 `only` / `and` / `not` / `or`.
 Everything else prints as written:
 values (a value may be a case-sensitive custom ident: `animation-name`, `grid-area`; keyword values are a linter's `value-keyword-case`),
