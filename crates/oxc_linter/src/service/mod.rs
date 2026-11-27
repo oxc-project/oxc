@@ -66,6 +66,7 @@ pub struct LintService {
 
 impl LintService {
     pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let linter = linter.with_cwd(&options.cwd);
         let runtime = Runtime::new(linter, options);
         Self { runtime }
     }
