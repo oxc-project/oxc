@@ -133,6 +133,7 @@ export function Component({ value }: { value: string }) {
     expect(result.code).toBe("");
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].message).toContain(`Invalid React Compiler \`${option}\` option`);
+    expect(result.errors[0].codeframe).toBeNull();
   });
 
   it("marks parse errors as fatal", () => {

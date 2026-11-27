@@ -37,6 +37,7 @@ describe("transformSync", () => {
     const invalidOption = transformSync("foo.js", fixture, { language: "elm" });
     expect(invalidOption.code).toBe("");
     expect(invalidOption.errors[0].message).toContain("language");
+    expect(invalidOption.errors[0].codeframe).toBeNull();
   });
 });
 

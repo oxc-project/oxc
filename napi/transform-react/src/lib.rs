@@ -74,9 +74,10 @@ fn transform_impl(
     let (react_compiler_options, transform_options) = match options.resolve(filename) {
         Ok(options) => options,
         Err(error) => {
+            // Options error is not an error in the source text, so don't produce a codeframe
             return TransformResult {
                 fatal: true,
-                errors: OxcError::from_diagnostics(filename, source_text, [error]),
+                errors: vec![OxcError::from(&error)],
                 ..TransformResult::default()
             };
         }

@@ -22,8 +22,7 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_minifier::Minifier;
+use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_napi::OxcError;
 use oxc_parser::Parser;
 use oxc_sourcemap::napi::SourceMap;
@@ -60,19 +59,14 @@ fn to_napi_mangle_cache(
 
 fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
     use oxc_codegen::CodegenOptions;
+
     let options = options.unwrap_or_default();
 
-    let mut minifier_options = match oxc_minifier::MinifierOptions::try_from(&options) {
+    let mut minifier_options = match MinifierOptions::try_from(&options) {
         Ok(options) => options,
         Err(error) => {
-            return MinifyResult {
-                errors: OxcError::from_diagnostics(
-                    filename,
-                    source_text,
-                    vec![OxcDiagnostic::error(error)],
-                ),
-                ..MinifyResult::default()
-            };
+            // Options error is not an error in the source text, so don't produce a codeframe
+            return MinifyResult { errors: vec![OxcError::new(error)], ..MinifyResult::default() };
         }
     };
 
@@ -107,12 +101,9 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
         Some(Either::B(o)) => match o.to_codegen_options() {
             Ok(opts) => opts,
             Err(error) => {
+                // Options error is not an error in the source text, so don't produce a codeframe
                 return MinifyResult {
-                    errors: OxcError::from_diagnostics(
-                        filename,
-                        source_text,
-                        vec![OxcDiagnostic::error(error)],
-                    ),
+                    errors: vec![OxcError::new(error)],
                     ..MinifyResult::default()
                 };
             }
