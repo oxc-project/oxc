@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::Expression;
 use oxc_span::Span;
 
-use crate::{cursor::ParserCheckpoint, js::CoverElement, ts::TypeArgumentLookahead};
+use crate::{js::CoverElement, top_level_await::StatementCheckpoint, ts::TypeArgumentLookahead};
 
 /// The initializer and diagnostic span of a shorthand property awaiting cover validation.
 pub struct CoverInitializedName<'a> {
@@ -58,14 +58,11 @@ pub struct ParserState<'a> {
     /// Keyed by the expression start and consumed when checked.
     pub trailing_commas: FxHashMap<u32, Span>,
 
-    /// Statements that may need reparsing when `sourceType` is `unambiguous`.
+    /// Checkpoints of the top-level statements from the first with an `await` identifier on,
+    /// when `sourceType` is `unambiguous` and no module syntax has been found yet.
     ///
-    /// In unambiguous mode, we initially parse top-level `await ...` as
-    /// `await(...)` (identifier/function call). But if ESM syntax is detected
-    /// later, we need to reparse these as await expressions.
-    ///
-    /// Each entry contains: (statement_index, checkpoint_before_statement)
-    pub potential_await_reparse: Vec<(usize, ParserCheckpoint<'a>)>,
+    /// See `top_level_await.rs`.
+    pub statement_checkpoints: Vec<StatementCheckpoint<'a>>,
 
     /// Flag to track if an `await` identifier was encountered during statement parsing.
     /// Used to determine if a statement needs to be stored for potential reparsing
@@ -85,7 +82,7 @@ impl<'a> ParserState<'a> {
             type_argument_lookahead: None,
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
-            potential_await_reparse: Vec::new(),
+            statement_checkpoints: Vec::new(),
             encountered_await_identifier: false,
         }
     }

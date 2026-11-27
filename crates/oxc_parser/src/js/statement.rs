@@ -37,7 +37,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         in_ts_namespace_body: bool,
     ) -> (ArenaVec<'a, Directive<'a>>, ArenaVec<'a, Statement<'a>>) {
         let mut directives = ArenaVec::new_in(self);
-        let mut statement_index = 0;
 
         let is_top_level = self.ctx.has_top_level();
         let stmt_ctx =
@@ -46,23 +45,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut reported_ambient_statement = false;
 
         // In unambiguous mode, top-level `await` parses as an identifier until ESM
-        // syntax commits to the Module goal.
-        let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
+        // syntax commits to the Module goal. See `top_level_await.rs`.
+        let mut track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
-        let statements = self.collect_list(|p| {
+        let mut statements = self.collect_list(|p| {
             while !p.has_fatal_error() && (is_top_level || !p.at(Kind::RCurly)) {
                 // Commit once module syntax is detected (`export` commits eagerly in
                 // `parse_export_declaration`; `has_module_syntax()` excludes TS's
                 // script-compatible `import x = ns.foo`). Until committed, checkpoint each
-                // statement so an `await` identifier in it can be reparsed.
-                let checkpoint = if track_await_reparse && !p.ctx.has_await() {
+                // statement so the statements with an `await` identifier can be parsed again.
+                let checkpoint = if track_await_reparse {
                     if p.module_record_builder.has_module_syntax() {
+                        track_await_reparse = false;
                         p.ctx = p.ctx.and_await(true);
+                        if !p.state.statement_checkpoints.is_empty() {
+                            return None;
+                        }
                         None
                     } else {
                         p.state.encountered_await_identifier = false;
-                        Some(p.checkpoint())
+                        Some(p.statement_checkpoint())
                     }
                 } else {
                     None
@@ -96,14 +99,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     p.parse_statement_list_item(stmt_ctx)
                 };
 
-                // Don't reparse a module declaration: `export` already committed to the
-                // Module goal while parsing, so reparsing would record the export twice.
-                // e.g. `@foo export default class C { x = await + 1 }`
-                if let Some(checkpoint) = checkpoint
-                    && p.state.encountered_await_identifier
-                    && !stmt.is_module_declaration()
-                {
-                    p.state.potential_await_reparse.push((statement_index, checkpoint));
+                // Record every statement from the first with an `await` identifier on
+                let mut check_ambient_statement = is_ambient_block;
+                if let Some(mut checkpoint) = checkpoint {
+                    checkpoint.has_await_identifier = p.state.encountered_await_identifier;
+                    if checkpoint.has_await_identifier || !p.state.statement_checkpoints.is_empty()
+                    {
+                        p.state.statement_checkpoints.push(checkpoint);
+                        // Checked by `finish_top_level_statements`, as it may be parsed again
+                        check_ambient_statement = false;
+                    }
                 }
 
                 expecting_directives = false;
@@ -112,19 +117,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if in_ts_namespace_body {
                     p.check_namespace_body_statement(&stmt);
                 }
-                if is_ambient_block
-                    && !reported_ambient_statement
-                    && !stmt.is_declaration()
-                    && !stmt.is_module_declaration()
-                {
-                    p.error(diagnostics::statement_in_ambient_context(stmt.span()));
-                    reported_ambient_statement = true;
+                if check_ambient_statement {
+                    p.check_ambient_statement(&stmt, &mut reported_ambient_statement);
                 }
-                statement_index += 1;
                 return Some(stmt);
             }
             None
         });
+
+        if is_top_level && !self.state.statement_checkpoints.is_empty() {
+            self.finish_top_level_statements(&mut statements, &mut reported_ambient_statement);
+        }
 
         (directives, statements)
     }
