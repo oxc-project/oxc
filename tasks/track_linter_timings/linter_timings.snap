@@ -211,6 +211,7 @@ import/no-nodejs-modules                                |  62734
 import/no-relative-parent-imports                       |  62732
 import/no-self-import                                   |      7
 import/no-unassigned-import                             |  24905
+import/no-useless-path-segments                         |  62732
 import/no-webpack-loader-syntax                         |  62709
 import/prefer-default-export                            |      7
 import/unambiguous                                      |      7

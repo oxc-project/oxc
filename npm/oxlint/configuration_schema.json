@@ -142,6 +142,19 @@
         },
         "jest": {
           "version": null
+        },
+        "import": {
+          "extensions": [
+            ".js",
+            ".mjs",
+            ".cjs",
+            ".jsx",
+            ".ts",
+            ".tsx",
+            ".mts",
+            ".cts",
+            ".json"
+          ]
         }
       },
       "allOf": [
@@ -3053,6 +3066,26 @@
                 },
                 {
                   "$ref": "#/definitions/NoUnassignedImportConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "import/no-useless-path-segments": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUselessPathSegments"
                 }
               ],
               "maxItems": 2,
@@ -12151,6 +12184,32 @@
         "single"
       ]
     },
+    "ImportPluginSettings": {
+      "description": "Configure import plugin rules.\n\nSee [eslint-plugin-import's settings](https://github.com/import-js/eslint-plugin-import#settings).",
+      "type": "object",
+      "properties": {
+        "extensions": {
+          "description": "File extensions that import rules consider when resolving relative specifiers\nand detecting directory `index` files.\n\nMirrors eslint-plugin-import's `import/extensions` setting.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"import\": {\n\"extensions\": [\".js\", \".jsx\"]\n}\n}\n}\n```",
+          "default": [
+            ".js",
+            ".mjs",
+            ".cjs",
+            ".jsx",
+            ".ts",
+            ".tsx",
+            ".mts",
+            ".cts",
+            ".json"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "File extensions that import rules consider when resolving relative specifiers\nand detecting directory `index` files.\n\nMirrors eslint-plugin-import's `import/extensions` setting.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"import\": {\n\"extensions\": [\".js\", \".jsx\"]\n}\n}\n}\n```"
+        }
+      },
+      "markdownDescription": "Configure import plugin rules.\n\nSee [eslint-plugin-import's settings](https://github.com/import-js/eslint-plugin-import#settings)."
+    },
     "ImportStyleConfig": {
       "type": "object",
       "properties": {
@@ -16553,6 +16612,24 @@
       },
       "additionalProperties": false
     },
+    "NoUselessPathSegments": {
+      "type": "object",
+      "properties": {
+        "commonjs": {
+          "description": "When `true`, CommonJS `require()` calls are also checked.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, CommonJS `require()` calls are also checked."
+        },
+        "noUselessIndex": {
+          "description": "When `true`, imports pointing to an `index` file (`./foo/index`, `./foo/index.js`)\nare reported and shortened to their directory (`./foo`), unless that would be\nambiguous with a sibling file (`./foo.js`), in which case `./foo/` is proposed.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, imports pointing to an `index` file (`./foo/index`, `./foo/index.js`)\nare reported and shortened to their directory (`./foo`), unless that would be\nambiguous with a sibling file (`./foo.js`), in which case `./foo/` is proposed."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoUselessPromiseResolveRejectOptions": {
       "type": "object",
       "properties": {
@@ -17400,6 +17477,26 @@
       "description": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```",
       "type": "object",
       "properties": {
+        "import": {
+          "default": {
+            "extensions": [
+              ".js",
+              ".mjs",
+              ".cjs",
+              ".jsx",
+              ".ts",
+              ".tsx",
+              ".mts",
+              ".cts",
+              ".json"
+            ]
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ImportPluginSettings"
+            }
+          ]
+        },
         "jest": {
           "default": {
             "version": null

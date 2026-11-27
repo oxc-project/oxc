@@ -1,0 +1,291 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 522
+---
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./../import/malformed.js", should be "../import/malformed.js"
+   ╭─[index.js:1:9]
+ 1 │ require("./../import/malformed.js")
+   ·         ──────────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./../import/malformed.js", should be "../import/malformed.js"
+   ╭─[index.js:1:9]
+ 1 │ require(`./../import/malformed.js`)
+   ·         ──────────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./../import/malformed", should be "../import/malformed"
+   ╭─[index.js:1:9]
+ 1 │ require("./../import/malformed")
+   ·         ───────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../import/malformed.js", should be "./malformed.js"
+   ╭─[index.js:1:9]
+ 1 │ require("../import/malformed.js")
+   ·         ────────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../import/malformed", should be "./malformed"
+   ╭─[index.js:1:9]
+ 1 │ require("../import/malformed")
+   ·         ─────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./test-module/", should be "./test-module"
+   ╭─[index.js:1:9]
+ 1 │ require("./test-module/")
+   ·         ────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./", should be "."
+   ╭─[index.js:1:9]
+ 1 │ require("./")
+   ·         ────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../", should be ".."
+   ╭─[index.js:1:9]
+ 1 │ require("../")
+   ·         ─────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./deep//a", should be "./deep/a"
+   ╭─[index.js:1:9]
+ 1 │ require("./deep//a")
+   ·         ───────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./bar/index.js", should be "./bar"
+   ╭─[index.js:1:9]
+ 1 │ require("./bar/index.js")
+   ·         ────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./bar/index", should be "./bar"
+   ╭─[index.js:1:9]
+ 1 │ require("./bar/index")
+   ·         ─────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./importPath/", should be "./importPath"
+   ╭─[index.js:1:9]
+ 1 │ require("./importPath/")
+   ·         ───────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./importPath/index.js", should be "./importPath"
+   ╭─[index.js:1:9]
+ 1 │ require("./importPath/index.js")
+   ·         ───────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./importType/index", should be "./importType"
+   ╭─[index.js:1:9]
+ 1 │ require("./importType/index")
+   ·         ────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./index", should be "."
+   ╭─[index.js:1:9]
+ 1 │ require("./index")
+   ·         ─────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../index", should be ".."
+   ╭─[index.js:1:9]
+ 1 │ require("../index")
+   ·         ──────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../index.js", should be ".."
+   ╭─[index.js:1:9]
+ 1 │ require("../index.js")
+   ·         ─────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./../import/malformed.js", should be "../import/malformed.js"
+   ╭─[index.js:1:8]
+ 1 │ import "./../import/malformed.js"
+   ·        ──────────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./../import/malformed", should be "../import/malformed"
+   ╭─[index.js:1:8]
+ 1 │ import "./../import/malformed"
+   ·        ───────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../import/malformed.js", should be "./malformed.js"
+   ╭─[index.js:1:8]
+ 1 │ import "../import/malformed.js"
+   ·        ────────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../import/malformed", should be "./malformed"
+   ╭─[index.js:1:8]
+ 1 │ import "../import/malformed"
+   ·        ─────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./test-module/", should be "./test-module"
+   ╭─[index.js:1:8]
+ 1 │ import "./test-module/"
+   ·        ────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./bar/", should be "./bar"
+   ╭─[index.js:1:8]
+ 1 │ import "./bar/"
+   ·        ────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./", should be "."
+   ╭─[index.js:1:8]
+ 1 │ import "./"
+   ·        ────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../", should be ".."
+   ╭─[index.js:1:8]
+ 1 │ import "../"
+   ·        ─────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./deep//a", should be "./deep/a"
+   ╭─[index.js:1:8]
+ 1 │ import "./deep//a"
+   ·        ───────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./bar/", should be "./bar"
+   ╭─[index.js:1:8]
+ 1 │ import "./bar/"
+   ·        ────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./bar/index.js", should be "./bar"
+   ╭─[index.js:1:8]
+ 1 │ import "./bar/index.js"
+   ·        ────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./bar/index", should be "./bar"
+   ╭─[index.js:1:8]
+ 1 │ import "./bar/index"
+   ·        ─────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./importPath/", should be "./importPath"
+   ╭─[index.js:1:8]
+ 1 │ import "./importPath/"
+   ·        ───────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./importPath/index.js", should be "./importPath"
+   ╭─[index.js:1:8]
+ 1 │ import "./importPath/index.js"
+   ·        ───────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./importPath/index", should be "./importPath"
+   ╭─[index.js:1:8]
+ 1 │ import "./importPath/index"
+   ·        ────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./index", should be "."
+   ╭─[index.js:1:8]
+ 1 │ import "./index"
+   ·        ─────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../index", should be ".."
+   ╭─[index.js:1:8]
+ 1 │ import "../index"
+   ·        ──────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../index.js", should be ".."
+   ╭─[index.js:1:8]
+ 1 │ import "../index.js"
+   ·        ─────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../index.custom", should be ".."
+   ╭─[index.js:1:8]
+ 1 │ import "../index.custom"
+   ·        ─────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./../import/malformed.js", should be "../import/malformed.js"
+   ╭─[index.js:1:21]
+ 1 │ export { foo } from "./../import/malformed.js"
+   ·                     ──────────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./../import/malformed.js", should be "../import/malformed.js"
+   ╭─[index.js:1:15]
+ 1 │ export * from "./../import/malformed.js"
+   ·               ──────────────────────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./", should be "."
+   ╭─[index.js:1:8]
+ 1 │ import("./")
+   ·        ────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "../", should be ".."
+   ╭─[index.js:1:8]
+ 1 │ import("../")
+   ·        ─────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
+
+  ⚠ import(no-useless-path-segments): Useless path segments for "./deep//a", should be "./deep/a"
+   ╭─[index.js:1:8]
+ 1 │ import("./deep//a")
+   ·        ───────────
+   ╰────
+  help: Remove unnecessary path segments from the import path.
