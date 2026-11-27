@@ -218,6 +218,7 @@ oxc_sourcemap = "10.0.1" # Source map generation
 allocator-api2 = "=0.2.21" # Allocator trait
 base64 = "0.23.0" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
+blake3 = "1.8.2" # Content hashing
 bpaf = "0.9.26" # CLI parser
 bytecount = "0.6.9" # Byte counting
 compact_str = "0.10.0" # Compact string type
