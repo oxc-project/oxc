@@ -965,6 +965,7 @@ and its at-rule printer drops the block comments in there (a trailing one surviv
 - Pin: `tests/fixtures/format/less/extend-rule.less`
 - Conformance:
   - `externals/prettier/less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less`
+  - `externals/prettier/less/less/less.less` (the `extend #7977` rules)
 - Drop when: the selector-list leak is fixed (prettier/prettier#19550 covered only the indentation) and the pin catches up
 
 ```less
@@ -1188,6 +1189,7 @@ A spaced `/` is not part of this: it glues to its left operand and breaks after,
   - `externals/prettier/less/interpolation/interpolation.less`
   - `externals/prettier/less/lookup/lookup-1.less`
   - `externals/prettier/less/no-semicolon/url.less`
+  - `externals/prettier/less/parens/parens.less`
 
 ```less
 /* input */
