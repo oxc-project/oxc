@@ -1,6 +1,6 @@
 ## javascript
 
-1184/1284 (92.21%)
+1186/1284 (92.37%)
 
 ### Failed
 
@@ -102,8 +102,6 @@
   - ❓unclassified
 - externals/prettier/js/if-statement/condition-break/boolean-expression.js (💥, 97.01%)
   - ❓unclassified
-- externals/prettier/js/if-statement/condition-break/unary-expression.js (💥, 61.38%)
-  - ❓unclassified
 - externals/prettier/js/if-statement/expr_and_same_line_comments.js (💥, 81.93%)
   - ❓unclassified
 - externals/prettier/js/if-statement/issue-15168.js (💥, 91.43%)
@@ -119,8 +117,6 @@
 - externals/prettier/js/label/comment.js (💥, 58.82%)
   - ❓unclassified
 - externals/prettier/js/last-argument-expansion/dangling-comment-in-arrow-function.js (💥, 0.00%)
-  - ❓unclassified
-- externals/prettier/js/logical-expression/in-unary-expression.js (💥, 79.49%)
   - ❓unclassified
 - externals/prettier/js/multiparser-comments/tagged.js (💥, 0.00%)
   - ❓unclassified

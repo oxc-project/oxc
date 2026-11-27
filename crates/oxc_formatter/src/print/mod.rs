@@ -708,21 +708,29 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, DoWhileStatement<'a>> {
         // Scan for the `)` only when a comment is actually around;
         // otherwise `FormatContentWithSemicolon` prints as-is from either position.
         let node_end = self.span().end;
-        let test_end = self.test().span().end;
+        let test = self.test();
+        let test_end = test.span().end;
         let rparen_end = if f.comments().has_comment_in_range(test_end, node_end) {
             f.comments().end_including_source_parens(test_end, node_end)
         } else {
             test_end
         };
+        let condition = FormatHeadCondition {
+            expression: &test,
+            // Just past the `w` of the `while` keyword (the gap holds only trivia and `while`),
+            // whichever pass printed the comments before it (the body's or the split above)
+            comments_start: f.comments().position_after_character(body.span().end, b'w'),
+            head_end: node_end,
+        };
         let content = format_with(|f| {
-            write!(f, ["while", space(), "(", group(&soft_block_indent(&self.test())), ")"]);
+            write!(f, ["while", space(), "(", condition, ")"]);
         });
         write!(f, FormatContentWithSemicolon::new(&content, rparen_end, node_end));
     }
 }
 
 /// The rightmost expression inside a statement head's parentheses
-/// (if/while test, for-in/for-of right, with object),
+/// (if/while/do-while test, for-in/for-of right, with object),
 /// printed without its generic trailing pass so the head's `)` bounds its comments.
 /// Comments past the `)` are left pending for the statement body's leading pass.
 struct FormatParenHeadExpression<'a, 'b> {
@@ -754,7 +762,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatParenHeadExpression<'a, '_> {
         let comments = f.context().comments().comments_before(rparen_end);
         if !comments.is_empty() {
             // Nothing may escape the head's `)`:
-            // a grouped head (if/while/with) flushes a pending line comment at its own break;
+            // a grouped head (if/while/do-while/with) flushes a pending line comment at its own break;
             // an ungrouped head (for-in/for-of) must emit `line_suffix_boundary()` before its `)` instead.
             // (The boundary must NOT be emitted here for grouped heads:
             // its presence poisons the enclosing fits measurement, breaking content that fits.)
@@ -763,19 +771,83 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatParenHeadExpression<'a, '_> {
     }
 }
 
+/// A statement head's condition between its `(` `)` (if / while / do-while test, `with` object).
+///
+/// A negated logical expression (`!(a || b)`, `!!(a || b)`, not `!!!`) hugs the head's parens:
+/// it breaks only inside its own parens, keeping the same inner indent as without the `!`.
+///
+/// ```js
+/// if (!(
+///   a ||
+///   b
+/// )) {}
+/// ```
+///
+/// Anything else breaks in the head's own group (`if (` + break),
+/// also a negated one with a comment of its own outside its parens (before it, or before the head's `)`):
+/// that group's break is what keeps such a comment on its side of the head's parens.
+///
+/// A `switch` discriminant and a `for` test never hug (as Prettier), so they do not use this.
+struct FormatHeadCondition<'a, 'b> {
+    expression: &'b AstNode<'b, 'a, Expression<'a>>,
+    /// Start of the gap holding the condition's leading comments (from the head's keyword)
+    comments_start: u32,
+    /// The head's `)` is the last one before it: the body's start, or a do-while's end
+    /// (see `FormatParenHeadExpression::body_start`)
+    head_end: u32,
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatHeadCondition<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // A cast keeps its parens, so a cast operand is not the `!`'s direct argument
+        let is_negated_logical = match self.expression.as_ref() {
+            Expression::UnaryExpression(unary) if unary.operator.is_not() => {
+                let argument = match &unary.argument {
+                    Expression::UnaryExpression(inner)
+                        if inner.operator.is_not() && !is_cast_target(inner.span, f) =>
+                    {
+                        &inner.argument
+                    }
+                    argument => argument,
+                };
+                matches!(argument, Expression::LogicalExpression(_))
+                    && !is_cast_target(argument.span(), f)
+            }
+            _ => false,
+        };
+        let span = self.expression.span();
+        let comments = f.comments();
+        let hugs = is_negated_logical
+            && !comments.has_any_comment_in_range(self.comments_start, span.start)
+            && !comments.has_any_comment_in_range(
+                span.end,
+                comments.end_including_source_parens(span.end, self.head_end),
+            );
+        let content =
+            FormatParenHeadExpression { expression: self.expression, body_start: self.head_end };
+        if hugs {
+            write!(f, content);
+        } else {
+            write!(f, group(&soft_block_indent(&content)));
+        }
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WhileStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let body = self.body();
+        let test = self.test();
         write!(
             f,
             group(&format_args!(
                 "while",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatParenHeadExpression {
-                    expression: &self.test(),
-                    body_start: body.span().start
-                })),
+                FormatHeadCondition {
+                    expression: &test,
+                    comments_start: self.span().start,
+                    head_end: body.span().start,
+                },
                 ")",
                 FormatStatementBody::new(&body)
             ))
@@ -983,10 +1055,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IfStatement<'a>> {
                 "if",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatParenHeadExpression {
+                FormatHeadCondition {
                     expression: &test,
-                    body_start: consequent.span().start
-                })),
+                    comments_start: self.span().start,
+                    head_end: consequent.span().start,
+                },
                 ")",
                 format_consequent,
             ))
@@ -1043,16 +1116,18 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BreakStatement<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WithStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let body = self.body();
+        let object = self.object();
         write!(
             f,
             group(&format_args!(
                 "with",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatParenHeadExpression {
-                    expression: &self.object(),
-                    body_start: body.span().start
-                })),
+                FormatHeadCondition {
+                    expression: &object,
+                    comments_start: self.span().start,
+                    head_end: body.span().start,
+                },
                 ")",
                 FormatStatementBody::new(&body)
             ))

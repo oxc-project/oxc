@@ -503,11 +503,8 @@
 
 ## jsdoc
 
-### Option 1: 369/370 (99.73%)
+### Option 1: 370/370 (100.00%)
 
 ```json
 {"printWidth":100}
 ```
-
-- [externals/svelte/compiler/print/index.js](diffs/jsdoc/externals__svelte__compiler__print__index.js.md)
-  - ❓unclassified

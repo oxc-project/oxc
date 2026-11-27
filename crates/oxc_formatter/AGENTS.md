@@ -260,6 +260,12 @@ A same-line block comment right before the hugged content, pinned in `tests/fixt
 - stops the hug: a sole object or array argument, a last-argument arrow, a sole object-pattern parameter
 - keeps the hug: an object type after a `:` (parameter, return type), a sole type argument, the right side of `=`
 
+A negated logical statement-head condition (`if (!(`), pinned in `tests/fixtures/js/if/negated-logical-condition.js`:
+
+- a comment of its own outside its parens stops the hug, a same-line block comment included
+  (a line or line-ending comment needs the head's break anyway, or the condition prints from column 0)
+- a comment inside its parens keeps the hug
+
 A union that hugs (`{ ... } | null`), pinned in `tests/fixtures/ts/union/hug-comments.ts`:
 
 - a member's comment stops the hug, and the union expands like any other (DIVERGENCES.md#union-annotation-flat-retry)
