@@ -507,7 +507,14 @@ impl ConstructorSuper {
                 _ => None,
             });
 
-            if let Some(exit) = exit {
+            let caught_throw = exit == Some(ExitKind::Throw)
+                && cfg.graph.edges_directed(block_id, Direction::Outgoing).any(|edge| {
+                    matches!(edge.weight(), EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit))
+                });
+
+            if let Some(exit) = exit
+                && !caught_throw
+            {
                 exit_results.push((state_after_block, exit));
                 // Exit blocks are terminal - don't propagate to successors
                 continue;
@@ -574,9 +581,14 @@ impl ConstructorSuper {
                         // This is conservative in the "report more errors" direction, which is
                         // correct for a linter: if super() is only in a try block, we report
                         // that some paths may not call it (if an exception occurs first).
+                        // A `throw` at the end of the block also reaches the catch with the
+                        // post-transfer state.
                         let old_state =
                             block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
-                        let new_state = old_state.merge(current_state);
+                        let mut new_state = old_state.merge(current_state);
+                        if caught_throw {
+                            new_state = new_state.merge(state_after_block);
+                        }
                         if new_state != old_state {
                             block_states.insert(target, new_state);
                             worklist.push_back(target);
@@ -586,6 +598,8 @@ impl ConstructorSuper {
                     EdgeType::NewFunction
                     | EdgeType::Unreachable
                     | EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {}
+
+                    EdgeType::Finalize if caught_throw => {}
 
                     EdgeType::Jump | EdgeType::Normal | EdgeType::Join | EdgeType::Finalize => {
                         let old_state =
@@ -830,11 +844,18 @@ fn test() {
         "class A extends B { constructor() { try { foo(); } catch { throw e; } return {}; } }",
         "class A extends null { constructor() { throw e; } }",
         "class A extends null { constructor() { if (a) return a; throw e; } }",
+        "class A extends B { constructor() { try { throw 0; } catch { super(); } } }",
+        "class A extends B { constructor() { try { throw 0; } catch { throw 1; } } }",
+        "class A extends B { constructor() { try { throw 0; } finally {} } }",
     ];
 
     let fail = vec![
         "class A extends B { constructor() { if (a) return {}; } }",
         "class A extends B { constructor() { if (a) return; throw e; } }",
+        "class A extends B { constructor() { try { throw 0; } catch {} } }",
+        "class A extends B { constructor() { try { super(); throw 0; } catch {} } }",
+        "class A extends B { constructor() { try { throw 0; } catch {} finally {} } }",
+        "class A extends B { constructor() { try { try { throw 0; } finally {} } catch {} } }",
         "class A extends B { constructor() { if (a) { super(); super(); throw e; } return; } }",
         "class A extends B { constructor() { super(); super(); for (;;) {} } }",
         "class A extends null { constructor() { if (a) return {}; } }",
