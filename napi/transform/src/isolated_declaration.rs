@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{mem, path::Path};
 
 use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
@@ -40,9 +40,13 @@ pub struct IsolatedDeclarationsResult {
     pub errors: Vec<OxcError>,
 }
 
+/// Async task for [`isolated_declaration`].
 pub struct IsolatedDeclarationTask {
+    /// File path.
     filename: String,
+    /// Source text.
     source_text: String,
+    /// Options. `None` if no options provided.
     options: Option<IsolatedDeclarationsOptions>,
 }
 
@@ -52,7 +56,11 @@ impl Task for IsolatedDeclarationTask {
     type Output = IsolatedDeclarationsResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(isolated_declaration_impl(&self.filename, &self.source_text, self.options.take()))
+        // Move filename and source text out of the task, so they're dropped here on worker thread.
+        // `IsolatedDeclarationsOptions` is `Copy` so no need to move it.
+        let filename = mem::take(&mut self.filename);
+        let source_text = mem::take(&mut self.source_text);
+        Ok(isolated_declaration_impl(&filename, &source_text, self.options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {

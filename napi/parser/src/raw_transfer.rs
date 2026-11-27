@@ -63,11 +63,17 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
     return offset as u32;
 }
 
+/// Async task for [`parse_raw`].
 pub struct ResolveTask {
+    /// File path.
     filename: String,
+    /// Buffer containing the source text, which the AST is written into.
     buffer: Uint8Array,
+    /// Offset of start of source text within the buffer.
     source_start: u32,
+    /// Length of source text, in UTF-8 bytes.
     source_len: u32,
+    /// Options. `None` if no options provided, or if `compute` has run.
     options: Option<ParserOptions>,
 }
 
@@ -77,19 +83,19 @@ impl Task for ResolveTask {
     type Output = ();
 
     fn compute(&mut self) -> napi::Result<()> {
+        // Move filename and options out of the task, so they're dropped here on worker thread.
+        // `buffer` stays in the task. It holds a reference to a JS object,
+        // which has to be released on main thread.
+        let filename = mem::take(&mut self.filename);
+        let mut options = self.options.take();
+
         // SAFETY: Caller of `parse_async` guarantees not to mutate the contents of buffer
         // between calling `parse_async` and the `AsyncTask` it returns resolving.
         // Therefore, this is a valid exclusive `&mut [u8]`.
         let buffer = unsafe { self.buffer.as_mut() };
         // SAFETY: Caller of `parse_async` guarantees to uphold invariants of `parse_raw_impl`
         unsafe {
-            parse_raw_impl(
-                &self.filename,
-                buffer,
-                self.source_start,
-                self.source_len,
-                self.options.take(),
-            );
+            parse_raw_impl(&filename, buffer, self.source_start, self.source_len, &mut options);
         }
         Ok(())
     }
@@ -169,14 +175,14 @@ pub unsafe fn parse_raw_sync(
     mut buffer: Uint8Array,
     source_start: u32,
     source_len: u32,
-    options: Option<ParserOptions>,
+    mut options: Option<ParserOptions>,
 ) {
     // SAFETY: This function is called synchronously, so buffer cannot be mutated outside this function
     // during the time this `&mut [u8]` exists
     let buffer = unsafe { buffer.as_mut() };
 
     // SAFETY: `parse_raw_impl` has same safety requirements as this function
-    unsafe { parse_raw_impl(&filename, buffer, source_start, source_len, options) };
+    unsafe { parse_raw_impl(&filename, buffer, source_start, source_len, &mut options) };
 }
 
 /// Parse AST into buffer.
@@ -196,7 +202,7 @@ unsafe fn parse_raw_impl(
     buffer: &mut [u8],
     source_start: u32,
     source_len: u32,
-    options: Option<ParserOptions>,
+    options: &mut Option<ParserOptions>,
 ) {
     // Check buffer has expected size and alignment
     assert_eq!(buffer.len(), BLOCK_SIZE);
@@ -245,10 +251,10 @@ unsafe fn parse_raw_impl(
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator`
     // exist after this.
-    let options = options.unwrap_or_default();
+    let options = &*options.get_or_insert_default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
-    let is_ts = get_ast_type(source_type, &options) == AstType::TypeScript;
+    let is_ts = get_ast_type(source_type, options) == AstType::TypeScript;
 
     let (data_offset, tokens_offset, tokens_len) = {
         // Get source text from buffer.
@@ -265,7 +271,7 @@ unsafe fn parse_raw_impl(
         };
 
         // Parse
-        let ret = parse_impl(allocator, source_type, source_text, &options);
+        let ret = parse_impl(allocator, source_type, source_text, options);
         let mut program = ret.program;
         let mut module_record = ret.module_record;
 
