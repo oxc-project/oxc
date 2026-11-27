@@ -92,7 +92,9 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        if matches!(callee, Expression::TaggedTemplateExpression(_)) && last.is_name_unequal("each")
+        if matches!(callee, Expression::TaggedTemplateExpression(_))
+            && last.is_name_unequal("each")
+            && last.is_name_unequal("for")
         {
             return None;
         }
@@ -131,6 +133,25 @@ pub fn parse_jest_fn_call<'a>(
         if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest | JestGeneralFnKind::Vitest))
         {
             return parse_jest_jest_fn_call(members, name, resolved.local);
+        }
+
+        // Ensure Vitest parameterized/conditional modifiers (`for`, `runIf`, `skipIf`) are only
+        // parsed at the outer CallExpression (e.g. `test.runIf(cond)(name, fn)`), not the inner
+        // modifier call (`test.runIf(cond)`).
+        if let Some(last_member) = members.last() {
+            if last_member.is_name_equal("for")
+                && !matches!(
+                    callee,
+                    Expression::CallExpression(_) | Expression::TaggedTemplateExpression(_)
+                )
+            {
+                return None;
+            }
+            if (last_member.is_name_equal("runIf") || last_member.is_name_equal("skipIf"))
+                && !matches!(callee, Expression::CallExpression(_))
+            {
+                return None;
+            }
         }
 
         // Check every link in the chain except the last is a member expression

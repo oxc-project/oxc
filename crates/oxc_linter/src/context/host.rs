@@ -504,9 +504,10 @@ impl<'a> ContextHost<'a> {
     #[cfg(not(test))]
     fn sniff_for_frameworks(mut self) -> Self {
         if self.plugins().has_test() {
-            let vitest_like = has_vitest_imports(self.module_record());
-            let jest_like =
-                is_jestlike_file(&self.file_path) || has_jest_imports(self.module_record());
+            let is_test_file = is_jestlike_file(&self.file_path);
+            let vitest_like = has_vitest_imports(self.module_record())
+                || (self.plugins().has_vitest() && is_test_file);
+            let jest_like = is_test_file || has_jest_imports(self.module_record());
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);

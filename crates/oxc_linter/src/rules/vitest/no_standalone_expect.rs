@@ -265,6 +265,39 @@ fn test() {
             });",
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/27158
+        (r#"test.runIf(true)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"test.skipIf(false)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"test.for([])("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (
+            "test.for`
+                a    | b
+                ${1} | ${1}
+            `('foobar', ({ a, b }) => {
+                expect(a).toBe(b);
+            });",
+            None,
+        ),
+        (r#"it.runIf(true)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"it.skipIf(false)("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (r#"it.for([])("foobar", () => { expect(true).toEqual(false); });"#, None),
+        (
+            r#"describe.runIf(true)("suite", () => { it("an it", () => { expect(1).toBe(1); }); });"#,
+            None,
+        ),
+        (
+            r#"describe.skipIf(false)("suite", () => { it("an it", () => { expect(1).toBe(1); }); });"#,
+            None,
+        ),
+        (
+            r#"describe.for([])("suite", () => { it("an it", () => { expect(1).toBe(1); }); });"#,
+            None,
+        ),
+        (r#"test.concurrent.for([])("foobar", () => { expect(1).toBe(1); });"#, None),
+        (r#"test.concurrent.runIf(true)("foobar", () => { expect(1).toBe(1); });"#, None),
+        (r#"test.concurrent.skipIf(false)("foobar", () => { expect(1).toBe(1); });"#, None),
+        (r#"it.concurrent.for([])("foobar", () => { expect(1).toBe(1); });"#, None),
+        (r#"test.runIf(true).concurrent("foobar", () => { expect(1).toBe(1); });"#, None),
     ];
 
     let fail = vec![
@@ -431,6 +464,15 @@ fn test() {
             first('foo', () => expect('foo').toBe('foo'));",
             None,
         ),
+        (
+            r#"test.runIf(true)("foobar", () => { expect(true).toEqual(false); }); expect(1).toBe(1);"#,
+            None,
+        ),
+        (r"test.runIf(() => { expect(1).toBe(1); });", None),
+        (r#"test.runIf(() => { expect(1).toBe(1); })("foobar", () => {});"#, None),
+        (r#"describe.runIf(true)("suite", () => { expect(1).toBe(1); });"#, None),
+        (r#"describe.skipIf(false)("suite", () => { expect(1).toBe(1); });"#, None),
+        (r#"describe.for([])("suite", () => { expect(1).toBe(1); });"#, None),
     ];
 
     Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::PLUGIN, pass, fail)
