@@ -4,11 +4,12 @@ use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
-        ObjectExpression, ObjectPropertyKind, SpreadElement,
+        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, IdentifierReference,
+        NewExpression, ObjectExpression, ObjectPropertyKind, SpreadElement, Statement,
     },
     builder::AstBuilder,
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
@@ -18,7 +19,8 @@ use oxc_str::static_ident;
 use crate::{
     AstNode,
     ast_util::{
-        get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
+        get_new_expr_ident_name, get_symbol_id_of_variable, is_method_call, is_new_expression,
+        outermost_paren_parent,
     },
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
@@ -389,7 +391,11 @@ fn check_useless_iterable_to_array<'a>(
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
             if for_of_stmt.right.without_parentheses().span() == array_expr.span {
-                ctx.diagnostic(iterable_to_array_in_for_of(span));
+                // The copy is needed when the loop body changes the original:
+                // `for (const x of [...items]) items.splice(i, 1);`
+                if !is_mutated_within(&spread_elem.argument, &for_of_stmt.body, ctx) {
+                    ctx.diagnostic(iterable_to_array_in_for_of(span));
+                }
                 return true;
             }
             false
@@ -446,6 +452,76 @@ fn check_useless_iterable_to_array<'a>(
             true
         }
         _ => false,
+    }
+}
+
+/// Methods that change an array, `Set` or `Map` in place.
+const MUTATING_METHODS: [&str; 13] = [
+    "add",
+    "clear",
+    "copyWithin",
+    "delete",
+    "fill",
+    "pop",
+    "push",
+    "reverse",
+    "set",
+    "shift",
+    "sort",
+    "splice",
+    "unshift",
+];
+
+/// Whether `target` is a variable that has a mutating method called on it inside `body`.
+fn is_mutated_within<'a>(
+    target: &Expression<'a>,
+    body: &Statement<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let Expression::Identifier(ident) = target.get_inner_expression() else {
+        return false;
+    };
+    let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx.semantic()) else {
+        return false;
+    };
+    let mut visitor = MutationVisitor { ctx, symbol_id, mutated: false };
+    visitor.visit_statement(body);
+    visitor.mutated
+}
+
+struct MutationVisitor<'a, 'c> {
+    ctx: &'c LintContext<'a>,
+    symbol_id: oxc_semantic::SymbolId,
+    mutated: bool,
+}
+
+impl<'a> Visit<'a> for MutationVisitor<'a, '_> {
+    fn visit_statement(&mut self, statement: &Statement<'a>) {
+        if !self.mutated {
+            walk::walk_statement(self, statement);
+        }
+    }
+
+    fn visit_expression(&mut self, expression: &Expression<'a>) {
+        if !self.mutated {
+            walk::walk_expression(self, expression);
+        }
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let reference = self.ctx.scoping().get_reference(ident.reference_id());
+        if reference.symbol_id() != Some(self.symbol_id) {
+            return;
+        }
+        let member = self.ctx.nodes().parent_node(reference.node_id());
+        let AstKind::StaticMemberExpression(member_expr) = member.kind() else {
+            return;
+        };
+        self.mutated |= MUTATING_METHODS.contains(&member_expr.property.name.as_str())
+            && matches!(
+                self.ctx.nodes().parent_kind(member.id()),
+                AstKind::CallExpression(call) if call.callee.span() == member_expr.span
+            );
     }
 }
 
@@ -640,6 +716,8 @@ fn test() {
         r"for (const foo of bar) [...iterable];",
         r"for (const foo of [,...iterable]);",
         r"for (const foo of [...iterable, extraElement]);",
+        r"const items = [1, 2, 3]; for (const item of [...items]) { items.splice(items.indexOf(item), 1); }",
+        r"const set = new Set([1]); for (const item of [...set]) set.add(item + 1);",
         r"for (const foo of {...iterable});",
         r"for (const foo in [...iterable]);",
         r"function * fn() {yield [...iterable];}",
@@ -765,6 +843,11 @@ fn test() {
         r"const typed = BigUint64Array.from([...iterable])",
         r"const object = Object.fromEntries([...iterable])",
         r"for (const foo of [...iterable]);",
+        r"const items = [1, 2]; for (const item of [...items]) console.log(items.indexOf(item));",
+        r"let list = [1, 2, 3]; for (const item of [...list]) list = list.concat(item);",
+        r"let items = [1, 2, 3]; for (const item of [...items]) items = [];",
+        r"const items = [1, 2]; for (const item of [...items]) { const items = []; items.pop(); }",
+        r"const items = [1, 2]; for (const item of [...items]) console.log(item); items.pop();",
         r"async () => {for await (const foo of [...iterable]);}",
         r"const map = new Map([...iterable,])",
         r"for (const foo of [...iterable]);",
