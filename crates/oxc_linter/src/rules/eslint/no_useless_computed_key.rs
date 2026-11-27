@@ -175,7 +175,9 @@ impl Rule for NoUselessComputedKey {
                 }
             }
             AstKind::PropertyDefinition(prop_def)
-                if self.enforce_for_class_members && prop_def.key.is_computed() =>
+                if self.enforce_for_class_members
+                    && prop_def.key.is_computed()
+                    && !prop_def.r#type.is_abstract() =>
             {
                 if let Some(expr) =
                     prop_def.key.as_expression().map(Expression::without_parentheses)
@@ -192,7 +194,9 @@ impl Rule for NoUselessComputedKey {
                 }
             }
             AstKind::MethodDefinition(method_def)
-                if self.enforce_for_class_members && method_def.key.is_computed() =>
+                if self.enforce_for_class_members
+                    && method_def.key.is_computed()
+                    && !method_def.r#type.is_abstract() =>
             {
                 if let Some(expr) =
                     method_def.key.as_expression().map(Expression::without_parentheses)
@@ -352,6 +356,9 @@ fn test() {
         ),
         ("({ [99999999999999999n]: 0 })", None), // { "ecmaVersion": 2020 }
         ("({ ['myKey' as CustomType]: 2 })", None),
+        ("abstract class Task { abstract ['run'](): void; }", None),
+        ("abstract class Task { abstract get ['x'](): number; }", None),
+        ("abstract class Task { abstract ['x']: number; }", None),
     ];
 
     let fail = vec![
