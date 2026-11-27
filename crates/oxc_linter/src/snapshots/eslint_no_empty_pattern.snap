@@ -66,6 +66,55 @@ source: crates/oxc_linter/src/tester.rs
   help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in a runtime error because these values are not iterable.
 
   ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:2]
+ 1 │ ({} = value);
+   ·  ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
+   ╭─[no_empty_pattern.tsx:1:2]
+ 1 │ ([] = value);
+   ·  ──
+   ╰────
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in a runtime error because these values are not iterable.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:6]
+ 1 │ ({a: {}} = value);
+   ·      ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
+   ╭─[no_empty_pattern.tsx:1:2]
+ 1 │ [[]] = value;
+   ·  ──
+   ╰────
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in a runtime error because these values are not iterable.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:6]
+ 1 │ ({a: {} = {}} = value);
+   ·      ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
+   ╭─[no_empty_pattern.tsx:1:5]
+ 1 │ [...[]] = value;
+   ·     ──
+   ╰────
+  help: Passing non-iterable values (null, undefined, numbers, booleans, etc.) will result in a runtime error because these values are not iterable.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
+   ╭─[no_empty_pattern.tsx:1:6]
+ 1 │ for ({} of xs);
+   ·      ──
+   ╰────
+  help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:14]
  1 │ function foo({}) {}
    ·              ──

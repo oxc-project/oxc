@@ -112,6 +112,14 @@ impl Rule for NoEmptyPattern {
             {
                 ctx.diagnostic(no_empty_object_pattern_diagnostic(object.span));
             }
+            AstKind::ArrayAssignmentTarget(array)
+                if array.elements.is_empty() && array.rest.is_none() =>
+            {
+                ctx.diagnostic(no_empty_array_pattern_diagnostic(array.span));
+            }
+            AstKind::ObjectAssignmentTarget(object) if object.is_empty() => {
+                ctx.diagnostic(no_empty_object_pattern_diagnostic(object.span));
+            }
             _ => {}
         }
     }
@@ -146,6 +154,10 @@ fn test() {
         ("function foo({a = {}}) {}", None), // { "ecmaVersion": 6 },
         ("function foo({a = []}) {}", None), // { "ecmaVersion": 6 },
         ("var [a] = foo", None),             // { "ecmaVersion": 6 },
+        ("({a} = value);", None),
+        ("[a] = value;", None),
+        ("[,] = value;", None),
+        ("({...a} = value);", None),
         (
             "function foo({}) {}",
             Some(serde_json::json!([{ "allowObjectPatternsAsParameters": true }])),
@@ -182,6 +194,13 @@ fn test() {
         ("function foo([]) {}", None),      // { "ecmaVersion": 6 },
         ("function foo({a: {}}) {}", None), // { "ecmaVersion": 6 },
         ("function foo({a: []}) {}", None), // { "ecmaVersion": 6 },
+        ("({} = value);", None),
+        ("([] = value);", None),
+        ("({a: {}} = value);", None),
+        ("[[]] = value;", None),
+        ("({a: {} = {}} = value);", None),
+        ("[...[]] = value;", None),
+        ("for ({} of xs);", None),
         ("function foo({}) {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
         ("var foo = function({}) {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
         ("var foo = ({}) => {}", Some(serde_json::json!([{}]))), // { "ecmaVersion": 6 },
