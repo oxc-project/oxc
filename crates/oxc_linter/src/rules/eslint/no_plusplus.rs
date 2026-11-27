@@ -87,9 +87,8 @@ declare_oxc_lint!(
     NoPlusplus,
     eslint,
     restriction,
-    // This is not guaranteed to rewrite the code in a way that is equivalent.
-    // For example, `++i` and `i++` will be rewritten as `i += 1` even though they are not the same.
-    // If the code depends on the order of evaluation, then this might break it.
+    // This is only offered where the value of `i++` isn't used, but `i += 1` still isn't
+    // equivalent when `i` is a string or a BigInt.
     conditional_suggestion,
     config = NoPlusplus,
     version = "0.9.5",
@@ -111,7 +110,7 @@ impl Rule for NoPlusplus {
         }
 
         let ident = expr.argument.get_identifier_name();
-        if ident.is_some() {
+        if ident.is_some() && is_value_unused(node, ctx) {
             let operator = match expr.operator {
                 UpdateOperator::Increment => "+=",
                 UpdateOperator::Decrement => "-=",
@@ -141,6 +140,29 @@ fn is_for_loop_afterthought(node: &AstNode, ctx: &LintContext) -> bool {
     }
 
     matches!(cur.kind(), AstKind::ForStatement(stmt) if stmt.update.is_some())
+}
+
+/// Whether the value of the update expression is discarded, e.g. `i++;` or `for (;; i++)`,
+/// so replacing it with `i += 1` doesn't change what the code does.
+fn is_value_unused(node: &AstNode, ctx: &LintContext) -> bool {
+    let mut span = node.kind().span();
+    for parent in ctx.nodes().ancestors(node.id()) {
+        match parent.kind() {
+            AstKind::ParenthesizedExpression(paren) => span = paren.span,
+            AstKind::SequenceExpression(seq) => {
+                if seq.expressions.last().is_some_and(|last| last.span() != span) {
+                    return true;
+                }
+                span = seq.span;
+            }
+            AstKind::ExpressionStatement(_) => return true,
+            AstKind::ForStatement(stmt) => {
+                return stmt.test.as_ref().is_none_or(|test| test.span() != span);
+            }
+            _ => return false,
+        }
+    }
+    false
 }
 
 #[test]
@@ -239,7 +261,7 @@ fn test() {
         ),
         (
             "for (;--i;);",
-            "for (;i -= 1;);",
+            "for (;--i;);",
             Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
         ),
         (
@@ -249,13 +271,13 @@ fn test() {
         ),
         (
             "for (;; i = j++);",
-            "for (;; i = j += 1);",
+            "for (;; i = j++);",
             Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
         ),
         (
             // Do not fix if part of a function call like f(--j)
             "for (;; i++, f(--j));",
-            "for (;; i++, f(j -= 1));",
+            "for (;; i++, f(--j));",
             Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
         ),
         (
@@ -266,10 +288,20 @@ fn test() {
         (
             // Do not fix if part of property definition
             "let x = 0; let y = { foo: x++ };",
-            "let x = 0; let y = { foo: x += 1 };",
+            "let x = 0; let y = { foo: x++ };",
             None,
         ),
         ("a.b++;", "a.b += 1;", None),
+        ("items[index++] = x;", "items[index++] = x;", None),
+        ("const id = counter++;", "const id = counter++;", None),
+        ("while (n--) {}", "while (n--) {}", None),
+        ("y = x++ + 1;", "y = x++ + 1;", None),
+        ("if (i++ < n) {}", "if (i++ < n) {}", None),
+        ("a + b++;", "a + b++;", None),
+        ("void--foo;", "void--foo;", None),
+        ("() => count++;", "() => count++;", None),
+        ("(i++);", "(i += 1);", None),
+        ("foo(), i++;", "foo(), i += 1;", None),
     ];
 
     Tester::new(NoPlusplus::NAME, NoPlusplus::PLUGIN, pass, fail)
