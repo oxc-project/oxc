@@ -564,6 +564,40 @@ export function Component({ value }: { value: string }) {
     expect(preserved.code).toContain("<button");
   });
 
+  it("preserves TypeScript syntax after React Compiler", () => {
+    const typed = `${fixture}
+export function format(value: number): string {
+  return value.toFixed(2);
+}
+`;
+    const preserved = transformSync("Component.tsx", typed, {
+      jsx: "preserve",
+      typescript: "preserve",
+    });
+    expect(preserved.errors).toEqual([]);
+    expect(preserved.code).toContain("react/compiler-runtime");
+    expect(preserved.code).toContain("interface Props");
+    expect(preserved.code).toContain("format(value: number): string");
+    expect(preserved.code).toContain("<button");
+
+    const transformedJsx = transformSync("Component.tsx", typed, {
+      typescript: "preserve",
+    });
+    expect(transformedJsx.errors).toEqual([]);
+    expect(transformedJsx.code).toContain("interface Props");
+    expect(transformedJsx.code).not.toContain("<button");
+  });
+
+  it("reports invalid TypeScript modes without emitting code", () => {
+    const result = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+      typescript: "invalid",
+    } as never);
+    expect(result.fatal).toBe(true);
+    expect(result.code).toBe("");
+    expect(result.errors[0].message).toContain("Invalid `typescript` option");
+  });
+
   it("reports invalid JSX modes without emitting code", () => {
     const result = transformSync("Component.tsx", fixture, {
       reactCompiler: false,
