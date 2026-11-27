@@ -469,7 +469,7 @@ fn is_solidus(value: &ComponentValue<'_>) -> bool {
 
 /// A `/` outside a math function keeps the source's choice, made symmetric (DIVERGENCES.md#slash-spacing):
 /// tight when glued on both sides, otherwise one space on both sides.
-fn is_slash_spaced(
+pub(super) fn is_slash_spaced(
     left: oxc_css_parser::pos::Span,
     slash: oxc_css_parser::pos::Span,
     right: oxc_css_parser::pos::Span,

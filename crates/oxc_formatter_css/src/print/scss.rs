@@ -742,7 +742,7 @@ pub(super) fn write_control_condition<'a>(
 enum CondPart<'b, 'a> {
     Value(&'b ComponentValue<'a>),
     /// Operator/keyword raw text (`and`, `or`, `not`, `==`, `*`, ...).
-    Op(Span, OpClass),
+    Op(oxc_css_parser::pos::Span, OpClass),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -771,13 +771,13 @@ fn flatten_condition<'b, 'a>(cond: &'b ComponentValue<'a>, out: &mut Vec<CondPar
                 SassBinaryOperatorKind::Division => OpClass::Division,
                 _ => OpClass::Other,
             };
-            out.push(CondPart::Op(to_span(binary.op.span), class));
+            out.push(CondPart::Op(binary.op.span, class));
             flatten_condition(&binary.right, out);
         }
         ComponentValue::SassUnaryExpression(unary)
             if matches!(unary.op.kind, SassUnaryOperatorKind::Not) =>
         {
-            out.push(CondPart::Op(to_span(unary.op.span), OpClass::Logical));
+            out.push(CondPart::Op(unary.op.span, OpClass::Logical));
             flatten_condition(&unary.expr, out);
         }
         other => out.push(CondPart::Value(other)),
@@ -799,17 +799,18 @@ fn write_condition_chain<'a>(
     let has_logical = parts.iter().any(|p| matches!(p, CondPart::Op(_, OpClass::Logical)));
     let part_span = |p: &CondPart<'_, 'a>| match p {
         CondPart::Op(span, _) => *span,
-        CondPart::Value(v) => to_span(v.span()),
+        CondPart::Value(v) => v.span(),
     };
     // `glued[i]`: no source gap before `parts[i]`.
     // Tokens glued in the source stay glued (postcss parses `$type==ocean` as ONE word and prints it verbatim);
     // a `/` takes both of its gaps together (DIVERGENCES.md#slash-spacing)
     let mut glued: Vec<bool> = (0..parts.len())
-        .map(|i| i > 0 && part_span(&parts[i - 1]).end == part_span(&parts[i]).start)
+        .map(|i| i > 0 && is_glued(part_span(&parts[i - 1]), part_span(&parts[i])))
         .collect();
     for i in 1..parts.len().saturating_sub(1) {
         if matches!(parts[i], CondPart::Op(_, OpClass::Division)) {
-            let both = glued[i] && glued[i + 1];
+            let [left, slash, right] = [i - 1, i, i + 1].map(|k| part_span(&parts[k]));
+            let both = !value::is_slash_spaced(left, slash, right);
             glued[i] = both;
             glued[i + 1] = both;
         }
@@ -837,7 +838,7 @@ fn write_condition_chain<'a>(
             }
             // Each part owns its leading comments, or they would leak into the block
             match part {
-                CondPart::Op(span, _) => value::write_text_with_leading_comments(*span, f),
+                CondPart::Op(span, _) => value::write_text_with_leading_comments(to_span(*span), f),
                 CondPart::Value(v) => {
                     value::write_list_element(v, ValueContext::default(), f);
                 }

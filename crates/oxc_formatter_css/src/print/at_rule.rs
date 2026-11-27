@@ -1037,10 +1037,13 @@ fn write_token_pair_space<'a>(
         ) => true,
         // A `/` takes both of its gaps together (DIVERGENCES.md#slash-spacing);
         // it glues to its left operand, so a gap after it ends the run
-        (_, Token::Solidus(_)) => {
-            gap || run.get(j + 1).map_or(followed, |next| !is_glued(tok.span, next.span))
+        (_, Token::Solidus(_)) => match run.get(j + 1) {
+            Some(next) => value::is_slash_spaced(prev.span, tok.span, next.span),
+            None => gap || followed,
+        },
+        (Token::Solidus(_), _) if j >= 2 => {
+            value::is_slash_spaced(run[j - 2].span, prev.span, tok.span)
         }
-        (Token::Solidus(_), _) => gap || (j >= 2 && !is_glued(run[j - 2].span, prev.span)),
         _ => gap,
     };
     if space {
