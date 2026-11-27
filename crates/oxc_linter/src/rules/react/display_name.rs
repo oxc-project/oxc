@@ -208,9 +208,12 @@ impl Rule for DisplayName {
             let program = ctx.nodes().program();
             for stmt in &program.body {
                 if let Statement::ExportDefaultDeclaration(export) = stmt {
-                    if let Some(component_info) =
-                        is_anonymous_export_component(export, ctx, ignore_transpiler_name)
-                    {
+                    if let Some(component_info) = is_anonymous_export_component(
+                        export,
+                        ctx,
+                        &mut version_cache,
+                        ignore_transpiler_name,
+                    ) {
                         components_to_report.push((component_info.span, component_info.is_context));
                     }
                     break; // Only one export default per module
@@ -387,6 +390,94 @@ fn check_context_assignment_references(
     None
 }
 
+/// Classification of the component wrapped by a React component wrapper call
+/// (`memo`, `forwardRef`, or a configured wrapper function).
+#[derive(Debug)]
+enum WrapperComponentKind {
+    /// The call does not wrap a component that needs a `displayName`.
+    NotComponent,
+    /// The wrapped component already has a name (a named inner function or a
+    /// reference to a named component), which the transpiler uses.
+    Named,
+    /// The wrapped component is anonymous and missing a display name.
+    Anonymous,
+}
+
+/// Inspect a React component wrapper call and classify the component it wraps.
+///
+/// Handles curried HOCs by unwrapping nested wrapper calls, skips classes that
+/// do not need a `displayName`, and skips `React.memo(React.forwardRef(...))`
+/// on React versions where the name is inferred automatically.
+fn classify_wrapper_call(
+    call: &CallExpression<'_>,
+    ctx: &LintContext<'_>,
+    version_cache: &mut VersionCache,
+    ignore_transpiler_name: bool,
+) -> WrapperComponentKind {
+    let Some(callee_name) = call.callee_name() else {
+        return WrapperComponentKind::NotComponent;
+    };
+
+    let Some(mut inner_component) = call
+        .arguments
+        .first()
+        .and_then(|arg| arg.as_expression().map(Expression::get_inner_expression))
+    else {
+        return WrapperComponentKind::NotComponent;
+    };
+    while let Expression::CallExpression(inner_call) = inner_component {
+        if !is_component_wrapper_call(inner_call, ctx) {
+            return WrapperComponentKind::NotComponent;
+        }
+        let Some(next) = inner_call
+            .arguments
+            .first()
+            .and_then(|arg| arg.as_expression().map(Expression::get_inner_expression))
+        else {
+            return WrapperComponentKind::NotComponent;
+        };
+        inner_component = next;
+    }
+    match inner_component {
+        Expression::ClassExpression(class) => {
+            if !is_es6_component_class(class) || class_has_static_display_name(class) {
+                return WrapperComponentKind::NotComponent;
+            }
+            let reported_via_class_symbol = class.id.as_ref().is_some_and(|id| {
+                is_react_component_name(&id.name) && class_returns_jsx(class, ctx)
+            });
+            if class.id.is_some() && (!ignore_transpiler_name || reported_via_class_symbol) {
+                return WrapperComponentKind::NotComponent;
+            }
+        }
+        Expression::FunctionExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::Identifier(_) => {}
+        _ => return WrapperComponentKind::NotComponent,
+    }
+
+    // Handle React.memo(React.forwardRef(...)) - skip if version compatible
+    if callee_name.ends_with("memo")
+        && let Some(first_arg) = call.arguments.first()
+        && let Some(Expression::CallExpression(inner_call)) = first_arg.as_expression()
+        && is_component_wrapper_call(inner_call, ctx)
+        && version_cache.get_memo_forwardref_compatible(ctx)
+    {
+        return WrapperComponentKind::NotComponent;
+    }
+
+    // For HOCs, check if the inner function/component has a name
+    // If the first argument is a named function or identifier, that counts as having a name
+    let inner_has_name =
+        call.arguments.first().is_some_and(|first_arg| match first_arg.as_expression() {
+            Some(Expression::FunctionExpression(func)) => func.id.is_some(),
+            Some(Expression::Identifier(_)) => true, // Reference to named component
+            _ => false,
+        });
+
+    if inner_has_name { WrapperComponentKind::Named } else { WrapperComponentKind::Anonymous }
+}
+
 /// Consolidate component detection logic
 fn is_react_component_node<'a>(
     node: &AstNode<'a>,
@@ -422,66 +513,25 @@ fn is_react_component_node<'a>(
             {
                 // Check for HOC patterns
                 if is_component_wrapper_call(call, ctx) {
-                    let mut inner_component =
-                        call.arguments.first()?.as_expression()?.get_inner_expression();
-                    while let Expression::CallExpression(inner_call) = inner_component {
-                        if !is_component_wrapper_call(inner_call, ctx) {
-                            return None;
-                        }
-                        inner_component =
-                            inner_call.arguments.first()?.as_expression()?.get_inner_expression();
-                    }
-                    match inner_component {
-                        Expression::ClassExpression(class) => {
-                            if !is_es6_component_class(class)
-                                || class_has_static_display_name(class)
-                            {
-                                return None;
-                            }
-                            let reported_via_class_symbol = class.id.as_ref().is_some_and(|id| {
-                                is_react_component_name(&id.name) && class_returns_jsx(class, ctx)
-                            });
-                            if class.id.is_some()
-                                && (!ignore_transpiler_name || reported_via_class_symbol)
-                            {
-                                return None;
-                            }
-                        }
-                        Expression::FunctionExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::Identifier(_) => {}
-                        _ => return None,
-                    }
-
-                    // Handle React.memo(React.forwardRef(...)) - skip if version compatible
-                    if callee_name.ends_with("memo")
-                        && let Some(first_arg) = call.arguments.first()
-                        && let Some(Expression::CallExpression(inner_call)) =
-                            first_arg.as_expression()
-                        && is_component_wrapper_call(inner_call, ctx)
-                        && version_cache.get_memo_forwardref_compatible(ctx)
-                    {
-                        return None;
-                    }
-
-                    // For HOCs, check if the inner function/component has a name
-                    // If the first argument is a named function or identifier, that counts as having a name
-                    let inner_has_name = if let Some(first_arg) = call.arguments.first() {
-                        match first_arg.as_expression() {
-                            Some(Expression::FunctionExpression(func)) => func.id.is_some(),
-                            Some(Expression::Identifier(_)) => true, // Reference to named component
-                            _ => false,
-                        }
-                    } else {
-                        false
+                    return match classify_wrapper_call(
+                        call,
+                        ctx,
+                        version_cache,
+                        ignore_transpiler_name,
+                    ) {
+                        // Return component info with name only if inner function has a name
+                        WrapperComponentKind::Named => Some(ReactComponentInfo {
+                            span: decl.id.span(),
+                            is_context: false,
+                            name,
+                        }),
+                        WrapperComponentKind::Anonymous => Some(ReactComponentInfo {
+                            span: decl.id.span(),
+                            is_context: false,
+                            name: None,
+                        }),
+                        WrapperComponentKind::NotComponent => None,
                     };
-
-                    // Return component info with name only if inner function has a name
-                    return Some(ReactComponentInfo {
-                        span: decl.id.span(),
-                        is_context: false,
-                        name: if inner_has_name { name } else { None },
-                    });
                 }
 
                 if callee_name == "createClass" || callee_name == "createReactClass" {
@@ -649,6 +699,7 @@ fn has_component_methods_in_object(
 fn is_anonymous_export_component(
     export: &ExportDefaultDeclaration,
     ctx: &LintContext,
+    version_cache: &mut VersionCache,
     ignore_transpiler_name: bool,
 ) -> Option<ReactComponentInfo> {
     match &export.declaration {
@@ -676,6 +727,18 @@ fn is_anonymous_export_component(
         }
         ExportDefaultDeclarationKind::ClassDeclaration(class) => {
             return check_class_component(class, export.span, ctx, ignore_transpiler_name);
+        }
+        // `export default memo(() => <div />)` and other wrapper calls.
+        // A named inner component gets a name from the transpiler, so only
+        // anonymous wrapped components are reported.
+        ExportDefaultDeclarationKind::CallExpression(call)
+            if is_component_wrapper_call(call, ctx)
+                && matches!(
+                    classify_wrapper_call(call, ctx, version_cache, ignore_transpiler_name),
+                    WrapperComponentKind::Anonymous
+                ) =>
+        {
+            return Some(ReactComponentInfo { span: export.span, is_context: false, name: None });
         }
         _ => {}
     }
@@ -1839,6 +1902,16 @@ fn test() {
         ("const C = React.memo(class C extends React.Component { render() { return <div />; } });", None, None),
         (r#"const C = React.memo(class extends React.Component { static displayName = "C"; render() { return <div />; } });"#, None, None),
         ("const C = React.memo(class { render() { return <div />; } });", None, None),
+        ("import { memo } from 'react'; export default memo(function Named() { return <li />; });", None, None),
+        ("import { memo } from 'react'; function Named() { return <li />; } export default memo(Named);", None, None),
+        ("import { memo } from 'other'; export default memo(() => <li />);", None, None),
+        (
+            "import { memo, forwardRef } from 'react';
+                    export default memo(forwardRef(() => <li />));
+                  ",
+            None,
+            Some(serde_json::json!({ "settings": {        "react": {          "version": "16.14.0",        },      } })),
+        ),
     ];
 
     let fail = vec![
@@ -2315,6 +2388,28 @@ fn test() {
         ("const memo = React.memo; const Component = memo(() => <li />);", None, None),
         (r#"const forwardRef = require("react").forwardRef; const Component = forwardRef(() => <li />);"#, None, None),
         ("import { memo } from 'react'; const Component = memo(function () {});", None, None),
+        ("import { memo } from 'react'; export default memo(() => <li />);", None, None),
+        ("import { forwardRef } from 'react'; export default forwardRef(() => <li />);", None, None),
+        ("export default React.memo(() => <li />);", None, None),
+        ("export default React.forwardRef(() => <li />);", None, None),
+        (
+            "import { memo } from 'react';
+
+                    export default memo(() => <div />);
+
+                    const B = memo(() => <div />);
+                    export { B };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "import { memo, forwardRef } from 'react';
+                    export default memo(forwardRef(() => <li />));
+                  ",
+            None,
+            Some(serde_json::json!({ "settings": {        "react": {          "version": "15.6.0",        },      } })),
+        ),
         (
             "const memo = fn => fn; const Component = memo(() => <li />);",
             None,
