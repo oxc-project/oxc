@@ -219,6 +219,12 @@ impl<'a> PeepholeOptimizations {
         read_expr: &Expression,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
+        // A direct `eval` can rebind the target's object between the logical read
+        // and the write (`x.y || (eval("x = ..."), x.y = 3)`), while the compound
+        // form writes to the object captured by the read.
+        if ctx.current_scope_flags().contains_direct_eval() {
+            return false;
+        }
         Self::has_no_side_effect_for_evaluation_same_target(assignment_target, read_expr, ctx)
             && !Self::member_object_may_be_mutated(assignment_target, ctx)
     }
