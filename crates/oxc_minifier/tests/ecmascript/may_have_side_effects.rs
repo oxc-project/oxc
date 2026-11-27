@@ -1422,6 +1422,29 @@ fn test_throwing_global_calls() {
     test("Symbol.for(10n)", false);
 }
 
+/// A `/*#__PURE__*/` annotation before `(` only applies when the parentheses
+/// contain nothing but one call. Parenthesized member-expression chains are an
+/// invalid annotation position, so the call inside must stay observable even
+/// when property reads are assumed side-effect-free; only the unparenthesized
+/// chain applies the annotation to the innermost call.
+/// <https://github.com/oxc-project/oxc/issues/30331>
+#[test]
+fn test_pure_comment_before_parentheses() {
+    let ctx = Ctx { property_read_side_effects: PropertyReadSideEffects::None, ..Ctx::default() };
+    // Invalid position: parentheses contain more than a call.
+    test_with_ctx("/*#__PURE__*/ (a().b)", &ctx, true);
+    test_with_ctx("/*#__PURE__*/ (a().b).c", &ctx, true);
+    test_with_ctx("/*#__PURE__*/ (new Foo().b)", &ctx, true);
+    test_with_ctx("/*#__PURE__*/ (a(), b())", &ctx, true);
+    // Valid position: parentheses contain nothing but the call.
+    test_with_ctx("/*#__PURE__*/ (a())", &ctx, false);
+    test_with_ctx("/*#__PURE__*/ (new Foo())", &ctx, false);
+    // Unparenthesized member chain: the annotation applies to the call.
+    test_with_ctx("/*#__PURE__*/ a().b", &ctx, false);
+    // With property reads side-effectful by default, the read is kept.
+    test("/*#__PURE__*/ (a().b)", true);
+}
+
 #[test]
 fn test_call_like_expressions() {
     test("foo()", true);

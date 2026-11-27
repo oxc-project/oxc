@@ -782,6 +782,30 @@ fn treeshake_options_annotations_false() {
     test_options("function test() {} /* @__PURE__ */ new test()", "function test() {}", &options);
 }
 
+/// A `/*#__PURE__*/` annotation before `(` only applies when the parentheses
+/// contain nothing but one call. `/*#__PURE__*/ (a().b)` does not mark `a()`
+/// pure — see `may_have_side_effects.rs` for the annotation-position coverage.
+/// These cases pin the end-to-end statement removal for the positions that do
+/// apply.
+/// <https://github.com/oxc-project/oxc/issues/30331>
+#[test]
+fn pure_comment_before_parentheses_applied_forms() {
+    let options = CompressOptions {
+        treeshake: TreeShakeOptions {
+            property_read_side_effects: PropertyReadSideEffects::None,
+            ..TreeShakeOptions::default()
+        },
+        ..CompressOptions::smallest()
+    };
+
+    // The unparenthesized form applies the annotation to `a()`, so the whole
+    // statement is dropped (and the then-unused function with it).
+    test_options("function a() { console.log('a'); } /*#__PURE__*/ a().b;", "", &options);
+
+    // A valid annotation position: the parentheses contain nothing but the call.
+    test_options("function a() { console.log('a'); } /*#__PURE__*/ (a());", "", &options);
+}
+
 #[test]
 fn remove_unused_assignment_keeps_eval_visible_catch_writes() {
     test_smallest(

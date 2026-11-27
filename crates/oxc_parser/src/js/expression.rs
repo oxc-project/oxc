@@ -1966,6 +1966,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
+        // A pure annotation before `(` only applies when the parentheses contain
+        // nothing but one call:
+        // <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/9ae52c2fca845a0532eadc10e993a0d0cadee384/pure-notation/pure-notation-spec.md#preceding-a-call-in-parentheses>
+        // So `/*#__PURE__*/ (a().b)` must not mark `a()` pure. Only the
+        // unparenthesized `/*#__PURE__*/ a().b` applies the annotation to the
+        // innermost call through a member-expression chain.
+        if matches!(expr, Expression::ParenthesizedExpression(_)) {
+            // `get_inner_expression_mut` unwraps nested parentheses and TS
+            // wrappers, but the annotation only applies to a lone call/new,
+            // never to a call inside a member-expression chain.
+            return match expr.get_inner_expression_mut() {
+                Expression::CallExpression(call_expr) => {
+                    call_expr.pure = true;
+                    true
+                }
+                Expression::NewExpression(new_expr) => {
+                    new_expr.pure = true;
+                    true
+                }
+                _ => false,
+            };
+        }
         match expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
