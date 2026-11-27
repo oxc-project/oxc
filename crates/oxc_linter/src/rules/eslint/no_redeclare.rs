@@ -14,12 +14,13 @@ use crate::{
 };
 
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
+    // Report the redeclaration, matching ESLint. `eslint-disable-next-line` comments are written
+    // on that declaration, so a primary span on the original binding would not suppress them.
+    // https://github.com/oxc-project/oxc/issues/29095
     OxcDiagnostic::warn(format!("'{name}' is already defined."))
         .with_help("Use a different variable name or remove the duplicate declaration.")
-        .with_labels([
-            decl_span.label(format!("'{name}' is already defined.")),
-            re_decl_span.label("It can not be redeclared here."),
-        ])
+        .with_label(re_decl_span.primary_label("It can not be redeclared here."))
+        .and_label(decl_span.label(format!("'{name}' is already defined.")))
 }
 
 fn no_redeclare_as_builtin_in_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
