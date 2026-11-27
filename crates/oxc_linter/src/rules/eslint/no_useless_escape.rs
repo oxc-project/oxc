@@ -276,23 +276,24 @@ fn check_string(string: &str) -> Vec<usize> {
     let bytes = &string.as_bytes()[1..string.len() - 1];
 
     let mut offsets = vec![];
-    let mut prev_offset = None; // for checking double escape `\\`
+    let mut escaped_backslash_offset = None;
     for offset in memmem::find_iter(bytes, "\\") {
+        if escaped_backslash_offset == Some(offset) {
+            continue;
+        }
+        escaped_backslash_offset = Some(offset + 1);
+
         // Safety:
         // The offset comes from a utf8 checked string
 
         let s = unsafe { std::str::from_utf8_unchecked(&bytes[offset..]) };
         if let Some(c) = s.chars().nth(1)
-            && !(c == quote_char
-                || (offset > 0 && prev_offset == Some(offset - 1))
-                || c.is_ascii_digit()
-                || VALID_STRING_ESCAPES.contains(c))
+            && !(c == quote_char || c.is_ascii_digit() || VALID_STRING_ESCAPES.contains(c))
         {
             // +1 for skipping the first string quote `"`
             // +1 for skipping the escape char `\\`
             offsets.push(offset + 2);
         }
-        prev_offset.replace(offset);
     }
 
     offsets
@@ -382,6 +383,7 @@ fn test() {
 
     let pass = vec![
         ("var foo = /\\./", None),
+        (r"const s = '\\\\a';", None),
         ("var foo = /\\//g", None),
         (r#"var foo = /""/"#, None),
         ("var foo = /''/", None),
@@ -598,6 +600,8 @@ fn test() {
         (r#"var foo = "\#/";"#, None),
         (r#"var foo = "\a""#, None),
         (r#"var foo = "\B";"#, None),
+        (r"const s = '\\\a';", None),
+        (r"const s = '\\\\\a';", None),
         (r#"var foo = "\@";"#, None),
         (r#"var foo = "foo \a bar";"#, None),
         (r#"var foo = '\"';"#, None),
