@@ -753,6 +753,11 @@ impl<C: CpuSimd> Vec256<C> {
     /// Useful where LLVM "optimizes" code in a way that's actually a pessimization.
     #[inline(always)]
     pub fn opaque(self) -> Self {
+        // Miri does not support `asm!`. `opaque` only affects optimization, so skip it.
+        if cfg!(miri) {
+            return self;
+        }
+
         cpu_select!(self.cpu(), {
             Avx2 => {
                 /// Pass `v` through an empty `asm!` block.
