@@ -401,8 +401,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Continue parsing from `checkpoint`, keeping all output.
     ///
     /// The output before `checkpoint` must have been put back, though maybe at different indexes.
+    /// That output can include a fatal error, which stopped parsing at `checkpoint`.
+    /// `top_level_await.rs` takes such a checkpoint with the fatal error moved out, and puts it
+    /// back before resuming.
     pub(crate) fn resume(&mut self, checkpoint: &ParserCheckpoint<'a>) {
-        debug_assert!(!checkpoint.has_fatal_error && self.fatal_error.is_none());
+        debug_assert!(!checkpoint.has_fatal_error);
         debug_assert_eq!(self.state.cover_parenthesized.len(), checkpoint.cover_parenthesized_len);
         self.lexer.resume(&checkpoint.lexer);
         self.token = checkpoint.cur_token;

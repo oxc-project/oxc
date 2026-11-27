@@ -94,6 +94,9 @@ pub fn run_lexer_misc(files: &[MiscFile]) -> Vec<CoverageResult> {
     const SKIP: &[&str] = &[
         "babel-16776-m.js",
         "oxc-26742-1.js",
+        "pass/unambiguous-await-fatal-await.js",
+        "pass/unambiguous-await-fatal-module.js",
+        "unambiguous-await-lexer-error-module.js",
         "unambiguous-await-regex.js",
         "unambiguous-await-reparse-ambient.d.ts",
         "unambiguous-await-reparse-import-meta.js",

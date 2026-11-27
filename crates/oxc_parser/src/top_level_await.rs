@@ -1,14 +1,51 @@
-//! Reparsing top-level statements which parsed `await` as an identifier.
+//! Parsing top-level statements again once an unambiguous source's goal is known.
 //!
 //! In unambiguous mode, `await` is an identifier until module syntax shows that the source is a
 //! module. After that, `await /x/u;` is not 2 divisions, but an `await` of a regular expression.
 //!
-//! The first parse stops after the statement with the module syntax. As in TypeScript's
-//! `reparseTopLevelAwait`, the statements before it in which `await` was an identifier are parsed
-//! again, as module code. Each reparse continues until it ends where a statement of the first
-//! parse started, with the same trivia before it, and that statement did not have `await` as an
-//! identifier. The first parse's statements from there on are kept, together with their tokens,
-//! trivia, errors and module records. Then parsing continues as a module.
+//! From the first top-level statement with `await` as an identifier on, the first parse saves a
+//! checkpoint before each statement (see `parse_directives_and_statements`). It stops after the
+//! statement with module syntax, if it finds any. `finish_top_level_statements` then takes one of
+//! 3 paths.
+//!
+//! ## Module syntax found
+//!
+//! As in TypeScript's `reparseTopLevelAwait`, the statements before it in which `await` was an
+//! identifier are parsed again, as module code. Each reparse continues until it ends where a
+//! statement of the first parse started, with the same trivia before it, and that statement did
+//! not have `await` as an identifier. The first parse's statements from there on are kept,
+//! together with their tokens, trivia, errors and module records. Then parsing continues as a
+//! module.
+//!
+//! ## No module syntax, but errors
+//!
+//! The first parse can also fail without finding module syntax, as in `await /x/; export {}`,
+//! where `await / x /` is missing an operand. If it has errors from the first checkpoint on, the
+//! statements from there on are parsed again as a module. Like Babel, the source is a module if
+//! that finds module syntax or has no errors, counting errors reported later, such as for
+//! HTML-like comments anywhere in the source. Otherwise, the first parse is put back as it was.
+//!
+//! ## No module syntax or errors
+//!
+//! The source is a script, and the first parse is kept.
+//!
+//! ## What this relies on
+//!
+//! * Every top-level statement from the first checkpoint on has a checkpoint, including one with a
+//!   fatal error. Directives cannot follow the first one. So `checkpoints[i]` is before
+//!   `statements[first_statement + i]`.
+//! * Output is appended in parse order, so the output from a checkpoint on is what follows the
+//!   lengths saved in it. The exception is the lexer error which `set_unexpected` can take as the
+//!   fatal error. See `take_first_parse`.
+//! * Without module syntax, the first parse stops only at the end of the source: at `Eof`, at a
+//!   fatal error, which moves the lexer to the end, or at the `Undetermined` token of a lexer
+//!   error, which ends the statements like `Eof`, with no fatal error. So once the source is a
+//!   script, nothing is left to parse.
+//! * `ParserCheckpoint` does not cover deferred errors, module records, or the parser state keyed
+//!   by source position. They are handled here, as they are where `arrow.rs` parses the arguments
+//!   of `async(…)` again.
+//! * Some errors are reported only at the end of parsing: the deferred errors of whichever of a
+//!   module or a script the source turns out to be, and the remaining `cover_initialized_name`s.
 
 use std::{mem, ops::Range, vec};
 
@@ -19,14 +56,18 @@ use oxc_syntax::module_record::DynamicImport;
 
 use crate::{
     ParserConfig as Config, ParserImpl, StatementContext, config::LexerConfig,
-    cursor::ParserCheckpoint, diagnostics, diagnostics::ParserDiagnostic, lexer::Token,
-    module_record::ModuleRecordBuilder,
+    cursor::ParserCheckpoint, diagnostics, diagnostics::ParserDiagnostic,
+    error_handler::FatalError, lexer::Token, module_record::ModuleRecordBuilder,
+    state::CoverInitializedName,
 };
 
 /// State before a top-level statement of the first parse.
+///
+/// The lengths outside `parser` are of output which `ParserImpl::rewind` does not truncate.
 pub struct StatementCheckpoint<'a> {
     parser: ParserCheckpoint<'a>,
     deferred_module_errors_len: usize,
+    deferred_script_errors_len: usize,
     dynamic_imports_len: usize,
     import_metas_len: usize,
     /// Whether the statement parsed `await` as an identifier.
@@ -77,6 +118,29 @@ struct OriginalOutput<'a> {
     import_metas: Original<Span>,
 }
 
+/// The first parse from the first checkpoint on, moved out of the parser while
+/// `retry_as_module` parses the same statements as a module.
+///
+/// With the checkpoints, it holds what that parse discards or overwrites, so the first parse can
+/// be put back as it was.
+struct FirstParse<'a> {
+    /// The checkpoints of the statements, then of where the first parse stopped.
+    checkpoints: Vec<StatementCheckpoint<'a>>,
+    /// Index of the first checkpoint's statement.
+    first_statement: usize,
+    output: OriginalOutput<'a>,
+    /// Module records other than dynamic imports and `import.meta`s.
+    declarations: ModuleRecordBuilder<'a>,
+    fatal_error: Option<FatalError<'a>>,
+    /// Whether a copy of `fatal_error`'s lexer error is in `lexer.errors` while `fatal_error` is
+    /// out of the parser.
+    lexer_error_copied: bool,
+    reported_ambient_statement: bool,
+    deferred_script_errors: Vec<ParserDiagnostic<'a>>,
+    cover_initialized_names: Vec<(u32, CoverInitializedName<'a>)>,
+    trailing_commas: Vec<(u32, Span)>,
+}
+
 /// Index of the current token of `checkpoint` in the tokens, if tokens are enabled.
 /// Lexing it pushed it, so it is the last token before the checkpoint.
 fn token_index(checkpoint: &StatementCheckpoint<'_>) -> usize {
@@ -89,14 +153,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         StatementCheckpoint {
             parser: self.checkpoint(),
             deferred_module_errors_len: self.lexer.deferred_module_errors.len(),
+            deferred_script_errors_len: self.deferred_script_errors.len(),
             dynamic_imports_len: self.module_record_builder.dynamic_imports_len(),
             import_metas_len: self.module_record_builder.import_metas_len(),
             has_await_identifier: false,
         }
     }
 
-    /// Parse a top-level statement of a module, after the first parse.
-    fn parse_module_statement(
+    /// Parse a top-level statement, after the first parse.
+    fn parse_top_level_statement(
         &mut self,
         reported_ambient_statement: &mut bool,
     ) -> Option<Statement<'a>> {
@@ -108,6 +173,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.check_ambient_statement(&statement, reported_ambient_statement);
         }
         Some(statement)
+    }
+
+    /// Parse the remaining top-level statements, after the first parse.
+    fn parse_top_level_statements(
+        &mut self,
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+        reported_ambient_statement: &mut bool,
+    ) {
+        while let Some(statement) = self.parse_top_level_statement(reported_ambient_statement) {
+            statements.push(statement);
+        }
     }
 
     /// Finish the top-level statements, after the first parse stopped with
@@ -122,19 +198,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         reported_ambient_statement: &mut bool,
     ) {
         if self.module_record_builder.has_module_syntax() {
-            self.ctx = self.ctx.and_await(true);
-            // Discard what lookahead found while `await` was an identifier
-            self.state.not_parenthesized_arrow.clear();
-            self.state.type_argument_lookahead = None;
+            self.set_await_context(true);
             if self.fatal_error.is_some() {
-                self.reparse_after_fatal_error(statements);
+                // The fatal error is in the statement with the module syntax, so the first parse
+                // has no statement to resume at. Parse everything from the first checkpoint on
+                // again.
+                let checkpoints = mem::take(&mut self.state.statement_checkpoints);
+                let first_statement = statements.len() - checkpoints.len();
+                self.rewind_to_statement(&checkpoints[0], statements, first_statement);
             } else {
                 self.reparse_top_level_awaits(statements, reported_ambient_statement);
             }
-            while let Some(statement) = self.parse_module_statement(reported_ambient_statement) {
-                statements.push(statement);
-            }
+            // Parsed again, the module syntax may not be, as in `await /x; export {}; y/u`.
+            // Like Babel, the source is still a module.
+            self.module_record_builder.set_module_syntax();
+            self.parse_top_level_statements(statements, reported_ambient_statement);
+        } else if self.has_errors_since(&self.state.statement_checkpoints[0]) {
+            self.retry_as_module(statements, reported_ambient_statement);
         } else {
+            // A script, so the first parse is kept. Statements with checkpoints skipped the
+            // ambient context check when parsed, because they might have been parsed again.
             let mut checkpoints = mem::take(&mut self.state.statement_checkpoints);
             if self.ctx.has_ambient() {
                 checkpoints.push(self.statement_checkpoint());
@@ -149,19 +232,184 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Parse the statements from the first with an `await` identifier on again, where the first
-    /// parse stopped at a fatal error in the statement with the module syntax.
-    fn reparse_after_fatal_error(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        let checkpoints = mem::take(&mut self.state.statement_checkpoints);
-        let first = &checkpoints[0];
-        let first_statement = statements.len() - checkpoints.len();
-        statements.truncate(first_statement);
+    /// Parse the statements from the first checkpoint on again as a module, after the first parse
+    /// had errors in them and found no module syntax. Put the first parse back if that fails.
+    fn retry_as_module(
+        &mut self,
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+        reported_ambient_statement: &mut bool,
+    ) {
+        let first_parse = self.take_first_parse(statements, *reported_ambient_statement);
+        let first = &first_parse.checkpoints[0];
         self.rewind(first.parser);
-        self.lexer.deferred_module_errors.truncate(first.deferred_module_errors_len);
+        // `take_first_parse` moved out the first checkpoint's token with the tokens after it
+        if self.lexer.config.tokens() {
+            self.lexer.tokens_mut().push(first.parser.token());
+        }
+        self.set_await_context(true);
+        self.parse_top_level_statements(statements, reported_ambient_statement);
+
+        // HTML-like comments are errors in a module wherever they are, even before `first`
+        if self.module_record_builder.has_module_syntax()
+            || (!self.has_errors_since(first) && self.lexer.deferred_module_errors.is_empty())
+        {
+            self.module_record_builder.set_module_syntax();
+            return;
+        }
+        self.put_back_first_parse(first_parse, statements, reported_ambient_statement);
+    }
+
+    /// Move the first parse from the first checkpoint on out of the parser.
+    ///
+    /// Leaves the parser where the first parse stopped, without its fatal error.
+    fn take_first_parse(
+        &mut self,
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+        reported_ambient_statement: bool,
+    ) -> FirstParse<'a> {
+        let mut checkpoints = mem::take(&mut self.state.statement_checkpoints);
+        let first_statement = statements.len() - checkpoints.len();
+
+        // At `Eof`, `set_unexpected` takes the last lexer error as the fatal error, even one from
+        // before the first checkpoint, as in `'\u{zz}'; await(1); (`. Then there are fewer lexer
+        // errors than the checkpoint counts. `rewind` gives such an error back when it discards
+        // the fatal error, but this only moves the fatal error out, so it pushes a copy instead.
+        let fatal_error = self.fatal_error.take();
+        let lexer_error_copied = if let Some(fatal_error) = &fatal_error
+            && self.lexer.errors.len() < checkpoints[0].parser.lexer().errors_len()
+        {
+            self.lexer.errors.push(fatal_error.error.clone());
+            true
+        } else {
+            false
+        };
+
+        // Where the first parse stopped. Taken without the fatal error, as `resume` requires, and
+        // with the copy, so its lexer errors start with the first checkpoint's.
+        checkpoints.push(self.statement_checkpoint());
+
+        let first = &checkpoints[0];
         let start = first.start();
+        let (output, declarations) = self.take_original_output(statements, first_statement, first);
+        let deferred_script_errors =
+            self.deferred_script_errors.split_off(first.deferred_script_errors_len);
+        // Keyed by source position. Left in, the module parse could find them at the same
+        // positions.
+        let cover_initialized_names = self
+            .state
+            .cover_initialized_name
+            .extract_if(|&position, _| position >= start)
+            .collect();
+        let trailing_commas =
+            self.state.trailing_commas.extract_if(|&position, _| position >= start).collect();
+
+        FirstParse {
+            checkpoints,
+            first_statement,
+            output,
+            declarations,
+            fatal_error,
+            lexer_error_copied,
+            reported_ambient_statement,
+            deferred_script_errors,
+            cover_initialized_names,
+            trailing_commas,
+        }
+    }
+
+    /// Discard the module parse, and put back the first parse.
+    ///
+    /// Leaves the parser where the first parse stopped, as if it had not been taken.
+    fn put_back_first_parse(
+        &mut self,
+        first_parse: FirstParse<'a>,
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+        reported_ambient_statement: &mut bool,
+    ) {
+        let FirstParse {
+            checkpoints,
+            first_statement,
+            mut output,
+            declarations,
+            fatal_error,
+            lexer_error_copied,
+            reported_ambient_statement: reported,
+            deferred_script_errors,
+            cover_initialized_names,
+            trailing_commas,
+        } = first_parse;
+        let (first, end) = (&checkpoints[0], &checkpoints[checkpoints.len() - 1]);
+
+        self.rewind_to_statement(first, statements, first_statement);
+        self.set_await_context(false);
+        if lexer_error_copied {
+            // `rewind` kept it, giving it back if the module parse's fatal error took it
+            debug_assert_eq!(self.lexer.errors.len(), first.parser.lexer().errors_len());
+            self.lexer.errors.pop();
+        }
+        // The first parse's errors are put back at the same indexes, so `errors_len` of its fatal
+        // error stays right. It is set before `keep_original`, whose ambient statement check skips
+        // the statement with the fatal error and keeps `errors_len` in step.
+        self.fatal_error = fatal_error;
+        *reported_ambient_statement = reported;
+        // `keep_original` puts back the first parse's tokens, from the first checkpoint's on
+        if self.lexer.config.tokens() {
+            self.lexer.tokens_mut().pop();
+        }
+        self.keep_original(
+            &mut output,
+            statements,
+            &checkpoints,
+            first_statement,
+            reported_ambient_statement,
+        );
+        self.deferred_script_errors.extend(deferred_script_errors);
+        self.state.cover_initialized_name.extend(cover_initialized_names);
+        self.state.trailing_commas.extend(trailing_commas);
+        self.module_record_builder.append(declarations);
+        // Its token is `Eof` or `Undetermined`, which `finalize_tokens` expects to be the last
+        // token, unless there is a fatal error, which discards the tokens.
+        self.resume_at(end);
+    }
+
+    /// Whether parsing since `checkpoint` had errors other than deferred errors, which depend on
+    /// whether the source is a module.
+    ///
+    /// That includes a fatal error, which may have taken a lexer error from before `checkpoint`
+    /// (see `take_first_parse`), and the `cover_initialized_name`s which
+    /// `check_unfinished_errors` reports at the end of parsing.
+    fn has_errors_since(&self, checkpoint: &StatementCheckpoint<'a>) -> bool {
+        let start = checkpoint.start();
+        self.fatal_error.is_some()
+            || self.errors.len() > checkpoint.parser.errors_len()
+            || self.lexer.errors.len() > checkpoint.parser.lexer().errors_len()
+            || self.state.cover_initialized_name.keys().any(|&position| position >= start)
+    }
+
+    /// Parse with `await` as a keyword or not from now on.
+    fn set_await_context(&mut self, has_await: bool) {
+        self.ctx = self.ctx.and_await(has_await);
+        // Discard what lookahead found in the other context
+        self.state.not_parenthesized_arrow.clear();
+        self.state.type_argument_lookahead = None;
+    }
+
+    /// Rewind to the statement of `checkpoint`, which is `statements[index]`, discarding all
+    /// output from it on, including the output which `rewind` does not truncate.
+    fn rewind_to_statement(
+        &mut self,
+        checkpoint: &StatementCheckpoint<'a>,
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+        index: usize,
+    ) {
+        statements.truncate(index);
+        self.rewind(checkpoint.parser);
+        self.lexer.deferred_module_errors.truncate(checkpoint.deferred_module_errors_len);
+        self.deferred_script_errors.truncate(checkpoint.deferred_script_errors_len);
+        let start = checkpoint.start();
         self.state.cover_initialized_name.retain(|&position, _| position < start);
         self.state.trailing_commas.retain(|&position, _| position < start);
-        self.take_module_record(first);
+        self.take_module_record(checkpoint);
     }
 
     /// Reparse the statements of the first parse which parsed `await` as an identifier.
@@ -202,7 +450,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Parse statements until the first parse is reached again
             let mut next = start + 1;
             let overran = loop {
-                let Some(statement) = self.parse_module_statement(reported_ambient_statement)
+                let Some(statement) = self.parse_top_level_statement(reported_ambient_statement)
                 else {
                     break true;
                 };
@@ -328,9 +576,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> (ModuleRecordBuilder<'a>, Vec<DynamicImport>, Vec<Span>) {
         let module_record_builder = ModuleRecordBuilder::new(self.allocator(), self.source_type);
         let mut declarations = mem::replace(&mut self.module_record_builder, module_record_builder);
-        // Parsed again, the module syntax may not be, as in `await /x; export {}; y/u`.
-        // Like Babel, the source is still a module.
-        self.module_record_builder.set_module_syntax();
         let (mut dynamic_imports, mut import_metas) = declarations.take_expression_records();
         let later_dynamic_imports = dynamic_imports.drain(first.dynamic_imports_len..).collect();
         let later_import_metas = import_metas.drain(first.import_metas_len..).collect();
@@ -413,6 +658,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Continue parsing at the statement of `checkpoint`, after the output before it.
+    ///
+    /// The statement's token was moved out with the tokens from it on. It is pushed back as the
+    /// last token, as the lexer pushed it when it lexed it.
     fn resume_at(&mut self, checkpoint: &StatementCheckpoint<'a>) {
         if self.lexer.config.tokens() {
             self.lexer.tokens_mut().push(checkpoint.parser.token());
