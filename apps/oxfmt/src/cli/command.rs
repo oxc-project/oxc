@@ -30,6 +30,8 @@ pub struct FormatCommand {
     pub ignore_options: IgnoreOptions,
     #[bpaf(external)]
     pub runtime_options: RuntimeOptions,
+    #[bpaf(external)]
+    pub cache_options: CacheOptions,
     /// Single file, path or list of paths.
     /// Glob patterns are also supported.
     /// (Be sure to quote them, otherwise your shell may expand them before passing.)
@@ -181,4 +183,17 @@ pub struct RuntimeOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
+}
+
+/// Cache Options
+#[derive(Debug, Clone, Bpaf)]
+pub struct CacheOptions {
+    /// Only read and format files that changed since the last run with `--cache`.
+    /// Output is the same as without it.
+    #[bpaf(switch, hide_usage)]
+    pub cache: bool,
+    /// Directory for the cache, used with `--cache`.
+    /// Defaults to `node_modules/.cache/oxfmt` in the current working directory.
+    #[bpaf(argument("PATH"), hide_usage)]
+    pub cache_location: Option<PathBuf>,
 }

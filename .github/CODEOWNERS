@@ -47,6 +47,7 @@ pnpm-lock.yaml
 # Shared application tooling (@camc314 @leaysgur)
 
 /crates/oxc_language_server @camc314 @leaysgur @sysix
+/crates/oxc_cache @camc314 @leaysgur
 /crates/oxc_config @camc314 @leaysgur
 /apps/shared @camc314 @leaysgur
 

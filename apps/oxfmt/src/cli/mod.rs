@@ -1,3 +1,4 @@
+pub(crate) mod cache;
 pub(crate) mod command;
 mod init;
 mod reporter;

@@ -7,6 +7,7 @@ import {
   sortTailwindClasses,
 } from "./cli/worker-proxy";
 import { loadJsConfig, loadVitePlusConfig } from "./cli/js_config";
+import { excludeCacheFromTaskRunner } from "./cli/task-runner";
 
 // napi-JS `oxfmt` CLI entry point
 // See also `run_cli()` function in `./src/main_napi.rs`
@@ -38,6 +39,8 @@ void (async () => {
   // Also, for Oxfmt, this affects loading JS/TS config files,
   // and Prettier calls in `worker_threads`, whose stdout is piped through this `process.stdout`.
   if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
+
+  if (args.includes("--cache")) excludeCacheFromTaskRunner(args);
 
   // Call the Rust CLI first, to parse args and determine mode
   // NOTE: If the mode is formatter CLI, it will also perform formatting and return an exit code
