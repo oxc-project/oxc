@@ -1,4 +1,5 @@
 export { defineConfig } from "./package/config.ts";
+export { presets } from "./package/presets.generated.ts";
 
 export type {
   AllowWarnDeny,
