@@ -1,8 +1,15 @@
 use oxc_ast::{AstKind, ast::ArrayExpressionElement};
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
+
+fn no_sparse_arrays_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected comma in middle of array")
+        .with_help("remove the comma or insert `undefined`")
+        .with_label(span.label("unexpected comma"))
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSparseArrays;
@@ -60,45 +67,12 @@ declare_oxc_lint!(
 
 impl Rule for NoSparseArrays {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ArrayExpression(array_expr) = node.kind() {
-            let violations = array_expr
-                .elements
-                .iter()
-                .filter_map(|el| match el {
-                    ArrayExpressionElement::Elision(elision) => Some(elision),
-                    _ => None,
-                })
-                .map(|elision| {
-                    LabeledSpan::at(elision.span.start..elision.span.start, "unexpected comma")
-                })
-                .collect::<Vec<_>>();
-
-            if !violations.is_empty() {
-                if violations.len() < 10 {
-                    ctx.diagnostic(
-                        OxcDiagnostic::warn("Unexpected comma in middle of array")
-                            .with_help("remove the comma or insert `undefined`")
-                            .with_labels(violations),
-                    );
-                } else {
-                    let span = if (array_expr.span.end - array_expr.span.start) < 50 {
-                        LabeledSpan::at(array_expr.span, "the array here")
-                    } else {
-                        LabeledSpan::at(
-                            array_expr.span.start..array_expr.span.start,
-                            "the array starting here",
-                        )
-                    };
-
-                    ctx.diagnostic(
-                        OxcDiagnostic::warn(format!(
-                            "{} unexpected commas in middle of array",
-                            violations.len()
-                        ))
-                        .with_help("remove the comma or insert `undefined`")
-                        .with_label(span),
-                    );
-                }
+        let AstKind::ArrayExpression(array_expr) = node.kind() else {
+            return;
+        };
+        for element in &array_expr.elements {
+            if let ArrayExpressionElement::Elision(elision) = element {
+                ctx.diagnostic(no_sparse_arrays_diagnostic(elision.span));
             }
         }
     }
@@ -114,16 +88,9 @@ fn test() {
         "var a = [,];",
         "var a = [ 1,, 2];",
         "var a = [ 1,,,, 2];",
-        "var a = [ 1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, 2];",
-        "var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,  2];",
-        "var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , , hello, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,  2];",
-        "var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , ,
-
-
-        hello, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,
-
-
-        , , , , , , , , , , , , , , , , , , ,  2];",
+        "var a = [ 1, , hello, , 2];",
+        "const a = [\n  ,\n  ,\n];",
+        "const a = [\n  // eslint-disable-next-line no-sparse-arrays\n  ,\n  ,\n];",
     ];
 
     Tester::new(NoSparseArrays::NAME, NoSparseArrays::PLUGIN, pass, fail).test_and_snapshot();
