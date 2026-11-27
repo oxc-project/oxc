@@ -70,6 +70,86 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax
     }
 
+    /// Number of dynamic imports recorded.
+    pub fn dynamic_imports_len(&self) -> usize {
+        self.dynamic_imports.len()
+    }
+
+    /// Number of `import.meta`s recorded.
+    pub fn import_metas_len(&self) -> usize {
+        self.import_metas.len()
+    }
+
+    /// Remove the dynamic imports and `import.meta`s, and return them.
+    pub fn take_expression_records(&mut self) -> (ArenaVec<'a, DynamicImport>, ArenaVec<'a, Span>) {
+        let dynamic_imports = std::mem::replace(
+            &mut self.dynamic_imports,
+            BufferedVec::new(ArenaVec::new_in(&self.allocator)),
+        );
+        let import_metas = std::mem::replace(
+            &mut self.import_metas,
+            BufferedVec::new(ArenaVec::new_in(&self.allocator)),
+        );
+        (dynamic_imports.into_vec(), import_metas.into_vec())
+    }
+
+    pub fn add_dynamic_import(&mut self, dynamic_import: DynamicImport) {
+        self.dynamic_imports.push(dynamic_import);
+    }
+
+    pub fn add_import_meta(&mut self, span: Span) {
+        self.import_metas.push(span);
+    }
+
+    /// Add the records of `other`, which are of source after the source recorded in `self`.
+    pub fn append(&mut self, other: Self) {
+        let Self {
+            module_record,
+            import_entries,
+            dynamic_imports,
+            import_metas,
+            export_entries,
+            exported_bindings_duplicated,
+            skipped_default_exports,
+            ..
+        } = other;
+        self.module_record.has_module_syntax |= module_record.has_module_syntax;
+        for (name, requested_modules) in module_record.requested_modules {
+            self.module_record
+                .requested_modules
+                .entry(name)
+                .or_insert_with(|| ArenaVec::new_in(&self.allocator))
+                .extend(requested_modules);
+        }
+        for entry in import_entries {
+            self.import_entries.push(entry);
+        }
+        for dynamic_import in dynamic_imports {
+            self.dynamic_imports.push(dynamic_import);
+        }
+        for import_meta in import_metas {
+            self.import_metas.push(import_meta);
+        }
+        for entry in export_entries {
+            self.export_entries.push(entry);
+        }
+        // Add the bindings again in source order, the order they were first added in.
+        let mut bindings = module_record
+            .exported_bindings
+            .into_iter()
+            .chain(
+                exported_bindings_duplicated
+                    .into_iter()
+                    .map(|binding| (binding.name, binding.span)),
+            )
+            .collect::<Vec<_>>();
+        bindings.sort_unstable_by_key(|(_, span)| span.start);
+        for (name, span) in bindings {
+            self.add_export_binding(name, span);
+        }
+        self.skipped_default_exports.extend(skipped_default_exports);
+    }
+
     fn errors(
         source_type: SourceType,
         module_record: &ModuleRecord<'a>,

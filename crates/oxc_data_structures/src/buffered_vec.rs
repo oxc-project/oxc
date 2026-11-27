@@ -47,6 +47,18 @@ impl<V: BufferedVecBacking, const N: usize> BufferedVec<V, N> {
         Self { buffer: std::array::from_fn(|_| None), len: 0, vec }
     }
 
+    /// Number of elements.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Whether there are no elements.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
     /// Reserve space for a batch of additional elements, keeping batches that
     /// fit in the inline buffer allocation-free.
     ///

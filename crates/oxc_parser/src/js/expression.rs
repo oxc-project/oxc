@@ -125,10 +125,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             return self.unexpected();
         }
-        // Track await identifier for potential reparsing in unambiguous mode
-        if kind == Kind::Await && !self.ctx.has_await() {
-            self.state.encountered_await_identifier = true;
-        }
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         IdentifierReference::new(span, name, self)
@@ -175,6 +171,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.unexpected();
         }
         // The grammar predicate already excludes `yield`/`await` in those contexts.
+        if kind == Kind::Await {
+            // In unambiguous mode, the statement is parsed again if the source is a module
+            self.state.encountered_await_identifier = true;
+        }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         LabelIdentifier::new(span, name, self)
     }
@@ -230,7 +230,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Await if ctx.has_await() => {
                 self.error(diagnostics::identifier_async("await", span));
             }
-            Kind::Await => self.state.mentions_await = true,
+            Kind::Await => {
+                self.state.mentions_await = true;
+                // In unambiguous mode, the statement is parsed again if the source is a module
+                self.state.encountered_await_identifier = true;
+            }
             // It is a Syntax Error if this production has a [Yield] parameter.
             Kind::Yield if ctx.has_yield() => {
                 let next_token = self.lexer.peek_token();
@@ -2162,7 +2166,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // Case 3: Ambiguous - parse `await` as identifier
         // This applies to scripts where `await` might be identifier or keyword
-        // The statement-level checkpoint system handles reparsing if ESM detected
+        // If the source turns out to be a module, the statement is parsed again (`top_level_await.rs`)
         self.parse_update_expression(lhs_start)
     }
 

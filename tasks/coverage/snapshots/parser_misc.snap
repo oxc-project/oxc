@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 179/179 (100.00%)
-Positive Passed: 179/179 (100.00%)
-Negative Passed: 320/320 (100.00%)
+AST Parsed     : 193/193 (100.00%)
+Positive Passed: 193/193 (100.00%)
+Negative Passed: 332/332 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -6351,6 +6351,205 @@ Negative Passed: 320/320 (100.00%)
  1 │ class A extends B<C> {}
    ·                  ───
    ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-ambient-fatal-statement.d.ts:2:1]
+ 1 │ declare var await: number;
+ 2 │ )
+   · ─
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[misc/fail/unambiguous-await-ambient-fatal.d.ts:1:1]
+ 1 │ await(1);
+   · ─────────
+ 2 │ function f(a?, b) {}
+   ╰────
+
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[misc/fail/unambiguous-await-ambient-fatal.d.ts:2:16]
+ 1 │ await(1);
+ 2 │ function f(a?, b) {}
+   ·                ─
+ 3 │ )
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[misc/fail/unambiguous-await-ambient-fatal.d.ts:2:19]
+ 1 │ await(1);
+ 2 │ function f(a?, b) {}
+   ·                   ▲
+ 3 │ )
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-ambient-fatal.d.ts:3:1]
+ 2 │ function f(a?, b) {}
+ 3 │ )
+   · ─
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[misc/fail/unambiguous-await-reparse-ambient-order.d.ts:2:1]
+ 1 │ declare var await: number;
+ 2 │ y;
+   · ──
+ 3 │ declare namespace N { x; }
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[misc/fail/unambiguous-await-reparse-ambient-order.d.ts:3:23]
+ 2 │ y;
+ 3 │ declare namespace N { x; }
+   ·                       ──
+ 4 │ function f(a?, b) {}
+   ╰────
+
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[misc/fail/unambiguous-await-reparse-ambient-order.d.ts:4:16]
+ 3 │ declare namespace N { x; }
+ 4 │ function f(a?, b) {}
+   ·                ─
+ 5 │ export {};
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[misc/fail/unambiguous-await-reparse-ambient-order.d.ts:4:19]
+ 3 │ declare namespace N { x; }
+ 4 │ function f(a?, b) {}
+   ·                   ▲
+ 5 │ export {};
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[misc/fail/unambiguous-await-reparse-ambient.d.ts:1:9]
+ 1 │ var a = await /x; c/g; d; export {}
+   ·         ─────────────
+   ╰────
+
+  × TS(1036): Statements are not allowed in ambient contexts.
+   ╭─[misc/fail/unambiguous-await-reparse-ambient.d.ts:1:24]
+ 1 │ var a = await /x; c/g; d; export {}
+   ·                        ──
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/unambiguous-await-reparse-binding.js:1:5]
+ 1 │ var await; ({ await }); export {};
+   ·     ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/unambiguous-await-reparse-binding.js:1:15]
+ 1 │ var await; ({ await }); export {};
+   ·               ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[misc/fail/unambiguous-await-reparse-binding.js:1:5]
+ 1 │ var await; ({ await }); export {};
+   ·     ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
+
+  × The keyword 'await' is reserved
+   ╭─[misc/fail/unambiguous-await-reparse-binding.js:1:15]
+ 1 │ var await; ({ await }); export {};
+   ·               ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-reparse-break-label.js:1:12]
+ 1 │ l: { break await; }
+   ·            ─────
+ 2 │ export {};
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/unambiguous-await-reparse-fatal.js:2:1]
+ 1 │ await
+ 2 │ export {};
+   · ──────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/unambiguous-await-reparse-import-default.js:1:8]
+ 1 │ import await from "a";
+   ·        ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[misc/fail/unambiguous-await-reparse-import-default.js:1:8]
+ 1 │ import await from "a";
+   ·        ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/unambiguous-await-reparse-import-equals.ts:1:8]
+ 1 │ import await = require("a");
+   ·        ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[misc/fail/unambiguous-await-reparse-import-equals.ts:1:8]
+ 1 │ import await = require("a");
+   ·        ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/unambiguous-await-reparse-import-namespace.js:1:13]
+ 1 │ import * as await from "a";
+   ·             ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[misc/fail/unambiguous-await-reparse-import-namespace.js:1:13]
+ 1 │ import * as await from "a";
+   ·             ─────
+   ╰────
+  note: The identifier `await` is reserved in module code
+
+  × Async functions can only be declared at the top level or inside a block
+   ╭─[misc/fail/unambiguous-await-reparse-kept-errors.js:1:8]
+ 1 │ if (1) async function f() {}
+   ·        ──────────────────
+ 2 │ await /x/u;
+   ╰────
+
+  × Async functions can only be declared at the top level or inside a block
+   ╭─[misc/fail/unambiguous-await-reparse-kept-errors.js:3:8]
+ 2 │ await /x/u;
+ 3 │ if (1) async function g() {}
+   ·        ──────────────────
+ 4 │ export {};
+   ╰────
+
+  × Invalid function declaration
+   ╭─[misc/fail/unambiguous-await-reparse-kept-errors.js:1:8]
+ 1 │ if (1) async function f() {}
+   ·        ─────────────────────
+ 2 │ await /x/u;
+   ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+   ╭─[misc/fail/unambiguous-await-reparse-kept-errors.js:3:8]
+ 2 │ await /x/u;
+ 3 │ if (1) async function g() {}
+   ·        ─────────────────────
+ 4 │ export {};
+   ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[misc/fail/unambiguous-await-reparse-regex-export.js:1:18]
+ 1 │ await /x; export {}; y/u;
+   ·                  ▲
+   ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[misc/fail/yield-of-outside-generator.cjs:2:3]

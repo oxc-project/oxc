@@ -1,0 +1,3 @@
+await /x/
+foo;
+export {};
