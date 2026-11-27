@@ -8,6 +8,13 @@ source: crates/oxc_linter/src/tester.rs
  2 │             interface Foo {}
    ·                       ───
  3 │             class Foo {}
+   ╰────
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
+
+  ⚠ typescript(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:3:19]
+ 2 │             interface Foo {}
+ 3 │             class Foo {}
    ·                   ───
  4 │                   
    ╰────
@@ -18,6 +25,13 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │                      class Foo {}
    ·                            ───
+ 3 │                      interface Foo {}
+   ╰────
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
+
+  ⚠ typescript(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:3:32]
+ 2 │                      class Foo {}
  3 │                      interface Foo {}
    ·                                ───
  4 │                            
@@ -30,7 +44,41 @@ source: crates/oxc_linter/src/tester.rs
  3 │                        interface Foo {}
    ·                                  ───
  4 │                        class Foo {}
+   ╰────
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
+
+  ⚠ typescript(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:4:30]
+ 3 │                        interface Foo {}
+ 4 │                        class Foo {}
    ·                              ───
  5 │                      }
+   ╰────
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
+
+  ⚠ typescript(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:3:7]
+ 2 │ namespace Foo { export interface Options {} }
+ 3 │ class Foo {}
+   ·       ───
+ 4 │ interface Foo { value: string }
+   ╰────
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
+
+  ⚠ typescript(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:4:11]
+ 3 │ class Foo {}
+ 4 │ interface Foo { value: string }
+   ·           ───
+ 5 │ export {};
+   ╰────
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
+
+  ⚠ typescript(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:4:7]
+ 3 │ interface Foo { value: string }
+ 4 │ class Foo {}
+   ·       ───
+ 5 │ export {};
    ╰────
   help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
