@@ -113,16 +113,8 @@ impl Rule for ForDirection {
             return;
         };
 
-        let Some(Expression::BinaryExpression(test)) = &for_loop.test else {
-            return;
-        };
-
-        let Some((counter, counter_position)) = extract_counter(&test.left, &test.right) else {
-            return;
-        };
-
-        let Some(expected_update_direction) =
-            get_expected_update_direction(test.operator, counter_position)
+        let Some(Expression::BinaryExpression(test)) =
+            for_loop.test.as_ref().map(Expression::without_parentheses)
         else {
             return;
         };
@@ -130,28 +122,32 @@ impl Rule for ForDirection {
         let Some(update_expr) = &for_loop.update else {
             return;
         };
+        let update_expr = update_expr.without_parentheses();
 
-        let Some(update_direction) = get_update_direction(update_expr, counter) else {
-            return;
-        };
+        for (operand, counter_position) in
+            [(&test.left, CounterPosition::Left), (&test.right, CounterPosition::Right)]
+        {
+            let Expression::Identifier(counter) = operand.without_parentheses() else {
+                continue;
+            };
 
-        if update_direction != expected_update_direction {
-            ctx.diagnostic_with_dangerous_fix(
-                for_direction_diagnostic(test.span, update_expr.span()),
-                |fixer| apply_rule_fix(&fixer, update_expr),
-            );
+            let Some(expected_update_direction) =
+                get_expected_update_direction(test.operator, counter_position)
+            else {
+                return;
+            };
+
+            let Some(update_direction) = get_update_direction(update_expr, counter) else {
+                continue;
+            };
+
+            if update_direction != expected_update_direction {
+                ctx.diagnostic_with_dangerous_fix(
+                    for_direction_diagnostic(test.span, update_expr.span()),
+                    |fixer| apply_rule_fix(&fixer, update_expr),
+                );
+            }
         }
-    }
-}
-
-fn extract_counter<'a>(
-    left: &'a Expression<'a>,
-    right: &'a Expression<'a>,
-) -> Option<(&'a IdentifierReference<'a>, CounterPosition)> {
-    match (left, right) {
-        (Expression::Identifier(counter), _) => Some((counter, CounterPosition::Left)),
-        (_, Expression::Identifier(counter)) => Some((counter, CounterPosition::Right)),
-        _ => None,
     }
 }
 
@@ -320,6 +316,8 @@ fn test() {
         "for(var i = 0; i === 10; i+=1){}",
         "for(var i = 0; i == 10; i+=1){}",
         "for(var i = 0; i != 10; i+=1){}",
+        "for (let i = 0; (i < 10); i++) {}",
+        "for (let n = 10, i = 0; n > i; i++) {}",
     ];
 
     let fail = vec![
@@ -350,6 +348,10 @@ fn test() {
         // "for(var i = 0; i < MAX; i += (2 - 3));",
         // "var n = -2; for(var i = 0; i < 10; i += n);",
         "for(var i = 0; 10 > i; i-=1){}",
+        "for (let i = 0; (i < 10); i--) {}",
+        "for (let i = 0; (i) < 10; i--) {}",
+        "for (let i = 0; i < 10; (i--)) {}",
+        "for (let n = 10, i = 0; n > i; i--) {}",
     ];
 
     let fix = vec![
@@ -365,6 +367,9 @@ fn test() {
         // variables of different lengths
         ("for(var ii = 0; ii < 10; ii--){}", "for(var ii = 0; ii < 10; ii++){}"),
         ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}"),
+        ("for (let i = 0; (i < 10); i--) {}", "for (let i = 0; (i < 10); i++) {}"),
+        ("for (let i = 0; i < 10; (i--)) {}", "for (let i = 0; i < 10; (i++)) {}"),
+        ("for (let n = 10, i = 0; n > i; i--) {}", "for (let n = 10, i = 0; n > i; i++) {}"),
     ];
 
     Tester::new(ForDirection::NAME, ForDirection::PLUGIN, pass, fail)

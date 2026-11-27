@@ -172,3 +172,39 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ╰── This test moves in the wrong direction
    ╰────
   help: Use `while` loop for intended infinite loop
+
+  ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
+   ╭─[for_direction.tsx:1:18]
+ 1 │ for (let i = 0; (i < 10); i--) {}
+   ·                  ───┬──   ─┬─
+   ·                     │      ╰── with this update
+   ·                     ╰── This test moves in the wrong direction
+   ╰────
+  help: Use `while` loop for intended infinite loop
+
+  ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
+   ╭─[for_direction.tsx:1:17]
+ 1 │ for (let i = 0; (i) < 10; i--) {}
+   ·                 ────┬───  ─┬─
+   ·                     │      ╰── with this update
+   ·                     ╰── This test moves in the wrong direction
+   ╰────
+  help: Use `while` loop for intended infinite loop
+
+  ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
+   ╭─[for_direction.tsx:1:17]
+ 1 │ for (let i = 0; i < 10; (i--)) {}
+   ·                 ───┬──   ─┬─
+   ·                    │      ╰── with this update
+   ·                    ╰── This test moves in the wrong direction
+   ╰────
+  help: Use `while` loop for intended infinite loop
+
+  ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
+   ╭─[for_direction.tsx:1:25]
+ 1 │ for (let n = 10, i = 0; n > i; i--) {}
+   ·                         ──┬──  ─┬─
+   ·                           │     ╰── with this update
+   ·                           ╰── This test moves in the wrong direction
+   ╰────
+  help: Use `while` loop for intended infinite loop
