@@ -675,6 +675,7 @@ vitest/prefer-mock-promise-shorthand                    |  62606
 vitest/prefer-mock-return-shorthand                     |  62606
 vitest/prefer-snapshot-hint                             |      7
 vitest/prefer-spy-on                                    |  13005
+vitest/prefer-vi-mocked                                 |   2576
 vitest/require-hook                                     |  62613
 vitest/require-test-timeout                             |      7
 vitest/require-top-level-describe                       |      7
