@@ -709,3 +709,52 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let x = 0; (o?.f)(x = 1); use(x);
+   ·     ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let x = 0; (x = 1)?.f(); use(x);
+   ·     ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:17]
+ 1 │ let x = 0; o?.f(x = 1); x = 2; use(x);
+   ·                 ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let x = 0; o?.f(x = 1); x = 2; use(x);
+   ·     ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let x = 0; o?.f(x = 1, x);
+   ·     ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:17]
+ 1 │ let x = 0; o?.f(x = 1, x = 2); use(x);
+   ·                 ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:12]
+ 1 │ let x = 0; x = o?.f(x);
+   ·            ─
+   ╰────
+  help: Consider removing or reusing the assigned value.

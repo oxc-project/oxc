@@ -148,12 +148,18 @@ impl<'a> AstNodes<'a> {
     }
 
     /// ID of the control flow graph node this node is in.
+    /// Assignment expressions belong to the block where their RHS evaluation completes.
     ///
     /// See [oxc_cfg::ControlFlowGraph] for more information.
     #[inline]
     #[cfg(feature = "cfg")]
     pub fn cfg_id(&self, node_id: NodeId) -> BlockNodeId {
         self.cfg_ids[node_id]
+    }
+
+    #[cfg(feature = "cfg")]
+    pub(crate) fn set_cfg_id(&mut self, node_id: NodeId, cfg_id: BlockNodeId) {
+        self.cfg_ids[node_id] = cfg_id;
     }
 
     /// Get the [`Program`] that's also the root of the AST.
