@@ -22,7 +22,7 @@ pub use crate::{
     context::JsonFormatContext,
     format::{ParsedJson, format, format_to_ir, parse_for_format},
     options::{
-        BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, SingleQuote,
-        TrailingCommas,
+        ArrayExpand, ArrayLinePattern, BracketSpacing, Expand, JsonFormatOptions, JsonVariant,
+        QuoteProps, SingleQuote, TrailingCommas,
     },
 };

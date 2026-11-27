@@ -32,7 +32,7 @@ pub enum JsonVariant {
     JsonStringify,
 }
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct JsonFormatOptions {
     pub indent_style: IndentStyle,
     pub indent_width: IndentWidth,
@@ -43,6 +43,10 @@ pub struct JsonFormatOptions {
     pub bracket_spacing: BracketSpacing,
     // Used by: JSON, JSONC, JSON5
     pub expand: Expand,
+    // Used by: JSON, JSONC, JSON5
+    pub array_expand: ArrayExpand,
+    // Used by: JSON, JSONC, JSON5
+    pub array_line_pattern: Option<ArrayLinePattern>,
     // Used by: JSONC, JSON5
     pub trailing_commas: TrailingCommas,
     // Used by: JSON5
@@ -171,6 +175,44 @@ pub enum Expand {
     Auto,
     /// `objectWrap: "collapse"`. Collapses when it fits regardless of authored shape.
     Never,
+}
+
+/// Whether arrays keep Prettier's layout, keep their authored multi-line shape,
+/// collapse, or wrap by element count.
+/// Mirrors Oxfmt's `arrayWrap` option (not a Prettier option).
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum ArrayExpand {
+    /// `arrayWrap: "auto"`. Prettier's layout: collapse when it fits,
+    /// except arrays of multiple arrays/objects, which always expand.
+    #[default]
+    Auto,
+    /// `arrayWrap: "preserve"`. Like `Auto`, but stays multi-line when the source has a newline right after `[`.
+    Preserve,
+    /// `arrayWrap: "collapse"`. Collapses when it fits regardless of authored shape.
+    Never,
+    /// `arrayWrap: { "wrapThreshold": N }`. Always expands with more than `N` elements,
+    /// otherwise behaves like `Preserve`.
+    ForceAboveThreshold(u32),
+}
+
+/// A repeating per-line element count pattern for expanded arrays.
+///
+/// e.g. `[2, 1]` prints two elements on the first line, one on the second, then repeats.
+/// Mirrors Oxfmt's `arrayWrap.linePattern` option (not a Prettier option).
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct ArrayLinePattern(Vec<u32>);
+
+impl ArrayLinePattern {
+    /// Returns `None` unless `counts` is a non-empty list of positive integers.
+    pub fn new(counts: Vec<u32>) -> Option<Self> {
+        (!counts.is_empty() && !counts.contains(&0)).then_some(Self(counts))
+    }
+
+    /// Number of elements to print on the given zero-based wrapped line;
+    /// the pattern repeats once exhausted.
+    pub fn elements_for_line(&self, line: usize) -> u32 {
+        self.0[line % self.0.len()]
+    }
 }
 
 /// Whether to print a trailing comma after the last entry of a multi-line object/array.

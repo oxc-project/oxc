@@ -1,0 +1,77 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Multiline arrays collapse when they fit
+const collapsed = [
+  1,
+  2,
+  3,
+];
+// Even arrays of objects that Prettier's heuristic would expand
+const objects = [
+  { a: 1 },
+  { b: 2 },
+];
+const nested = [
+  [1, 2],
+  [3, 4],
+];
+// Arrays wider than printWidth still break
+const wide = [
+  "aaaaaaaaaaaaaaaaaaaa",
+  "bbbbbbbbbbbbbbbbbbbb",
+  "cccccccccccccccccccc",
+  "dddddddddddddddddddd",
+  "eeeeeeeeeeeeeeeeeeee",
+];
+// A trailing line comment still forces a break
+const commented = [1, 2, // line
+];
+
+==================== Output ====================
+-----------------------------------------
+{ arrayWrap: "collapse", printWidth: 80 }
+-----------------------------------------
+// Multiline arrays collapse when they fit
+const collapsed = [1, 2, 3];
+// Even arrays of objects that Prettier's heuristic would expand
+const objects = [{ a: 1 }, { b: 2 }];
+const nested = [[1, 2], [3, 4]];
+// Arrays wider than printWidth still break
+const wide = [
+  "aaaaaaaaaaaaaaaaaaaa",
+  "bbbbbbbbbbbbbbbbbbbb",
+  "cccccccccccccccccccc",
+  "dddddddddddddddddddd",
+  "eeeeeeeeeeeeeeeeeeee",
+];
+// A trailing line comment still forces a break
+const commented = [
+  1,
+  2, // line
+];
+
+------------------------------------------
+{ arrayWrap: "collapse", printWidth: 100 }
+------------------------------------------
+// Multiline arrays collapse when they fit
+const collapsed = [1, 2, 3];
+// Even arrays of objects that Prettier's heuristic would expand
+const objects = [{ a: 1 }, { b: 2 }];
+const nested = [[1, 2], [3, 4]];
+// Arrays wider than printWidth still break
+const wide = [
+  "aaaaaaaaaaaaaaaaaaaa",
+  "bbbbbbbbbbbbbbbbbbbb",
+  "cccccccccccccccccccc",
+  "dddddddddddddddddddd",
+  "eeeeeeeeeeeeeeeeeeee",
+];
+// A trailing line comment still forces a break
+const commented = [
+  1,
+  2, // line
+];
+
+===================== End =====================
