@@ -61,8 +61,9 @@ declare_oxc_lint!(
 impl Rule for NoSparseArrays {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ArrayExpression(array_expr) = node.kind() {
-            // Holes are deliberately grouped into one diagnostic per array. Directives only
-            // check a diagnostic's first label, so filter out disabled holes before grouping.
+            // Holes are grouped into one diagnostic per array, with a count-only summary for 10 or
+            // more, because printing a diagnostic per hole is slow for very sparse arrays (#1895).
+            // Directives only check a diagnostic's first label, so filter out disabled holes first.
             let violations = array_expr
                 .elements
                 .iter()
