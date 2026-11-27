@@ -34,6 +34,7 @@
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.ts",
     "generate-config-types": "node scripts/generate-config-types.ts",
+    "generate-presets": "node scripts/generate-presets.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
     "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx --conditions=code ./conformance/src/index.ts"
