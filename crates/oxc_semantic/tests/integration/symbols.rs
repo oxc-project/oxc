@@ -815,3 +815,102 @@ fn test_implicit_arguments_unresolved_references() {
         assert!(scoping.get_reference(reference_id).symbol_id().is_none());
     }
 }
+
+#[test]
+fn test_class_type_parameter_scope_exclusions() {
+    let tester = SemanticTester::ts(
+        "
+        declare function key<K>(): PropertyKey;
+        declare function base<B>(): new () => {};
+        interface IFace<F> {}
+        const expr = class Self<T> extends base<T>() implements IFace<T> {
+            static value: T;
+            static accessor acc: T;
+            static getFn(): T { return null as any; }
+            static [key: string]: T;
+            static { type Local = T; }
+            static make(): Self<number> { return new Self(); }
+            static withOwnParam<T>(x: T): T { return x; }
+            instance: T;
+            accessor instAcc: T;
+            [key<T>()](): T { return null as any; }
+            [key<T>()]: T;
+            accessor [key<T>()]: T;
+        };
+        ",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let class_scope_id = scoping
+        .scope_descendants_from_root()
+        .find(|&id| {
+            matches!(
+                semantic.nodes().get_node(scoping.get_node_id(id)).kind(),
+                oxc_ast::AstKind::Class(_)
+            )
+        })
+        .unwrap();
+    let class_t = scoping.get_binding(class_scope_id, "T".into()).unwrap();
+    assert_eq!(scoping.get_resolved_references(class_t).count(), 6);
+    assert_eq!(scoping.root_unresolved_references().get("T").map_or(0, |v| v.len()), 9);
+
+    tester.has_symbol("Self").has_number_of_references(2).test();
+}
+
+#[test]
+fn test_interface_and_nested_type_parameter_scope_exclusions() {
+    let tester = SemanticTester::ts(
+        "
+        declare function key<K>(): PropertyKey;
+        declare const sym: unique symbol;
+        type Shadowed = string;
+        interface I<Shadowed> {
+            [key<Shadowed>()]: Shadowed;
+            [key<Shadowed>()](): Shadowed;
+            nested: { [key<Shadowed>()]: number };
+        }
+        declare class Bar<sym> {
+            [sym]: number;
+        }
+        function outer<OuterT>(
+            p = class C<OuterT> {
+                static bad: OuterT;
+            },
+        ) {
+            return class Inner<U> {
+                static ok: OuterT;
+                static bad: U;
+            };
+        }
+        class OuterCls<ClsT> {
+            static Inner = class Middle<M> {
+                bad: ClsT;
+                ok: M;
+            };
+        }
+        namespace Ns { export type Foo = number; }
+        class WithNs<Ns> {
+            static x: Ns.Foo;
+        }
+        ",
+    );
+    tester.has_root_symbol("Shadowed").has_number_of_references(0).test();
+    tester.has_root_symbol("sym").has_number_of_references(1).test();
+    tester.has_root_symbol("Ns").has_number_of_references(1).test();
+    tester.has_symbol("OuterT").has_number_of_references(1).test();
+    tester.has_symbol("ClsT").has_number_of_references(0).test();
+    tester.has_symbol("M").has_number_of_references(1).test();
+    tester.has_symbol("U").has_number_of_references(0).test();
+
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let iface_shadowed = scoping
+        .symbol_ids()
+        .find(|&id| {
+            scoping.symbol_name(id) == "Shadowed"
+                && scoping.symbol_scope_id(id) != scoping.root_scope_id()
+        })
+        .unwrap();
+    assert_eq!(scoping.get_resolved_references(iface_shadowed).count(), 3);
+    assert_eq!(scoping.root_unresolved_references().get("Shadowed").map_or(0, |v| v.len()), 2);
+}
