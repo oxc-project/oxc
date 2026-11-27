@@ -888,6 +888,45 @@ impl CompilerInterface for Compiler {
     }
 }
 
+/// Parse `source_text`, transform it, and return the generated code, source map,
+/// declaration and errors.
+fn transform_impl(
+    filename: &str,
+    source_text: &str,
+    options: Option<TransformOptions>,
+) -> TransformResult {
+    let source_path = Path::new(filename);
+
+    let source_type = get_source_type(
+        filename,
+        options.as_ref().and_then(|options| options.lang.as_deref()),
+        options.as_ref().and_then(|options| options.source_type.as_deref()),
+    );
+
+    let mut compiler = match Compiler::new(options) {
+        Ok(compiler) => compiler,
+        Err(errors) => {
+            // Options errors are not errors in the source text. If they have labels
+            // (e.g. a syntax error in a `define` value), the labels are offsets into
+            // the option's value, so don't produce a codeframe.
+            // They're also unrelated to this specific file, so don't include file path.
+            let errors = errors.iter().map(OxcError::from).collect();
+            return TransformResult { errors, ..Default::default() };
+        }
+    };
+
+    compiler.compile(source_text, source_type, source_path);
+
+    TransformResult {
+        code: compiler.printed,
+        map: compiler.printed_sourcemap,
+        declaration: compiler.declaration,
+        declaration_map: compiler.declaration_map,
+        helpers_used: compiler.helpers_used,
+        errors: OxcError::from_diagnostics(filename, source_text, compiler.errors),
+    }
+}
+
 /// Transpile a JavaScript or TypeScript into a target ECMAScript version.
 ///
 /// @param filename The name of the file being transformed. If this is a
@@ -905,36 +944,7 @@ pub fn transform_sync(
     source_text: String,
     options: Option<TransformOptions>,
 ) -> TransformResult {
-    let source_path = Path::new(&filename);
-
-    let source_type = get_source_type(
-        &filename,
-        options.as_ref().and_then(|options| options.lang.as_deref()),
-        options.as_ref().and_then(|options| options.source_type.as_deref()),
-    );
-
-    let mut compiler = match Compiler::new(options) {
-        Ok(compiler) => compiler,
-        Err(errors) => {
-            // Options errors are not errors in the source text. If they have labels
-            // (e.g. a syntax error in a `define` value), the labels are offsets into
-            // the option's value, so don't produce a codeframe.
-            // They're also unrelated to this specific file, so don't include file path.
-            let errors = errors.iter().map(OxcError::from).collect();
-            return TransformResult { errors, ..Default::default() };
-        }
-    };
-
-    compiler.compile(&source_text, source_type, source_path);
-
-    TransformResult {
-        code: compiler.printed,
-        map: compiler.printed_sourcemap,
-        declaration: compiler.declaration,
-        declaration_map: compiler.declaration_map,
-        helpers_used: compiler.helpers_used,
-        errors: OxcError::from_diagnostics(&filename, &source_text, compiler.errors),
-    }
+    transform_impl(&filename, &source_text, options)
 }
 
 pub struct TransformTask {
@@ -949,36 +959,7 @@ impl Task for TransformTask {
     type Output = TransformResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        let source_path = Path::new(&self.filename);
-
-        let source_type = get_source_type(
-            &self.filename,
-            self.options.as_ref().and_then(|options| options.lang.as_deref()),
-            self.options.as_ref().and_then(|options| options.source_type.as_deref()),
-        );
-
-        let mut compiler = match Compiler::new(self.options.take()) {
-            Ok(compiler) => compiler,
-            Err(errors) => {
-                // Options errors are not errors in the source text. If they have labels
-                // (e.g. a syntax error in a `define` value), the labels are offsets into
-                // the option's value, so don't produce a codeframe.
-                // They're also unrelated to this specific file, so don't include file path.
-                let errors = errors.iter().map(OxcError::from).collect();
-                return Ok(TransformResult { errors, ..Default::default() });
-            }
-        };
-
-        compiler.compile(&self.source_text, source_type, source_path);
-
-        Ok(TransformResult {
-            code: compiler.printed,
-            map: compiler.printed_sourcemap,
-            declaration: compiler.declaration,
-            declaration_map: compiler.declaration_map,
-            helpers_used: compiler.helpers_used,
-            errors: OxcError::from_diagnostics(&self.filename, &self.source_text, compiler.errors),
-        })
+        Ok(transform_impl(&self.filename, &self.source_text, self.options.take()))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
