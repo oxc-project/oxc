@@ -46,6 +46,34 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(constructor-super): Expected to call `super()`.
    ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { throw 0; } finally { return; } } }
+   ·                     ──────────────────────────────────────────────────────
+   ╰────
+  help: Add a `super()` call to the constructor
+
+  ⚠ eslint(constructor-super): Lacked a call of `super()` in some code paths.
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { super(); throw 0; } finally { return; } } }
+   ·                     ───────────────────────────────────────────────────────────────
+   ╰────
+  help: Ensure `super()` is called in all code paths
+
+  ⚠ eslint(constructor-super): Expected to call `super()`.
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { throw 0; } catch { throw 1; } finally { return; } } }
+   ·                     ─────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Add a `super()` call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call `super()`.
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { try { throw 0; } finally {} } finally { return; } } }
+   ·                     ─────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Add a `super()` call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call `super()`.
+   ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { if (a) { super(); super(); throw e; } return; } }
    ·                     ───────────────────────────────────────────────────────────────
    ╰────

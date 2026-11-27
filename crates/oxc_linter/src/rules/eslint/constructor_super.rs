@@ -159,6 +159,10 @@ struct PathSummary {
     duplicate: bool,
 }
 
+/// A basic block, paired with whether the path reaching it is running a `finally` block for an
+/// uncaught `throw`.
+type PathKey = (BlockNodeId, bool);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ExitKind {
     Throw,
@@ -460,24 +464,29 @@ impl ConstructorSuper {
     /// handles loops conservatively by not following backedges and marking any loop containing super()
     /// as potentially violating the "exactly once" requirement.
     ///
+    /// An uncaught `throw` inside `try` continues into the `finally` block on a separate rethrowing
+    /// path. A `return` in the `finally` block overrides the `throw`, but reaching the end of the
+    /// constructor on that path still throws. The CFG continues that path past the `finally` block
+    /// into code that never runs after a `throw`, so it does not report duplicate calls.
+    ///
     /// Returns a summary of the super() call patterns on the execution paths.
     fn analyze_super_paths(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
         super_call_counts: &FxHashMap<BlockNodeId, usize>,
     ) -> PathSummary {
-        let mut block_states: FxHashMap<BlockNodeId, SuperCallState> = FxHashMap::default();
+        let mut block_states: FxHashMap<PathKey, SuperCallState> = FxHashMap::default();
         let mut loop_with_super = false;
-        let mut worklist: VecDeque<BlockNodeId> = VecDeque::new();
+        let mut worklist: VecDeque<PathKey> = VecDeque::new();
         let mut exit_results: Vec<(SuperCallState, ExitKind)> = Vec::new();
         let mut summary = PathSummary::default();
 
-        block_states.insert(constructor_block, SuperCallState::Never);
-        worklist.push_back(constructor_block);
+        block_states.insert((constructor_block, false), SuperCallState::Never);
+        worklist.push_back((constructor_block, false));
 
-        while let Some(block_id) = worklist.pop_front() {
+        while let Some(key @ (block_id, rethrowing)) = worklist.pop_front() {
             let current_state =
-                block_states.get(&block_id).copied().unwrap_or(SuperCallState::Unreached);
+                block_states.get(&key).copied().unwrap_or(SuperCallState::Unreached);
 
             if current_state == SuperCallState::Unreached {
                 continue;
@@ -491,12 +500,13 @@ impl ConstructorSuper {
 
             let block_super_count = super_call_counts.get(&block_id).copied().unwrap_or(0);
             let state_after_block = current_state.add_super_calls(block_super_count);
-            if state_after_block == SuperCallState::Multiple {
+            if state_after_block == SuperCallState::Multiple && !rethrowing {
                 summary.duplicate = true;
             }
 
             let exit = block.instructions().iter().find_map(|inst| match inst.kind {
                 oxc_cfg::InstructionKind::Throw => Some(ExitKind::Throw),
+                oxc_cfg::InstructionKind::ImplicitReturn if rethrowing => Some(ExitKind::Throw),
                 oxc_cfg::InstructionKind::Return(
                     oxc_cfg::ReturnInstructionKind::NotImplicitUndefined,
                 ) => Some(ExitKind::ReturnValue),
@@ -507,13 +517,22 @@ impl ConstructorSuper {
                 _ => None,
             });
 
-            let caught_throw = exit == Some(ExitKind::Throw)
-                && cfg.graph.edges_directed(block_id, Direction::Outgoing).any(|edge| {
-                    matches!(edge.weight(), EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit))
+            let is_throw = exit == Some(ExitKind::Throw);
+            let has_edge = |predicate: fn(&EdgeType) -> bool| {
+                cfg.graph
+                    .edges_directed(block_id, Direction::Outgoing)
+                    .any(|edge| predicate(edge.weight()))
+            };
+            let caught_throw = is_throw
+                && has_edge(|edge| {
+                    matches!(edge, EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit))
                 });
+            let finalized_throw =
+                is_throw && !caught_throw && has_edge(|edge| matches!(edge, EdgeType::Finalize));
 
             if let Some(exit) = exit
                 && !caught_throw
+                && !finalized_throw
             {
                 exit_results.push((state_after_block, exit));
                 // Exit blocks are terminal - don't propagate to successors
@@ -544,8 +563,10 @@ impl ConstructorSuper {
                         // But if state_after_block is Mixed or Multiple when header was Once,
                         // or if state_after_block is Once/Mixed/Multiple when header was Never,
                         // then super() must be in the loop body.
-                        let loop_header_state =
-                            block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
+                        let loop_header_state = block_states
+                            .get(&(target, rethrowing))
+                            .copied()
+                            .unwrap_or(SuperCallState::Unreached);
 
                         // Detect super() in loop body by checking if state increased from
                         // loop header to backedge:
@@ -570,8 +591,8 @@ impl ConstructorSuper {
                         }
 
                         if loop_header_state == SuperCallState::Unreached {
-                            block_states.insert(target, state_after_block);
-                            worklist.push_back(target);
+                            block_states.insert((target, rethrowing), state_after_block);
+                            worklist.push_back((target, rethrowing));
                         }
                     }
 
@@ -583,16 +604,17 @@ impl ConstructorSuper {
                         // that some paths may not call it (if an exception occurs first).
                         // A `throw` at the end of the block also reaches the catch with the
                         // post-transfer state.
-                        let old_state =
-                            block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
-                        let mut new_state = old_state.merge(current_state);
-                        if caught_throw {
-                            new_state = new_state.merge(state_after_block);
-                        }
-                        if new_state != old_state {
-                            block_states.insert(target, new_state);
-                            worklist.push_back(target);
-                        }
+                        let thrown_state = if caught_throw {
+                            current_state.merge(state_after_block)
+                        } else {
+                            current_state
+                        };
+                        Self::propagate(
+                            &mut block_states,
+                            &mut worklist,
+                            (target, false),
+                            thrown_state,
+                        );
                     }
 
                     EdgeType::NewFunction
@@ -601,14 +623,22 @@ impl ConstructorSuper {
 
                     EdgeType::Finalize if caught_throw => {}
 
+                    EdgeType::Finalize if finalized_throw => {
+                        Self::propagate(
+                            &mut block_states,
+                            &mut worklist,
+                            (target, true),
+                            current_state.merge(state_after_block),
+                        );
+                    }
+
                     EdgeType::Jump | EdgeType::Normal | EdgeType::Join | EdgeType::Finalize => {
-                        let old_state =
-                            block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
-                        let new_state = old_state.merge(state_after_block);
-                        if new_state != old_state {
-                            block_states.insert(target, new_state);
-                            worklist.push_back(target);
-                        }
+                        Self::propagate(
+                            &mut block_states,
+                            &mut worklist,
+                            (target, rethrowing),
+                            state_after_block,
+                        );
                     }
                 }
             }
@@ -637,6 +667,21 @@ impl ConstructorSuper {
         }
 
         summary
+    }
+
+    /// Merges `state` into the state of `target`, queueing `target` when its state changes.
+    fn propagate(
+        block_states: &mut FxHashMap<PathKey, SuperCallState>,
+        worklist: &mut VecDeque<PathKey>,
+        target: PathKey,
+        state: SuperCallState,
+    ) {
+        let old_state = block_states.get(&target).copied().unwrap_or(SuperCallState::Unreached);
+        let new_state = old_state.merge(state);
+        if new_state != old_state {
+            block_states.insert(target, new_state);
+            worklist.push_back(target);
+        }
     }
 
     /// Checks if an expression is definitely an invalid superclass.
@@ -847,6 +892,9 @@ fn test() {
         "class A extends B { constructor() { try { throw 0; } catch { super(); } } }",
         "class A extends B { constructor() { try { throw 0; } catch { throw 1; } } }",
         "class A extends B { constructor() { try { throw 0; } finally {} } }",
+        "class A extends B { constructor() { try { throw 0; } catch { throw 1; } finally {} } }",
+        "class A extends B { constructor() { try { super(); } catch { throw e; } finally {} } }",
+        "class A extends B { constructor() { try { if (a) { super(); throw 0; } } finally {} super(); } }",
     ];
 
     let fail = vec![
@@ -856,6 +904,10 @@ fn test() {
         "class A extends B { constructor() { try { super(); throw 0; } catch {} } }",
         "class A extends B { constructor() { try { throw 0; } catch {} finally {} } }",
         "class A extends B { constructor() { try { try { throw 0; } finally {} } catch {} } }",
+        "class A extends B { constructor() { try { throw 0; } finally { return; } } }",
+        "class A extends B { constructor() { try { super(); throw 0; } finally { return; } } }",
+        "class A extends B { constructor() { try { throw 0; } catch { throw 1; } finally { return; } } }",
+        "class A extends B { constructor() { try { try { throw 0; } finally {} } finally { return; } } }",
         "class A extends B { constructor() { if (a) { super(); super(); throw e; } return; } }",
         "class A extends B { constructor() { super(); super(); for (;;) {} } }",
         "class A extends null { constructor() { if (a) return {}; } }",
