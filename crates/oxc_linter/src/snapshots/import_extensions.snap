@@ -653,44 +653,25 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the file extension from this import.
 
   ⚠ import(extensions): Missing file extension in import declaration.
-   ╭─[extensions.tsx:1:1]
- 1 │ import React from 'react';
-   · ──────────────────────────
+   ╭─[extensions.tsx:4:17]
+ 3 │                 import minimist from "minimist";
+ 4 │                 import x from "./local";
+   ·                 ────────────────────────
+ 5 │             
    ╰────
   help: Add a file extension to this import.
 
   ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
- 1 │ import crypto from 'node_crypto';
-   · ─────────────────────────────────
+ 1 │ import x from "./local";
+   · ────────────────────────
    ╰────
   help: Add a file extension to this import.
 
   ⚠ import(extensions): Missing file extension in import declaration.
    ╭─[extensions.tsx:1:1]
- 1 │ import fs from 'some-package';
-   · ──────────────────────────────
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ import(extensions): Missing file extension in import declaration.
-   ╭─[extensions.tsx:1:1]
- 1 │ import fs from '@fs/some-package';
-   · ──────────────────────────────────
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ import(extensions): Missing file extension in import declaration.
-   ╭─[extensions.tsx:1:1]
- 1 │ import { default as crypto } from '@fs/some-package';
-   · ─────────────────────────────────────────────────────
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ import(extensions): Missing file extension in import declaration.
-   ╭─[extensions.tsx:1:1]
- 1 │ import * as fs from '@fs/some-package';
-   · ───────────────────────────────────────
+ 1 │ import fp from "lodash/fp";
+   · ───────────────────────────
    ╰────
   help: Add a file extension to this import.
 
