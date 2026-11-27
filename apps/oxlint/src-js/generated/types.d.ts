@@ -305,6 +305,7 @@ export type SimpleAssignmentTarget =
   | TSSatisfiesExpression
   | TSNonNullExpression
   | TSTypeAssertion
+  | CallExpression
   | MemberExpression;
 
 export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;

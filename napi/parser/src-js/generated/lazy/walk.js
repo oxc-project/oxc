@@ -1193,6 +1193,9 @@ function walkAssignmentTarget(pos, ast, visitors) {
     case 4:
       walkBoxTSTypeAssertion(pos + 8, ast, visitors);
       return;
+    case 5:
+      walkBoxCallExpression(pos + 8, ast, visitors);
+      return;
     case 8:
       walkBoxArrayAssignmentTarget(pos + 8, ast, visitors);
       return;
@@ -1229,6 +1232,9 @@ function walkSimpleAssignmentTarget(pos, ast, visitors) {
       return;
     case 4:
       walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      return;
+    case 5:
+      walkBoxCallExpression(pos + 8, ast, visitors);
       return;
     case 48:
       walkBoxComputedMemberExpression(pos + 8, ast, visitors);
@@ -1310,6 +1316,9 @@ function walkAssignmentTargetMaybeDefault(pos, ast, visitors) {
       return;
     case 4:
       walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      return;
+    case 5:
+      walkBoxCallExpression(pos + 8, ast, visitors);
       return;
     case 8:
       walkBoxArrayAssignmentTarget(pos + 8, ast, visitors);
@@ -1982,6 +1991,9 @@ function walkForStatementLeft(pos, ast, visitors) {
       return;
     case 4:
       walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      return;
+    case 5:
+      walkBoxCallExpression(pos + 8, ast, visitors);
       return;
     case 8:
       walkBoxArrayAssignmentTarget(pos + 8, ast, visitors);

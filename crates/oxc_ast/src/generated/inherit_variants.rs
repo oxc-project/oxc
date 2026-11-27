@@ -1327,6 +1327,7 @@ impl<'a> AssignmentTarget<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
+                | Self::CallExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -1433,6 +1434,7 @@ impl<'a> TryFrom<AssignmentTarget<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(o))
             }
             AssignmentTarget::TSTypeAssertion(o) => Ok(SimpleAssignmentTarget::TSTypeAssertion(o)),
+            AssignmentTarget::CallExpression(o) => Ok(SimpleAssignmentTarget::CallExpression(o)),
             AssignmentTarget::ComputedMemberExpression(o) => {
                 Ok(SimpleAssignmentTarget::ComputedMemberExpression(o))
             }
@@ -1465,6 +1467,7 @@ impl<'a> From<SimpleAssignmentTarget<'a>> for AssignmentTarget<'a> {
                 AssignmentTarget::TSNonNullExpression(o)
             }
             SimpleAssignmentTarget::TSTypeAssertion(o) => AssignmentTarget::TSTypeAssertion(o),
+            SimpleAssignmentTarget::CallExpression(o) => AssignmentTarget::CallExpression(o),
             SimpleAssignmentTarget::ComputedMemberExpression(o) => {
                 AssignmentTarget::ComputedMemberExpression(o)
             }
@@ -1883,6 +1886,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
+                | Self::CallExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -1995,6 +1999,9 @@ impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for AssignmentTarget<'a> {
             AssignmentTargetMaybeDefault::TSTypeAssertion(o) => {
                 Ok(AssignmentTarget::TSTypeAssertion(o))
             }
+            AssignmentTargetMaybeDefault::CallExpression(o) => {
+                Ok(AssignmentTarget::CallExpression(o))
+            }
             AssignmentTargetMaybeDefault::ComputedMemberExpression(o) => {
                 Ok(AssignmentTarget::ComputedMemberExpression(o))
             }
@@ -2035,6 +2042,7 @@ impl<'a> From<AssignmentTarget<'a>> for AssignmentTargetMaybeDefault<'a> {
             AssignmentTarget::TSTypeAssertion(o) => {
                 AssignmentTargetMaybeDefault::TSTypeAssertion(o)
             }
+            AssignmentTarget::CallExpression(o) => AssignmentTargetMaybeDefault::CallExpression(o),
             AssignmentTarget::ComputedMemberExpression(o) => {
                 AssignmentTargetMaybeDefault::ComputedMemberExpression(o)
             }
@@ -2065,6 +2073,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
+                | Self::CallExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -2175,6 +2184,9 @@ impl<'a> TryFrom<AssignmentTargetMaybeDefault<'a>> for SimpleAssignmentTarget<'a
             AssignmentTargetMaybeDefault::TSTypeAssertion(o) => {
                 Ok(SimpleAssignmentTarget::TSTypeAssertion(o))
             }
+            AssignmentTargetMaybeDefault::CallExpression(o) => {
+                Ok(SimpleAssignmentTarget::CallExpression(o))
+            }
             AssignmentTargetMaybeDefault::ComputedMemberExpression(o) => {
                 Ok(SimpleAssignmentTarget::ComputedMemberExpression(o))
             }
@@ -2210,6 +2222,9 @@ impl<'a> From<SimpleAssignmentTarget<'a>> for AssignmentTargetMaybeDefault<'a> {
             }
             SimpleAssignmentTarget::TSTypeAssertion(o) => {
                 AssignmentTargetMaybeDefault::TSTypeAssertion(o)
+            }
+            SimpleAssignmentTarget::CallExpression(o) => {
+                AssignmentTargetMaybeDefault::CallExpression(o)
             }
             SimpleAssignmentTarget::ComputedMemberExpression(o) => {
                 AssignmentTargetMaybeDefault::ComputedMemberExpression(o)
@@ -3324,6 +3339,7 @@ impl<'a> ForStatementLeft<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
+                | Self::CallExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -3432,6 +3448,7 @@ impl<'a> TryFrom<ForStatementLeft<'a>> for AssignmentTarget<'a> {
                 Ok(AssignmentTarget::TSNonNullExpression(o))
             }
             ForStatementLeft::TSTypeAssertion(o) => Ok(AssignmentTarget::TSTypeAssertion(o)),
+            ForStatementLeft::CallExpression(o) => Ok(AssignmentTarget::CallExpression(o)),
             ForStatementLeft::ComputedMemberExpression(o) => {
                 Ok(AssignmentTarget::ComputedMemberExpression(o))
             }
@@ -3468,6 +3485,7 @@ impl<'a> From<AssignmentTarget<'a>> for ForStatementLeft<'a> {
             }
             AssignmentTarget::TSNonNullExpression(o) => ForStatementLeft::TSNonNullExpression(o),
             AssignmentTarget::TSTypeAssertion(o) => ForStatementLeft::TSTypeAssertion(o),
+            AssignmentTarget::CallExpression(o) => ForStatementLeft::CallExpression(o),
             AssignmentTarget::ComputedMemberExpression(o) => {
                 ForStatementLeft::ComputedMemberExpression(o)
             }
@@ -3498,6 +3516,7 @@ impl<'a> ForStatementLeft<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSNonNullExpression(_)
                 | Self::TSTypeAssertion(_)
+                | Self::CallExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -3604,6 +3623,7 @@ impl<'a> TryFrom<ForStatementLeft<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(o))
             }
             ForStatementLeft::TSTypeAssertion(o) => Ok(SimpleAssignmentTarget::TSTypeAssertion(o)),
+            ForStatementLeft::CallExpression(o) => Ok(SimpleAssignmentTarget::CallExpression(o)),
             ForStatementLeft::ComputedMemberExpression(o) => {
                 Ok(SimpleAssignmentTarget::ComputedMemberExpression(o))
             }
@@ -3636,6 +3656,7 @@ impl<'a> From<SimpleAssignmentTarget<'a>> for ForStatementLeft<'a> {
                 ForStatementLeft::TSNonNullExpression(o)
             }
             SimpleAssignmentTarget::TSTypeAssertion(o) => ForStatementLeft::TSTypeAssertion(o),
+            SimpleAssignmentTarget::CallExpression(o) => ForStatementLeft::CallExpression(o),
             SimpleAssignmentTarget::ComputedMemberExpression(o) => {
                 ForStatementLeft::ComputedMemberExpression(o)
             }
@@ -5565,6 +5586,7 @@ macro_rules! match_assignment_target {
             | $ty::TSSatisfiesExpression(_)
             | $ty::TSNonNullExpression(_)
             | $ty::TSTypeAssertion(_)
+            | $ty::CallExpression(_)
             | $ty::ComputedMemberExpression(_)
             | $ty::StaticMemberExpression(_)
             | $ty::PrivateFieldExpression(_)
@@ -5585,6 +5607,7 @@ macro_rules! match_simple_assignment_target {
             | $ty::TSSatisfiesExpression(_)
             | $ty::TSNonNullExpression(_)
             | $ty::TSTypeAssertion(_)
+            | $ty::CallExpression(_)
             | $ty::ComputedMemberExpression(_)
             | $ty::StaticMemberExpression(_)
             | $ty::PrivateFieldExpression(_)

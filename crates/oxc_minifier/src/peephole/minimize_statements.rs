@@ -1611,7 +1611,8 @@ impl<'a> PeepholeOptimizations {
                         | AssignmentTarget::TSAsExpression(_)
                         | AssignmentTarget::TSNonNullExpression(_)
                         | AssignmentTarget::TSSatisfiesExpression(_)
-                        | AssignmentTarget::TSTypeAssertion(_) => true,
+                        | AssignmentTarget::TSTypeAssertion(_)
+                        | AssignmentTarget::CallExpression(_) => true,
                     };
                     if may_depend_on_side_effect {
                         return Some(false);

@@ -493,12 +493,14 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::UpdateExpression(UpdateExpression { argument, .. })
                     // `for (let x = 0; x++; ) {}` is valid usage, as the loop body running is a side-effect
                     if !self.is_in_for_loop_test_or_update(node.id(), ref_span) => {
-                        // `a.b++` or `a[b] + 1` are not reassignment of `a`
+                        // `a.b++` or `a[b] + 1` are not reassignment of `a`, and `a()++` or
+                        // `a.b()++` reassign nothing
                         let is_member_expr = argument.is_member_expression()
                             || argument
                                 .get_expression()
                                 .is_some_and(|e| e.get_inner_expression().is_member_expression());
-                        if !is_member_expr {
+                        let is_call = matches!(argument, SimpleAssignmentTarget::CallExpression(_));
+                        if !is_member_expr && !is_call {
                             is_used_by_others = false;
                             saw_self_update = true;
                         }

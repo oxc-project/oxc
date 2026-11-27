@@ -6618,6 +6618,67 @@ impl<'a> AssignmentTarget<'a> {
         ))
     }
 
+    /// Build an [`AssignmentTarget::CallExpression`].
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    #[inline]
+    pub fn new_call_expression(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`AssignmentTarget::CallExpression`] with `pure`.
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_call_expression_with_pure(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            pure,
+            builder.builder(),
+        ))
+    }
+
     /// Build an [`AssignmentTarget::ComputedMemberExpression`].
     ///
     /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
@@ -6864,6 +6925,67 @@ impl<'a> SimpleAssignmentTarget<'a> {
             span,
             type_annotation,
             expression,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`SimpleAssignmentTarget::CallExpression`].
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    #[inline]
+    pub fn new_call_expression(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`SimpleAssignmentTarget::CallExpression`] with `pure`.
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_call_expression_with_pure(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            pure,
             builder.builder(),
         ))
     }
@@ -7267,6 +7389,67 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
             span,
             type_annotation,
             expression,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`AssignmentTargetMaybeDefault::CallExpression`].
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    #[inline]
+    pub fn new_call_expression(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            builder.builder(),
+        ))
+    }
+
+    /// Build an [`AssignmentTargetMaybeDefault::CallExpression`] with `pure`.
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_call_expression_with_pure(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            pure,
             builder.builder(),
         ))
     }
@@ -11726,6 +11909,67 @@ impl<'a> ForStatementLeft<'a> {
             span,
             type_annotation,
             expression,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`ForStatementLeft::CallExpression`].
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    #[inline]
+    pub fn new_call_expression(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`ForStatementLeft::CallExpression`] with `pure`.
+    ///
+    /// This node contains a [`CallExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_arguments`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_call_expression_with_pure(
+        span: Span,
+        callee: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: impl IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        optional: bool,
+        pure: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CallExpression(CallExpression::boxed_with_pure(
+            span,
+            callee,
+            type_arguments,
+            arguments,
+            optional,
+            pure,
             builder.builder(),
         ))
     }

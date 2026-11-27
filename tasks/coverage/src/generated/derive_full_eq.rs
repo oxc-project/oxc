@@ -631,6 +631,7 @@ impl FullEq for AssignmentTarget<'_> {
             }
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => FullEq::full_eq(a, b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => FullEq::full_eq(a, b),
+            (Self::CallExpression(a), Self::CallExpression(b)) => FullEq::full_eq(a, b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 FullEq::full_eq(a, b)
             }
@@ -663,6 +664,7 @@ impl FullEq for SimpleAssignmentTarget<'_> {
             }
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => FullEq::full_eq(a, b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => FullEq::full_eq(a, b),
+            (Self::CallExpression(a), Self::CallExpression(b)) => FullEq::full_eq(a, b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 FullEq::full_eq(a, b)
             }
@@ -732,6 +734,7 @@ impl FullEq for AssignmentTargetMaybeDefault<'_> {
             }
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => FullEq::full_eq(a, b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => FullEq::full_eq(a, b),
+            (Self::CallExpression(a), Self::CallExpression(b)) => FullEq::full_eq(a, b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 FullEq::full_eq(a, b)
             }
@@ -1146,6 +1149,7 @@ impl FullEq for ForStatementLeft<'_> {
             }
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => FullEq::full_eq(a, b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => FullEq::full_eq(a, b),
+            (Self::CallExpression(a), Self::CallExpression(b)) => FullEq::full_eq(a, b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 FullEq::full_eq(a, b)
             }

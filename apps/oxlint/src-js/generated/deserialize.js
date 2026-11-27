@@ -1164,6 +1164,8 @@ function deserializeAssignmentTarget(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
+    case 5:
+      return deserializeBoxCallExpression(pos + 8);
     case 8:
       return deserializeBoxArrayAssignmentTarget(pos + 8);
     case 9:
@@ -1191,6 +1193,8 @@ function deserializeSimpleAssignmentTarget(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
+    case 5:
+      return deserializeBoxCallExpression(pos + 8);
     case 48:
       return deserializeBoxComputedMemberExpression(pos + 8);
     case 49:
@@ -1287,6 +1291,8 @@ function deserializeAssignmentTargetMaybeDefault(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
+    case 5:
+      return deserializeBoxCallExpression(pos + 8);
     case 8:
       return deserializeBoxArrayAssignmentTarget(pos + 8);
     case 9:
@@ -1989,6 +1995,8 @@ function deserializeForStatementLeft(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
+    case 5:
+      return deserializeBoxCallExpression(pos + 8);
     case 8:
       return deserializeBoxArrayAssignmentTarget(pos + 8);
     case 9:

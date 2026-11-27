@@ -10,12 +10,9 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::precedence::Precedence;
 
-use super::{
-    grammar::CoverGrammar,
-    operator::{
-        kind_to_precedence, map_assignment_operator, map_binary_operator, map_logical_operator,
-        map_unary_operator, map_update_operator,
-    },
+use super::operator::{
+    kind_to_precedence, map_assignment_operator, map_binary_operator, map_logical_operator,
+    map_unary_operator, map_update_operator,
 };
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
@@ -1321,7 +1318,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let operator = map_update_operator(kind);
             self.bump_any();
             let argument = self.parse_unary_expression_or_higher(lhs_start);
-            let argument = SimpleAssignmentTarget::cover(argument, self);
+            let argument = self.cover_simple_assignment_target(argument, true);
             return Expression::new_update_expression(
                 self.end_span(lhs_start),
                 operator,
@@ -1365,7 +1362,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if post_kind.is_update_operator() && !self.cur_token().is_on_new_line() {
             let operator = map_update_operator(post_kind);
             self.bump_any();
-            let lhs = SimpleAssignmentTarget::cover(lhs, self);
+            let lhs = self.cover_simple_assignment_target(lhs, true);
             return Expression::new_update_expression(
                 self.end_span(start),
                 operator,
@@ -2036,7 +2033,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.error(diagnostics::assignment_is_not_simple(lhs.span()));
         }
-        let left = AssignmentTarget::cover(lhs, self);
+        let left = self.cover_assignment_target(lhs, !operator.is_logical());
         self.bump_any();
         let right =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);

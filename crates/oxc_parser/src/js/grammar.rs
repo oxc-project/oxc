@@ -14,22 +14,45 @@ pub trait CoverGrammar<'a, T, C: Config>: Sized {
 
 impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTarget<'a> {
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        match expr {
-            Expression::ArrayExpression(array_expr) => {
-                let pat = ArrayAssignmentTarget::cover(array_expr.unbox(), p);
-                AssignmentTarget::ArrayAssignmentTarget(p.alloc(pat))
-            }
-            Expression::ObjectExpression(object_expr) => {
-                let pat = ObjectAssignmentTarget::cover(object_expr.unbox(), p);
-                AssignmentTarget::ObjectAssignmentTarget(p.alloc(pat))
-            }
-            _ => AssignmentTarget::from(SimpleAssignmentTarget::cover(expr, p)),
-        }
+        p.cover_assignment_target(expr, false)
     }
 }
 
-impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarget<'a> {
-    fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+impl<'a, C: Config> ParserImpl<'a, C> {
+    /// Cover an assignment target. See [`Self::cover_simple_assignment_target`] for `allow_call`.
+    pub(crate) fn cover_assignment_target(
+        &mut self,
+        expr: Expression<'a>,
+        allow_call: bool,
+    ) -> AssignmentTarget<'a> {
+        match expr {
+            Expression::ArrayExpression(array_expr) => {
+                let pat = ArrayAssignmentTarget::cover(array_expr.unbox(), self);
+                AssignmentTarget::ArrayAssignmentTarget(self.alloc(pat))
+            }
+            Expression::ObjectExpression(object_expr) => {
+                let pat = ObjectAssignmentTarget::cover(object_expr.unbox(), self);
+                AssignmentTarget::ObjectAssignmentTarget(self.alloc(pat))
+            }
+            _ => AssignmentTarget::from(self.cover_simple_assignment_target(expr, allow_call)),
+        }
+    }
+
+    /// Cover a simple assignment target.
+    ///
+    /// `allow_call` accepts a call such as `f()` or `(f())`, for the target of `=`, a compound
+    /// assignment such as `+=`, `++` / `--`, and a `for-in` / `for-of` head. In sloppy-mode
+    /// JavaScript these are not early errors: they call `f` and then throw a `ReferenceError`.
+    /// The semantic checker reports them in strict mode code and in TypeScript. A call is never
+    /// a destructuring target or the target of a logical assignment such as `f() &&= 1`, and
+    /// `super()` is never a target.
+    ///
+    /// <https://tc39.es/ecma262/#sec-runtime-errors-for-function-call-assignment-targets>
+    pub(crate) fn cover_simple_assignment_target(
+        &mut self,
+        expr: Expression<'a>,
+        allow_call: bool,
+    ) -> SimpleAssignmentTarget<'a> {
         match expr {
             Expression::Identifier(ident) => {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)
@@ -42,9 +65,9 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 let span = expr.span;
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                        p.fatal_error(diagnostics::invalid_assignment(span))
+                        self.fatal_error(diagnostics::invalid_assignment(span))
                     }
-                    expr => SimpleAssignmentTarget::cover(expr, p),
+                    expr => self.cover_simple_assignment_target(expr, allow_call),
                 }
             }
             Expression::TSAsExpression(expr) => match expr.expression.get_inner_expression() {
@@ -54,7 +77,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 | Expression::PrivateFieldExpression(_) => {
                     SimpleAssignmentTarget::TSAsExpression(expr)
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                _ => self.fatal_error(diagnostics::invalid_assignment(expr.span())),
             },
             Expression::TSSatisfiesExpression(expr) => {
                 match expr.expression.get_inner_expression() {
@@ -64,7 +87,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                     | Expression::PrivateFieldExpression(_) => {
                         SimpleAssignmentTarget::TSSatisfiesExpression(expr)
                     }
-                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                    _ => self.fatal_error(diagnostics::invalid_assignment(expr.span())),
                 }
             }
             Expression::TSNonNullExpression(expr) => match expr.expression.get_inner_expression() {
@@ -74,7 +97,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 | Expression::PrivateFieldExpression(_) => {
                     SimpleAssignmentTarget::TSNonNullExpression(expr)
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                _ => self.fatal_error(diagnostics::invalid_assignment(expr.span())),
             },
             Expression::TSTypeAssertion(expr) => match expr.expression.get_inner_expression() {
                 Expression::Identifier(_)
@@ -83,19 +106,22 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
                 | Expression::PrivateFieldExpression(_) => {
                     SimpleAssignmentTarget::TSTypeAssertion(expr)
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                _ => self.fatal_error(diagnostics::invalid_assignment(expr.span())),
             },
-            Expression::TSInstantiationExpression(expr) => {
-                p.fatal_error(diagnostics::invalid_lhs_assignment(expr.span()))
+            Expression::CallExpression(call) if allow_call && !call.callee.is_super() => {
+                SimpleAssignmentTarget::CallExpression(call)
             }
-            expr => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            Expression::TSInstantiationExpression(expr) => {
+                self.fatal_error(diagnostics::invalid_lhs_assignment(expr.span()))
+            }
+            expr => self.fatal_error(diagnostics::invalid_assignment(expr.span())),
         }
     }
 }
 
 impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignmentTarget<'a> {
     // Destructuring-target conversion is comparatively rare and large. Keeping it out of line
-    // stops it being inlined into `AssignmentTarget::cover`, whose common arm (simple targets)
+    // stops it being inlined into `cover_assignment_target`, whose common arm (simple targets)
     // would otherwise carry this body's large stack frame + callee-saved spills on every call.
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
@@ -173,13 +199,17 @@ impl<'a, C: Config> CoverGrammar<'a, AssignmentExpression<'a>, C>
     for AssignmentTargetWithDefault<'a>
 {
     fn cover(expr: AssignmentExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        // `[f() = 1] = []`: a call is never a destructuring target.
+        if let AssignmentTarget::CallExpression(call) = &expr.left {
+            p.error(diagnostics::invalid_assignment(call.span));
+        }
         AssignmentTargetWithDefault::new(expr.span, expr.left, expr.right, p)
     }
 }
 
 impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignmentTarget<'a> {
     // Kept out of line for the same reason as `ArrayAssignmentTarget::cover` above: avoid
-    // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
+    // inlining this large body into the hot `cover_assignment_target` dispatcher.
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         let len = expr.properties.len();

@@ -2483,6 +2483,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             SimpleAssignmentTarget::TSTypeAssertion(it) => {
                 self.visit_ts_type_assertion(it);
             }
+            SimpleAssignmentTarget::CallExpression(it) => {
+                // `f() = 1` writes nothing: `f` and the arguments are only read.
+                self.current_reference_flags = ReferenceFlags::empty();
+                self.visit_call_expression(it);
+            }
             match_member_expression!(SimpleAssignmentTarget) => {
                 self.visit_member_expression(it.to_member_expression());
             }

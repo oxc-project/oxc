@@ -512,6 +512,13 @@ pub static INHERITED_ENUMS: [InheritedEnum; 9] = [
                 discriminant: 4,
             },
             EnumVariant {
+                name: "CallExpression",
+                inner_name: "CallExpression",
+                inner_has_lifetime: true,
+                is_boxed: true,
+                discriminant: 5,
+            },
+            EnumVariant {
                 name: "ComputedMemberExpression",
                 inner_name: "ComputedMemberExpression",
                 inner_has_lifetime: true,
@@ -586,6 +593,13 @@ pub static INHERITED_ENUMS: [InheritedEnum; 9] = [
                 inner_has_lifetime: true,
                 is_boxed: true,
                 discriminant: 4,
+            },
+            EnumVariant {
+                name: "CallExpression",
+                inner_name: "CallExpression",
+                inner_has_lifetime: true,
+                is_boxed: true,
+                discriminant: 5,
             },
             EnumVariant {
                 name: "ComputedMemberExpression",

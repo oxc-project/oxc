@@ -1,9 +1,9 @@
 commit: 51225612
 
 parser_babel Summary:
-AST Parsed     : 2363/2364 (99.96%)
-Positive Passed: 2342/2364 (99.07%)
-Negative Passed: 1931/1947 (99.18%)
+AST Parsed     : 2365/2366 (99.96%)
+Positive Passed: 2344/2366 (99.07%)
+Negative Passed: 1929/1945 (99.18%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -1768,12 +1768,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/367/input.js:1:1]
  1 │ 3 = 4
    · ─
-   ╰────
-
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/368/input.js:1:1]
- 1 │ func() = 4
-   · ──────
    ╰────
 
   × Cannot assign to this expression
@@ -4603,13 +4597,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-member-assignment-target/input.js:3:1]
- 2 │ ({a=1}.x = 0);
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-member-assignment-target/input.js:4:3]
  3 │ [{a=1}](x) = 0;
-   · ──────────
  4 │ [{a=1}].x += 0;
+   ·   ───
+ 5 │ [{a=1}].x ||= 0;
    ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-member-assignment-target/input.js:5:3]
+ 4 │ [{a=1}].x += 0;
+ 5 │ [{a=1}].x ||= 0;
+   ·   ───
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Invalid assignment in object literal
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/object/invalid-property-initializer-in-member-assignment-target/input.js:3:3]
@@ -12569,12 +12572,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0045/input.js:1:1]
  1 │ 3 = 4
    · ─
-   ╰────
-
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0046/input.js:1:1]
- 1 │ func() = 4
-   · ──────
    ╰────
 
   × Cannot assign to this expression

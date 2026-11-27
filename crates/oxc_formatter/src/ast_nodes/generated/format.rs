@@ -2081,6 +2081,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SimpleAssignmentTar
                 }
                 .fmt(f);
             }
+            SimpleAssignmentTarget::CallExpression(inner) => {
+                AstNode::<CallExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
             it @ match_member_expression!(SimpleAssignmentTarget) => {
                 let inner = it.to_member_expression();
                 AstNode::<MemberExpression> {

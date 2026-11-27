@@ -1631,6 +1631,7 @@ fn test_assignment_targets() {
     test_assign_target("a.#b = 1", false);
     test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
     test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
+    test_assign_target("/* @__PURE__ */ foo() = 1", true); // throws a ReferenceError
 }
 
 #[test]

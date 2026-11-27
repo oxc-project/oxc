@@ -303,6 +303,24 @@ fn test_var_read_write() {
     .has_number_of_reads(1)
     .has_number_of_writes(0)
     .test();
+
+    // A call as an assignment target only reads the callee and arguments.
+    for source in [
+        "let f, a; f(a) = 1",
+        "let f, a; f(a) += 1",
+        "let f, a; f(a)++",
+        "let f, a; for (f(a) in {});",
+        "let f, a; for (f(a) of []);",
+    ] {
+        for name in ["f", "a"] {
+            SemanticTester::js(source)
+                .with_script(true)
+                .has_some_symbol(name)
+                .has_number_of_reads(1)
+                .has_number_of_writes(0)
+                .test();
+        }
+    }
 }
 
 // https://github.com/rolldown/rolldown/issues/10722

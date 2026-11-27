@@ -2879,6 +2879,11 @@ impl<'parent, 'a> AstNode<'parent, 'a, SimpleAssignmentTarget<'a>> {
                 parent,
                 following_span_start,
             }),
+            SimpleAssignmentTarget::CallExpression(s) => AstNodeKind::CallExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_member_expression!(SimpleAssignmentTarget) => {
                 AstNode { inner: it.to_member_expression(), parent, following_span_start }.as_kind()
             }

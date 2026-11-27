@@ -114,7 +114,6 @@ pub fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
         s.contains("test262/test/staging")
             || path.extension().is_some_and(|e| e.eq_ignore_ascii_case("md"))
             || s.contains("_FIXTURE")
-            || s.contains("annexB/language/expressions/assignmenttargettype")
     };
 
     walk_and_read(Path::new(TEST262_PATH), filter, skip_path)
@@ -140,7 +139,9 @@ fn load_babel(filter: Option<&str>) -> Vec<BabelFile> {
             "async-do-expression",
             "export-ns-from",
             "annex-b/disabled",
-            "annex-b/enabled/valid-assignment-target-type",
+            // `"annexB": false`. Oxc always applies Annex B.
+            "core/uncategorised/368/",
+            "esprima/invalid-syntax/migrated_0046/",
             "module-block",
             "typescript/arrow-function/arrow-like-in-conditional-2",
             "typescript/cast/satisfies-const-error",

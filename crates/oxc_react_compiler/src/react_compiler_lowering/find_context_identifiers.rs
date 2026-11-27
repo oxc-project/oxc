@@ -344,6 +344,8 @@ impl<'a> ContextIdentifierVisitor<'a> {
             AssignmentTarget::StaticMemberExpression(_)
             | AssignmentTarget::ComputedMemberExpression(_)
             | AssignmentTarget::PrivateFieldExpression(_) => {}
+            // `f() = 1` throws before it stores anything.
+            AssignmentTarget::CallExpression(_) => {}
             AssignmentTarget::TSAsExpression(node) => {
                 self.walk_assignment_target_expression_for_reassignment(
                     &node.expression,

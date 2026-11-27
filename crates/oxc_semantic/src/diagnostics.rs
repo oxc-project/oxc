@@ -202,6 +202,11 @@ pub fn function_declaration_non_strict(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invalid_assignment(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Cannot assign to this expression").with_label(span)
+}
+
+#[cold]
 pub fn with_statement(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'with' statements are not allowed").with_label(span)
 }

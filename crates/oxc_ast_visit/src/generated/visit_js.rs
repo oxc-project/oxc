@@ -1523,6 +1523,7 @@ pub mod walk_js {
                 visitor.visit_ts_non_null_expression(it)
             }
             SimpleAssignmentTarget::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
+            SimpleAssignmentTarget::CallExpression(it) => visitor.visit_call_expression(it),
             match_member_expression!(SimpleAssignmentTarget) => {
                 visitor.visit_member_expression(it.to_member_expression())
             }

@@ -840,7 +840,8 @@ impl<'a> MayHaveSideEffects<'a> for SimpleAssignmentTarget<'a> {
             SimpleAssignmentTarget::TSAsExpression(_)
             | SimpleAssignmentTarget::TSNonNullExpression(_)
             | SimpleAssignmentTarget::TSSatisfiesExpression(_)
-            | SimpleAssignmentTarget::TSTypeAssertion(_) => true,
+            | SimpleAssignmentTarget::TSTypeAssertion(_)
+            | SimpleAssignmentTarget::CallExpression(_) => true,
         }
     }
 }

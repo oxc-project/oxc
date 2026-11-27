@@ -543,6 +543,8 @@ fn test_inline_computed_key_before_side_effecting_replacement() {
     test_script_same(
         "var value = 0; function init(consume) { let num = mutate(); consume(value, num) }",
     );
+    // `f() = num` throws before it evaluates `num`.
+    test_script_same("function init() { let num = mutate(); f() = num }");
 }
 
 #[test]

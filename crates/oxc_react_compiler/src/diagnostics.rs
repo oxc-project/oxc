@@ -587,6 +587,26 @@ pub fn invariant_member_expression_may_only_appear_assignment_expression(
 }
 
 #[cold]
+pub fn todo_unsupported_syntax_left_side_assignment_expression(
+    label: impl Into<oxc_diagnostics::LabeledSpan>,
+) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Todo,
+        "(BuildHIR::lowerExpression) Unsupported syntax on the left side of an AssignmentExpression",
+    )
+    .with_help("Expected an LVal, got: CallExpression")
+    .with_label(primary_label(label))
+}
+
+#[cold]
+pub fn todo_build_hir_lower_assignment_handle_call_expression_assignments(
+    label: impl Into<oxc_diagnostics::LabeledSpan>,
+) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::Todo, "(BuildHIR::lowerAssignment) Handle CallExpression assignments")
+        .with_label(primary_label(label))
+}
+
+#[cold]
 pub fn todo_build_hir_lower_assignment_handle_private_name_properties_member_expression(
     label: impl Into<oxc_diagnostics::LabeledSpan>,
 ) -> OxcDiagnostic {

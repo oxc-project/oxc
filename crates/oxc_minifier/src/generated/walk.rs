@@ -990,6 +990,7 @@ unsafe fn walk_assignment_target<'a, Tr: Traverse<'a>>(
         | AssignmentTarget::TSSatisfiesExpression(_)
         | AssignmentTarget::TSNonNullExpression(_)
         | AssignmentTarget::TSTypeAssertion(_)
+        | AssignmentTarget::CallExpression(_)
         | AssignmentTarget::ComputedMemberExpression(_)
         | AssignmentTarget::StaticMemberExpression(_)
         | AssignmentTarget::PrivateFieldExpression(_) => {
@@ -1024,6 +1025,9 @@ unsafe fn walk_simple_assignment_target<'a, Tr: Traverse<'a>>(
         }
         SimpleAssignmentTarget::TSTypeAssertion(node) => {
             walk_ts_type_assertion(traverser, (&mut **node) as *mut _, ctx)
+        }
+        SimpleAssignmentTarget::CallExpression(node) => {
+            walk_call_expression(traverser, (&mut **node) as *mut _, ctx)
         }
         SimpleAssignmentTarget::ComputedMemberExpression(_)
         | SimpleAssignmentTarget::StaticMemberExpression(_)
@@ -1136,6 +1140,7 @@ unsafe fn walk_assignment_target_maybe_default<'a, Tr: Traverse<'a>>(
         | AssignmentTargetMaybeDefault::TSSatisfiesExpression(_)
         | AssignmentTargetMaybeDefault::TSNonNullExpression(_)
         | AssignmentTargetMaybeDefault::TSTypeAssertion(_)
+        | AssignmentTargetMaybeDefault::CallExpression(_)
         | AssignmentTargetMaybeDefault::ArrayAssignmentTarget(_)
         | AssignmentTargetMaybeDefault::ObjectAssignmentTarget(_)
         | AssignmentTargetMaybeDefault::ComputedMemberExpression(_)
@@ -1834,6 +1839,7 @@ unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
         | ForStatementLeft::TSSatisfiesExpression(_)
         | ForStatementLeft::TSNonNullExpression(_)
         | ForStatementLeft::TSTypeAssertion(_)
+        | ForStatementLeft::CallExpression(_)
         | ForStatementLeft::ArrayAssignmentTarget(_)
         | ForStatementLeft::ObjectAssignmentTarget(_)
         | ForStatementLeft::ComputedMemberExpression(_)

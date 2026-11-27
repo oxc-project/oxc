@@ -1015,6 +1015,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTarget<'_> {
             | Self::TSSatisfiesExpression(_)
             | Self::TSNonNullExpression(_)
             | Self::TSTypeAssertion(_)
+            | Self::CallExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => AssignmentTarget::from(CloneIn::clone_in_impl(
@@ -1059,6 +1060,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for SimpleAssignmentTarget<'_> {
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
             Self::TSTypeAssertion(it) => SimpleAssignmentTarget::TSTypeAssertion(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::CallExpression(it) => SimpleAssignmentTarget::CallExpression(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
             Self::ComputedMemberExpression(_)
@@ -1160,6 +1164,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeDefault<'_> {
             | Self::TSSatisfiesExpression(_)
             | Self::TSNonNullExpression(_)
             | Self::TSTypeAssertion(_)
+            | Self::CallExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_)
@@ -1818,6 +1823,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementLeft<'_> {
             | Self::TSSatisfiesExpression(_)
             | Self::TSNonNullExpression(_)
             | Self::TSTypeAssertion(_)
+            | Self::CallExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_)

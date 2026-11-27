@@ -609,6 +609,7 @@ impl ESTree for AssignmentTarget<'_> {
             | Self::TSSatisfiesExpression(_)
             | Self::TSNonNullExpression(_)
             | Self::TSTypeAssertion(_)
+            | Self::CallExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => {
@@ -629,6 +630,7 @@ impl ESTree for SimpleAssignmentTarget<'_> {
             Self::TSSatisfiesExpression(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_member_expression().serialize(serializer),
@@ -694,6 +696,7 @@ impl ESTree for AssignmentTargetMaybeDefault<'_> {
             | Self::TSSatisfiesExpression(_)
             | Self::TSNonNullExpression(_)
             | Self::TSTypeAssertion(_)
+            | Self::CallExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_)
@@ -1093,6 +1096,7 @@ impl ESTree for ForStatementLeft<'_> {
             | Self::TSSatisfiesExpression(_)
             | Self::TSNonNullExpression(_)
             | Self::TSTypeAssertion(_)
+            | Self::CallExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_)

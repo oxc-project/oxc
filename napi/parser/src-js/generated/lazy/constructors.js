@@ -2049,6 +2049,8 @@ function constructAssignmentTarget(pos, ast) {
       return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
       return constructBoxTSTypeAssertion(pos + 8, ast);
+    case 5:
+      return constructBoxCallExpression(pos + 8, ast);
     case 8:
       return constructBoxArrayAssignmentTarget(pos + 8, ast);
     case 9:
@@ -2076,6 +2078,8 @@ function constructSimpleAssignmentTarget(pos, ast) {
       return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
       return constructBoxTSTypeAssertion(pos + 8, ast);
+    case 5:
+      return constructBoxCallExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
@@ -2258,6 +2262,8 @@ function constructAssignmentTargetMaybeDefault(pos, ast) {
       return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
       return constructBoxTSTypeAssertion(pos + 8, ast);
+    case 5:
+      return constructBoxCallExpression(pos + 8, ast);
     case 8:
       return constructBoxArrayAssignmentTarget(pos + 8, ast);
     case 9:
@@ -3566,6 +3572,8 @@ function constructForStatementLeft(pos, ast) {
       return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
       return constructBoxTSTypeAssertion(pos + 8, ast);
+    case 5:
+      return constructBoxCallExpression(pos + 8, ast);
     case 8:
       return constructBoxArrayAssignmentTarget(pos + 8, ast);
     case 9:

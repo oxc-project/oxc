@@ -863,6 +863,11 @@ pub enum SimpleAssignmentTarget<'a> {
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+    /// `f()` in `f() = 1`. Only valid in sloppy-mode JavaScript; the semantic checker reports
+    /// it in strict mode code and in TypeScript.
+    ///
+    /// <https://tc39.es/ecma262/#sec-runtime-errors-for-function-call-assignment-targets>
+    CallExpression(Box<'a, CallExpression<'a>>) = 5,
 
     // `MemberExpression` variants added here by `#[ast]` macro
     INHERIT(MemberExpression<'a>),

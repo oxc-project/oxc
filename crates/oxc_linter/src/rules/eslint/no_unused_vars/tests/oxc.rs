@@ -279,6 +279,24 @@ fn discarded_instance_initializers() {
 }
 
 #[test]
+fn test_vars_call_assignment_target() {
+    // A call as an assignment target reads the callee.
+    let pass = vec![
+        "var o = { m() { return {}; } }; o.m()++;",
+        "var o = { m() { return {}; } }; o.m() = 1;",
+        "var f = () => ({}); --f();",
+        "var f = () => ({}); f() += 1;",
+        "var f = () => ({}); for (f() in {});",
+    ];
+    let fail = vec![];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .change_rule_path_extension("cjs")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
 fn test_vars_discarded_reads() {
     let pass = vec![
         // https://github.com/oxc-project/oxc/pull/4445#issuecomment-2254122889

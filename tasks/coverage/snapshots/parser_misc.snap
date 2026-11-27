@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 193/193 (100.00%)
 Positive Passed: 193/193 (100.00%)
-Negative Passed: 332/332 (100.00%)
+Negative Passed: 336/336 (100.00%)
 
   × TS(1029): 'declare' modifier must precede 'abstract' modifier.
    ╭─[misc/fail/abstract-declare-property-order.ts:2:14]
@@ -5659,6 +5659,72 @@ Negative Passed: 332/332 (100.00%)
    · ┬                ┬
    · │                ╰── `,` or `>` expected
    · ╰── Opened here
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-destructuring-default.cjs:1:2]
+ 1 │ [f() = 1] = [];
+   ·  ───
+ 2 │ ({ a: f() = 1 } = {});
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-destructuring-default.cjs:2:7]
+ 1 │ [f() = 1] = [];
+ 2 │ ({ a: f() = 1 } = {});
+   ·       ───
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-module.mjs:1:1]
+ 1 │ f() = 1;
+   · ───
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-strict.cjs:3:5]
+ 2 │   m() {
+ 3 │     f()++;
+   ·     ───
+ 4 │   }
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-strict.cjs:8:8]
+ 7 │   "use strict";
+ 8 │   for (f() in o);
+   ·        ───
+ 9 │ }
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-typescript.cts:1:1]
+ 1 │ f() = 1;
+   · ───
+ 2 │ f()++;
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-typescript.cts:2:1]
+ 1 │ f() = 1;
+ 2 │ f()++;
+   · ───
+ 3 │ for (f() in o);
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-typescript.cts:3:6]
+ 2 │ f()++;
+ 3 │ for (f() in o);
+   ·      ───
+ 4 │ for (f() of o);
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-30398-typescript.cts:4:6]
+ 3 │ for (f() in o);
+ 4 │ for (f() of o);
+   ·      ───
    ╰────
 
   × Expected `:` but found `[`

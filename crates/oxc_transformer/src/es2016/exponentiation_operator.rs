@@ -72,9 +72,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
             }
             // `left **= right`
             Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator != AssignmentOperator::Exponential
-                    || assign_expr.right.is_big_int_literal()
-                {
+                if assign_expr.operator != AssignmentOperator::Exponential {
+                    return;
+                }
+
+                // `f() **= x` calls `f` and then throws a `ReferenceError` without reading the
+                // old value or evaluating `x`, exactly like `f() = x`.
+                if matches!(assign_expr.left, AssignmentTarget::CallExpression(_)) {
+                    assign_expr.operator = AssignmentOperator::Assign;
+                    return;
+                }
+
+                if assign_expr.right.is_big_int_literal() {
                     return;
                 }
 

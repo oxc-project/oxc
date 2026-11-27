@@ -462,6 +462,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             AssignmentTarget::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
             AssignmentTarget::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
             AssignmentTarget::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            AssignmentTarget::CallExpression(it) => self.visit_call_expression(it),
             AssignmentTarget::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -486,6 +487,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_ts_non_null_expression(it)
             }
             SimpleAssignmentTarget::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            SimpleAssignmentTarget::CallExpression(it) => self.visit_call_expression(it),
             SimpleAssignmentTarget::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -538,6 +540,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_ts_non_null_expression(it)
             }
             AssignmentTargetMaybeDefault::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            AssignmentTargetMaybeDefault::CallExpression(it) => self.visit_call_expression(it),
             AssignmentTargetMaybeDefault::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -827,6 +830,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ForStatementLeft::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
             ForStatementLeft::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
             ForStatementLeft::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            ForStatementLeft::CallExpression(it) => self.visit_call_expression(it),
             ForStatementLeft::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }

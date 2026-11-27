@@ -382,6 +382,7 @@ fn for_of_head_starts_with_let(left: &ForStatementLeft, p: &Codegen) -> bool {
         ForStatementLeft::StaticMemberExpression(m) => expr_starts_with_let(&m.object, p),
         ForStatementLeft::PrivateFieldExpression(m) => expr_starts_with_let(&m.object, p),
         ForStatementLeft::TSNonNullExpression(e) => expr_starts_with_let(&e.expression, p),
+        ForStatementLeft::CallExpression(e) => expr_starts_with_let(&e.callee, p),
         _ => false,
     }
 }
@@ -2192,6 +2193,7 @@ impl GenExpr for SimpleAssignmentTarget<'_> {
             Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
+            Self::CallExpression(e) => e.print_expr(p, precedence, ctx),
         }
     }
 }

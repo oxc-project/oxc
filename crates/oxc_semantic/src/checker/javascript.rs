@@ -746,6 +746,13 @@ pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
     }
 }
 
+/// <https://tc39.es/ecma262/#sec-runtime-errors-for-function-call-assignment-targets>
+pub fn check_call_assignment_target(call: &CallExpression, ctx: &SemanticBuilder<'_>) {
+    if ctx.strict_mode() || ctx.source_type.is_typescript() {
+        ctx.error(diagnostics::invalid_assignment(call.span));
+    }
+}
+
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
@@ -877,7 +884,11 @@ pub fn check_for_statement_left(
     is_for_in: bool,
     ctx: &SemanticBuilder<'_>,
 ) {
-    let ForStatementLeft::VariableDeclaration(decl) = left else { return };
+    let decl = match left {
+        ForStatementLeft::VariableDeclaration(decl) => decl,
+        ForStatementLeft::CallExpression(call) => return check_call_assignment_target(call, ctx),
+        _ => return,
+    };
 
     // The parser checks initialized lexical declarations and multiple declarations. The
     // remaining cases depend on strict mode or the binding form.

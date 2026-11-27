@@ -2596,6 +2596,16 @@ fn lower_assignment_target<'a>(
         oxc::AssignmentTarget::TSTypeAssertion(node) => {
             lower_typed_assignment_target_expression(builder, span, kind, &node.expression, value)
         }
+        // Only reachable from an AST recovered after a parse error, such as `[f() = 1] = []`:
+        // `=` and for-in/for-of heads report a call target before lowering it.
+        oxc::AssignmentTarget::CallExpression(call) => {
+            builder.record_error(
+                diagnostics::todo_build_hir_lower_assignment_handle_call_expression_assignments(
+                    call.span,
+                ),
+            )?;
+            Ok(None)
+        }
     }
 }
 
@@ -2671,6 +2681,20 @@ fn lower_identifier_followup_store<'a>(
             }
         }
     }
+}
+
+/// Unlike the TS implementation, which fails an invariant for a call as a for-in / for-of
+/// head (`for (f() in o)`), report the Todo from the `default` arm of the TS `lowerAssignment`
+/// and skip the loop, as the unsupported `for await` does. The upstream Rust AST cannot
+/// represent a call here.
+fn lower_call_expression_loop_head<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    call: &oxc::CallExpression<'a>,
+) -> Result<(), OxcDiagnostic> {
+    builder.record_error(
+        diagnostics::todo_build_hir_lower_assignment_handle_call_expression_assignments(call.span),
+    )?;
+    Ok(())
 }
 
 /// Lower a single destructuring followup (the recursion step shared by
@@ -4596,6 +4620,13 @@ fn lower_assignment_expression<'a>(
                     }
                 }
             }
+            // `f() = 1`: Babel's `isLVal()` is false for a call.
+            oxc::AssignmentTarget::CallExpression(call) => {
+                builder.record_error(
+                    diagnostics::todo_unsupported_syntax_left_side_assignment_expression(call.span),
+                )?;
+                Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
+            }
             _ => {
                 // Destructuring assignment
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
@@ -6436,6 +6467,9 @@ fn lower_statement<'a>(
             );
         }
         oxc::Statement::ForInStatement(for_in) => {
+            if let oxc::ForStatementLeft::CallExpression(call) = &for_in.left {
+                return lower_call_expression_loop_head(builder, call);
+            }
             let span = Some(for_in.span);
             let left_span = for_in.left.span();
             let continuation_block = builder.reserve(BlockKind::Block);
@@ -6497,6 +6531,9 @@ fn lower_statement<'a>(
             );
         }
         oxc::Statement::ForOfStatement(for_of) => {
+            if let oxc::ForStatementLeft::CallExpression(call) = &for_of.left {
+                return lower_call_expression_loop_head(builder, call);
+            }
             let span = Some(for_of.span);
             let left_span = for_of.left.span();
             let continuation_block = builder.reserve(BlockKind::Block);
