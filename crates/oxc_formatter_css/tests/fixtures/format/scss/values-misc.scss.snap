@@ -45,8 +45,8 @@ $colours: (
   "background-secondary": $dark-200,
 );
 a {
-  prop19: ($width/2) ($width / 2) ($width/ 2) ($width / 2);
-  prop20: (2 / $width) (2 / $width) (2 / $width) (2 / $width);
+  prop19: ($width/2) ($width / 2) ($width / 2) ($width / 2);
+  prop20: (2/$width) (2 / $width) (2 / $width) (2 / $width);
 }
 body {
   test: foo(return-list($list)...);
@@ -72,8 +72,8 @@ $colours: (
   "background-secondary": $dark-200,
 );
 a {
-  prop19: ($width/2) ($width / 2) ($width/ 2) ($width / 2);
-  prop20: (2 / $width) (2 / $width) (2 / $width) (2 / $width);
+  prop19: ($width/2) ($width / 2) ($width / 2) ($width / 2);
+  prop20: (2/$width) (2 / $width) (2 / $width) (2 / $width);
 }
 body {
   test: foo(return-list($list)...);

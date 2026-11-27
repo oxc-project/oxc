@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.a {
+  width: @a/2;
+  width: @a/ 2;
+  width: (@a  /2);
+  width: @a ./ 2;
+  width: calc(@a/2);
+  width: @a /* c */ / 2;
+}
+@media @phone and (aspect-ratio: 16/ 9) {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.a {
+  width: @a/2;
+  width: @a / 2;
+  width: (@a / 2);
+  width: @a ./ 2;
+  width: calc(@a / 2);
+  width: @a /* c */ / 2;
+}
+@media @phone and (aspect-ratio: 16 / 9) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.a {
+  width: @a/2;
+  width: @a / 2;
+  width: (@a / 2);
+  width: @a ./ 2;
+  width: calc(@a / 2);
+  width: @a /* c */ / 2;
+}
+@media @phone and (aspect-ratio: 16 / 9) {
+}
+
+===================== End =====================

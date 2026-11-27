@@ -836,8 +836,9 @@ fn write_token_comma_group_after<'a>(
         }
         let run = &tokens[i..run_end];
         let run_start = i;
+        let followed = run_end < tokens.len();
         let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-            write_token_run(run, run_start == 0 && hug_lparen, f);
+            write_token_run(run, run_start == 0 && hug_lparen, followed, f);
         });
         filler.entry(&soft_line_break_or_space(), &content);
         i = run_end;
@@ -895,7 +896,13 @@ fn write_token_comma_group_grouped<'a>(
 }
 
 /// One run: spacing normalized; paren regions recurse as breakable groups.
-fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssFormatter<'_, 'a>) {
+/// `followed`: more tokens come after the run (a `/` ending it has a gap after it).
+fn write_token_run<'a>(
+    run: &[TokenWithSpan<'a>],
+    hug_lparen: bool,
+    followed: bool,
+    f: &mut CssFormatter<'_, 'a>,
+) {
     let source = f.context().source_text();
     let mut j = 0;
     while j < run.len() {
@@ -914,7 +921,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
             // Unbalanced region: print the opener verbatim and move on
             if depth != 0 || k < j + 2 {
                 if j > 0 {
-                    write_token_pair_space(run, j, hug_lparen, f);
+                    write_token_pair_space(run, j, hug_lparen, followed, f);
                 }
                 let span = to_span(tok.span);
                 write!(f, text(source.text_for(&span)));
@@ -928,7 +935,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
                 _ => ("{", "}"),
             };
             if j > 0 {
-                write_token_pair_space(run, j, hug_lparen, f);
+                write_token_pair_space(run, j, hug_lparen, followed, f);
             }
             if inner.is_empty() {
                 write!(f, [text(open), text(close)]);
@@ -951,7 +958,7 @@ fn write_token_run<'a>(run: &[TokenWithSpan<'a>], hug_lparen: bool, f: &mut CssF
             continue;
         }
         if j > 0 {
-            write_token_pair_space(run, j, hug_lparen, f);
+            write_token_pair_space(run, j, hug_lparen, followed, f);
         }
         let span = to_span(tok.span);
         match &tok.token {
@@ -984,6 +991,7 @@ fn write_token_pair_space<'a>(
     run: &[TokenWithSpan<'a>],
     j: usize,
     hug_lparen: bool,
+    followed: bool,
     f: &mut CssFormatter<'_, 'a>,
 ) {
     let source = f.context().source_text();
@@ -1027,6 +1035,15 @@ fn write_token_pair_space<'a>(
             | Token::EqualEqual(_)
             | Token::ExclamationEqual(_),
         ) => true,
+        // A `/` takes both of its gaps together (DIVERGENCES.md#slash-spacing);
+        // it glues to its left operand, so a gap after it ends the run
+        (_, Token::Solidus(_)) => match run.get(j + 1) {
+            Some(next) => value::is_slash_spaced(prev.span, tok.span, next.span),
+            None => gap || followed,
+        },
+        (Token::Solidus(_), _) if j >= 2 => {
+            value::is_slash_spaced(run[j - 2].span, prev.span, tok.span)
+        }
         _ => gap,
     };
     if space {
