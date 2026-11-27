@@ -64,6 +64,9 @@ declare_oxc_lint!(
     /// Enforce that elements with interactive roles and interaction handlers
     /// (mouse or key press) must be focusable.
     ///
+    /// The suggestion to add `tabIndex` is only offered when the element already
+    /// handles keyboard events.
+    ///
     /// ### Why is this bad?
     ///
     /// Elements that handle user interaction (e.g., `onClick`) but are not
@@ -94,7 +97,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     recommended,
-    suggestion,
+    conditional_suggestion,
     config = InteractiveSupportsFocusConfig,
     version = "1.63.0",
     short_description = "Enforce that elements with interactive roles and interaction handlers (mouse or key press) must be focusable.",
@@ -149,27 +152,40 @@ impl Rule for InteractiveSupportsFocus {
             return;
         }
 
+        let has_keyboard_handler = KEYBOARD_EVENT_HANDLERS
+            .iter()
+            .any(|handler| has_jsx_prop_ignore_case(jsx_el, handler).is_some());
+
         if self.0.tabbable.iter().any(|t| t.as_str() == role) {
-            ctx.diagnostic_with_suggestion(
-                must_be_tabbable_diagnostic(role, jsx_el.span),
-                |fixer| fixer.insert_text_after(&jsx_el.name, " tabIndex={0}"),
-            );
+            let diagnostic = must_be_tabbable_diagnostic(role, jsx_el.span);
+            if has_keyboard_handler {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fixer.insert_text_after(&jsx_el.name, " tabIndex={0}")
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         } else {
-            let fixer = RuleFixer::new(FixKind::Suggestion, ctx);
-            ctx.diagnostic_with_suggestions(
-                must_be_focusable_diagnostic(role, jsx_el.span),
-                [
-                    fixer.insert_text_after(&jsx_el.name, " tabIndex={0}"),
-                    fixer.insert_text_after(&jsx_el.name, " tabIndex={-1}"),
-                ],
-            );
+            let diagnostic = must_be_focusable_diagnostic(role, jsx_el.span);
+            if has_keyboard_handler {
+                let fixer = RuleFixer::new(FixKind::Suggestion, ctx);
+                ctx.diagnostic_with_suggestions(
+                    diagnostic,
+                    [
+                        fixer.insert_text_after(&jsx_el.name, " tabIndex={0}"),
+                        fixer.insert_text_after(&jsx_el.name, " tabIndex={-1}"),
+                    ],
+                );
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
@@ -310,20 +326,60 @@ fn test() {
         (r#"<div role="button" onclick={() => void 0} />"#, None, None),
     ];
 
-    let fix_tabbable = vec![(
-        r#"<div role="button" onClick={() => void 0} />"#,
-        r#"<div tabIndex={0} role="button" onClick={() => void 0} />"#,
-    )];
-    let fix_focusable = vec![(
-        r#"<div role="menuitem" onClick={() => void 0} />"#,
+    let fix: Vec<ExpectFixTestCase> = vec![
+        // Tabbable interactive role with keyboard handler gets tabIndex={0} suggestion
         (
-            r#"<div tabIndex={0} role="menuitem" onClick={() => void 0} />"#,
-            r#"<div tabIndex={-1} role="menuitem" onClick={() => void 0} />"#,
-        ),
-    )];
+            r#"<div role="button" onClick={go} onKeyDown={go}>Open</div>"#,
+            r#"<div tabIndex={0} role="button" onClick={go} onKeyDown={go}>Open</div>"#,
+            None,
+            FixKind::Suggestion,
+        )
+            .into(),
+        (
+            r#"<div role="button" onKeyUp={() => void 0} />"#,
+            r#"<div tabIndex={0} role="button" onKeyUp={() => void 0} />"#,
+            None,
+            FixKind::Suggestion,
+        )
+            .into(),
+        (
+            r#"<div role="button" onKeyPress={() => void 0} />"#,
+            r#"<div tabIndex={0} role="button" onKeyPress={() => void 0} />"#,
+            None,
+            FixKind::Suggestion,
+        )
+            .into(),
+        (
+            r#"<div role="button" onClick={go} onkeydown={go}>Open</div>"#,
+            r#"<div tabIndex={0} role="button" onClick={go} onkeydown={go}>Open</div>"#,
+            None,
+            FixKind::Suggestion,
+        )
+            .into(),
+        // Tabbable interactive role without keyboard handler fails with no fix
+        (
+            r#"<div role="button" onClick={go}>Open</div>"#,
+            r#"<div role="button" onClick={go}>Open</div>"#,
+        )
+            .into(),
+        // Non-tabbable interactive role with keyboard handler gets tabIndex={0} and tabIndex={-1} suggestions
+        (
+            r#"<div role="menuitem" onClick={go} onKeyDown={go}>Open</div>"#,
+            (
+                r#"<div tabIndex={0} role="menuitem" onClick={go} onKeyDown={go}>Open</div>"#,
+                r#"<div tabIndex={-1} role="menuitem" onClick={go} onKeyDown={go}>Open</div>"#,
+            ),
+        )
+            .into(),
+        // Non-tabbable interactive role without keyboard handler fails with no fix
+        (
+            r#"<div role="menuitem" onClick={go}>Open</div>"#,
+            r#"<div role="menuitem" onClick={go}>Open</div>"#,
+        )
+            .into(),
+    ];
 
     Tester::new(InteractiveSupportsFocus::NAME, InteractiveSupportsFocus::PLUGIN, pass, fail)
-        .expect_fix(fix_tabbable)
-        .expect_fix(fix_focusable)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
