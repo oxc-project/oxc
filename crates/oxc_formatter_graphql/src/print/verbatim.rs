@@ -6,8 +6,9 @@
 //! only the leading claim at its start remains.
 //!
 //! Each check relies on spelling the grammar fixes (`$var`, `[Foo!]!`, literal values),
-//! except the `": "` of [`write_colon_pair`], a layout choice (Prettier never breaks after it):
-//! change both of its sides together.
+//! except the `": "` of [`write_colon_pair`], a layout choice:
+//! what follows it is atomic or breaks inside its own `[` / `{`, so a break after the `:` gains no width.
+//! Change both of its sides together.
 
 use oxc_formatter_core::{builders::text, write};
 use oxc_graphql_parser::ast::{self, Name, Type, Value, Variable};
