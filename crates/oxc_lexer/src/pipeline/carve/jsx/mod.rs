@@ -178,10 +178,10 @@ impl JsxCarve<'_> {
         let Bitmaps { token_start, op_char, .. } = self.bitmaps;
         let module = self.options.source_type_module;
         let c1 = if s + 1 < src.len() { src[s + 1] } else { 0 };
-        if c1 == b'!' && html_open_comment_at(src, s, module, cpu) {
+        if c1 == b'!' && html_open_comment_at(src, s, module) {
             // Annex B B.1.1: the goal, not the JSX setting, decides.
-            self.html_close = !module;
-            return lex_html_open_comment(src, token_start, kinds, op_char, s, module, self.lanes);
+            self.html_close = true;
+            return lex_html_open_comment(src, token_start, kinds, op_char, s, self.lanes);
         }
         if c1 == b'<' {
             // A shift: skip both, or the second < would read the first as an operand preceder.

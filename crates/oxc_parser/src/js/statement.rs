@@ -142,6 +142,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
+        // A module's `<!--` at the start of a line is lexed as `<` `!` `--`, because
+        // Annex B.1.1 has HTML-like comments in the Script goal only, and oxc reads the ones
+        // in the middle of a line that way too. A statement cannot start with `<`, so keep
+        // the friendlier error for the line-start form, where a script would read a comment
+        // (#30422). Mid-line, and in script and unambiguous modes, the current token is never
+        // a `<` which begins `<!--` on a new line, so the check never applies there.
+        if self.cur_kind() == Kind::LAngle
+            && self.cur_token().is_on_new_line()
+            && self.source_text[self.cur_start() as usize..].starts_with("<!--")
+        {
+            let span = Span::sized(self.cur_start(), 4);
+            return self.fatal_error(diagnostics::html_comment_in_module(span));
+        }
+
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => self.parse_empty_statement(),

@@ -31,7 +31,6 @@ pub enum DiagCode {
     AllocationLimitExceeded = 17,
     UnexpectedCharacter = 18,
     LineTerminatorInString = 19,
-    HtmlCommentInModule = 20,
     UnterminatedJsxElement = 21,
     UnterminatedJsxTag = 22,
     UnterminatedJsxContainer = 23,

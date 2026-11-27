@@ -124,17 +124,12 @@ pub(super) fn lex_comment_at(
     }
 }
 
-/// Annex B B.1.1: does the `<` at `s` open a `<!--` comment? Always in a script; in a module
-/// only at line start, where it is diagnosed rather than read as operators. Shared by `carve`
-/// and `carve_jsx` JS mode: the goal, not the JSX setting, decides.
-#[cpu_multiversion]
+/// Annex B B.1.1: does the `<` at `s` open a `<!--` comment? Only in a script, where the goal,
+/// not the JSX setting, decides. The Module goal has no HTML-like comments, so there `<!--` is
+/// always the tokens `<` `!` `--` (#30422).
 #[inline(always)]
-pub(super) fn html_open_comment_at(src: Source, s: usize, module: bool, cpu: impl Cpu) -> bool {
-    s + 3 < src.len()
-        && src[s + 1] == b'!'
-        && src[s + 2] == b'-'
-        && src[s + 3] == b'-'
-        && (!module || html_close_at_line_start(src, s, cpu))
+pub(super) fn html_open_comment_at(src: Source, s: usize, module: bool) -> bool {
+    !module && s + 3 < src.len() && src[s + 1] == b'!' && src[s + 2] == b'-' && src[s + 3] == b'-'
 }
 
 /// Lex the `<!--` comment opening at `s` (see [`html_open_comment_at`]). Returns the resume
@@ -152,12 +147,8 @@ pub(super) fn lex_html_open_comment(
     kinds: Kinds,
     op_char: Bitmap,
     s: usize,
-    module: bool,
     lanes: &mut Lanes,
 ) -> usize {
-    if module {
-        lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
-    }
     lex_html_comment(src, token_start, kinds, op_char, s, 4, CommentKind::HtmlOpen, lanes)
 }
 

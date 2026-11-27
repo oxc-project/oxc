@@ -18,7 +18,11 @@ impl<C: Config> Lexer<'_, C> {
         }
     }
 
-    /// returns None for `SingleLineHTMLOpenComment` `<!--` in script mode
+    /// returns None for the `SingleLineHTMLOpenComment` `<!--` in script mode. In a module,
+    /// `<!--` is always the tokens `<` `!` `--`, wherever it appears, because Annex B.1.1 has
+    /// HTML-like comments in the Script goal only. When one starts a statement, where `<`
+    /// cannot begin one, the parser keeps the friendlier error for the comment a script would
+    /// read (#30422).
     pub(super) fn read_left_angle(&mut self) -> Option<Kind> {
         match self.peek_byte() {
             Some(b'<') => {
@@ -36,21 +40,12 @@ impl<C: Config> Lexer<'_, C> {
             // `<!--` HTML comment (Annex B.1.1). Rare legacy syntax, so handle out of line:
             // it builds/pushes a diagnostic, whose `OxcDiagnostic` buffer would otherwise inflate
             // the `<` byte-handler's stack frame on the common `<`/`<<`/`<=` path.
-            Some(b'!') if self.remaining().starts_with("!--") => cold_branch(|| {
-                if self.source_type.is_module() {
-                    if self.pending.is_on_new_line() {
-                        let span = Span::sized(self.token_start, 4);
-                        self.errors.push(diagnostics::html_comment_in_module(span));
-                        None
-                    } else {
-                        // In middle of expression (e.g. `foo <!--bar`) - parse as `<`
-                        Some(Kind::LAngle)
-                    }
-                } else {
+            Some(b'!') if !self.source_type.is_module() && self.remaining().starts_with("!--") => {
+                cold_branch(|| {
                     self.defer_html_comment_error(4);
                     None
-                }
-            }),
+                })
+            }
             _ => Some(Kind::LAngle),
         }
     }
