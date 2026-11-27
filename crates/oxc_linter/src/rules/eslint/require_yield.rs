@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn require_yield_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("This generator function does not have `yield`")
@@ -58,8 +58,14 @@ impl Rule for RequireYield {
             }
 
             if !finder.found {
-                let span = func.id.as_ref().map_or_else(|| func.span, |ident| ident.span);
-                ctx.diagnostic(require_yield_diagnostic(span));
+                let start = match outermost_paren_parent(node, ctx.semantic()).map(AstNode::kind) {
+                    Some(AstKind::ObjectProperty(prop)) => prop.span.start,
+                    Some(AstKind::ObjectMethodProperty(prop)) => prop.span.start,
+                    Some(AstKind::MethodDefinition(method)) => method.span.start,
+                    Some(AstKind::PropertyDefinition(prop)) => prop.span.start,
+                    _ => func.span.start,
+                };
+                ctx.diagnostic(require_yield_diagnostic(Span::new(start, func.params.span.start)));
             }
         }
     }
@@ -99,6 +105,7 @@ fn test() {
         "class A { *foo() { yield 0; } };",
         "class A { *foo() { } };",
         "() => {}",
+        "// eslint-disable-next-line require-yield\nfunction*\ngenerate() { return 1; }",
     ];
 
     let fail = vec![
@@ -108,6 +115,11 @@ fn test() {
         "class A { *foo() { return 0; } }",
         "function* foo() { function* bar() { yield 0; } }",
         "function* foo() { function* bar() { return 0; } yield 0; }",
+        "function*\ngenerate() { return 1; }",
+        "class A { static *foo() { return 0; } }",
+        "var obj = { foo: (function* () { return 0; }) }",
+        "class A { foo = function* bar() { return 0; } }",
+        "export default async function* () { return 0; }",
     ];
 
     Tester::new(RequireYield::NAME, RequireYield::PLUGIN, pass, fail).test_and_snapshot();
