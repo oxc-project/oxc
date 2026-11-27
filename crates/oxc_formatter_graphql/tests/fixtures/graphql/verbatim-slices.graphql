@@ -1,0 +1,42 @@
+# Spelled as printed: one source slice per construct
+query Q($a: Int!, $b: [String!]! = [], $c: ID @d) @live {
+  alias: field(x: 1, y: "s", z: $a, e: ENUM, n: null, o: {k: true}) @include(if: $b)
+  ...Frag
+  bare
+}
+
+# Spacing the printer normalizes: piecewise fallback
+query R($ a :Int, $b:[ String ! ]) @ live {
+  alias :field(x :1, y:"s\n", z: $ a) @ include(if :$b)
+  ... Frag
+  other : bare
+}
+
+# Comments between the pieces (DIVERGENCES.md#trailing-comment-before-continuation)
+query S(
+  $a # c1
+  : Int
+) {
+  alias # c2
+  : field
+  f(x # c3
+  : 1)
+}
+
+type T implements I @d {
+  f(a: Int): [T!]!
+  g(a: Int):String
+  h(a: Int) # c4
+  : String
+}
+
+type U implements
+# c5
+I {
+  a: Int
+}
+
+input In {
+  a :Int = 1
+  b: [ Int ]
+}
