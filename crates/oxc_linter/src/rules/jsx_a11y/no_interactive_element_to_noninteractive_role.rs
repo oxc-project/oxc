@@ -421,6 +421,12 @@ fn test() {
 
     let fail = vec![
         (r#"<a href="http://x.y.z" role="img" />"#, None, None),
+        // `separator` is a non-interactive (structure) role, so assigning it
+        // to an interactive element is flagged, matching
+        // eslint-plugin-jsx-a11y. https://github.com/oxc-project/oxc/issues/29773
+        (r#"<a href="http://x.y.z" role="separator" />"#, None, None),
+        (r#"<button role="separator" />"#, None, None),
+        (r#"<input role="separator" />"#, None, None),
         (r#"<a href="http://x.y.z" tabIndex="0" role="img" />"#, None, None),
         (r#"<input role="img" />"#, None, None),
         (r#"<input type="img" role="img" />"#, None, None),

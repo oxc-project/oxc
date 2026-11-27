@@ -329,7 +329,7 @@ const NON_INTERACTIVE_ELEMENT_TYPES: [&str; 59] = [
     "ul",
 ];
 
-const INTERACTIVE_ROLES: [&str; 31] = [
+const INTERACTIVE_ROLES: [&str; 30] = [
     "button",
     "checkbox",
     "columnheader",
@@ -350,7 +350,6 @@ const INTERACTIVE_ROLES: [&str; 31] = [
     "rowheader",
     "scrollbar",
     "searchbox",
-    "separator",
     "slider",
     "spinbutton",
     "switch",
@@ -366,7 +365,7 @@ const INTERACTIVE_ROLES: [&str; 31] = [
     "treeitem",
 ];
 
-const NON_INTERACTIVE_ROLES: [&str; 43] = [
+const NON_INTERACTIVE_ROLES: [&str; 44] = [
     "alert",
     "alertdialog",
     "application",
@@ -406,6 +405,12 @@ const NON_INTERACTIVE_ROLES: [&str; 43] = [
     "row",
     "rowgroup",
     "search",
+    // The `separator` role descends from `structure`, not `widget` (see
+    // aria-query: `superClass: [["roletype", "structure"]]`), so upstream
+    // classifies it as non-interactive. It only becomes an interactive
+    // widget when made focusable, which `no_noninteractive_element_interactions`
+    // handles separately.
+    "separator",
     "status",
     "table",
     "tabpanel",

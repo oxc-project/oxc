@@ -257,6 +257,10 @@ fn test() {
         (r"<article tabIndex={0} />", None, None),
         (r"<Article tabIndex={0} />", None, Some(settings())),
         (r#"<article tabIndex="0" />"#, None, None),
+        // `separator` is a non-interactive (structure) role, so a
+        // non-negative `tabIndex` on it is flagged, matching
+        // eslint-plugin-jsx-a11y. https://github.com/oxc-project/oxc/issues/29773
+        (r#"<div role="separator" tabIndex="0" />"#, None, None),
         (
             r#"<div role="tabpanel" tabIndex="0" />"#,
             Some(serde_json::json!([{ "roles": [], "allowExpressionValues": false }])),
