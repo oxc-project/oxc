@@ -665,8 +665,12 @@ impl RuleRunner for crate::rules::eslint::no_empty_function::NoEmptyFunction {
 }
 
 impl RuleRunner for crate::rules::eslint::no_empty_pattern::NoEmptyPattern {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ArrayPattern, AstType::ObjectPattern]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrayAssignmentTarget,
+        AstType::ArrayPattern,
+        AstType::ObjectAssignmentTarget,
+        AstType::ObjectPattern,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

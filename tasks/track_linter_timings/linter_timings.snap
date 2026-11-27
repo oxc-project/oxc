@@ -60,7 +60,7 @@ eslint/no-else-return                                   |  13190
 eslint/no-empty                                         |  15230
 eslint/no-empty-character-class                         |    209
 eslint/no-empty-function                                |  15202
-eslint/no-empty-pattern                                 |    655
+eslint/no-empty-pattern                                 |    680
 eslint/no-empty-static-block                            |      2
 eslint/no-eq-null                                       |  20604
 eslint/no-eval                                          |  73005
