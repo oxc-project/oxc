@@ -751,6 +751,8 @@ enum OpClass {
     Logical,
     /// `==` / `!=` / `<` / `<=` / `>` / `>=`
     Comparison,
+    /// `/`: glued on both sides or spaced on both (DIVERGENCES.md#slash-spacing)
+    Division,
     Other,
 }
 
@@ -766,6 +768,7 @@ fn flatten_condition<'b, 'a>(cond: &'b ComponentValue<'a>, out: &mut Vec<CondPar
                 | SassBinaryOperatorKind::GreaterThanOrEqual
                 | SassBinaryOperatorKind::LessThan
                 | SassBinaryOperatorKind::LessThanOrEqual => OpClass::Comparison,
+                SassBinaryOperatorKind::Division => OpClass::Division,
                 _ => OpClass::Other,
             };
             out.push(CondPart::Op(to_span(binary.op.span), class));
@@ -794,6 +797,23 @@ fn write_condition_chain<'a>(
     let mut parts = Vec::new();
     flatten_condition(condition, &mut parts);
     let has_logical = parts.iter().any(|p| matches!(p, CondPart::Op(_, OpClass::Logical)));
+    let part_span = |p: &CondPart<'_, 'a>| match p {
+        CondPart::Op(span, _) => *span,
+        CondPart::Value(v) => to_span(v.span()),
+    };
+    // `glued[i]`: no source gap before `parts[i]`.
+    // Tokens glued in the source stay glued (postcss parses `$type==ocean` as ONE word and prints it verbatim);
+    // a `/` takes both of its gaps together (DIVERGENCES.md#slash-spacing)
+    let mut glued: Vec<bool> = (0..parts.len())
+        .map(|i| i > 0 && part_span(&parts[i - 1]).end == part_span(&parts[i]).start)
+        .collect();
+    for i in 1..parts.len().saturating_sub(1) {
+        if matches!(parts[i], CondPart::Op(_, OpClass::Division)) {
+            let both = glued[i] && glued[i + 1];
+            glued[i] = both;
+            glued[i + 1] = both;
+        }
+    }
     let parts_ref = &parts;
     let inner = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         if let Some(word) = prefix {
@@ -805,23 +825,14 @@ fn write_condition_chain<'a>(
                 write!(f, soft_line_break_or_space());
             }
         }
-        let part_span = |p: &CondPart<'_, 'a>| match p {
-            CondPart::Op(span, _) => *span,
-            CondPart::Value(v) => to_span(v.span()),
-        };
         for (i, part) in parts_ref.iter().enumerate() {
-            if i > 0 {
-                // Tokens glued in the source stay glued (postcss parses
-                // `$type==ocean` as ONE word and prints it verbatim).
-                let glued = part_span(&parts_ref[i - 1]).end == part_span(part).start;
-                if !glued {
-                    let after_comparison = has_logical
-                        && matches!(parts_ref[i - 1], CondPart::Op(_, OpClass::Comparison));
-                    if matches!(part, CondPart::Op(..)) || after_comparison {
-                        write!(f, space());
-                    } else {
-                        write!(f, soft_line_break_or_space());
-                    }
+            if i > 0 && !glued[i] {
+                let after_comparison =
+                    has_logical && matches!(parts_ref[i - 1], CondPart::Op(_, OpClass::Comparison));
+                if matches!(part, CondPart::Op(..)) || after_comparison {
+                    write!(f, space());
+                } else {
+                    write!(f, soft_line_break_or_space());
                 }
             }
             // Each part owns its leading comments, or they would leak into the block

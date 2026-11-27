@@ -323,7 +323,7 @@
 
 ## css
 
-139/164 (84.76%)
+138/164 (84.15%)
 
 ### Failed
 
@@ -339,11 +339,15 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/css/fill-value/fill.css (💥, 93.33%)
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
+- externals/prettier/css/font/font.css (💥, 79.41%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
+  - crates/oxc_formatter_css/DIVERGENCES.md#math-function-operator-spacing
 - externals/prettier/css/parens/empty-lines.css (💥, 31.58%)
   - crates/oxc_formatter_css/DIVERGENCES.md#postcss-simple-var-raw-verbatim
-- externals/prettier/css/parens/parens.css (💥, 92.41%)
+- externals/prettier/css/parens/parens.css (💥, 91.72%)
   - crates/oxc_formatter_css/DIVERGENCES.md#unary-plus-glue
   - crates/oxc_formatter_css/DIVERGENCES.md#css-glued-minus-paren
+  - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
 - externals/prettier/css/postcss-8-improment/test.css (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
 - externals/prettier/css/postcss-plugins/postcss-nesting.css (💥, 97.66%)
@@ -388,8 +392,9 @@
 
 ### Failed
 
-- externals/prettier/css/font/font.css (💥, 94.12%)
-  - ❓unclassified
+- externals/prettier/css/font/font.css (💥, 79.41%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
+  - crates/oxc_formatter_css/DIVERGENCES.md#math-function-operator-spacing
 - externals/prettier/scss/comments/4594.scss (💥, 83.78%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/4878.scss (💥, 89.39%)
@@ -449,10 +454,13 @@
 
 ## less
 
-227/252 (90.08%)
+225/252 (89.29%)
 
 ### Failed
 
+- externals/prettier/css/font/font.css (💥, 79.41%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
+  - crates/oxc_formatter_css/DIVERGENCES.md#math-function-operator-spacing
 - externals/prettier/less/comments/between-decl.less (💥, 94.44%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/less/comments/selectors.less (💥, 88.89%)
@@ -461,6 +469,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/less/less-test-suite/snippet: tests-config/globalVars/extended.less (💥, 78.26%)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
+- externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-3.less (💥, 98.04%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
 - externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-functions.less (💥, 97.30%)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-lookup-glue
 - externals/prettier/less/less-test-suite/snippet: tests-config/namespacing/namespacing-media.less (💥, 96.15%)
@@ -487,7 +497,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-variable-value-comments
 - externals/prettier/less/less-test-suite/snippet: tests-unit/strings/strings.less (💥, 98.68%)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-escaped-string-gap
-- externals/prettier/less/less-test-suite/snippet: tests-unit/variables/variables.less (💥, 98.95%)
+- externals/prettier/less/less-test-suite/snippet: tests-unit/variables/variables.less (💥, 97.89%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
   - crates/oxc_formatter_css/DIVERGENCES.md#less-escaped-string-gap
 - externals/prettier/less/postcss-8-improment/test.less (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
