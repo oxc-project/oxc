@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_respect_eslint_disable_directives
+----------
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[pkg/index.js:2:1]
+ 1 | // eslint-disable-next-line no-debugger
+ 2 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
