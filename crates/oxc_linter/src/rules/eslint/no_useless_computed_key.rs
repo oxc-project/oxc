@@ -1,11 +1,12 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -129,6 +130,21 @@ impl Rule for NoUselessComputedKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectProperty(property) if property.key.is_computed() => {
+                if let Some(expr) =
+                    property.key.as_expression().map(Expression::without_parentheses)
+                {
+                    check_computed_class_member(
+                        ctx,
+                        property.key.span(),
+                        property.span,
+                        expr,
+                        false,
+                        &[],
+                        &["__proto__"],
+                    );
+                }
+            }
+            AstKind::ObjectMethodProperty(property) if property.key.is_computed() => {
                 if let Some(expr) =
                     property.key.as_expression().map(Expression::without_parentheses)
                 {

@@ -13,8 +13,8 @@ use oxc_ast::{
     ast::{
         Argument, AssignmentOperator, AssignmentTarget, BindingIdentifier, BindingPattern,
         Expression, Function, IdentifierName, LogicalExpression, LogicalOperator, ObjectExpression,
-        ObjectProperty, ObjectPropertyKind, Program, PropertyKey, PropertyKind, Statement,
-        VariableDeclarationKind, VariableDeclarator,
+        ObjectMethodKind, ObjectMethodProperty, ObjectProperty, ObjectPropertyKind, Program,
+        PropertyKey, Statement, VariableDeclarationKind, VariableDeclarator,
     },
     builder::AstBuilder,
 };
@@ -1905,7 +1905,6 @@ impl<'a> LocFieldAdder<'a> {
 
         for prop in obj_expr.properties {
             match prop {
-                ObjectPropertyKind::ObjectProperty(prop) => exprs.push(self.define(prop, temp)),
                 ObjectPropertyKind::SpreadProperty(spread) => {
                     // `...(cond && { a, b })` -> `cond && (node$0.a = a, node$0.b = b)`
                     let Expression::LogicalExpression(logical_expr) =
@@ -1925,9 +1924,7 @@ impl<'a> LocFieldAdder<'a> {
 
                     let mut assignments = ArenaVec::new_in(&self.ast);
                     for prop in obj_expr.unbox().properties {
-                        let ObjectPropertyKind::ObjectProperty(prop) = prop else {
-                            panic!("Unsupported spread in object literal");
-                        };
+                        assert!(!prop.is_spread(), "Unsupported spread in object literal");
                         assignments.push(self.define(prop, temp));
                     }
                     let right = if assignments.len() == 1 {
@@ -1943,6 +1940,7 @@ impl<'a> LocFieldAdder<'a> {
                         &self.ast,
                     ));
                 }
+                prop => exprs.push(self.define(prop, temp)),
             }
         }
 
@@ -1955,19 +1953,11 @@ impl<'a> LocFieldAdder<'a> {
     /// * `foo: value` -> `node$0.foo = value`
     /// * `get foo() {}` ->
     ///   `Object.defineProperty(node$0, 'foo', { get() {}, enumerable: true, configurable: true })`
-    fn define(&self, prop: ArenaBox<'a, ObjectProperty<'a>>, temp: Ident<'a>) -> Expression<'a> {
-        assert!(!prop.method, "Unsupported property in object literal");
-        let PropertyKey::StaticIdentifier(key) = &prop.key else {
-            panic!("Unsupported property in object literal");
-        };
-        let key_name = key.name.as_str();
-        // Assigning these would hit a getter / setter on prototype chain, instead of defining a property
-        assert!(!matches!(key_name, "loc" | "__proto__"), "Unsupported property `{key_name}`");
-
-        match prop.kind {
-            PropertyKind::Init => {
+    fn define(&self, prop: ObjectPropertyKind<'a>, temp: Ident<'a>) -> Expression<'a> {
+        match prop {
+            ObjectPropertyKind::ObjectProperty(prop) => {
                 let ObjectProperty { key, value, .. } = prop.unbox();
-                let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
+                let key = Self::define_key(key);
                 let target = AssignmentTarget::new_static_member_expression(
                     SPAN,
                     Expression::new_identifier(SPAN, temp, &self.ast),
@@ -1983,15 +1973,21 @@ impl<'a> LocFieldAdder<'a> {
                     &self.ast,
                 )
             }
-            PropertyKind::Get => {
+            ObjectPropertyKind::MethodProperty(prop) => {
+                let ObjectMethodProperty { kind, key, value, .. } = prop.unbox();
+                match kind {
+                    ObjectMethodKind::Get => {}
+                    ObjectMethodKind::Method => panic!("Unsupported property in object literal"),
+                    ObjectMethodKind::Set => panic!("Unsupported setter in object literal"),
+                }
+                let key_name = Self::define_key(key).name.as_str();
+
                 // Same attributes as a getter in an object literal
-                let descriptor_prop = |name, value, method| {
+                let descriptor_prop = |name, value| {
                     ObjectPropertyKind::new_object_property(
                         SPAN,
-                        PropertyKind::Init,
                         PropertyKey::new_static_identifier(SPAN, name, &self.ast),
                         value,
-                        method,
                         false,
                         &self.ast,
                     )
@@ -2000,16 +1996,20 @@ impl<'a> LocFieldAdder<'a> {
                     SPAN,
                     ArenaVec::from_iter_in(
                         [
-                            descriptor_prop("get", prop.unbox().value, true),
+                            ObjectPropertyKind::new_method_property(
+                                SPAN,
+                                ObjectMethodKind::Method,
+                                PropertyKey::new_static_identifier(SPAN, "get", &self.ast),
+                                value,
+                                &self.ast,
+                            ),
                             descriptor_prop(
                                 "enumerable",
                                 Expression::new_boolean_literal(SPAN, true, &self.ast),
-                                false,
                             ),
                             descriptor_prop(
                                 "configurable",
                                 Expression::new_boolean_literal(SPAN, true, &self.ast),
-                                false,
                             ),
                         ],
                         &self.ast,
@@ -2037,8 +2037,20 @@ impl<'a> LocFieldAdder<'a> {
                     &self.ast,
                 )
             }
-            PropertyKind::Set => panic!("Unsupported setter in object literal"),
+            ObjectPropertyKind::SpreadProperty(_) => {
+                panic!("Unsupported spread in object literal")
+            }
         }
+    }
+
+    fn define_key(key: PropertyKey<'a>) -> ArenaBox<'a, IdentifierName<'a>> {
+        let PropertyKey::StaticIdentifier(key) = key else {
+            panic!("Unsupported property in object literal");
+        };
+        let key_name = key.name.as_str();
+        // Assigning these would hit a getter / setter on prototype chain, instead of defining a property
+        assert!(!matches!(key_name, "loc" | "__proto__"), "Unsupported property `{key_name}`");
+        key
     }
 }
 

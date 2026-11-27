@@ -1,4 +1,3 @@
-use oxc_syntax::precedence::Precedence;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -14,6 +13,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::precedence::Precedence;
 
 use crate::{
     AstNode,

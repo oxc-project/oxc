@@ -134,6 +134,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IdentifierName<'a>> {
         let is_property_key_parent = matches!(
             self.parent(),
             AstNodes::ObjectProperty(_)
+                | AstNodes::ObjectMethodProperty(_)
                 | AstNodes::BindingProperty(_)
                 | AstNodes::AssignmentTargetPropertyProperty(_)
                 | AstNodes::TSPropertySignature(_)
@@ -190,9 +191,10 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Elision> {
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ObjectExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
-            let quote_needed = self.properties.iter().any(|kind| {
-                kind.as_property().is_some_and(|property| should_preserve_quote(&property.key, f))
-            });
+            let quote_needed = self
+                .properties
+                .iter()
+                .any(|property| property.key().is_some_and(|key| should_preserve_quote(key, f)));
             f.context_mut().push_quote_needed(quote_needed);
         }
 
@@ -217,46 +219,37 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Object
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ObjectProperty<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_accessor = match &self.kind() {
-            PropertyKind::Init => false,
-            PropertyKind::Get => {
-                write!(f, ["get", space()]);
-                true
-            }
-            PropertyKind::Set => {
-                write!(f, ["set", space()]);
-                true
-            }
-        };
+        write!(f, AssignmentLike::ObjectProperty(self));
+    }
+}
 
-        if self.method || is_accessor {
-            let AstNodeKind::Function(value) = self.value().as_kind() else {
-                unreachable!(
-                    "The `value` always be a function node if `method` or `accessor` is true"
-                )
-            };
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ObjectMethodProperty<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        match self.kind() {
+            ObjectMethodKind::Method => {}
+            ObjectMethodKind::Get => write!(f, ["get", space()]),
+            ObjectMethodKind::Set => write!(f, ["set", space()]),
+        }
 
-            if value.r#async() {
-                write!(f, ["async", space()]);
-            }
-            if value.generator() {
-                write!(f, "*");
-            }
-            format_property_key(&self.key(), f);
+        let value = self.value();
+        if value.r#async() {
+            write!(f, ["async", space()]);
+        }
+        if value.generator() {
+            write!(f, "*");
+        }
+        format_property_key(&self.key(), f);
 
-            format_grouped_parameters_with_return_type_for_method(
-                value.type_parameters(),
-                value.this_param.as_deref(),
-                &value.params(),
-                value.return_type(),
-                f,
-            );
+        format_grouped_parameters_with_return_type_for_method(
+            value.type_parameters(),
+            value.this_param.as_deref(),
+            &value.params(),
+            value.return_type(),
+            f,
+        );
 
-            if let Some(body) = &value.body() {
-                write!(f, [space(), body]);
-            }
-        } else {
-            write!(f, AssignmentLike::ObjectProperty(self));
+        if let Some(body) = &value.body() {
+            write!(f, [space(), body]);
         }
     }
 }
@@ -1183,6 +1176,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, NumericLiteral<'a>> {
         // Computed keys like `[1]` are expressions, so they are never quoted.
         let (key_span, computed) = match self.parent() {
             AstNodes::ObjectProperty(prop) => (prop.key.span(), prop.key.is_computed()),
+            AstNodes::ObjectMethodProperty(prop) => (prop.key.span(), prop.key.is_computed()),
             AstNodes::BindingProperty(prop) => (prop.key.span(), prop.key.is_computed()),
             AstNodes::AssignmentTargetPropertyProperty(prop) => {
                 (prop.name.span(), prop.name.is_computed())

@@ -1,9 +1,12 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::AstKind;
-use oxc_ast::ast::{Argument, Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn consistent_date_clone_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary `.getTime()` call")

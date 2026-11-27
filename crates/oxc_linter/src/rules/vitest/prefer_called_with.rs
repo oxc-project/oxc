@@ -33,8 +33,7 @@ impl Rule for PreferCalledWith {
 
 #[test]
 fn test() {
-    use crate::fixer::FixKind;
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let mut pass = vec![
         ("expect(fn).toBeCalledWith();", None),

@@ -1,14 +1,15 @@
 use std::cell::OnceCell;
 
+use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, ReferenceId, ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -614,7 +615,9 @@ fn get_short_span_for_fn_scope(
 
     let scope_id =
         match ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(function_symbol_id)) {
-            AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_) => {
+            AstKind::AssignmentExpression(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::ObjectMethodProperty(_) => {
                 ctx.scoping().scope_parent_id(scope_id).unwrap_or(scope_id)
             }
             _ => scope_id,

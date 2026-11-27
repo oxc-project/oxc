@@ -487,7 +487,9 @@ fn classify_this_receiver(while_node: &AstNode, ctx: &LintContext) -> ReceiverTy
                     }
                 }
                 match ctx.nodes().parent_kind(ancestor.id()) {
-                    AstKind::ObjectProperty(_) => return ReceiverTypeKind::NonTarget,
+                    AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_) => {
+                        return ReceiverTypeKind::NonTarget;
+                    }
                     AstKind::MethodDefinition(method) => {
                         if method.r#static {
                             return ReceiverTypeKind::NonTarget;
@@ -517,7 +519,10 @@ fn classify_super_receiver(while_node: &AstNode, ctx: &LintContext) -> ReceiverT
                 return ReceiverTypeKind::NonTarget;
             }
             AstKind::Function(_)
-                if matches!(ctx.nodes().parent_kind(ancestor.id()), AstKind::ObjectProperty(_)) =>
+                if matches!(
+                    ctx.nodes().parent_kind(ancestor.id()),
+                    AstKind::ObjectProperty(_) | AstKind::ObjectMethodProperty(_)
+                ) =>
             {
                 return ReceiverTypeKind::NonTarget;
             }

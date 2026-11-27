@@ -3,6 +3,62 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:43]
+ 1 │ class C { constructor(public x: number) { this.x = (x as number); } }
+   ·                                           ──────────────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:43]
+ 1 │ class C { constructor(public x: number) { this.x = x!; } }
+   ·                                           ───────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:55]
+ 1 │ class C { constructor(public x: number) { this.x = 0; this.x = x; } }
+   ·                                                       ──────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:50]
+ 1 │ class C { constructor(public x: number) { if (x) this.x = x; else {} } }
+   ·                                                  ──────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:101]
+ 1 │ class Outer { constructor(public x: number) { class Inner { static x = 0; static { this.x += 1; } } this.x = x; } }
+   ·                                                                                                     ──────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:43]
+ 1 │ class C { constructor(public x: number) { (this).x = x; this[("x")] = x; this[`x`] = x; } }
+   ·                                           ────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:57]
+ 1 │ class C { constructor(public x: number) { (this).x = x; this[("x")] = x; this[`x`] = x; } }
+   ·                                                         ───────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:1:74]
+ 1 │ class C { constructor(public x: number) { (this).x = x; this[("x")] = x; this[`x`] = x; } }
+   ·                                                                          ─────────────
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
  3 │           constructor(public name: unknown) {
  4 │             this.name = name;

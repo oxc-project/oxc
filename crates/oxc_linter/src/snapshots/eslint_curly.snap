@@ -869,6 +869,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { if (b) foo(); } /* else */ bar();
+   ·        ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:7]
  1 │ if(a) { if (b) foo(); } if (c) bar(); else baz();
    ·       ─────────────────

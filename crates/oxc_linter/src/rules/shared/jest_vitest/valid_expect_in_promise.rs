@@ -1,3 +1,5 @@
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
@@ -11,7 +13,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{CompactStr, JSStr};
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     context::LintContext,

@@ -198,16 +198,31 @@ fn is_safe_from_name_collisions(
 
     match stmt {
         Statement::BlockStatement(block) => {
-            let block_scope_id = block.scope_id();
-            let bindings = scopes.get_bindings(block_scope_id);
-            let parent_bindings = scopes.get_bindings(parent_scope_id);
+            let parent_span = ctx.nodes().get_node(scopes.get_node_id(parent_scope_id)).span();
+            let is_in_parent = |reference_id| {
+                let node_id = scopes.get_reference(reference_id).node_id();
+                parent_span.contains_inclusive(ctx.nodes().get_node(node_id).span())
+            };
 
-            !bindings.iter().any(|(name, symbol_id)| {
-                let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name)
-                else {
-                    return false;
-                };
-                parent_name == name && symbol_id != parent_symbol_id
+            scopes.get_bindings(block.scope_id()).iter().all(|(&name, &symbol_id)| {
+                match scopes.find_binding(parent_scope_id, name) {
+                    Some(outer_id) if outer_id == symbol_id => true,
+                    Some(outer_id) => {
+                        let outer_scope_id = scopes.symbol_scope_id(outer_id);
+                        outer_scope_id != parent_scope_id
+                            && !(scopes.scope_flags(outer_scope_id).is_catch_clause()
+                                && scopes.scope_parent_id(parent_scope_id) == Some(outer_scope_id))
+                            && !scopes
+                                .get_resolved_reference_ids(outer_id)
+                                .iter()
+                                .copied()
+                                .any(is_in_parent)
+                    }
+                    None => scopes
+                        .root_unresolved_references()
+                        .get(&name)
+                        .is_none_or(|ids| !ids.iter().copied().any(is_in_parent)),
+                }
             })
         }
         Statement::FunctionDeclaration(_) => false,
@@ -233,7 +248,13 @@ fn no_else_return_diagnostic_fix(
         return;
     }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        let target_span = Span::new(else_keyword_span.start, else_content_span.end);
+        let target_start = if ctx.has_comments_between(else_keyword_span) {
+            ctx.find_next_token_within(else_keyword_span.start, else_keyword_span.end, "else")
+                .map_or(else_keyword_span.start, |offset| else_keyword_span.start + offset)
+        } else {
+            else_keyword_span.start
+        };
+        let target_span = Span::new(target_start, else_content_span.end);
 
         // Capture the contents of the `else` statement, removing curly braces
         // for block statements
@@ -257,7 +278,9 @@ fn no_else_return_diagnostic_fix(
             let replacement_text = ctx.source_range(replacement_span);
             let mut replacement = String::with_capacity(replacement_text.len() + 2);
             if needs_newline {
-                replacement.push('\n');
+                let starts_with_continuation =
+                    replacement_text.trim_start().starts_with(['(', '[', '/', '+', '`', '-']);
+                replacement.push(if starts_with_continuation { ';' } else { '\n' });
             }
             replacement.push_str(replacement_text);
             if needs_trailing_semicolon {
@@ -278,12 +301,15 @@ fn needs_trailing_statement_separator(
     if let Some(last_stmt) = last_statement(else_stmt)
         && !ctx.source_range(last_stmt.span()).trim_end().ends_with([';', '}'])
     {
+        let mut on_same_line = true;
         for ch in ctx.source_text()[target_end as usize..].chars() {
-            if is_line_terminator(ch) || ch == '}' || ch == ';' {
+            if ch == '}' || ch == ';' {
                 return false;
             }
-            if !ch.is_whitespace() {
-                return true;
+            if is_line_terminator(ch) {
+                on_same_line = false;
+            } else if !ch.is_whitespace() {
+                return on_same_line || matches!(ch, '(' | '[' | '/' | '+' | '`' | '-');
             }
         }
     }
@@ -912,6 +938,41 @@ fn test() {
         (
             "function foo(){if(foo){return bar}else{if(a)baz=qux}while(baz){}}",
             "function foo(){if(foo){return bar}if(a)baz=qux;while(baz){}}",
+            None,
+        ),
+        (
+            "let status = 1; function f(ok) { if (ok) { return status; } else { const status = 2; return status; } }",
+            "let status = 1; function f(ok) { if (ok) { return status; } else { const status = 2; return status; } }",
+            None,
+        ),
+        (
+            "function f(ok) { if (ok) { return status; } else { const status = 2; return status; } }",
+            "function f(ok) { if (ok) { return status; } else { const status = 2; return status; } }",
+            None,
+        ),
+        (
+            "let status = 1; function f(ok) { if (ok) { return 1; } else { const status = 2; return status; } } status;",
+            "let status = 1; function f(ok) { if (ok) { return 1; } const status = 2; return status;  } status;",
+            None,
+        ),
+        (
+            "function f() { try {} catch (e) { if (a) { return 1; } else { let e = 2; return e; } } }",
+            "function f() { try {} catch (e) { if (a) { return 1; } else { let e = 2; return e; } } }",
+            None,
+        ),
+        (
+            "function f(x) { if (x) { return; } else { g()\n}\n(h)(); }",
+            "function f(x) { if (x) { return; } g()\n;\n(h)(); }",
+            None,
+        ),
+        (
+            "function f(flag) { if (flag) { return 1; } /* fallback */ else { return 2; } }",
+            "function f(flag) { if (flag) { return 1; } /* fallback */  return 2;  }",
+            None,
+        ),
+        (
+            "function f() { if (x) return a\nelse (b)() }",
+            "function f() { if (x) return a;(b)() }",
             None,
         ),
     ];

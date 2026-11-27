@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, ObjectProperty,
-        StringLiteral,
+        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName,
+        ObjectPropertyKind, StringLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -194,8 +194,10 @@ fn is_allowed_value(value: &str) -> bool {
     ALLOWED_VALUES.contains(&&value[6..])
 }
 
-fn validate_sandbox_property(object_property: &ObjectProperty, ctx: &LintContext) {
-    if let Expression::StringLiteral(str) = object_property.value.without_parentheses() {
+fn validate_sandbox_property(object_property: &ObjectPropertyKind, ctx: &LintContext) {
+    if let ObjectPropertyKind::ObjectProperty(object_property) = object_property
+        && let Expression::StringLiteral(str) = object_property.value.without_parentheses()
+    {
         validate_sandbox_value(str, ctx);
     }
 }

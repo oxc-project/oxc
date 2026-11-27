@@ -184,6 +184,30 @@ impl<'a> TriviaBuilder<'a> {
         self.processed = self.comments.len();
         self.previous_token = checkpoint.previous_token;
         self.annotation_comments = checkpoint.annotation_comments;
+        if self.annotation_comments.ends != [None; 2] {
+            self.unapply_annotation_comments();
+        }
+    }
+
+    /// Mark the annotations before the current token as not applied.
+    ///
+    /// Only parsing from that token applies them, which rewinding to it discards.
+    #[cold]
+    #[inline(never)]
+    fn unapply_annotation_comments(&mut self) {
+        let AnnotationComments { starts, ends } = self.annotation_comments;
+        for (index, applied, not_applied) in [
+            (0, CommentContent::Pure, CommentContent::PureNotApplied),
+            (1, CommentContent::NoSideEffects, CommentContent::NoSideEffectsNotApplied),
+        ] {
+            if let Some(end) = ends[index] {
+                for comment in &mut self.comments[starts[index] as usize..end.get() as usize] {
+                    if comment.content == applied {
+                        comment.content = not_applied;
+                    }
+                }
+            }
+        }
     }
 
     /// Make rewinding to `checkpoint` keep the trivia lexed after it.

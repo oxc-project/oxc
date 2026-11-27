@@ -1,8 +1,6 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{
-    FormatElement, IndentWidth, Placeholder, PlaceholderPiece, dispatch_fragment_ir,
-};
+use oxc_formatter_core::{FormatElement, Placeholder, PlaceholderPiece, dispatch_fragment_ir};
 
 use crate::{
     ast_nodes::AstNode,
@@ -19,15 +17,6 @@ use crate::{
 // so the marker is unmistakably out-of-band.
 // NOTE: A copy of `oxc_formatter_css`'s, whose parser reads it (its backticks are oxc-css-parser's): keep them in sync.
 const PLACEHOLDER: Placeholder<'static> = Placeholder { prefix: "`oxfmt_css_", suffix: "`" };
-
-/// Re-emit a (already arena-backed) text slice as a `Text` element.
-/// No-op for an empty slice.
-fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsFormatter<'_, 'a>) {
-    if text.is_empty() {
-        return;
-    }
-    f.write_element(FormatElement::text(text, indent_width));
-}
 
 /// Print `${expr}` like a plain template expression, minus source-indentation preservation.
 /// Default options (zero indention) are exactly that (same as graphql.rs).
@@ -120,7 +109,6 @@ pub(super) fn format_css_doc<'a>(
     //   because a string / `url()` / comment keeps it opaque to the CSS lexer
     // Both print the expression the same way.
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
-        let indent_width = f.options().indent_width;
         for element in ir {
             match element {
                 FormatElement::EmbedPlaceholder(index) => {
@@ -128,10 +116,21 @@ pub(super) fn format_css_doc<'a>(
                         write_expression(expr, f);
                     }
                 }
-                FormatElement::Text { text, .. } if PLACEHOLDER.is_in(text.as_str()) => {
-                    for piece in PLACEHOLDER.pieces(text.as_str()) {
+                FormatElement::Text { text: run, width } if PLACEHOLDER.is_in(run.as_str()) => {
+                    for piece in PLACEHOLDER.pieces(run.as_str()) {
                         match piece {
-                            PlaceholderPiece::Text(text) => write_text_piece(text, indent_width, f),
+                            // Keeping its `without_expand_parent()`, as `map_text_in_ir` does
+                            PlaceholderPiece::Text(piece) => {
+                                let piece = text(piece);
+                                write!(
+                                    f,
+                                    if width.propagates_expand() {
+                                        piece
+                                    } else {
+                                        piece.without_expand_parent()
+                                    }
+                                );
+                            }
                             PlaceholderPiece::Index(index) => {
                                 if let Some(&expr) = expressions.get(index) {
                                     write_expression(expr, f);

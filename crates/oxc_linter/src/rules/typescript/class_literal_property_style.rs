@@ -1,5 +1,9 @@
 use std::ops::Deref;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
@@ -14,9 +18,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,

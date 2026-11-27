@@ -168,6 +168,14 @@ fn can_fix_binding<'a>(
         return false;
     }
 
+    let source_type = ctx.source_type();
+    if scoping.symbol_scope_id(symbol_id) == scoping.root_scope_id()
+        && !source_type.is_module()
+        && !source_type.is_commonjs()
+    {
+        return false;
+    }
+
     // `try {} catch (e) { var e = 1; }` assigns to the catch parameter. With `let`,
     // it would be a syntax error, or a new binding in a nested block.
     if scoping.find_binding(node.scope_id(), ident.name) != Some(symbol_id) {
@@ -318,10 +326,10 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
             }
         }
         BindingPattern::AssignmentPattern(_) => true,
-        BindingPattern::ArrayPattern(array_pat) => array_pat
-            .elements
-            .iter()
-            .any(|elem| if let Some(elem) = elem { is_written_to(elem, ctx) } else { false }),
+        BindingPattern::ArrayPattern(array_pat) => {
+            array_pat.elements.iter().flatten().any(|elem| is_written_to(elem, ctx))
+                || array_pat.rest.as_ref().is_some_and(|rest| is_written_to(&rest.argument, ctx))
+        }
     }
 }
 
@@ -456,8 +464,6 @@ fn test() {
         ("var a = b; var b = 1", "const a = b; var b = 1"),
         ("function foo() { a } var a = 1; foo()", "function foo() { a } var a = 1; foo()"),
         ("if (foo) var bar = 1;", "if (foo) var bar = 1;"),
-        ("function foo() { var let; }", "function foo() { var let; }"),
-        ("function foo() { var { let } = {}; }", "function foo() { var { let } = {}; }"),
         (
             "var fx = function (i = 0) { if (i < 5) { return fx(i + 1); } console.log(i); }; fx();",
             "const fx = function (i = 0) { if (i < 5) { return fx(i + 1); } console.log(i); }; fx();",
@@ -622,7 +628,28 @@ fn test() {
             "for (var i of [1, 2]) { classes.push(class { [i] = 0; }); }",
             "for (let i of [1, 2]) { classes.push(class { [i] = 0; }); }",
         ),
+        (
+            "function f() { var [...xs] = []; xs = [1]; return xs; }",
+            "function f() { let [...xs] = []; xs = [1]; return xs; }",
+        ),
+        ("var [a, ...rest] = arr; rest = [];", "let [a, ...rest] = arr; rest = [];"),
     ];
 
-    Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+    let script_fix = vec![
+        ("function foo() { var let; }", "function foo() { var let; }"),
+        ("function foo() { var { let } = {}; }", "function foo() { var { let } = {}; }"),
+        (
+            "var auditX = 1; console.log(globalThis.auditX);",
+            "var auditX = 1; console.log(globalThis.auditX);",
+        ),
+        ("{ var foo = 1 }", "{ var foo = 1 }"),
+        ("declare var foo: 2;", "declare var foo: 2;"),
+        ("function f() { var x = 1; return x; }", "function f() { const x = 1; return x; }"),
+    ];
+
+    Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(script_fix).test_and_snapshot();
+    Tester::new(NoVar::NAME, NoVar::PLUGIN, Vec::<&str>::new(), vec![])
+        .change_rule_path_extension("mts")
+        .expect_fix(fix)
+        .test();
 }

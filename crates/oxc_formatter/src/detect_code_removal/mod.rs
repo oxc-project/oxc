@@ -207,6 +207,7 @@ impl StatsCollector {
         if matches!(
             parent_kind,
             AstKind::ObjectProperty(_)
+                | AstKind::ObjectMethodProperty(_)
                 | AstKind::BindingProperty(_)
                 | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::MethodDefinition(_)

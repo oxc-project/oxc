@@ -1,0 +1,1 @@
+{ "plugins": ["syntax-decorators", "transform-typescript"] }

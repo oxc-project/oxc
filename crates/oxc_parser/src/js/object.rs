@@ -43,31 +43,33 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_object_expression_property(&mut self) -> ObjectPropertyKind<'a> {
         match self.cur_kind() {
-            Kind::Ident => ObjectPropertyKind::ObjectProperty(
-                self.parse_object_literal_element_with_identifier_key(),
-            ),
+            Kind::Ident => self.parse_object_literal_element_with_identifier_key(),
             Kind::Dot3 => ObjectPropertyKind::SpreadProperty(self.parse_spread_element()),
-            _ => ObjectPropertyKind::ObjectProperty(self.parse_object_literal_element()),
+            _ => self.parse_object_literal_element(),
         }
     }
 
     /// Parse a property whose key is an identifier that is not a keyword in any context,
     /// so it is not a modifier, `get` or `set`: `a`, `a: b`, `a = b` or `a() {}`.
-    fn parse_object_literal_element_with_identifier_key(
-        &mut self,
-    ) -> ArenaBox<'a, ObjectProperty<'a>> {
+    fn parse_object_literal_element_with_identifier_key(&mut self) -> ObjectPropertyKind<'a> {
         let start = self.cur_start();
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         let key = PropertyKey::StaticIdentifier(IdentifierName::boxed(span, name, self));
 
         let kind = self.cur_kind();
-        let (value, method, shorthand) = if kind == Kind::Colon {
+        let (value, shorthand) = if kind == Kind::Colon {
             self.bump_any(); // `:`
-            (self.parse_assignment_expression_or_higher(), false, false)
+            (self.parse_assignment_expression_or_higher(), false)
         } else if matches!(kind, Kind::LParen | Kind::LAngle) {
             let method =
                 self.parse_method(/* async */ false, None, FunctionKind::ObjectMethod);
-            (Expression::FunctionExpression(method), true, false)
+            return ObjectPropertyKind::MethodProperty(ObjectMethodProperty::boxed(
+                self.end_span(start),
+                ObjectMethodKind::Method,
+                key,
+                method,
+                self,
+            ));
         } else {
             // CoverInitializedName ({ foo = bar })
             if kind == Kind::Eq {
@@ -76,21 +78,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let cover = CoverInitializedName { span: self.end_span(start), initializer };
                 self.state.cover_initialized_name.insert(start, cover);
             }
-            (Expression::new_identifier(span, name, self), false, true)
+            (Expression::new_identifier(span, name, self), true)
         };
-        ObjectProperty::boxed(
+        ObjectPropertyKind::ObjectProperty(ObjectProperty::boxed(
             self.end_span(start),
-            PropertyKind::Init,
             key,
             value,
-            method,
             shorthand,
             self,
-        )
+        ))
     }
 
     /// `PropertyDefinition`[Yield, Await]
-    fn parse_object_literal_element(&mut self) -> ArenaBox<'a, ObjectProperty<'a>> {
+    fn parse_object_literal_element(&mut self) -> ObjectPropertyKind<'a> {
         let start = self.cur_start();
 
         let modifiers = self.parse_modifiers(
@@ -99,11 +99,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
 
         if self.parse_contextual_modifier(Kind::Get) {
-            return self.parse_method_getter_setter(start, PropertyKind::Get, &modifiers);
+            return self.parse_method_getter_setter(start, ObjectMethodKind::Get, &modifiers);
         }
 
         if self.parse_contextual_modifier(Kind::Set) {
-            return self.parse_method_getter_setter(start, PropertyKind::Set, &modifiers);
+            return self.parse_method_getter_setter(start, ObjectMethodKind::Set, &modifiers);
         }
 
         let asterisk_token = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
@@ -127,15 +127,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 asterisk_token,
                 FunctionKind::ObjectMethod,
             );
-            return ObjectProperty::boxed(
+            return ObjectPropertyKind::MethodProperty(ObjectMethodProperty::boxed(
                 self.end_span(start),
-                PropertyKind::Init,
+                ObjectMethodKind::Method,
                 key,
-                Expression::FunctionExpression(method),
-                /* method */ true,
-                /* shorthand */ false,
+                method,
                 self,
-            );
+            ));
         }
 
         self.verify_modifiers(
@@ -164,15 +162,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::Colon);
             self.parse_assignment_expression_or_higher()
         };
-        ObjectProperty::boxed(
+        ObjectPropertyKind::ObjectProperty(ObjectProperty::boxed(
             self.end_span(start),
-            PropertyKind::Init,
             key,
             value,
-            /* method */ false,
             shorthand,
             self,
-        )
+        ))
     }
 
     /// `PropertyDefinition`[Yield, Await] :
@@ -236,15 +232,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_method_getter_setter(
         &mut self,
         start: u32,
-        kind: PropertyKind,
+        kind: ObjectMethodKind,
         modifiers: &Modifiers,
-    ) -> ArenaBox<'a, ObjectProperty<'a>> {
+    ) -> ObjectPropertyKind<'a> {
         let key = self.parse_property_name();
         let function = self.parse_method(false, None, FunctionKind::ObjectMethod);
         match kind {
-            PropertyKind::Get => self.check_getter(&function),
-            PropertyKind::Set => self.check_setter(&function),
-            PropertyKind::Init => {}
+            ObjectMethodKind::Get => self.check_getter(&function),
+            ObjectMethodKind::Set => self.check_setter(&function),
+            ObjectMethodKind::Method => {}
         }
         self.verify_modifiers(
             modifiers,
@@ -252,14 +248,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        ObjectProperty::boxed(
+        ObjectPropertyKind::MethodProperty(ObjectMethodProperty::boxed(
             self.end_span(start),
             kind,
             key,
-            Expression::FunctionExpression(function),
-            /* method */ false,
-            /* shorthand */ false,
+            function,
             self,
-        )
+        ))
     }
 }

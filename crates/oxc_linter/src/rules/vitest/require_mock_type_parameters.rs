@@ -234,8 +234,9 @@ fn find_member_call_type_arguments_in_expression(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("vi.fn<(...args: any[]) => any>()", None, None, Some(PathBuf::from("test.ts"))),

@@ -1,11 +1,12 @@
+use schemars::JsonSchema;
+use serde::Serialize;
+use serde_json::Value;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
-use schemars::JsonSchema;
-use serde::Serialize;
-use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

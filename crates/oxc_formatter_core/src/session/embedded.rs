@@ -120,6 +120,7 @@ pub fn dispatch_ir<'a, C: FormatContext>(
 ///
 /// `map_text` receives each `Text` and `Token` run (a child may print any character as a token, e.g. JS's `` ` ``);
 /// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
+/// The `Text`s it pushes itself (not inside a pushed subtree) in place of a `text(..).without_expand_parent()` keep that flag.
 /// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
 /// Nothing is rebuilt until the first change, an IR with none is returned as is.
 pub fn map_text_in_ir<'a, F>(
@@ -175,9 +176,20 @@ where
     let mut rebuilt = false;
     for (index, element) in ir.iter().enumerate() {
         let changed = match element {
-            FormatElement::Text { text, .. } | FormatElement::Token { text } => {
-                map_text(text.as_str(), &mut out)
+            FormatElement::Text { text, width } => {
+                let start = out.len();
+                let changed = map_text(text.as_str(), &mut out);
+                // The texts replacing a `without_expand_parent()` one keep it
+                if width.is_multiline() && !width.propagates_expand() {
+                    for element in &mut out[start..] {
+                        if let FormatElement::Text { width: replaced, .. } = element {
+                            *replaced = replaced.without_expand_parent();
+                        }
+                    }
+                }
+                changed
             }
+            FormatElement::Token { text } => map_text(text.as_str(), &mut out),
             FormatElement::BestFitting(best_fitting) => {
                 let mut changed = false;
                 let mut variants =

@@ -1,0 +1,16 @@
+/* DIVERGENCES.md#commented-as-uncommented */
+@keyframes /* c */  foo {
+}
+@keyframes /* c */
+  foo {
+}
+
+/* DIVERGENCES.md#prelude-string-requote */
+@keyframes /* c */ 'a' {
+}
+
+/* As Prettier prints them */
+@keyframes foo /* c */ {
+}
+@keyframes /* c */ /* d */ foo {
+}

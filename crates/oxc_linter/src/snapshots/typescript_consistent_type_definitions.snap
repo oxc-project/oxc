@@ -7,21 +7,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ type T = { x: number; };
    · ────
    ╰────
-  help: Replace `type T = { x: number; };` with `interface T { x: number; }`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T={ x: number; };
    · ────
    ╰────
-  help: Replace `type T={ x: number; };` with `interface T { x: number; }`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T=                         { x: number; };
    · ────
    ╰────
-  help: Replace `type T=                         { x: number; };` with `interface T { x: number; }`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:2:20]
@@ -30,11 +30,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
  3 │               x: T;
    ╰────
-  help: Replace `type W<T> = {
-                      x: T;
-                    };` with `interface W<T> {
-                      x: T;
-                    }`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
    ╭─[consistent_type_definitions.tsx:1:1]
@@ -62,7 +58,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ type T = { x: "interface" | "type"; };
    · ────
    ╰────
-  help: Replace `type T = { x: "interface" | "type"; };` with `interface T { x: "interface" | "type"; }`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
    ╭─[consistent_type_definitions.tsx:1:1]
@@ -177,13 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────
  3 │               foo: string;
    ╰────
-  help: Replace `type Test = {
-                      foo: string;
-                      bar: string;
-                    };` with `interface Test {
-                      foo: string;
-                      bar: string;
-                    }`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
    ╭─[consistent_type_definitions.tsx:2:28]
@@ -205,7 +195,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ declaretype S={}
    ·         ────
    ╰────
-  help: Replace `type S={}` with `interface S {}`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
    ╭─[consistent_type_definitions.tsx:1:10]
@@ -219,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export declaretype S={}
    ·                ────
    ╰────
-  help: Replace `type S={}` with `interface S {}`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `type` instead of `interface`.
    ╭─[consistent_type_definitions.tsx:1:17]
@@ -240,25 +230,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ declare /* type */ type T =  { x: number; };
    ·                    ────
    ╰────
-  help: Replace `type T =  { x: number; };` with `interface T { x: number; }`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type foo = ({});
    · ────
    ╰────
-  help: Replace `type foo = ({});` with `interface foo {}`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type foo = (({}));
    · ────
    ╰────
-  help: Replace `type foo = (({}));` with `interface foo {}`.
+  help: Convert this type alias to an interface.
 
   ⚠ typescript(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type foo = ({ x: number });
    · ────
    ╰────
-  help: Replace `type foo = ({ x: number });` with `interface foo { x: number }`.
+  help: Convert this type alias to an interface.

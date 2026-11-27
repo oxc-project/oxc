@@ -6,7 +6,7 @@ use oxc_ast::{
     ast::{
         AssignmentExpression, AssignmentTarget, CallExpression, Class, ClassElement,
         ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, Statement,
+        ObjectMethodKind, ObjectPropertyKind, PropertyKey, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -632,12 +632,12 @@ fn has_component_methods_in_object(
     ignore_transpiler_name: bool,
 ) -> bool {
     for prop in &obj_expr.properties {
-        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
+        if let ObjectPropertyKind::MethodProperty(obj_prop) = prop
             && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
-            && obj_prop.method
+            && obj_prop.kind == ObjectMethodKind::Method
             && ignore_transpiler_name
             && is_react_component_name(&ident.name)
-            && matches!(&obj_prop.value, Expression::FunctionExpression(f) if function_returns(f, ctx).has_jsx())
+            && function_returns(&obj_prop.value, ctx).has_jsx()
         {
             return true;
         }

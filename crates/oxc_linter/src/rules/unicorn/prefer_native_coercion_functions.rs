@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameters, FunctionBody, PropertyKind, Statement, TSType},
+    ast::{
+        Argument, Expression, FormalParameters, FunctionBody, ObjectMethodKind, Statement, TSType,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -113,8 +115,8 @@ impl Rule for PreferNativeCoercionFunctions {
                     || func.return_type.as_ref().is_some_and(|ret| {
                         matches!(ret.type_annotation, TSType::TSTypePredicate(_))
                     })
-                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(property)
-                        if property.kind == PropertyKind::Set && property.value.span() == func.span)
+                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectMethodProperty(property)
+                        if property.kind == ObjectMethodKind::Set && property.value.span() == func.span)
                 {
                     return;
                 }

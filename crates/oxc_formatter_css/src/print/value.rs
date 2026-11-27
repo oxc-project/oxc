@@ -783,7 +783,7 @@ fn flush_trailing_comments_while(
 
 /// Comments between a prelude ending at `prelude_end` and its `{` at `block_start`:
 /// a run glued to the prelude stays on its line (`@page :first // c`, the `//` ends it so `{` starts the next),
-/// own-line ones keep their line before the `{`.
+/// own-line ones keep their line before the `{` (DIVERGENCES.md#own-line-comment-before-block).
 /// Either way the caller's space before `{` is safe: the printer drops it at the start of a line.
 pub(super) fn write_comments_before_block(
     prelude_end: u32,
@@ -796,8 +796,19 @@ pub(super) fn write_comments_before_block(
         return;
     }
     write!(f, hard_line_break());
-    for &comment in own_line {
-        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
+    let source = f.context().source_text();
+    let last = own_line.len() - 1;
+    for (i, &comment) in own_line.iter().enumerate() {
+        // The `{` stays on the last comment's line when it is there (`/* c */ {`), as before a JS block
+        let after = if i == last
+            && comments::classify_gap(source.bytes_range(comment.span.end, block_start))
+                == comments::Gap::None
+        {
+            BlockCommentAfter::None
+        } else {
+            BlockCommentAfter::HardLine
+        };
+        write!(f, FormatCommentBeforeContent::new(comment, after));
     }
 }
 
@@ -1695,10 +1706,13 @@ pub(super) fn write_component_value<'a>(
             if !is_glued(ratio.numerator.span, ratio.solidus_span) {
                 write!(f, space());
             }
+            // A comment between the parts stays there
+            flush_value_comments(ratio.solidus_span.start, f);
             write!(f, "/");
             if !is_glued(ratio.solidus_span, ratio.denominator.span) {
                 write!(f, space());
             }
+            flush_value_comments(ratio.denominator.span.start, f);
             write_number(&ratio.denominator, f);
         }
         ComponentValue::HexColor(hex) => {
@@ -1739,7 +1753,9 @@ pub(super) fn write_component_value<'a>(
         }
         ComponentValue::Function(func) => write_function(func, ctx, f),
         ComponentValue::Calc(calc) => write_calc(calc, ctx, f),
-        ComponentValue::CalcParenthesized(paren) => write_parenthesized(&paren.expr, ctx, f),
+        ComponentValue::CalcParenthesized(paren) => {
+            write_parenthesized(&paren.expr, paren.span.end - 1, ctx, f);
+        }
         ComponentValue::SassMap(map) => scss::write_sass_map(map, ctx, f),
         ComponentValue::SassList(list) => scss::write_sass_list(list, ctx, f),
         ComponentValue::SassParenthesizedExpression(paren) => {
@@ -1901,7 +1917,7 @@ pub(super) fn write_component_value<'a>(
         // `+`/`-` as a binary operator (see `write_less_binary_operation`).
         ComponentValue::LessBinaryOperation(op) => write_less_binary_operation(op, ctx, f),
         ComponentValue::LessParenthesizedOperation(paren) => {
-            write_parenthesized(&paren.operation, ctx, f);
+            write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
         }
         // A css-in-js placeholder becomes a typed marker the host replaces with `${expr}`
         ComponentValue::Placeholder(placeholder) => {
@@ -2083,7 +2099,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
     // Source-glued runs (`1px+2px`) stay glued.
     enum Piece<'b, 'a> {
         Operand(&'b ComponentValue<'a>),
-        Op(&'static str),
+        Op(&'static str, u32),
         Space,
     }
 
@@ -2104,7 +2120,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
         if !is_glued(calc.left.span(), calc.op.span) {
             current.push(Piece::Space);
         }
-        current.push(Piece::Op(op_str));
+        current.push(Piece::Op(op_str, calc.op.span.start));
         if !is_glued(calc.op.span, calc.right.span()) {
             chunks.push(std::mem::take(current));
         }
@@ -2133,9 +2149,16 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
 
     let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
         for piece in chunk {
+            // A comment between the operands and operators stays there
             match piece {
-                Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Op(op) => write!(f, token(op)),
+                Piece::Operand(operand) => {
+                    flush_value_comments(operand.span().start, f);
+                    write_component_value(operand, ctx, f);
+                }
+                Piece::Op(op, start) => {
+                    flush_value_comments(*start, f);
+                    write!(f, token(op));
+                }
                 Piece::Space => write!(f, " "),
             }
         }
@@ -2290,7 +2313,9 @@ fn write_less_binary_operation<'a>(
         for piece in chunk {
             match piece {
                 Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Paren(paren) => write_parenthesized(&paren.operation, ctx, f),
+                Piece::Paren(paren) => {
+                    write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
+                }
                 Piece::Op(op) => write!(f, token(op)),
                 Piece::Space => write!(f, " "),
             }
@@ -2325,12 +2350,17 @@ fn write_less_binary_operation<'a>(
 /// its own group, so when it breaks the `(` / `)` land on their own lines
 /// with the content indented one level (Prettier's `printParenthesizedValueGroup`).
 /// When it fits, it stays inline (`(@a - @b)`).
+/// `(value)`, `close` its `)`: the comments before it stay inside.
 fn write_parenthesized<'a>(
     value: &ComponentValue<'a>,
+    close: u32,
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let content = format_with(move |f| write_component_value(value, ctx, f));
+    let content = format_with(move |f| {
+        write_component_value(value, ctx, f);
+        flush_trailing_value_comments(close, f);
+    });
     if ctx.no_break {
         write!(f, ["(", content, ")"]);
     } else {
@@ -2393,6 +2423,7 @@ pub(super) fn write_function<'a>(
                 write!(f, " ");
             }
         }
+        flush_trailing_value_comments(func.span().end.saturating_sub(1), f);
         write!(f, ")");
         return;
     }
@@ -2525,12 +2556,15 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
     match &url.value {
         Some(UrlValue::Str(InterpolableStr::Literal(str))) => {
+            flush_value_comments(str.span.start, f);
             write_str(str, f);
             for modifier in &url.modifiers {
                 write!(f, " ");
                 let span = to_span(modifier.span());
                 write!(f, text(source.text_for(&span)));
             }
+            // The comments before the `)` stay inside it
+            flush_trailing_value_comments(url.span.end - 1, f);
         }
         // Quoted url with interpolation: requote the outer quotes only
         Some(UrlValue::Str(istr)) => {

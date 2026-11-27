@@ -5,6 +5,7 @@
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::GetSpan;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{context::Context, jsx_state::JSXState};
 
@@ -79,6 +80,16 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
                             self.visit_property_key(&property.key);
                         }
                         self.visit_expression(&property.value);
+                    }
+                    ObjectPropertyKind::MethodProperty(property) => {
+                        let is_with_key = matches!(
+                            &property.key,
+                            PropertyKey::StaticIdentifier(id) if id.name == "with"
+                        );
+                        if !is_with_key {
+                            self.visit_property_key(&property.key);
+                        }
+                        self.visit_function(&property.value, ScopeFlags::Function);
                     }
                     ObjectPropertyKind::SpreadProperty(spread) => {
                         self.visit_spread_element(spread);

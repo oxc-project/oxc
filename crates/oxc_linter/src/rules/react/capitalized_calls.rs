@@ -1,7 +1,8 @@
 use lazy_regex::Regex;
-use oxc_react_compiler::ErrorCategory;
 use schemars::JsonSchema;
 use serde::Deserialize;
+
+use oxc_react_compiler::ErrorCategory;
 
 use crate::{
     context::{ContextHost, LintContext},

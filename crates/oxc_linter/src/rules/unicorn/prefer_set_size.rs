@@ -10,8 +10,10 @@ use oxc_syntax::identifier::is_identifier_part;
 
 use crate::{
     AstNode,
-    ast_util::variable_declaration_kind,
-    ast_util::{get_declaration_of_variable, is_method_call, outermost_paren_parent},
+    ast_util::{
+        get_declaration_of_variable, is_method_call, outermost_paren_parent,
+        variable_declaration_kind,
+    },
     context::LintContext,
     fixer::Fix,
     rule::Rule,

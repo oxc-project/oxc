@@ -1,3 +1,5 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -11,7 +13,6 @@ use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ReferenceId, ScopeFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext};
 

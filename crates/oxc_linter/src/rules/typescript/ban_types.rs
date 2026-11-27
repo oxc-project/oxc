@@ -1,4 +1,5 @@
 use cow_utils::CowUtils;
+
 use oxc_ast::{AstKind, ast::TSTypeName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

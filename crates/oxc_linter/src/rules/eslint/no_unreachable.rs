@@ -6,7 +6,9 @@ use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::ContextHost, context::LintContext, rule::Rule, utils::effective_unreachable_blocks,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::effective_unreachable_blocks,
 };
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {

@@ -1,0 +1,57 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A comment in a function's arguments stays between the tokens it sits between */
+a {
+  width: calc(1px /* c */ + 2px);
+  width: calc(1px + /* c */ 2px);
+  width: calc((1px /* c */) + 2px);
+  color: rgb(1 /* c */ 2 3);
+  background: image-set("x" /* c */ 1x);
+}
+
+/* DIVERGENCES.md#url-string-comment */
+a {
+  background: url("x" /* c */);
+  background: url(/* c */ "x");
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A comment in a function's arguments stays between the tokens it sits between */
+a {
+  width: calc(1px /* c */ + 2px);
+  width: calc(1px + /* c */ 2px);
+  width: calc((1px /* c */) + 2px);
+  color: rgb(1 /* c */ 2 3);
+  background: image-set("x" /* c */ 1x);
+}
+
+/* DIVERGENCES.md#url-string-comment */
+a {
+  background: url("x" /* c */);
+  background: url(/* c */ "x");
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A comment in a function's arguments stays between the tokens it sits between */
+a {
+  width: calc(1px /* c */ + 2px);
+  width: calc(1px + /* c */ 2px);
+  width: calc((1px /* c */) + 2px);
+  color: rgb(1 /* c */ 2 3);
+  background: image-set("x" /* c */ 1x);
+}
+
+/* DIVERGENCES.md#url-string-comment */
+a {
+  background: url("x" /* c */);
+  background: url(/* c */ "x");
+}
+
+===================== End =====================

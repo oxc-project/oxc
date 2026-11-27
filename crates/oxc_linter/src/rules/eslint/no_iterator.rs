@@ -74,8 +74,13 @@ impl Rule for NoIterator {
         {
             let mem_span = member_expression.span();
             let obj_span = member_expression.object().span();
+            let replacement = if member_expression.optional() {
+                "?.[Symbol.iterator]"
+            } else {
+                "[Symbol.iterator]"
+            };
             ctx.diagnostic_with_suggestion(no_iterator_diagnostic(mem_span), |fixer| {
-                fixer.replace(Span::new(obj_span.end, mem_span.end), "[Symbol.iterator]")
+                fixer.replace(Span::new(obj_span.end, mem_span.end), replacement)
             });
         }
     }
@@ -99,6 +104,8 @@ fn test() {
         "var a = test['__iterator__'];",
         "var a = test[`__iterator__`];",
         "test[`__iterator__`] = function () {};",
+        "var a = obj?.__iterator__;",
+        "var a = obj?.['__iterator__'];",
     ];
 
     let fix = vec![
@@ -110,6 +117,8 @@ fn test() {
         ("var a = test['__iterator__'];", "var a = test[Symbol.iterator];"),
         ("var a = test[`__iterator__`];", "var a = test[Symbol.iterator];"),
         ("test[`__iterator__`] = function () {};", "test[Symbol.iterator] = function () {};"),
+        ("var a = obj?.__iterator__;", "var a = obj?.[Symbol.iterator];"),
+        ("var a = obj?.['__iterator__'];", "var a = obj?.[Symbol.iterator];"),
     ];
 
     Tester::new(NoIterator::NAME, NoIterator::PLUGIN, pass, fail)

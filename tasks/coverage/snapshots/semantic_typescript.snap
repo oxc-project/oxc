@@ -26671,11 +26671,8 @@ rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/decoratorInAmbientContext.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_b", "_decorate", "_decorateMetadata", "b", "decorator"]
-rebuilt        : ScopeId(0): ["Foo", "_b", "_decorate", "_decorateMetadata", "b"]
-Symbol reference IDs mismatch for "_b":
-after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12)]
-rebuilt        : SymbolId(2): [ReferenceId(13)]
+after transform: ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "b", "decorator"]
+rebuilt        : ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "b"]
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>

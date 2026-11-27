@@ -982,6 +982,7 @@ Prettier empties it when it holds only JS whitespace (`/^\s*$/`), and drops a ch
 - Why: semantics (whitespace added around a block marker renders between the content it joins; prettier/prettier#16577, prettier/prettier#19020)
 - Pin: `tests/fixtures/angular/angular-glued-block-markers.component.html`
 - Conformance:
+  - `externals/prettier/angular/control-flow/after-close-tag.html` (`</app-tweet-item>@if`)
   - `externals/prettier/angular/control-flow/chid.html`
   - `externals/prettier/angular/let-declaration/valid-from-tokenizer-test.html` (`@defer {@let foo = 123 + 456;}`)
 
@@ -1026,6 +1027,8 @@ Where that run is significant and empty, the markers stay glued to their neighbo
 otherwise a block is laid out on its own lines, as Prettier does.
 The whitespace outside a marker is in the run only in a text next to the block: Angular drops a whitespace-only text (`preserveWhitespaces: false`),
 so `<span>⏎  @if (test) {text}` renders `text` with no space, and its body stays glued; under `preserveWhitespaces: true` (invisible to the formatter) it renders the same.
+A body's edge is outside a marker the same way: Angular drops a whitespace-only text there too,
+so `@if (x) {<icon-x />⏎  }{{ label }}` keeps `}` glued to `{{ label }}`; a text's own edge whitespace is not dropped, so `a@if (x) {b }c` stays on its own lines.
 An empty block's body is in the run too: whitespace there renders only when the block does,
 so it is kept (`a@if (x) { }b`) unless the run has whitespace outside the block, and none is added (`a@if (x) {}@else {}b`).
 Prettier always breaks around a block, which turns `abc` into `a b c` (and adds spaces inside the `span`).

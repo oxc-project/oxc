@@ -1,5 +1,6 @@
-use crate::rule::Rule;
 use oxc_macros::declare_oxc_lint;
+
+use crate::rule::Rule;
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessDefaultAssignment;

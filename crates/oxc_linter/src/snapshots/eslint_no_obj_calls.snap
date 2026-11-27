@@ -295,3 +295,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: This call will throw a TypeError at runtime.
+
+  ⚠ eslint(no-obj-calls): `Math` is not a function and cannot be called
+   ╭─[no_obj_calls.tsx:1:30]
+ 1 │ const { Math } = globalThis; Math();
+   ·                              ──────
+   ╰────
+  help: This call will throw a TypeError at runtime.
+
+  ⚠ eslint(no-obj-calls): `M` is not a function and cannot be called
+   ╭─[no_obj_calls.tsx:1:33]
+ 1 │ const { Math: M } = globalThis; M();
+   ·                                 ───
+   ╰────
+  help: This call will throw a TypeError at runtime.
+
+  ⚠ eslint(no-obj-calls): `J` is not a function and cannot be called
+   ╭─[no_obj_calls.tsx:1:37]
+ 1 │ const { ['JSON']: J } = globalThis; new J();
+   ·                                     ───────
+   ╰────
+  help: This call will throw a TypeError at runtime.
+
+  ⚠ eslint(no-obj-calls): `Reflect` is not a function and cannot be called
+   ╭─[no_obj_calls.tsx:1:44]
+ 1 │ const { Reflect = () => {} } = globalThis; Reflect();
+   ·                                            ─────────
+   ╰────
+  help: This call will throw a TypeError at runtime.

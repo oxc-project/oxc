@@ -1,11 +1,8 @@
-use oxc_ast::StaticPropertyName;
-use oxc_str::JSStr;
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         Argument, AssignmentTarget, CallExpression, Expression, Function, ObjectProperty,
         PropertyDefinition, PropertyKey,
@@ -14,6 +11,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 
 use crate::{

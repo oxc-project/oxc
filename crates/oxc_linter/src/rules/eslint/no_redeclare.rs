@@ -1,12 +1,12 @@
 use itertools::Itertools;
 use javascript_globals::GLOBALS_BUILTIN;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::symbol::SymbolFlags;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -171,8 +171,9 @@ impl Rule for NoRedeclare {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let defaults = NoRedeclare::default();
     assert!(defaults.builtin_globals);

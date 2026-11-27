@@ -1,4 +1,8 @@
 use lazy_regex::Regex;
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, ExpressionStatement, MemberExpression},
@@ -6,9 +10,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{CompactStr, JSStr};
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     context::LintContext,

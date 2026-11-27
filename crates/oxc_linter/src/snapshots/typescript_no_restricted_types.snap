@@ -246,3 +246,31 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Use a safer type
+
+  ⚠ typescript(no-restricted-types): Do not use `Foo` as a type
+   ╭─[no_restricted_types.tsx:1:10]
+ 1 │ type T = Foo;
+   ·          ───
+   ╰────
+  help: This type is restricted from being used.
+
+  ⚠ typescript(no-restricted-types): Do not use `Foo` as a type
+   ╭─[no_restricted_types.tsx:1:10]
+ 1 │ type T = Foo;
+   ·          ───
+   ╰────
+  help: This type is restricted from being used.
+
+  ⚠ typescript(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:27]
+ 1 │ interface Derived extends Banned<string> {}
+   ·                           ──────
+   ╰────
+  help: This type is restricted from being used.
+
+  ⚠ typescript(no-restricted-types): Do not use `Banned` as a type
+   ╭─[no_restricted_types.tsx:1:26]
+ 1 │ class Derived implements Banned<string> {}
+   ·                          ──────
+   ╰────
+  help: This type is restricted from being used.

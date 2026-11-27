@@ -241,6 +241,7 @@ pub enum ImportImportName {
     Name(NameSpan),
     NamespaceObject,
     Default(Span),
+    Source(Span),
 }
 
 impl ImportImportName {
@@ -261,6 +262,7 @@ impl<'a> From<&oxc_syntax::module_record::ImportImportName<'a>> for ImportImport
             }
             oxc_syntax::module_record::ImportImportName::NamespaceObject => Self::NamespaceObject,
             oxc_syntax::module_record::ImportImportName::Default(span) => Self::Default(*span),
+            oxc_syntax::module_record::ImportImportName::Source(span) => Self::Source(*span),
         }
     }
 }
@@ -348,6 +350,9 @@ pub enum ExportImportName {
     /// the ExportDeclaration does not have a ModuleSpecifier
     #[default]
     Null,
+    /// source is used for re-exports of `import source x from "mod"` bindings,
+    /// with the span of `x` in the import declaration.
+    Source(Span),
 }
 
 impl<'a> From<&oxc_syntax::module_record::ExportImportName<'a>> for ExportImportName {
@@ -359,6 +364,7 @@ impl<'a> From<&oxc_syntax::module_record::ExportImportName<'a>> for ExportImport
             oxc_syntax::module_record::ExportImportName::All => Self::All,
             oxc_syntax::module_record::ExportImportName::AllButDefault => Self::AllButDefault,
             oxc_syntax::module_record::ExportImportName::Null => Self::Null,
+            oxc_syntax::module_record::ExportImportName::Source(span) => Self::Source(*span),
         }
     }
 }

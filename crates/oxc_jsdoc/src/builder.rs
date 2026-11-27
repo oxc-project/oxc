@@ -182,6 +182,7 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::ParenthesizedExpression(_)
 
         | AstKind::ObjectProperty(_)
+        | AstKind::ObjectMethodProperty(_)
 
         | AstKind::Function(_)
         | AstKind::FormalParameter(_)

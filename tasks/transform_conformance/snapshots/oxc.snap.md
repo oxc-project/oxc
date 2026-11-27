@@ -1,6 +1,6 @@
 commit: 51225612
 
-Passed: 371/490
+Passed: 374/494
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -49,7 +49,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (60/76)
+# babel-plugin-transform-typescript (60/77)
 * computed-constant-value/input.ts
 x Output mismatch
 
@@ -162,6 +162,11 @@ Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
 
+* oxc/decorated-declare-field-erased/input.ts
+Unresolved references mismatch:
+after transform: ["a", "dec", "g"]
+rebuilt        : ["a", "g"]
+
 * redeclarations/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A"]
@@ -206,7 +211,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (40/120)
+# legacy-decorators (43/123)
 * oxc/accessor/input.ts
 x Output mismatch
 

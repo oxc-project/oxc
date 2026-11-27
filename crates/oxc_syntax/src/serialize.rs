@@ -68,6 +68,19 @@ pub struct ImportOrExportNameDefault<'b>(#[expect(dead_code)] pub &'b Span);
 
 dummy_estree_impl!(ImportOrExportNameDefault<'_>);
 
+/// Serializer for `Source` variant of `ImportImportName` and `ExportImportName`.
+#[ast_meta]
+#[estree(
+    ts_type = "Dummy",
+    raw_deser = "
+        var { start, end } = DESER[Span](POS);
+        { kind: 'Source', name: null, start, end, ...(RANGE && { range: [start, end] }) }
+    "
+)]
+pub struct ImportOrExportNameSource<'b>(#[expect(dead_code)] pub &'b Span);
+
+dummy_estree_impl!(ImportOrExportNameSource<'_>);
+
 /// Serializer for `All` variant of `ExportImportName`.
 #[ast_meta]
 #[estree(
