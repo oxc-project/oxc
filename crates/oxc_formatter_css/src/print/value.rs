@@ -2016,118 +2016,136 @@ fn write_sass_binary<'a>(
     write!(f, group(&indent(&body)));
 }
 
-/// Calc expression (`a + b` inside `calc(...)`):
-/// spaces around `+`/`-` follow the source (invalid syntax otherwise),
-/// with a break opportunity after the operator only.
-fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'_, 'a>) {
-    // Prettier prints calc contents as a FLAT run of word/operator fill chunks
-    // (postcss-values has no expression tree):
-    // every operator glues to its LEFT operand with the break opportunity after it,
-    // and continuation lines share ONE uniform indent,
-    // nested unparenthesized operations do NOT nest groups/indents.
-    // A parenthesized sub-expression stays a single chunk.
-    // Source-glued runs (`1px+2px`) stay glued.
-    enum Piece<'b, 'a> {
-        Operand(&'b ComponentValue<'a>),
-        Op(&'static str, u32),
-        Space,
+/// A piece of a flat operator fill (`write_calc`, `write_less_binary_operation`).
+enum OpPiece<'b, 'a> {
+    Operand(&'b ComponentValue<'a>),
+    /// A Less parenthesized operation: its own nested group (it can break inside its parens)
+    Paren(&'b LessParenthesizedOperation<'a>),
+    /// An operator, printed as its source text
+    Op {
+        span: oxc_css_parser::pos::Span,
+        space_before: bool,
+    },
+}
+
+/// A flat operator fill, mirroring how Prettier prints math (postcss-values has no expression tree):
+/// every operator glues to its LEFT operand with the break opportunity after it,
+/// continuation lines share ONE uniform indent, and nested unparenthesized operations flatten into the same fill.
+#[derive(Default)]
+struct OpChunks<'b, 'a> {
+    chunks: Vec<Vec<OpPiece<'b, 'a>>>,
+    current: Vec<OpPiece<'b, 'a>>,
+}
+
+impl<'b, 'a> OpChunks<'b, 'a> {
+    fn push_operand(&mut self, operand: &'b ComponentValue<'a>) {
+        self.current.push(OpPiece::Operand(operand));
     }
 
-    fn flatten<'b, 'a>(
-        calc: &'b Calc<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
-        let op_str: &'static str = match calc.op.kind {
-            CalcOperatorKind::Plus => "+",
-            CalcOperatorKind::Minus => "-",
-            CalcOperatorKind::Multiply => "*",
-            CalcOperatorKind::Division => "/",
-            // Sass modulo inside a math function's arguments (`max(1px, 7px % 4)`)
-            CalcOperatorKind::Modulo => "%",
+    fn push_paren(&mut self, paren: &'b LessParenthesizedOperation<'a>) {
+        self.current.push(OpPiece::Paren(paren));
+    }
+
+    /// A space after the operator is also the fill's break opportunity
+    fn push_op(&mut self, span: oxc_css_parser::pos::Span, space_before: bool, space_after: bool) {
+        self.current.push(OpPiece::Op { span, space_before });
+        if space_after {
+            self.chunks.push(std::mem::take(&mut self.current));
+        }
+    }
+
+    /// The operand pushed last: the left neighbor of the operator about to be pushed
+    fn last_operand(&self) -> Option<&'b ComponentValue<'a>> {
+        match self.current.last() {
+            Some(OpPiece::Operand(v)) => Some(*v),
+            _ => None,
+        }
+    }
+
+    fn write(mut self, ctx: ValueContext<'a>, f: &mut CssFormatter<'_, 'a>) {
+        if !self.current.is_empty() {
+            self.chunks.push(self.current);
+        }
+        let chunks = self.chunks;
+        let write_chunk = |chunk: &[OpPiece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
+            for piece in chunk {
+                // A comment between the operands and operators stays there
+                match piece {
+                    OpPiece::Operand(operand) => {
+                        flush_value_comments(operand.span().start, f);
+                        write_component_value(operand, ctx, f);
+                    }
+                    OpPiece::Paren(paren) => {
+                        flush_value_comments(paren.span.start, f);
+                        write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
+                    }
+                    OpPiece::Op { span, space_before } => {
+                        if *space_before {
+                            write!(f, " ");
+                        }
+                        write_text_with_leading_comments(to_span(*span), f);
+                    }
+                }
+            }
         };
-        push_operand(&calc.left, chunks, current);
+
+        if ctx.no_break || chunks.len() == 1 {
+            for (i, chunk) in chunks.iter().enumerate() {
+                if i > 0 {
+                    write!(f, " ");
+                }
+                write_chunk(chunk, f);
+            }
+            return;
+        }
+
+        let chunks_ref = &chunks;
+        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            let mut filler = f.fill();
+            for chunk in chunks_ref {
+                let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                    write_chunk(chunk, f);
+                });
+                filler.entry(&soft_line_break_or_space(), &content);
+            }
+            filler.finish();
+        });
+        write!(f, group(&indent(&body)));
+    }
+}
+
+/// Calc expression (`a + b` inside `calc(...)`), an [`OpChunks`] fill.
+fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'_, 'a>) {
+    fn flatten<'b, 'a>(calc: &'b Calc<'a>, out: &mut OpChunks<'b, 'a>) {
+        push_operand(&calc.left, out);
         // `*` and `/` are always spaced (DIVERGENCES.md#math-function-operator-spacing);
-        // `+`/`-` keep the source (they require whitespace, a glued one is invalid)
+        // `+`/`-` (and a Sass `%`) keep the source: `+`/`-` require whitespace, a glued one is invalid
         let spaced =
             matches!(calc.op.kind, CalcOperatorKind::Multiply | CalcOperatorKind::Division);
-        if spaced || !is_glued(calc.left.span(), calc.op.span) {
-            current.push(Piece::Space);
-        }
-        current.push(Piece::Op(op_str, calc.op.span.start));
-        if spaced || !is_glued(calc.op.span, calc.right.span()) {
-            chunks.push(std::mem::take(current));
-        }
-        push_operand(&calc.right, chunks, current);
+        out.push_op(
+            calc.op.span,
+            spaced || !is_glued(calc.left.span(), calc.op.span),
+            spaced || !is_glued(calc.op.span, calc.right.span()),
+        );
+        push_operand(&calc.right, out);
     }
 
     // A parenthesized sub-expression (`CalcParenthesized`) is one operand: its parens come from the AST
-    fn push_operand<'b, 'a>(
-        operand: &'b ComponentValue<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
+    fn push_operand<'b, 'a>(operand: &'b ComponentValue<'a>, out: &mut OpChunks<'b, 'a>) {
         if let ComponentValue::Calc(inner) = operand {
-            flatten(inner, chunks, current);
+            flatten(inner, out);
         } else {
-            current.push(Piece::Operand(operand));
+            out.push_operand(operand);
         }
     }
 
-    let mut chunks: Vec<Vec<Piece<'_, 'a>>> = vec![];
-    let mut current: Vec<Piece<'_, 'a>> = vec![];
-    flatten(calc, &mut chunks, &mut current);
-    if !current.is_empty() {
-        chunks.push(current);
-    }
-
-    let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
-        for piece in chunk {
-            // A comment between the operands and operators stays there
-            match piece {
-                Piece::Operand(operand) => {
-                    flush_value_comments(operand.span().start, f);
-                    write_component_value(operand, ctx, f);
-                }
-                Piece::Op(op, start) => {
-                    flush_value_comments(*start, f);
-                    write!(f, token(op));
-                }
-                Piece::Space => write!(f, " "),
-            }
-        }
-    };
-
-    if ctx.no_break || chunks.len() == 1 {
-        for (i, chunk) in chunks.iter().enumerate() {
-            if i > 0 {
-                write!(f, " ");
-            }
-            write_chunk(chunk, f);
-        }
-        return;
-    }
-
-    let chunks_ref = &chunks;
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        let mut filler = f.fill();
-        for chunk in chunks_ref {
-            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write_chunk(chunk, f);
-            });
-            filler.entry(&soft_line_break_or_space(), &content);
-        }
-        filler.finish();
-    });
-    write!(f, group(&indent(&body)));
+    let mut out = OpChunks::default();
+    flatten(calc, &mut out);
+    out.write(ctx, f);
 }
 
-/// Less arithmetic (`@a - 2 * @b - (@c / 2)`):
-/// a flat operator fill matching Prettier (the `printNumber`/`adjustNumbers` math layout, umbrella prettier/prettier#1811).
-/// Every operator glues to its LEFT operand with the break opportunity AFTER it;
-/// continuation lines share one uniform indent.
-/// Nested unparenthesized operations flatten into the SAME fill;
-/// a parenthesized sub-expression is its own nested group (it can break inside its parens).
+/// Less arithmetic (`@a - 2 * @b - (@c / 2)`), an [`OpChunks`] fill
+/// (Prettier's `printNumber`/`adjustNumbers` math layout, umbrella prettier/prettier#1811).
 ///
 /// Operator spacing mirrors Prettier's Less word lexing (postcss-values-parser) plus its math-operator rules:
 /// - `+`/`-` keep the source glue (`10px+20px`, `@a+1`: a glued sign folds into the next word),
@@ -2146,32 +2164,9 @@ fn write_less_binary_operation<'a>(
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    enum Piece<'b, 'a> {
-        Operand(&'b ComponentValue<'a>),
-        Paren(&'b LessParenthesizedOperation<'a>),
-        Op(&'static str, u32),
-        Space,
-    }
-
-    fn flatten<'b, 'a>(
-        op: &'b LessBinaryOperation<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
-        let op_str: &'static str = match op.op.kind {
-            LessOperationOperatorKind::Multiply => "*",
-            LessOperationOperatorKind::Division => "/",
-            LessOperationOperatorKind::DotDivision => "./",
-            LessOperationOperatorKind::Plus => "+",
-            LessOperationOperatorKind::Minus => "-",
-        };
-
-        push_operand(&op.left, chunks, current);
-        // The left neighbor in the flattened stream is the piece `push_operand` just pushed last
-        let left_operand = match current.last() {
-            Some(Piece::Operand(v)) => Some(*v),
-            _ => None,
-        };
+    fn flatten<'b, 'a>(op: &'b LessBinaryOperation<'a>, out: &mut OpChunks<'b, 'a>) {
+        push_operand(&op.left, out);
+        let left_operand = out.last_operand();
         let source_before = !is_glued(op.left.span(), op.op.span);
         let source_after = !is_glued(op.op.span, op.right.span());
         // Spaces on both sides regardless of the source (see the doc comment), else the source glue
@@ -2187,16 +2182,8 @@ fn write_less_binary_operation<'a>(
                 left_operand.is_some_and(is_func_like)
             }
         };
-        let (space_before, space_after) = (forced || source_before, forced || source_after);
-        if space_before {
-            current.push(Piece::Space);
-        }
-        current.push(Piece::Op(op_str, op.op.span.start));
-        // Break opportunity where a space follows the operator
-        if space_after {
-            chunks.push(std::mem::take(current));
-        }
-        push_operand(&op.right, chunks, current);
+        out.push_op(op.op.span, forced || source_before, forced || source_after);
+        push_operand(&op.right, out);
     }
 
     /// postcss-values-parser's `atword`: `@var`, `@@var`, `$prop` and lookups (`@config[key]`)
@@ -2210,68 +2197,17 @@ fn write_less_binary_operation<'a>(
         )
     }
 
-    fn push_operand<'b, 'a>(
-        operand: &'b ComponentValue<'a>,
-        chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
-        current: &mut Vec<Piece<'b, 'a>>,
-    ) {
+    fn push_operand<'b, 'a>(operand: &'b ComponentValue<'a>, out: &mut OpChunks<'b, 'a>) {
         match operand {
-            ComponentValue::LessBinaryOperation(inner) => flatten(inner, chunks, current),
-            ComponentValue::LessParenthesizedOperation(paren) => current.push(Piece::Paren(paren)),
-            _ => current.push(Piece::Operand(operand)),
+            ComponentValue::LessBinaryOperation(inner) => flatten(inner, out),
+            ComponentValue::LessParenthesizedOperation(paren) => out.push_paren(paren),
+            _ => out.push_operand(operand),
         }
     }
 
-    let mut chunks: Vec<Vec<Piece<'_, 'a>>> = vec![];
-    let mut current: Vec<Piece<'_, 'a>> = vec![];
-    flatten(op, &mut chunks, &mut current);
-    if !current.is_empty() {
-        chunks.push(current);
-    }
-
-    let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
-        for piece in chunk {
-            // A comment between the operands and operators stays there
-            match piece {
-                Piece::Operand(operand) => {
-                    flush_value_comments(operand.span().start, f);
-                    write_component_value(operand, ctx, f);
-                }
-                Piece::Paren(paren) => {
-                    flush_value_comments(paren.span.start, f);
-                    write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
-                }
-                Piece::Op(op, start) => {
-                    flush_value_comments(*start, f);
-                    write!(f, token(op));
-                }
-                Piece::Space => write!(f, " "),
-            }
-        }
-    };
-
-    if ctx.no_break || chunks.len() == 1 {
-        for (i, chunk) in chunks.iter().enumerate() {
-            if i > 0 {
-                write!(f, " ");
-            }
-            write_chunk(chunk, f);
-        }
-        return;
-    }
-
-    let chunks_ref = &chunks;
-    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-        let mut filler = f.fill();
-        for chunk in chunks_ref {
-            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write_chunk(chunk, f);
-            });
-            filler.entry(&soft_line_break_or_space(), &content);
-        }
-        filler.finish();
-    });
-    write!(f, group(&indent(&body)));
+    let mut out = OpChunks::default();
+    flatten(op, &mut out);
+    out.write(ctx, f);
 }
 
 /// A parenthesized operand (Less operation `(@a - @b)`, `calc()` sub-expression):
