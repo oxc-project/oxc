@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-useMemo-callback-args-lowered-params.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "useMemo() callbacks may not accept parameters", labels: [LabeledSpan { label: Some("Callbacks with parameters are not supported"), span: Span { start: 47, end: 52 }, primary: true }], help: Some("useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("UseMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/use-memo") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "useMemo() callbacks may not accept parameters", labels: [LabeledSpan { label: Some("Callbacks with parameters are not supported"), span: Span { start: 91, end: 94 }, primary: true }], help: Some("useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("UseMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/use-memo") } }
+
+No changes.

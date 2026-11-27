@@ -171,9 +171,15 @@ fn handle_possible_use_memo_call(
     // Validate no parameters
     if !body_func.params.is_empty() {
         let first_param = &body_func.params[0];
+        // Lowered params (default or destructured) leave `place.span` unset as
+        // the temporary-parameter sentinel, but their identifier keeps the
+        // parameter's original span. Fall back to it so the diagnostic points
+        // at the parameter, matching upstream's `firstParam.place.loc`.
         let span = match first_param {
-            ParamPattern::Place(place) => place.span,
-            ParamPattern::Spread(spread) => spread.place.span,
+            ParamPattern::Place(place) => place.span.or(identifiers[place.identifier].span),
+            ParamPattern::Spread(spread) => {
+                spread.place.span.or(identifiers[spread.place.identifier].span)
+            }
         };
         errors.push(diagnostics::use_memo_callback_parameters(span));
     }
