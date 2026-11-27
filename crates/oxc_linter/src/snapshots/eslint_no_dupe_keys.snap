@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(no-dupe-keys): Duplicate key '/a/gi'
-   ╭─[no_dupe_keys.tsx:1:14]
+   ╭─[no_dupe_keys.tsx:1:26]
  1 │ const a = { [/a/ig]: 1, [/a/gi]: 2 };
    ·              ──┬──       ──┬──
    ·                │           ╰── and duplicated here
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '/a/gi'
-   ╭─[no_dupe_keys.tsx:1:14]
+   ╭─[no_dupe_keys.tsx:1:25]
  1 │ const b = { [/a/ig]: 1, "/a/gi": 2 };
    ·              ──┬──      ───┬───
    ·                │           ╰── and duplicated here
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'a'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:18]
  1 │ var x = { a: b, ['a']: b };
    ·           ┬      ─┬─
    ·           │       ╰── and duplicated here
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'y'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:17]
  1 │ var x = { y: 1, y: 2 };
    ·           ┬     ┬
    ·           │     ╰── and duplicated here
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key ''
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:18]
  1 │ var x = { '': 1, '': 2 };
    ·           ─┬     ─┬
    ·            │      ╰── and duplicated here
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '``'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:19]
  1 │ var x = { '': 1, [``]: 2 };
    ·           ─┬      ─┬
    ·            │       ╰── and duplicated here
@@ -57,7 +57,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '1'
-   ╭─[no_dupe_keys.tsx:1:13]
+   ╭─[no_dupe_keys.tsx:1:21]
  1 │ var foo = { 0x1: 1, 1: 2};
    ·             ─┬─     ┬
    ·              │      ╰── and duplicated here
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '10'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:19]
  1 │ var x = { 012: 1, 10: 2 };
    ·           ─┬─     ─┬
    ·            │       ╰── and duplicated here
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '1'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:19]
  1 │ var x = { 0b1: 1, 1: 2 };
    ·           ─┬─     ┬
    ·            │      ╰── and duplicated here
@@ -84,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '1'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:19]
  1 │ var x = { 0o1: 1, 1: 2 };
    ·           ─┬─     ┬
    ·            │      ╰── and duplicated here
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '1'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:18]
  1 │ var x = { 1n: 1, 1: 2 };
    ·           ─┬     ┬
    ·            │     ╰── and duplicated here
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '10'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:19]
  1 │ var x = { 1_0: 1, 10: 2 };
    ·           ─┬─     ─┬
    ·            │       ╰── and duplicated here
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'z'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:19]
  1 │ var x = { "z": 1, z: 2 };
    ·           ─┬─     ┬
    ·            │      ╰── and duplicated here
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'bar'
-   ╭─[no_dupe_keys.tsx:2:15]
+   ╭─[no_dupe_keys.tsx:3:15]
  1 │ var foo = {
  2 │               bar: 1,
    ·               ─┬─
@@ -133,7 +133,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'a'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:21]
  1 │ var x = { a: 1, get a() {} };
    ·           ┬         ┬
    ·           │         ╰── and duplicated here
@@ -142,7 +142,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'a'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:21]
  1 │ var x = { a: 1, set a(value) {} };
    ·           ┬         ┬
    ·           │         ╰── and duplicated here
@@ -151,7 +151,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'b'
-   ╭─[no_dupe_keys.tsx:1:17]
+   ╭─[no_dupe_keys.tsx:1:34]
  1 │ var x = { a: 1, b: { a: 2 }, get b() {} };
    ·                 ┬                ┬
    ·                 │                ╰── and duplicated here
@@ -160,7 +160,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '/(?<zero>0)/'
-   ╭─[no_dupe_keys.tsx:1:12]
+   ╭─[no_dupe_keys.tsx:1:32]
  1 │ var x = ({ '/(?<zero>0)/': 1, [/(?<zero>0)/]: 2 })
    ·            ───────┬──────      ──────┬─────
    ·                   │                  ╰── and duplicated here
@@ -169,7 +169,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
-   ╭─[no_dupe_keys.tsx:1:12]
+   ╭─[no_dupe_keys.tsx:1:33]
  1 │ var x = { ['__proto__']: null, ['__proto__']: null };
    ·            ─────┬─────          ─────┬─────
    ·                 │                    ╰── and duplicated here
@@ -178,7 +178,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
-   ╭─[no_dupe_keys.tsx:1:12]
+   ╭─[no_dupe_keys.tsx:1:32]
  1 │ var x = { ['__proto__']: null, __proto__ };
    ·            ─────┬─────         ────┬────
    ·                 │                  ╰── and duplicated here
@@ -187,7 +187,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
-   ╭─[no_dupe_keys.tsx:1:12]
+   ╭─[no_dupe_keys.tsx:1:32]
  1 │ var x = { ['__proto__']: null, __proto__() {} };
    ·            ─────┬─────         ────┬────
    ·                 │                  ╰── and duplicated here
@@ -196,7 +196,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
-   ╭─[no_dupe_keys.tsx:1:12]
+   ╭─[no_dupe_keys.tsx:1:36]
  1 │ var x = { ['__proto__']: null, get __proto__() {} };
    ·            ─────┬─────             ────┬────
    ·                 │                      ╰── and duplicated here
@@ -205,7 +205,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
-   ╭─[no_dupe_keys.tsx:1:12]
+   ╭─[no_dupe_keys.tsx:1:36]
  1 │ var x = { ['__proto__']: null, set __proto__(value) {} };
    ·            ─────┬─────             ────┬────
    ·                 │                      ╰── and duplicated here
@@ -214,7 +214,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'a'
-   ╭─[no_dupe_keys.tsx:1:28]
+   ╭─[no_dupe_keys.tsx:1:34]
  1 │ var x = { __proto__: null, a: 5, a: 6 };
    ·                            ┬     ┬
    ·                            │     ╰── and duplicated here
@@ -223,7 +223,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '\ud800'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:24]
  1 │ var x = { "\uD800": 1, "\uD800": 2 };
    ·           ────┬───     ────┬───
    ·               │            ╰── and duplicated here
@@ -232,7 +232,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '\udc00'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:25]
  1 │ var x = { "\uDC00": 1, ["\uDC00"]: 2 };
    ·           ────┬───      ────┬───
    ·               │             ╰── and duplicated here
@@ -241,7 +241,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '`a\uD800b`'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:27]
  1 │ var x = { "a\uD800b": 1, [`a\uD800b`]: 2 };
    ·           ─────┬────      ─────┬────
    ·                │               ╰── and duplicated here
@@ -250,10 +250,77 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key '𐀀'
-   ╭─[no_dupe_keys.tsx:1:11]
+   ╭─[no_dupe_keys.tsx:1:30]
  1 │ var x = { "\uD800\uDC00": 1, "𐀀": 2 };
    ·           ───────┬──────     ─┬─
    ·                  │            ╰── and duplicated here
    ·                  ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'x'
+   ╭─[no_dupe_keys.tsx:1:40]
+ 1 │ var x = { get x() {}, set x(v) {}, get x() {} };
+   ·               ┬                        ┬
+   ·               │                        ╰── and duplicated here
+   ·               ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'x'
+   ╭─[no_dupe_keys.tsx:1:40]
+ 1 │ var x = { set x(v) {}, get x() {}, set x(v) {} };
+   ·               ┬                        ┬
+   ·               │                        ╰── and duplicated here
+   ·               ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'x'
+   ╭─[no_dupe_keys.tsx:1:88]
+ 1 │ var x = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, get x() {}, set x(v) {}, get x() {} };
+   ·                                                               ┬                        ┬
+   ·                                                               │                        ╰── and duplicated here
+   ·                                                               ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'a'
+   ╭─[no_dupe_keys.tsx:1:36]
+ 1 │ var x = { get a() {}, set a(v) {}, a: 1 };
+   ·                           ┬        ┬
+   ·                           │        ╰── and duplicated here
+   ·                           ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'true'
+   ╭─[no_dupe_keys.tsx:1:23]
+ 1 │ var x = { "true": 0, [true]: 1 };
+   ·           ───┬──      ──┬─
+   ·              │          ╰── and duplicated here
+   ·              ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'false'
+   ╭─[no_dupe_keys.tsx:1:22]
+ 1 │ var x = { false: 0, [false]: 1 };
+   ·           ──┬──      ──┬──
+   ·             │          ╰── and duplicated here
+   ·             ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'a'
+   ╭─[no_dupe_keys.tsx:4:13]
+ 2 │             // eslint-disable-next-line no-dupe-keys
+ 3 │             a: 1,
+   ·             ┬
+   ·             ╰── Key is first defined here
+ 4 │             a: 2,
+   ·             ┬
+   ·             ╰── and duplicated here
+ 5 │         };
    ╰────
   help: Consider removing the duplicated key
