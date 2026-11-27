@@ -30,7 +30,7 @@ use crate::{
     context::CssFormatContext,
     format::to_span,
     print::{
-        CssFormatter, block_comment_end, format_with, is_glued, scss, selector, statement,
+        CssFormatter, format_with, is_glued, scss, selector, statement,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -354,17 +354,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
     let source = f.context().source_text();
     // `@import` places its own: one fuses with the path after it (`write_import_path_list`)
     if !matches!(prelude, AtRulePrelude::Import(_) | AtRulePrelude::SassImport(_)) {
-        // A first `selector()` term starts before its span (`supports_in_parens_start`)
-        let start = match prelude {
-            AtRulePrelude::Supports(condition) => match condition.conditions.first() {
-                Some(SupportsConditionKind::SupportsInParens(in_parens)) => {
-                    supports_in_parens_start(in_parens, f)
-                }
-                _ => condition.span.start,
-            },
-            _ => prelude.span().start,
-        };
-        write_leading_comments(start, f);
+        write_leading_comments(prelude.span().start, f);
     }
     match prelude {
         AtRulePrelude::Media(media) => write_media_query_list(media, f),
@@ -1967,40 +1957,9 @@ fn write_supports_term<'a>(
     end: u32,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let mut span = to_span(in_parens.span());
-    span.start = supports_in_parens_start(in_parens, f);
-    value::write_with_comments(span, end, f, |f| {
+    value::write_with_comments(to_span(in_parens.span()), end, f, |f| {
         write_supports_in_parens(in_parens, f);
     });
-}
-
-/// Where a term starts, so a comment inside it never reads as leading it.
-///
-/// TODO: oxc-css-parser spans a `selector()` term as its selector list only:
-/// its start is found back over the pending comments and whitespace after `selector(`.
-/// Fix the span in the parser and remove this.
-fn supports_in_parens_start(in_parens: &SupportsInParens<'_>, f: &CssFormatter<'_, '_>) -> u32 {
-    let list_start = in_parens.span.start;
-    if !matches!(in_parens.kind, SupportsInParensKind::Selector(_)) {
-        return list_start;
-    }
-    let source = f.context().source_text();
-    let mut end = list_start;
-    loop {
-        end = u32::try_from(source.slice_range(0, end).trim_end().len()).unwrap_or(end);
-        match f.context().comments().iter_before(list_start).find(|c| c.span.end == end) {
-            Some(comment) => end = comment.span.start,
-            None => break,
-        }
-    }
-    let Some(head) = source.slice_range(0, end).strip_suffix('(') else { return list_start };
-    // The name, escapes included (`s\65lector`)
-    let name_start =
-        head.trim_end_matches(|c: char| c.is_ascii_alphanumeric() || c == '-' || c == '\\').len();
-    if name_start == head.len() {
-        return list_start;
-    }
-    u32::try_from(name_start).unwrap_or(list_start)
 }
 
 /// A `@supports` declaration with the comments inside its parens (`close` is the `)`), as around one in a rule:
@@ -2023,7 +1982,7 @@ fn write_supports_declaration<'a>(
 
 fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
-    // The term's `)`: the comments before it stay inside (but a `selector()`'s, see below)
+    // The term's `)`: the comments before it stay inside
     let close = in_parens.span.end - 1;
     match &in_parens.kind {
         // An over-wide term opens its parens (Prettier's parenthesized value group)
@@ -2042,24 +2001,12 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
             write!(f, "selector(");
             // An inline comment inside `selector(...)` forces the parens
             // open and trails the selector.
-            // oxc-css-parser's span may stop at the selector; scan to the `)`.
-            let span_end = in_parens.span().end;
-            let bytes = source.as_bytes();
-            let mut scan = span_end.saturating_sub(1) as usize;
-            while scan < bytes.len() && bytes[scan] != b')' {
-                scan = if bytes[scan..].starts_with(b"/*") {
-                    block_comment_end(&source, scan)
-                } else {
-                    scan + 1
-                };
-            }
-            let r_paren = u32::try_from(scan).unwrap_or(span_end);
-            let has_inline_inside = f.context().comments().iter_before(r_paren).any(|c| c.inline);
+            let has_inline_inside = f.context().comments().iter_before(close).any(|c| c.inline);
             if has_inline_inside {
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, hard_line_break());
                     selector::write_selector_list(list, selector::SelectorListStyle::Line, f);
-                    for &comment in f.context().comments().take_before(r_paren) {
+                    for &comment in f.context().comments().take_before(close) {
                         write!(f, space());
                         write!(
                             f,
@@ -2074,7 +2021,7 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                 let content = format_with(|f| {
                     value::flush_value_comments(list.span.start, f);
                     selector::write_selector_list(list, selector::SelectorListStyle::Hard, f);
-                    value::flush_trailing_value_comments(r_paren, f);
+                    value::flush_trailing_value_comments(close, f);
                 });
                 write!(f, group(&format_args!(soft_block_indent(&content), ")")));
             }
