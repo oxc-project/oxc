@@ -819,6 +819,12 @@ impl<'a> PeepholeOptimizations {
         if ctx.scoping().scope_flags(scope_id).contains_direct_eval() {
             return false;
         }
+        // `(a = () => {}).name` is `"a"`: the assignment names the function, so
+        // unwrapping it to `(() => {}).name` would print `""`.
+        if ctx.is_expression_whose_name_needs_to_be_kept(&assign_expr.right) {
+            // Pure RHS: the statement-position caller drops the whole thing.
+            return !assign_expr.right.may_have_side_effects(ctx);
+        }
         let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
         // `(a = o.f)()` => `(0, o.f)()`
