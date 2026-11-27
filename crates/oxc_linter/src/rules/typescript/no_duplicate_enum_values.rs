@@ -105,6 +105,7 @@ impl Rule for NoDuplicateEnumValues {
             let Some(initializer) = &enum_member.initializer else {
                 continue;
             };
+            let initializer = initializer.without_parentheses();
             let value = match initializer {
                 Expression::NumericLiteral(num) => {
                     if let Some((_, old_span)) =
@@ -409,6 +410,10 @@ fn test() {
               B = 'A',
             }
         ",
+        "enum E { A = 1, B = (1) }",
+        "enum E { A = (1), B = 1 }",
+        "enum E { A = ('a'), B = 'a' }",
+        "enum E { A = ((`a`)), B = 'a' }",
     ];
 
     Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::PLUGIN, pass, fail)
