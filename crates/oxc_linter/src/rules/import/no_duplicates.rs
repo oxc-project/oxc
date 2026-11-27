@@ -429,8 +429,7 @@ fn merge_imports_fix<'a>(
         .copied()
         .filter_map(|decl| {
             let (open, close) = specifier_braces(ctx, decl)?;
-            let identifiers =
-                ctx.source_range(Span::new(open + 1, close)).split(',').collect::<Vec<_>>();
+            let identifiers = split_specifiers(ctx, open, close);
             Some(MergeSpecifier {
                 decl,
                 identifiers,
@@ -463,18 +462,14 @@ fn merge_imports_fix<'a>(
     let import_keyword_end = first.span.start + u32::try_from("import".len()).unwrap();
 
     let first_is_empty = !has_named_specifiers(first);
-    let first_brace_content = match braces {
-        Some((open, close)) => ctx.source_range(Span::new(open + 1, close)),
-        None => "",
-    };
     let first_has_trailing_comma = !first_is_empty
         && braces.is_some_and(|(open, close)| {
             ctx.source_range(Span::new(open + 1, last_token_end(ctx, open, close))).ends_with(',')
         });
 
     let mut existing: FxHashSet<&str> = FxHashSet::default();
-    if !first_is_empty {
-        for id in first_brace_content.split(',') {
+    if !first_is_empty && let Some((open, close)) = braces {
+        for id in split_specifiers(ctx, open, close) {
             existing.insert(id.trim());
         }
     }
@@ -614,6 +609,45 @@ fn build_specifiers_text<'a>(
     }
 
     result
+}
+
+/// Splits the text between `{` and `}` at the commas that separate specifiers. Commas inside
+/// comments or string names don't count: `{ b, /* x, y */ c }`, `{ 'a,b' as ab }`.
+fn split_specifiers<'a>(ctx: &LintContext<'a>, open: u32, close: u32) -> Vec<&'a str> {
+    let start = open + 1;
+    let text = ctx.source_range(Span::new(start, close));
+    let comments: Vec<Span> =
+        ctx.semantic().comments_range(start..close).map(|comment| comment.span).collect();
+    let mut parts = Vec::new();
+    let mut part_start = 0;
+    let mut quote = None;
+    let mut escaped = false;
+    for (i, byte) in text.bytes().enumerate() {
+        if let Some(q) = quote {
+            if escaped {
+                escaped = false;
+            } else if byte == b'\\' {
+                escaped = true;
+            } else if byte == q {
+                quote = None;
+            }
+            continue;
+        }
+        let pos = start + u32::try_from(i).unwrap();
+        if comments.iter().any(|comment| comment.start <= pos && pos < comment.end) {
+            continue;
+        }
+        match byte {
+            b'"' | b'\'' => quote = Some(byte),
+            b',' => {
+                parts.push(&text[part_start..i]);
+                part_start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    parts.push(&text[part_start..]);
+    parts
 }
 
 fn ends_with_line_comment(text: &str) -> bool {
@@ -1266,6 +1300,22 @@ import { /* }{ */ y } from '}{';",
         (
             "import { a } from 'foo';\nimport { b, // note\u{2029} c } from 'foo';",
             "import { a,b,// note\u{2029} c\n } from 'foo';\n",
+            None,
+        ),
+        // a comma inside a comment or a string name is not a separator
+        (
+            "import { a } from 'foo';\nimport {\n  b,\n  // one, two\n  c,\n} from 'foo';",
+            "import { a,\n  b,\n  // one, two\n  c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { b, /* one, two */ c } from 'foo';",
+            "import { a,b,/* one, two */ c } from 'foo';\n",
+            None,
+        ),
+        (
+            "import { a } from 'foo';\nimport { 'b,c' as bc } from 'foo';",
+            "import { a,'b,c' as bc } from 'foo';\n",
             None,
         ),
     ];
