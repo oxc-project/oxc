@@ -143,33 +143,16 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            FormatElement::Token { text } => self.print_text(Text::Token(text)),
-            FormatElement::Text { text, width } => {
-                // A flat group was measured up to the first newline only (`fits_text`),
-                // what follows is measured again, as after a hard line
-                if args.mode().is_flat() && width.is_multiline() {
-                    self.state.measured_group_fits = false;
-                }
-                self.print_text(Text::Text { text, width: *width });
+            FormatElement::Token { .. } | FormatElement::Text { .. } => {
+                self.print_leaf(element, args.mode());
             }
             FormatElement::Line(line_mode) => {
+                if self.print_leaf(element, args.mode()) {
+                    return Ok(());
+                }
+                // Not a flat soft line: it breaks a flat group
                 if args.mode().is_flat() {
-                    match line_mode {
-                        LineMode::Soft | LineMode::SoftOrSpace => {
-                            if line_mode == &LineMode::SoftOrSpace && self.state.line_width > 0 {
-                                self.state.pending_space = true;
-                            }
-                            return Ok(());
-                        }
-                        LineMode::Hard
-                        | LineMode::HardWithoutExpand
-                        | LineMode::Empty
-                        | LineMode::EmptyWithoutExpand
-                        | LineMode::ExactLineBreaks(_)
-                        | LineMode::Literal => {
-                            self.state.measured_group_fits = false;
-                        }
-                    }
+                    self.state.measured_group_fits = false;
                 }
 
                 if self.state.line_suffixes.has_pending() {
@@ -714,6 +697,15 @@ impl<'a> Printer<'a> {
         indent_stack: &mut PrintIndentStack,
         args: PrintElementArgs,
     ) -> PrintResult<()> {
+        // A leaf alone (the words and separators of a filled paragraph):
+        // printed without the entry frame and the walk
+        if let Some(element) = queue.single_element_entry()
+            && self.print_leaf(element, args.mode())
+        {
+            queue.skip_single_element_entry();
+            return Ok(());
+        }
+
         let start_entry = queue.top();
 
         if !matches!(start_entry, Some(&FormatElement::Tag(Tag::StartEntry))) {
@@ -826,6 +818,32 @@ impl<'a> Printer<'a> {
         self.flush_pending_indention_and_space();
         self.print_line_break(root);
         self.state.has_empty_line = false;
+    }
+
+    /// Prints an element that needs nothing but the print mode:
+    /// a text, or a soft line in flat mode.
+    /// Returns `false` for any other element, left to [`Self::print_element`].
+    #[inline(always)]
+    fn print_leaf(&mut self, element: &'a FormatElement, mode: PrintMode) -> bool {
+        match element {
+            FormatElement::Token { text } => self.print_text(Text::Token(text)),
+            FormatElement::Text { text, width } => {
+                // A flat group was measured up to the first newline only (`fits_text`),
+                // what follows is measured again, as after a hard line
+                if mode.is_flat() && width.is_multiline() {
+                    self.state.measured_group_fits = false;
+                }
+                self.print_text(Text::Text { text, width: *width });
+            }
+            FormatElement::Line(LineMode::SoftOrSpace) if mode.is_flat() => {
+                if self.state.line_width > 0 {
+                    self.state.pending_space = true;
+                }
+            }
+            FormatElement::Line(LineMode::Soft) if mode.is_flat() => {}
+            _ => return false,
+        }
+        true
     }
 
     /// Materializes the pending indention and pending space before printing visible content.
@@ -1217,7 +1235,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     // counts a pending `Space` once text follows, like Prettier measuring
                     // `[content, separator, next content]` together
                     if predicate.is_end(element)? {
-                        return Ok(self.state.line_width <= usize::from(self.options().print_width));
+                        return Ok(self.fits_at_entry_end());
                     }
                 }
             }
@@ -1233,6 +1251,12 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     fn overflows(&self) -> bool {
         self.state.line_width + usize::from(self.state.pending_space)
             > usize::from(self.options().print_width)
+    }
+
+    /// The check at a fill entry boundary whose line goes on (see `fits`):
+    /// unlike [`Self::overflows`], a pending `Space` is left for the next entry to count.
+    fn fits_at_entry_end(&self) -> bool {
+        self.state.line_width <= usize::from(self.options().print_width)
     }
 
     /// Tests if the content of a `Fill` item fits in [PrintMode::Flat].
@@ -1257,6 +1281,10 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     /// Returns `Err` if the queue isn't positioned at a [Tag::StartEntry] or if
     /// the matching [Tag::EndEntry] is missing.
     fn fill_entry_fits(&mut self, mode: PrintMode) -> PrintResult<bool> {
+        if let Some(fits) = self.simple_fill_entry_fits(mode) {
+            return Ok(fits);
+        }
+
         let start_entry = self.queue.top();
 
         if !matches!(start_entry, Some(&FormatElement::Tag(Tag::StartEntry))) {
@@ -1272,6 +1300,45 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         }
 
         Ok(fits)
+    }
+
+    /// [`Self::fill_entry_fits`] of an entry holding a leaf alone (see [`Self::fits_leaf`]),
+    /// like the words and separators of a filled paragraph: the same measurement, without the frames and the walk.
+    /// `None` for any other entry.
+    ///
+    /// It restates the exits of [`Self::fits`] for one element: `Fits::No` ends the measurement,
+    /// `Fits::Maybe` is checked at the end of the entry.
+    /// `Fits::Yes` (a multi-line text when not `must_be_flat`) is left to the walk.
+    /// The `StartEntry` arm of [`Self::fits_element`] is skipped too,
+    /// which is fine as `fill_separator_mode` is always `None` while a fill measures its entries.
+    fn simple_fill_entry_fits(&mut self, mode: PrintMode) -> Option<bool> {
+        debug_assert!(self.fill_separator_mode.is_none());
+        if !self.must_be_flat {
+            return None;
+        }
+        let element = self.queue.single_element_entry()?;
+        let fits = self.fits_leaf(element, mode)?;
+        self.queue.skip_single_element_entry();
+        Some(fits == Fits::Maybe && self.fits_at_entry_end())
+    }
+
+    /// Measures an element that needs nothing but the print mode:
+    /// a text, or a soft line measured flat.
+    /// Returns `None` for any other element, left to [`Self::fits_element`].
+    #[inline(always)]
+    fn fits_leaf(&mut self, element: &'a FormatElement, mode: PrintMode) -> Option<Fits> {
+        match element {
+            FormatElement::Token { text } => Some(self.fits_text(Text::Token(text))),
+            FormatElement::Text { text, width } => {
+                Some(self.fits_text(Text::Text { text, width: *width }))
+            }
+            FormatElement::Line(LineMode::SoftOrSpace) if mode.is_flat() => {
+                self.state.pending_line_space = true;
+                Some(Fits::Maybe)
+            }
+            FormatElement::Line(LineMode::Soft) if mode.is_flat() => Some(Fits::Maybe),
+            _ => None,
+        }
     }
 
     /// Tests if the passed element fits on the current line or not.
@@ -1295,77 +1362,57 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     self.state.pending_space = true;
                 }
             }
-            FormatElement::Line(line_mode) => {
-                if args.mode().is_flat() {
-                    match line_mode {
-                        LineMode::SoftOrSpace => {
-                            self.state.pending_line_space = true;
-                        }
-                        LineMode::Soft => {}
-                        LineMode::Hard
-                        | LineMode::HardWithoutExpand
-                        | LineMode::Empty
-                        | LineMode::EmptyWithoutExpand
-                        | LineMode::ExactLineBreaks(_)
-                        | LineMode::Literal => {
-                            // Even in flat mode, content that _directly_ contains a hard or empty
-                            // line is considered to fit when a hard break is reached, since that
-                            // break is always going to exist, regardless of the print mode.
-                            // This is particularly important for `Fill` entries, where _ungrouped_
-                            // content that contains hard breaks shouldn't force the surrounding
-                            // elements to also expand. Example:
-                            //   [
-                            //     -1, -2, 3
-                            //     // leading comment
-                            //     -4, -5, -6
-                            //   ]
-                            // Here, `-4` contains a hardline because of the leading comment, but that
-                            // doesn't cause the element (`-4`) nor the separator (`,`) to print in
-                            // expanded mode, allowing the rest of the elements to fill in. If this
-                            // _did_ respect `must_be_flat` and returned `Fits::No` instead, the result
-                            // would put the `-4` on its own line, which is not preferable (at least,
-                            // it doesn't match Prettier):
-                            //   [
-                            //     -1, -2, 3
-                            //     // leading comment
-                            //     -4,
-                            //     -5, -6
-                            //   ]
-                            // The perception here is that most comments inline for fills are used to
-                            // separate _groups_ rather than to single out an individual element.
-                            //
-                            // The alternative case is when the fill entry is grouped, in which case
-                            // this fit returns `Yes`, but the parent group is already known to
-                            // expand _because_ of this hard line, and so the fill entry and separator
-                            // are automatically printed in expanded mode anyway, and this fit check
-                            // has no bearing on that (so it doesn't need to care about flat or not):
-                            //   <div>
-                            //     <span a b>
-                            //       <Foo />
-                            //     </span>{" "}
-                            //     ({variable})
-                            //   </div>
-                            // Here the `<span>...</span>` _is_ grouped and contains a hardline, so it
-                            // is known to break and _not_ fit already because the check is performed
-                            // on the group. But within the group itself, the content with hardlines
-                            // (the `\n<Foo />\n`) _does_ fit, for the same logic in the first case.
-                            return Ok(Fits::Yes);
-                        }
-                    }
-                } else {
-                    // Reachable if the restQueue contains an element with mode expanded because Expanded
-                    // is what the mode's initialized to by default
-                    // This means, the printer is outside of the current element at this point and any
-                    // line break should be printed as regular line break -> Fits
-                    return Ok(Fits::Yes);
-                }
-            }
-
-            FormatElement::Token { text } => {
-                return Ok(self.fits_text(Text::Token(text)));
-            }
-            FormatElement::Text { text, width } => {
-                return Ok(self.fits_text(Text::Text { text, width: *width }));
+            // A text, or a soft line measured flat, is measured by `fits_leaf`;
+            // any other line fits.
+            FormatElement::Token { .. } | FormatElement::Text { .. } | FormatElement::Line(_) => {
+                // In flat mode, content that _directly_ contains a hard or empty
+                // line is considered to fit when a hard break is reached, since that
+                // break is always going to exist, regardless of the print mode.
+                // This is particularly important for `Fill` entries, where _ungrouped_
+                // content that contains hard breaks shouldn't force the surrounding
+                // elements to also expand. Example:
+                //   [
+                //     -1, -2, 3
+                //     // leading comment
+                //     -4, -5, -6
+                //   ]
+                // Here, `-4` contains a hardline because of the leading comment, but that
+                // doesn't cause the element (`-4`) nor the separator (`,`) to print in
+                // expanded mode, allowing the rest of the elements to fill in. If this
+                // _did_ respect `must_be_flat` and returned `Fits::No` instead, the result
+                // would put the `-4` on its own line, which is not preferable (at least,
+                // it doesn't match Prettier):
+                //   [
+                //     -1, -2, 3
+                //     // leading comment
+                //     -4,
+                //     -5, -6
+                //   ]
+                // The perception here is that most comments inline for fills are used to
+                // separate _groups_ rather than to single out an individual element.
+                //
+                // The alternative case is when the fill entry is grouped, in which case
+                // this fit returns `Yes`, but the parent group is already known to
+                // expand _because_ of this hard line, and so the fill entry and separator
+                // are automatically printed in expanded mode anyway, and this fit check
+                // has no bearing on that (so it doesn't need to care about flat or not):
+                //   <div>
+                //     <span a b>
+                //       <Foo />
+                //     </span>{" "}
+                //     ({variable})
+                //   </div>
+                // Here the `<span>...</span>` _is_ grouped and contains a hardline, so it
+                // is known to break and _not_ fit already because the check is performed
+                // on the group. But within the group itself, the content with hardlines
+                // (the `\n<Foo />\n`) _does_ fit, for the same logic in the first case.
+                //
+                // In expanded mode, any line fits.
+                // This is reachable if the restQueue contains an element with mode expanded because Expanded
+                // is what the mode's initialized to by default
+                // This means, the printer is outside of the current element at this point and any
+                // line break should be printed as regular line break -> Fits
+                return Ok(self.fits_leaf(element, args.mode()).unwrap_or(Fits::Yes));
             }
 
             FormatElement::LineSuffixBoundary => {
@@ -2313,6 +2360,28 @@ a",
     }
 
     #[test]
+    fn a_group_after_a_flat_multiline_text_entry_is_measured_again() {
+        // Same as above, with the text alone in an entry (`print_entry` prints it without the walk)
+        let allocator = Allocator::default();
+        let long = "b".repeat(100);
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [group(&format_args!(
+                    token("["),
+                    best_fitting![text("x\ny").without_expand_parent(), token("never chosen")],
+                    token(", "),
+                    group(&format_args!(token("["), soft_block_indent(&text(&long)), token("]"))),
+                    token("]")
+                ))]
+            );
+        });
+        let result = format_simple(&allocator, &content);
+
+        assert_eq!(format!("[x\ny, [\n  {long}\n]]"), result.as_code());
+    }
+
+    #[test]
     fn embedded_root_resumes_text_newlines() {
         let allocator = Allocator::default();
         let result = format_simple(
@@ -2613,6 +2682,28 @@ two lines`,
         );
 
         assert_eq!("a\n\nb", result.as_code());
+    }
+
+    #[test]
+    fn fill_of_single_token_entries_breaks_at_the_print_width() {
+        // Every item and separator is a single-element entry, measured without the walk:
+        // `aaaa bbbbb` fills the width exactly, `cc dddddddd` is one over it with the separator's space
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            f.fill()
+                .entry(&soft_line_break_or_space(), &token("aaaa"))
+                .entry(&soft_line_break_or_space(), &token("bbbbb"))
+                .entry(&soft_line_break_or_space(), &token("cc"))
+                .entry(&soft_line_break_or_space(), &token("dddddddd"))
+                .finish();
+        });
+        let result = format_simple_with_options(
+            &allocator,
+            &content,
+            PrinterOptions::default().with_print_width(PrintWidth::new(10)),
+        );
+
+        assert_eq!("aaaa bbbbb\ncc\ndddddddd", result.as_code());
     }
 
     #[test]
