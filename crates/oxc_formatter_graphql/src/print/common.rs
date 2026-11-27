@@ -263,6 +263,8 @@ pub(super) fn write_type<'a>(ty: &Type<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     match ty {
         Type::Named(named) => write_named_type(named, f),
         Type::List(list) => {
+            // Claim at the `[` so a leading comment lands before it, not inside at the first name
+            flush_leading_comments(to_span(list.span).start, f);
             write!(f, "[");
             write_type(&list.ty, f);
             write!(f, "]");
