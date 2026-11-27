@@ -1,3 +1,13 @@
+mod isolated_declaration;
+mod module_runner;
+mod options;
+mod transformer;
+
+pub use isolated_declaration::*;
+pub use module_runner::*;
+pub use options::*;
+pub use transformer::*;
+
 #[cfg(all(
     feature = "allocator",
     not(any(
@@ -10,9 +20,3 @@
 ))]
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
-mod isolated_declaration;
-pub use isolated_declaration::*;
-
-mod transformer;
-pub use transformer::*;

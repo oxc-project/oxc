@@ -1,20 +1,5 @@
 #![expect(clippy::needless_pass_by_value)]
 
-#[cfg(all(
-    feature = "allocator",
-    not(any(
-        target_arch = "arm",
-        target_os = "android",
-        target_os = "freebsd",
-        target_os = "windows",
-        target_family = "wasm"
-    ))
-))]
-#[global_allocator]
-static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
-mod options;
-
 use std::{collections::BTreeMap, path::PathBuf};
 
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
@@ -28,7 +13,21 @@ use oxc_parser::Parser;
 use oxc_sourcemap::napi::SourceMap;
 use oxc_span::SourceType;
 
-pub use crate::options::*;
+mod options;
+pub use options::*;
+
+#[cfg(all(
+    feature = "allocator",
+    not(any(
+        target_arch = "arm",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "windows",
+        target_family = "wasm"
+    ))
+))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 #[derive(Default)]
 #[napi(object)]
@@ -45,16 +44,46 @@ pub struct MinifyResult {
     pub mangle_cache: Option<BTreeMap<String, Either<String, bool>>>,
 }
 
-fn to_napi_mangle_cache(
-    cache: oxc_minifier::ManglePropertyCache,
-) -> BTreeMap<String, Either<String, bool>> {
-    cache
-        .into_iter()
-        .map(|(original, target)| {
-            let value = target.map_or(Either::B(false), |target| Either::A(target.to_string()));
-            (original.to_string(), value)
-        })
-        .collect()
+pub struct MinifyTask {
+    filename: String,
+    source_text: String,
+    options: Option<MinifyOptions>,
+}
+
+#[napi]
+impl Task for MinifyTask {
+    type JsValue = MinifyResult;
+    type Output = MinifyResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(minify_impl(&self.filename, &self.source_text, self.options.take()))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Minify asynchronously.
+///
+/// Note: This function can be slower than `minifySync` due to the overhead of spawning a thread.
+#[napi]
+pub fn minify(
+    filename: String,
+    source_text: String,
+    options: Option<MinifyOptions>,
+) -> AsyncTask<MinifyTask> {
+    AsyncTask::new(MinifyTask { filename, source_text, options })
+}
+
+/// Minify synchronously.
+#[napi]
+pub fn minify_sync(
+    filename: String,
+    source_text: String,
+    options: Option<MinifyOptions>,
+) -> MinifyResult {
+    minify_impl(&filename, &source_text, options)
 }
 
 fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
@@ -132,44 +161,14 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
     }
 }
 
-/// Minify synchronously.
-#[napi]
-pub fn minify_sync(
-    filename: String,
-    source_text: String,
-    options: Option<MinifyOptions>,
-) -> MinifyResult {
-    minify_impl(&filename, &source_text, options)
-}
-
-pub struct MinifyTask {
-    filename: String,
-    source_text: String,
-    options: Option<MinifyOptions>,
-}
-
-#[napi]
-impl Task for MinifyTask {
-    type JsValue = MinifyResult;
-    type Output = MinifyResult;
-
-    fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(minify_impl(&self.filename, &self.source_text, self.options.take()))
-    }
-
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
-        Ok(result)
-    }
-}
-
-/// Minify asynchronously.
-///
-/// Note: This function can be slower than `minifySync` due to the overhead of spawning a thread.
-#[napi]
-pub fn minify(
-    filename: String,
-    source_text: String,
-    options: Option<MinifyOptions>,
-) -> AsyncTask<MinifyTask> {
-    AsyncTask::new(MinifyTask { filename, source_text, options })
+fn to_napi_mangle_cache(
+    cache: oxc_minifier::ManglePropertyCache,
+) -> BTreeMap<String, Either<String, bool>> {
+    cache
+        .into_iter()
+        .map(|(original, target)| {
+            let value = target.map_or(Either::B(false), |target| Either::A(target.to_string()));
+            (original.to_string(), value)
+        })
+        .collect()
 }

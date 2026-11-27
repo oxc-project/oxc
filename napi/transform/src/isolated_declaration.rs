@@ -14,13 +14,6 @@ use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
 
 #[napi(object)]
-pub struct IsolatedDeclarationsResult {
-    pub code: String,
-    pub map: Option<SourceMap>,
-    pub errors: Vec<OxcError>,
-}
-
-#[napi(object)]
 #[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {
     /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
@@ -38,6 +31,56 @@ impl From<IsolatedDeclarationsOptions> for oxc::isolated_declarations::IsolatedD
     fn from(options: IsolatedDeclarationsOptions) -> Self {
         Self { strip_internal: options.strip_internal.unwrap_or_default() }
     }
+}
+
+#[napi(object)]
+pub struct IsolatedDeclarationsResult {
+    pub code: String,
+    pub map: Option<SourceMap>,
+    pub errors: Vec<OxcError>,
+}
+
+pub struct IsolatedDeclarationTask {
+    filename: String,
+    source_text: String,
+    options: Option<IsolatedDeclarationsOptions>,
+}
+
+#[napi]
+impl Task for IsolatedDeclarationTask {
+    type JsValue = IsolatedDeclarationsResult;
+    type Output = IsolatedDeclarationsResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(isolated_declaration_impl(&self.filename, &self.source_text, self.options.take()))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// TypeScript Isolated Declarations for Standalone DTS Emit (async)
+///
+/// Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
+#[napi]
+pub fn isolated_declaration(
+    filename: String,
+    source_text: String,
+    options: Option<IsolatedDeclarationsOptions>,
+) -> AsyncTask<IsolatedDeclarationTask> {
+    AsyncTask::new(IsolatedDeclarationTask { filename, source_text, options })
+}
+
+/// TypeScript Isolated Declarations for Standalone DTS Emit
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub fn isolated_declaration_sync(
+    filename: String,
+    source_text: String,
+    options: Option<IsolatedDeclarationsOptions>,
+) -> IsolatedDeclarationsResult {
+    isolated_declaration_impl(&filename, &source_text, options)
 }
 
 fn isolated_declaration_impl(
@@ -81,47 +124,4 @@ fn isolated_declaration_impl(
         map: codegen_ret.map.map(SourceMap::from),
         errors,
     }
-}
-
-/// TypeScript Isolated Declarations for Standalone DTS Emit
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-#[napi]
-pub fn isolated_declaration_sync(
-    filename: String,
-    source_text: String,
-    options: Option<IsolatedDeclarationsOptions>,
-) -> IsolatedDeclarationsResult {
-    isolated_declaration_impl(&filename, &source_text, options)
-}
-
-pub struct IsolatedDeclarationTask {
-    filename: String,
-    source_text: String,
-    options: Option<IsolatedDeclarationsOptions>,
-}
-
-#[napi]
-impl Task for IsolatedDeclarationTask {
-    type JsValue = IsolatedDeclarationsResult;
-    type Output = IsolatedDeclarationsResult;
-
-    fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(isolated_declaration_impl(&self.filename, &self.source_text, self.options.take()))
-    }
-
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
-        Ok(result)
-    }
-}
-
-/// TypeScript Isolated Declarations for Standalone DTS Emit (async)
-///
-/// Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
-#[napi]
-pub fn isolated_declaration(
-    filename: String,
-    source_text: String,
-    options: Option<IsolatedDeclarationsOptions>,
-) -> AsyncTask<IsolatedDeclarationTask> {
-    AsyncTask::new(IsolatedDeclarationTask { filename, source_text, options })
 }
