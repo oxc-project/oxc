@@ -125,7 +125,20 @@ type: `boolean`
 
 
 Whether to enable/disable type-aware linting.
-It will override the root config's `typeAware` option if set.
+If set, it applies to every file and overrides the `typeAware` option of every config.
+If unset, each file follows the `typeAware` option of the config which governs it.
+
+
+## typeCheck
+
+type: `boolean`
+
+
+Whether to report the TypeScript compiler diagnostics (experimental type checking).
+If set, it applies to every file linted with type-aware rules and overrides the
+`typeCheck` option of every config; it does not enable type-aware linting itself, so a
+file no config makes type-aware is never type-checked.
+If unset, each file follows the `typeCheck` option of the config which governs it.
 
 
 ## unusedDisableDirectives
@@ -133,4 +146,6 @@ It will override the root config's `typeAware` option if set.
 type: `"allow" | "warn" | "deny"`
 
 
-How to handle unused disable directives. By default, they are allowed and ignored.
+How to handle unused disable directives.
+If unset, the `reportUnusedDisableDirectives` option of the config which governs each file
+is used.

@@ -2345,6 +2345,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "tempfile",
  "unicode-segmentation",
  "url",
 ]
@@ -2986,6 +2987,7 @@ dependencies = [
 name = "oxlint"
 version = "1.95.0"
 dependencies = [
+ "bitflags",
  "bpaf",
  "cow-utils",
  "ignore",
