@@ -11,6 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
+    ast_util::next_token,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -143,18 +144,23 @@ impl Rule for NoExtraneousClass {
                         }
                     }
                     let has_decorators = !class.decorators.is_empty();
-                    ctx.diagnostic_with_suggestion(
+                    ctx.diagnostic_with_dangerous_suggestion(
                         empty_class_diagnostic(span, has_decorators),
                         |fixer| {
                             if has_decorators || class.is_expression() {
                                 return fixer.noop();
                             }
-                            if let AstKind::ExportDeclaration(decl) =
-                                ctx.nodes().parent_kind(node.id())
-                            {
-                                fixer.delete(decl)
+                            let span = match ctx.nodes().parent_kind(node.id()) {
+                                AstKind::ExportDeclaration(decl) => decl.span,
+                                AstKind::ExportDefaultDeclaration(decl) => decl.span,
+                                _ => class.span,
+                            };
+                            if next_token(span.end, ctx).is_some_and(|(_, c)| {
+                                matches!(c, '(' | '[' | '/' | '+' | '-' | '`' | '<')
+                            }) {
+                                fixer.replace(span, ";")
                             } else {
-                                fixer.delete(class)
+                                fixer.delete_range(span)
                             }
                         },
                     );
@@ -359,6 +365,21 @@ fn test() {
     let fix = vec![
         ("class Foo {}", "", None, FixKind::DangerousSuggestion),
         ("export class Foo {}", "", None, FixKind::DangerousSuggestion),
+        ("export default class {}", "", None, FixKind::DangerousSuggestion),
+        ("export default class Foo {}", "", None, FixKind::DangerousSuggestion),
+        ("export class Foo {}", "export class Foo {}", None, FixKind::Suggestion),
+        (
+            "const n = 1\nclass Empty {}\n/abc/.test('abc');",
+            "const n = 1\n;\n/abc/.test('abc');",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "foo()\nexport class Empty {}\n[1].map(bar);",
+            "foo()\n;\n[1].map(bar);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
         (
             "@foo class Foo {}",
             "@foo class Foo {}",
