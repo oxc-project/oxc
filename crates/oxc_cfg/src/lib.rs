@@ -175,6 +175,12 @@ pub enum EdgeType {
     /// c();  // Execution continues here
     /// ```
     Join,
+
+    /// Propagates variable liveness from a shared finalizer to an abrupt jump target.
+    ///
+    /// This is not an executable control-flow edge: the finalizer can also run for
+    /// a throwing or returning path. Control-flow analyses must ignore this edge.
+    Liveness,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -236,7 +242,10 @@ impl ControlFlowGraph {
                     return filter_result;
                 }
                 let unreachable = !graph.edges_connecting(a, b).any(|edge| {
-                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                    !matches!(
+                        edge.weight(),
+                        EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Liveness
+                    )
                 });
 
                 if unreachable {
@@ -270,6 +279,7 @@ impl ControlFlowGraph {
         fn get_jump_target(graph: &Graph, node: BlockNodeId) -> Option<BlockNodeId> {
             graph
                 .edges_directed(node, Direction::Outgoing)
+                .filter(|e| !matches!(e.weight(), EdgeType::Liveness))
                 .find_or_first(|e| matches!(e.weight(), EdgeType::Jump))
                 .map(|it| it.target())
         }
@@ -325,10 +335,27 @@ impl ControlFlowGraph {
     }
 
     pub fn is_cyclic(&self, node: BlockNodeId) -> bool {
-        set_depth_first_search(&self.graph, Some(node), |event| match event {
-            DfsEvent::BackEdge(_, id) if id == node => Err(()),
-            _ => Ok(()),
-        })
-        .is_err()
+        let output: Control<()> =
+            set_depth_first_search(&self.graph, Some(node), |event| match event {
+                DfsEvent::TreeEdge(from, to)
+                    if self
+                        .graph
+                        .edges_connecting(from, to)
+                        .all(|edge| matches!(edge.weight(), EdgeType::Liveness)) =>
+                {
+                    Control::Prune
+                }
+                DfsEvent::BackEdge(from, to)
+                    if to == node
+                        && self
+                            .graph
+                            .edges_connecting(from, to)
+                            .any(|edge| !matches!(edge.weight(), EdgeType::Liveness)) =>
+                {
+                    Control::Break(())
+                }
+                _ => Control::Continue,
+            });
+        output.break_value().is_some()
     }
 }

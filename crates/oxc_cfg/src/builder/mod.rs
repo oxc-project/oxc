@@ -4,7 +4,8 @@ use context::Ctx;
 pub use context::{CtxCursor, CtxFlags};
 use oxc_index::IndexVec;
 use oxc_syntax::node::NodeId;
-use petgraph::Direction;
+use petgraph::{Direction, visit::EdgeRef};
+use rustc_hash::FxHashMap;
 
 use super::{
     BasicBlock, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph, Instruction,
@@ -25,6 +26,7 @@ pub struct ControlFlowGraphBuilder<'a> {
     error_path: Vec<ErrorHarness>,
     /// Stack of finalizers, the top most element is always the appropriate one for current node.
     finalizers: Vec<Option<BlockNodeId>>,
+    finalizer_exits: FxHashMap<BlockNodeId, (usize, BlockNodeId)>,
 }
 
 impl<'a> ControlFlowGraphBuilder<'a> {
@@ -90,10 +92,18 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     }
 
     pub fn add_edge(&mut self, a: BlockNodeId, b: BlockNodeId, weight: EdgeType) {
+        if matches!(weight, EdgeType::Liveness) {
+            self.graph.add_edge(a, b, weight);
+            return;
+        }
         if matches!(weight, EdgeType::NewFunction) {
             self.basic_block_mut(b).mark_as_reachable();
         } else if matches!(weight, EdgeType::Unreachable) || self.basic_block(a).is_unreachable() {
-            if self.graph.edges_directed(b, Direction::Incoming).count() == 0 {
+            if !self
+                .graph
+                .edges_directed(b, Direction::Incoming)
+                .any(|edge| !matches!(edge.weight(), EdgeType::Liveness))
+            {
                 self.basic_block_mut(b).mark_as_unreachable();
             }
         } else if !self
@@ -168,6 +178,29 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             Some(expect),
             "expected finalizer doesn't match the last finalizer pushed onto the stack."
         );
+    }
+
+    /// Records the exit of a finalizer after visiting its body.
+    pub fn finish_finalizer(&mut self, entry: BlockNodeId) {
+        self.finalizer_exits.insert(entry, (self.ctx_stack.len(), self.current_node_ix));
+    }
+
+    fn add_jump_edge(&mut self, mut source: BlockNodeId, target: BlockNodeId) {
+        self.add_edge(source, target, EdgeType::Jump);
+        let jump_source = source;
+        loop {
+            let next = self
+                .graph
+                .edges_directed(source, Direction::Outgoing)
+                .filter(|edge| matches!(edge.weight(), EdgeType::Finalize))
+                .find_map(|edge| self.finalizer_exits.get(&edge.target()))
+                .filter(|(depth, _)| *depth > self.ctx_stack.len());
+            let Some((_, end)) = next else { break };
+            source = *end;
+        }
+        if source != jump_source {
+            self.add_edge(source, target, EdgeType::Liveness);
+        }
     }
 
     pub fn append_condition_to(&mut self, block: BlockNodeId, node: Option<NodeId>) {

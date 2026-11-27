@@ -82,3 +82,28 @@ fn stacked_loop_labels_share_continue_target() {
         );
     }
 }
+
+#[test]
+fn liveness_edges_do_not_create_control_flow_paths() {
+    let mut cfg = ControlFlowGraphBuilder::default();
+    cfg.attach_error_harness(oxc_cfg::ErrorEdgeKind::Implicit);
+    let source = cfg.new_basic_block_normal();
+    let target = cfg.new_basic_block_normal();
+    cfg.add_edge(source, target, oxc_cfg::EdgeType::Liveness);
+    cfg.add_edge(target, source, oxc_cfg::EdgeType::Normal);
+    let cfg = cfg.build();
+    assert!(!cfg.is_reachable(source, target));
+    assert!(!cfg.is_cyclic(source));
+    assert!(!cfg.is_cyclic(target));
+}
+
+#[test]
+fn liveness_edges_do_not_establish_reachability() {
+    let mut cfg = ControlFlowGraphBuilder::default();
+    cfg.attach_error_harness(oxc_cfg::ErrorEdgeKind::Implicit);
+    let source = cfg.new_basic_block_normal();
+    let target = cfg.new_basic_block_normal();
+    cfg.add_edge(source, target, oxc_cfg::EdgeType::Liveness);
+    cfg.add_edge(source, target, oxc_cfg::EdgeType::Unreachable);
+    assert!(cfg.basic_block(target).is_unreachable());
+}
