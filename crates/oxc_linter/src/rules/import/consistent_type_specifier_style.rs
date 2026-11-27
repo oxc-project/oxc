@@ -301,12 +301,15 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
             _ => None,
         })
         .collect();
+    // Import attributes are not allowed on type-only imports (only the
+    // `resolution-mode` key is, and the upstream rule drops the attributes
+    // entirely), so the `with` clause is not copied to the new declaration.
     let import_declaration = ImportDeclaration::boxed(
         SPAN,
         Some(ArenaVec::from_iter_in(specifiers, &ast_builder)),
         import_decl.source.clone_in(&alloc),
         None,
-        import_decl.with_clause.clone_in(&alloc),
+        None,
         ImportOrExportKind::Type,
         &ast_builder,
     );
@@ -445,6 +448,7 @@ fn test() {
         ("import { type Foo, type Bar } from 'Foo';", None),
         ("import { Foo, type Bar } from 'Foo';", None),
         ("import { type Foo, Bar } from 'Foo';", None),
+        ("import { type Foo, Bar } from 'Foo' with { 'some-attribute': 'value' };", None),
         ("import Foo, { type Bar } from 'Foo';", None),
         ("import Foo, { type Bar, Baz } from 'Foo';", None),
         ("import { Component, type ComponentProps } from 'package-1';", None),
@@ -551,6 +555,26 @@ fn test() {
             "import Foo, { type Bar, Baz } from 'Foo';",
             "import Foo, { Baz } from 'Foo';\nimport type { Bar } from 'Foo';",
             Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { Foo, type Bar } from 'Foo' with { 'some-attribute': 'value' };",
+            "import { Foo } from 'Foo' with { 'some-attribute': 'value' };\nimport type { Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo, Bar } from \"Foo\" with { type: \"json\" };",
+            "import { Bar } from 'Foo' with { type: 'json' };\nimport type { Foo } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo } from 'Foo' with { 'some-attribute': 'value' };",
+            "import type { Foo } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo, type Bar } from 'Foo' with { 'some-attribute': 'value' };",
+            "import type { Foo, Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
         ),
         (
             "import { type Foo } from 'index.d.ts';",
