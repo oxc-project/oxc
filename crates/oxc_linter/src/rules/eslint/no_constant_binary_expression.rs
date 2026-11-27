@@ -191,6 +191,17 @@ impl Rule for NoConstantBinaryExpression {
 }
 
 impl NoConstantBinaryExpression {
+    /// Checks for an `undefined` that refers to the global, not a local binding that shadows it.
+    fn is_global_undefined<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+        matches!(expr, Expression::Identifier(ident)
+            if ident.is_undefined() && ctx.is_reference_to_global_variable(ident))
+    }
+
+    /// Like [`Expression::is_null_or_undefined`], but a shadowed `undefined` is not nullish.
+    fn is_null_or_undefined<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+        expr.is_null() || expr.is_void() || Self::is_global_undefined(expr, ctx)
+    }
+
     fn is_static_literal<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
         match expr.get_inner_expression() {
             Expression::UnaryExpression(unary_expr)
@@ -219,7 +230,7 @@ impl NoConstantBinaryExpression {
         non_nullish: bool,
         ctx: &LintContext<'a>,
     ) -> bool {
-        if non_nullish && (expr.is_null() || expr.evaluate_to_undefined()) {
+        if non_nullish && Self::is_null_or_undefined(expr, ctx) {
             return false;
         }
         match expr.get_inner_expression() {
@@ -259,7 +270,7 @@ impl NoConstantBinaryExpression {
                 .iter()
                 .last()
                 .is_some_and(|last| Self::has_constant_nullishness(last, non_nullish, ctx)),
-            Expression::Identifier(_) => expr.evaluate_to_undefined(),
+            Expression::Identifier(_) => Self::is_global_undefined(expr, ctx),
             _ => false,
         }
     }
@@ -273,7 +284,7 @@ impl NoConstantBinaryExpression {
     ) -> Option<&'a Expression<'a>> {
         match operator {
             BinaryOperator::Equality | BinaryOperator::Inequality
-                if ((a.is_null_or_undefined()
+                if ((Self::is_null_or_undefined(a, ctx)
                     && Self::has_constant_nullishness(b, false, ctx))
                     || (ast_util::is_static_boolean(a, ctx)
                         && Self::has_constant_loose_boolean_comparison(b, ctx))) =>
@@ -281,7 +292,7 @@ impl NoConstantBinaryExpression {
                 return Some(b);
             }
             BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
-                if ((a.is_null_or_undefined()
+                if ((Self::is_null_or_undefined(a, ctx)
                     && Self::has_constant_nullishness(b, false, ctx))
                     || (ast_util::is_static_boolean(a, ctx)
                         && Self::has_constant_strict_boolean_comparison(b, ctx))) =>
@@ -330,7 +341,7 @@ impl NoConstantBinaryExpression {
                 Self::has_constant_loose_boolean_comparison(&paren_expr.expression, ctx)
             }
             expr if expr.is_literal() => true,
-            expr if expr.evaluate_to_undefined() => true,
+            expr if Self::is_global_undefined(expr, ctx) => true,
             _ => false,
         }
     }
@@ -392,7 +403,7 @@ impl NoConstantBinaryExpression {
             Expression::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_strict_boolean_comparison(&paren_expr.expression, ctx)
             }
-            Expression::Identifier(_) => expr.evaluate_to_undefined(),
+            Expression::Identifier(_) => Self::is_global_undefined(expr, ctx),
             _ => false,
         }
     }
@@ -477,11 +488,9 @@ fn test() {
         "new Foo() === x",
         "x === new someObj.Promise()",
         "Boolean(foo) === true",
-        // TODO: `undefined` is matched by name, so a shadowed binding is still treated as
-        // the global. See `Expression::is_undefined` usage in this rule.
-        // "function foo(undefined) { undefined ?? bar;}",
-        // "function foo(undefined) { undefined == true;}",
-        // "function foo(undefined) { undefined === true;}",
+        "function foo(undefined) { undefined ?? bar;}",
+        "function foo(undefined) { undefined == true;}",
+        "function foo(undefined) { undefined === true;}",
         "[...arr, 1] == true",
         "[,,,] == true",
         // { code: "new Foo() === bar;", globals: { Foo: "writable" } },
