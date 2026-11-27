@@ -20,6 +20,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
    ╭─[no_importing_vitest_globals.tsx:1:10]
+ 1 │ import { describe } from '@rstest/core';
+   ·          ────┬───
+   ·              ╰── Remove this global vitest import
+   ╰────
+  help: You can import anything except `suite, test, chai, describe, it, expectTypeOf, assertType, expect, assert, vitest, vi, beforeAll, afterAll, beforeEach, afterEach, onTestFailed, onTestFinished`.
+
+  ⚠ vitest(no-importing-vitest-globals): Do not `import`/`require` global functions from 'vitest'.
+   ╭─[no_importing_vitest_globals.tsx:1:10]
  1 │ import { describe, it } from 'vitest';
    ·          ────┬───  ─┬
    ·              │      ╰── Remove this global vitest import

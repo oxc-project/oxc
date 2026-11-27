@@ -9,6 +9,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in this test.
 
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:3:13]
+ 2 │             import { expect as e } from '@rstest/core';
+ 3 │             it("it1", () => { consume(() => { e(1); }); });
+   ·             ──────────────────────────────────────────────
+ 4 │                 
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
+
   ⚠ vitest(prefer-expect-assertions): This test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
    ╭─[prefer_expect_assertions.tsx:3:13]
  2 │                 import * as vi from 'vitest';

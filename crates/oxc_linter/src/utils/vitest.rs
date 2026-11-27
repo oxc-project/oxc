@@ -7,7 +7,7 @@ use super::{ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode, parse_jes
 pub mod valid_vitest_fn;
 
 pub fn is_vitest_import_source(source: &str) -> bool {
-    matches!(source, "vitest" | "vite-plus/test" | "@effect/vitest")
+    matches!(source, "vitest" | "vite-plus/test" | "@effect/vitest" | "@rstest/core")
 }
 
 pub fn parse_expect_and_typeof_vitest_fn_call<'a>(

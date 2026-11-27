@@ -143,3 +143,12 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     // ...
    ╰────
   help: Add assertion(s) in this Test
+
+  ⚠ vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:4:17]
+ 3 │ 
+ 4 │                 it('should fail', () => {
+   ·                 ──
+ 5 │                     foo();
+   ╰────
+  help: Add assertion(s) in this Test

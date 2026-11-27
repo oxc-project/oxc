@@ -355,6 +355,16 @@ fn test() {
             ",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
         ),
+        (
+            "
+                import { it } from '@rstest/core';
+
+                it('should fail', () => {
+                    foo();
+                });
+            ",
+            None,
+        ),
         // Todo: currently we couldn't support ignore the typecheck option.
         // (
         //     "

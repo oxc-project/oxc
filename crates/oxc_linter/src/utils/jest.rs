@@ -211,7 +211,13 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
             };
             if !matches!(
                 import_decl.source.value.as_str(),
-                Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+                Some(
+                    "@jest/globals"
+                        | "vitest"
+                        | "vite-plus/test"
+                        | "@effect/vitest"
+                        | "@rstest/core"
+                )
             ) {
                 return None;
             }
@@ -332,7 +338,13 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 
                 if !matches!(
                     import_decl.source.value.as_str(),
-                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+                    Some(
+                        "@jest/globals"
+                            | "vitest"
+                            | "vite-plus/test"
+                            | "@effect/vitest"
+                            | "@rstest/core"
+                    )
                 ) {
                     return None;
                 }
@@ -379,7 +391,7 @@ fn resolve_extended_vitest_test<'a>(
                 semantic.nodes().parent_kind(declaration_id).as_import_declaration()?;
             if !matches!(
                 import_decl.source.value.as_str(),
-                Some("vitest" | "vite-plus/test" | "@effect/vitest")
+                Some("vitest" | "vite-plus/test" | "@effect/vitest" | "@rstest/core")
             ) {
                 return None;
             }
