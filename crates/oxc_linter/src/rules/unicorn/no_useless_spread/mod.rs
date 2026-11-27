@@ -670,6 +670,13 @@ fn test() {
         "[...arr.reduce((set, b) => set.add(b), new Set(iter))]",
         // NOTE: we may want to consider this a violation in the future
         "[...(foo ? new Set() : [])]",
+        // Issue: <https://github.com/oxc-project/oxc/issues/29055>
+        // `Iterator` has its own `map`, `filter` and `flatMap`, which return another
+        // iterator, so the spread around the call converts it to an array.
+        "[...map.keys().filter((n) => n % 2 === 0)]",
+        "[...set.values().map(f)]",
+        "[...map.entries().flatMap(f)]",
+        "[...new Foo().map(f)]",
         // Issue: <https://github.com/oxc-project/oxc/issues/7936>
         "[ ...Uint8Array([ 1, 2, 3 ]) ].map(byte => byte.toString())",
         "[ ...new Uint8Array([ 1, 2, 3 ]) ].map(byte => byte.toString())",
@@ -790,6 +797,8 @@ fn test() {
         r"[...new Array(3)]",
         r"[...Object.keys(foo)]",
         r"[...Object.values(foo)]",
+        // a receiver known to return an array keeps the clone report
+        r"[...Object.values(foo).map(f)]",
         r"[...Array.from(foo)]",
         r"[...Array.of()]",
         r"[...await Promise.all(foo)]",
