@@ -55,7 +55,7 @@ impl Task for IsolatedDeclarationTask {
     type JsValue = IsolatedDeclarationsResult;
     type Output = IsolatedDeclarationsResult;
 
-    fn compute(&mut self) -> napi::Result<Self::Output> {
+    fn compute(&mut self) -> napi::Result<IsolatedDeclarationsResult> {
         // Move filename and source text out of the task, so they're dropped here on worker thread.
         // `IsolatedDeclarationsOptions` is `Copy` so no need to move it.
         let filename = mem::take(&mut self.filename);
@@ -63,7 +63,11 @@ impl Task for IsolatedDeclarationTask {
         Ok(isolated_declaration_impl(&filename, &source_text, self.options))
     }
 
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+    fn resolve(
+        &mut self,
+        _: napi::Env,
+        result: IsolatedDeclarationsResult,
+    ) -> napi::Result<IsolatedDeclarationsResult> {
         Ok(result)
     }
 }

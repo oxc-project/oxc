@@ -59,7 +59,7 @@ impl Task for MinifyTask {
     type JsValue = MinifyResult;
     type Output = MinifyResult;
 
-    fn compute(&mut self) -> napi::Result<Self::Output> {
+    fn compute(&mut self) -> napi::Result<MinifyResult> {
         // Move all data out of the task, so it's dropped here on worker thread
         let filename = mem::take(&mut self.filename);
         let source_text = mem::take(&mut self.source_text);
@@ -67,7 +67,7 @@ impl Task for MinifyTask {
         Ok(minify_impl(&filename, &source_text, &mut options))
     }
 
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+    fn resolve(&mut self, _: napi::Env, result: MinifyResult) -> napi::Result<MinifyResult> {
         Ok(result)
     }
 }

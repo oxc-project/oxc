@@ -92,7 +92,7 @@ impl Task for ParseTask {
     type JsValue = ParseResult;
     type Output = ParseResult;
 
-    fn compute(&mut self) -> napi::Result<Self::Output> {
+    fn compute(&mut self) -> napi::Result<ParseResult> {
         // Move all data out of the task, so it's dropped here on worker thread
         let filename = mem::take(&mut self.filename);
         let source_text = mem::take(&mut self.source_text);
@@ -100,7 +100,7 @@ impl Task for ParseTask {
         Ok(parse_with_return(&filename, &source_text, &mut options))
     }
 
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+    fn resolve(&mut self, _: napi::Env, result: ParseResult) -> napi::Result<ParseResult> {
         Ok(result)
     }
 }
