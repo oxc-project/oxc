@@ -47,6 +47,8 @@ implements I {
   : String
   g: # after colon
     String
+  h: # after colon
+    [String]
 }
 
 union ForwardUnion # after name
@@ -164,6 +166,8 @@ implements I {
   : String
   g: # after colon
   String
+  h: # after colon
+  [String]
 }
 
 union ForwardUnion # after name
@@ -279,6 +283,8 @@ implements I {
   : String
   g: # after colon
   String
+  h: # after colon
+  [String]
 }
 
 union ForwardUnion # after name
