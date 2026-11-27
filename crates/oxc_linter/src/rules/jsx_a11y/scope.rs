@@ -47,7 +47,7 @@ declare_oxc_lint!(
     jsx_a11y,
     correctness,
     recommended,
-    fix = conditional_fix_suggestion,
+    fix = suggestion,
     version = "0.0.19",
     short_description = "The scope prop should be used only on `<th>` elements.",
 );
@@ -74,29 +74,16 @@ impl Rule for Scope {
             return;
         }
 
-        let is_safe_to_delete = scope_attribute.value.as_ref().is_none_or(is_safe_to_remove_value);
+        // Removing the `scope` prop changes observable behavior, even when its
+        // value is a plain literal: the rendered DOM attribute disappears, an
+        // earlier spread's `scope` value starts winning, and on a component
+        // mapped through `settings.jsx-a11y.components` the prop stops being
+        // passed. Offer the removal as a suggestion instead of a safe fix.
         let diagnostic = scope_diagnostic(scope_attribute.span);
 
-        if is_safe_to_delete {
-            ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete_range(scope_attribute.span));
-        } else {
-            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                fixer.delete_range(scope_attribute.span)
-            });
-        }
-    }
-}
-
-/// Returns `true` when removing the attribute will not discard any
-/// potentially side-effecting expression.
-fn is_safe_to_remove_value(value: &oxc_ast::ast::JSXAttributeValue) -> bool {
-    match value {
-        oxc_ast::ast::JSXAttributeValue::StringLiteral(_) => true,
-        oxc_ast::ast::JSXAttributeValue::ExpressionContainer(container) => {
-            container.expression.as_expression().is_none_or(oxc_ast::ast::Expression::is_literal)
-        }
-        oxc_ast::ast::JSXAttributeValue::Element(_)
-        | oxc_ast::ast::JSXAttributeValue::Fragment(_) => false,
+        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+            fixer.delete_range(scope_attribute.span)
+        });
     }
 }
 
@@ -136,11 +123,15 @@ fn test() {
     ];
 
     let fix: Vec<ExpectFixTestCase> = vec![
-        (r"<div scope />", r"<div  />", None).into(),
+        // Removing `scope` can change observable behavior (rendered DOM
+        // attribute, spread override, component prop), so all removals are
+        // suggestions rather than safe fixes.
+        (r"<div scope />", r"<div  />", None, FixKind::Suggestion).into(),
         (r"<Foo scope='bar' />;", r"<Foo  />;", None, Some(settings())).into(),
-        (r"<h1 scope='bar' />;", r"<h1  />;", None).into(),
-        (r"<div scope={'col'} />", r"<div  />", None).into(),
+        (r"<h1 scope='bar' />;", r"<h1  />;", None, FixKind::Suggestion).into(),
+        (r"<div scope={'col'} />", r"<div  />", None, FixKind::Suggestion).into(),
         (r"<div scope={track()} />", r"<div  />", None, FixKind::Suggestion).into(),
+        (r"<div {...cell} scope='col' />", r"<div {...cell}  />", None, FixKind::Suggestion).into(),
     ];
 
     Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
