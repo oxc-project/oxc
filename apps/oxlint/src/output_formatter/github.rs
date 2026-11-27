@@ -16,6 +16,11 @@ impl InternalFormatter for GithubOutputFormatter {
         Some(lint_command_info.format_execution_summary())
     }
 
+    /// As an annotation without a file, see `format_github`.
+    fn reports_config_warnings(&self) -> bool {
+        true
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GithubReporter)
     }

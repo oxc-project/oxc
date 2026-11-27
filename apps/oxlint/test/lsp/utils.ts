@@ -93,6 +93,15 @@ export function createLspConnection(env: Record<string, string> = {}) {
       });
     },
 
+    // Every `window/showMessage` the server sends from now on, in order.
+    collectShowMessages(): { type: number; message: string }[] {
+      const messages: { type: number; message: string }[] = [];
+      connection.onNotification("window/showMessage", (params) => {
+        messages.push(params);
+      });
+      return messages;
+    },
+
     async didChangeConfiguration(settings: unknown) {
       await connection.sendNotification(DidChangeConfigurationNotification.type, { settings });
     },

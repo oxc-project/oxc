@@ -71,3 +71,30 @@ different-severity/workspace2/test.ts
 help: Remove the debugger statement
 --------------------"
 `;
+
+exports[`LSP multi workspace linting > nested workspace folders > should honour the ignore files of the outer workspace folder 1`] = `
+"--- FILE -----------
+nested/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------
+
+--- FILE -----------
+nested/packages/a/test.ts
+--- Diagnostics ---------
+  1 | debugger;
+> 2 | console.log(1);
+    | ^^^^^^^^^^^ Error: Unexpected console statement.
+help: Delete this console statement.
+  3 |
+--------------------
+
+--- FILE -----------
+nested/packages/b/ignored.ts
+--- Diagnostics ---------
+
+--------------------"
+`;

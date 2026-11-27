@@ -52,6 +52,16 @@ impl ResolvedPath {
         &self.0
     }
 
+    /// Whether this path is `base` or below it, compared by components.
+    pub fn starts_with(&self, base: &Self) -> bool {
+        self.0.starts_with(&base.0)
+    }
+
+    /// The path below `base`, if it is `base` or below it.
+    pub fn strip_prefix(&self, base: &Self) -> Option<&Path> {
+        self.0.strip_prefix(&base.0).ok()
+    }
+
     /// Resolves the given path to its canonical form if necessary, based on the operating system.
     fn canonical(path: PathBuf) -> Self {
         // on non windows and non macos, we can just return the path as is,
