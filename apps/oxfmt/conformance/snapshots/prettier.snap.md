@@ -395,6 +395,8 @@
 - externals/prettier/css/font/font.css (💥, 79.41%)
   - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
   - crates/oxc_formatter_css/DIVERGENCES.md#math-function-operator-spacing
+- externals/prettier/scss/case/case.scss (💥, 93.67%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#scss-at-rule-name-case
 - externals/prettier/scss/comments/4594.scss (💥, 83.78%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/comments/4878.scss (💥, 89.39%)
@@ -437,8 +439,6 @@
 
 ### Error
 
-- externals/prettier/scss/case/case.scss: Syntax error: expect token `<string>`, but found `<ident>`
-  - ❓unclassified
 - externals/prettier/css/custom-properties/emoji.css: Syntax error: declaration at top level is disallowed
   - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/scss/atrule/for.scss: Syntax error: Sass keyword `to` is expected
@@ -500,15 +500,13 @@
 - externals/prettier/less/less-test-suite/snippet: tests-unit/variables/variables.less (💥, 97.89%)
   - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
   - crates/oxc_formatter_css/DIVERGENCES.md#less-escaped-string-gap
+- externals/prettier/less/less/less.less (💥, 99.21%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#less-extend-statement-break
 - externals/prettier/less/postcss-8-improment/test.less (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
 
 ### Error
 
-- externals/prettier/less/less/less.less: Syntax error: expect one of `<ident>` or `@{`, but found `(`
-  - ❓unclassified
-- externals/prettier/less/parens/parens.less: Syntax error: expect token `;`, but found `{`
-  - ❓unclassified
 - externals/prettier/less/case/case.less: Syntax error: expect token `(`, but found `<ident>`
   - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/less/comments/in-value.less: Syntax error: expect token `;`, but found `{`
@@ -518,6 +516,8 @@
 - externals/prettier/less/lookup/lookup-1.less: Syntax error: expect token `;`, but found `<ident>`
   - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 - externals/prettier/less/no-semicolon/url.less: Syntax error: expect token `(`, but found `<ident>`
+  - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
+- externals/prettier/less/parens/parens.less: Syntax error: expect token `;`, but found `{`
   - crates/oxc_formatter_css/DIVERGENCES.md#grammar-owner-rejected
 
 ## graphql

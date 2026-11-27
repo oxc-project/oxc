@@ -965,6 +965,7 @@ and its at-rule printer drops the block comments in there (a trailing one surviv
 - Pin: `tests/fixtures/format/less/extend-rule.less`
 - Conformance:
   - `externals/prettier/less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less`
+  - `externals/prettier/less/less/less.less` (the `extend #7977` rules)
 - Drop when: the selector-list leak is fixed (prettier/prettier#19550 covered only the indentation) and the pin catches up
 
 ```less
@@ -1009,6 +1010,54 @@ Mode-independent (measured in Css and Less alike): a unary sign the source SPACE
 Prettier glues the sign to the number (removing the source space, a postcss word-lexing behavior).
 Matching that gluing is ad-hoc work for a torture-test-only shape.
 A sign GLUED in the source never gains a space in either implementation (that direction is the parser's folded-sign handling, not a divergence).
+
+## less-keyword-minus
+
+- Why: semantics
+- Pin: `tests/fixtures/format/less/keyword-minus.less`
+
+```less
+/* input */
+v: -  1;
+
+/* ours */
+v: - 1;
+
+/* prettier */
+v: -1;
+```
+
+less.js negates only a glued `@var`, `$prop` or `(`, so a lone `-` before a number is a keyword, not a sign.
+lessc compiles `- 1` as written and `-1` as the number, so Prettier's glue changes the output.
+
+## scss-at-rule-name-case
+
+- Why: semantics
+- Pin: `tests/fixtures/format/scss/at-rule-name-case.scss`
+- Conformance:
+  - `externals/prettier/scss/case/case.scss` (the at-rule name lines only; the interpolated property name line has no entry)
+
+```scss
+/* input */
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {}
+
+/* ours */
+@IMPORT Keep;
+@USE "x";
+@MEDIA (MIN-WIDTH: 700PX) {}
+
+/* prettier */
+@import Keep;
+@use "x";
+@media (min-width: 700px) {}
+```
+
+dart-sass matches at-rule names case-sensitively: `@IMPORT`, `@USE` and `@MEDIA` are unknown at-rules it compiles as written,
+while `@import Keep;` fails to compile and `@use "x"` loads a module.
+So an SCSS at-rule with an uppercase name prints as written, its params included,
+as every unknown at-rule's (AGENTS.md "Printing raw vs typed").
 
 ## signed-value-resplit
 
@@ -1140,6 +1189,7 @@ A spaced `/` is not part of this: it glues to its left operand and breaks after,
   - `externals/prettier/less/interpolation/interpolation.less`
   - `externals/prettier/less/lookup/lookup-1.less`
   - `externals/prettier/less/no-semicolon/url.less`
+  - `externals/prettier/less/parens/parens.less`
 
 ```less
 /* input */
