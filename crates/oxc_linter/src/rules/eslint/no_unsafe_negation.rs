@@ -105,14 +105,8 @@ impl Rule for NoUnsafeNegation {
 
             let fix_producer = |fixer: RuleFixer<'_, 'a>| {
                 // modify `!a instance of B` to `!(a instanceof B)`
-                let modified_code = {
-                    let left = ctx.source_range(left.argument.span());
-                    let operator = expr.operator.as_str();
-                    let right = ctx.source_range(expr.right.span());
-
-                    format!("!({left} {operator} {right})")
-                };
-                fixer.replace(expr.span, modified_code)
+                let span = Span::new(left.span.start + 1, expr.span.end);
+                fixer.replace(span, format!("({})", ctx.source_range(span).trim_start()))
             };
 
             ctx.diagnostic_with_suggestion(diagnostic, fix_producer);
@@ -197,6 +191,8 @@ fn test() {
             "!(a <= b)",
             Some(serde_json::json!([{ "enforceForOrderingRelations": true }])),
         ),
+        ("!/* rationale */ key in obj;", "!(/* rationale */ key in obj);", None),
+        ("!a /* c */ instanceof /* d */ b", "!(a /* c */ instanceof /* d */ b)", None),
     ];
 
     Tester::new(NoUnsafeNegation::NAME, NoUnsafeNegation::PLUGIN, pass, fail)
