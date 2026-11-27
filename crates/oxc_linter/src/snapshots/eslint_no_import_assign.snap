@@ -414,3 +414,45 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ─────────
    ╰────
   help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:35]
+ 1 │ import * as ns from 'mod'; delete ns.a; delete ns.b;
+   ·                                   ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:48]
+ 1 │ import * as ns from 'mod'; delete ns.a; delete ns.b;
+   ·                                                ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:35]
+ 1 │ import * as ns from 'mod'; delete ns.a; ns.b = 1;
+   ·                                   ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:41]
+ 1 │ import * as ns from 'mod'; delete ns.a; ns.b = 1;
+   ·                                         ────
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:43]
+ 1 │ import * as ns from 'mod'; Object.assign((ns), { value: 1 });
+   ·                                           ──
+   ╰────
+  help: Imported bindings are readonly
+
+  ⚠ eslint(no-import-assign): Do not assign to imported bindings
+   ╭─[no_import_assign.tsx:1:42]
+ 1 │ import * as ns from 'mod'; Reflect.set(((ns)), 'a', 1);
+   ·                                          ──
+   ╰────
+  help: Imported bindings are readonly
