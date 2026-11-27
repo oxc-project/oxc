@@ -381,7 +381,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
         // Get a new chunk from the parent allocator (the global allocator by default).
         // By default, we want our new chunk to be about twice as big as the previous chunk.
-        // If the allocator refuses it, we try to divide it by half until it works for `layout`
+        // If the parent allocator refuses it, we try to divide it by half until it works for `layout`
         // or the requested size is smaller than the default chunk size.
         let min_new_chunk_size = max(layout.size(), DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
 

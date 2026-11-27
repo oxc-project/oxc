@@ -98,6 +98,7 @@ impl<const MIN_ALIGN: usize> Drop for Arena<MIN_ALIGN> {
 /// Deallocate all chunks in linked list, starting with the chunk whose footer is pointed to by `footer_ptr`.
 ///
 /// # SAFETY
+///
 /// * `footer_ptr` must be `None` or point to a valid `ChunkFooter`.
 /// * Every chunk in the list which is not fixed-size must have been allocated from `parent`
 ///   (or from the global allocator if `parent` is `None`).
@@ -170,8 +171,10 @@ unsafe fn dealloc_chunk(
     }
 
     if let Some(parent) = parent {
-        // Not marked as a chunk operation. A parent allocator does not necessarily call the global allocator,
-        // and then nothing would consume the marker.
+        // No call to `tracking::start_chunk_operation` here. A parent allocator does not
+        // necessarily call the global allocator, so if the "chunk operation pending"
+        // flag was set, nothing would unset it again.
+        //
         // SAFETY: Each `ChunkFooter`'s `backing_alloc_ptr` and `layout` describe its backing allocation.
         // `is_fixed_size` is `false`, so caller guarantees that backing allocation was made via `parent`.
         unsafe { parent.dealloc(backing_alloc_ptr, layout) };

@@ -429,7 +429,7 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Allocate a new chunk and return pointers to its start and its initialized footer.
     ///
     /// The actual chunk size is derived from `new_size_without_footer` and `requested_layout`,
-    /// rounded up to play nicely with the allocator
+    /// rounded up to play nicely with the parent/global allocator
     /// (power of two for small chunks, or a page boundary for larger ones).
     ///
     /// `previous_chunk_footer_ptr` is `None` when the new chunk will be the first chunk in the arena.
@@ -437,14 +437,15 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// The chunk is allocated from `parent`, or from the global allocator if `parent` is `None`.
     ///
     /// Returns `None` if either:
-    /// * The requested size/layout is too large for the allocator to service.
-    /// * The allocator fails to allocate the requested size.
+    /// * The requested size/layout is too large for the parent/global allocator to service.
+    /// * The parent/global allocator fails to allocate the requested size.
     ///
     /// # SAFETY
     ///
     /// * `previous_chunk_footer_ptr` must point to the current `ChunkFooter` for this `Arena`,
     ///   or `None` if this will be the first chunk in the arena.
-    /// * `parent` must be the parent allocator of the `Arena` that will own the new chunk.
+    /// * `parent` must be the parent allocator of the `Arena` that will own the new chunk,
+    ///   (`None` if the `Arena` has no parent and uses the global allocator).
     pub(super) unsafe fn new_chunk(
         new_size_without_footer: usize,
         requested_layout: Layout,
@@ -528,8 +529,10 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
 
         // Allocate memory for the chunk.
         let start_ptr = if let Some(parent) = parent {
-            // Not marked as a chunk operation. A parent allocator does not necessarily call the global allocator,
-            // and then nothing would consume the marker.
+            // No call to `tracking::start_chunk_operation` here. A parent allocator does not
+            // necessarily call the global allocator, so if the "chunk operation pending"
+            // flag was set, nothing would unset it again.
+            //
             // SAFETY: `layout` has non-zero size.
             unsafe { parent.alloc(layout) }
         } else {
