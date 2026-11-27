@@ -50,8 +50,12 @@ impl<'a> VuePartialLoader<'a> {
             &comment_end_finder,
         )?;
 
-        // skip `<script-`
-        if !self.source_text[*pointer..].starts_with([' ', '>']) {
+        // skip `<script-...>` tags and keep searching for a real `<script>` block
+        let is_script_tag_boundary = self.source_text[*pointer..]
+            .chars()
+            .next()
+            .is_some_and(|ch| ch.is_whitespace() || ch == '>');
+        if !is_script_tag_boundary {
             return self.parse_script(pointer);
         }
 
@@ -152,6 +156,38 @@ mod test {
 
         let result = parse_vue(source_text);
         assert_eq!(result.source_text, r#" console.log("hi") "#);
+    }
+
+    #[test]
+    fn test_parse_vue_multi_line_script_tag() {
+        // The opening `<script>` tag may wrap onto new lines when its
+        // attributes are long, e.g. `<script\n  setup\n  lang="ts"\n>`.
+        let source_text = r#"
+        <template>
+          <h1>hello world</h1>
+        </template>
+        <script
+          setup
+          lang="ts"
+          generic="Row"
+        >
+        1/1
+        </script>
+        "#;
+
+        let result = parse_vue(source_text);
+        assert!(result.source_type.is_typescript());
+        assert!(!result.source_type.is_jsx());
+        assert_eq!(result.source_text.trim(), "1/1");
+    }
+
+    #[test]
+    fn test_parse_vue_script_tag_with_tab_and_carriage_return() {
+        let source_text = "<script\tsetup\r\nlang='ts'>\n1/1\n</script>";
+
+        let result = parse_vue(source_text);
+        assert!(result.source_type.is_typescript());
+        assert_eq!(result.source_text.trim(), "1/1");
     }
 
     #[test]
