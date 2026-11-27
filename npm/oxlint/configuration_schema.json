@@ -16603,6 +16603,12 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "Whether to check for useless `undefined` in arrow function bodies."
+        },
+        "checkReturnValue": {
+          "description": "Whether to check for useless `undefined` in explicit `return` statements.\n\nSet to `false` to preserve `return undefined` when enforcing consistent return values.\nThis does not affect checks for `yield undefined` or concise arrow function bodies.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check for useless `undefined` in explicit `return` statements.\n\nSet to `false` to preserve `return undefined` when enforcing consistent return values.\nThis does not affect checks for `yield undefined` or concise arrow function bodies."
         }
       },
       "additionalProperties": false

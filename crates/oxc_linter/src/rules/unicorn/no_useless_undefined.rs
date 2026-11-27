@@ -39,11 +39,16 @@ pub struct NoUselessUndefined {
     check_arguments: bool,
     /// Whether to check for useless `undefined` in arrow function bodies.
     check_arrow_function_body: bool,
+    /// Whether to check for useless `undefined` in explicit `return` statements.
+    ///
+    /// Set to `false` to preserve `return undefined` when enforcing consistent return values.
+    /// This does not affect checks for `yield undefined` or concise arrow function bodies.
+    check_return_value: bool,
 }
 
 impl Default for NoUselessUndefined {
     fn default() -> Self {
-        Self { check_arguments: true, check_arrow_function_body: true }
+        Self { check_arguments: true, check_arrow_function_body: true, check_return_value: true }
     }
 }
 
@@ -60,6 +65,10 @@ declare_oxc_lint!(
     ///
     /// Removing trailing `undefined` arguments can change a function's behavior when it
     /// inspects the number of arguments. These fixes require `--fix-dangerously`.
+    ///
+    /// To preserve explicit `return undefined` statements when enforcing consistent return
+    /// values, set `checkReturnValue` to `false`. This does not disable checks inside returned
+    /// expressions.
     ///
     /// ### Why is this bad?
     ///
@@ -240,7 +249,7 @@ impl Rule for NoUselessUndefined {
                 match parent_node_kind {
                     // `return undefined`
                     AstKind::ReturnStatement(ret_stmt) => {
-                        if has_non_void_return_type(parent_node, ctx) {
+                        if !self.check_return_value || has_non_void_return_type(parent_node, ctx) {
                             return;
                         }
                         ctx.diagnostic_with_fix(
@@ -1110,6 +1119,114 @@ fn test_config_array_format() {
             Some(serde_json::json!([{ "checkArrowFunctionBody": true }])),
         ),
     ];
+
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_check_return_value() {
+    use crate::tester::Tester;
+
+    let cases = [
+        ("function f() { return undefined; }", "function f() { return; }"),
+        ("function* f() { return undefined; }", "function* f() { return; }"),
+        ("async function f() { return undefined; }", "async function f() { return; }"),
+        ("async function* f() { return undefined; }", "async function* f() { return; }"),
+        ("const f = function () { return undefined; };", "const f = function () { return; };"),
+        ("const f = () => { return undefined; };", "const f = () => { return; };"),
+        ("const object = { f() { return undefined; } };", "const object = { f() { return; } };"),
+        ("function f() { return ((undefined)); }", "function f() { return; }"),
+        ("function f() { return /* keep */ undefined; }", "function f() { return /* keep */; }"),
+        ("function f(): void { return undefined; }", "function f(): void { return; }"),
+        ("function f(): undefined { return undefined; }", "function f(): undefined { return; }"),
+        (
+            "function f(value) { if (value) { return value; } return undefined; }",
+            "function f(value) { if (value) { return value; } return; }",
+        ),
+    ];
+    let disabled = Some(serde_json::json!([{ "checkReturnValue": false }]));
+    let mut pass: Vec<_> = cases.iter().map(|(source, _)| (*source, disabled.clone())).collect();
+    pass.extend([
+        (
+            "function f(): number | undefined { return undefined; }",
+            Some(serde_json::json!([{ "checkReturnValue": true }])),
+        ),
+        (
+            "function f(undefined) { return undefined; }",
+            Some(serde_json::json!([{ "checkReturnValue": true }])),
+        ),
+    ]);
+    let mut fail = Vec::new();
+    let mut fix = Vec::new();
+    for options in [
+        None,
+        Some(serde_json::json!([])),
+        Some(serde_json::json!([{}])),
+        Some(serde_json::json!([{ "checkReturnValue": true }])),
+    ] {
+        fail.extend(cases.iter().map(|(source, _)| (*source, options.clone())));
+        fix.extend(cases.iter().map(|(source, expected)| (*source, *expected, options.clone())));
+    }
+
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_check_return_value_option_interactions() {
+    use crate::tester::Tester;
+
+    let mut pass = Vec::new();
+    let mut fail = Vec::new();
+    let mut fix = Vec::new();
+    for check_return_value in [false, true] {
+        for check_arguments in [false, true] {
+            for check_arrow_function_body in [false, true] {
+                let options = Some(serde_json::json!([{
+                    "checkReturnValue": check_return_value,
+                    "checkArguments": check_arguments,
+                    "checkArrowFunctionBody": check_arrow_function_body,
+                }]));
+                for (source, expected, should_report) in [
+                    (
+                        "function f() { return undefined; }",
+                        "function f() { return; }",
+                        check_return_value,
+                    ),
+                    ("call(undefined);", "call();", check_arguments),
+                    (
+                        "function f() { return call(undefined); }",
+                        "function f() { return call(); }",
+                        check_arguments,
+                    ),
+                    (
+                        "const f = () => undefined;",
+                        "const f = () => {};",
+                        check_arrow_function_body,
+                    ),
+                    ("let value = undefined;", "let value;", true),
+                    ("function* f() { yield undefined; }", "function* f() { yield; }", true),
+                    ("const {value = undefined} = {};", "const {value = undefined} = {};", true),
+                    ("function f(value = undefined) {}", "function f(value = undefined) {}", true),
+                    (
+                        "function f(i, array) { return i >= 0 ? array[i] : undefined; }",
+                        "function f(i, array) { return array[i]; }",
+                        true,
+                    ),
+                ] {
+                    if should_report {
+                        fail.push((source, options.clone()));
+                        fix.push((source, expected, options.clone()));
+                    } else {
+                        pass.push((source, options.clone()));
+                    }
+                }
+            }
+        }
+    }
 
     Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
         .expect_fix(fix)
