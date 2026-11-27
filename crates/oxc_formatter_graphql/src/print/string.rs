@@ -18,9 +18,18 @@ use super::GraphqlFormatter;
 pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     if sv.block {
         write_block_string(sv.value, f);
+    } else if is_verbatim(sv) {
+        // No escapes: the body cannot contain `"` or raw line terminators either,
+        // so the string round-trips verbatim, quotes included (one slice).
+        write!(f, text(sv.raw));
     } else {
-        write_regular_string(sv, f);
+        write_escaped_string(sv.value, f);
     }
+}
+
+/// Whether [write_string_value] prints `sv` as its raw source text.
+pub(super) fn is_verbatim(sv: &StringValue<'_>) -> bool {
+    !sv.block && !sv.raw.contains('\\')
 }
 
 /// Block string: cook per the GraphQL `BlockStringValue` algorithm, re-escape `"""`,
@@ -125,23 +134,20 @@ fn leading_whitespace_len(line: &str) -> usize {
     line.bytes().take_while(|&b| b == b' ' || b == b'\t').count()
 }
 
-/// Regular string: the cooked value re-encoded the Prettier way
+/// Regular string with escapes: the cooked value re-encoded the Prettier way
 /// (`"` and `\` escaped, newline as `\n`, everything else verbatim).
-fn write_regular_string<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+fn write_escaped_string<'a>(value: &'a str, f: &mut GraphqlFormatter<'_, 'a>) {
     write!(f, "\"");
-    // Without an escape the value is the source text, which holds none of these either
-    let needs_escape = sv.raw.contains('\\')
-        && sv.value.bytes().any(|b| matches!(b, b'"' | b'\\' | b'\n' | b'\r'));
-    if !needs_escape {
-        if !sv.value.is_empty() {
-            write!(f, text(sv.value));
+    if !value.bytes().any(|b| matches!(b, b'"' | b'\\' | b'\n' | b'\r')) {
+        if !value.is_empty() {
+            write!(f, text(value));
         }
         write!(f, "\"");
         return;
     }
 
-    let mut out = StringBuilder::with_capacity_in(sv.value.len() + 2, f.allocator());
-    for c in sv.value.chars() {
+    let mut out = StringBuilder::with_capacity_in(value.len() + 2, f.allocator());
+    for c in value.chars() {
         match c {
             '"' => out.push_str("\\\""),
             '\\' => out.push_str("\\\\"),
