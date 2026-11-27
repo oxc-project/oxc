@@ -72,6 +72,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Does "./bar" have the export "bar"?
 
+  ⚠ import(named): named import "bar" not found
+   ╭─[index.js:1:10]
+ 1 │ export { bar } from './export-all'
+   ·          ───
+   ╰────
+  help: Does "./export-all" have the export "bar"?
+
   × Unexpected token
    ╭─[index.js:1:8]
  1 │ export bar2, { bar } from './bar'
