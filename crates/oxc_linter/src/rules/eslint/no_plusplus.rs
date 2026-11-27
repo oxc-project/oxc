@@ -117,13 +117,43 @@ impl Rule for NoPlusplus {
                 UpdateOperator::Decrement => "-=",
             };
             let source = expr.argument.span().source_text(ctx.source_text());
+            let replacement = if needs_parentheses(node, ctx) {
+                format!("({source} {operator} 1)")
+            } else {
+                format!("{source} {operator} 1")
+            };
             ctx.diagnostic_with_suggestion(
                 no_plusplus_diagnostic(expr.span, expr.operator),
-                |fixer| fixer.replace(expr.span, format!("{source} {operator} 1")),
+                |fixer| fixer.replace(expr.span, replacement),
             );
         } else {
             ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator));
         }
+    }
+}
+
+/// Whether an assignment expression must be parenthesized to replace `node`,
+/// e.g. `1 + i++` -> `1 + (i += 1)`.
+fn needs_parentheses(node: &AstNode, ctx: &LintContext) -> bool {
+    let span = node.span();
+    match ctx.nodes().parent_kind(node.id()) {
+        AstKind::BinaryExpression(_)
+        | AstKind::LogicalExpression(_)
+        | AstKind::UnaryExpression(_)
+        | AstKind::AwaitExpression(_)
+        | AstKind::StaticMemberExpression(_)
+        | AstKind::PrivateFieldExpression(_)
+        | AstKind::TaggedTemplateExpression(_)
+        | AstKind::TSAsExpression(_)
+        | AstKind::TSSatisfiesExpression(_)
+        | AstKind::TSNonNullExpression(_)
+        | AstKind::TSTypeAssertion(_)
+        | AstKind::TSInstantiationExpression(_) => true,
+        AstKind::ConditionalExpression(conditional) => conditional.test.span() == span,
+        AstKind::ComputedMemberExpression(member) => member.object.span() == span,
+        AstKind::CallExpression(call) => call.callee.span() == span,
+        AstKind::NewExpression(new) => new.callee.span() == span,
+        _ => false,
     }
 }
 
@@ -270,6 +300,14 @@ fn test() {
             None,
         ),
         ("a.b++;", "a.b += 1;", None),
+        ("let i = 0; const n = 1 + i++;", "let i = 0; const n = 1 + (i += 1);", None),
+        ("let i = 0; const n = !i--;", "let i = 0; const n = !(i -= 1);", None),
+        ("let i = 0; i++ ? a : b;", "let i = 0; (i += 1) ? a : b;", None),
+        ("let i = 0; c ? i++ : i--;", "let i = 0; c ? i += 1 : i -= 1;", None),
+        ("let i = 0; f(i++).x;", "let i = 0; f(i += 1).x;", None),
+        ("let i = 0; a[i++];", "let i = 0; a[i += 1];", None),
+        ("let i = 0; async () => await i++;", "let i = 0; async () => await (i += 1);", None),
+        ("let i = 0; i++ as number;", "let i = 0; (i += 1) as number;", None),
     ];
 
     Tester::new(NoPlusplus::NAME, NoPlusplus::PLUGIN, pass, fail)
