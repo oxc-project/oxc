@@ -709,3 +709,19 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let callback = () => 1;
+   ·     ────────
+ 2 │                         callback = () => 2;
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let callback = function () { return 1; };
+   ·     ────────
+ 2 │                         callback = () => 2;
+   ╰────
+  help: Consider removing or reusing the assigned value.

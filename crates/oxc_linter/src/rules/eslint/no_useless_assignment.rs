@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentTarget as AstAssignmentTarget, BindingPattern,
-        ClassElement, Expression, VariableDeclarator,
+        ClassElement, VariableDeclarator,
     },
 };
 use oxc_cfg::{
@@ -163,22 +163,13 @@ impl Rule for NoUselessAssignment {
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => None,
                 _ => continue,
             };
-            if let Some(var_decl) = var_decl {
+            if var_decl.is_some() {
                 if let AstKind::VariableDeclaration(var_declaration) =
                     ctx.nodes().parent_node(decl_node.id()).kind()
                     && var_declaration.kind.is_const()
                 {
                     continue;
                 }
-                if matches!(
-                    &var_decl.init,
-                    Some(
-                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-                    )
-                ) {
-                    continue;
-                }
-
                 if Self::is_exported(ctx, symbol_id, decl_node) {
                     continue;
                 }
@@ -1609,6 +1600,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
         "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
         "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
+        "let callback = () => 1;
+                    if (condition) {
+                        callback();
+                    }
+                    callback = () => 2;
+                    callback();",
     ];
 
     let fail = vec![
@@ -1977,6 +1974,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "function f(p) { use(p); p = 1; }",
         "function f(p, q = p) { p = 1; return q; }",
         "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",
+        "let callback = () => 1;
+                        callback = () => 2;
+                        callback();",
+        "let callback = function () { return 1; };
+                        callback = () => 2;
+                        callback();",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
