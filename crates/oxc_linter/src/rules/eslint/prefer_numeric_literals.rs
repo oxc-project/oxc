@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, CallExpression, Expression, IdentifierReference, MemberExpression,
-        StaticMemberExpression,
-    },
+    ast::{CallExpression, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -70,58 +67,31 @@ impl Rule for PreferNumericLiterals {
             return;
         };
 
-        match &call_expr.callee.without_parentheses() {
-            Expression::Identifier(ident)
-                if ident.name == "parseInt" && is_parse_int_call(ctx, ident, None) =>
-            {
-                check_arguments(call_expr, ctx);
+        let is_parse_int = match call_expr.callee.without_parentheses() {
+            Expression::Identifier(ident) => {
+                ident.name == "parseInt" && get_symbol_id_of_variable(ident, ctx).is_none()
             }
-            Expression::StaticMemberExpression(member_expr) => {
-                if let Expression::Identifier(ident) = &member_expr.object {
-                    if is_parse_int_call(ctx, ident, Some(member_expr)) {
-                        check_arguments(call_expr, ctx);
-                    }
-                } else if let Expression::ParenthesizedExpression(paren_expr) = &member_expr.object
-                    && let Expression::Identifier(ident) = &paren_expr.expression
-                    && is_parse_int_call(ctx, ident, Some(member_expr))
-                {
-                    check_arguments(call_expr, ctx);
-                }
-            }
-            Expression::ChainExpression(chain_expr) => {
-                if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
-                    chain_expr.expression.as_member_expression()
-                    && let Expression::Identifier(ident) = &member_expr.object
-                    && is_parse_int_call(ctx, ident, Some(member_expr))
-                {
-                    check_arguments(call_expr, ctx);
-                }
-            }
-            _ => {}
+            Expression::ChainExpression(chain_expr) => chain_expr
+                .expression
+                .as_member_expression()
+                .is_some_and(|member_expr| is_number_parse_int(member_expr, ctx)),
+            callee => callee
+                .as_member_expression()
+                .is_some_and(|member_expr| is_number_parse_int(member_expr, ctx)),
+        };
+        if is_parse_int {
+            check_arguments(call_expr, ctx);
         }
     }
 }
 
-fn is_string_type(arg: &Argument) -> bool {
-    match arg {
-        Argument::StringLiteral(_) => true,
-        Argument::TemplateLiteral(t) => t.is_no_substitution_template(),
-        _ => false,
-    }
-}
-
-fn is_parse_int_call(
-    ctx: &LintContext,
-    ident: &IdentifierReference,
-    static_member_expr: Option<&StaticMemberExpression>,
-) -> bool {
-    if let Some(member_expr) = static_member_expr {
-        return ident.name == "Number"
-            && member_expr.property.name == "parseInt"
-            && get_symbol_id_of_variable(ident, ctx).is_none();
-    }
-
-    get_symbol_id_of_variable(ident, ctx).is_none()
+fn is_number_parse_int(member_expr: &MemberExpression, ctx: &LintContext) -> bool {
+    member_expr.static_property_name().is_some_and(|name| name == "parseInt")
+        && matches!(
+            member_expr.object().without_parentheses(),
+            Expression::Identifier(ident)
+                if ident.name == "Number" && get_symbol_id_of_variable(ident, ctx).is_none()
+        )
 }
 
 fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
@@ -129,20 +99,24 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         return;
     }
 
-    let string_arg = &call_expr.arguments[0];
-    if !is_string_type(string_arg) {
+    let Some(string_arg) = call_expr.arguments[0]
+        .as_expression()
+        .map(Expression::without_parentheses)
+        .filter(|arg| is_string_type(arg))
+    else {
         return;
-    }
+    };
 
-    let radix_arg = &call_expr.arguments[1];
-    let Some(Expression::NumericLiteral(numeric_lit)) = radix_arg.as_expression() else {
+    let Some(Expression::NumericLiteral(numeric_lit)) =
+        call_expr.arguments[1].as_expression().map(Expression::without_parentheses)
+    else {
         return;
     };
 
     let raw = numeric_lit.raw.as_ref().unwrap().as_str();
     if let Some((name, prefix)) = radix_map(raw) {
-        match is_fixable(call_expr, raw) {
-            Ok(argument) => {
+        match is_fixable(string_arg, raw) {
+            Ok(argument) if !ctx.has_comments_between(call_expr.span) => {
                 ctx.diagnostic_with_fix(
                     prefer_numeric_literals_diagnostic(call_expr.span, name),
                     |fixer| {
@@ -150,22 +124,30 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
                         let mut replacement =
                             String::with_capacity(prefix.len() + argument.len() + 2);
                         replacement.push_str(prefix);
-                        replacement.push_str(&argument);
+                        replacement.push_str(argument);
                         pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
                         fixer.replace(span, replacement)
                     },
                 );
             }
-            Err(_) => ctx.diagnostic(prefer_numeric_literals_diagnostic(call_expr.span, name)),
+            _ => ctx.diagnostic(prefer_numeric_literals_diagnostic(call_expr.span, name)),
         }
     }
 }
 
-fn is_fixable(
-    call_expr: &CallExpression,
+fn is_string_type(expr: &Expression) -> bool {
+    match expr {
+        Expression::StringLiteral(_) => true,
+        Expression::TemplateLiteral(t) => t.is_no_substitution_template(),
+        _ => false,
+    }
+}
+
+fn is_fixable<'a>(
+    string_arg: &'a Expression,
     radix: &str,
-) -> Result<String, Box<dyn std::error::Error>> {
-    let Some(string_argument) = get_string_argument(call_expr) else {
+) -> Result<&'a str, Box<dyn std::error::Error>> {
+    let Some(string_argument) = get_string_value(string_arg) else {
         return Err("".into());
     };
 
@@ -174,22 +156,19 @@ fn is_fixable(
     }
 
     let radix_num = radix.parse::<u32>()?;
-    i64::from_str_radix(&string_argument, radix_num)?;
+    i64::from_str_radix(string_argument, radix_num)?;
 
     Ok(string_argument)
 }
 
-fn get_string_argument(call_expr: &CallExpression) -> Option<String> {
-    if let Argument::StringLiteral(ident) = &call_expr.arguments[0] {
-        return ident.value.as_str().map(str::to_owned);
-    } else if let Argument::TemplateLiteral(temp) = &call_expr.arguments[0] {
-        if temp.quasis.is_empty() {
-            return None;
+fn get_string_value<'a>(expr: &'a Expression) -> Option<&'a str> {
+    match expr {
+        Expression::StringLiteral(lit) => lit.value.as_str(),
+        Expression::TemplateLiteral(lit) => {
+            lit.quasis.first().map(|quasi| quasi.value.raw.as_str())
         }
-        return Some(temp.quasis[0].value.raw.to_string());
+        _ => None,
     }
-
-    None
 }
 
 #[test]
@@ -224,6 +203,7 @@ fn test() {
         r#"class C { #parseInt; foo() { Number.#parseInt("111110111", 2); } }"#, // { "ecmaVersion": 2022 }
         "parseInt('ff', ...x);",
         "Number.parseInt('ff', ...x);",
+        "Number[parseInt]('ff', 16);",
     ];
 
     let fail = vec![
@@ -288,6 +268,8 @@ fn test() {
         r#"Number?.parseInt?.("1F7", 16) === 255;"#,
         r#"(Number?.parseInt)("1F7", 16) === 255;"#,
         r#"(Number?.parseInt)?.("1F7", 16) === 255;"#,
+        "Number['parseInt']('ff', 16);",
+        "parseInt('ff', (16));",
         "parseInt('1_0', 2);",
         "Number.parseInt('5_000', 8);",
         "parseInt('0_1', 16);",
@@ -348,6 +330,14 @@ fn test() {
         (r#"Number?.parseInt?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
         (r#"(Number?.parseInt)("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
         (r#"(Number?.parseInt)?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+        ("Number['parseInt']('ff', 16);", "0xff;", None),
+        ("Number[`parseInt`]('ff', 16);", "0xff;", None),
+        ("Number?.['parseInt']('ff', 16);", "0xff;", None),
+        ("parseInt('ff', (16));", "0xff;", None),
+        ("parseInt(('ff'), 16);", "0xff;", None),
+        ("parseInt(/* binary mask */ '11', 2);", "parseInt(/* binary mask */ '11', 2);", None),
+        ("Number/**/.parseInt('11', 2);", "Number/**/.parseInt('11', 2);", None),
+        ("parseInt('11', 2 /**/);", "parseInt('11', 2 /**/);", None),
     ];
 
     Tester::new(PreferNumericLiterals::NAME, PreferNumericLiterals::PLUGIN, pass, fail)
