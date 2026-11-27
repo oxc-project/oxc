@@ -1120,6 +1120,8 @@ mod test {
         store.register_plugin(
             PathBuf::from("path/to/custom-plugin"),
             "custom".to_string(),
+            false,
+            None,
             0,
             vec!["my-rule".to_string()],
         );

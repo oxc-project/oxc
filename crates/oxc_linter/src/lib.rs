@@ -93,7 +93,9 @@ pub use crate::{
         JsFix, LintFileFailure, LintFileOutput, LintFileResult, LintFileTiming, LintFileTimings,
         LoadPluginResult, convert_and_merge_js_fixes,
     },
-    external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
+    external_plugin_store::{
+        ExternalOptionsId, ExternalPluginIdentity, ExternalPluginStore, ExternalRuleId,
+    },
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
