@@ -806,6 +806,7 @@ impl<'a> PeepholeOptimizations {
         if ctx.state.symbols.is_implicitly_observable(symbol_id) {
             return false;
         }
+        ctx.debug_assert_reference_counts_current(symbol_id);
         let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
             return false;
         };
@@ -1025,6 +1026,7 @@ impl<'a> PeepholeOptimizations {
         if ctx.state.symbols.is_implicitly_observable(symbol_id) {
             return false;
         }
+        ctx.debug_assert_reference_counts_current(symbol_id);
         let Some(sv) = ctx.state.symbols.value(symbol_id) else {
             return false;
         };

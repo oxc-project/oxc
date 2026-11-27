@@ -4,7 +4,6 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, IsInt32OrUint32},
     side_effects::MayHaveSideEffects,
 };
-use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 
 use crate::TraverseCtx;
@@ -204,8 +203,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let reference = ctx.scoping_mut().get_reference_mut(write_id_ref.reference_id());
-        reference.flags_mut().insert(ReferenceFlags::Read);
+        ctx.mark_reference_as_read(write_id_ref.reference_id());
 
         expr.operator = logical_expr.operator.to_assignment_operator();
         ctx.drop_expression(&logical_expr.left);

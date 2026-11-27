@@ -6,7 +6,7 @@ use oxc_allocator::Allocator;
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::{
     CompressOptions,
@@ -68,6 +68,22 @@ impl<'a> SymbolState<'a> {
     #[inline]
     pub fn value(&self, symbol_id: SymbolId) -> Option<&SymbolValue<'a>> {
         self.values.get(symbol_id)?.as_ref()
+    }
+
+    /// Count a reference created after `symbol_id`'s value was initialized.
+    #[inline]
+    pub fn record_reference(&mut self, symbol_id: SymbolId, flags: ReferenceFlags) {
+        if let Some(value) = self.values.get_mut(symbol_id).and_then(Option::as_mut) {
+            value.references.record(flags);
+        }
+    }
+
+    /// Stop counting the read of a reference to `symbol_id` that left the AST.
+    #[inline]
+    pub fn forget_read_reference(&mut self, symbol_id: SymbolId, flags: ReferenceFlags) {
+        if let Some(value) = self.values.get_mut(symbol_id).and_then(Option::as_mut) {
+            value.references.forget_read(flags);
+        }
     }
 
     pub fn set_function_summary(&mut self, symbol_id: SymbolId, summary: FunctionSummary) {

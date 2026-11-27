@@ -388,6 +388,14 @@ pub fn run_peephole_pass<'a>(
     traverse_mut_with_ctx(&mut PeepholeOptimizations, program, ctx);
 
     let ctx = ctx.get_mut();
+    // Debug-only guard for every binding's per-pass reference counts. With
+    // `debug_assert_no_over_prune`, which checks that no reference whose read
+    // was forgotten is still in the program, it keeps single-use checks from
+    // seeing fewer reads than the program has.
+    #[cfg(debug_assertions)]
+    for symbol_id in ctx.scoping().symbol_ids() {
+        ctx.debug_assert_reference_counts_current(symbol_id);
+    }
     let revisit_requested = ctx.state.take_revisit_requested();
     let newly_dead = finish_pass(program, ctx, /* force_liveness_analysis */ false);
     debug_assert!(

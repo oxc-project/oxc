@@ -7,7 +7,7 @@ use oxc_semantic::Scoping;
 use oxc_span::Span;
 use oxc_syntax::symbol::SymbolId;
 
-use crate::state::PassChanges;
+use crate::{state::PassChanges, symbol_state::SymbolState};
 
 /// Returns the callee `IdentifierReference` if `call` is a direct
 /// `eval(...)` call. Shared by the [`DroppedSubtreeCollector`] producer and the
@@ -86,8 +86,10 @@ impl<'a, F: FnMut(SymbolId, Span)> Visit<'a> for RedeclaredBindings<'_, F> {
 /// [`PassChanges`] accumulator. Use via the `Visit` entry point matching the
 /// dropped node (`visit_expression`, `visit_variable_declarator`, ...).
 ///
-/// Mark-only semantics: every reference found in a dropped subtree is added
-/// to `pass_changes.removed_references`; every direct eval call sets
+/// Mark-only semantics, plus one live count: every reference found in a
+/// dropped subtree is added to `pass_changes.removed_references` and its read
+/// leaves the symbol's per-pass [`ReferenceCounts`](crate::symbol_value::ReferenceCounts);
+/// every direct eval call sets
 /// `pass_changes.direct_eval_dropped = true`; every binding of a redeclared
 /// symbol is added to `pass_changes.removed_declarations`. Marks for unresolved references
 /// are inert: the flush only filters per-symbol resolved-reference lists,
@@ -105,13 +107,18 @@ impl<'a, F: FnMut(SymbolId, Span)> Visit<'a> for RedeclaredBindings<'_, F> {
 /// `PassChanges::reemitted_declarations`).
 pub struct DroppedSubtreeCollector<'a, 's> {
     pass_changes: &'s mut PassChanges<'a>,
+    symbols: &'s mut SymbolState<'a>,
     scoping: &'s Scoping,
     catch_parameter: Option<SymbolId>,
 }
 
 impl<'a, 's> DroppedSubtreeCollector<'a, 's> {
-    pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>, scoping: &'s Scoping) -> Self {
-        Self { pass_changes, scoping, catch_parameter: None }
+    pub(crate) fn new(
+        pass_changes: &'s mut PassChanges<'a>,
+        symbols: &'s mut SymbolState<'a>,
+        scoping: &'s Scoping,
+    ) -> Self {
+        Self { pass_changes, symbols, scoping, catch_parameter: None }
     }
 }
 
@@ -127,8 +134,14 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
         // and are treated as live — see `PassChanges::removed_references`.
         // This is a legal flow (a fresh ident minted by one optimization can
         // be dropped later in the same pass by another), so no debug_assert.
-        if idx < self.pass_changes.removed_references.capacity() {
+        if idx < self.pass_changes.removed_references.capacity()
+            && !self.pass_changes.removed_references.has_bit(idx)
+        {
             self.pass_changes.removed_references.set_bit(idx);
+            let reference = self.scoping.get_reference(reference_id);
+            if let Some(symbol_id) = reference.symbol_id() {
+                self.symbols.forget_read_reference(symbol_id, reference.flags());
+            }
         }
     }
 
