@@ -16,7 +16,7 @@ use oxc_graphql_parser::ast::{
 
 use crate::comments::{
     flush_leading_comments, flush_trailing_comment_before, flush_trailing_inside_comments,
-    has_comment_before, write_adjacent_trailing_comment, write_dangling_comments,
+    write_adjacent_trailing_comment, write_dangling_comments,
 };
 
 use super::{
@@ -298,7 +298,7 @@ pub(super) fn write_implements_interfaces<'a>(
     write_spaced_keyword(to_span(implements.span).start, "implements ", f);
     // A single name with no comment to claim in front leaves the group nothing to break
     if let [named] = interfaces
-        && !has_comment_before(f, to_span(named.name.span).start)
+        && f.context().comments().iter_before(to_span(named.name.span).start).next().is_none()
     {
         write_named_type(named, f);
         return;
