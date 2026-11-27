@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.95.0] - 2026-11-23
+
+### 🚀 Features
+
+- a96e2bd linter/typescript/no-unsafe-class-instance-assignment: Add rule (#29982) (Cameron)
+
+### 🐛 Bug Fixes
+
+- 18d6e27 linter: Escape file and rule names in checkstyle and junit reporters (#28962) (Zain Qureshi)
+- 4263221 agent: Implement all_rules for --rules support (#27585) (Bartok)
+- 279185a react-compiler: Ignore ESLint suppressions when hooks and memo validations are enabled (#29655) (Boshen)
+- 5d2129c oxlint: Write --init errors to stderr (#29654) (oxc-captain[bot])
+
+### ⚡ Performance
+
+- 2c4240a oxlint: Convert diagnostic offsets to positions with a line index (#29987) (Nicholas Rayburn)
+- f43a92f linter/plugins: Match selectors without allocating ancestor arrays (#29652) (Shanon Jackson)
+
 ## [1.94.0] - 2026-11-16
 
 ### 🚀 Features

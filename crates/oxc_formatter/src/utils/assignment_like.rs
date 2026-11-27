@@ -199,7 +199,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
 
                 // Handle computed properties
-                if property.computed {
+                if property.key.is_computed() {
                     write!(f, ["[", property.key(), "]"]);
                     f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else if property.shorthand {
@@ -229,7 +229,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
 
                 // Handle computed properties
-                if property.computed {
+                if property.key.is_computed() {
                     write!(f, ["[", property.key(), "]"]);
                     f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else {
@@ -242,7 +242,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 let text_width_for_break =
                     (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
 
-                if property.computed {
+                if property.name.is_computed() {
                     write!(f, ["[", property.name(), "]"]);
                     f.source_text().text_for(&property.name).width() + 2 < text_width_for_break
                 } else {
@@ -272,7 +272,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 if property.readonly {
                     write!(f, ["readonly", space()]);
                 }
-                format_property_key(&property.key(), property.computed, f);
+                format_property_key(&property.key(), f);
                 if property.optional {
                     write!(f, "?");
                 }
@@ -301,7 +301,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     write!(f, ["override", space()]);
                 }
                 write!(f, ["accessor", space()]);
-                format_property_key(&property.key(), property.computed, f);
+                format_property_key(&property.key(), f);
                 if property.definite {
                     write!(f, "!");
                 }

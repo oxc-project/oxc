@@ -10,6 +10,9 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ({{ a
     }})
   </div>
+  <div>({{ a
+
+  }})</div>
 </template>
 
 ==================== Output ====================
@@ -26,6 +29,11 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
     ({{ a
     }})
   </div>
+  <div>
+    ({{ a
+
+    }})
+  </div>
 </template>
 
 -------------------
@@ -38,6 +46,11 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
   </div>
   <div>
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ({{ a
+    }})
+  </div>
+  <div>
+    ({{ a
+
     }})
   </div>
 </template>

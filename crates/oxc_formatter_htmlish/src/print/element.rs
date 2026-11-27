@@ -223,13 +223,15 @@ fn force_break_children(t: &Tree<'_>, id: NodeId) -> bool {
 
 /// Besides `force_break_children`:
 /// the content of `body`, `script`, `style`, nested markup, or a lone child on its own lines.
-/// `{{ }}` is no markup there, as text (DIVERGENCES.md#interpolation-element-as-text).
+/// `{{ }}` is no markup there, as text (DIVERGENCES.md#interpolation-element-as-text),
+/// nor an ICU expression's cases, printed as written with it.
 fn force_break_content(t: &Tree<'_>, id: NodeId) -> bool {
     let item = &t[id];
     if t.element(id).is_some()
         && (item.script_like
             || t.tag(id) == "body"
             || t.children(id)
+                .filter(|&child| !matches!(t.kind(child), NodeKind::Icu(_)))
                 .any(|child| t.children(child).any(|grandchild| !t.is_text_content(grandchild))))
     {
         return true;

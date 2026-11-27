@@ -2601,7 +2601,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_ts_property_signature(&mut self, sig: &TSPropertySignature<'a>) {
         let kind = AstKind::TSPropertySignature(self.alloc(sig));
         self.enter_node(kind);
-        if sig.key.is_expression() {
+        if sig.key.is_computed() {
             // interface A { [prop]: string }
             //               ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
             self.current_reference_flags = ReferenceFlags::ValueAsType;
@@ -2619,7 +2619,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::TSMethodSignature(self.alloc(sig));
         self.enter_node(kind);
         self.visit_span(&sig.span);
-        if sig.computed {
+        if sig.key.is_computed() {
             // interface A { [prop](): string }
             //                ^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
             self.current_reference_flags = ReferenceFlags::ValueAsType;
@@ -2646,7 +2646,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_span(&method.span);
         self.visit_decorators(&method.decorators);
-        if method.computed && (method.r#type.is_abstract() || self.in_ambient_context()) {
+        if method.key.is_computed() && (method.r#type.is_abstract() || self.in_ambient_context()) {
             // declare class A { [prop](): string }
             //                    ^^^^  The property can reference value or [`SymbolFlags::TypeImport`] symbol
             self.current_reference_flags = ReferenceFlags::ValueAsType;
@@ -2663,7 +2663,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&prop.span);
         self.visit_decorators(&prop.decorators);
         self.enter_ambient_context(prop.declare);
-        if prop.computed && (prop.r#type.is_abstract() || self.in_ambient_context()) {
+        if prop.key.is_computed() && (prop.r#type.is_abstract() || self.in_ambient_context()) {
             // class A { declare [prop]: string }
             //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
             self.current_reference_flags = ReferenceFlags::ValueAsType;
@@ -2921,7 +2921,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_ts_enum_body(&decl.body);
         // Evaluate enum member values after all members are bound
         if self.enum_eval {
-            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+            let is_ambient = self.in_ambient_context();
+            crate::ts_enum::eval::evaluate_enum_members(decl, is_ambient, &mut self.scoping);
         }
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);

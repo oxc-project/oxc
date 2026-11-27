@@ -39,10 +39,13 @@ use oxc_formatter_core::{
 use oxc_span::Span;
 
 use crate::{
-    CssFormatOptions,
+    CssFormatOptions, CssVariant,
     comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
-    print::{CssFormatter, format_with, has_comments_between, is_glued, less, scss, statement},
+    print::{
+        CssFormatter, block_comment_end, format_with, has_comments_between, is_glued, less, scss,
+        statement,
+    },
 };
 
 /// Prettier's `printNumber` + `printCssNumber` (trailing `.0` removal included).
@@ -171,7 +174,14 @@ pub(super) fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_,
 /// strings re-quote via `printString`,
 /// standalone numbers (not glued to a word part) get `printCssNumber` + lowercased/canonical unit;
 /// Everything else (whitespace and newlines included) stays verbatim.
-/// Used where Prettier prints raw selector text: Less mixin definitions/calls and `when` guards.
+/// Used where Prettier prints raw selector text: Less mixin definitions/calls and `when` guards,
+/// and a media keyword glued to its parens (`and(...)`).
+///
+/// NOTE: every caller's slice is a typed node
+/// (`LessMixinParameters`, `LessConditions`, `LessMixinCall` args, `MediaInParens`),
+/// so splicing the printed `Number` / `Dimension` / `Str` leaves into the verbatim slice is possible
+/// and would retire this byte re-scan, with its comment / `url()` / hash skips.
+/// However, we keep the scan for now: `oxc-css-parser` has no visitor to collect those leaves.
 pub(super) fn adjust_numbers_and_strings<'a>(
     raw: &'a str,
     options: &CssFormatOptions,
@@ -234,9 +244,34 @@ pub(super) fn adjust_numbers_and_strings<'a>(
         }
         j
     };
+    // A run of numbers (+ units) glued to a word part or to each other stays raw,
+    // the same rule as `is_word_glued_number`: `a.10.2` / `1.20.3` stay.
+    // (Prettier re-reads the glued `.2` as standalone, `a.10.2` -> `a.100.2`, growing every pass)
+    let scan_glued_numbers = |mut j: usize| -> usize {
+        loop {
+            let number_end = scan_number(j);
+            if number_end == j {
+                return j;
+            }
+            j = scan_unit(number_end);
+        }
+    };
 
     while i < bytes.len() {
         let b = bytes[i];
+        // Comments are the user's: always verbatim.
+        let comment_end = match (b, bytes.get(i + 1)) {
+            (b'/', Some(b'*')) => block_comment_end(raw, i),
+            (b'/', Some(b'/')) if options.variant != CssVariant::Css => {
+                raw[i..].find('\n').map_or(raw.len(), |end| i + end)
+            }
+            _ => i,
+        };
+        if comment_end > i {
+            out.push_str(&raw[i..comment_end]);
+            i = comment_end;
+            continue;
+        }
         // Strings: re-quote, never adjust their content as numbers.
         if b == b'"' || b == b'\'' {
             let mut j = i + 1;
@@ -257,9 +292,12 @@ pub(super) fn adjust_numbers_and_strings<'a>(
             continue;
         }
         // Word part `[$@]?[_a-z-￿][\w-￿-]*`; a number
-        // glued to it (plus its unit) is left untouched.
+        // glued to it (plus its unit) is left untouched; a hash `#[\w-]+` (`#1e0`) too.
         let word_start =
             if (b == b'$' || b == b'@') && i + 1 < bytes.len() && is_word_start(bytes[i + 1]) {
+                Some(i + 1)
+            } else if b == b'#' && i + 1 < bytes.len() && is_word_char(bytes[i + 1]) {
+                // A hash token (`#1e0`, a hex color) is a word, never a number: `#1e0` != `#1`
                 Some(i + 1)
             } else if is_word_start(b) {
                 Some(i)
@@ -271,10 +309,15 @@ pub(super) fn adjust_numbers_and_strings<'a>(
             while j < bytes.len() && is_word_char(bytes[j]) {
                 j += 1;
             }
-            let number_end = scan_number(j);
-            if number_end > j {
-                j = scan_unit(number_end);
-            }
+            // An unquoted `url(...)` is one token: verbatim (`url(img/1.50.png)`)
+            let j = if raw[i..j].eq_ignore_ascii_case("url")
+                && raw[j..].starts_with('(')
+                && !raw[j + 1..].trim_start().starts_with(['"', '\''])
+            {
+                raw[j..].find(')').map_or(raw.len(), |end| j + end + 1)
+            } else {
+                scan_glued_numbers(j)
+            };
             out.push_str(&raw[i..j]);
             i = j;
             continue;
@@ -284,6 +327,12 @@ pub(super) fn adjust_numbers_and_strings<'a>(
             let number_end = scan_number(i);
             if number_end > i {
                 let unit_end = scan_unit(number_end);
+                let glued_end = scan_glued_numbers(unit_end);
+                if glued_end > unit_end {
+                    out.push_str(&raw[i..glued_end]);
+                    i = glued_end;
+                    continue;
+                }
                 let number = &raw[i..number_end];
                 let unit = &raw[number_end..unit_end];
                 let lowered_unit = unit.cow_to_ascii_lowercase();
@@ -435,33 +484,35 @@ fn is_func_like(value: &ComponentValue<'_>) -> bool {
 /// but postcss lexes the whole contiguous run as ONE word
 /// (an xstyled / tailwind-theme token, or plugin-processed pseudo-math).
 ///
-/// Such a number stays glued and prints raw (`Separator::Word`).
+/// Such a number stays glued and prints raw (`Separator::Word`),
+/// and so does the number heading the run (`is_glued_number_head`): `1.20.3` stays.
 /// `.10` must not normalize to `0.1`, `+1` must not gain a space.
 /// Two glued number-ish values can never be valid CSS,
 /// so a number-ish neighbor is as sure a word sign as a word-like one.
-/// (The raw-slice twin of this rule lives in `adjust_numbers_and_strings`,
-/// whose word-part scan skips numbers glued to a word; keep them in sync.)
+/// (The raw-slice twin of this rule lives in `adjust_numbers_and_strings`; keep them in sync.)
 fn is_word_glued_number(values: &[ComponentValue<'_>], i: usize) -> bool {
-    let number_ish = |value: &ComponentValue<'_>| {
-        matches!(
-            value,
-            ComponentValue::Number(_)
-                | ComponentValue::Dimension(_)
-                | ComponentValue::Percentage(_)
-        )
-    };
     i > 0
-        && number_ish(&values[i])
-        && (is_word_like(&values[i - 1]) || number_ish(&values[i - 1]))
+        && is_number_ish(&values[i])
+        && (is_word_like(&values[i - 1]) || is_number_ish(&values[i - 1]))
         && is_glued(values[i - 1].span(), values[i].span())
+}
+
+/// A number followed by a glued number: the head of a word run (`1.20` of `1.20.3`).
+fn is_glued_number_head(values: &[ComponentValue<'_>], i: usize) -> bool {
+    is_number_ish(&values[i]) && i + 1 < values.len() && is_word_glued_number(values, i + 1)
+}
+
+fn is_number_ish(value: &ComponentValue<'_>) -> bool {
+    matches!(
+        value,
+        ComponentValue::Number(_) | ComponentValue::Dimension(_) | ComponentValue::Percentage(_)
+    )
 }
 
 /// Is this number-ish or a font-size-capable function? (Prettier's `isPossibleFontSize`)
 fn is_possible_font_size(value: &ComponentValue<'_>) -> bool {
     match value {
-        ComponentValue::Number(_)
-        | ComponentValue::Dimension(_)
-        | ComponentValue::Percentage(_) => true,
+        v if is_number_ish(v) => true,
         ComponentValue::Function(func) => {
             let name = function_name_text(func);
             name.eq_ignore_ascii_case("var")
@@ -732,7 +783,7 @@ fn flush_trailing_comments_while(
 
 /// Comments between a prelude ending at `prelude_end` and its `{` at `block_start`:
 /// a run glued to the prelude stays on its line (`@page :first // c`, the `//` ends it so `{` starts the next),
-/// own-line ones keep their line before the `{`.
+/// own-line ones keep their line before the `{` (DIVERGENCES.md#own-line-comment-before-block).
 /// Either way the caller's space before `{` is safe: the printer drops it at the start of a line.
 pub(super) fn write_comments_before_block(
     prelude_end: u32,
@@ -745,8 +796,19 @@ pub(super) fn write_comments_before_block(
         return;
     }
     write!(f, hard_line_break());
-    for &comment in own_line {
-        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
+    let source = f.context().source_text();
+    let last = own_line.len() - 1;
+    for (i, &comment) in own_line.iter().enumerate() {
+        // The `{` stays on the last comment's line when it is there (`/* c */ {`), as before a JS block
+        let after = if i == last
+            && comments::classify_gap(source.bytes_range(comment.span.end, block_start))
+                == comments::Gap::None
+        {
+            BlockCommentAfter::None
+        } else {
+            BlockCommentAfter::HardLine
+        };
+        write!(f, FormatCommentBeforeContent::new(comment, after));
     }
 }
 
@@ -1202,17 +1264,18 @@ pub(super) fn write_comma_group<'a>(
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 flush_value_comments(start, f);
                 for (j, v) in run.iter().enumerate() {
-                    if j > 0 {
+                    let is_word_continuation = j > 0 && {
                         let sep = separator_between(values, run_start + j, ctx, source);
                         if sep == Separator::Space {
                             write!(f, " ");
                         }
-                        // A word continuation prints raw, not normalized
-                        // (`sandstone.10`, `[0.50]` must survive as-is).
-                        if sep == Separator::Word {
-                            write!(f, text(source.text_for(&to_span(v.span()))));
-                            continue;
-                        }
+                        sep == Separator::Word
+                    };
+                    // A word continuation or a glued number head prints raw, not normalized
+                    // (`sandstone.10`, `[0.50]`, `1.20.3` must survive as-is).
+                    if is_word_continuation || is_glued_number_head(values, run_start + j) {
+                        write!(f, text(source.text_for(&to_span(v.span()))));
+                        continue;
                     }
                     write_component_value(v, ctx, f);
                 }
@@ -1643,10 +1706,13 @@ pub(super) fn write_component_value<'a>(
             if !is_glued(ratio.numerator.span, ratio.solidus_span) {
                 write!(f, space());
             }
+            // A comment between the parts stays there
+            flush_value_comments(ratio.solidus_span.start, f);
             write!(f, "/");
             if !is_glued(ratio.solidus_span, ratio.denominator.span) {
                 write!(f, space());
             }
+            flush_value_comments(ratio.denominator.span.start, f);
             write_number(&ratio.denominator, f);
         }
         ComponentValue::HexColor(hex) => {
@@ -1687,7 +1753,9 @@ pub(super) fn write_component_value<'a>(
         }
         ComponentValue::Function(func) => write_function(func, ctx, f),
         ComponentValue::Calc(calc) => write_calc(calc, ctx, f),
-        ComponentValue::CalcParenthesized(paren) => write_parenthesized(&paren.expr, ctx, f),
+        ComponentValue::CalcParenthesized(paren) => {
+            write_parenthesized(&paren.expr, paren.span.end - 1, ctx, f);
+        }
         ComponentValue::SassMap(map) => scss::write_sass_map(map, ctx, f),
         ComponentValue::SassList(list) => scss::write_sass_list(list, ctx, f),
         ComponentValue::SassParenthesizedExpression(paren) => {
@@ -1849,7 +1917,7 @@ pub(super) fn write_component_value<'a>(
         // `+`/`-` as a binary operator (see `write_less_binary_operation`).
         ComponentValue::LessBinaryOperation(op) => write_less_binary_operation(op, ctx, f),
         ComponentValue::LessParenthesizedOperation(paren) => {
-            write_parenthesized(&paren.operation, ctx, f);
+            write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
         }
         // A css-in-js placeholder becomes a typed marker the host replaces with `${expr}`
         ComponentValue::Placeholder(placeholder) => {
@@ -2031,7 +2099,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
     // Source-glued runs (`1px+2px`) stay glued.
     enum Piece<'b, 'a> {
         Operand(&'b ComponentValue<'a>),
-        Op(&'static str),
+        Op(&'static str, u32),
         Space,
     }
 
@@ -2052,7 +2120,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
         if !is_glued(calc.left.span(), calc.op.span) {
             current.push(Piece::Space);
         }
-        current.push(Piece::Op(op_str));
+        current.push(Piece::Op(op_str, calc.op.span.start));
         if !is_glued(calc.op.span, calc.right.span()) {
             chunks.push(std::mem::take(current));
         }
@@ -2081,9 +2149,16 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
 
     let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
         for piece in chunk {
+            // A comment between the operands and operators stays there
             match piece {
-                Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Op(op) => write!(f, token(op)),
+                Piece::Operand(operand) => {
+                    flush_value_comments(operand.span().start, f);
+                    write_component_value(operand, ctx, f);
+                }
+                Piece::Op(op, start) => {
+                    flush_value_comments(*start, f);
+                    write!(f, token(op));
+                }
                 Piece::Space => write!(f, " "),
             }
         }
@@ -2238,7 +2313,9 @@ fn write_less_binary_operation<'a>(
         for piece in chunk {
             match piece {
                 Piece::Operand(operand) => write_component_value(operand, ctx, f),
-                Piece::Paren(paren) => write_parenthesized(&paren.operation, ctx, f),
+                Piece::Paren(paren) => {
+                    write_parenthesized(&paren.operation, paren.span.end - 1, ctx, f);
+                }
                 Piece::Op(op) => write!(f, token(op)),
                 Piece::Space => write!(f, " "),
             }
@@ -2273,12 +2350,17 @@ fn write_less_binary_operation<'a>(
 /// its own group, so when it breaks the `(` / `)` land on their own lines
 /// with the content indented one level (Prettier's `printParenthesizedValueGroup`).
 /// When it fits, it stays inline (`(@a - @b)`).
+/// `(value)`, `close` its `)`: the comments before it stay inside.
 fn write_parenthesized<'a>(
     value: &ComponentValue<'a>,
+    close: u32,
     ctx: ValueContext<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let content = format_with(move |f| write_component_value(value, ctx, f));
+    let content = format_with(move |f| {
+        write_component_value(value, ctx, f);
+        flush_trailing_value_comments(close, f);
+    });
     if ctx.no_break {
         write!(f, ["(", content, ")"]);
     } else {
@@ -2341,6 +2423,7 @@ pub(super) fn write_function<'a>(
                 write!(f, " ");
             }
         }
+        flush_trailing_value_comments(func.span().end.saturating_sub(1), f);
         write!(f, ")");
         return;
     }
@@ -2473,12 +2556,15 @@ pub(super) fn write_url<'a>(url: &Url<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, "(");
     match &url.value {
         Some(UrlValue::Str(InterpolableStr::Literal(str))) => {
+            flush_value_comments(str.span.start, f);
             write_str(str, f);
             for modifier in &url.modifiers {
                 write!(f, " ");
                 let span = to_span(modifier.span());
                 write!(f, text(source.text_for(&span)));
             }
+            // The comments before the `)` stay inside it
+            flush_trailing_value_comments(url.span.end - 1, f);
         }
         // Quoted url with interpolation: requote the outer quotes only
         Some(UrlValue::Str(istr)) => {

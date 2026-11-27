@@ -4,6 +4,77 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.95.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- 8c2abc4 diagnostics: [**BREAKING**] Implement `SourceCode` for `&T` (#29852) (overlookmotel)
+
+### 🚀 Features
+
+- a96e2bd linter/typescript/no-unsafe-class-instance-assignment: Add rule (#29982) (Cameron)
+
+### 🐛 Bug Fixes
+
+- 11d16bd linter/eslint/prefer-object-spread: Prefix semicolon when the fix could merge with the previous statement (#30080) (oxc-captain[bot])
+- 106d301 linter/unicorn/prefer-math-trunc: Report `parseInt(String(...), 10)` (#30067) (Lê Văn Xuân Hoàn)
+- 226ba04 linter/unicorn/prefer-import-meta-properties: Stop flagging `fileURLToPath(new URL('.', import.meta.url))` (#30041) (oxc-captain[bot])
+- 04cdaec linter/unicorn/no-useless-spread: Replace holes with `undefined` in spread array literals (#30042) (oxc-captain[bot])
+- 7141c26 linter/eslint/no-implicit-coercion: Skip autofix when coercion constructor is shadowed (#30043) (oxc-captain[bot])
+- f22709d linter/eslint/no-unused-vars: Fixes remove a whole CRLF after an unused import (#30047) (Nicholas Rayburn)
+- 6998259 linter/eslint/max-lines: Report diagnostic at the start of the last character (#30046) (Nicholas Rayburn)
+- 48ed7f7 linter: Find tsgolint in case-sensitive directories on Windows (#26234) (Nicolas Stepien)
+- f92aeab linter/vitest/valid-expect: Validate `expectTypeOf` matcher chains (#30023) (Cameron)
+- 0f774dc linter/react/exhaustive-deps: Report setters accessed through member expressions (#30017) (Cameron)
+- 8726fca linter/react/exhaustive-deps: Report setters from parenthesized or `as`-cast `useState` calls (#30016) (Cameron)
+- 1a19370 linter/eslint/no-extra-boolean-cast: Parenthesize the replacement when needed (#30012) (Thejesh)
+- 4452bb6 linter/eslint/operator-assignment: Parenthesize a conditional right operand in the "never" fix (#30013) (Thejesh)
+- ad91ec9 linter/react/exhaustive-deps: Don't report `useReducer` dispatches as `setState` calls (#29986) (oxc-captain[bot])
+- 589d281 linter/oxc/branches-sharing-code: Skip move suggestions for branch-local references (#30006) (Cameron)
+- 27440dc linter/react/jsx-curly-brace-presence: Don't report or fix props with escape sequences and preserve raw text (#29976) (oxc-captain[bot])
+- 9882eab linter/unicorn/prefer-bigint-literals: Provide fix for hex literals containing `e` or `E` (#29915) (overlookmotel)
+- 9c39045 linter/eslint/no-unneeded-ternary: Don't drop side-effecting tests in equal-literal fix (#29880) (oxc-captain[bot])
+- 7261f5b linter/unicorn/prefer-logical-operator-over-ternary: Parenthesize operands that bind looser than `||` in fixer (#29882) (oxc-captain[bot])
+- d4c3cbe linter/typescript/array-type: Report and fix `Readonly<T[]>` (#29841) (camc314)
+- 35694db linter/typescript/explicit-function-return-type: Check block-bodied arrows in returned objects (#29843) (camc314)
+- cf124c8 linter/typescript/prefer-as-const: Report angle-bracket literal assertions (#29839) (camc314)
+- 86cdc9d linter: Do not flag one export { a, b } from as duplicate (#26992) (Bartok)
+- 2f6a11f semantic: Keep catch parameters in the catch clause scope (#29635) (Dunqing)
+- f84e6b2 linter/import/extensions: Read options next to `pattern` (#29442) (Nadir Ali)
+- a527e7b linter: Preserve code in Jest and Vitest padding fixes (#29496) (oxc-captain[bot])
+- 536e240 linter/unicorn/catch-error-name: Keep the key of a shorthand property (#28727) (YT)
+- f860f1b semantic: Resolve a private name to the enclosing class that declares it (#29714) (Nadir Ali)
+- 279185a react-compiler: Ignore ESLint suppressions when hooks and memo validations are enabled (#29655) (Boshen)
+- ddedec8 linter/eslint/new-cap: Allow `UTC()` only on the global `Date` (#29711) (Nadir Ali)
+- 709d89d linter/eslint/no-async-promise-executor: Ignore shadowed Promise (#29706) (Nadir Ali)
+- 90196a5 linter/eslint/radix: Only report literal and `undefined` radixes, skip spreads (#29708) (Nadir Ali)
+- 0fb527b linter/eslint/no-invalid-regexp: Ignore a shadowed `RegExp` (#29715) (Nadir Ali)
+- 60fedf9 linter/eslint/no-loss-of-precision: Ignore a `.` with no fraction digits (#29713) (Nadir Ali)
+- 4069cb3 linter/eslint/use-isnan: Ignore a shadowed `NaN` or `Number` (#29707) (Nadir Ali)
+- dd9683c linter/eslint/prefer-promise-reject-errors: Ignore a shadowed `Promise` (#29710) (Nadir Ali)
+- d7e12de linter/eslint/no-extra-boolean-cast: Ignore a shadowed `Boolean` (#29709) (Nadir Ali)
+- 1ac8a63 linter/eslint/no-obj-calls: Respect shadowed globalThis (#29705) (周星星同学)
+- 3464a0d linter/eslint/prefer-numeric-literals: Avoid invalid fixes for signed strings (#29703) (周星星同学)
+- d3af621 linter/typescript/class-literal-property-style: Only suggest readonly fields in TypeScript files (#29704) (Chung-il)
+- 49b935a linter/eslint/no-unneeded-ternary: Preserve boolean binary results (#29702) (周星星同学)
+- 3f05c06 linter/react/require-render-return: Check non-JSX render methods (#29701) (oxc-captain)
+- 78b6494 linter/vitest/prefer-called-times: Preserve expect head in fixes (#29699) (camc314)
+- f2cd3c7 linter/jest/prefer-to-contain,linter/vitest/prefer-to-contain: Offer rewrites as suggestions (#29698) (camc314)
+- 3398425 linter/typescript/ban-tslint-comment: Preserve line breaks in fixes (#29695) (camc314)
+- a0214ae linter/eslint/no-unsafe-negation: Offer rewrite as a suggestion (#29694) (camc314)
+- 658762e linter/eslint/no-unexpected-multiline: Recognize all line terminators (#29682) (周星星同学)
+- 89ad201 linter/eslint/no-compare-neg-zero: Exclude BigInt zero (#29683) (周星星同学)
+- 5629d00 linter/eslint/no-unsafe-finally: Report labeled continues escaping finally (#29681) (周星星同学)
+- 7ab52dd linter/jest/no-restricted-jest-methods,linter/vitest/no-restricted-vi-methods: Report restricted methods in call chains (#29660) (oxc-captain[bot])
+- a53df45 linter/eslint/no-fallthrough: Recognize all line terminators (#29676) (周星星同学)
+- 8270346 linter/typescript/consistent-type-definitions: Add a semicolon when code follows on the same line (#29634) (Jingbo Chai)
+- 132793f linter/eslint: Preserve statement boundaries in autofixes (#29633) (Jingbo Chai)
+
+### ⚡ Performance
+
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+- 27777a9 diagnostics: Loosen lifetime bound on `OxcDiagnostic::with_source_code` (#29849) (overlookmotel)
+
 ## [1.94.0] - 2026-11-16
 
 ### 🚀 Features

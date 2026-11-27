@@ -1,0 +1,114 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:3:1]
+ 2 │ const someText = 'abc';
+ 3 │ beforeEach(() => {
+   · ▲
+ 4 │ });
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:5:1]
+ 4 │ });
+ 5 │ describe('someText', () => {
+   · ▲
+ 6 │   const something = 'abc';
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:8:3]
+ 7 │   // A comment
+ 8 │   beforeEach(() => {
+   ·   ▲
+ 9 │     // stuff
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+    ╭─[padding_around_before_each_blocks.tsx:11:3]
+ 10 │   });
+ 11 │   beforeEach(() => {
+    ·   ▲
+ 12 │     // other stuff
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+    ╭─[padding_around_before_each_blocks.tsx:18:3]
+ 17 │   const something = 'abc';
+ 18 │   beforeEach(() => {
+    ·   ▲
+ 19 │     // stuff
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ beforeEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:3:1]
+ 2 │ // A comment
+ 3 │ beforeEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:2:1]
+ 1 │ beforeEach(() => {});
+ 2 │ foo();
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ await beforeEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:3:3]
+ 2 │   const thing = 123;
+ 3 │   beforeEach(() => {});
+   ·   ▲
+ 4 │ }
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:4:5]
+ 3 │     beforeEach(() => {});
+ 4 │     foo();
+   ·     ▲
+ 5 │ }
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:2:2]
+ 1 │ const thing = 123
+ 2 │ ;beforeEach(() => {})
+   ·  ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-before-each-blocks): Expected blank line before this statement
+   ╭─[padding_around_before_each_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ label: beforeEach(() => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement

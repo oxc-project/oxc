@@ -413,6 +413,15 @@ fn vec128_get_u64() {
 }
 
 #[test]
+fn vec128_opaque() {
+    let Some(cpu) = simd_cpu() else { return };
+
+    let bytes: [u8; 16] = pattern(37, 11);
+    let v = Vec128::read_unaligned(&bytes, cpu);
+    assert_eq!(to_bytes128(v.opaque()), bytes);
+}
+
+#[test]
 fn vec256_create() {
     let Some(cpu) = simd_cpu() else { return };
 
@@ -699,4 +708,13 @@ fn vec256_halves() {
     let (out_low, out_high) = v.into_halves();
     assert_eq!(to_bytes128(out_low), low);
     assert_eq!(to_bytes128(out_high), high);
+}
+
+#[test]
+fn vec256_opaque() {
+    let Some(cpu) = simd_cpu() else { return };
+
+    let bytes: [u8; 32] = pattern(37, 11);
+    let v = Vec256::read_unaligned(&bytes, cpu);
+    assert_eq!(to_bytes256(v.opaque()), bytes);
 }

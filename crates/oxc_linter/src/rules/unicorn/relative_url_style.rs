@@ -1,3 +1,7 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use url::Url;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, NewExpression},
@@ -5,9 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use url::Url;
 
 use crate::{
     AstNode,

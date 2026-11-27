@@ -299,7 +299,9 @@ pub struct Modifiers {
 
 bitflags! {
     /// Each part of modifier in [`Modifiers`].
+    #[ast]
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[generate_derive(CloneIn, ContentEq)]
     pub struct Modifier: u8 {
         /// Ignore case flag
         const I = 1 << 0;
@@ -309,10 +311,6 @@ bitflags! {
         const S = 1 << 2;
     }
 }
-/// Dummy type to communicate the content of `Modifier` to `oxc_ast_tools`.
-#[ast(foreign = Modifier)]
-#[expect(dead_code)]
-struct ModifierAlias(u8);
 
 /// Backreference by index.
 /// e.g. `\1`, `\2`, `\3`

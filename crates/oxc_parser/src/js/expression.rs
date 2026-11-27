@@ -1,17 +1,14 @@
 use std::num::NonZeroU32;
 
 use cow_utils::CowUtils;
-use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_data_structures::buffered_vec::BufferedVec;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr, Str};
-use oxc_syntax::{
-    number::{BigintBase, NumberBase},
-    precedence::Precedence,
-};
+use oxc_syntax::precedence::Precedence;
 
 use super::{
     grammar::CoverGrammar,
@@ -36,6 +33,7 @@ fn is_import_expression_or_member_access_on_import_expression(callee: &Expressio
             expr = match expr {
                 Expression::TaggedTemplateExpression(tagged_template) => &tagged_template.tag,
                 Expression::TSNonNullExpression(non_null) => &non_null.expression,
+                Expression::TSInstantiationExpression(instantiation) => &instantiation.expression,
                 _ => return false,
             };
             continue;
@@ -341,6 +339,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LParen => self.parse_parenthesized_expression(),
             Kind::Slash | Kind::SlashEq => Expression::RegExpLiteral(self.parse_literal_regexp()),
             Kind::At => self.parse_decorated_expression(),
+            Kind::LAngle if self.source_type.is_jsx() && !self.is_ts => self.parse_jsx_expression(),
             // Literal, RegularExpressionLiteral
             kind if kind.is_literal() => self.parse_literal_expression(),
             _ => self.parse_identifier_expression(),
@@ -477,43 +476,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.set_fatal_error(diagnostics::invalid_number(err, span));
             0.0 // Dummy value
         });
-        let base = match kind {
-            Kind::Decimal => NumberBase::Decimal,
-            Kind::Float => NumberBase::Float,
-            Kind::Binary => NumberBase::Binary,
-            Kind::Octal => NumberBase::Octal,
-            Kind::Hex => NumberBase::Hex,
-            Kind::PositiveExponential | Kind::NegativeExponential => {
-                if value.fract() == 0.0 {
-                    NumberBase::Decimal
-                } else {
-                    NumberBase::Float
-                }
-            }
-            _ => return self.unexpected(),
-        };
         self.bump_any();
-        NumericLiteral::boxed(span, value, Some(Str::from(src)), base, self)
+        NumericLiteral::boxed(span, value, Some(Str::from(src)), self)
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> ArenaBox<'a, BigIntLiteral<'a>> {
         let token = self.cur_token();
         let kind = token.kind();
         let has_separator = token.has_separator();
-        let (base, number_kind) = match kind {
-            Kind::DecimalBigInt => (BigintBase::Decimal, Kind::Decimal),
-            Kind::BinaryBigInt => (BigintBase::Binary, Kind::Binary),
-            Kind::OctalBigInt => (BigintBase::Octal, Kind::Octal),
-            Kind::HexBigInt => (BigintBase::Hex, Kind::Hex),
-            _ => return self.unexpected(),
-        };
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, number_kind, has_separator, self.allocator());
+        let value = parse_big_int(src, kind, has_separator, self.allocator());
 
         self.bump_any();
-        BigIntLiteral::boxed(span, value, Some(Str::from(raw)), base, self)
+        BigIntLiteral::boxed(span, value, Some(Str::from(raw)), self)
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> ArenaBox<'a, RegExpLiteral<'a>> {
@@ -884,16 +861,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
         if self.ctx.has_decorator() {
-            self.error(diagnostics::decorator_optional(lhs.span()));
+            self.error(diagnostics::decorator_expression_not_parenthesized(lhs.span()));
         }
-        // Add `ChainExpression` to `a?.c?.b<c>`;
-        if let Expression::TSInstantiationExpression(mut expr) = lhs {
-            expr.expression.replace_with(|expr| self.map_to_chain_expression(expr.span(), expr));
-            Expression::TSInstantiationExpression(expr)
-        } else {
-            let span = self.end_span(start);
-            self.map_to_chain_expression(span, lhs)
-        }
+        let span = self.end_span(start);
+        self.map_to_chain_expression(span, lhs)
     }
 
     #[expect(clippy::inline_always)]
@@ -946,11 +917,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// An instantiation expression (`MemberExpression TypeArguments`) directly followed by a
-    /// member access is TS1477; a parenthesized one is allowed:
+    /// property access is TS1477. As in TypeScript, element access and a parenthesized
+    /// instantiation are allowed:
     ///
     /// ```text
     /// a<b>.c      // error
-    /// a<b>?.[c]   // error
+    /// a<b>?.c     // error
+    /// a<b>?.[c]   // ok
     /// (a<b>).c    // ok
     /// ```
     fn error_if_unparenthesized_instantiation_expression(
@@ -1007,7 +980,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             lhs = self.parse_static_member_expression(lhs_start, lhs, true);
                         } else if self.at(Kind::LBrack) {
                             // ?.[
-                            self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_start);
                             lhs = self.parse_computed_member_expression(lhs_start, lhs, true);
                         } else {
                             // ?.template`...`
@@ -1026,7 +998,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.error_if_unparenthesized_instantiation_expression(&lhs, lhs_start);
                     lhs = self.parse_computed_member_expression(lhs_start, lhs, false);
                 }
                 kind if kind.is_template_start_of_tagged_template() => {
@@ -1039,7 +1010,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 Kind::LAngle | Kind::ShiftLeft if self.is_ts => {
                     if let Some(arguments) = self.parse_type_arguments_in_expression() {
-                        let instantiation = TSInstantiationExpression::new(
+                        let mut instantiation = TSInstantiationExpression::new(
                             self.end_span(lhs_start),
                             lhs,
                             arguments,
@@ -1061,6 +1032,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 );
                                 continue;
                             }
+                        }
+                        // As in TypeScript, `a?.b<c>` ends the optional chain, so a later
+                        // suffix applies to the instantiation: `a?.b<c>\n[d]` is `(a?.b)[d]`
+                        // after type erasure.
+                        if *in_optional_chain {
+                            *in_optional_chain = false;
+                            if self.ctx.has_decorator() {
+                                self.error(diagnostics::decorator_expression_not_parenthesized(
+                                    instantiation.span,
+                                ));
+                            }
+                            let span = instantiation.expression.span();
+                            instantiation.expression =
+                                self.map_to_chain_expression(span, instantiation.expression);
                         }
                         lhs = Expression::TSInstantiationExpression(self.alloc(instantiation));
                     } else {
@@ -1343,12 +1328,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if self.source_type.is_jsx() && self.at(Kind::LAngle) {
-            return self.parse_jsx_expression();
+            return self.parse_jsx_operand();
         }
 
         let start = self.cur_start();
         let lhs = self.parse_lhs_expression_or_higher();
         self.parse_postfix_update_expression(start, lhs)
+    }
+
+    /// Parse a JSX element or fragment operand. The JSX grammar makes it a `PrimaryExpression`,
+    /// so in JavaScript its suffixes are parsed too (`<C />.props`). In TSX it ends at the
+    /// closing tag, as in TypeScript.
+    fn parse_jsx_operand(&mut self) -> Expression<'a> {
+        if self.is_ts {
+            return self.parse_jsx_expression();
+        }
+        let start = self.cur_start();
+        let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+        let element = self.parse_jsx_expression();
+        self.parse_primary_expression_rest(start, element, pure_comments)
     }
 
     #[expect(clippy::inline_always)]
@@ -1408,7 +1406,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             kind if kind.is_unary_operator() => self.parse_unary_expression(),
             Kind::LAngle => {
                 if self.source_type.is_jsx() {
-                    return self.parse_jsx_expression();
+                    return self.parse_jsx_operand();
                 }
                 if self.is_ts {
                     return self.with_pure_comments(Self::parse_ts_type_assertion);
@@ -1806,12 +1804,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     // `<div />`, `<T,>(x) => {}`
                     Kind::LAngle if self.source_type.is_jsx() => {
-                        let (expression, is_arrow) = self
-                            .parse_jsx_expression_or_generic_arrow_function(
+                        // In a JSX file, `<` can only start JSX.
+                        // Checking here skips the checkpoint which TSX needs.
+                        let (expression, is_arrow) = if self.is_ts {
+                            self.parse_jsx_expression_or_generic_arrow_function(
                                 allow_return_type_in_arrow_function,
-                            );
+                            )
+                        } else {
+                            (self.parse_jsx_operand(), false)
+                        };
                         if !is_arrow {
-                            // A JSX element is a complete `UpdateExpression`.
                             break 'parse_lhs if kind_to_precedence(self.cur_kind()).is_none() {
                                 expression
                             } else {
@@ -1825,6 +1827,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         }
                         Some(expression)
                     }
+                    // `<T>(x) => {}` in TS. JSX and TSX files take the branch above.
+                    // In JS, `<` here is a syntax error, so it's not worth checking `is_ts` first.
                     Kind::LAngle => self.try_parse_generic_arrow_function_expression(
                         allow_return_type_in_arrow_function,
                     ),
@@ -2059,6 +2063,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///
     /// Unambiguous cases (returns `true`):
     /// - Next token is identifier, keyword, or literal on same line, except the cases below
+    /// - Next token is `~`, or `!` in JavaScript, on same line
     ///
     /// Ambiguous cases (returns `false`):
     /// - Line break after `await` (could be ASI)
@@ -2087,6 +2092,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Only reserve `await using` for a declaration when a binding identifier follows.
         if kind == Kind::Using && self.is_using_statement() {
             return false;
+        }
+
+        // `!` and `~` cannot follow an identifier, except a TypeScript non-null assertion `await!`.
+        if kind == Kind::Tilde || (kind == Kind::Bang && !self.is_ts) {
+            return true;
         }
 
         // Returns true for identifiers, keywords, and literals (not binary operators)
@@ -2185,14 +2195,76 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// `Decorator`[Yield, Await]:
-    ///   `DecoratorMemberExpression`[?Yield, ?Await]
+    ///   @ `DecoratorMemberExpression`[?Yield, ?Await]
+    ///   @ `DecoratorParenthesizedExpression`[?Yield, ?Await]
+    ///   @ `DecoratorCallExpression`[?Yield, ?Await]
+    ///
+    /// `DecoratorMemberExpression`[Yield, Await]:
+    ///   `IdentifierReference`[?Yield, ?Await]
+    ///   `DecoratorMemberExpression`[?Yield, ?Await] . `IdentifierName`
+    ///   `DecoratorMemberExpression`[?Yield, ?Await] . `PrivateIdentifier`
+    ///
+    /// `DecoratorCallExpression`[Yield, Await]:
+    ///   `DecoratorMemberExpression`[?Yield, ?Await] `Arguments`[?Yield, ?Await]
+    ///
+    /// `DecoratorParenthesizedExpression`[Yield, Await]:
     ///   ( `Expression`[+In, ?Yield, ?Await] )
-    ///   `DecoratorCallExpression`
+    ///
+    /// The expression is parsed as a `LeftHandSideExpression` (with `[` excluded by
+    /// [`Context::Decorator`]) and then checked against the grammar above.
     pub(crate) fn parse_decorator(&mut self) -> Decorator<'a> {
         let start = self.cur_start();
         self.bump_any(); // bump @
+        let expr_start = self.cur_start();
+        let is_parenthesized = self.at(Kind::LParen);
         let expr = self.context_add(Context::Decorator, Self::parse_lhs_expression_or_higher);
+        // TypeScript's parser accepts any `LeftHandSideExpression` here and only its type checker
+        // reports TS1497, which `experimentalDecorators` code such as
+        // `@http.controller('hooks').middleware(M)` relies on. The parser cannot tell the two
+        // decorator modes apart, so only enforce the grammar outside TypeScript.
+        if !self.is_ts && !self.has_fatal_error() {
+            self.check_decorator_expression(&expr, expr_start, is_parenthesized);
+        }
         Decorator::new(self.end_span(start), expr, self)
+    }
+
+    /// Report a decorator expression that is not a `DecoratorMemberExpression`,
+    /// `DecoratorCallExpression` or `DecoratorParenthesizedExpression`.
+    fn check_decorator_expression(
+        &mut self,
+        expr: &Expression<'a>,
+        expr_start: u32,
+        is_parenthesized: bool,
+    ) {
+        // Optional chains are already reported while parsing.
+        if matches!(expr, Expression::ChainExpression(_)) {
+            return;
+        }
+        let error = if is_parenthesized {
+            // `@(expr)` is valid only when nothing follows the closing `)`. Without `preserve_parens`,
+            // the parenthesized expression starts after `(`, while a suffixed one such as `(a)(b)`
+            // starts at `(`.
+            let is_parenthesized_head = |e: &Expression<'a>| {
+                matches!(e, Expression::ParenthesizedExpression(_)) || e.span().start != expr_start
+            };
+            match expr {
+                expr if is_parenthesized_head(expr) => return,
+                Expression::CallExpression(call) if is_parenthesized_head(&call.callee) => {
+                    diagnostics::decorator_arguments_outside_parentheses(expr.span())
+                }
+                _ => diagnostics::decorator_expression_not_parenthesized(expr.span()),
+            }
+        } else {
+            let is_valid = match expr {
+                Expression::CallExpression(call) => call.callee.is_decorator_member_expression(),
+                expr => expr.is_decorator_member_expression(),
+            };
+            if is_valid {
+                return;
+            }
+            diagnostics::decorator_expression_not_parenthesized(expr.span())
+        };
+        self.error(error);
     }
 
     fn is_yield_expression(&mut self) -> bool {
@@ -2200,12 +2272,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.ctx.has_yield() {
                 return true;
             }
-            // Outside a generator, `yield` is an `IdentifierReference` unless the next token (on the
-            // same line) can start the operand of a `YieldExpression`. That is a single-token
-            // decision, so peek instead of running a full `lookahead` checkpoint/rewind. With
-            // `is_await = false` the worker reduces to exactly this (mirrors `is_unambiguous_await`).
+            // Outside a generator, `yield` is an identifier, but parse a `YieldExpression` anyway
+            // when an operand follows on the same line, to report it. In a `for` head, where `in`
+            // is not an operator, `of` is the delimiter of `for (yield of xs)` instead.
             let token = self.lexer.peek_token();
-            return !token.is_on_new_line() && token.kind().is_after_await_or_yield();
+            let kind = token.kind();
+            return !token.is_on_new_line()
+                && kind.is_after_await_or_yield()
+                && (kind != Kind::Of || self.ctx.has_in());
         }
         false
     }

@@ -606,7 +606,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
-        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
+        !FindNestedBreak::has_unlabelled_break(&case.consequent)
     }
 
     fn handle_switch_statement(
@@ -731,7 +731,7 @@ impl<'a> PeepholeOptimizations {
             };
             if can_merge_with_alternate {
                 // Don't do this transformation if the branch condition could
-                // potentially access symbols declared later on on this scope below.
+                // potentially access symbols declared later on in this scope below.
                 // If so, inverting the branch condition and nesting statements after
                 // this in a block would break that access which is a behavior change.
                 //
@@ -1392,6 +1392,12 @@ impl<'a> PeepholeOptimizations {
             if ctx.scoping().symbol_flags(prev_decl_id.symbol_id()).is_catch_variable() {
                 return true;
             }
+            // A `var` in a block is bound in the enclosing var scope, where a direct eval
+            // can read it even when the current block has no eval.
+            let binding_scope_id = ctx.scoping().symbol_scope_id(prev_decl_id.symbol_id());
+            if ctx.scoping().scope_flags(binding_scope_id).contains_direct_eval() {
+                return true;
+            }
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
@@ -1870,7 +1876,7 @@ impl<'a> PeepholeOptimizations {
                 for prop in &mut obj_expr.properties {
                     match prop {
                         ObjectPropertyKind::ObjectProperty(prop) => {
-                            if prop.computed {
+                            if prop.key.is_computed() {
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
                                         prop.key.to_expression_mut(),
@@ -1895,7 +1901,6 @@ impl<'a> PeepholeOptimizations {
                             ) {
                                 if prop.shorthand && prop.key.is_specific_id("__proto__") {
                                     // { __proto__ } -> { ['__proto__']: value }
-                                    prop.computed = true;
                                     prop.key = PropertyKey::new_string_literal(
                                         prop.key.span(),
                                         "__proto__",
@@ -1905,6 +1910,23 @@ impl<'a> PeepholeOptimizations {
                                 }
                                 prop.shorthand = false;
                                 return Some(changed);
+                            }
+                        }
+                        ObjectPropertyKind::MethodProperty(prop) => {
+                            if prop.key.is_computed() {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        prop.key.to_expression_mut(),
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                                // Stop now because computed keys have side effects
+                                return Some(false);
                             }
                         }
                         ObjectPropertyKind::SpreadProperty(prop) => {
@@ -2067,14 +2089,16 @@ impl<'a> PeepholeOptimizations {
 }
 
 #[derive(Default)]
-struct FindNestedBreak {
+pub(super) struct FindNestedBreak {
     found_unlabelled_break: bool,
 }
 
 impl FindNestedBreak {
-    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+    pub(super) fn has_unlabelled_break(stmts: &[Statement]) -> bool {
         let mut visitor = Self::default();
-        visitor.visit_switch_case(node);
+        for stmt in stmts {
+            visitor.visit_statement(stmt);
+        }
         visitor.found_unlabelled_break
     }
 }

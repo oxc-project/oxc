@@ -165,13 +165,35 @@ impl<'a> Dummy<'a> for ObjectProperty<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            key: Dummy::dummy(allocator),
+            value: Dummy::dummy(allocator),
+            shorthand: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ObjectMethodProperty<'a> {
+    /// Create a dummy [`ObjectMethodProperty`].
+    ///
+    /// Has cost of making 3 allocations (160 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            method: Dummy::dummy(allocator),
-            shorthand: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for ObjectMethodKind {
+    /// Create a dummy [`ObjectMethodKind`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Method
     }
 }
 
@@ -181,16 +203,6 @@ impl<'a> Dummy<'a> for PropertyKey<'a> {
     /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::NullLiteral(Dummy::dummy(allocator))
-    }
-}
-
-impl<'a> Dummy<'a> for PropertyKind {
-    /// Create a dummy [`PropertyKind`].
-    ///
-    /// Does not allocate any data into arena.
-    #[inline(always)]
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Init
     }
 }
 
@@ -600,7 +612,6 @@ impl<'a> Dummy<'a> for AssignmentTargetPropertyProperty<'a> {
             span: Dummy::dummy(allocator),
             name: Dummy::dummy(allocator),
             binding: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
         }
     }
 }
@@ -1119,7 +1130,6 @@ impl<'a> Dummy<'a> for BindingProperty<'a> {
             key: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             shorthand: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
         }
     }
 }
@@ -1379,7 +1389,6 @@ impl<'a> Dummy<'a> for MethodDefinition<'a> {
             key: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
@@ -1411,7 +1420,6 @@ impl<'a> Dummy<'a> for PropertyDefinition<'a> {
             key: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
@@ -1502,7 +1510,6 @@ impl<'a> Dummy<'a> for AccessorProperty<'a> {
             key: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),
             r#override: Dummy::dummy(allocator),
             definite: Dummy::dummy(allocator),
@@ -1801,7 +1808,6 @@ impl<'a> Dummy<'a> for NumericLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            base: Dummy::dummy(allocator),
         }
     }
 }
@@ -1830,7 +1836,6 @@ impl<'a> Dummy<'a> for BigIntLiteral<'a> {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
-            base: Dummy::dummy(allocator),
         }
     }
 }
@@ -1864,6 +1869,16 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
         Self { text: Dummy::dummy(allocator), pattern: Dummy::dummy(allocator) }
+    }
+}
+
+impl<'a> Dummy<'a> for RegExpFlags {
+    /// Create a dummy [`RegExpFlags`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::empty()
     }
 }
 
@@ -2691,7 +2706,6 @@ impl<'a> Dummy<'a> for TSPropertySignature<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
             readonly: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
@@ -2761,7 +2775,6 @@ impl<'a> Dummy<'a> for TSMethodSignature<'a> {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
             key: Dummy::dummy(allocator),
-            computed: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),

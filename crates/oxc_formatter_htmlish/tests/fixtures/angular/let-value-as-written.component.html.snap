@@ -1,0 +1,46 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@let    foo     =  a   +  b;
+@let  bar =  a // c
+;
+@let   baz  =  (x | async) ;
+@let   q  =  a
+  +   b;
+@let s = 'a;b'  // c
+;
+@let = 1;
+@let cancelableRequest = (accessActions?.cancelableRequest$(cipher) | async) ?? false;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@let foo = a   +  b;
+@let bar = a // c
+;
+@let baz = (x | async) ;
+@let q = a
+  +   b;
+@let s = 'a;b'  // c
+;
+@let = 1;
+@let cancelableRequest =
+  (accessActions?.cancelableRequest$(cipher) | async) ?? false;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@let foo = a   +  b;
+@let bar = a // c
+;
+@let baz = (x | async) ;
+@let q = a
+  +   b;
+@let s = 'a;b'  // c
+;
+@let = 1;
+@let cancelableRequest = (accessActions?.cancelableRequest$(cipher) | async) ?? false;
+
+===================== End =====================

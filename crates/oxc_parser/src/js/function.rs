@@ -11,7 +11,7 @@ use crate::{
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {
-        matches!(self, Self::Declaration)
+        matches!(self, Self::Declaration | Self::TSDeclaration)
     }
 
     pub(crate) fn is_expression(self) -> bool {
@@ -353,13 +353,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, Function<'a>> {
         let ctx = self.ctx;
         // `new.target` is allowed in a function's parameters and body (but not arrow
-        // functions, which are parsed via `parse_function_body` directly).
+        // functions, which are parsed via `parse_function_body` directly). Neither is at
+        // the top level, so `await` in them is not top-level `await`.
         self.ctx = self
             .ctx
             .and_in(true)
             .and_await(r#async)
             .and_yield(generator.is_some())
-            .and_new_target(true);
+            .and_new_target(true)
+            .and_top_level(false);
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
@@ -373,7 +375,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .and_in(ctx.has_in())
             .and_await(ctx.has_await())
             .and_yield(ctx.has_yield())
-            .and_new_target(ctx.has_new_target());
+            .and_new_target(ctx.has_new_target())
+            .and_top_level(ctx.has_top_level());
         if (!self.is_ts || matches!(func_kind, FunctionKind::ObjectMethod)) && body.is_none() {
             return self.fatal_error(diagnostics::expect_function_body(self.end_span(start)));
         }
@@ -619,12 +622,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Some(BindingIdentifier::new(span, name, self))
         } else {
             if func_kind.is_id_required() {
-                match self.cur_kind() {
-                    Kind::LParen => {
-                        self.error(diagnostics::expect_function_name(self.cur_token().span()));
-                    }
-                    kind if kind.is_reserved_keyword() => self.expect_without_advance(Kind::Ident),
-                    _ => {}
+                if kind == Kind::LParen || (kind == Kind::LAngle && self.is_ts) {
+                    self.error(diagnostics::expect_function_name(self.cur_token().span()));
+                } else if kind.is_reserved_keyword() {
+                    self.expect_without_advance(Kind::Ident);
                 }
             }
 

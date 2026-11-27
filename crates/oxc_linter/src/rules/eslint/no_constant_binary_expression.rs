@@ -1,10 +1,11 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -235,7 +236,8 @@ impl NoConstantBinaryExpression {
             expr if expr.is_literal() => true,
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
+                    return ["Boolean", "String", "Number", "Symbol", "BigInt"]
+                        .contains(&ident.name.as_str())
                         && ctx.is_reference_to_global_variable(ident);
                 }
                 false
@@ -406,7 +408,8 @@ impl NoConstantBinaryExpression {
             | Expression::RegExpLiteral(_) => true,
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    return ctx.is_ecma_script_global(&ident.name);
+                    return ctx.is_ecma_script_global(&ident.name)
+                        && ctx.is_reference_to_global_variable(ident);
                 }
                 false
             }
@@ -447,6 +450,8 @@ fn test() {
         "<p /> ?? foo",
         "<></> ?? foo",
         "arbitraryFunction(n) ?? foo",
+        "Object(); function same(Object, value) { return new Object() === value; }",
+        "function f(Symbol, BigInt) { return [Symbol() ?? a, BigInt(b) ?? c]; }",
         "foo.Boolean(n) ?? foo",
         "(x += 1) && foo",
         "`${bar}` && foo",
@@ -516,6 +521,9 @@ fn test() {
     );
 
     let mut fail = vec![
+        "const id = Symbol() ?? fallback;",
+        "const count = BigInt(input) ?? fallback;",
+        "function same(value) { return new Object() === value; }",
         // Error messages
         "[] && greeting",
         "[] || greeting",

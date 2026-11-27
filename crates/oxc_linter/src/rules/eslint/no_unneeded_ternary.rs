@@ -1,8 +1,6 @@
-use crate::{
-    AstNode,
-    context::LintContext,
-    rule::{DefaultRuleConfig, Rule},
-};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{BinaryOperator, Expression},
@@ -10,8 +8,12 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use serde::Deserialize;
+
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_unneeded_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary use of boolean literals in conditional expression")
@@ -100,7 +102,15 @@ impl Rule for NoUnneededTernary {
                     return fixer.noop();
                 };
                 if left.value == right.value {
-                    return fixer.replace_with(expr, &expr.consequent);
+                    // Replace `foo ? true : true` with just `true`, but don't replace
+                    // `foo() ? true : true` where the test may have side effects.
+                    // Matches the upstream ESLint rule, which only fixes identifier tests.
+                    return if matches!(expr.test.get_inner_expression(), Expression::Identifier(_))
+                    {
+                        fixer.replace_with(expr, &expr.consequent)
+                    } else {
+                        fixer.noop()
+                    };
                 }
                 let replacement;
                 let test_expr_source = ctx.source_range(expr.test.span());
@@ -291,6 +301,11 @@ fn test() {
         ("var a = foo + bar ? false : true;", "var a = !(foo + bar);", None),
         ("var a = x instanceof foo ? false : true;", "var a = !(x instanceof foo);", None),
         ("var a = foo ? false : false;", "var a = false;", None),
+        ("var a = foo() ? false : false;", "var a = foo() ? false : false;", None),
+        ("var a = f() ? true : true;", "var a = f() ? true : true;", None),
+        ("var a = a + b ? true : true;", "var a = a + b ? true : true;", None),
+        ("var a = foo.bar ? true : true;", "var a = foo.bar ? true : true;", None),
+        ("var a = (foo) ? true : true;", "var a = true;", None),
         ("var a = x instanceof foo ? true : false;", "var a = x instanceof foo;", None),
         ("var a = !foo ? true : false;", "var a = !foo;", None),
         (

@@ -1,0 +1,148 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:11:1]
+ 10 │ // A comment before describe
+ 11 │ describe('someText', () => {
+    · ▲
+ 12 │   describe('some condition', () => {
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:17:1]
+ 16 │ });
+ 17 │ xdescribe('someObject', () => {
+    · ▲
+ 18 │   // Another comment
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:24:4]
+ 23 │   });
+ 24 │ });fdescribe('weird', () => {});
+    ·    ▲
+ 25 │ describe.skip('skip me', () => {});
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:25:1]
+ 24 │ });fdescribe('weird', () => {});
+ 25 │ describe.skip('skip me', () => {});
+    · ▲
+ 26 │ const BOOP = 'boop';
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:26:1]
+ 25 │ describe.skip('skip me', () => {});
+ 26 │ const BOOP = 'boop';
+    · ▲
+ 27 │ describe
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:27:1]
+ 26 │ const BOOP = 'boop';
+ 27 │ describe
+    · ▲
+ 28 │   .skip('skip me too', () => {
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:14:3]
+ 13 │   });
+ 14 │   describe('some other condition', () => {
+    ·   ▲
+ 15 │   });
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+    ╭─[padding_around_describe_blocks.tsx:21:5]
+ 20 │     const anotherThing = 500;
+ 21 │     describe('yet another condition', () => { // A comment over here!
+    ·     ▲
+ 22 │     });
+    ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ describe('foo', () => {});
+ 2 │ describe('bar', () => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ xdescribe('foo', () => {});
+ 2 │ fdescribe('bar', () => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ describe.each([1, 2])('%s', () => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:1:27]
+ 1 │ describe('foo', () => {});foo();
+   ·                           ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:3:3]
+ 2 │   const thing = 123;
+ 3 │   describe('foo', () => {});
+   ·   ▲
+ 4 │ }
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:4:5]
+ 3 │     describe('foo', () => {});
+ 4 │     foo();
+   ·     ▲
+ 5 │ }
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:2:2]
+ 1 │ const thing = 123
+ 2 │ ;describe('foo', () => {})
+   ·  ▲
+   ╰────
+  help: Insert a blank line before this statement
+
+  ⚠ vitest(padding-around-describe-blocks): Expected blank line before this statement
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ label: describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Insert a blank line before this statement

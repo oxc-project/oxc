@@ -11,16 +11,16 @@ mod usage;
 
 use std::ops::Deref;
 
-use allowed::FunctionParameterKind;
-use ignored::IgnoreReason;
-use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
-use oxc_ast::{AstKind, AstType, ast::CatchParameter};
+use schemars::JsonSchema;
+
+use oxc_ast::{
+    AstKind, AstType,
+    ast::{BindingPattern, CatchParameter},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::{GetSpan, Span};
-use schemars::JsonSchema;
-use symbol::Symbol;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -28,6 +28,10 @@ use crate::{
     rules::eslint::no_unused_vars::options::VarsOption,
     utils::declarator_initializes,
 };
+use allowed::FunctionParameterKind;
+use ignored::IgnoreReason;
+use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
+use symbol::Symbol;
 
 #[derive(JsonSchema, Debug)]
 #[serde(untagged)]
@@ -258,27 +262,32 @@ impl NoUnusedVars {
         ctx: &LintContext<'a>,
         exported_names: &rustc_hash::FxHashSet<&str>,
     ) {
+        if self.vars.is_local() && symbol.is_in_global_scope() {
+            return;
+        }
+
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored.is_some() && !self.report_used_ignore_pattern {
             return;
         }
 
-        let is_used = symbol.is_exported(exported_names) || symbol.has_usages(self);
-
-        match (is_used, *is_ignored) {
-            // used, ignored because variable name matches one of several
-            // ignore patterns. Report if used.
-            (true, Some(IgnoreReason::NamePattern)) => {
-                if self.report_used_ignore_pattern {
+        match *is_ignored {
+            // ignored because variable name matches one of several ignore
+            // patterns. Report if used. Exporting a declaration is not a use.
+            Some(IgnoreReason::NamePattern) => {
+                if self.report_used_ignore_pattern && symbol.has_usages(self) {
                     ctx.diagnostic(diagnostic::used_ignored(symbol, &self.vars_ignore_pattern));
                 }
                 return;
             }
-            // used, ignored because of other ignore reason (e.g. rest siblings)
-            (_, Some(_)) | (true, None) => return,
-            // needs acceptance check and/or reporting
-            (false, None) => {}
+            // ignored because of other ignore reason (e.g. rest siblings)
+            Some(_) => return,
+            None => {}
+        }
+
+        if symbol.is_exported(exported_names) || symbol.has_usages(self) {
+            return;
         }
 
         let declaration = symbol.declaration();
@@ -472,13 +481,13 @@ fn remove_unused_catch_parameter<'a>(
     ctx: &LintContext<'a>,
     catch: &CatchParameter<'a>,
 ) -> crate::fixer::RuleFix {
+    // Removing a destructuring pattern would also remove its other bindings.
+    let BindingPattern::BindingIdentifier(id) = &catch.pattern else {
+        return fixer.noop();
+    };
     // A redeclaring `var` initializer assigns to this binding even without references.
     // Removing the parameter would redirect the assignment to the enclosing var binding.
-    if catch
-        .pattern
-        .get_binding_identifier()
-        .is_some_and(|id| ctx.scoping().catch_var_binding(id.symbol_id()).is_some())
-    {
+    if ctx.scoping().catch_var_binding(id.symbol_id()).is_some() {
         return fixer.noop();
     }
     let Span { start, end, .. } = catch.span();

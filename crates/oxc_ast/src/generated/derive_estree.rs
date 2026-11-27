@@ -217,6 +217,7 @@ impl ESTree for ObjectPropertyKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::ObjectProperty(it) => it.serialize(serializer),
+            Self::MethodProperty(it) => it.serialize(serializer),
             Self::SpreadProperty(it) => it.serialize(serializer),
         }
     }
@@ -226,15 +227,41 @@ impl ESTree for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Property"));
-        state.serialize_field("kind", &self.kind);
+        state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
-        state.serialize_field("method", &self.method);
+        state.serialize_field("method", &crate::serialize::basic::False(self));
         state.serialize_field("shorthand", &self.shorthand);
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_span(self.span);
         state.end();
+    }
+}
+
+impl ESTree for ObjectMethodProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("method", &crate::serialize::js::ObjectMethodPropertyMethod(self));
+        state.serialize_field("shorthand", &crate::serialize::basic::False(self));
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
+        state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ObjectMethodKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Method => JsonSafeString("init").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
+        }
     }
 }
 
@@ -242,6 +269,9 @@ impl ESTree for PropertyKey<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::StaticIdentifier(it) => it.serialize(serializer),
+            Self::StaticStringLiteral(it) => it.serialize(serializer),
+            Self::StaticNumericLiteral(it) => it.serialize(serializer),
+            Self::StaticBigIntLiteral(it) => it.serialize(serializer),
             Self::PrivateIdentifier(it) => it.serialize(serializer),
             Self::BooleanLiteral(_)
             | Self::NullLiteral(_)
@@ -287,16 +317,6 @@ impl ESTree for PropertyKey<'_> {
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
-        }
-    }
-}
-
-impl ESTree for PropertyKind {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::Init => JsonSafeString("init").serialize(serializer),
-            Self::Get => JsonSafeString("get").serialize(serializer),
-            Self::Set => JsonSafeString("set").serialize(serializer),
         }
     }
 }
@@ -734,7 +754,10 @@ impl ESTree for AssignmentTargetPropertyProperty<'_> {
         state.serialize_field("value", &self.binding);
         state.serialize_field("method", &crate::serialize::basic::False(self));
         state.serialize_field("shorthand", &crate::serialize::basic::False(self));
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field(
+            "computed",
+            &crate::serialize::js::AssignmentTargetPropertyPropertyComputed(self),
+        );
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_span(self.span);
         state.end();
@@ -1264,7 +1287,7 @@ impl ESTree for BindingProperty<'_> {
         state.serialize_field("value", &self.value);
         state.serialize_field("method", &crate::serialize::basic::False(self));
         state.serialize_field("shorthand", &self.shorthand);
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_span(self.span);
         state.end();
@@ -1526,7 +1549,7 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &self.kind);
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_field("static", &self.r#static);
         state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("optional", &self.optional);
@@ -1555,7 +1578,7 @@ impl ESTree for PropertyDefinition<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_field("static", &self.r#static);
         state.serialize_ts_field("declare", &self.declare);
         state.serialize_ts_field("override", &self.r#override);
@@ -1644,7 +1667,7 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_field("static", &self.r#static);
         state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("definite", &self.definite);
@@ -2873,7 +2896,7 @@ impl ESTree for TSPropertySignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSPropertySignature"));
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_field("optional", &self.optional);
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("key", &self.key);
@@ -2942,7 +2965,7 @@ impl ESTree for TSMethodSignature<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSMethodSignature"));
         state.serialize_field("key", &self.key);
-        state.serialize_field("computed", &self.computed);
+        state.serialize_field("computed", &crate::serialize::js::PropertyKeyComputed(self));
         state.serialize_field("optional", &self.optional);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("typeParameters", &self.type_parameters);

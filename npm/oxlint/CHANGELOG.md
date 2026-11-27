@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.95.0] - 2026-11-23
+
+### 🚀 Features
+
+- a96e2bd linter/typescript/no-unsafe-class-instance-assignment: Add rule (#29982) (Cameron)
+
 ## [1.94.0] - 2026-11-16
 
 ### 🚀 Features

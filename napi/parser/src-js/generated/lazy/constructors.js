@@ -639,6 +639,8 @@ function constructObjectPropertyKind(pos, ast) {
     case 0:
       return constructBoxObjectProperty(pos + 8, ast);
     case 1:
+      return constructBoxObjectMethodProperty(pos + 8, ast);
+    case 2:
       return constructBoxSpreadElement(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectPropertyKind`);
@@ -670,11 +672,6 @@ export class ObjectProperty {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
-  get kind() {
-    const internal = this.#internal;
-    return constructPropertyKind(internal.pos + 12, internal.ast);
-  }
-
   get key() {
     const internal = this.#internal;
     return constructPropertyKey(internal.pos + 16, internal.ast);
@@ -685,19 +682,14 @@ export class ObjectProperty {
     return constructExpression(internal.pos + 32, internal.ast);
   }
 
-  get method() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
-  }
-
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 12, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 15, internal.ast);
+    return internal.ast.buffer[internal.pos + 16] < 64;
   }
 
   toJSON() {
@@ -705,10 +697,8 @@ export class ObjectProperty {
       type: "ObjectProperty",
       start: this.start,
       end: this.end,
-      kind: this.kind,
       key: this.key,
       value: this.value,
-      method: this.method,
       shorthand: this.shorthand,
       computed: this.computed,
     };
@@ -720,6 +710,89 @@ export class ObjectProperty {
 }
 
 const DebugObjectProperty = class ObjectProperty {};
+
+export class ObjectMethodProperty {
+  type = "ObjectMethodProperty";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get kind() {
+    const internal = this.#internal;
+    return constructObjectMethodKind(internal.pos + 12, internal.ast);
+  }
+
+  get key() {
+    const internal = this.#internal;
+    return constructPropertyKey(internal.pos + 16, internal.ast);
+  }
+
+  get value() {
+    const internal = this.#internal;
+    return constructBoxFunction(internal.pos + 32, internal.ast);
+  }
+
+  get method() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 12] === 0;
+  }
+
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 16] < 64;
+  }
+
+  toJSON() {
+    return {
+      type: "ObjectMethodProperty",
+      start: this.start,
+      end: this.end,
+      kind: this.kind,
+      key: this.key,
+      value: this.value,
+      method: this.method,
+      computed: this.computed,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectMethodProperty.prototype);
+  }
+}
+
+const DebugObjectMethodProperty = class ObjectMethodProperty {};
+
+function constructObjectMethodKind(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return "init";
+    case 1:
+      return "get";
+    case 2:
+      return "set";
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectMethodKind`);
+  }
+}
 
 function constructPropertyKey(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -814,22 +887,15 @@ function constructPropertyKey(pos, ast) {
     case 64:
       return constructBoxIdentifierName(pos + 8, ast);
     case 65:
+      return constructBoxStringLiteral(pos + 8, ast);
+    case 66:
+      return constructBoxNumericLiteral(pos + 8, ast);
+    case 67:
+      return constructBoxBigIntLiteral(pos + 8, ast);
+    case 68:
       return constructBoxPrivateIdentifier(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKey`);
-  }
-}
-
-function constructPropertyKind(pos, ast) {
-  switch (ast.buffer[pos]) {
-    case 0:
-      return "init";
-    case 1:
-      return "get";
-    case 2:
-      return "set";
-    default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKind`);
   }
 }
 
@@ -2363,7 +2429,7 @@ export class AssignmentTargetPropertyProperty {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 12, internal.ast);
+    return internal.ast.buffer[internal.pos + 16] < 64;
   }
 
   toJSON() {
@@ -4328,7 +4394,7 @@ export class BindingProperty {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return internal.ast.buffer[internal.pos + 16] < 64;
   }
 
   toJSON() {
@@ -5174,29 +5240,29 @@ export class MethodDefinition {
     return constructMethodDefinitionKind(internal.pos + 13, internal.ast);
   }
 
-  get computed() {
+  get static() {
     const internal = this.#internal;
     return constructBool(internal.pos + 14, internal.ast);
   }
 
-  get static() {
+  get override() {
     const internal = this.#internal;
     return constructBool(internal.pos + 15, internal.ast);
   }
 
-  get override() {
+  get optional() {
     const internal = this.#internal;
     return constructBool(internal.pos + 64, internal.ast);
   }
 
-  get optional() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 65, internal.ast);
-  }
-
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 66, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 65, internal.ast);
+  }
+
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 40] < 64;
   }
 
   toJSON() {
@@ -5208,11 +5274,11 @@ export class MethodDefinition {
       key: this.key,
       value: this.value,
       kind: this.kind,
-      computed: this.computed,
       static: this.static,
       override: this.override,
       optional: this.optional,
       accessibility: this.accessibility,
+      computed: this.computed,
     };
   }
 
@@ -5285,44 +5351,44 @@ export class PropertyDefinition {
     return constructOptionExpression(internal.pos + 64, internal.ast);
   }
 
-  get computed() {
+  get static() {
     const internal = this.#internal;
     return constructBool(internal.pos + 13, internal.ast);
   }
 
-  get static() {
+  get declare() {
     const internal = this.#internal;
     return constructBool(internal.pos + 14, internal.ast);
   }
 
-  get declare() {
+  get override() {
     const internal = this.#internal;
     return constructBool(internal.pos + 15, internal.ast);
   }
 
-  get override() {
+  get optional() {
     const internal = this.#internal;
     return constructBool(internal.pos + 80, internal.ast);
   }
 
-  get optional() {
+  get definite() {
     const internal = this.#internal;
     return constructBool(internal.pos + 81, internal.ast);
   }
 
-  get definite() {
+  get readonly() {
     const internal = this.#internal;
     return constructBool(internal.pos + 82, internal.ast);
   }
 
-  get readonly() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 83, internal.ast);
-  }
-
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 84, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 83, internal.ast);
+  }
+
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 40] < 64;
   }
 
   toJSON() {
@@ -5334,7 +5400,6 @@ export class PropertyDefinition {
       key: this.key,
       typeAnnotation: this.typeAnnotation,
       value: this.value,
-      computed: this.computed,
       static: this.static,
       declare: this.declare,
       override: this.override,
@@ -5342,6 +5407,7 @@ export class PropertyDefinition {
       definite: this.definite,
       readonly: this.readonly,
       accessibility: this.accessibility,
+      computed: this.computed,
     };
   }
 
@@ -5559,29 +5625,29 @@ export class AccessorProperty {
     return constructOptionExpression(internal.pos + 64, internal.ast);
   }
 
-  get computed() {
+  get static() {
     const internal = this.#internal;
     return constructBool(internal.pos + 13, internal.ast);
   }
 
-  get static() {
+  get override() {
     const internal = this.#internal;
     return constructBool(internal.pos + 14, internal.ast);
   }
 
-  get override() {
+  get definite() {
     const internal = this.#internal;
     return constructBool(internal.pos + 15, internal.ast);
   }
 
-  get definite() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 80, internal.ast);
-  }
-
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 81, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 80, internal.ast);
+  }
+
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 40] < 64;
   }
 
   toJSON() {
@@ -5593,11 +5659,11 @@ export class AccessorProperty {
       key: this.key,
       typeAnnotation: this.typeAnnotation,
       value: this.value,
-      computed: this.computed,
       static: this.static,
       override: this.override,
       definite: this.definite,
       accessibility: this.accessibility,
+      computed: this.computed,
     };
   }
 
@@ -10037,19 +10103,14 @@ export class TSPropertySignature {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
-  get computed() {
+  get optional() {
     const internal = this.#internal;
     return constructBool(internal.pos + 12, internal.ast);
   }
 
-  get optional() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
-  }
-
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 14, internal.ast);
+    return constructBool(internal.pos + 13, internal.ast);
   }
 
   get key() {
@@ -10062,16 +10123,21 @@ export class TSPropertySignature {
     return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
   }
 
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 16] < 64;
+  }
+
   toJSON() {
     return {
       type: "TSPropertySignature",
       start: this.start,
       end: this.end,
-      computed: this.computed,
       optional: this.optional,
       readonly: this.readonly,
       key: this.key,
       typeAnnotation: this.typeAnnotation,
+      computed: this.computed,
     };
   }
 
@@ -10264,19 +10330,14 @@ export class TSMethodSignature {
     return constructPropertyKey(internal.pos + 16, internal.ast);
   }
 
-  get computed() {
+  get optional() {
     const internal = this.#internal;
     return constructBool(internal.pos + 64, internal.ast);
   }
 
-  get optional() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 65, internal.ast);
-  }
-
   get kind() {
     const internal = this.#internal;
-    return constructTSMethodSignatureKind(internal.pos + 66, internal.ast);
+    return constructTSMethodSignatureKind(internal.pos + 65, internal.ast);
   }
 
   get typeParameters() {
@@ -10294,18 +10355,23 @@ export class TSMethodSignature {
     return constructOptionBoxTSTypeAnnotation(internal.pos + 56, internal.ast);
   }
 
+  get computed() {
+    const internal = this.#internal;
+    return internal.ast.buffer[internal.pos + 16] < 64;
+  }
+
   toJSON() {
     return {
       type: "TSMethodSignature",
       start: this.start,
       end: this.end,
       key: this.key,
-      computed: this.computed,
       optional: this.optional,
       kind: this.kind,
       typeParameters: this.typeParameters,
       params: this.params,
       returnType: this.returnType,
+      computed: this.computed,
     };
   }
 
@@ -12256,6 +12322,8 @@ function constructImportImportName(pos, ast) {
       return "namespaceObject";
     case 2:
       return new Span(pos + 8, ast);
+    case 3:
+      return new Span(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ImportImportName`);
   }
@@ -12339,6 +12407,8 @@ function constructExportImportName(pos, ast) {
       return "allButDefault";
     case 3:
       return "null";
+    case 4:
+      return new Span(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportImportName`);
   }
@@ -13154,6 +13224,10 @@ function constructVecObjectPropertyKind(pos, ast) {
 
 function constructBoxObjectProperty(pos, ast) {
   return new ObjectProperty(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxObjectMethodProperty(pos, ast) {
+  return new ObjectMethodProperty(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBool(pos, ast) {

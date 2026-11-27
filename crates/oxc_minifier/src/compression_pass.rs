@@ -1,24 +1,28 @@
 //! Completion of Normalize and peephole compression passes.
 //!
-//! AST mutations accumulate removed semantic references and dropped direct
-//! `eval` calls on [`crate::state::PassChanges`]. Both Normalize and each
-//! peephole pass cross the same completion boundary: prune those references,
+//! AST mutations accumulate removed semantic references, dropped direct
+//! `eval` calls and dropped declarations of redeclared symbols on
+//! [`crate::state::PassChanges`]. Both Normalize and each peephole pass cross
+//! the same completion boundary: prune those references and declarations,
 //! refresh direct-eval scope flags, then derive function reachability from the
 //! settled semantic state.
 
-#[cfg(debug_assertions)]
-use oxc_ast_visit::Visit;
-use oxc_ast_visit::{VisitJs, walk_js::walk_call_expression};
+use oxc_ast_visit::{Visit, VisitJs, walk_js::walk_call_expression};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{BitSet, GetAllocator};
 use oxc_ast::ast::*;
-use oxc_semantic::Scoping;
+use oxc_semantic::{Scoping, SymbolId};
+use oxc_span::Span;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
-    ReusableTraverseCtx, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    peephole::PeepholeOptimizations, symbol_liveness, traverse_context::as_direct_eval_call,
+    ReusableTraverseCtx, TraverseCtx,
+    minifier_traverse::traverse_mut_with_ctx,
+    peephole::PeepholeOptimizations,
+    state::PassChanges,
+    symbol_liveness,
+    traverse_context::{RedeclaredBindings, as_direct_eval_call},
 };
 
 /// The fixed-point decision produced by one completed peephole pass.
@@ -140,6 +144,35 @@ pub fn debug_assert_no_under_prune(
     }
 }
 
+/// Debug-only guard for the walk gate in [`prune_removed_declarations`]: a
+/// declaration dropped this pass must not still be in the program unless
+/// `KeepVar` re-emitted it. A violation means a site moved or cloned a binding
+/// out of a subtree it then dropped; release builds, which skip the walk when
+/// nothing was re-emitted, would then remove a live declaration from
+/// `Scoping::symbol_redeclarations` (the unsafe direction).
+///
+/// This is a separate walk rather than part of the pruning walk, so debug builds
+/// take the same pruning path as release builds.
+///
+/// Allocation-free like the other debug guards: it asserts inline during the walk.
+#[cfg(debug_assertions)]
+fn debug_assert_no_revived_declarations(
+    program: &Program<'_>,
+    scoping: &Scoping,
+    removed: &FxHashSet<(SymbolId, Span)>,
+    reemitted: &FxHashSet<(SymbolId, Span)>,
+) {
+    RedeclaredBindings::new(scoping, |symbol_id, span| {
+        let declaration = (symbol_id, span);
+        assert!(
+            !removed.contains(&declaration) || reemitted.contains(&declaration),
+            "revived declaration: {declaration:?} was dropped and is still in the program, \
+             but `KeepVar` did not re-emit it — see `PassChanges::reemitted_declarations`",
+        );
+    })
+    .visit_program(program);
+}
+
 /// Debug-only guard for the gated direct-eval refresh: every live direct
 /// `eval(...)` call must already have `ScopeFlags::DirectEval` on its
 /// reference's recorded scope and every ancestor (the exact postcondition of
@@ -199,9 +232,65 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
     DirectEvalFlagCheck { scoping }.visit_program(program);
 }
 
+/// Whether `span` identifies exactly one recorded declaration of `symbol_id`.
+///
+/// Bindings with synthesized spans (e.g. `SPAN` from a transform) can share one,
+/// and then a span cannot tell which of them a dropped binding was. Such
+/// declarations are never pruned: a stale redeclaration only keeps optimizations
+/// conservative, while pruning the wrong one would drop a live declaration.
+fn has_unique_span(scoping: &Scoping, symbol_id: SymbolId, span: Span) -> bool {
+    let mut matching = scoping
+        .symbol_redeclarations(symbol_id)
+        .iter()
+        .filter(|redeclaration| redeclaration.span == span);
+    matching.next().is_some() && matching.next().is_none()
+}
+
+/// Remove [`PassChanges::removed_declarations`] from
+/// `Scoping::symbol_redeclarations`, so e.g. `catch (a) { var a }` can drop `a`
+/// once the `var` is gone (#27548). A declaration is identified by its symbol
+/// and binding span; keys whose span is shared are skipped (see
+/// [`has_unique_span`]).
+///
+/// Unlike a `ReferenceId`, a dropped binding can reappear: `KeepVar` re-emits
+/// dropped `var`s with their symbol and span, and records them in
+/// [`PassChanges::reemitted_declarations`]. Only when a removed declaration was
+/// re-emitted is the program walked to keep those still present. Skipping the
+/// walk otherwise relies on `KeepVar` being the only site that re-emits a
+/// dropped binding, which debug builds check with a separate walk
+/// (`debug_assert_no_revived_declarations`); the pruning itself takes the same
+/// path in debug and release builds.
+///
+/// Removals are applied in hash-set order. The order does not matter unless
+/// every declaration of a symbol is removed: `remove_symbol_declaration` stops
+/// tracking a symbol once one declaration is left, so the last one is never
+/// removed and the symbol's span and flags describe whichever removed
+/// declaration that was. Nothing declares such a symbol anymore, so this is
+/// harmless.
+fn prune_removed_declarations(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) {
+    let PassChanges { removed_declarations: removed, reemitted_declarations: reemitted, .. } =
+        &mut ctx.state.pass_changes;
+    let scoping = ctx.scoping.scoping();
+    removed.retain(|&(symbol_id, span)| has_unique_span(scoping, symbol_id, span));
+    #[cfg(debug_assertions)]
+    debug_assert_no_revived_declarations(program, scoping, removed, reemitted);
+    // `is_disjoint` iterates the smaller set.
+    if !removed.is_disjoint(reemitted) {
+        RedeclaredBindings::new(scoping, |symbol_id, span| {
+            removed.remove(&(symbol_id, span));
+        })
+        .visit_program(program);
+    }
+    let scoping = ctx.scoping.scoping_mut();
+    for (symbol_id, span) in removed.drain() {
+        scoping.remove_symbol_declaration(symbol_id, span);
+    }
+}
+
 /// Consume the [`crate::state::PassChanges`] accumulator: batch-prune removed
 /// resolved references from scoping, refresh direct-eval flags if an
-/// `eval(...)` call was dropped, and re-initialize the accumulator.
+/// `eval(...)` call was dropped, remove dropped redeclarations, and
+/// re-initialize the accumulator.
 ///
 /// Pass completion calls this after Normalize (so the fixed-point loop starts
 /// against already-pruned scoping and Normalize's drops cost no extra
@@ -240,7 +329,12 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     #[cfg(debug_assertions)]
     debug_assert_no_stale_direct_eval(program, ctx.scoping());
 
-    // (3) Reset the accumulator for the next pass. `references_len` only grows
+    // (3) Declarations — drop the redeclarations of removed declarations.
+    if !ctx.state.pass_changes.removed_declarations.is_empty() {
+        prune_removed_declarations(program, ctx);
+    }
+
+    // (4) Reset the accumulator for the next pass. `references_len` only grows
     //     (helpers mint, never delete, references), so the bitset is
     //     re-allocated only when refs were minted this pass; otherwise a
     //     memset reuses the warm allocation (a bump arena never reclaims the
@@ -254,6 +348,7 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
         ctx.state.pass_changes.removed_references = BitSet::new_in(refs_len, ctx.allocator());
     }
     ctx.state.pass_changes.direct_eval_dropped = false;
+    ctx.state.pass_changes.reemitted_declarations.clear();
     liveness_inputs_changed
 }
 

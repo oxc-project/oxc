@@ -86,6 +86,10 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
 
     let (body, body_uses_flag) = if struct_def.clone_in.is_default {
         (quote!(Default::default()), false)
+    } else if struct_def.is_bitflags {
+        // `bitflags!` types' field is private, so can't clone it.
+        // We assume `bitflags!` types are `Copy`.
+        (quote!(*self), false)
     } else if struct_def.fields.is_empty() {
         (quote!( #type_ident ), false)
     } else {
@@ -112,7 +116,10 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         (quote!( #type_ident { #(#fields),* } ), true)
     };
 
-    generate_impl(&type_ident, &body, struct_def.has_lifetime, false, body_uses_flag)
+    // Add `#[inline(always)]` to methods for `bitflags!` types, because they're no-ops
+    let inline_always = struct_def.is_bitflags;
+
+    generate_impl(&type_ident, &body, struct_def.has_lifetime, inline_always, body_uses_flag)
 }
 
 /// Get if a struct field should be filled with default value when cloning.

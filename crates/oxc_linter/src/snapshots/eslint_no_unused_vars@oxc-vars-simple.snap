@@ -10,6 +10,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
+  ⚠ eslint(no-unused-vars): Variable 'unused' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ var unused = 1; export {};
+   ·     ───┬──
+   ·        ╰── 'unused' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'unused' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let unused;
+   ·     ───┬──
+   ·        ╰── 'unused' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a: number = 1

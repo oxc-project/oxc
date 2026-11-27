@@ -1,5 +1,9 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{AssignmentTarget, Expression, Statement},
@@ -15,9 +19,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,

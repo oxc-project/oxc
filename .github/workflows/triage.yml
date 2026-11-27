@@ -143,7 +143,9 @@ jobs:
           triage-model: cloudflare-ai/@cf/zai-org/glm-5.3
           verification-model: cloudflare-ai/@cf/zai-org/glm-5.3
           triage-skill: .agents/skills/triage
-          pr-skill: .agents/skills/pr-writer
+          pr-skill: .agents/skills/triage-bot-pr-writer
+          # The action invokes the PR skill by frontmatter name, which defaults to `pr-writer`.
+          pr-skill-name: triage-bot-pr-writer
           # Leave assigned issues with their assignees; only auto-open PRs for unassigned issues.
           auto-pr-on-fix: ${{ !github.event.issue.assignees[0] }}
           bot-logins: oxc-captain[bot]

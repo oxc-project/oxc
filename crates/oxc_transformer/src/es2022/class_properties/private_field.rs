@@ -1261,7 +1261,9 @@ impl<'a> ClassProperties<'a> {
         let Expression::ChainExpression(chain_expr) = expr else { unreachable!() };
 
         let element = &mut chain_expr.expression;
-        if matches!(element, ChainElement::PrivateFieldExpression(_)) {
+        if let ChainElement::PrivateFieldExpression(field) = element
+            && self.private_field_needs_lowering(&field.field)
+        {
             // The PrivateFieldExpression must be transformed, so we can convert it to a normal expression here.
             let mut chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
             let bind_context = matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_));
@@ -1270,7 +1272,37 @@ impl<'a> ClassProperties<'a> {
                 .expect("The ChainExpression must contain at least one optional expression, so it can never be `None` here.");
             Some((result, chain_expr))
         } else if let Some(result) = self.transform_chain_expression_element(element, ctx) {
-            let chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
+            let receiver = if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_))
+                && let ChainElement::PrivateFieldExpression(field) = element
+            {
+                // A native private method can follow a lowered private field in the same chain.
+                let (object, receiver) = self.duplicate_object(field.object.take_in(ctx), ctx);
+                field.object = object;
+                Some(receiver)
+            } else {
+                None
+            };
+            let mut chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
+            if let Some(receiver) = receiver {
+                let optional = matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(call) if *call.optional());
+                let callee = Expression::new_static_member_expression(
+                    SPAN,
+                    chain_expr,
+                    IdentifierName::new(SPAN, "bind", ctx),
+                    optional,
+                    ctx,
+                );
+                let call = Expression::new_call_expression(
+                    SPAN,
+                    callee,
+                    None,
+                    [Argument::from(receiver)],
+                    false,
+                    ctx,
+                );
+                chain_expr =
+                    Self::ensure_optional_expression_wrapped_by_chain_expression(call, ctx);
+            }
             Some((result, chain_expr))
         } else {
             // "Entering this branch indicates that the chain element has been changed and updated directly in
@@ -1309,7 +1341,9 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match expr {
-            Expression::PrivateFieldExpression(_) => {
+            Expression::PrivateFieldExpression(field)
+                if self.private_field_needs_lowering(&field.field) =>
+            {
                 self.transform_private_field_expression_of_chain_expression(expr, false, ctx)
             }
             match_member_expression!(Expression) => self
@@ -1458,7 +1492,9 @@ impl<'a> ClassProperties<'a> {
         let is_optional = call_expr.optional;
 
         let callee = call_expr.callee.get_inner_expression_mut();
-        if matches!(callee, Expression::PrivateFieldExpression(_)) {
+        if let Expression::PrivateFieldExpression(field) = callee
+            && self.private_field_needs_lowering(&field.field)
+        {
             let result = self.transform_first_optional_expression(callee, ctx);
             // If the `callee` has no optional expression, we need to transform it using `transform_call_expression_impl` directly.
             // `Foo.bar.#m?.();` -> `_assertClassBrand(Foo, _Foo$bar = Foo.bar, _m)._?.call(_Foo$bar);`

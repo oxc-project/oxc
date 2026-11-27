@@ -1,0 +1,53 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@defer (on viewport) {
+  <p>x</p>
+} @placeholder (minimum 1000000000000000000000000000000000000000000000000000000000000000ms) {
+  <p>placeholder</p>
+} @loading (after 100000000000000000000000000000ms; minimum 1000000000000000000000000000000000ms) {
+  <p>loading</p>
+}
+@defer (on viewport; prefetch on idle; on timer(5000ms); when someVeryVeryVeryLongConditionName) {
+  <p>x</p>
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@defer (on viewport) {
+  <p>x</p>
+} @placeholder (
+  minimum 1000000000000000000000000000000000000000000000000000000000000000ms) {
+  <p>placeholder</p>
+} @loading (
+  after 100000000000000000000000000000ms;
+  minimum 1000000000000000000000000000000000ms) {
+  <p>loading</p>
+}
+@defer (
+  on viewport;
+  prefetch on idle;
+  on timer(5000ms);
+  when someVeryVeryVeryLongConditionName
+) {
+  <p>x</p>
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@defer (on viewport) {
+  <p>x</p>
+} @placeholder (minimum 1000000000000000000000000000000000000000000000000000000000000000ms) {
+  <p>placeholder</p>
+} @loading (after 100000000000000000000000000000ms; minimum 1000000000000000000000000000000000ms) {
+  <p>loading</p>
+}
+@defer (on viewport; prefetch on idle; on timer(5000ms); when someVeryVeryVeryLongConditionName) {
+  <p>x</p>
+}
+
+===================== End =====================

@@ -104,6 +104,7 @@ fn write_mixin_name<'a>(name: &LessMixinName<'a>, f: &mut CssFormatter<'_, 'a>) 
 /// Prettier reads the prelude with postcss-selector-parser: the name and `when` are words joined by one space,
 /// the parameter list is a token printed raw apart from number/string adjustments
 /// (its spacing, `;` separators and line breaks survive), and any comment makes it verbatim.
+/// Ours keeps that verbatim layout but still adjusts numbers/strings (DIVERGENCES.md#less-verbatim-glued-numbers).
 /// `LessMixinParameters` is structured, so the parameters COULD break on width instead.
 pub(super) fn write_less_mixin_definition<'a>(
     def: &LessMixinDefinition<'a>,

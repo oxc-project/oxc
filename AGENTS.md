@@ -54,7 +54,7 @@ Prerequisites: Rust (MSRV: 1.98), Node.js, pnpm, just
 
 - All tools already installed (`cargo-insta`, `cargo-shear`, `ast-grep`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
-- Use Conventional Commits for commit messages; `.github/workflows/pr.yml` requires a scoped title like `fix(parser): handle trailing comma`
+- Use Conventional Commits for commit messages.
 - Choose verification from the changed code; reserve `just ready` for an optional broad integration checkpoint as described below.
 - Do not add extra benchmarks to a PR unless explicitly requested.
 - You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang rust -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
@@ -328,7 +328,7 @@ When changing linter codegen files such as `tasks/linter_codegen/**` or generate
 
 ## Pull request guidance
 
-Before opening or updating a pull request, read [the PR guidance](.agents/pr-guidance.md). It defines the required example layout and evidence for behavior fixes and optimizations, and when to include a playground link.
+Use the [PR writing skill](.agents/skills/pr-writer/SKILL.md) when writing a pull request title or before opening or updating a pull request. It covers title conventions, the required example layout and evidence for behavior fixes and optimizations, and when to include a playground link.
 
 ## Notes
 

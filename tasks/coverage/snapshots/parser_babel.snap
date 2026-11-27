@@ -1,8 +1,8 @@
-commit: 16a2d671
+commit: 51225612
 
 parser_babel Summary:
-AST Parsed     : 2357/2358 (99.96%)
-Positive Passed: 2336/2358 (99.07%)
+AST Parsed     : 2363/2364 (99.96%)
+Positive Passed: 2342/2364 (99.07%)
 Negative Passed: 1931/1947 (99.18%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -5392,7 +5392,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                       ───
    ╰────
 
-  × Cannot use import statement outside a module
+  × 'import statement' declaration can only be used at the top level of a module
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/291/input.js:1:8]
  1 │ if (1) import "acorn";
    ·        ──────
@@ -17543,14 +17543,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ a<b>?.c;
    · ──────
  4 │ a<b>?.[c];
-   ╰────
-
-  × TS(1477): An instantiation expression cannot be followed by a property access.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts:4:1]
- 3 │ a<b>?.c;
- 4 │ a<b>?.[c];
-   · ──────
- 5 │ 
    ╰────
 
   × TS(1477): An instantiation expression cannot be followed by a property access.

@@ -221,6 +221,15 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_expression(&it.value);
     }
 
+    #[inline]
+    fn visit_object_method_property(&mut self, it: &ObjectMethodProperty<'a>) {
+        self.visit_property_key(&it.key);
+        {
+            let flags = ScopeFlags::Function;
+            self.visit_function(&it.value, flags);
+        }
+    }
+
     fn visit_property_key(&mut self, it: &PropertyKey<'a>) {
         match it {
             PropertyKey::TemplateLiteral(it) => self.visit_template_literal(it),
@@ -264,6 +273,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             _ => {
                 // Remaining variants do not contain scopes:
                 // `StaticIdentifier`
+                // `StaticStringLiteral`
+                // `StaticNumericLiteral`
+                // `StaticBigIntLiteral`
                 // `PrivateIdentifier`
                 // `BooleanLiteral`
                 // `NullLiteral`

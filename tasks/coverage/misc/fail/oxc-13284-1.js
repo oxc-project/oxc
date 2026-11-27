@@ -145,13 +145,13 @@ class G extends super() {}
 class H extends (() => () => 123 + super()) {}
 
 // `super()` in class decorators
-@super()
+@(super())
 class I extends Super {
-  @super() prop = 1;
-  @super() static prop = 2;
-  @super() accessor access = 3;
-  @super() static accessor access = 4;
-  @super() method() {}
+  @(super()) prop = 1;
+  @(super()) static prop = 2;
+  @(super()) accessor access = 3;
+  @(super()) static accessor access = 4;
+  @(super()) method() {}
 }
 
 // `super()` in properties / methods of class inside class constructor
@@ -223,25 +223,25 @@ class N extends Super {
 
 // `super()` in decorators of class inside class property
 class O extends Super {
-  prop = @super() class Inner extends Super {
-    @super() prop = 1;
-    @super() static prop = 2;
-    @super() accessor access = 3;
-    @super() static accessor access = 4;
-    @super() method() {}
+  prop = @(super()) class Inner extends Super {
+    @(super()) prop = 1;
+    @(super()) static prop = 2;
+    @(super()) accessor access = 3;
+    @(super()) static accessor access = 4;
+    @(super()) method() {}
   };
 }
 
 // `super()` in decorators of class inside class method
 class P extends Super {
   method() {
-    @super()
+    @(super())
     class Inner extends Super {
-      @super() prop = 1;
-      @super() static prop = 2;
-      @super() accessor access = 3;
-      @super() static accessor access = 4;
-      @super() method() {}
+      @(super()) prop = 1;
+      @(super()) static prop = 2;
+      @(super()) accessor access = 3;
+      @(super()) static accessor access = 4;
+      @(super()) method() {}
     }
   }
 }
@@ -268,7 +268,7 @@ class Q extends Super {
         class H {
           @(
             class I {
-              @super()
+              @(super())
               method() {}
             }
           )

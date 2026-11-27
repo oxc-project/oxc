@@ -24,3 +24,4 @@
 }
 @defer (on   viewport;   prefetch on
    idle) { <p>x</p> }
+@defer (on viewport;   prefetch on idle; on timer(5000ms); when someVeryVeryVeryLongConditionName) { <p>x</p> }

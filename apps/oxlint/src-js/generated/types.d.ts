@@ -114,23 +114,41 @@ export interface ObjectExpression extends Span {
   parent: Node;
 }
 
-export type ObjectPropertyKind = ObjectProperty | SpreadElement;
+export type ObjectPropertyKind = ObjectProperty | ObjectMethodProperty | SpreadElement;
 
 export interface ObjectProperty extends Span {
   type: "Property";
-  kind: PropertyKind;
+  kind: "init";
   key: PropertyKey;
   value: Expression;
-  method: boolean;
+  method: false;
   shorthand: boolean;
   computed: boolean;
   optional?: false;
   parent: Node;
 }
 
-export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
+export interface ObjectMethodProperty extends Span {
+  type: "Property";
+  kind: ObjectMethodKind;
+  key: PropertyKey;
+  value: Function;
+  method: boolean;
+  shorthand: false;
+  computed: boolean;
+  optional?: false;
+  parent: Node;
+}
 
-export type PropertyKind = "init" | "get" | "set";
+export type ObjectMethodKind = "init" | "get" | "set";
+
+export type PropertyKey =
+  | IdentifierName
+  | StringLiteral
+  | NumericLiteral
+  | BigIntLiteral
+  | PrivateIdentifier
+  | Expression;
 
 export interface TemplateLiteral extends Span {
   type: "TemplateLiteral";
@@ -1737,6 +1755,7 @@ export type Node =
   | ArrayExpression
   | ObjectExpression
   | ObjectProperty
+  | ObjectMethodProperty
   | TemplateLiteral
   | TaggedTemplateExpression
   | TemplateElement

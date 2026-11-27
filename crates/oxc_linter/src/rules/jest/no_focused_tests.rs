@@ -34,8 +34,7 @@ impl Rule for NoFocusedTests {
 
 #[test]
 fn test() {
-    use crate::fixer::FixKind;
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("describe()", None),

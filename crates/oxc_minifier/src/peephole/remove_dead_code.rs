@@ -108,7 +108,6 @@ impl<'a> PeepholeOptimizations {
                     if_stmt.test.span(),
                     if boolean { 1.0 } else { 0.0 },
                     None,
-                    NumberBase::Decimal,
                     ctx,
                 );
                 ctx.replace_expression(&mut if_stmt.test, new_test);
@@ -707,12 +706,20 @@ impl<'a> PeepholeOptimizations {
     /// Whether the indirect access should be kept.
     /// For example, `(0, foo.bar)()` should not be transformed to `foo.bar()`.
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
+    /// Also applies to decorators: `@((0, foo.bar))` should not be
+    /// transformed to `@(foo.bar)`, as the decorator's `this` differs.
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
     pub fn should_keep_indirect_access(
         access_value: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
+        // Example case: `x = (0, class {})` (`x.name === ""`) -> `x = class {}` (`x.name === "x"`)
+        if ctx.is_expression_whose_name_needs_to_be_kept(access_value)
+            && Self::is_named_evaluation_position(ctx)
+        {
+            return true;
+        }
         match ctx.parent() {
             Ancestor::CallExpressionCallee(call)
                 if !call.optional()
@@ -732,6 +739,17 @@ impl<'a> PeepholeOptimizations {
                     _ => false,
                 }
             }
+            Ancestor::DecoratorExpression(_) => match access_value {
+                // Example case: `@((0, foo.bar))` (decorator `this` is `undefined`)
+                // -> `@(foo.bar)` (decorator `this` is `foo`)
+                match_member_expression!(Expression) => true,
+                // Example case: `@((0, foo?.bar))` (decorator `this` is `undefined`)
+                // -> `@(foo?.bar)` (decorator `this` is `foo`)
+                Expression::ChainExpression(chain) => {
+                    matches!(&chain.expression, match_member_expression!(ChainElement))
+                }
+                _ => false,
+            },
             Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
                 UnaryOperator::Typeof => {
                     // Example case: `typeof (0, foo)` (error) -> `typeof foo` (no error)
@@ -763,13 +781,38 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether an anonymous function or class in the current position would be
+    /// named by NamedEvaluation, e.g. `x = class {}` names the class `x`.
+    ///
+    /// Destructuring targets and member assignments do not name the value.
+    /// `__proto__: class {}` does not either, but it is kept for simplicity.
+    fn is_named_evaluation_position(ctx: &TraverseCtx<'a>) -> bool {
+        match ctx.parent() {
+            Ancestor::AssignmentExpressionRight(assign) => {
+                let operator = *assign.operator();
+                (operator.is_assign() || operator.is_logical())
+                    && matches!(assign.left(), AssignmentTarget::AssignmentTargetIdentifier(_))
+            }
+            Ancestor::VariableDeclaratorInit(decl) => decl.id().is_binding_identifier(),
+            Ancestor::AssignmentPatternRight(pattern) => pattern.left().is_binding_identifier(),
+            Ancestor::FormalParameterInitializer(param) => param.pattern().is_binding_identifier(),
+            Ancestor::AssignmentTargetWithDefaultInit(target) => {
+                matches!(target.binding(), AssignmentTarget::AssignmentTargetIdentifier(_))
+            }
+            Ancestor::AssignmentTargetPropertyIdentifierInit(_)
+            | Ancestor::ObjectPropertyValue(_)
+            | Ancestor::PropertyDefinitionValue(_)
+            | Ancestor::AccessorPropertyValue(_)
+            | Ancestor::ExportDefaultDeclarationDeclaration(_) => true,
+            _ => false,
+        }
+    }
+
     /// Wrap `expr` as `(0, expr)` so an access that
     /// [`Self::should_keep_indirect_access`] flagged stays indirect.
     ///
     /// The shape is load-bearing: `remove_sequence_expression`'s idempotency
     /// gate recognizes exactly a 2-element sequence whose head `is_number_0`.
-    /// Sibling fold sites in `fold_constants.rs` / `try_fold_conditional_expression`
-    /// still build it inline; migrating them here is welcome.
     pub fn preserve_indirect_access(
         span: Span,
         expr: Expression<'a>,

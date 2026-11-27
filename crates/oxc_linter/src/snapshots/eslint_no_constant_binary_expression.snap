@@ -2,6 +2,27 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:12]
+ 1 │ const id = Symbol() ?? fallback;
+   ·            ────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant nullishness on the left-hand side of a "??" expression
+   ╭─[no_constant_binary_expression.tsx:1:15]
+ 1 │ const count = BigInt(input) ?? fallback;
+   ·               ─────────────────────────
+   ╰────
+  help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
+   ╭─[no_constant_binary_expression.tsx:1:31]
+ 1 │ function same(value) { return new Object() === value; }
+   ·                               ──────────────────────
+   ╰────
+  help: These two values can never be equal
+
   ⚠ eslint(no-constant-binary-expression): Unexpected constant truthiness on the left-hand side of a "&&" expression
    ╭─[no_constant_binary_expression.tsx:1:1]
  1 │ [] && greeting

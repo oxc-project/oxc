@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
+use oxc_diagnostics::{Diagnostic, OxcDiagnostic};
 use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
 
 use super::{Expect, SemanticTester};
@@ -301,9 +301,9 @@ impl<'a> Expect<(Rc<Semantic<'a>>, SymbolId), Result<(), OxcDiagnostic>> for Sym
     }
 }
 
-impl<'a> From<SymbolTester<'a>> for Result<(), Error> {
+impl<'a> From<SymbolTester<'a>> for Result<(), Box<dyn Diagnostic + Send + Sync + 'a>> {
     fn from(val: SymbolTester<'a>) -> Self {
-        let source_code = val.parent.source_text.to_string();
-        val.test_result.map(|_| {}).map_err(|e| e.with_source_code(source_code))
+        let source_text = val.parent.source_text;
+        val.test_result.map(|_| {}).map_err(|e| e.with_source_code(source_text))
     }
 }

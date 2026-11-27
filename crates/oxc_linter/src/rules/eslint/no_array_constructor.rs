@@ -49,7 +49,7 @@ declare_oxc_lint!(
     NoArrayConstructor,
     eslint,
     pedantic,
-    fix,
+    conditional_fix_suggestion,
     version = "0.0.3",
     short_description = "Disallows creating arrays with the `Array` constructor.",
 );
@@ -87,10 +87,14 @@ impl Rule for NoArrayConstructor {
             && type_parameters.is_none()
             && !optional
         {
-            ctx.diagnostic_with_fix(no_array_constructor_diagnostic(span), |fixer| {
-                if arg_len <= 2 && last_arg_is_spread {
-                    return fixer.noop();
-                }
+            let non_spread_args = arguments.iter().filter(|argument| !argument.is_spread()).count();
+            let fix_kind = if arg_len == 0 || non_spread_args >= 2 {
+                FixKind::SafeFix
+            } else {
+                FixKind::Suggestion
+            };
+            let diagnostic = no_array_constructor_diagnostic(span);
+            ctx.diagnostic_with_fix_of_kind(diagnostic, fix_kind, |fixer| {
                 let replacement = if arg_len == 0 {
                     ""
                 } else {
@@ -109,7 +113,7 @@ impl Rule for NoArrayConstructor {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "new Array(x)",
@@ -167,6 +171,7 @@ fn test() {
         "const array = new Array(...args);",
         "const array = Array(5, ...args);",
         "const array = Array(5, 6, ...args);",
+        "const xs = Array(...[], 3);",
         // "a = new (Array);",
         // "a = new (Array) && (foo);",
         "/*a*/Array()",
@@ -218,10 +223,10 @@ fn test() {
     ];
 
     let fix = vec![
-        ("new Array()", "[]"),
-        ("new Array", "[]"),
-        ("new Array(x, y)", "[x, y]"),
-        ("new Array(0, 1, 2)", "[0, 1, 2]"),
+        ("new Array()", "[]", None, FixKind::SafeFix),
+        ("new Array", "[]", None, FixKind::SafeFix),
+        ("new Array(x, y)", "[x, y]", None, FixKind::SafeFix),
+        ("new Array(0, 1, 2)", "[0, 1, 2]", None, FixKind::SafeFix),
         // TODO: Catch this case and fix it:
         // (
         //     "
@@ -237,12 +242,17 @@ fn test() {
         //                         ];
         //                         ",
         // ),
-        ("const array = Array(5, 6, ...args);", "const array = [5, 6, ...args];"),
+        (
+            "const array = Array(5, 6, ...args);",
+            "const array = [5, 6, ...args];",
+            None,
+            FixKind::SafeFix,
+        ),
         // TODO: Catch this case:
         // ("a = new (Array);", "a = [];"),
         // ("a = new (Array) && (foo);", "a = [] && (foo);"),
-        ("/*a*/Array()", "/*a*/[]"),
-        ("/*a*/Array()/*b*/", "/*a*/[]/*b*/"),
+        ("/*a*/Array()", "/*a*/[]", None, FixKind::SafeFix),
+        ("/*a*/Array()/*b*/", "/*a*/[]/*b*/", None, FixKind::SafeFix),
         // TODO: Preserve comments around callee:
         // ("Array(/*a*/ /*b*/)", "[/*a*/ /*b*/]"),
         // ("Array(/*a*/ x /*b*/, /*c*/ y /*d*/)", "[/*a*/ x /*b*/, /*c*/ y /*d*/]"),
@@ -250,24 +260,28 @@ fn test() {
         //     "/*a*/Array(/*b*/ x /*c*/, /*d*/ y /*e*/)/*f*/;/*g*/",
         //     "/*a*/[/*b*/ x /*c*/, /*d*/ y /*e*/]/*f*/;/*g*/",
         // ),
-        ("/*a*/new Array", "/*a*/[]"),
-        ("/*a*/new Array/*b*/", "/*a*/[]/*b*/"),
+        ("/*a*/new Array", "/*a*/[]", None, FixKind::SafeFix),
+        ("/*a*/new Array/*b*/", "/*a*/[]/*b*/", None, FixKind::SafeFix),
         // TODO: Preserve comments:
         // ("new Array(/*a*/ /*b*/)", "[/*a*/ /*b*/]"),
         // ("new Array(/*a*/ x /*b*/, /*c*/ y /*d*/)", "[/*a*/ x /*b*/, /*c*/ y /*d*/]"),
-        ("new Array();", "[];"),
-        ("Array();", "[];"),
-        ("new Array(x, y);", "[x, y];"),
-        ("Array(x, y);", "[x, y];"),
-        ("new Array(0, 1, 2);", "[0, 1, 2];"),
-        ("Array(0, 1, 2);", "[0, 1, 2];"),
+        ("new Array();", "[];", None, FixKind::SafeFix),
+        ("Array();", "[];", None, FixKind::SafeFix),
+        ("new Array(x, y);", "[x, y];", None, FixKind::SafeFix),
+        ("Array(x, y);", "[x, y];", None, FixKind::SafeFix),
+        ("new Array(0, 1, 2);", "[0, 1, 2];", None, FixKind::SafeFix),
+        ("Array(0, 1, 2);", "[0, 1, 2];", None, FixKind::SafeFix),
         // A statement-initial `[` continues the line above when it has no semicolon.
-        ("foo\nArray()", "foo\n;[]"),
-        ("foo\nArray(1, 2)", "foo\n;[1, 2]"),
-        ("foo\nnew Array()", "foo\n;[]"),
-        ("foo;\nArray()", "foo;\n[]"),
-        ("Array()", "[]"),
-        ("if (x) Array()", "if (x) []"),
+        ("foo\nArray()", "foo\n;[]", None, FixKind::SafeFix),
+        ("foo\nArray(1, 2)", "foo\n;[1, 2]", None, FixKind::SafeFix),
+        ("foo\nnew Array()", "foo\n;[]", None, FixKind::SafeFix),
+        ("foo;\nArray()", "foo;\n[]", None, FixKind::SafeFix),
+        // identifiers can end with non-ASCII identifier parts
+        ("foo\u{200c}\nArray(1, 2)", "foo\u{200c}\n;[1, 2]", None, FixKind::SafeFix),
+        ("foo\u{200d}\nArray(1, 2)", "foo\u{200d}\n;[1, 2]", None, FixKind::SafeFix),
+        ("foo\u{301}\nArray(1, 2)", "foo\u{301}\n;[1, 2]", None, FixKind::SafeFix),
+        ("Array()", "[]", None, FixKind::SafeFix),
+        ("if (x) Array()", "if (x) []", None, FixKind::SafeFix),
         // TODO: these no longer produce invalid syntax, but they still differ: after a
         // `}) as Fn` line the fixer now inserts a `;` that the expected output below
         // does not have. `[` after a type position is read as an array type (`Fn[]`),
@@ -312,6 +326,18 @@ fn test() {
         (
             "// leading\nfoo() // trailing\n// above\nnew Array(1, 2)",
             "// leading\nfoo() // trailing\n// above\n;[1, 2]",
+            None,
+            FixKind::SafeFix,
+        ),
+        ("const xs = Array(...[], 3);", "const xs = Array(...[], 3);", None, FixKind::SafeFix),
+        ("const xs = Array(...[], 3);", "const xs = [...[], 3];", None, FixKind::Suggestion),
+        ("const xs = Array(...values);", "const xs = Array(...values);", None, FixKind::SafeFix),
+        ("const xs = Array(...values);", "const xs = [...values];", None, FixKind::Suggestion),
+        (
+            "const array = Array(5, ...args);",
+            "const array = [5, ...args];",
+            None,
+            FixKind::Suggestion,
         ),
     ];
 

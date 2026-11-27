@@ -1,11 +1,12 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -128,7 +129,7 @@ impl Rule for NoUselessComputedKey {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ObjectProperty(property) if property.computed => {
+            AstKind::ObjectProperty(property) if property.key.is_computed() => {
                 if let Some(expr) =
                     property.key.as_expression().map(Expression::without_parentheses)
                 {
@@ -143,7 +144,22 @@ impl Rule for NoUselessComputedKey {
                     );
                 }
             }
-            AstKind::BindingProperty(binding_prop) if binding_prop.computed => {
+            AstKind::ObjectMethodProperty(property) if property.key.is_computed() => {
+                if let Some(expr) =
+                    property.key.as_expression().map(Expression::without_parentheses)
+                {
+                    check_computed_class_member(
+                        ctx,
+                        property.key.span(),
+                        property.span,
+                        expr,
+                        false,
+                        &[],
+                        &["__proto__"],
+                    );
+                }
+            }
+            AstKind::BindingProperty(binding_prop) if binding_prop.key.is_computed() => {
                 if let Some(expr) =
                     binding_prop.key.as_expression().map(Expression::without_parentheses)
                 {
@@ -159,7 +175,7 @@ impl Rule for NoUselessComputedKey {
                 }
             }
             AstKind::PropertyDefinition(prop_def)
-                if self.enforce_for_class_members && prop_def.computed =>
+                if self.enforce_for_class_members && prop_def.key.is_computed() =>
             {
                 if let Some(expr) =
                     prop_def.key.as_expression().map(Expression::without_parentheses)
@@ -176,7 +192,7 @@ impl Rule for NoUselessComputedKey {
                 }
             }
             AstKind::MethodDefinition(method_def)
-                if self.enforce_for_class_members && method_def.computed =>
+                if self.enforce_for_class_members && method_def.key.is_computed() =>
             {
                 if let Some(expr) =
                     method_def.key.as_expression().map(Expression::without_parentheses)

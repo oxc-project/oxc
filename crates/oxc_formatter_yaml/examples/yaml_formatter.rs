@@ -10,6 +10,7 @@
 //! ```bash
 //! cargo run -p oxc_formatter_yaml --example yaml_formatter [filename]
 //! cargo run -p oxc_formatter_yaml --example yaml_formatter -- --print-width 100 [filename]
+//! cargo run -p oxc_formatter_yaml --example yaml_formatter -- --tab-width 4 [filename]
 //! cargo run -p oxc_formatter_yaml --example yaml_formatter -- --diff [filename]
 //! ```
 
@@ -18,7 +19,7 @@ use std::fs;
 use pico_args::Arguments;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::LineWidth;
+use oxc_formatter_core::{IndentWidth, LineWidth};
 use oxc_formatter_yaml::YamlFormatOptions;
 use oxc_tasks_common::print_diff_in_terminal;
 
@@ -27,6 +28,7 @@ fn main() -> Result<(), String> {
     // Show diff between original and formatted code
     let show_diff = args.contains("--diff");
     let print_width = args.opt_value_from_str::<&'static str, u16>("--print-width").unwrap_or(None);
+    let tab_width = args.opt_value_from_str::<&'static str, u8>("--tab-width").unwrap_or(None);
     let prose_wrap =
         args.opt_value_from_str::<&'static str, String>("--prose-wrap").unwrap_or(None);
     let name = args.free_from_str().unwrap_or_else(|_| "test.yaml".to_string());
@@ -42,7 +44,9 @@ fn main() -> Result<(), String> {
         Some("never") => oxc_formatter_yaml::ProseWrap::Never,
         _ => oxc_formatter_yaml::ProseWrap::Preserve,
     };
-    let options = YamlFormatOptions { line_width, prose_wrap, ..Default::default() };
+    let indent_width =
+        tab_width.map_or_else(IndentWidth::default, |width| IndentWidth::try_from(width).unwrap());
+    let options = YamlFormatOptions { line_width, indent_width, prose_wrap, ..Default::default() };
 
     let allocator = Allocator::new();
     let formatted = match oxc_formatter_yaml::format(&allocator, &source_text, options) {

@@ -1,3 +1,6 @@
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -9,8 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::GetPrecedence;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -213,7 +214,8 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
                         Expression::AssignmentExpression(_)
                         | Expression::ArrowFunctionExpression(_)
                         | Expression::YieldExpression(_)
-                        | Expression::LogicalExpression(_) => {
+                        | Expression::LogicalExpression(_)
+                        | Expression::ConditionalExpression(_) => {
                             format!("{former}({right_expr_text})")
                         }
                         // For the rest
@@ -598,6 +600,8 @@ fn test() {
             "x = x + + /** fooo */ (() => {})",
             Some(serde_json::json!(["never"])),
         ),
+        ("x += c ? 1 : 2", "x = x + (c ? 1 : 2)", Some(serde_json::json!(["never"]))),
+        ("x *= c ? a : b", "x = x * (c ? a : b)", Some(serde_json::json!(["never"]))),
     ];
     Tester::new(OperatorAssignment::NAME, OperatorAssignment::PLUGIN, pass, fail)
         .expect_fix(fix)

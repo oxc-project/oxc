@@ -1,8 +1,10 @@
+use cow_utils::CowUtils;
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, CompressOptionsUnused, default_options, test, test_options,
-    test_options_source_type, test_same, test_same_options, test_same_options_source_type,
+    CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
+    test_options, test_options_source_type, test_same, test_same_options,
+    test_same_options_source_type,
 };
 
 #[track_caller]
@@ -351,6 +353,114 @@ fn remove_unused_expressions_in_sequence() {
     test("delete (0, foo.bar);", "foo.bar");
     test("delete (0, foo[bar]);", "foo[bar]");
     test("delete (0, foo?.bar);", "foo?.bar");
+}
+
+#[test]
+fn keep_indirect_access_in_decorator() {
+    test("@((0, a.b)) class C {}", "@(0, a.b) class C {}");
+    test("@((0, a[b])) class C {}", "@(0, a[b]) class C {}");
+    test("@((true, a.b)) class C {}", "@(0, a.b) class C {}");
+    test("@((true, true, a.b)) class C {}", "@(0, a.b) class C {}");
+    test_same("@(x(), a.b) class C {}");
+    test("@(true ? a.b : c) class D {}", "@(0, a.b) class D {}");
+    test("var x; @(x ? a.b : a.b) class D {}", "var x; @(0, a.b) class D {}");
+    test("@(true && a.b) class C {}", "@(0, a.b) class C {}");
+    test("@(null ?? a.b) class C {}", "@(0, a.b) class C {}");
+    test("class E { @((0, a.b)) m() {} }", "class E { @(0, a.b) m() {} }");
+    test("class E { @((0, a.b)) p = 1 }", "class E { @(0, a.b) p = 1 }");
+    test("@((0, foo)) class C {}", "@foo class C {}");
+    test("@((0, a?.b)) class C {}", "@(0, a?.b) class C {}");
+    test("@((0, a?.b.c)) class C {}", "@(0, a?.b.c) class C {}");
+    test("@(true && a?.b) class C {}", "@(0, a?.b) class C {}");
+    test("@((0, a?.b())) class C {}", "@(a?.b()) class C {}");
+}
+
+#[test]
+fn keep_names_indirect_anonymous_function_definition() {
+    let keep_names =
+        CompressOptions { keep_names: CompressOptionsKeepNames::all_true(), ..default_options() };
+    let class_only =
+        CompressOptions { keep_names: CompressOptionsKeepNames::class_only(), ..default_options() };
+    let function_only = CompressOptions {
+        keep_names: CompressOptionsKeepNames::function_only(),
+        ..default_options()
+    };
+
+    // `(0, value)` stops NamedEvaluation, so removing `0,` would give the value a name.
+    let named = [
+        "x = (0, VALUE)",
+        "x ||= (0, VALUE)",
+        "var x = (0, VALUE)",
+        "function f(a = (0, VALUE)) { return a }",
+        "var { a = (0, VALUE) } = o",
+        "[a = (0, VALUE)] = o",
+        "({ a = (0, VALUE) } = o)",
+        "x = { a: (0, VALUE) }",
+        "x = { [a]: (0, VALUE) }",
+        "x = class { a = (0, VALUE) }",
+        "x = class { accessor a = (0, VALUE) }",
+    ];
+    // These positions never name the value, so `0,` can always be removed.
+    let unnamed = [
+        ("f((0, VALUE))", "f(VALUE)"),
+        ("x.y = (0, VALUE)", "x.y = VALUE"),
+        ("x[y] = (0, VALUE)", "x[y] = VALUE"),
+        ("[x.y = (0, VALUE)] = o", "[x.y = VALUE] = o"),
+        ("x = [(0, VALUE)]", "x = [VALUE]"),
+    ];
+    let values = ["class {}", "class extends v {}", "function () {}", "() => {}"];
+
+    for value in values {
+        let is_class = value.starts_with("class");
+        for source in named {
+            let source = source.cow_replace("VALUE", value);
+            let folded = source.cow_replace(&format!("(0, {value})"), value);
+            test_same_options(&source, &keep_names);
+            if is_class {
+                test_same_options(&source, &class_only);
+                test_options(&source, &folded, &function_only);
+            } else {
+                test_same_options(&source, &function_only);
+                test_options(&source, &folded, &class_only);
+            }
+            // Names are not guaranteed without `keepNames`, so the smaller output is kept.
+            test(&source, &folded);
+        }
+        for (source, expected) in unnamed {
+            let source = source.cow_replace("VALUE", value);
+            let expected = expected.cow_replace("VALUE", value);
+            test_options(&source, &expected, &keep_names);
+            test(&source, &expected);
+        }
+    }
+
+    // `export default (class {})` is also named `default`.
+    test_same_options("export default (0, class {})", &keep_names);
+    test_same_options("export default (0, function () {})", &keep_names);
+    test_same_options("export default (0, () => {})", &keep_names);
+    test("export default (0, class {})", "export default (class {})");
+    test("export default (0, function () {})", "export default (function () {})");
+
+    // Other side-effect-free leading elements are reduced to the `0,` placeholder.
+    test_options("x = (1, class {})", "x = (0, class {})", &keep_names);
+    test_options("x = (a(), 1, 2, class {})", "x = (a(), 0, class {})", &keep_names);
+    test_options("x = (true && class {})", "x = (0, class {})", &keep_names);
+    test_options("x = (true ? class {} : 0)", "x = (0, class {})", &keep_names);
+    test("x = (true ? class {} : 0)", "x = class {}");
+    // Named values and non-assigning operators are not affected.
+    test_options("x = (0, class C {})", "x = class C {}", &keep_names);
+    test_options("x = (0, function f() {})", "x = function f() {}", &keep_names);
+    test_options("x += (0, class {})", "x += class {}", &keep_names);
+
+    // Output of the class-properties transform for a lowered anonymous class (#29931).
+    test_same_options(
+        "var _Class; function make(v) { return _Class = (0, class extends v {}), _Class.r = 1, _Class }",
+        &keep_names,
+    );
+    test(
+        "var _Class; function make(v) { return _Class = (0, class extends v {}), _Class.r = 1, _Class }",
+        "var _Class; function make(v) { return _Class = class extends v {}, _Class.r = 1, _Class }",
+    );
 }
 
 #[test]

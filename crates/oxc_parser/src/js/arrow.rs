@@ -304,7 +304,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                     return Some((arrow, true));
                 }
-            } else if kind == Kind::LAngle {
+            } else if kind == Kind::LAngle && self.is_ts {
+                // `async <T>(x) => ...`.
+                // `is_ts` check above because in JS/JSX, `async <` is a comparison
+                // (`f(async < b, c)`).
                 self.rewind(checkpoint);
                 return self
                     .try_parse_generic_arrow_function_expression(
@@ -611,13 +614,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse an arrow function with type parameters, if `<` starts one: `<T>(a: T) => a`.
     ///
     /// The cursor is at `<`, or at an `async` that is followed by `<` on the same line.
+    ///
+    /// In JS/JSX this always returns `None`, as type parameters are a TS-only thing.
+    /// This function is only called in a JS file for a `<` at the start of an expression,
+    /// which is a syntax error. Checking `is_ts` here, or before calling this function,
+    /// would add a branch to valid TS/TSX, just to bail out sooner on invalid JS (rare).
     pub(super) fn try_parse_generic_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         let kind = self.lookahead(|p| {
-            p.bump(Kind::Async);
-            p.is_generic_arrow_function_expression()
+            let is_async = p.eat(Kind::Async);
+            p.is_generic_arrow_function_expression(is_async)
         });
         // Most `<` do not start type parameters. Decide that here, without a call.
         if kind == Tristate::False {
@@ -647,7 +655,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Whether the `<` at the cursor starts the type parameters of an arrow function.
-    fn is_generic_arrow_function_expression(&mut self) -> Tristate {
+    /// `is_async` is whether the `<` follows `async`.
+    ///
+    /// Called in TS, in TSX only after `async`, and in JS only for invalid code.
+    /// Never called in JSX.
+    fn is_generic_arrow_function_expression(&mut self, is_async: bool) -> Tristate {
         debug_assert!(self.at(Kind::LAngle));
         self.bump_any(); // `<`
         let second = self.cur_kind();
@@ -658,8 +670,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return Tristate::False;
         }
 
-        // JSX overrides
+        // TSX overrides. Only `async <` gets here in TSX.
         if self.source_type.is_jsx() {
+            debug_assert!(self.is_ts);
             // <const Ident extends Ident>
             //  ^^^^^ Optional
             self.bump(Kind::Const);
@@ -668,18 +681,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // `<T>` may start an arrow function, which is then tried first. The exception is
-        // a type assertion that the next tokens give away, because trying to parse them as
-        // type parameters and parameters is certain to fail: the name of a type parameter is
-        // followed by `,`, `=`, `extends` or `>`, not by the rest of a type as in `<A.B>a`,
-        // `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of type parameters is followed by
-        // `(`, not by an operand as in `<T>a` and `<any>{}`.
+        // a type assertion, or type arguments after `async`, that the next tokens give away,
+        // because trying to parse them as type parameters and parameters is certain to fail:
+        // the name of a type parameter is followed by `,`, `=`, `extends` or `>`, not by the
+        // rest of a type as in `<A.B>a`, `<A[]>a`, `<A | B>a` and `<A<B>>a`, and the `>` of
+        // type parameters is followed by `(`, not by an operand as in `<T>a` and `<any>{}`.
+        // JS only gets here for invalid code. `Maybe` gives it a better error for `<T,>`.
         if !self.is_ts || second == Kind::Const {
             return Tristate::Maybe;
         }
         self.bump_any(); // the name
         match self.cur_kind() {
-            // `<T,` is not a type, so it can only start type parameters.
-            Kind::Comma => Tristate::True,
+            // `<T,` cannot start a type assertion, but after `async` it can start type
+            // arguments, as in `async<A, B>()` and `async<A, B>;`.
+            Kind::Comma => {
+                if is_async {
+                    Tristate::Maybe
+                } else {
+                    Tristate::True
+                }
+            }
             Kind::Dot | Kind::LBrack | Kind::Pipe | Kind::Amp | Kind::LAngle => Tristate::False,
             Kind::RAngle => {
                 self.bump_any(); // `>`
@@ -698,7 +719,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Whether `<` and a name start the type parameters of an arrow function in a JSX file,
+    /// Whether `<` and a name start the type parameters of an arrow function in a TSX file,
     /// where they can also start a JSX element. The cursor is at the token after the name,
     /// and moves past an `extends`.
     ///
@@ -713,10 +734,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// a JSX element is followed by `.`, `:`, `<`, `{`, `/`, `>` or an attribute name, which may
     /// be `extends`. So `,` and `=` are type parameters, `extends` is decided by the token
     /// after it, and everything else is a JSX element. That includes `<T>`, which is why
-    /// the type parameters of an arrow function are written `<T,>` in a JSX file.
+    /// the type parameters of an arrow function are written `<T,>` in a TSX file.
     #[expect(clippy::inline_always)]
     #[inline(always)] // Keep `is_generic_arrow_function_expression` in one piece.
     pub(crate) fn is_generic_arrow_function_expression_after_jsx_name(&mut self) -> Tristate {
+        debug_assert!(self.is_ts);
         match self.cur_kind() {
             Kind::Extends => {
                 self.bump_any();
@@ -724,10 +746,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if matches!(next, Kind::Eq | Kind::RAngle | Kind::Slash) {
                     // An attribute: `<T extends={U}>`, `<T extends>`, `<T extends />`.
                     Tristate::False
-                } else if next.is_binding_identifier() {
-                    // `<T extends U>(a) => a`, or an element with attributes `extends` and `U`.
-                    Tristate::Maybe
                 } else {
+                    // A constraint: `<T extends U>(a) => a`. `<T extends U` could also start an
+                    // element with attributes `extends` and `U`, but TypeScript always reads it
+                    // as type parameters, so `<T extends U>(a)</T>` is a syntax error.
                     Tristate::True
                 }
             }

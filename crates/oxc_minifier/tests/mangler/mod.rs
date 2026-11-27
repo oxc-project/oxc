@@ -165,6 +165,13 @@ fn mangler() {
         "function _() { class Foo { foo() { var x } } }",
         "function _() { var Foo = class { foo() { var x } } }",
         "function _() { var foo; try {} catch (foo) { var foo = function() {} } }",
+        // A redeclaration, not the first declaration, sets the name.
+        "function _() { var foo; var foo = function() { var x } }",
+        "function _() { var foo = 1; var foo = () => { var x } }",
+        "function _() { var Foo; var Foo = class { foo() { var x } } }",
+        "function _(foo) { var foo = function() { var x } }",
+        "function _() { var foo; function foo() { var x } }",
+        "function _(foo) { function foo() { var x } }",
     ];
 
     let mut snapshot = String::new();
@@ -230,6 +237,15 @@ fn private_member_mangling() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("private_member_mangling", snapshot);
     });
+}
+
+#[test]
+fn private_member_mangling_debug() {
+    test(
+        "class C { #field = 1; get() { return this.#field; } }",
+        "class C { #slot_0 = 1; get() { return this.#slot_0; } }",
+        &MangleOptions { debug: true, ..MangleOptions::default() },
+    );
 }
 
 /// A named function expression whose name is shadowed by a same-named declaration in its
@@ -384,6 +400,39 @@ fn reserved_names() {
              function t(e) { return e; }
              e.queue = t;
          });",
+        &MangleOptions::default(),
+    );
+}
+
+/// A top-level `var exports` / `var require` in a CommonJS file redeclares the
+/// module wrapper's parameter, so renaming it breaks the module.
+#[test]
+fn commonjs_wrapper_names() {
+    let mangle_cjs = |source_text: &str| {
+        mangle_with_source_type(source_text, &MangleOptions::default(), SourceType::cjs())
+    };
+
+    let code =
+        mangle_cjs("var exports = exports || {}; exports.a = 1; console.log(module.exports);");
+    assert!(code.contains("var exports = exports || {}"), "{code}");
+    assert!(code.contains("exports.a = 1"), "{code}");
+
+    let code = mangle_cjs("var require; console.log(typeof require);");
+    assert!(code.contains("var require;"), "{code}");
+
+    let code = mangle_cjs(
+        "var module, __filename, __dirname, other; use(module, __filename, __dirname, other);",
+    );
+    assert!(code.contains("var module, __filename, __dirname, e;"), "{code}");
+
+    // Nested bindings with these names are not the wrapper's and are still mangled.
+    let code = mangle_cjs("function f() { var exports = 1; return exports; } use(f);");
+    assert!(!code.contains("exports"), "{code}");
+
+    // ES modules are unaffected.
+    test(
+        "var exports = 1; use(exports); export {};",
+        "var e = 1; use(e); export {};",
         &MangleOptions::default(),
     );
 }

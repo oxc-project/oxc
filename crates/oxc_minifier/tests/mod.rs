@@ -5,11 +5,13 @@ mod mangler;
 mod peephole;
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast::BindingIdentifier;
+use oxc_ast_visit::VisitMut;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_compat::EngineTargets;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_span::{SPAN, SourceType};
 
 pub(crate) use oxc_minifier::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, Compressor, TreeShakeOptions,
@@ -150,6 +152,25 @@ fn run_with_iterations(
     source_type: SourceType,
     options: Option<CompressOptions>,
 ) -> (String, u8) {
+    run_with_binding_spans(source_text, source_type, options, false)
+}
+
+/// Like [`test_smallest`], with every binding given the synthesized `SPAN`, so
+/// redeclarations cannot be told apart by span. No idempotency check: such
+/// redeclarations are never pruned, so the output may shrink on a second run.
+#[track_caller]
+pub(crate) fn test_unspanned_bindings(source_text: &str, expected: &str) {
+    let options = CompressOptions::smallest();
+    let output = run_with_binding_spans(source_text, SourceType::mjs(), Some(options), true).0;
+    assert_eq!(output, run(expected, SourceType::mjs(), None), "for source\n{source_text}");
+}
+
+fn run_with_binding_spans(
+    source_text: &str,
+    source_type: SourceType,
+    options: Option<CompressOptions>,
+    unspanned: bool,
+) -> (String, u8) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type)
         .with_options(ParseOptions { allow_return_outside_function: true, ..Default::default() })
@@ -157,6 +178,15 @@ fn run_with_iterations(
     assert!(!ret.fatal_error, "{source_text}");
     assert!(ret.diagnostics.is_empty(), "{source_text}");
     let mut program = ret.program;
+    if unspanned {
+        struct UnspanBindings;
+        impl<'a> VisitMut<'a> for UnspanBindings {
+            fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
+                ident.span = SPAN;
+            }
+        }
+        UnspanBindings.visit_program(&mut program);
+    }
     let iterations = options.map_or(0, |options| {
         let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
         Compressor::new(&allocator).build_with_scoping(&mut program, scoping, options)

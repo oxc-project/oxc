@@ -92,6 +92,8 @@ A host dispatches a part of its document (`format_to_ir`), its marker translated
 This formatter knows nothing about the host's vocabulary; it wraps the source to parse it as the root says.
 It drives the context-dependent decisions: the layout in the host's delimiters, the quote style, the handler's semicolons.
 The IR goes between the host's delimiters as is: the host names the layout (`ProgramLayout` / `ExpressionLayout`), and this builds it, hugging as the AST says.
+Host text that goes inside that layout ends the dispatched text, its length a marker (`ExpressionRoot::host_suffix`: an Angular alias, ` as x`), and prints as written after the root:
+the host never adds to the IR, which comes back alone.
 
 What the host reads of the code is the contract: the output reads to the host as the input does, code it does not accept included.
 The markers say how it reads (`JsEmbeddedIn`, `ExpressionRoot`'s flags, `ProgramSemicolons`):
@@ -139,6 +141,7 @@ Prettier's attachment artifacts that relocate a comment across tokens are diverg
 
 - Leading / trailing: the newline is the boundary, not the node's span.
   Trailing is the same-line run after content; a comment preceded by a newline is leading for what follows (`formatter/trivia.rs` module doc)
+  - Never `Comment::position` APIs (e.g. `is_trailing()`): the parser sets it for codegen, not for formatter's requirement
 - Deferred: left unprinted on purpose for a later pass (the next sibling's leading pass or the container's dangling pass)
 - Claim: a pass prints a comment and advances the cursor past it
 - Hide: a pass makes comments invisible to a sub-printer (`limit_comments_up_to`) so a later pass can print them
@@ -257,6 +260,12 @@ A same-line block comment right before the hugged content, pinned in `tests/fixt
 - stops the hug: a sole object or array argument, a last-argument arrow, a sole object-pattern parameter
 - keeps the hug: an object type after a `:` (parameter, return type), a sole type argument, the right side of `=`
 
+A negated logical statement-head condition (`if (!(`), pinned in `tests/fixtures/js/if/negated-logical-condition.js`:
+
+- a comment of its own outside its parens stops the hug, a same-line block comment included
+  (a line or line-ending comment needs the head's break anyway, or the condition prints from column 0)
+- a comment inside its parens keeps the hug
+
 A union that hugs (`{ ... } | null`), pinned in `tests/fixtures/ts/union/hug-comments.ts`:
 
 - a member's comment stops the hug, and the union expands like any other (DIVERGENCES.md#union-annotation-flat-retry)
@@ -299,9 +308,12 @@ The second line of each item is the drift symptom.
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
 
-### Open debts
+## Open debts
 
-Behavior our own rules want otherwise, mostly where it follows Prettier. Not accepted, only not fixed yet; each fix is a DIVERGENCES entry plus a fixture pin.
+Behavior our own rules want otherwise, mostly where it follows Prettier.
+Not accepted, only not fixed yet (for compatibility).
+
+### Comments
 
 - TS-only statements (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`)
   and class index signatures keep a same-line comment before their `;` (`import A = B /* c */;`), instead of the glued `;` above.
@@ -322,10 +334,22 @@ Behavior our own rules want otherwise, mostly where it follows Prettier. Not acc
 - An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
   crossing the `(` onto the previous line (`outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
   The hug decision follows that placement (`first_member_comment`), so a fix changes both
-- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
-  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
+- An own-line comment right after a heritage keyword (`extends` / `implements`, a class's or an interface's) crosses it:
+  `class A extends` + break + `// c` + break + `B {}` prints `class A` + break + `// c` + break + `extends B {}` (Prettier too),
+  and in a class without a name the comment is flushed past the whole statement, not a fixpoint (`should_group` sees no span before the superclass).
+  The class head claims every comment before the superclass as the name's trailing ones; the fix bounds that at the keyword
+  and breaks + indents after it, as after `=` (Prettier prints that for an `implements` after an `extends`)
 
 The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
+
+### Layout
+
+- A type predicate's object type is not a fixpoint: `function f(x: unknown): x is { ... } {}` breaks the parameters on the first pass
+  and rejoins them on the second (Prettier too); a plain return type (`): { ... } {}`) is stable
+- Only a member expression superclass without type arguments moves `extends` to the next line (`should_group`, prettier#18325);
+  any other breaks inside itself, so `class X extends a.B<T> {}` overflows when neither `a.B` nor `<T>` can break (Prettier too).
+  Moving it always is worse: a superclass breaking inside anyway only gets indented deeper (`extends Modal<` + break + ... + `>` + break + `{`).
+  The fix moves it only when it then fits, a fits check in the class head
 
 ## Verification
 

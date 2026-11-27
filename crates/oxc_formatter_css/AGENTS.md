@@ -51,6 +51,9 @@ Ownership is a claim discipline, not attachment: each printer claims the comment
 - Statement level: `write_comments` before the statement (then `write_statement_separator`), `write_terminator_tail_comments` before its `;`
 - Value level: a comma group claims its own head (`write_comma_group`); a bare value has no group to do so,
   its CALLER claims (`write_list_element` / `write_top_level_list_element`), never `write_component_value` itself (a `//` hardline would land inside the indent an arm opens)
+- A printer writing a source slice as its text (a glued `and(...)`, `layer(...)`) claims the comments in it, or they print again after it;
+  one writing a closing `)` / `]` claims the comments before it (`flush_trailing_value_comments` up to it), or they cross it.
+  A node's span may stop at its last child, not its `)`: bound the claim by the delimiter, not the child
 - After each statement, the sequence DISCARDS unclaimed comments inside the statement span:
   a monotonicity guard (the cursor must never point before a printed position), not a placement rule.
   A comment reaching it is LOST (the lossless contract), so every new value position must claim its leads
@@ -78,7 +81,9 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
     Prettier's CSS moves it below as the next element's leading comment (DIVERGENCES.md#line-comment-after-comma)
   - a `//` before a list `,` rides past it (`a // c\n, b` -> `a, // c`), an own-line comment there leads the next element;
     a `//` glued to a prelude's end stays there and `{` starts the next line (DIVERGENCES.md#line-comment-before-block)
-  - a structured prelude printer places its own comments, word by word (`value::write_with_comments`: own-line ones lead the word, glued ones trail it),
+  - the comments before a structured prelude lead it through one flush (`write_leading_comments`; a `//` breaks, the prelude continues one level in),
+    as do a Less `@import`'s after its `(options)`, except `@import`'s, which its path fill places itself (a comment fuses with the path after it)
+  - inside it, the prelude printer places its own comments, word by word (`value::write_with_comments`: own-line ones lead the word, glued ones trail it),
     and `write_at_rule` writes whatever is still pending before the `;` / `{`, so a prelude comment is never lost
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
     - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
@@ -97,8 +102,8 @@ The configured `end_of_line` option still applies, the printer emits the chosen 
 
 ### css-in-js specifics
 
-`format_to_ir()` accepts SCSS-like source with `` `PLACEHOLDER-N` `` markers in place of `${}` interpolations.
-`oxc-css-parser` tokenizes each as a typed `Token::Placeholder` via the fork option `template_placeholder` (`format.rs` passes the inner affix). Backtick is invalid SCSS, so the marker can never be confused with real syntax (see the `TEMPLATE_PLACEHOLDER_PREFIX` / `_SUFFIX` consts in `lib.rs`).
+`format_to_ir()` accepts SCSS-like source with `` `oxfmt_css_N` `` markers in place of `${}` interpolations.
+`oxc-css-parser` tokenizes each as a typed `Token::Placeholder` via the fork option `template_placeholder` (`format.rs` passes the inner affix). Backtick is invalid SCSS, so the marker can never be confused with real syntax (see the `TEMPLATE_PLACEHOLDER` const in `lib.rs`, an `oxc_formatter_core::Placeholder`).
 
 Each parses into a typed node that the printer emits as a `FormatElement::EmbedPlaceholder(N)` marker (`print/mod.rs::write_placeholder`), plus a `Text` for any glued suffix; the JS host (`oxc_formatter/embed/css.rs`) substitutes `${exprN}` back. No output-side string protocol — the index is carried structurally.
 
@@ -112,8 +117,8 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - Glued placeholders and static parts interpolate into one name like `#{}` (`${a}-${b}`, `x-${a}`); see DIVERGENCES.md#placeholder-property-name
 - Value position: `ComponentValue::Placeholder`; rides existing gap-based separator rules
   - One added rule: glued to a paren group → `Separator::SoftBreak` (`${fn}(30px)` breaks BEFORE the parens)
-- Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector still triggers "garbage mode" in `write_selector_list`
-  - Emits the raw source slice with whitespace runs collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
+- Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector, outside a string or a comment, still triggers "garbage mode" in `write_selector_list`
+  - Emits the raw source slice with whitespace runs outside strings and comments collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
   - Mirrors `postcss-selector-parser` degrading on at-words
   - A statement-position placeholder-led selector must not absorb across a newline (oxc-css-parser `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
 - String / `url()` / comment position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
@@ -154,6 +159,11 @@ What the formatter relies on per shape:
   A postcss-simple-vars value the typed grammar could not read is verbatim too: the plugin substitutes those bytes textually.
   "Raw plus a little normalization" is the failure mode: re-spacing unknown params corrupts Tailwind syntax (`dark:bg-x` → `dark: bg-x`, `py-1.5` → `py-10.5`).
   A normal property's `<any-value>` fallback is not raw in this sense; it rides the value writer
+- The one sanctioned "raw plus normalization" (`adjust_numbers_and_strings`):
+  Less mixin calls / params / guards, Less verbatim preludes, and a media keyword glued to its parens (`and(...)`, every variant)
+  - It re-scans bytes, so every token it does not know is a corruption risk: only STANDALONE numbers normalize, and strings re-quote
+  - Verbatim: comments, unquoted `url()`, hash tokens (`#1e0`, never `#1`), and glued number runs, head included (`a.10.2`, `1.20.3`)
+  - Glued-run rule shared with the typed side (`is_word_glued_number` / `is_glued_number_head`); change both together
 - The print-layer word heuristics (`value.rs`) rebuild postcss's word model from spec tokens.
   A new one is admitted when its scope is bounded and it improves how structured output is laid out;
   never to match a fixture, and never to reproduce Prettier's string handling
@@ -182,7 +192,7 @@ Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plug
 5. A dedicated `CssVariant` only for real languages with reference compilers. Never for a plugin
 
 A report is first translated into "which line, which shape or which rung is this?", never "how do we support plugin Xxx?".
-Triage follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`.
+Triage follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`, or `#1e0` → `#1` / `a.10.2` → `a.100.2` in a raw slice.
 Specific plugin names accumulating in code is the red flag.
 
 ### Tailwind `@apply` sorting (`CssFormatOptions::sort_tailwindcss`)

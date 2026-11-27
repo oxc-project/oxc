@@ -342,13 +342,11 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
-        let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
         if self.options.debug {
-            self.build_with_semantic_impl(semantic, program, debug_name);
+            self.build_with_semantic_impl(semantic, program, debug_name)
         } else {
-            self.build_with_semantic_impl(semantic, program, base54);
+            self.build_with_semantic_impl(semantic, program, base54)
         }
-        class_private_mappings
     }
 
     /// Mangle the program: rewrite local bindings and labels to the shortest legal names.
@@ -399,7 +397,9 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
-    ) {
+    ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        let class_private_mappings =
+            Self::collect_private_members_from_semantic(semantic, &generate_name);
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
         let allocator = self.temp_allocator.as_ref();
 
@@ -417,12 +417,15 @@ impl<'t> Mangler<'t> {
         names.apply(allocator, scoping, &ranking);
         // ── Phase 6: name labels by nesting depth. ──
         labels::mangle_labels(allocator, scoping, generate_name);
+
+        class_private_mappings
     }
 
     /// Collects and generates mangled names for private members using semantic information
     /// Returns a Vec where each element corresponds to a class in declaration order
-    fn collect_private_members_from_semantic(
+    fn collect_private_members_from_semantic<const CAPACITY: usize>(
         semantic: &Semantic<'_>,
+        generate_name: impl Fn(u32) -> InlineString<CAPACITY, u8>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
 
@@ -458,7 +461,7 @@ impl<'t> Mangler<'t> {
                     // We can improve this by reusing names that are not used in child classes,
                     // but nesting a class inside another class is not common
                     // and that would require liveness analysis.
-                    base54((parent_private_member_count + next_index) as u32).as_str(),
+                    generate_name((parent_private_member_count + next_index) as u32).as_str(),
                 );
                 entry.insert(mangled);
             }
@@ -470,6 +473,12 @@ impl<'t> Mangler<'t> {
 
 fn is_special_name(name: &str) -> bool {
     matches!(name, "arguments")
+}
+
+/// Parameters of Node's CommonJS module wrapper. A top-level binding with one of these
+/// names in a CommonJS file is the same binding as the parameter.
+fn is_commonjs_wrapper_name(name: &str) -> bool {
+    matches!(name, "exports" | "require" | "module" | "__filename" | "__dirname")
 }
 
 #[derive(Debug)]
@@ -505,6 +514,9 @@ struct Constraints<'a> {
     /// Names preserved by the `keep_names` option (function / class names).
     keep_name_names: ArenaIdentHashSet<'a>,
     keep_name_symbols: Option<BitSet<'a>>,
+    /// Whether the program is CommonJS. Its top-level `var exports` / `var require` etc.
+    /// redeclare the module wrapper's parameters, so they must keep their names.
+    is_commonjs: bool,
 }
 
 /// Phase 2 output — each symbol's slot, plus the names a direct `eval` can see.
@@ -559,6 +571,7 @@ impl<'a> Constraints<'a> {
             exported_symbols,
             keep_name_names,
             keep_name_symbols,
+            is_commonjs: program.source_type.is_commonjs(),
         }
     }
 
@@ -588,6 +601,9 @@ impl<'a> Constraints<'a> {
                 || self.exported_symbols.as_ref().is_some_and(|e| e.has_bit(symbol_id.index())))
             || scoping.scope_flags(scope_id).contains_direct_eval()
             || self.is_kept_name(scoping.symbol_ident(symbol_id))
+            || (self.is_commonjs
+                && scope_id == scoping.root_scope_id()
+                && is_commonjs_wrapper_name(scoping.symbol_ident(symbol_id).as_str()))
             || self.keep_name_symbols.as_ref().is_some_and(|keep| keep.has_bit(symbol_id.index())))
     }
 }

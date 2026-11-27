@@ -20,7 +20,8 @@ pub struct DialectRules {
     pub has_blocks: bool,
     /// Angular: the content of an element with `i18n`, and an attribute's value marked by `i18n-x`, print as written (`Tree::keeps_angular_content`, `Tree::keeps_angular_value`).
     pub keeps_angular_content: bool,
-    /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`).
+    /// Vue: the root's elements but `html` are single-file component blocks (`<template>`, `<script>`, `<i18n>`),
+    /// in a file read as HTML too, as Prettier reads them.
     pub vue_sfc: bool,
     /// The language of `{{ }}` and the attribute values that are code.
     pub template_expressions: TemplateExpressions,

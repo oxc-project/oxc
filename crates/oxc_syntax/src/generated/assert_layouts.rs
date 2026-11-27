@@ -7,9 +7,7 @@ use std::mem::{align_of, offset_of, size_of};
 
 use nonmax::NonMaxU32;
 
-use crate::{
-    label::*, module_record::*, node::*, number::*, operator::*, reference::*, scope::*, symbol::*,
-};
+use crate::{label::*, module_record::*, node::*, operator::*, reference::*, scope::*, symbol::*};
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
@@ -68,12 +66,6 @@ const _: () = {
     // Padding: 0 bytes
     assert!(size_of::<NodeId>() == 4);
     assert!(align_of::<NodeId>() == 4);
-
-    assert!(size_of::<NumberBase>() == 1);
-    assert!(align_of::<NumberBase>() == 1);
-
-    assert!(size_of::<BigintBase>() == 1);
-    assert!(align_of::<BigintBase>() == 1);
 
     assert!(size_of::<AssignmentOperator>() == 1);
     assert!(align_of::<AssignmentOperator>() == 1);
@@ -160,12 +152,6 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 0 bytes
     assert!(size_of::<NodeId>() == 4);
     assert!(align_of::<NodeId>() == 4);
-
-    assert!(size_of::<NumberBase>() == 1);
-    assert!(align_of::<NumberBase>() == 1);
-
-    assert!(size_of::<BigintBase>() == 1);
-    assert!(align_of::<BigintBase>() == 1);
 
     assert!(size_of::<AssignmentOperator>() == 1);
     assert!(align_of::<AssignmentOperator>() == 1);

@@ -40,7 +40,7 @@ mod typescript;
 mod decorator;
 mod plugins;
 
-use common::Common;
+use common::{Common, class_transform::ClassTransform};
 use context::TraverseCtx;
 use decorator::Decorator;
 use es2015::ES2015;
@@ -135,6 +135,7 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+        let decorator_mode = self.decorator.mode();
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -158,12 +159,12 @@ impl<'a> Transformer<'a> {
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env),
-            decorator: Decorator::new(self.decorator),
+            decorator: Decorator::new(self.decorator, decorator_mode),
             plugins: Plugins::new(self.plugins),
             x0_typescript: program
                 .source_type
                 .is_typescript()
-                .then(|| TypeScript::new(&self.typescript, &self.state)),
+                .then(|| TypeScript::new(&self.typescript, decorator_mode, &self.state)),
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,
@@ -337,6 +338,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Record ownership before decorators or TypeScript rewrite the class.
+        if self.x0_typescript.is_some()
+            || matches!(ctx.state.class_transform, ClassTransform::ClassProperties { .. })
+        {
+            ctx.state.record_class_lowering(class);
+        }
         self.decorator.enter_class(class, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
@@ -345,6 +352,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.decorator.exit_class(class, ctx);
+        // Legacy decorators have taken the decorators off the fields they lowered, so TypeScript
+        // can now remove those fields if they have no initializer.
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_class(class, ctx);
         }

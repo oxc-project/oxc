@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, ObjectExpression},
+    ast::{CallExpression, Expression, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -140,7 +140,9 @@ impl ComponentDefinitionNameCasing {
     }
 
     fn check_name_property<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-        let Some(prop) = obj.find_property("name") else { return };
+        let Some(ObjectPropertyKind::ObjectProperty(prop)) = obj.find_property("name") else {
+            return;
+        };
         self.check_name_node(&prop.value, ctx);
     }
 
@@ -216,8 +218,9 @@ fn exact_convert(s: &str, case_type: CaseType) -> Option<String> {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let vue = || Some(PathBuf::from("test.vue"));
     let js = || Some(PathBuf::from("test.js"));

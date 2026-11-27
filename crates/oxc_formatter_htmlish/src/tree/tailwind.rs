@@ -44,7 +44,7 @@ impl<'a> TailwindAttributes<'a> {
     }
 
     /// An Angular property binding to `target` holds classes (`[class]`, `[ngClass]`, `bind-class`;
-    /// apps/oxfmt/DIVERGENCES.md#angular-prefixed-class-binding-tailwind): every string in it, its pipes' arguments included.
+    /// apps/oxfmt/DIVERGENCES.md#js-in-angular-tailwind-bind-class): every string in it, its pipes' arguments included.
     pub fn binds(&self, target: &str) -> bool {
         self.holds(target) || (self.ng_class && target == "ngClass")
     }

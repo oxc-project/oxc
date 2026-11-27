@@ -161,7 +161,7 @@ impl LintCommand {
 pub struct BasicOptions {
     /// Oxlint configuration file
     ///  * `.json` and `.jsonc` config files are supported in all runtimes
-    ///  * JavaScript/TypeScript config files are experimental and require running via Node.js
+    ///  * JavaScript/TypeScript config files require running Oxlint via Node.js
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///

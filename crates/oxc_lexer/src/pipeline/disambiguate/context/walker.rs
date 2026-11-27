@@ -268,6 +268,13 @@ impl Walk {
     pub(super) fn end_statement(&mut self) {
         // Bodiless signatures and open type regions end with the statement.
         self.pop_virtual();
+        if self.top_kind() == FrameKind::ClassBody {
+            // A class body holds members, so the next one starts.
+            self.top_mut().next_member();
+            self.set_operand();
+            self.decorator = 0;
+            return;
+        }
         self.after_statement();
     }
 
@@ -392,12 +399,7 @@ impl Walk {
 
     #[cpu_version(Generic)]
     pub(super) fn site(&self) -> Site {
-        let in_type = self.in_type();
-        Site {
-            in_type,
-            operand: self.operand_allowed() && !in_type && !self.stmt_done,
-            type_params: self.type_params_expected(),
-        }
+        Site { in_type: self.in_type(), type_params: self.type_params_expected() }
     }
 
     /// Would a `<` at the next token open a type-parameter list of a declaration head or member?

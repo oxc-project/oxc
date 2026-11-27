@@ -69,16 +69,12 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut init = None;
         if decl.type_annotation.is_none() {
             if let Some(init_expr) = &decl.init {
-                // if kind is const and it doesn't need to infer type from expression
-                if kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
-                    if let Expression::TemplateLiteral(lit) = init_expr {
-                        init =
-                            self.transform_template_to_string(lit).map(Expression::StringLiteral);
-                    } else {
-                        init = Some(init_expr.clone_in(self.allocator()));
-                    }
-                } else if !kind.is_const() || !matches!(init_expr, Expression::TemplateLiteral(_)) {
-                    // otherwise, we need to infer type from expression
+                if kind.is_const() {
+                    init = self.get_literal_initializer_without_const_assertion(init_expr);
+                }
+                if init.is_none()
+                    && (!kind.is_const() || !matches!(init_expr, Expression::TemplateLiteral(_)))
+                {
                     binding_type = self.infer_type_from_expression(init_expr);
                 }
             }
@@ -246,13 +242,13 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    fn report_signature_property_key(&self, key: &PropertyKey<'a>, computed: bool) {
-        if !computed {
+    fn report_signature_property_key(&self, key: &PropertyKey<'a>) {
+        if !key.is_computed() {
             return;
         }
 
         let is_not_allowed = match key {
-            PropertyKey::StaticIdentifier(_) | PropertyKey::Identifier(_) => false,
+            PropertyKey::Identifier(_) => false,
             PropertyKey::StaticMemberExpression(expr) => {
                 !expr.get_first_object().is_identifier_reference()
             }
@@ -272,7 +268,7 @@ impl<'a> VisitMut<'a> for IsolatedDeclarations<'a> {
     }
 
     fn visit_ts_method_signature(&mut self, signature: &mut TSMethodSignature<'a>) {
-        self.report_signature_property_key(&signature.key, signature.computed);
+        self.report_signature_property_key(&signature.key);
         if signature.return_type.is_none() {
             match signature.kind {
                 TSMethodSignatureKind::Method => {
@@ -289,6 +285,6 @@ impl<'a> VisitMut<'a> for IsolatedDeclarations<'a> {
     }
 
     fn visit_ts_property_signature(&mut self, signature: &mut TSPropertySignature<'a>) {
-        self.report_signature_property_key(&signature.key, signature.computed);
+        self.report_signature_property_key(&signature.key);
     }
 }

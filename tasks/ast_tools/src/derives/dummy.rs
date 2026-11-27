@@ -199,6 +199,18 @@ fn calculate_alloc_for_enum(type_id: TypeId, schema: &mut Schema) -> Alloc {
 
 /// Generate `Dummy` impl for struct.
 fn generate_impl_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+    // `bitflags!` types' field is private, so can't construct the type from it
+    if struct_def.is_bitflags {
+        let value = quote!(Self::empty());
+        return generate_impl(
+            struct_def.name(),
+            &struct_def.ty(schema),
+            &value,
+            struct_def.dummy.alloc,
+            true,
+        );
+    }
+
     let fields = struct_def.fields.iter().map(|field| {
         let field_ident = field.ident();
         quote!(#field_ident: Dummy::dummy(allocator))

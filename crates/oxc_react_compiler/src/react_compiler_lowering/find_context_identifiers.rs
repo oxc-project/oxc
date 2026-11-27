@@ -272,10 +272,18 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         // Non-computed object keys were never visited.
-        if it.computed {
+        if it.key.is_computed() {
             self.visit_property_key(&it.key);
         }
         self.visit_expression(&it.value);
+    }
+
+    fn visit_object_method_property(&mut self, it: &ObjectMethodProperty<'a>) {
+        // Non-computed object keys were never visited.
+        if it.key.is_computed() {
+            self.visit_property_key(&it.key);
+        }
+        self.visit_function(&it.value, ScopeFlags::Function);
     }
 
     fn visit_class(&mut self, _it: &Class<'a>) {

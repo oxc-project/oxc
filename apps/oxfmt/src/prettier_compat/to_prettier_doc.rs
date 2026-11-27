@@ -201,9 +201,9 @@ fn convert_elements(
                 concat_string(current_children_mut(&mut stack)?, text);
                 printer.line = LineState::Content;
             }
-            FormatElement::Text { text, .. } => {
+            FormatElement::Text { text, width } => {
                 printer.flush_pending_space(&mut stack)?;
-                push_text(current_children_mut(&mut stack)?, text);
+                push_text(current_children_mut(&mut stack)?, text, width.propagates_expand());
                 printer.line = LineState::Content;
             }
             FormatElement::Line(mode) => {
@@ -235,7 +235,10 @@ fn convert_elements(
                         }
                         // else: `printer.line` stays as-is — the output is still at a line start
                     }
-                    LineMode::Hard | LineMode::HardWithoutExpand | LineMode::Empty => {
+                    LineMode::Hard
+                    | LineMode::HardWithoutExpand
+                    | LineMode::Empty
+                    | LineMode::EmptyWithoutExpand => {
                         printer.flush_pending_space(&mut stack)?;
                         // Mimic the printer's `line_width > 0` guard and `has_empty_line` cap:
                         // the printer only emits a newline when the line has content,
@@ -246,15 +249,18 @@ fn convert_elements(
                         match printer.line {
                             LineState::Content => {
                                 push_line(current_children_mut(&mut stack)?, *mode);
-                                printer.line = if *mode == LineMode::Empty {
+                                printer.line = if mode.is_empty_line() {
                                     LineState::Blank
                                 } else {
                                     LineState::Hardline
                                 };
                             }
                             LineState::Hardline => {
-                                if *mode == LineMode::Empty {
-                                    push_line(current_children_mut(&mut stack)?, LineMode::Hard);
+                                if mode.is_empty_line() {
+                                    push_line(
+                                        current_children_mut(&mut stack)?,
+                                        hard_of_empty(*mode),
+                                    );
                                     printer.line = LineState::Blank;
                                 }
                                 // `Hard` after `Hard` → skip (line already broken).
@@ -467,10 +473,11 @@ fn interned_cache_key(elements: &[FormatElement]) -> InternedCacheKey {
     (elements.as_ptr() as usize, elements.len())
 }
 
-fn push_text(children: &mut Vec<Value>, text: &str) {
+fn push_text(children: &mut Vec<Value>, text: &str, expands: bool) {
     // `FormatElement::Text` may contain embedded newlines (e.g., template literals).
-    // Convert them to Prettier's `literalline` docs instead of raw '\n' in strings,
-    // so parent groups can remeasure and break correctly.
+    // Convert them to literal lines instead of raw '\n' in strings, so parent groups remeasure:
+    // the printer resumes them at the root inside an `embedded_root`, as a literal line does,
+    // and at column 0 elsewhere; the two differ only under a `mark_as_root` of the IR itself (md-in-js).
     if !text.as_bytes().iter().any(|b| *b == b'\n' || *b == b'\r') {
         concat_string(children, text);
         return;
@@ -486,7 +493,7 @@ fn push_text(children: &mut Vec<Value>, text: &str) {
                 if segment_start < i {
                     concat_string(children, &text[segment_start..i]);
                 }
-                push_literal_line(children);
+                push_literal_line(children, false);
                 i += 1;
                 segment_start = i;
             }
@@ -494,7 +501,7 @@ fn push_text(children: &mut Vec<Value>, text: &str) {
                 if segment_start < i {
                     concat_string(children, &text[segment_start..i]);
                 }
-                push_literal_line(children);
+                push_literal_line(children, false);
                 i += 1;
                 // Treat CRLF as a single line break.
                 if i < bytes.len() && bytes[i] == b'\n' {
@@ -510,6 +517,10 @@ fn push_text(children: &mut Vec<Value>, text: &str) {
 
     if segment_start < bytes.len() {
         concat_string(children, &text[segment_start..]);
+    }
+    // A `without_expand_parent` text is Prettier's `literallineWithoutBreakParent`
+    if expands {
+        children.push(json!({"type": "break-parent"}));
     }
 }
 
@@ -528,12 +539,10 @@ fn push_line(children: &mut Vec<Value>, mode: LineMode) {
         LineMode::HardWithoutExpand => {
             children.push(json!({"type": "line", "hard": true}));
         }
-        LineMode::Empty => {
+        LineMode::Empty | LineMode::EmptyWithoutExpand => {
             // hardline x2
-            children.push(json!({"type": "line", "hard": true}));
-            children.push(json!({"type": "break-parent"}));
-            children.push(json!({"type": "line", "hard": true}));
-            children.push(json!({"type": "break-parent"}));
+            push_line(children, hard_of_empty(mode));
+            push_line(children, hard_of_empty(mode));
         }
         LineMode::ExactLineBreaks(count) => {
             // hardline x count: Prettier's own printer never collapses hardlines,
@@ -544,14 +553,22 @@ fn push_line(children: &mut Vec<Value>, mode: LineMode) {
             }
         }
         LineMode::Literal => {
-            push_literal_line(children);
+            push_literal_line(children, true);
         }
     }
 }
 
-fn push_literal_line(children: &mut Vec<Value>) {
+/// One of the two hardlines an empty line prints, with its `break-parent` only when it expands
+const fn hard_of_empty(mode: LineMode) -> LineMode {
+    if mode.propagates_expand() { LineMode::Hard } else { LineMode::HardWithoutExpand }
+}
+
+/// Prettier's `literalline`, or `literallineWithoutBreakParent` without `break_parent`
+fn push_literal_line(children: &mut Vec<Value>, break_parent: bool) {
     children.push(json!({"type": "line", "hard": true, "literal": true}));
-    children.push(json!({"type": "break-parent"}));
+    if break_parent {
+        children.push(json!({"type": "break-parent"}));
+    }
 }
 
 fn extract_start_tag_info(tag: &Tag) -> StartTagInfo {
@@ -572,7 +589,7 @@ fn extract_start_tag_info(tag: &Tag) -> StartTagInfo {
         Tag::StartEntry => StartTagInfo::Entry,
         Tag::StartLineSuffix => StartTagInfo::LineSuffix,
         Tag::StartLabelled(_) => StartTagInfo::Labelled,
-        Tag::StartMarkAsRoot => StartTagInfo::MarkAsRoot,
+        Tag::StartMarkAsRoot(_) => StartTagInfo::MarkAsRoot,
         _ => unreachable!("end tags should not be passed to `extract_start_tag_info()`"),
     }
 }
@@ -877,6 +894,13 @@ mod tests {
         // (no break is consumed as a line ending), capping the Empty too.
         let doc = to_doc(&[A, HARD, exact(1), EMPTY, A]);
         assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    #[test]
+    fn empty_without_expand_has_no_break_parent() {
+        let doc = to_doc(&[A, FormatElement::Line(LineMode::EmptyWithoutExpand), A]);
+        assert_eq!(count_hardlines(&doc), 2);
+        assert!(!doc.to_string().contains("break-parent"), "{doc}");
     }
 
     #[test]

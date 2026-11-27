@@ -1,6 +1,7 @@
 //! Per-run execution unit shared by a root formatter and its embedded children.
 
 pub mod embedded;
+pub mod placeholder;
 
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 

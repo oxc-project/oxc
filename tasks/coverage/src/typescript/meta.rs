@@ -1,6 +1,6 @@
 //! <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/harness/harnessIO.ts#L1237>
 
-use std::{fmt::Display, fs, path::Path, sync::Arc};
+use std::{fmt::Display, fs, path::Path};
 
 use itertools::Itertools;
 use lazy_regex::{Lazy, Regex, lazy_regex};
@@ -447,11 +447,8 @@ impl Baseline {
     }
 
     fn get_oxc_diagnostic(&self) -> String {
-        let source = Arc::new(NamedSource::new(&self.name, self.original.clone()));
-        self.oxc_diagnostics
-            .iter()
-            .map(|d| d.clone().render_with_source_code(Arc::clone(&source)))
-            .join("")
+        let source = NamedSource::new(&self.name, self.original.as_str());
+        self.oxc_diagnostics.iter().map(|d| d.clone().render_with_source_code(&source)).join("")
     }
 }
 

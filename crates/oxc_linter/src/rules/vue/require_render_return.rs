@@ -1,4 +1,7 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{ObjectMethodProperty, ObjectProperty},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -92,10 +95,12 @@ impl Rule for RequireRenderReturn {
 fn render_property_key_span(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<Span> {
     let nodes = ctx.nodes();
     let parent = nodes.parent_node(node.id());
-    let AstKind::ObjectProperty(prop) = parent.kind() else {
+    let (AstKind::ObjectProperty(ObjectProperty { key, .. })
+    | AstKind::ObjectMethodProperty(ObjectMethodProperty { key, .. })) = parent.kind()
+    else {
         return None;
     };
-    if !prop.key.is_specific_static_name("render") {
+    if !key.is_specific_static_name("render") {
         return None;
     }
 
@@ -107,7 +112,7 @@ fn render_property_key_span(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option
         return None;
     }
 
-    Some(prop.key.span())
+    Some(key.span())
 }
 
 #[test]

@@ -10,8 +10,8 @@ use oxc_str::{CompactStr, Ident, JSStr};
 /// The JavaScript string value of a statically known property key.
 ///
 /// Static means statically determinable, not a `static` class member.
-/// Names already stored in the AST borrow their storage. Numeric keys own their Rust `f64`
-/// `Display` text, preserving the existing naming behavior. Both forms compare and hash by text,
+/// Names already stored in the AST borrow their storage. Formatted names own their storage.
+/// Both forms compare and hash by text,
 /// so `{ 1: a, "1": b }` declares the same name twice.
 #[derive(Clone)]
 pub enum StaticPropertyName<'a> {
@@ -131,7 +131,7 @@ impl fmt::Debug for StaticPropertyName<'_> {
 mod tests {
     use super::StaticPropertyName;
     use oxc_allocator::Allocator;
-    use oxc_str::{JSStr, JSStrBuilder, format_compact_str};
+    use oxc_str::{JSStr, JSStrBuilder};
     use rustc_hash::FxHashSet;
 
     #[test]
@@ -173,12 +173,22 @@ mod tests {
     }
 
     #[test]
-    fn numbers_are_named_by_f64_display() {
-        for value in [1e21, 1e-7, -f64::MAX, -5e-324, -f64::MIN_POSITIVE, f64::NAN, -0.0] {
-            let text = value.to_string();
-            let name = StaticPropertyName::Owned(format_compact_str!("{value}"));
-            assert_eq!(name.display().to_string(), text);
-            assert_eq!(name, StaticPropertyName::from(text.as_str()));
+    fn numeric_keys_use_javascript_names() {
+        use crate::{ast::PropertyKey, builder::AstBuilder};
+        use oxc_span::SPAN;
+
+        let allocator = Allocator::new();
+        let ast = AstBuilder::new(&allocator);
+        for (value, raw, name) in
+            [(1e21, "1e21", "1e+21"), (1e-7, "1e-7", "1e-7"), (f64::INFINITY, "2e308", "Infinity")]
+        {
+            let key = PropertyKey::new_static_numeric_literal(SPAN, value, Some(raw.into()), &ast);
+            assert_eq!(key.literal_name().unwrap(), name);
+            assert_eq!(key.static_name().unwrap(), name);
+
+            let key = PropertyKey::new_numeric_literal(SPAN, value, None, &ast);
+            assert!(key.literal_name().is_none());
+            assert_eq!(key.static_name().unwrap(), name);
         }
     }
 }

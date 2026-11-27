@@ -1,8 +1,8 @@
-commit: 2e58f87d
+commit: ebf6ae62
 
 parser_test262 Summary:
-AST Parsed     : 47633/47633 (100.00%)
-Positive Passed: 47633/47633 (100.00%)
+AST Parsed     : 47639/47639 (100.00%)
+Positive Passed: 47639/47639 (100.00%)
 Negative Passed: 4669/4669 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -39070,14 +39070,6 @@ Negative Passed: 4669/4669 (100.00%)
  14 │ 
  15 │ if (true) class C {} else class D {}
     ·           ────────
-    ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Invalid class declaration
-    ╭─[test262/test/language/statements/if/if-cls-else-cls.js:15:27]
- 14 │ 
- 15 │ if (true) class C {} else class D {}
-    ·                           ────────
     ╰────
   help: Classes can only be declared at top level or inside a block
 

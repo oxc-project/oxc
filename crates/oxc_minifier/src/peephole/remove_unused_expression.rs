@@ -459,7 +459,7 @@ impl<'a> PeepholeOptimizations {
                 ObjectPropertyKind::SpreadProperty(_) => {
                     pending_spread_elements.push(prop);
                 }
-                ObjectPropertyKind::ObjectProperty(prop) => {
+                ObjectPropertyKind::ObjectProperty(_) | ObjectPropertyKind::MethodProperty(_) => {
                     if !pending_spread_elements.is_empty() {
                         // flush pending spread elements
                         transformed_elements.push(Expression::new_object_expression(
@@ -470,11 +470,25 @@ impl<'a> PeepholeOptimizations {
                         pending_spread_elements = ArenaVec::new_in(ctx);
                     }
 
-                    let ObjectProperty { key, mut value, .. } = prop.unbox();
+                    let (key, mut value) = match prop {
+                        ObjectPropertyKind::ObjectProperty(prop) => {
+                            let ObjectProperty { key, value, .. } = prop.unbox();
+                            (key, value)
+                        }
+                        ObjectPropertyKind::MethodProperty(prop) => {
+                            let ObjectMethodProperty { key, value, .. } = prop.unbox();
+                            (key, Expression::FunctionExpression(value))
+                        }
+                        ObjectPropertyKind::SpreadProperty(_) => unreachable!(),
+                    };
                     // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
                     // But we can ignore that by using the assumption.
                     match key {
-                        PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
+                        PropertyKey::StaticIdentifier(_)
+                        | PropertyKey::StaticStringLiteral(_)
+                        | PropertyKey::StaticNumericLiteral(_)
+                        | PropertyKey::StaticBigIntLiteral(_)
+                        | PropertyKey::PrivateIdentifier(_) => {}
                         match_expression!(PropertyKey) => {
                             let mut prop_key = key.into_expression();
                             if Self::remove_unused_expression(&mut prop_key, ctx) {

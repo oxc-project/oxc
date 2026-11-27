@@ -92,3 +92,201 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:15]
+ 1 │ Promise.all([(await promise, 0)])
+   ·               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:15]
+ 1 │ Promise.all([(await promise).foo, anotherPromise])
+   ·               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:26]
+ 1 │ Promise.all([condition ? await promise : fallbackPromise, anotherPromise])
+   ·                          ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:21]
+ 1 │ Promise.all([foo && await promise, anotherPromise])
+   ·                     ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:21]
+ 1 │ Promise.all([foo ?? await bar])
+   ·                     ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:17]
+ 1 │ Promise.all([fn(await promise)])
+   ·                 ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:17]
+ 1 │ Promise.all([...await promise])
+   ·                 ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:20]
+ 1 │ Promise.all([{foo: await promise}])
+   ·                    ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:15]
+ 1 │ Promise.all([[await promise]])
+   ·               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:15]
+ 1 │ Promise.all([(await promise1) + (await promise2)])
+   ·               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:34]
+ 1 │ Promise.all([(await promise1) + (await promise2)])
+   ·                                  ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
+   ╭─[no_await_in_promise_methods.mjs:1:14]
+ 1 │ Promise.all([await (await promise).foo])
+   ·              ─────
+   ╰────
+  help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
+   ╭─[no_await_in_promise_methods.mjs:1:14]
+ 1 │ Promise.all([await foo(await promise)])
+   ·              ─────
+   ╰────
+  help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
+   ╭─[no_await_in_promise_methods.mjs:1:27]
+ 1 │ Promise.all([Promise.all([await promise]), anotherPromise])
+   ·                           ─────
+   ╰────
+  help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
+   ╭─[no_await_in_promise_methods.mjs:1:14]
+ 1 │ Promise.all([await Promise.all([await promise])])
+   ·              ─────
+   ╰────
+  help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
+   ╭─[no_await_in_promise_methods.mjs:1:33]
+ 1 │ Promise.all([await Promise.all([await promise])])
+   ·                                 ─────
+   ╰────
+  help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:31]
+ 1 │ Promise.all([async () => {}, (await promise).foo])
+   ·                               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:15]
+ 1 │ Promise.all([(await promise)?.foo, anotherPromise])
+   ·               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:17]
+ 1 │ Promise.all([`${await promise}`, anotherPromise])
+   ·                 ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:20]
+ 1 │ Promise.all([tag`${await promise}`, anotherPromise])
+   ·                    ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:16]
+ 1 │ Promise.all([{[await key]: value}])
+   ·                ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:22]
+ 1 │ Promise.all([{async [await key]() {}}])
+   ·                      ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:23]
+ 1 │ Promise.all([class { [await key]() {} }])
+   ·                       ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:29]
+ 1 │ Promise.all([class extends (await Base) {}])
+   ·                             ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:19]
+ 1 │ Promise.all([foo([await promise])])
+   ·                   ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:26]
+ 1 │ Promise.all([Promise.all(await promises), anotherPromise])
+   ·                          ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.allSettled()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:22]
+ 1 │ Promise.allSettled([(await promise).foo, anotherPromise])
+   ·                      ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.any()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:15]
+ 1 │ Promise.any([(await promise).foo, anotherPromise])
+   ·               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.race()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:16]
+ 1 │ Promise.race([(await promise).foo, anotherPromise])
+   ·                ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
+   ╭─[no_await_in_promise_methods.mjs:1:14]
+ 1 │ Promise.all([await promise1, (await promise2).foo])
+   ·              ─────
+   ╰────
+  help: Remove the `await`
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:31]
+ 1 │ Promise.all([await promise1, (await promise2).foo])
+   ·                               ─────
+   ╰────
+
+  ⚠ unicorn(no-await-in-promise-methods): Avoid `await` inside `Promise.all()` arguments to prevent delaying the call.
+   ╭─[no_await_in_promise_methods.mjs:1:16]
+ 1 │ Promise.all([((await promise)).foo])
+   ·                ─────
+   ╰────

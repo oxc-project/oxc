@@ -41,6 +41,8 @@ pub struct StructSkeleton {
     pub file_id: FileId,
     pub is_foreign: bool,
     pub is_meta: bool,
+    /// `true` if struct is defined with `bitflags!` macro.
+    pub is_bitflags: bool,
     pub item: ItemStruct,
 }
 

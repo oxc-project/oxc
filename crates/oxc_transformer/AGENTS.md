@@ -81,9 +81,11 @@ Use `crates/oxc_transformer/tests/integrations/` for transformer API behavior, t
 
 Do not add ordinary transform output regressions there when a `tasks/transform_conformance` fixture can cover the behavior.
 
-## Pull request descriptions
+## Pull request guidance
 
-Follow the shared [PR guidance](../../.agents/pr-guidance.md), including a runnable example and playground link. Capture the before and after outputs with the transformer example. Save the input outside the repository and run the example while the bug still reproduces:
+Follow the shared [PR writing skill](../../.agents/skills/pr-writer/SKILL.md) for titles and descriptions.
+
+For the before-and-after example in the PR description, capture the outputs with the transformer example. Save the input outside the repository and run the example while the bug still reproduces:
 
 ```sh
 cargo run -p oxc_transformer --example transformer -- /tmp/repro.ts --target es2015

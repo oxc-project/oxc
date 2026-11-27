@@ -1,3 +1,5 @@
+use smallvec::{SmallVec, smallvec};
+
 use oxc_ast::{
     AstKind,
     ast::{Expression, Statement},
@@ -6,7 +8,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
-use smallvec::{SmallVec, smallvec};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

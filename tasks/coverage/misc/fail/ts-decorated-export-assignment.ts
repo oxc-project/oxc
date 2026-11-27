@@ -1,0 +1,1 @@
+@d export = x;

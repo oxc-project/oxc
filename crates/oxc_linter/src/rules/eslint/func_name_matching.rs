@@ -1,11 +1,8 @@
-use oxc_ast::StaticPropertyName;
-use oxc_str::JSStr;
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         Argument, AssignmentTarget, CallExpression, Expression, Function, ObjectProperty,
         PropertyDefinition, PropertyKey,
@@ -14,6 +11,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 
 use crate::{
@@ -283,7 +281,7 @@ impl FuncNameMatching {
         let Some(function) = as_named_function(&property.value) else { return };
         let Some(function_name) = function_name(function) else { return };
 
-        if property_key_is_identifier(&property.key) && !property.computed {
+        if property_key_is_identifier(&property.key) {
             let Some(property_name) = property.key.static_name() else { return };
 
             if self.0.1.consider_property_descriptor && property_name == "value" {
@@ -328,7 +326,7 @@ impl FuncNameMatching {
         let Some(value) = property.value.as_ref() else { return };
         let Some(function_name) = function_expression_name(value) else { return };
 
-        if property_key_is_identifier(&property.key) && !property.computed {
+        if property_key_is_identifier(&property.key) {
             let Some(property_name) = property.key.static_name() else { return };
 
             self.report_if_should_warn(&property_name, &function_name, true, ctx);
@@ -375,8 +373,7 @@ fn property_descriptor_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> De
                 })
         }
         AstKind::ObjectProperty(descriptor_property) => {
-            if descriptor_property.computed || !property_key_is_identifier(&descriptor_property.key)
-            {
+            if !property_key_is_identifier(&descriptor_property.key) {
                 return DescriptorName::Unresolved;
             }
 
@@ -467,7 +464,9 @@ fn property_key_is_identifier(key: &PropertyKey) -> bool {
 
 fn string_literal_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
     match key {
-        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
+        PropertyKey::StaticStringLiteral(lit) | PropertyKey::StringLiteral(lit) => {
+            lit.value.as_str()
+        }
         _ => None,
     }
 }

@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     AstKind,
     ast::{AssignmentTarget, BigIntLiteral, Expression, NumericLiteral},
@@ -7,8 +10,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodes;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
@@ -372,7 +373,12 @@ fn is_class_field_initial_value(current_kind: &AstKind<'_>, parent_kind: &AstKin
 }
 
 fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
-    matches!(parent_kind, AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_))
+    matches!(
+        parent_kind,
+        AstKind::ObjectExpression(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::ObjectMethodProperty(_)
+    )
 }
 
 fn is_parse_int_radix(parent_kind: &AstKind<'_>) -> bool {
@@ -575,6 +581,7 @@ fn test() {
         ("var foo = 0 + 1 - 2 + -2;", Some(serde_json::json!([{ "ignore": [0, 1, 2, -2] }]))),
         ("var foo = 0 + 1 + 2 + 3 + 4;", Some(serde_json::json!([{ "ignore": [0, 1, 2, 3, 4] }]))),
         ("var foo = { bar:10 }", None),
+        ("var foo = { [42]() {} };", None),
         ("setTimeout(function() {return 1;}, 0);", Some(serde_json::json!([{ "ignore": [0, 1] }]))),
         ("var data = ['foo', 'bar', 'baz']; var third = data[3];", ignore_array_indexes.clone()),
         ("foo[0]", ignore_array_indexes.clone()),

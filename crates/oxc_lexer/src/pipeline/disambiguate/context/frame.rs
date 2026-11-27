@@ -131,7 +131,7 @@ pub(super) struct Frame {
     /// JsxTag: open angle brackets of its type arguments.
     pub(super) jsx_depth: u8,
     pub(super) reg: StmtReg,
-    /// Modifier bits: an Object or ClassBody member's, or the async before a Group.
+    /// Modifier bits: an Object or ClassBody member's, or the async before a Group or an Angle.
     pub(super) mods: u8,
     pub(super) open_questions: u16,
 }

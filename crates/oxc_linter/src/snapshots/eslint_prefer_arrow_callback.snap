@@ -359,3 +359,24 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────────────────────────────────
    ╰────
   help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function visit(self = 0) { return self; });
+   ·     ─────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:5]
+ 1 │ foo(function () { return class extends Base { method() { return this; } }; });
+   ·     ────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.
+
+  ⚠ eslint(prefer-arrow-callback): Unexpected function expression.
+   ╭─[prefer_arrow_callback.tsx:1:9]
+ 1 │ enqueue(function () { return this.value; }.bind(/* preserve the receiver */ this));
+   ·         ──────────────────────────────────
+   ╰────
+  help: Use an arrow function instead.

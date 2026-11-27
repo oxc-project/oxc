@@ -3,11 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::context::LintContext;
-use crate::rule::Rule;
-use crate::utils::{
-    JestFnKind, JestGeneralFnKind, is_jest_file, iter_possible_jest_call_node,
-    parse_general_jest_fn_call,
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{
+        JestFnKind, JestGeneralFnKind, is_jest_file, iter_possible_jest_call_node,
+        parse_general_jest_fn_call,
+    },
 };
 
 fn no_export_diagnostic(span: Span) -> OxcDiagnostic {

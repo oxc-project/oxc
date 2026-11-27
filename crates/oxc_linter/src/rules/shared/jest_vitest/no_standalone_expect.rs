@@ -225,7 +225,10 @@ fn is_var_declarator_or_test_block<'a>(
                 );
             }
         }
-        AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_) => {
+        AstKind::ArrayExpression(_)
+        | AstKind::ObjectExpression(_)
+        | AstKind::ObjectProperty(_)
+        | AstKind::ObjectMethodProperty(_) => {
             let mut current = node;
             loop {
                 let parent = ctx.nodes().parent_node(current.id());

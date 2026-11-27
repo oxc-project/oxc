@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2026-11-23
+
+### 🐛 Bug Fixes
+
+- b373412 formatter_css: Preserve glued numbers (#29941) (leaysgur)
+
+### 📚 Documentation
+
+- c5790e2 formatter_css: Record multi-line value comment expanding its group as a divergence (#29950) (leaysgur)
+
 ## [0.79.0] - 2026-11-16
 
 ### 🚀 Features

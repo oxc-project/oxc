@@ -77,9 +77,9 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, IdentifierReference<'_>> {
         if f.comments().is_marked_as_type_cast_node(self) {
             return false;
         }
-        // An html-in-js placeholder (reaching JS through HTML's `<script>` or `on*` attributes)
+        // An html-in-js placeholder (reaching JS through HTML's `<script>` or Angular's bindings, a dispatch deep)
         // stands in for an expression of any precedence: the parens around it in the source stay
-        if is_html_placeholder(self.name.as_str()) {
+        if f.session().dispatch_depth() > 0 && is_html_placeholder(self.name.as_str()) {
             return is_parenthesized_in_source(self, f);
         }
 

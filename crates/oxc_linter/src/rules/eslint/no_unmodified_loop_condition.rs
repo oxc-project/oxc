@@ -1,5 +1,4 @@
 use rustc_hash::{FxHashMap, FxHashSet};
-
 use schemars::JsonSchema;
 use serde::Deserialize;
 use smallvec::SmallVec;

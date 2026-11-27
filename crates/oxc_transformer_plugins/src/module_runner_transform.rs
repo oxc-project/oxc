@@ -240,8 +240,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
                 // wrap with (0, ...) to avoid method binding `this`
                 // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
-                let zero =
-                    Expression::new_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal, ctx);
+                let zero = Expression::new_numeric_literal(SPAN, 0f64, None, ctx);
                 Expression::new_sequence_expression(ident.span, [zero, expr], ctx)
             } else {
                 expr
@@ -734,16 +733,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     ) -> Argument<'a> {
         let value = Expression::new_array_expression(SPAN, elements, ctx);
         let key = PropertyKey::new_static_identifier(SPAN, Str::from("importedNames"), ctx);
-        let imported_names = ObjectPropertyKind::new_object_property(
-            SPAN,
-            PropertyKind::Init,
-            key,
-            value,
-            false,
-            false,
-            false,
-            ctx,
-        );
+        let imported_names = ObjectPropertyKind::new_object_property(SPAN, key, value, false, ctx);
         Argument::new_object_expression(SPAN, [imported_names], ctx)
     }
 
@@ -780,37 +770,43 @@ impl<'a> ModuleRunnerTransform<'a> {
         Expression::new_call_expression(SPAN, member, None, arguments, false, ctx)
     }
 
-    // `key: value` or `key() {}`
+    // `key: true` or `key() {}`
     fn create_object_property(
         key: &'static str,
-        value: Option<Expression<'a>>,
+        method: Option<ArenaBox<'a, Function<'a>>>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
-        let is_method = value.is_some();
-        ObjectPropertyKind::new_object_property(
-            SPAN,
-            PropertyKind::Init,
-            PropertyKey::new_static_identifier(SPAN, key, ctx),
-            value.unwrap_or_else(|| Expression::new_boolean_literal(SPAN, true, ctx)),
-            is_method,
-            false,
-            false,
-            ctx,
-        )
+        let key = PropertyKey::new_static_identifier(SPAN, key, ctx);
+        match method {
+            Some(function) => ObjectPropertyKind::new_method_property(
+                SPAN,
+                ObjectMethodKind::Method,
+                key,
+                function,
+                ctx,
+            ),
+            None => ObjectPropertyKind::new_object_property(
+                SPAN,
+                key,
+                Expression::new_boolean_literal(SPAN, true, ctx),
+                false,
+                ctx,
+            ),
+        }
     }
 
     /// `{ enumerable: true, configurable: true, get(){ return expr } }`
     fn create_function_with_return_statement(
         expr: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let kind = FormalParameterKind::FormalParameter;
         let params = FormalParameters::boxed(SPAN, kind, [], None, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
         let body = FunctionBody::boxed(SPAN, [], [statement], ctx);
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
-        Expression::new_function_expression_with_scope_id_and_pure_and_pife(
+        Function::boxed_with_scope_id_and_pure_and_pife(
             SPAN,
             r#type,
             None,

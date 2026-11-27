@@ -1,4 +1,5 @@
 use std::{
+    array,
     num::NonZeroU32,
     ops::{Deref, DerefMut},
 };
@@ -23,7 +24,7 @@ pub struct Comments<'a> {
 impl<'a> Comments<'a> {
     fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            inline: std::array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
+            inline: array::from_fn(|_| Comment::new(0, 0, CommentKind::Line)),
             len: 0,
             vec: ArenaVec::new_in(&allocator),
             starts_end: 0,
@@ -49,15 +50,24 @@ impl<'a> Comments<'a> {
     fn push(&mut self, comment: Comment) {
         debug_assert!(!self.is_seen(comment.span.start));
         self.starts_end = comment.span.start + 1;
-        if self.len < self.inline.len() {
+        if self.vec.is_empty() && self.len < self.inline.len() {
             self.inline[self.len] = comment;
         } else {
-            if self.len == self.inline.len() {
+            if self.vec.is_empty() {
                 self.move_inline_to_vec();
             }
             self.vec.push(comment);
         }
         self.len += 1;
+    }
+
+    /// Discard comments after the first `len`.
+    fn truncate(&mut self, len: usize) {
+        if len < self.len {
+            self.len = len;
+            self.vec.truncate(len);
+            self.starts_end = self.last().map_or(0, |comment| comment.span.start + 1);
+        }
     }
 
     /// Move the comments to arena storage, once there are too many to store inline.
@@ -116,7 +126,16 @@ pub struct TriviaBuilder<'a> {
     previous_token: Token,
 
     /// Annotation ranges preceding the current token, also saved by lexer checkpoints.
-    pub(super) annotation_comments: AnnotationComments,
+    annotation_comments: AnnotationComments,
+}
+
+/// Trivia state saved by lexer checkpoints.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct TriviaCheckpoint {
+    comments_len: usize,
+    irregular_whitespaces_len: usize,
+    previous_token: Token,
+    annotation_comments: AnnotationComments,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -140,6 +159,61 @@ impl<'a> TriviaBuilder<'a> {
             previous_token,
             annotation_comments: AnnotationComments::default(),
         }
+    }
+
+    pub(super) fn checkpoint(&self) -> TriviaCheckpoint {
+        // Checkpoint does not store `processed`, as it's always the same as `comments.len()`.
+        // Checkpoints are only created between tokens.
+        // Once a token is finished, all comments before it have been attached,
+        // and attaching comments sets `processed` to `comments.len()`.
+        debug_assert_eq!(self.processed, self.comments.len());
+
+        TriviaCheckpoint {
+            comments_len: self.comments.len(),
+            irregular_whitespaces_len: self.irregular_whitespaces.len(),
+            previous_token: self.previous_token,
+            annotation_comments: self.annotation_comments,
+        }
+    }
+
+    /// Discard trivia lexed after `checkpoint`. It is lexed again, maybe differently:
+    /// a speculative parse can lex JSX text as a comment.
+    pub(super) fn rewind(&mut self, checkpoint: TriviaCheckpoint) {
+        self.comments.truncate(checkpoint.comments_len);
+        self.irregular_whitespaces.truncate(checkpoint.irregular_whitespaces_len);
+        self.processed = self.comments.len();
+        self.previous_token = checkpoint.previous_token;
+        self.annotation_comments = checkpoint.annotation_comments;
+        if self.annotation_comments.ends != [None; 2] {
+            self.unapply_annotation_comments();
+        }
+    }
+
+    /// Mark the annotations before the current token as not applied.
+    ///
+    /// Only parsing from that token applies them, which rewinding to it discards.
+    #[cold]
+    #[inline(never)]
+    fn unapply_annotation_comments(&mut self) {
+        let AnnotationComments { starts, ends } = self.annotation_comments;
+        for (index, applied, not_applied) in [
+            (0, CommentContent::Pure, CommentContent::PureNotApplied),
+            (1, CommentContent::NoSideEffects, CommentContent::NoSideEffectsNotApplied),
+        ] {
+            if let Some(end) = ends[index] {
+                for comment in &mut self.comments[starts[index] as usize..end.get() as usize] {
+                    if comment.content == applied {
+                        comment.content = not_applied;
+                    }
+                }
+            }
+        }
+    }
+
+    /// Make rewinding to `checkpoint` keep the trivia lexed after it.
+    pub(super) fn keep_trivia(&self, checkpoint: &mut TriviaCheckpoint) {
+        checkpoint.comments_len = self.comments.len();
+        checkpoint.irregular_whitespaces_len = self.irregular_whitespaces.len();
     }
 
     pub fn previous_token_pure_comments(&self) -> Option<(u32, NonZeroU32)> {
@@ -172,8 +246,8 @@ impl<'a> TriviaBuilder<'a> {
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         // The irregular whitespaces array is ordered; only add if not added before, to avoid
-        // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
-        // same whitespace. Same approach as `add_comment`.
+        // duplicates when the parser rewinds keeping trivia, then re-lexes the same whitespace.
+        // Same approach as comments.
         if let Some(last) = self.irregular_whitespaces.last()
             && start <= last.start
         {
@@ -947,13 +1021,18 @@ token /* Trailing 1 */
             ("a /* trailing */\n+ b", CommentPosition::Trailing, 1),
             ("a\n/* leading */ +b", CommentPosition::Leading, 16),
             ("void /* leading */ +value", CommentPosition::Leading, 19),
+            ("x = a < b < c >> /*x*/ + d;", CommentPosition::Leading, 23),
             ("a /* webpackFoo: 1 */ + b", CommentPosition::Trailing, 1),
             ("foo(); /* trailing */", CommentPosition::Trailing, 6),
         ] {
-            let comments = get_comments(source_text);
-            assert_eq!(comments.len(), 1, "{source_text}");
-            assert_eq!(comments[0].position, position, "{source_text}");
-            assert_eq!(comments[0].attached_to, attached_to, "{source_text}");
+            for (language, comments) in [
+                ("JavaScript", get_comments(source_text)),
+                ("TypeScript", get_comments_typescript(source_text)),
+            ] {
+                assert_eq!(comments.len(), 1, "{language}: {source_text}");
+                assert_eq!(comments[0].position, position, "{language}: {source_text}");
+                assert_eq!(comments[0].attached_to, attached_to, "{language}: {source_text}");
+            }
         }
     }
 

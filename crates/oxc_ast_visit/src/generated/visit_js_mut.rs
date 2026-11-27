@@ -125,6 +125,11 @@ pub trait VisitJsMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_object_method_property(&mut self, it: &mut ObjectMethodProperty<'a>) {
+        walk_object_method_property(self, it);
+    }
+
+    #[inline]
     fn visit_property_key(&mut self, it: &mut PropertyKey<'a>) {
         walk_property_key(self, it);
     }
@@ -1231,6 +1236,7 @@ pub mod walk_js_mut {
         // No `AstType` for this type
         match it {
             ObjectPropertyKind::ObjectProperty(it) => visitor.visit_object_property(it),
+            ObjectPropertyKind::MethodProperty(it) => visitor.visit_object_method_property(it),
             ObjectPropertyKind::SpreadProperty(it) => visitor.visit_spread_element(it),
         }
     }
@@ -1249,10 +1255,28 @@ pub mod walk_js_mut {
     }
 
     #[inline]
+    pub fn walk_object_method_property<'a, V: VisitJsMut<'a>>(
+        visitor: &mut V,
+        it: &mut ObjectMethodProperty<'a>,
+    ) {
+        let kind = AstType::ObjectMethodProperty;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_property_key(&mut it.key);
+        {
+            let flags = ScopeFlags::Function;
+            visitor.visit_function(&mut it.value, flags);
+        }
+        visitor.leave_node(kind);
+    }
+
     pub fn walk_property_key<'a, V: VisitJsMut<'a>>(visitor: &mut V, it: &mut PropertyKey<'a>) {
         // No `AstType` for this type
         match it {
             PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
+            PropertyKey::StaticStringLiteral(it) => visitor.visit_string_literal(it),
+            PropertyKey::StaticNumericLiteral(it) => visitor.visit_numeric_literal(it),
+            PropertyKey::StaticBigIntLiteral(it) => visitor.visit_big_int_literal(it),
             PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
             match_expression!(PropertyKey) => visitor.visit_expression(it.to_expression_mut()),
         }

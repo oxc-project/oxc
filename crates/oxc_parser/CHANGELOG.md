@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.160.0] - 2026-11-23
+
+### 💥 BREAKING CHANGES
+
+- b90b3aa ast: [**BREAKING**] Remove `base` field from `NumericLiteral` and `BigIntLiteral` (#29919) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 395913e parser: Parse `<=` after `as` and `satisfies` (#30028) (Cameron)
+- 9570bc8 parser: Require `class` keyword for decorated class export (#30027) (Cameron)
+- 0167451 parser: Treat `import x = require()` as module syntax (#29908) (camc314)
+- e4e2ac4 parser,semantic: Reject invalid types in type arguments (#29945) (camc314)
+- a0f67fa parser: Parse TSX `<T extends U` as start of generic arrow function (#29910) (overlookmotel)
+- 8c84c5f parser: Never parse `<` as start of generic arrow function in JSX files (#29909) (overlookmotel)
+- 777d2d1 parser: Report import/export in unambiguous code resolved to script (#29902) (camc314)
+- e385fe8 parser: Don't treat `await` in function parameters and class fields as top-level await (#29901) (camc314)
+- 5442f8a parser: Report misplaced import/export before checking parse goal (#29898) (camc314)
+- 24a1aaf parser: Discard comments from rewound speculative parses (#29847) (camc314)
+- 15bdce3 parser: `parse_expression` produce correct error for overlong source (#29761) (overlookmotel)
+- 7b2b207 parser: Parse contextual keywords after relational expressions (#25097) (camc314)
+
+### ⚡ Performance
+
+- 5e7abd1 parser: Remove unnecessary conversion when parsing BigInts (#29913) (overlookmotel)
+- 5ac3942 parser: Mark missing-digit lexer errors cold (#29806) (Boshen)
+- 892f086 various: Avoid copying source text in `OxcDiagnostic::render_with_source_code` callers (#29850) (overlookmotel)
+- a2eed1b parser: Read each comment once (#29794) (Boshen)
+- 0537b09 parser: Take the name of a JSX identifier from its token (#29746) (Boshen)
+- 1c2cd7c parser: Take the value of a string literal without escapes from its source text (#29745) (Boshen)
+- 1d84d3f parser: Take the value of JSX text from its source text (#29744) (Boshen)
+- 41e3075 parser: Check for the `<` of type arguments without a call (#29743) (Boshen)
+- 6e783b1 parser: Keep the token read after `import` (#29742) (Boshen)
+- eb9c7a4 parser: Parse `(<div />)` as a parenthesized expression directly (#29741) (Boshen)
+- 7acf20a parser: Parse JSX at the start of an expression without speculation (#29740) (Boshen)
+- 414532b parser: Cache failed type argument speculation (#29518) (Boshen)
+- d91c961 parser: Take comments from the lexer without copying inline storage (#29623) (Boshen)
+- dda1781 parser: Finish plain strings and integers in their token handler (#29622) (Boshen)
+- 6f5d371 parser: Choose how to scan a block comment from its first bytes (#29621) (Boshen)
+- d80d731 parser: Do less work to record each comment (#29620) (Boshen)
+- ce2b7aa parser: Lex the token after a line break in its token handler (#29619) (Boshen)
+- 7833ea0 parser: Finish identifier and keyword tokens in their token handler (#29618) (Boshen)
+- bb08acb parser: Dispatch tokens through handlers which finish the token (#29617) (Boshen)
+- a1ed5af parser: Parse `(…)` once with a cover grammar for arrow functions (#29603) (Boshen)
+
+Full release notes: [0.160.0](https://github.com/oxc-project/oxc/blob/main/crates/CHANGELOG.md#01600---2026-11-23)
+
 ## [0.159.0] - 2026-11-16
 
 ### 🐛 Bug Fixes

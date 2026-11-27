@@ -12,7 +12,8 @@ use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Se
 use oxc_span::{GetSpan, Span};
 use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
-    identifier::is_irregular_whitespace,
+    identifier::{is_identifier_part, is_irregular_whitespace, is_white_space},
+    line_terminator::is_line_terminator,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
@@ -735,6 +736,9 @@ pub fn is_default_this_binding<'a>(
             AstKind::ObjectProperty(obj) => {
                 return obj.value.span() != current_node.span();
             }
+            AstKind::ObjectMethodProperty(obj) => {
+                return obj.value.span != current_node.span();
+            }
             AstKind::MethodDefinition(method) => {
                 return method.value.span != current_node.span();
             }
@@ -825,20 +829,23 @@ pub fn is_default_this_binding<'a>(
 }
 
 pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<StaticPropertyName<'a>> {
-    let (key, computed) = match parent_node.kind() {
-        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::MethodDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::ObjectProperty(property) => (&property.key, property.computed),
+    let key = match parent_node.kind() {
+        AstKind::PropertyDefinition(definition) => &definition.key,
+        AstKind::MethodDefinition(definition) => &definition.key,
+        AstKind::ObjectProperty(property) => &property.key,
+        AstKind::ObjectMethodProperty(property) => &property.key,
         _ => return None,
     };
-    if key.is_identifier() && !computed {
+    if key.is_identifier() {
         return key.name();
     }
     match key {
         PropertyKey::NullLiteral(_) => Some(StaticPropertyName::from("null")),
         // A regex key names its canonical runtime string: `[/a/ig]` names `/a/gi`.
         PropertyKey::RegExpLiteral(_) => key.static_name(),
-        PropertyKey::BigIntLiteral(bigint) => Some(StaticPropertyName::from(bigint.value.as_str())),
+        PropertyKey::StaticBigIntLiteral(bigint) | PropertyKey::BigIntLiteral(bigint) => {
+            Some(StaticPropertyName::from(bigint.value.as_str()))
+        }
         PropertyKey::TemplateLiteral(template) => {
             template.single_quasi().map(StaticPropertyName::from)
         }
@@ -859,7 +866,7 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
 
     match parent_node.kind() {
         AstKind::MethodDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 tokens.push(Cow::Borrowed("private"));
             } else if let Some(accessibility) = definition.accessibility {
                 tokens.push(Cow::Borrowed(accessibility.as_str()));
@@ -870,7 +877,7 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
             }
         }
         AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 tokens.push(Cow::Borrowed("private"));
             } else if let Some(accessibility) = definition.accessibility {
                 tokens.push(Cow::Borrowed(accessibility.as_str()));
@@ -904,12 +911,12 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
 
     let method_name = match parent_node.kind() {
         AstKind::MethodDefinition(method_definition)
-            if !method_definition.computed && method_definition.key.is_private_identifier() =>
+            if method_definition.key.is_private_identifier() =>
         {
             method_definition.key.name()
         }
         AstKind::PropertyDefinition(definition) => {
-            if !definition.computed && definition.key.is_private_identifier() {
+            if definition.key.is_private_identifier() {
                 definition.key.name()
             } else if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)
@@ -988,6 +995,22 @@ pub fn is_node_within_call_argument<'a>(
     let node_span = node.span();
     let arg_span = target_arg.span();
     node_span.start >= arg_span.start && node_span.end <= arg_span.end
+}
+
+/// The start and first character of the next token after `pos`, skipping whitespace
+/// and comments.
+pub fn next_token(mut pos: u32, ctx: &LintContext) -> Option<(u32, char)> {
+    loop {
+        let rest = &ctx.source_text()[pos as usize..];
+        let (offset, c) =
+            rest.char_indices().find(|&(_, c)| !is_white_space(c) && !is_line_terminator(c))?;
+        #[expect(clippy::cast_possible_truncation)]
+        let start = pos + offset as u32;
+        match ctx.semantic().get_comment_at(start) {
+            Some(comment) => pos = comment.span.end,
+            None => return Some((start, c)),
+        }
+    }
 }
 
 /// Determines if a semicolon is needed before inserting code that starts with
@@ -1073,13 +1096,15 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
 
     // Characters that could cause ASI issues when followed by `[`, `(`, `/`, etc.
     matches!(last_char, ')' | ']' | '}' | '"' | '\'' | '`' | '+' | '-' | '/' | '.')
-        || last_char.is_alphanumeric()
-        || last_char == '_'
-        || last_char == '$'
+        || is_identifier_part(last_char)
 }
 
 /// Find the last meaningful (non-whitespace, non-comment) character before `end_pos`.
-fn find_last_meaningful_char(source_text: &str, end_pos: u32, ctx: &LintContext) -> Option<char> {
+pub fn find_last_meaningful_char(
+    source_text: &str,
+    end_pos: u32,
+    ctx: &LintContext,
+) -> Option<char> {
     let comments = ctx.semantic().comments();
     let mut idx = comments.partition_point(|c| c.span.start < end_pos);
     let mut text = &source_text[..end_pos as usize];

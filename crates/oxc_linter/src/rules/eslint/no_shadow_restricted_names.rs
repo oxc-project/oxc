@@ -1,14 +1,16 @@
-use crate::{
-    context::LintContext,
-    rule::{DefaultRuleConfig, Rule},
-};
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
+
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 const PRE_DEFINE_VAR: [&str; 5] = ["Infinity", "NaN", "arguments", "eval", "undefined"];
 

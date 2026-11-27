@@ -6,6 +6,7 @@ mod tests;
 use std::path::Path;
 
 use javascript_globals::GLOBALS;
+
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,

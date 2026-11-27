@@ -1,4 +1,5 @@
 use itertools::Itertools;
+
 use oxc_ast::{AstKind, ast::AssignmentOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -189,7 +190,7 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                 AstKind::PrivateFieldExpression(_),
                 AstKind::AssignmentTargetPropertyProperty(prop),
             ) => {
-                if prop.computed && prop.name.span() == curr.span() {
+                if prop.name.is_computed() && prop.name.span() == curr.span() {
                     return true;
                 }
             }
@@ -231,6 +232,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::PropertyDefinition(_)
         | AstKind::ArrayExpression(_)
         | AstKind::ObjectProperty(_)
+        | AstKind::ObjectMethodProperty(_)
         | AstKind::JSXExpressionContainer(_)
         | AstKind::ChainExpression(_)
         | AstKind::StaticMemberExpression(_)

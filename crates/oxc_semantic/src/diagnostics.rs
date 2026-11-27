@@ -317,9 +317,9 @@ pub fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
 
 // TypeScript diagnostics
 
-/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
+/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | undefined'?(17019)
 #[cold]
-pub fn jsdoc_type_in_annotation(
+pub fn jsdoc_type_modifier(
     modifier: char,
     is_start: bool,
     span: Span,
@@ -333,6 +333,12 @@ pub fn jsdoc_type_in_annotation(
     )
     .with_label(span)
     .with_help(format!("Did you mean to write '{suggested_type}'?"))
+}
+
+/// JSDoc types can only be used inside documentation comments.(8020)
+#[cold]
+pub fn jsdoc_type(span: Span) -> OxcDiagnostic {
+    ts_error("8020", "JSDoc types can only be used inside documentation comments.").with_label(span)
 }
 
 #[cold]

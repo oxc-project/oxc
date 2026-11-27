@@ -154,6 +154,9 @@ impl Walk {
             AngleList::Assert => {
                 // Type assertion `<T>`: an operand follows.
                 self.type_operator();
+                if a.mods & MOD_ASYNC != 0 {
+                    self.prev_kw = tk!(KwAsync);
+                }
             }
             AngleList::Value => {
                 // The head or instantiation is a value, and no second list may follow.
@@ -181,8 +184,27 @@ impl Walk {
             None
         };
         if let Some(list) = list {
-            self.push(FrameKind::Angle).angle = list;
+            let is_async = self.prev_kw == tk!(KwAsync);
+            let f = self.push(FrameKind::Angle);
+            f.angle = list;
+            f.mods = if is_async { MOD_ASYNC } else { 0 };
         }
         self.operand_done();
+    }
+
+    /// Can a `<<` here be two list openers? TypeScript splits one only after a name in a type
+    /// (`Array<<T>() => T>`) or where it accepts type arguments after a value (`f<<T>() => T>(0)`),
+    /// and reads a shift anywhere else (`x = <<T>() => T>f`).
+    #[cpu_version(Generic)]
+    pub(super) fn lt_run_may_open(&self, tokens: &TokensView, pos: usize) -> bool {
+        let cpu = BASELINE;
+
+        if self.no_type_args {
+            return false;
+        }
+        if self.in_type() {
+            return !self.operand_allowed();
+        }
+        (!self.operand_allowed() || self.after_dot) && type_args_at(tokens, pos, cpu)
     }
 }

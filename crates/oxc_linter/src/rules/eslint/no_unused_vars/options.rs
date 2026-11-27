@@ -1,10 +1,11 @@
 use std::{borrow::Cow, ops::Deref};
 
 use lazy_regex::{Regex, RegexBuilder};
-use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
 use serde::Serialize;
 use serde_json::Value;
+
+use oxc_diagnostics::OxcDiagnostic;
 
 // See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
 #[derive(Debug, Clone, JsonSchema)]
@@ -359,7 +360,7 @@ impl TryFrom<Option<&str>> for IgnorePattern<Regex> {
 
     fn try_from(value: Option<&str>) -> Result<Self, Self::Error> {
         match value {
-            None => Ok(Self::None),
+            None | Some("") => Ok(Self::None),
             Some("^_") => Ok(Self::PrefixUnderscore),
             Some(pattern) => RegexBuilder::new(pattern).build().map(Self::Some),
         }
@@ -856,6 +857,9 @@ mod tests {
 
         let pat = json!("^_");
         assert!(matches!(parse_unicode_rule(Some(&pat)).unwrap(), IgnorePattern::PrefixUnderscore));
+
+        let pat = json!("");
+        assert!(parse_unicode_rule(Some(&pat)).unwrap().is_none());
     }
 
     #[test]

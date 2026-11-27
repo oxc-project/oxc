@@ -179,11 +179,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Preserve the original error by using the `cause` property when re-throwing errors.
 
   ⚠ eslint(preserve-caught-error): The caught error is not accessible because the catch clause has no error parameter.
-   ╭─[preserve_caught_error.tsx:3:8]
- 2 │                             doSomething();
- 3 │ ╭─▶                     } catch {
- 4 │ │                           throw new Error("Something went wrong");
- 5 │ ╰─▶                     }
+   ╭─[preserve_caught_error.tsx:4:7]
+ 3 │                     } catch {
+ 4 │                         throw new Error("Something went wrong");
+   ·                         ────────────────────────────────────────
+ 5 │                     }
    ╰────
   help: Add an error parameter to the catch clause to access the caught error.
 
@@ -275,5 +275,110 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[preserve_caught_error.tsx:1:40]
  1 │ try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: unrelated }); }
    ·                                        ─────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): The caught error is not accessible because the catch clause has no error parameter.
+   ╭─[preserve_caught_error.tsx:1:51]
+ 1 │ try { doSomething(); } catch { if (shouldThrow) { throw new Error("Something went wrong"); } }
+   ·                                                   ────────────────────────────────────────
+   ╰────
+  help: Add an error parameter to the catch clause to access the caught error.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new SyntaxError("Invalid JSON"); }
+   ·                                        ──────────────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new EvalError("e"); }
+   ·                                        ─────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new RangeError("e"); }
+   ·                                        ──────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new ReferenceError("e"); }
+   ·                                        ──────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new URIError("e"); }
+   ·                                        ────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }
+   ·                                        ─────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:62]
+ 1 │ try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }
+   ·                                                              ─────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:88]
+ 1 │ try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }
+   ·                                                                                        ──────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:115]
+ 1 │ try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }
+   ·                                                                                                                   ──────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:146]
+ 1 │ try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }
+   ·                                                                                                                                                  ───────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:174]
+ 1 │ try { doSomething(); } catch (error) { throw new Error("e"); throw new EvalError("e"); throw new RangeError("e"); throw new ReferenceError("e"); throw new SyntaxError("e"); throw new URIError("e"); }
+   ·                                                                                                                                                                              ────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:46]
+ 1 │ try { doSomething(); } catch ({ message }) { throw new Error(message, options); }
+   ·                                              ──────────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:46]
+ 1 │ try { doSomething(); } catch ({ message }) { throw new Error(...args); }
+   ·                                              ─────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:42]
+ 1 │ try { doSomething(); } catch ([error]) { throw new Error("Something failed", { ...options }); }
+   ·                                          ────────────────────────────────────────────────────
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.

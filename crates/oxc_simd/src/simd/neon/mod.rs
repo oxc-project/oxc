@@ -158,6 +158,31 @@ impl Vec128<Neon> {
             _ => unused!(self, other)
         })
     }
+
+    /// Compare every byte of this [`Vec128`] to `other`, as unsigned integers.
+    /// `other` is either a `u8`, or another [`Vec128`] to compare byte by byte.
+    ///
+    /// Each byte of the result is `0xFF` if the byte in `self` is greater, otherwise `0x00`.
+    #[inline(always)]
+    pub fn gt_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        cpu_select!(self.cpu(), {
+            Neon => {
+                let other = other.into_vec128(self.cpu());
+                // SAFETY: `Vec128<Neon>` type guarantees platform supports Neon
+                Self::new(unsafe { vcgtq_u8(self.inner(), other.inner()) }, self.cpu())
+            }
+            _ => unused!(self, other)
+        })
+    }
+
+    /// Compare every byte of this [`Vec128`] to `other`, as unsigned integers.
+    /// `other` is either a `u8`, or another [`Vec128`] to compare byte by byte.
+    ///
+    /// Each byte of the result is `0xFF` if the byte in `self` is less, otherwise `0x00`.
+    #[inline(always)]
+    pub fn lt_u8(self, other: impl Operand128<u8, Neon>) -> Self {
+        other.into_vec128(self.cpu()).gt_u8(self)
+    }
 }
 
 /// [`Vec256`] methods which are specific to Neon.

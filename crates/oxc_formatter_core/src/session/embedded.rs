@@ -13,12 +13,12 @@
 
 use std::{any::Any, sync::Arc};
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
-    FormatContext, FormatElement, FormatSession, Formatter, IndentWidth, InputKind, LineMode,
+    FormatContext, FormatElement, FormatSession, Formatter, InputKind,
     format_element::{BestFittingElement, Interned},
     write::formatter::intern_exact,
 };
@@ -120,6 +120,7 @@ pub fn dispatch_ir<'a, C: FormatContext>(
 ///
 /// `map_text` receives each `Text` and `Token` run (a child may print any character as a token, e.g. JS's `` ` ``);
 /// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
+/// The `Text`s it pushes itself (not inside a pushed subtree) in place of a `text(..).without_expand_parent()` keep that flag.
 /// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
 /// Nothing is rebuilt until the first change, an IR with none is returned as is.
 pub fn map_text_in_ir<'a, F>(
@@ -132,6 +133,30 @@ where
 {
     let mut interned_cache = FxHashMap::default();
     map_text_in_ir_impl(&ir, allocator, map_text, &mut interned_cache).unwrap_or(ir)
+}
+
+/// Whether a `Text` or `Token` run of an embedded IR satisfies `predicate`,
+/// descending into BestFitting variants and interned content (a shared `Interned` subtree once).
+pub fn any_text_in_ir(ir: &[FormatElement<'_>], predicate: &mut impl FnMut(&str) -> bool) -> bool {
+    fn walk<'a>(
+        ir: &[FormatElement<'a>],
+        predicate: &mut impl FnMut(&str) -> bool,
+        visited: &mut FxHashSet<Interned<'a>>,
+    ) -> bool {
+        ir.iter().any(|element| match element {
+            FormatElement::Text { text, .. } | FormatElement::Token { text } => {
+                predicate(text.as_str())
+            }
+            FormatElement::BestFitting(best_fitting) => {
+                best_fitting.variants().iter().any(|variant| walk(variant, predicate, visited))
+            }
+            FormatElement::Interned(interned) => {
+                visited.insert(interned.clone()) && walk(interned, predicate, visited)
+            }
+            _ => false,
+        })
+    }
+    walk(ir, predicate, &mut FxHashSet::default())
 }
 
 /// Returns `None` if no element changed.
@@ -151,9 +176,20 @@ where
     let mut rebuilt = false;
     for (index, element) in ir.iter().enumerate() {
         let changed = match element {
-            FormatElement::Text { text, .. } | FormatElement::Token { text } => {
-                map_text(text.as_str(), &mut out)
+            FormatElement::Text { text, width } => {
+                let start = out.len();
+                let changed = map_text(text.as_str(), &mut out);
+                // The texts replacing a `without_expand_parent()` one keep it
+                if width.is_multiline() && !width.propagates_expand() {
+                    for element in &mut out[start..] {
+                        if let FormatElement::Text { width: replaced, .. } = element {
+                            *replaced = replaced.without_expand_parent();
+                        }
+                    }
+                }
+                changed
             }
+            FormatElement::Token { text } => map_text(text.as_str(), &mut out),
             FormatElement::BestFitting(best_fitting) => {
                 let mut changed = false;
                 let mut variants =
@@ -203,31 +239,4 @@ where
         }
     }
     rebuilt.then_some(out)
-}
-
-/// Pushes `text` with each newline as a literal line (Prettier's `replaceEndOfLine()`).
-///
-/// For a [`map_text_in_ir`] callback:
-/// a literal line adds no indentation of its own, it resumes at the enclosing root (`mark_as_root`).
-///
-/// TODO: An embedding boundary rewrites the child IR with this, because a newline inside a `Text` has two readings:
-/// - the printer prints it as is (column 0), as Prettier prints a string
-/// - the IR to Prettier Doc conversion (oxfmt's `to_prettier_doc`) always makes it a `literalline`
-///
-/// A boundary scope tag (a `mark_as_root` variant whose `Text` newlines resume at the root) would replace the rewrite.
-/// Revisit once the Vue and HTML ports remove the Doc conversion path, which leaves the printer as the only reader.
-pub fn push_text_with_literal_lines<'a>(
-    out: &mut ArenaVec<'a, FormatElement<'a>>,
-    text: &'a str,
-    indent_width: IndentWidth,
-) {
-    // Splitting on `\n` is safe because the IR only contains normalized linebreaks
-    for (i, line) in text.split('\n').enumerate() {
-        if i > 0 {
-            out.push(FormatElement::Line(LineMode::Literal));
-        }
-        if !line.is_empty() {
-            out.push(FormatElement::text(line, indent_width));
-        }
-    }
 }

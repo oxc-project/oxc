@@ -1,9 +1,9 @@
 use std::iter;
 
-use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::{Ident, static_ident};
 use oxc_traverse::BoundIdentifier;
 
@@ -23,6 +23,31 @@ pub fn arrow_function_body_as_function_body_mut<'a, 'b>(
         });
     }
     body.as_function_body_mut().unwrap()
+}
+
+/// Take a non-computed string, numeric or BigInt literal property key as an expression.
+///
+/// `'x'` -> `"x"`, `123` -> `123`, `1n` -> `1n`.
+/// Returns `None` for other keys.
+pub fn take_literal_property_key<'a>(
+    key: &mut PropertyKey<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Option<Expression<'a>> {
+    if !matches!(
+        key,
+        PropertyKey::StaticStringLiteral(_)
+            | PropertyKey::StaticNumericLiteral(_)
+            | PropertyKey::StaticBigIntLiteral(_)
+    ) {
+        return None;
+    }
+    let expr = match key.take_in(ctx) {
+        PropertyKey::StaticStringLiteral(lit) => Expression::StringLiteral(lit),
+        PropertyKey::StaticNumericLiteral(lit) => Expression::NumericLiteral(lit),
+        PropertyKey::StaticBigIntLiteral(lit) => Expression::BigIntLiteral(lit),
+        _ => unreachable!(),
+    };
+    Some(expr)
 }
 
 /// `object` -> `object.call`.
@@ -225,6 +250,7 @@ pub fn create_class_constructor_with_params<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
     create_class_method(
+        SPAN,
         ArenaVec::new_in(ctx),
         PropertyKey::new_static_identifier(SPAN, "constructor", ctx),
         MethodDefinitionKind::Constructor,
@@ -232,27 +258,28 @@ pub fn create_class_constructor_with_params<'a>(
         None,
         stmts,
         false,
-        false,
         scope_id,
         ctx,
     )
 }
 
 /// Create a `MethodDefinition` class element wrapping a function expression.
+///
+/// `span` is used for the method and its body.
 pub fn create_class_method<'a>(
+    span: Span,
     decorators: ArenaVec<'a, Decorator<'a>>,
     key: PropertyKey<'a>,
     kind: MethodDefinitionKind,
     params: ArenaBox<'a, FormalParameters<'a>>,
     return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     stmts: ArenaVec<'a, Statement<'a>>,
-    computed: bool,
     is_static: bool,
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
     ClassElement::new_method_definition(
-        SPAN,
+        span,
         MethodDefinitionType::MethodDefinition,
         decorators,
         key,
@@ -267,12 +294,11 @@ pub fn create_class_method<'a>(
             None,
             params,
             return_type,
-            Some(FunctionBody::boxed(SPAN, [], stmts, ctx)),
+            Some(FunctionBody::boxed(span, [], stmts, ctx)),
             scope_id,
             ctx,
         ),
         kind,
-        computed,
         is_static,
         false,
         false,
@@ -285,11 +311,17 @@ pub fn create_class_method<'a>(
 ///
 /// Instance: `get <key>() { return this.#<storage_name>; }`
 /// Static:   `get <key>() { return ClassName.#<storage_name>; }`
+///
+/// The method and its body get `span`, and the statement in the body gets `statement_span`, so
+/// stepping into the method maps to the source of the auto-accessor it is generated from.
+/// The two must differ: a source map records no mapping for a position equal to the last one,
+/// which would leave the statement's line unmapped.
 pub fn create_accessor_method<'a>(
+    span: Span,
+    statement_span: Span,
     decorators: ArenaVec<'a, Decorator<'a>>,
     key: PropertyKey<'a>,
     kind: MethodDefinitionKind,
-    computed: bool,
     is_static: bool,
     storage_name: Str<'a>,
     object_binding: Option<&BoundIdentifier<'a>>,
@@ -322,14 +354,17 @@ pub fn create_accessor_method<'a>(
             false,
             ctx,
         );
-        let stmt = Statement::new_return_statement(SPAN, Some(field_expr), ctx);
+        let stmt = Statement::new_return_statement(statement_span, Some(field_expr), ctx);
         (params, stmt)
     } else {
-        let value_binding = ctx.generate_binding(
-            static_ident!("value"),
-            scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        );
+        // The body reads `object_binding`, so a parameter with the same name would shadow it,
+        // as in `class value { static accessor x; }`. Use a unique name in that case.
+        let flags = SymbolFlags::FunctionScopedVariable;
+        let value_binding = if object_binding.is_some_and(|binding| binding.name == "value") {
+            ctx.generate_uid("value", scope_id, flags)
+        } else {
+            ctx.generate_binding(static_ident!("value"), scope_id, flags)
+        };
         let param =
             FormalParameter::new_plain(SPAN, value_binding.create_binding_pattern(ctx), ctx);
         let params =
@@ -347,18 +382,18 @@ pub fn create_accessor_method<'a>(
             value_binding.create_read_expression(ctx),
             ctx,
         );
-        let stmt = Statement::new_expression_statement(SPAN, assign, ctx);
+        let stmt = Statement::new_expression_statement(statement_span, assign, ctx);
         (params, stmt)
     };
 
     create_class_method(
+        span,
         decorators,
         key,
         kind,
         params,
         return_type,
         ArenaVec::from_value_in(body_stmt, ctx),
-        computed,
         is_static,
         scope_id,
         ctx,

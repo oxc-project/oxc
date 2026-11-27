@@ -66,6 +66,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Use array literal notation [] instead.
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:12]
+ 1 │ const xs = Array(...[], 3);
+   ·            ───────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:6]
  1 │ /*a*/Array()
    ·      ───────
