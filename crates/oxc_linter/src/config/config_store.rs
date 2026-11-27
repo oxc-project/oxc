@@ -184,22 +184,26 @@ impl Config {
             return self.base.clone();
         }
 
-        let relative_path = self
-            .base
-            .config
-            .path
-            .as_ref()
-            .and_then(|config_path| {
-                config_path.parent().map(|parent| path.strip_prefix(parent).unwrap_or(path))
-            })
-            .unwrap_or(path);
+        let config_dir =
+            self.base.config.path.as_ref().and_then(|config_path| config_path.parent());
 
-        let path = relative_path.to_string_lossy();
-        let path = path.as_ref();
-        let overrides_to_apply = self
-            .overrides
-            .iter()
-            .filter(|config| config.files.is_match(path) && !config.exclude_files.is_match(path));
+        // The path of the file being linted, relative to the directory of the
+        // configuration file when the file is inside it, otherwise the given path.
+        let relative_path = config_dir.map_or(path, |dir| path.strip_prefix(dir).unwrap_or(path));
+
+        // Absolute glob patterns can only match the file's absolute path, so
+        // also match against it for files inside the directory of the
+        // configuration file. https://github.com/oxc-project/oxc/issues/29883
+        let absolute_path = (relative_path != path).then(|| path.to_string_lossy());
+
+        let relative_path = relative_path.to_string_lossy();
+        let relative_path = relative_path.as_ref();
+        let overrides_to_apply = self.overrides.iter().filter(|config| {
+            (config.files.is_match(relative_path)
+                || absolute_path.as_deref().is_some_and(|p| config.files.is_match(p)))
+                && !config.exclude_files.is_match(relative_path)
+                && !absolute_path.as_deref().is_some_and(|p| config.exclude_files.is_match(p))
+        });
 
         let mut overrides_to_apply = overrides_to_apply.peekable();
 
@@ -690,6 +694,54 @@ mod test {
         assert_eq!(store.resolve("src/App.ts".as_ref()).rules.len(), 2);
         assert_eq!(store.resolve("src/foo/bar/baz/App.tsx".as_ref()).rules.len(), 2);
         assert_eq!(store.resolve("src/foo/bar/baz/App.spec.tsx".as_ref()).rules.len(), 2);
+    }
+
+    /// Absolute glob patterns match the file's absolute path, regardless of
+    /// whether the file is inside or outside the directory of the configuration
+    /// file.
+    ///
+    /// See <https://github.com/oxc-project/oxc/issues/29883>
+    #[test]
+    fn test_absolute_glob_overrides() {
+        let base_rules = vec![no_explicit_any()];
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            external_plugins: None,
+            env: None,
+            files: GlobSet::new(vec![
+                "/tmp/repro/configs/sub/inside.ts",
+                "/tmp/repro/src/outside.ts",
+            ]),
+            exclude_files: GlobSet::default(),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![(
+                    RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
+                    RuleConfig::new(AllowWarnDeny::Allow),
+                )],
+                external_rules: vec![],
+            },
+        }]);
+
+        let config = LintConfig {
+            path: Some(PathBuf::from("/tmp/repro/configs/oxlintrc.json")),
+            ..Default::default()
+        };
+
+        let store = ConfigStore::new(
+            Config::new(base_rules, vec![], OxlintCategories::default(), config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // The override silences the rule for both files named by an absolute
+        // glob, whether the file is inside or outside the directory of the
+        // configuration file.
+        assert!(store.resolve(Path::new("/tmp/repro/configs/sub/inside.ts")).rules.is_empty());
+        assert!(store.resolve(Path::new("/tmp/repro/src/outside.ts")).rules.is_empty());
+
+        // Files not named by the globs keep the base configuration.
+        assert_eq!(store.resolve(Path::new("/tmp/repro/configs/sub/other.ts")).rules.len(), 1);
     }
 
     #[test]
