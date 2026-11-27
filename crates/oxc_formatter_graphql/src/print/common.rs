@@ -243,10 +243,11 @@ pub(super) fn write_spaced_keyword(
 }
 
 pub(super) fn write_type<'a>(ty: &Type<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    // A wrapped type is one slice unless a comment is pending in front
-    // (the piecewise path claims it at the first name, inside a `[`); a named one is a single text anyway
+    // A wrapped type spelled as printed is one slice, claimed at its start like the piecewise path;
+    // a named one is a single text anyway
     let span = Piece::span(ty);
-    if !matches!(ty, Type::Named(_)) && ty.is_verbatim(f) && !has_comment_before(f, span.start) {
+    if !matches!(ty, Type::Named(_)) && ty.is_verbatim(f) {
+        flush_leading_comments(span.start, f);
         verbatim::write_slice(span, f);
         return;
     }
