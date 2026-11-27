@@ -101,7 +101,7 @@ fn quick_test(s: &str) -> bool {
 }
 
 static NONOCTAL_REGEX: Lazy<Regex> =
-    lazy_regex!(r"(?:[^\\]|(?P<previousEscape>\\.))*?(?P<decimalEscape>\\[89])");
+    lazy_regex!(r"(?s)(?:[^\\]|(?P<previousEscape>\\.))*?(?P<decimalEscape>\\[89])");
 
 #[expect(clippy::cast_possible_truncation)]
 fn check_string(ctx: &LintContext<'_>, literal_span: Span) {
@@ -279,6 +279,9 @@ fn test() {
         r"'\01\8'",
         r"'\0\1\8'",
         r"'\0\\n\8'",
+        "'\\\n\\8'",
+        "'\\\r\n\\9'",
+        "'\\\u{2028}\\8'",
     ];
 
     let fix: Vec<ExpectFixTestCase> = vec![
@@ -309,6 +312,7 @@ fn test() {
         (r"'\0\8'", (r"'\u00008'", r"'\0\u0038'", r"'\0\\8'")).into(),
         (r"'foo\0\9bar'", (r"'foo\u00009bar'", r"'foo\0\u0039bar'", r"'foo\0\\9bar'")).into(),
         (r"'\1\0\8'", (r"'\1\u00008'", r"'\1\0\u0038'", r"'\1\0\\8'")).into(),
+        ("'\\\n\\8'", ("'\\\n8'", "'\\\n\\\\8'")).into(),
     ];
 
     Tester::new(NoNonoctalDecimalEscape::NAME, NoNonoctalDecimalEscape::PLUGIN, pass, fail)
