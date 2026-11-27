@@ -1010,6 +1010,25 @@ Prettier glues the sign to the number (removing the source space, a postcss word
 Matching that gluing is ad-hoc work for a torture-test-only shape.
 A sign GLUED in the source never gains a space in either implementation (that direction is the parser's folded-sign handling, not a divergence).
 
+## less-keyword-minus
+
+- Why: semantics
+- Pin: `tests/fixtures/format/less/keyword-minus.less`
+
+```less
+/* input */
+v: -  1;
+
+/* ours */
+v: - 1;
+
+/* prettier */
+v: -1;
+```
+
+less.js negates only a glued `@var`, `$prop` or `(`, so a lone `-` before a number is a keyword, not a sign.
+lessc compiles `- 1` as written and `-1` as the number, so Prettier's glue changes the output.
+
 ## signed-value-resplit
 
 - Why: uniform-rule (same construct, same output: the item in first position, an unsigned item)

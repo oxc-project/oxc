@@ -1423,6 +1423,11 @@ fn raw_token<'b, 'a>(value: &'b ComponentValue<'a>) -> Option<&'b Token<'a>> {
     if let ComponentValue::TokenWithSpan(token) = value { Some(&token.token) } else { None }
 }
 
+/// A lone `-` that oxc-css-parser reads as a Less keyword, not an operator or a sign (`1 -"t"`).
+fn is_less_keyword_minus(value: &ComponentValue<'_>) -> bool {
+    matches!(value, ComponentValue::InterpolableIdent(InterpolableIdent::Literal(id)) if id.raw == "-")
+}
+
 /// The end of the run starting at `values[start]`: tight / non-breaking-space components merge into one fill entry.
 fn run_end(
     values: &[ComponentValue<'_>],
@@ -1577,11 +1582,14 @@ fn base_separator(values: &[ComponentValue<'_>], i: usize, ctx: ValueContext<'_>
 
     // Raw token fallbacks (postcss-values would have produced operator/word tokens):
     // keep gap-free neighbors tight (`10em+12em`, `-fb-url(/a/b)`).
+    // So does the Less keyword `-` (`1 -"t"`, `1-`): a space after it would make it an operator
     if gap_empty
         && (matches!(prev, ComponentValue::TokenWithSpan(_) | ComponentValue::Placeholder(_))
             || matches!(curr, ComponentValue::TokenWithSpan(_) | ComponentValue::Placeholder(_))
             || matches!(prev, ComponentValue::Delimiter(_))
-            || matches!(curr, ComponentValue::Delimiter(_)))
+            || matches!(curr, ComponentValue::Delimiter(_))
+            || is_less_keyword_minus(prev)
+            || is_less_keyword_minus(curr))
     {
         return Separator::Tight;
     }

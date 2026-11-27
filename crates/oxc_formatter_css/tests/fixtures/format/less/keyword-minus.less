@@ -1,0 +1,11 @@
+// A lone `-` less.js reads as a keyword, not an operator: its glued sides stay glued
+.a {
+  p: 1 -'t';
+  q: 1 -#FFF;
+  r: 1-"t";
+  s: 1-;
+  t: (1)-;
+  u: 1 -  'x'   2;
+  // DIVERGENCES.md#less-keyword-minus
+  v: -  1;
+}
