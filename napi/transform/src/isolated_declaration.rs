@@ -72,9 +72,16 @@ impl Task for IsolatedDeclarationTask {
     }
 }
 
-/// TypeScript Isolated Declarations for Standalone DTS Emit (async)
+/// TypeScript Isolated Declarations for Standalone DTS Emit, asynchronously on a separate thread.
 ///
-/// Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
+/// Note: This function can be slower than `isolatedDeclarationSync`,
+/// due to the overhead of running on another thread.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Isolated declarations options. See {@link IsolatedDeclarationsOptions}.
+/// @returns A `Promise` that resolves to an object containing the declaration code, source map,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 pub fn isolated_declaration(
     filename: String,
@@ -84,7 +91,13 @@ pub fn isolated_declaration(
     AsyncTask::new(IsolatedDeclarationTask { filename, source_text, options })
 }
 
-/// TypeScript Isolated Declarations for Standalone DTS Emit
+/// TypeScript Isolated Declarations for Standalone DTS Emit, synchronously on current thread.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Isolated declarations options. See {@link IsolatedDeclarationsOptions}.
+/// @returns An object containing the declaration code, source map,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn isolated_declaration_sync(

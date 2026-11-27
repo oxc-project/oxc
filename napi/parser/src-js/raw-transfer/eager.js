@@ -26,7 +26,8 @@ export function parseSyncRaw(filename, sourceText, options) {
  *
  * i.e. the majority of the workload cannot be parallelized by using this method.
  *
- * Generally `parseSyncRaw` is preferable to use as it does not have the overhead of spawning a thread.
+ * Generally `parseSyncRaw` is preferable to use,
+ * as it does not have the overhead of running on another thread.
  * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
  *
  * @param {string} filename - Filename

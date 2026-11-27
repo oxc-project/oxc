@@ -210,9 +210,16 @@ export interface Helpers {
 }
 
 /**
- * TypeScript Isolated Declarations for Standalone DTS Emit (async)
+ * TypeScript Isolated Declarations for Standalone DTS Emit, asynchronously on a separate thread.
  *
- * Note: This function can be slower than `isolatedDeclarationSync` due to the overhead of spawning a thread.
+ * Note: This function can be slower than `isolatedDeclarationSync`,
+ * due to the overhead of running on another thread.
+ *
+ * @param filename - Name of the file being transformed.
+ * @param sourceText - Source code
+ * @param options - Isolated declarations options. See {@link IsolatedDeclarationsOptions}.
+ * @returns A `Promise` that resolves to an object containing the declaration code, source map,
+ *   and any errors that occurred during parsing or transformation.
  */
 export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): Promise<IsolatedDeclarationsResult>
 
@@ -235,7 +242,15 @@ export interface IsolatedDeclarationsResult {
   errors: Array<OxcError>
 }
 
-/** TypeScript Isolated Declarations for Standalone DTS Emit */
+/**
+ * TypeScript Isolated Declarations for Standalone DTS Emit, synchronously on current thread.
+ *
+ * @param filename - Name of the file being transformed.
+ * @param sourceText - Source code
+ * @param options - Isolated declarations options. See {@link IsolatedDeclarationsOptions}.
+ * @returns An object containing the declaration code, source map,
+ *   and any errors that occurred during parsing or transformation.
+ */
 export declare function isolatedDeclarationSync(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
 
 /**
@@ -311,19 +326,18 @@ export interface JsxOptions {
 }
 
 /**
- * Transform JavaScript code to a Vite Node runnable module.
+ * Transform JavaScript code to a Vite Node runnable module, asynchronously on a separate thread.
  *
- * @param filename The name of the file being transformed.
- * @param sourceText the source code itself
- * @param options The options for the transformation. See {@link
- * ModuleRunnerTransformOptions} for more information.
- *
- * @returns an object containing the transformed code, source maps, and any
- * errors that occurred during parsing or transformation.
- *
- * Note: This function can be slower than `moduleRunnerTransformSync` due to the overhead of spawning a thread.
+ * Note: This function can be slower than `moduleRunnerTransformSync`,
+ * due to the overhead of running on another thread.
  *
  * @deprecated Only works for Vite.
+ *
+ * @param filename - Name of the file being transformed.
+ * @param sourceText - Source code
+ * @param options - Transformation options. See {@link ModuleRunnerTransformOptions}.
+ * @returns A `Promise` that resolves to an object containing the transformed code, source maps,
+ *   and any errors that occurred during parsing or transformation.
  */
 export declare function moduleRunnerTransform(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): Promise<ModuleRunnerTransformResult>
 
@@ -365,7 +379,17 @@ export interface ModuleRunnerTransformResult {
   errors: Array<OxcError>
 }
 
-/** @deprecated Only works for Vite. */
+/**
+ * Transform JavaScript code to a Vite Node runnable module, synchronously on current thread.
+ *
+ * @deprecated Only works for Vite.
+ *
+ * @param filename - Name of the file being transformed.
+ * @param sourceText - Source code
+ * @param options - Transformation options. See {@link ModuleRunnerTransformOptions}.
+ * @returns An object containing the transformed code, source maps,
+ *   and any errors that occurred during parsing or transformation.
+ */
 export declare function moduleRunnerTransformSync(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): ModuleRunnerTransformResult
 
 export interface PluginsOptions {
@@ -472,18 +496,18 @@ export interface StyledComponentsOptions {
 }
 
 /**
- * Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
+ * Transpile a JavaScript or TypeScript into a target ECMAScript version,
+ * asynchronously on a separate thread.
  *
- * Note: This function can be slower than `transform` due to the overhead of spawning a thread.
+ * Note: This function can be slower than `transformSync`,
+ * due to the overhead of running on another thread.
  *
- * @param filename The name of the file being transformed. If this is a
- * relative path, consider setting the {@link TransformOptions#cwd} option.
- * @param sourceText the source code itself
- * @param options The options for the transformation. See {@link
- * TransformOptions} for more information.
- *
- * @returns a promise that resolves to an object containing the transformed code,
- * source maps, and any errors that occurred during parsing or transformation.
+ * @param filename - Name of the file being transformed.
+ *   If this is a relative path, consider setting the {@link TransformOptions#cwd} option.
+ * @param sourceText - Source code
+ * @param options - Transformation options. See {@link TransformOptions}.
+ * @returns A `Promise` that resolves to an object containing the transformed code, source maps,
+ *   and any errors that occurred during parsing or transformation.
  */
 export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResult>
 
@@ -629,16 +653,15 @@ export interface TransformResult {
 }
 
 /**
- * Transpile a JavaScript or TypeScript into a target ECMAScript version.
+ * Transpile a JavaScript or TypeScript into a target ECMAScript version,
+ * synchronously on current thread.
  *
- * @param filename The name of the file being transformed. If this is a
- * relative path, consider setting the {@link TransformOptions#cwd} option..
- * @param sourceText the source code itself
- * @param options The options for the transformation. See {@link
- * TransformOptions} for more information.
- *
- * @returns an object containing the transformed code, source maps, and any
- * errors that occurred during parsing or transformation.
+ * @param filename - Name of the file being transformed.
+ *   If this is a relative path, consider setting the {@link TransformOptions#cwd} option.
+ * @param sourceText - Source code
+ * @param options - Transformation options. See {@link TransformOptions}.
+ * @returns An object containing the transformed code, source maps,
+ *   and any errors that occurred during parsing or transformation.
  */
 export declare function transformSync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
 
