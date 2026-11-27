@@ -5,6 +5,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::static_ident;
 
 use crate::{
     AstNode,
@@ -77,9 +78,16 @@ impl Rule for NoVoid {
         }
 
         if unary_expr.operator.is_void() {
-            ctx.diagnostic_with_suggestion(no_void_diagnostic(unary_expr.span), |fixer| {
-                fixer.replace(unary_expr.span, "undefined")
-            });
+            let diagnostic = no_void_diagnostic(unary_expr.span);
+            if unary_expr.argument.without_parentheses().is_literal()
+                && ctx.scoping().find_binding(node.scope_id(), static_ident!("undefined")).is_none()
+            {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fixer.replace(unary_expr.span, "undefined")
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
     }
 }
@@ -105,6 +113,7 @@ fn test() {
         ("void(0)", None),
         ("var foo = void 0", None),
         ("var foo = void 0", Some(serde_json::json!([{ "allowAsStatement": true }]))),
+        ("function discard(callback) { return void callback(); }", None),
     ];
 
     let fix = vec![
@@ -117,6 +126,18 @@ fn test() {
             "var foo = void 0",
             "var foo = undefined",
             Some(serde_json::json!([{ "allowAsStatement": true }])),
+        ),
+        ("var foo = void (0)", "var foo = undefined", None),
+        (
+            "function discard(callback) { return void callback(); }",
+            "function discard(callback) { return void callback(); }",
+            None,
+        ),
+        ("var foo = void bar", "var foo = void bar", None),
+        (
+            "function f(undefined) { return void 0; }",
+            "function f(undefined) { return void 0; }",
+            None,
         ),
     ];
 
