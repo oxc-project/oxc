@@ -65,9 +65,8 @@ impl RulesCustomization {
         let Some(rule) = get_full_rule_name(rule_code) else {
             return false;
         };
-        self.rules
-            .get(rule.as_ref())
-            .is_some_and(|customization| customization.autofix.is_some_and(|autofix| !autofix))
+        self.get(rule.as_ref(), |customization| customization.autofix)
+            .is_some_and(|autofix| !autofix)
     }
 }
 
@@ -247,6 +246,44 @@ mod tests {
                 kind: FixKind::SafeFix,
                 lsp_kind: FixedContentKind::LintRule(OxcCode { scope: None, number: None }),
             }],
+        }
+    }
+
+    #[test]
+    fn test_wildcard_customization_filters_fix_all() {
+        let customization = serde_json::from_value(serde_json::json!({
+            "unicorn/*": { "autofix": false },
+            "unicorn/prefer-set-has": { "autofix": true }
+        }))
+        .unwrap();
+        let uri = Uri::from_str("file:///test.js").unwrap();
+
+        for (rule, enabled) in [("prefer-includes", false), ("prefer-set-has", true)] {
+            let mut action = make_fix_kind_action(FixKind::SafeFix);
+            action.fixed_content[0].lsp_kind = FixedContentKind::LintRule(OxcCode {
+                scope: Some("unicorn".into()),
+                number: Some(rule.into()),
+            });
+            assert_eq!(
+                apply_all_fix_code_action(
+                    std::iter::once(action.clone()),
+                    uri.clone(),
+                    Some(&customization),
+                )
+                .is_some(),
+                enabled,
+            );
+            action.fixed_content[0].kind = FixKind::DangerousFix;
+            assert_eq!(
+                apply_dangerous_fix_code_action(
+                    std::iter::once(action.clone()),
+                    uri.clone(),
+                    Some(&customization),
+                )
+                .is_some(),
+                enabled,
+            );
+            assert_eq!(apply_fix_code_actions(action, &uri).len(), 1);
         }
     }
 
