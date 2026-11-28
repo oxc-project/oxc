@@ -406,14 +406,19 @@ impl<'a> Tree<'a> {
     }
 }
 
+/// `text` is trimmed, with single spaces for whitespace: what [`collapse_whitespace`] returns as is.
+pub fn is_collapsed(text: &str) -> bool {
+    text.len() == text.trim_ascii().len()
+        && text
+            .as_bytes()
+            .windows(2)
+            .all(|pair| !pair[1].is_ascii_whitespace() || (pair[1] == b' ' && pair[0] != b' '))
+}
+
 /// `text` trimmed, with its whitespace runs collapsed to single spaces; borrowed when already so.
 pub fn collapse_whitespace<'a>(allocator: &'a Allocator, text: &'a str) -> &'a str {
     let text = text.trim_ascii();
-    let collapsed = text
-        .as_bytes()
-        .windows(2)
-        .all(|pair| !pair[1].is_ascii_whitespace() || (pair[1] == b' ' && pair[0] != b' '));
-    if collapsed {
+    if is_collapsed(text) {
         return text;
     }
     let mut out = StringBuilder::new_in(allocator);
