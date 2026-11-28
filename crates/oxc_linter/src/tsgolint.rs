@@ -1372,10 +1372,7 @@ fn should_skip_diagnostic(
     };
 
     if let Some(directives) = disable_directives_map.get(path) {
-        directives.contains(&tsgolint_diagnostic.rule, span)
-            || directives.contains(&format!("typescript-eslint/{}", tsgolint_diagnostic.rule), span)
-            || directives
-                .contains(&format!("@typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+        directives.contains_builtin("typescript", &tsgolint_diagnostic.rule, span)
     } else {
         debug_assert!(
             false,
@@ -1568,6 +1565,58 @@ mod test {
         fixer::{FixKind, Message, PossibleFixes},
         tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
+
+    #[test]
+    fn test_disable_directive_plugin_prefixes() {
+        use std::path::PathBuf;
+
+        use oxc_allocator::Allocator;
+        use oxc_parser::Parser;
+        use oxc_span::SourceType;
+        use rustc_hash::FxHashMap;
+
+        use crate::disable_directives::DisableDirectivesBuilder;
+
+        for prefix in ["eslint", "oxlint"] {
+            for (rule, expected) in [
+                ("no-floating-promises", true),
+                ("typescript/no-floating-promises", true),
+                ("typescript-eslint/no-floating-promises", true),
+                ("@typescript-eslint/no-floating-promises", true),
+                ("WRONG-PREFIX/no-floating-promises", false),
+                ("eslint/no-floating-promises", false),
+            ] {
+                let source = format!("// {prefix}-disable-next-line {rule}\nfoo();");
+                let allocator = Allocator::default();
+                let parsed = Parser::new(&allocator, &source, SourceType::default()).parse();
+                let directives =
+                    DisableDirectivesBuilder::new().build(&source, &parsed.program.comments);
+                let path = PathBuf::from("test.ts");
+                let map = FxHashMap::from_iter([(path.clone(), directives)]);
+                let diagnostic = TsGoLintRuleDiagnostic {
+                    span: Span::new(
+                        u32::try_from(source.len()).unwrap() - 6,
+                        u32::try_from(source.len()).unwrap(),
+                    ),
+                    rule: "no-floating-promises".into(),
+                    message: RuleMessage {
+                        id: "test".into(),
+                        description: "test".into(),
+                        help: None,
+                    },
+                    fixes: vec![],
+                    suggestions: vec![],
+                    labeled_ranges: vec![],
+                    file_path: "test.ts".into(),
+                };
+                assert_eq!(
+                    super::should_skip_diagnostic(&map, &path, &diagnostic),
+                    expected,
+                    "{prefix}: {rule}"
+                );
+            }
+        }
+    }
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {

@@ -10,7 +10,9 @@ use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{
     FixKind,
+    config::{normalize_rule_name, plugins::plugin_display_name},
     fixer::{Fix, Message, PossibleFixes},
+    utils::is_eslint_rule_adapted_to_typescript,
 };
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -366,6 +368,43 @@ impl DisableDirectives {
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
+        self.contains_matching(span, |name| {
+            if rule_name.contains('/') {
+                name == rule_name
+            } else {
+                name.rsplit_once('/').map_or(name, |(_, rule)| rule) == rule_name
+            }
+        })
+    }
+
+    pub(crate) fn contains_builtin(&self, plugin_name: &str, rule_name: &str, span: Span) -> bool {
+        self.contains_matching(span, |name| {
+            if name == rule_name
+                || name.strip_prefix(plugin_name).and_then(|name| name.strip_prefix('/'))
+                    == Some(rule_name)
+            {
+                return true;
+            }
+            let Some((_, rule)) = name.rsplit_once('/') else {
+                return false;
+            };
+            if rule != rule_name {
+                return false;
+            }
+
+            let normalized = normalize_rule_name(name);
+            let directive_plugin =
+                normalized.rsplit_once('/').map_or("eslint", |(plugin, _)| plugin);
+            match (directive_plugin, plugin_display_name(plugin_name)) {
+                (directive, plugin) if directive == plugin => true,
+                ("jest", "vitest") | ("vitest", "jest") => true,
+                ("typescript", "eslint") => is_eslint_rule_adapted_to_typescript(rule_name),
+                _ => false,
+            }
+        })
+    }
+
+    fn contains_matching(&self, span: Span, matches_rule: impl Fn(&str) -> bool) -> bool {
         // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
         // if the diagnostic's starting position falls within the disabled interval.
         // This prevents suppressing diagnostics for larger constructs (like functions) that
@@ -380,24 +419,7 @@ impl DisableDirectives {
             // Check if this rule should be disabled
             let rule_matches = match &interval.val {
                 DisabledRule::All { .. } => true,
-                // `rule_name` does not contain the plugin prefix.
-                // - `vitest/foobar` will be just `foobar`.
-                // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
-                //
-                // This enables matching rules across different plugins that share the same
-                // rule name, such as jest<->vitest rules and eslint<->typescript rules.
-                //
-                // We strip the plugin prefix from the directive name and compare equality
-                // rather than doing a substring match. Otherwise unrelated rules like
-                // `canonical/no-re-export` would accidentally match oxlint's `export`
-                // rule because `"no-re-export".contains("export")` is true.
-                DisabledRule::Single { rule_name: name, .. } => {
-                    if rule_name.contains('/') {
-                        name == rule_name
-                    } else {
-                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule) == rule_name
-                    }
-                }
+                DisabledRule::Single { rule_name, .. } => matches_rule(rule_name),
             };
 
             if !rule_matches {
@@ -1511,6 +1533,90 @@ mod tests {
         assert!(parser_ret.diagnostics.is_empty());
         let semantic_ret = SemanticBuilder::new_linter().build(allocator.alloc(parser_ret.program));
         semantic_ret.semantic
+    }
+
+    #[test]
+    fn test_native_plugin_prefixes() {
+        use crate::tester::Tester;
+
+        for prefix in ["eslint", "oxlint"] {
+            for (plugin, rule, code, aliases) in [
+                ("unicorn", "consistent-date-clone", "new Date(date.getTime());", vec!["unicorn"]),
+                (
+                    "eslint",
+                    "no-unused-vars",
+                    "const unused = 0;",
+                    vec!["eslint", "typescript", "typescript-eslint", "@typescript-eslint"],
+                ),
+                ("jest", "no-disabled-tests", "it.skip('test', () => {});", vec!["jest", "vitest"]),
+                (
+                    "vitest",
+                    "no-disabled-tests",
+                    "it.skip('test', () => {});",
+                    vec!["vitest", "jest"],
+                ),
+            ] {
+                let mut pass = aliases
+                    .into_iter()
+                    .map(|alias| format!("// {prefix}-disable-next-line {alias}/{rule}\n{code}"))
+                    .collect::<Vec<_>>();
+                pass.push(format!("// {prefix}-disable-next-line {rule}\n{code}"));
+                pass.push(format!("// {prefix}-disable-next-line\n{code}"));
+                let fail = vec![
+                    format!("// {prefix}-disable WRONG-PREFIX/{rule}\n{code}"),
+                    format!("// {prefix}-disable-next-line WRONG-PREFIX/{rule}\n{code}"),
+                    format!("{code} // {prefix}-disable-line WRONG-PREFIX/{rule}"),
+                    format!("// {prefix}-disable import/{rule}\n{code}"),
+                    code.to_string(),
+                ];
+                Tester::new(rule, plugin, pass, fail).intentionally_allow_no_fix_tests().test();
+            }
+        }
+    }
+
+    #[test]
+    fn test_external_plugin_prefixes() {
+        test_directives(
+            |prefix| format!("// {prefix}-disable @scope/custom/rule\ndebugger;"),
+            |source, _, directives| {
+                let end = u32::try_from(source.len()).unwrap();
+                let span = Span::new(end - 9, end);
+                assert!(!directives.contains("other/rule", span));
+                assert!(!directives.contains("@scope/other/rule", span));
+                assert!(directives.contains("@scope/custom/rule", span));
+                assert_eq!(directives.collect_unused_disable_comments(), []);
+            },
+        );
+    }
+
+    #[test]
+    fn test_builtin_plugin_aliases() {
+        for (plugin, aliases) in [
+            ("typescript", vec!["typescript-eslint", "typescript_eslint", "@typescript-eslint"]),
+            ("react", vec!["react-hooks", "react_hooks"]),
+            ("jsx_a11y", vec!["jsx-a11y", "jsx-a11y-x", "jsx_a11y-x"]),
+            ("nextjs", vec!["@next", "@next/next", "next"]),
+            ("react_perf", vec!["react-perf"]),
+            ("import", vec!["import-x"]),
+            ("oxc", vec!["deepscan"]),
+        ] {
+            for alias in aliases {
+                test_directives(
+                    |prefix| format!("// {prefix}-disable {alias}/rule\ndebugger;"),
+                    |source, _, directives| {
+                        let end = u32::try_from(source.len()).unwrap();
+                        let span = Span::new(end - 9, end);
+                        assert!(!directives.contains_builtin("unicorn", "rule", span));
+                        assert_eq!(directives.collect_unused_disable_comments().len(), 1);
+                        assert!(
+                            directives.contains_builtin(plugin, "rule", span),
+                            "{alias}: {plugin}"
+                        );
+                        assert_eq!(directives.collect_unused_disable_comments(), []);
+                    },
+                );
+            }
+        }
     }
 
     #[test]
