@@ -6,9 +6,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeId;
+use oxc_semantic::{IsGlobalReference, ScopeId};
 use oxc_span::Span;
-use oxc_str::JSStr;
+use oxc_str::{JSStr, static_ident};
 
 use crate::{
     AstNode,
@@ -85,7 +85,7 @@ fn is_array_of_or_from(callee: &MemberExpression) -> bool {
         || callee.is_specific_member_access("Array", "from")
 }
 
-fn is_kind_of_array_expr(expr: &Expression) -> bool {
+fn is_kind_of_array_expr(expr: &Expression, ctx: &LintContext<'_>) -> bool {
     match expr {
         Expression::NewExpression(new_expr) => {
             new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Array")
@@ -103,7 +103,13 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
                 return false;
             };
 
-            is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
+            is_array_of_or_from(callee)
+                || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
+                || (name == "keys"
+                    && !call_expr.optional
+                    && callee
+                        .object()
+                        .is_global_reference_name(static_ident!("Object"), ctx.scoping()))
         }
         Expression::ArrayExpression(_) => true,
         _ => false,
@@ -155,7 +161,7 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        let is_kind_of_array = is_kind_of_array_expr(init);
+        let is_kind_of_array = is_kind_of_array_expr(init, ctx);
 
         if !is_kind_of_array {
             return;
@@ -270,6 +276,25 @@ fn test() {
         "
             const foo = [1, 2, 3];
             const isExists = foo.includes(1);
+        ",
+        "
+            const keys = Object.keys(record);
+            const exists = keys.includes(candidate);
+        ",
+        "
+            function countMatches(Object, record, candidates) {
+                const keys = Object.keys(record);
+                for (const candidate of candidates) {
+                    keys.includes(candidate);
+                }
+            }
+        ",
+        "
+            const keys = Object.keys(record);
+            for (const candidate of candidates) {
+                keys.includes(candidate);
+            }
+            consume(keys);
         ",
         "
             while (a) {
@@ -584,6 +609,16 @@ fn test() {
 
     let fail = vec![
         "
+            export function countMatches(record, candidates) {
+                const keys = Object.keys(record);
+                let count = 0;
+                for (const candidate of candidates) {
+                    if (keys.includes(candidate)) count++;
+                }
+                return count;
+            }
+        ",
+        "
             const foo = [1, 2, 3];
             function unicorn() {
                 return foo.includes(1);
@@ -778,6 +813,10 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "const keys = Object.keys(record); for (const candidate of candidates) keys.includes(candidate);",
+            "const keys = new Set(Object.keys(record)); for (const candidate of candidates) keys.has(candidate);",
+        ),
         (
             "
                 const foo = [1, 2, 3];
