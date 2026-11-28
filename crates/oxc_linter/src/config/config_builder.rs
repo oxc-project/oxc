@@ -1788,6 +1788,41 @@ mod test {
     }
 
     #[test]
+    // https://github.com/oxc-project/oxc/issues/29826
+    fn test_typescript_alias_of_typescript_compatible_eslint_rule() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "rules": {
+                    "typescript/no-unused-private-class-members": "error"
+                }
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap();
+
+        let (rule, config) = builder
+            .rules
+            .iter()
+            .find(|(r, _)| r.name() == "no-unused-private-class-members")
+            .expect("typescript/no-unused-private-class-members should be configured");
+
+        assert_eq!(rule.plugin_name(), "eslint");
+        assert_eq!(rule.name(), "no-unused-private-class-members");
+        assert_eq!(config.severity, AllowWarnDeny::Deny);
+    }
+
+    #[test]
     fn test_unknown_builtin_rule_errors_in_overrides() {
         let oxlintrc: Oxlintrc = serde_json::from_str(
             r#"
