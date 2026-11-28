@@ -368,3 +368,112 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                                         ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split("a").join("b")
+   ·                ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split(`a`).join("b")
+   ·                ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split("a").join(`b`)
+   ·                ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:22]
+ 1 │ foo.split("a" + "b").join("c")
+   ·                      ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:18]
+ 1 │ (foo).split("a").join("b")
+   ·                  ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:18]
+ 1 │ (foo.split("a")).join("b")
+   ·                  ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split("_").join("$&")
+   ·                ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split("_").join("$1")
+   ·                ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split("_").join("$$")
+   ·                ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split("a").join("")
+   ·                ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:21]
+ 1 │ foo?.bar.split("a").join("b")
+   ·                     ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:26]
+ 1 │ foo.split("a" as string).join("b" as string)
+   ·                          ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:21]
+ 1 │ foo.split("\uD83D").join("b")
+   ·                     ────
+   ╰────
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:30]
+ 1 │ foo.split(/* comment */ "a").join("b")
+   ·                              ────
+   ╰────
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:16]
+ 1 │ foo.split("a").join(/* comment */ "b")
+   ·                ────
+   ╰────
+
+  ⚠ unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#split().join()`.
+   ╭─[prefer_string_replace_all.tsx:1:33]
+ 1 │ ({text: "a.a"}.text.split(".")).join("-");
+   ·                                 ────
+   ╰────
+  help: Replace `split().join()` with `replaceAll()`.
