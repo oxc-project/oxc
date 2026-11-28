@@ -1,0 +1,118 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:2:11]
+ 1 │ 
+ 2 │           /*
+   ·           ──
+ 3 │            * @param foo
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:2:11]
+ 1 │ 
+ 2 │           /*
+   ·           ──
+ 3 │            * @property foo
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:1:1]
+ 1 │ /* @ts-ignore */
+   · ──
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:2:7]
+ 1 │ 
+ 2 │       /*
+   ·       ──
+ 3 │        * Some description.
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:2:11]
+ 1 │ 
+ 2 │           /***
+   ·           ────
+ 3 │            * @param foo
+   ╰────
+  help: Replace `/***` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:2:11]
+ 1 │ 
+ 2 │           /***
+   ·           ────
+ 3 │            *
+   ╰────
+  help: Replace `/***` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:6:11]
+ 5 │ 
+ 6 │           /*
+   ·           ──
+ 7 │            * @param foo The foo.
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:2:11]
+ 1 │ 
+ 2 │           /*
+   ·           ──
+ 3 │            * @param foo The foo.
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:1:1]
+ 1 │ /*@param input*/
+   · ──
+ 2 │ /*** @returns {number} */
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:2:1]
+ 1 │ /*@param input*/
+ 2 │ /*** @returns {number} */
+   · ────
+   ╰────
+  help: Replace `/***` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:1:1]
+ 1 │ /* ﻿@tag */
+   · ──
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:1:14]
+ 1 │ const x = 1; /* @param value */
+   ·              ──
+   ╰────
+  help: Replace `/*` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Expected JSDoc-like comment to begin with two asterisks.
+   ╭─[no_bad_blocks.tsx:1:1]
+ 1 │ /***/
+   · ────
+   ╰────
+  help: Replace `/***` with `/**`.
+
+  ⚠ jsdoc(no-bad-blocks): Cannot add "name" to `require` with the tag's `name` set to `false`
+   ╭─[no_bad_blocks.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │           function quux() {
+ 3 │ 
+   ╰────

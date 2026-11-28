@@ -1032,6 +1032,7 @@ export interface DummyRuleMap {
   "jsdoc/check-tag-names"?: RuleNoConfig | [AllowWarnDeny, CheckTagNamesConfig];
   "jsdoc/empty-tags"?: RuleNoConfig | [AllowWarnDeny, EmptyTagsConfig];
   "jsdoc/implements-on-classes"?: RuleNoConfig;
+  "jsdoc/no-bad-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBadBlocksConfig];
   "jsdoc/no-blank-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBlankBlocks];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
@@ -1884,6 +1885,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, ValidExpectConfig]
     | [AllowWarnDeny, CheckTagNamesConfig]
     | [AllowWarnDeny, EmptyTagsConfig]
+    | [AllowWarnDeny, NoBadBlocksConfig]
     | [AllowWarnDeny, NoBlankBlocks]
     | [AllowWarnDeny, NoDefaultsConfig]
     | [AllowWarnDeny, RequireParamConfig]
@@ -2951,6 +2953,17 @@ export interface EmptyTagsConfig {
    * Additional tags to check for their descriptions.
    */
   tags?: string[];
+}
+export interface NoBadBlocksConfig {
+  /**
+   * Tags which exempt a block from this rule. By default TypeScript directives
+   * and license tags are ignored.
+   */
+  ignore?: string[];
+  /**
+   * Also report comments with three or more opening asterisks that contain no tags.
+   */
+  preventAllMultiAsteriskBlocks?: boolean;
 }
 export interface NoBlankBlocks {
   /**
