@@ -308,6 +308,76 @@ impl<'a> Expression<'a> {
         }
     }
 
+    /// Checks an expression that follows `@` against the `Decorator` grammar: a
+    /// `DecoratorMemberExpression`, a `DecoratorCallExpression` or a
+    /// `DecoratorParenthesizedExpression`.
+    ///
+    /// `start` is the start of the first token after `@`, and `is_parenthesized` is whether that
+    /// token is `(`. Without `preserve_parens`, `@(a.b)` parses as `a.b` starting after `(`, while
+    /// a suffixed parenthesized head such as `@(a)(b)` starts at `(`.
+    ///
+    /// As in TypeScript, non-null assertions and instantiation expressions may appear anywhere in
+    /// a member chain or call, e.g. `@a!.b()` and `@a.b<T>()`.
+    ///
+    /// Optional chains are accepted here, because the parser reports them while parsing.
+    ///
+    /// # Errors
+    ///
+    /// Returns which rule the expression breaks.
+    pub fn check_decorator_expression(
+        &self,
+        start: u32,
+        is_parenthesized: bool,
+    ) -> Result<(), DecoratorExpressionError> {
+        if matches!(self, Expression::ChainExpression(_)) {
+            return Ok(());
+        }
+        if is_parenthesized {
+            // `@(expr)` is valid only when nothing follows the closing `)`.
+            let is_parenthesized_head = |e: &Expression<'a>| {
+                matches!(e, Expression::ParenthesizedExpression(_)) || e.span().start != start
+            };
+            return match self {
+                expr if is_parenthesized_head(expr) => Ok(()),
+                Expression::CallExpression(call) if is_parenthesized_head(&call.callee) => {
+                    Err(DecoratorExpressionError::ArgumentsOutsideParentheses)
+                }
+                _ => Err(DecoratorExpressionError::NotParenthesized),
+            };
+        }
+        let mut expr = self.without_decorator_ts_wrappers();
+        if let Expression::CallExpression(call) = expr {
+            expr = &call.callee;
+        }
+        if expr.is_decorator_member_chain() {
+            Ok(())
+        } else {
+            Err(DecoratorExpressionError::NotParenthesized)
+        }
+    }
+
+    /// [`Self::is_decorator_member_expression`], also allowing TypeScript non-null assertions and
+    /// instantiation expressions anywhere in the chain.
+    fn is_decorator_member_chain(&self) -> bool {
+        match self.without_decorator_ts_wrappers() {
+            Expression::Identifier(_) => true,
+            Expression::StaticMemberExpression(member) => member.object.is_decorator_member_chain(),
+            Expression::PrivateFieldExpression(field) => field.object.is_decorator_member_chain(),
+            _ => false,
+        }
+    }
+
+    fn without_decorator_ts_wrappers(&self) -> &Self {
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::TSNonNullExpression(e) => &e.expression,
+                Expression::TSInstantiationExpression(e) => &e.expression,
+                _ => return expr,
+            };
+        }
+    }
+
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
@@ -2293,6 +2363,31 @@ impl WithClauseKeyword {
         match self {
             Self::With => "with",
             Self::Assert => "assert",
+        }
+    }
+}
+
+/// Why an expression after `@` is not a valid decorator expression.
+/// See [`Expression::check_decorator_expression`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DecoratorExpressionError {
+    /// The expression is neither a `DecoratorMemberExpression`, a call of one, nor wholly
+    /// parenthesized, e.g. `@a.b().c`, `@a[0]` or `@(a).b`. TypeScript reports this as TS1497.
+    NotParenthesized,
+    /// A parenthesized expression is called, e.g. `@(a)(b)`.
+    ArgumentsOutsideParentheses,
+}
+
+impl DecoratorExpressionError {
+    /// The diagnostic message for this error.
+    pub fn message(self) -> &'static str {
+        match self {
+            Self::NotParenthesized => {
+                "Expression must be enclosed in parentheses to be used as a decorator."
+            }
+            Self::ArgumentsOutsideParentheses => {
+                "Decorator arguments must be moved inside parentheses: use '@(decorator(args))' instead of '@(decorator)(args)'"
+            }
         }
     }
 }

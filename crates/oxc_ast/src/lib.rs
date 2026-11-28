@@ -77,6 +77,7 @@ mod generated {
 pub use generated::ast_kind;
 
 pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPlacement, CommentPosition};
+pub use ast_impl::DecoratorExpressionError;
 pub use ast_kind::{AstKind, AstType};
 pub use ast_kind_impl::{FunctionKind, MemberExpressionKind, ModuleDeclarationKind};
 pub use trivia::{
