@@ -1,12 +1,22 @@
 use std::{
     fmt::{self, Debug, Display},
-    path::{Component as PathComponent, Path, PathBuf},
+    path::PathBuf,
 };
 
 use itertools::Itertools;
-use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
+
+// JS plugins are only supported on 64-bit little-endian platforms
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use std::path::{Component as PathComponent, Path};
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use oxc_resolver::{ResolveOptions, Resolver};
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 use url::Url;
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use crate::config::plugins::{is_normal_plugin_name, normalize_plugin_name};
 
 use crate::{
     AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, OxlintOptions,
@@ -14,7 +24,7 @@ use crate::{
     config::{
         ESLintRule, OxlintOverrides,
         external_plugins::ExternalPluginEntry,
-        plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
+        plugins::LintPlugins,
         rules::{OverrideRulesError, RuleConfig, RuleSet},
     },
     external_linter::ExternalLinter,
@@ -256,30 +266,12 @@ impl ConfigStoreBuilder {
         // disabled, configs that reference external plugins are accepted but the plugins
         // themselves are not loaded, to avoid failing config parsing.
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
-            let Some(external_linter) = external_linter else {
-                #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let first_plugin = external_plugins.first().unwrap();
-                return Err(ConfigBuilderError::NoExternalLinterConfigured {
-                    plugin_specifier: first_plugin.specifier.clone(),
-                });
-            };
-
-            let resolver = Resolver::new(ResolveOptions {
-                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
-                ..Default::default()
-            });
-
-            for entry in external_plugins {
-                Self::load_external_plugin(
-                    &entry.config_dir,
-                    &entry.specifier,
-                    entry.name.as_deref(),
-                    external_linter,
-                    &resolver,
-                    external_plugin_store,
-                    workspace_uri,
-                )?;
-            }
+            Self::load_external_plugins(
+                &external_plugins,
+                external_linter,
+                external_plugin_store,
+                workspace_uri,
+            )?;
         }
 
         let plugins = oxlintrc.plugins.unwrap_or_default();
@@ -583,6 +575,59 @@ impl ConfigStoreBuilder {
             .collect()
     }
 
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    fn load_external_plugins(
+        external_plugins: &[&ExternalPluginEntry],
+        external_linter: Option<&ExternalLinter>,
+        external_plugin_store: &mut ExternalPluginStore,
+        workspace_uri: Option<&str>,
+    ) -> Result<(), ConfigBuilderError> {
+        let Some(first_plugin) = external_plugins.first() else {
+            return Ok(());
+        };
+        let Some(external_linter) = external_linter else {
+            return Err(ConfigBuilderError::NoExternalLinterConfigured {
+                plugin_specifier: first_plugin.specifier.clone(),
+            });
+        };
+
+        let resolver = Resolver::new(ResolveOptions {
+            condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+            ..Default::default()
+        });
+
+        for entry in external_plugins {
+            Self::load_external_plugin(
+                &entry.config_dir,
+                &entry.specifier,
+                entry.name.as_deref(),
+                external_linter,
+                &resolver,
+                external_plugin_store,
+                workspace_uri,
+            )?;
+        }
+
+        Ok(())
+    }
+
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    fn load_external_plugins(
+        external_plugins: &[&ExternalPluginEntry],
+        _external_linter: Option<&ExternalLinter>,
+        _external_plugin_store: &mut ExternalPluginStore,
+        _workspace_uri: Option<&str>,
+    ) -> Result<(), ConfigBuilderError> {
+        // External plugins (JS plugins) are not supported on non-64-bit or big-endian platforms.
+        if let Some(first_plugin) = external_plugins.first() {
+            return Err(ConfigBuilderError::NoExternalLinterConfigured {
+                plugin_specifier: first_plugin.specifier.clone(),
+            });
+        }
+        Ok(())
+    }
+
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     fn load_external_plugin(
         resolve_dir: &Path,
         plugin_specifier: &str,
@@ -851,7 +896,7 @@ impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     use cow_utils::CowUtils;
 
