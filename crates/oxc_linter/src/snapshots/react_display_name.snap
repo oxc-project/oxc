@@ -434,6 +434,61 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a `displayName` property to the component.
 
   ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:31]
+ 1 │ import { memo } from 'react'; export default memo(() => <li />);
+   ·                               ──────────────────────────────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:37]
+ 1 │ import { forwardRef } from 'react'; export default forwardRef(() => <li />);
+   ·                                     ────────────────────────────────────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:1]
+ 1 │ export default React.memo(() => <li />);
+   · ────────────────────────────────────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:1:1]
+ 1 │ export default React.forwardRef(() => <li />);
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:5:27]
+ 4 │ 
+ 5 │                     const B = memo(() => <div />);
+   ·                           ─
+ 6 │                     export { B };
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:3:21]
+ 2 │ 
+ 3 │                     export default memo(() => <div />);
+   ·                     ───────────────────────────────────
+ 4 │ 
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
+   ╭─[display_name.tsx:2:21]
+ 1 │ import { memo, forwardRef } from 'react';
+ 2 │                     export default memo(forwardRef(() => <li />));
+   ·                     ──────────────────────────────────────────────
+ 3 │                   
+   ╰────
+  help: Add a `displayName` property to the component.
+
+  ⚠ react(display-name): Component definition is missing display name.
    ╭─[display_name.tsx:1:30]
  1 │ const memo = fn => fn; const Component = memo(() => <li />);
    ·                              ─────────
