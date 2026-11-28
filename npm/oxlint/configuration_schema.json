@@ -3702,6 +3702,9 @@
             }
           ]
         },
+        "jsdoc/require-next-description": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jsdoc/require-param": {
           "anyOf": [
             {
