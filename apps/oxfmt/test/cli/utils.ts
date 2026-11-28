@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
+export const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 const CLI_TEST_DIR = import.meta.dirname;
 
 // --- Types ---
