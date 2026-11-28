@@ -45,16 +45,13 @@ impl ES2022<'_> {
     pub fn new(
         top_level_await: bool,
         class_transform: ClassTransform,
+        decorator_mode: DecoratorMode,
         remove_class_fields_without_initializer: bool,
     ) -> Self {
         // Class-properties owns static blocks in classes it lowers. In decorators-only mode,
         // the standalone static-block transform handles the remaining classes.
         let (class_static_block, class_properties) = match class_transform {
-            ClassTransform::ClassProperties {
-                options,
-                transform_static_blocks,
-                decorator_mode,
-            } => (
+            ClassTransform::ClassProperties { options, transform_static_blocks } => (
                 None,
                 Some(ClassProperties::new(
                     options,
@@ -69,7 +66,7 @@ impl ES2022<'_> {
                     ClassPropertiesOptions::default(),
                     transform_static_blocks,
                     remove_class_fields_without_initializer,
-                    DecoratorMode::Standard,
+                    decorator_mode,
                 )),
             ),
             ClassTransform::StaticBlocks => (Some(ClassStaticBlock::new()), None),
@@ -121,9 +118,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
             if self.class_static_block.is_some() {
                 self.enter_expression_both_class_transforms(expr, ctx);
             } else if class_properties.lowers_standard_decorators()
-                && matches!(expr, Expression::ClassExpression(_))
+                && matches!(expr, Expression::ClassExpression(_) | Expression::ObjectExpression(_))
             {
-                self.enter_class_expression(expr, ctx);
+                // Object literals are captured here rather than in class-properties'
+                // `enter_expression`, which keeps that check out of the inlined expression walker.
+                self.enter_class_or_object_expression(expr, ctx);
             } else {
                 class_properties.enter_expression(expr, ctx);
             }
@@ -146,12 +145,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
                 }
             }
             ClassOwner::None => {}
-        }
-    }
-
-    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(class_properties) = &mut self.class_properties {
-            class_properties.enter_object_property(prop, ctx);
         }
     }
 
@@ -318,11 +311,23 @@ impl<'a> ES2022<'a> {
         self.entered_class_owner(ctx.current_scope_id(), ctx)
     }
 
-    /// Enter a class expression when class-properties lowers standard decorators, but static
-    /// blocks are not lowered. Out of line to keep it out of the expression walker.
+    /// Enter a class or object expression when class-properties lowers standard decorators, but
+    /// static blocks are not lowered. Out of line to keep it out of the expression walker.
     #[inline(never)]
-    fn enter_class_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ClassExpression(class) = expr else { unreachable!() };
+    fn enter_class_or_object_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let class = match expr {
+            Expression::ClassExpression(class) => class,
+            Expression::ObjectExpression(object) => {
+                let Some(class_properties) = &mut self.class_properties else { unreachable!() };
+                class_properties.enter_object_expression(object, ctx);
+                return;
+            }
+            _ => unreachable!(),
+        };
         let lowering = ctx.state.class_lowering_before_entry(class);
         let owner = self.class_owner(lowering);
         let Some(class_properties) = &mut self.class_properties else { unreachable!() };
@@ -357,6 +362,9 @@ impl<'a> ES2022<'a> {
             unreachable!()
         };
         let Some(lowering) = class_lowering else {
+            if let Expression::ObjectExpression(object) = expr {
+                class_properties.enter_object_expression(object, ctx);
+            }
             class_properties.enter_expression(expr, ctx);
             class_static_block.enter_expression(expr, ctx);
             return;

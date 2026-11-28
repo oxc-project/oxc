@@ -16,7 +16,7 @@ use crate::{
 use super::{Module, babel::BabelEnvOptions};
 use oxc_compat::{ESFeature, EngineTargets};
 
-#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
 /// Feature toggles selected from target runtime support.
 ///
@@ -27,6 +27,12 @@ pub struct EnvOptions {
     ///
     /// Evaluated by the TypeScript transform (`import =` / `export =` and namespaces).
     pub module: Module,
+
+    /// Lower standard decorators and auto-accessors when the targets need it.
+    ///
+    /// False for an unspecified target and for `esnext`, which assume proposal syntax is
+    /// supported. The `decorator.lower` option overrides this decision.
+    pub standard_decorators: bool,
 
     /// ES2026 transform options.
     pub es2026: ES2026Options,
@@ -61,6 +67,12 @@ pub struct EnvOptions {
     pub regexp: RegExpOptions,
 }
 
+impl Default for EnvOptions {
+    fn default() -> Self {
+        Self::from(EngineTargets::default())
+    }
+}
+
 impl EnvOptions {
     /// Explicitly enable all plugins that are ready, mainly for testing purposes.
     ///
@@ -69,6 +81,7 @@ impl EnvOptions {
     pub fn enable_all(include_unfinished_plugins: bool) -> Self {
         Self {
             module: Module::default(),
+            standard_decorators: true,
             es2026: ES2026Options { explicit_resource_management: true },
             es2022: ES2022Options {
                 class_static_block: true,
@@ -113,12 +126,13 @@ impl EnvOptions {
         }
     }
 
-    /// Whether these options make the transformer lower, or reject, any JavaScript syntax.
+    /// Whether these options make the transformer lower, or reject, any JavaScript syntax
+    /// other than decorators.
     ///
-    /// When this is `false`, the transformer leaves a program's syntax unchanged, so a caller can
-    /// skip it. This does not answer for transforms that do not depend on the target:
+    /// When this is `false` and [`DecoratorOptions::transforms_decorators`] is `false` for a
+    /// program, the transformer leaves that program's syntax unchanged, so a caller can skip it.
+    /// Neither answers for transforms that do not depend on the target:
     ///
-    /// * decorators: `decorator.legacy` lowers them at any target;
     /// * TypeScript, which runs for TypeScript source types;
     /// * JSX options: besides JSX syntax, `display_name` (on by default) names
     ///   `React.createClass` and `createReactClass` calls, and `refresh` registers components,
@@ -134,9 +148,14 @@ impl EnvOptions {
     ///
     /// Every flag is listed below by destructuring, so adding a flag to these options does not
     /// compile until this method accounts for it.
+    ///
+    /// [`DecoratorOptions::transforms_decorators`]: crate::DecoratorOptions::transforms_decorators
     pub fn lowers_syntax(&self) -> bool {
         let Self {
             module: _,
+            // Gated by whether the program has decorators: see
+            // `DecoratorOptions::transforms_decorators`.
+            standard_decorators: _,
             es2026: ES2026Options { explicit_resource_management },
             es2022: ES2022Options { class_static_block, class_properties, top_level_await },
             es2021: ES2021Options { logical_assignment_operators },
@@ -229,6 +248,7 @@ impl From<EngineTargets> for EnvOptions {
         use ESFeature::*;
         Self {
             module: Module::default(),
+            standard_decorators: o.has_feature(StandardDecorators),
             es2026: ES2026Options {
                 explicit_resource_management: o.has_feature(ES2026ExplicitResourceManagement),
             },

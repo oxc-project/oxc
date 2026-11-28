@@ -337,14 +337,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         self.decorator_state.capture_decorator_receiver(decorator, ctx);
     }
 
-    fn enter_object_property(
-        &mut self,
-        property: &mut ObjectProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.decorator_state.capture_object_property_class_name(property, ctx);
-    }
-
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -479,6 +471,18 @@ impl<'a> ClassProperties<'a> {
     /// Whether standard decorators are lowered, so class expressions may need entering.
     pub fn lowers_standard_decorators(&self) -> bool {
         self.decorator_state.enabled()
+    }
+
+    /// Capture the names that classes in an object literal's property values receive through
+    /// named evaluation, when standard decorators are lowered.
+    pub fn enter_object_expression(
+        &mut self,
+        object: &mut ObjectExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.decorator_state.enabled() {
+            self.decorator_state.capture_object_class_names(object, ctx);
+        }
     }
 
     /// Enter a class expression whose fields this transform lowers.

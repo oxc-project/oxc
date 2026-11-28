@@ -39,3 +39,19 @@ fn test_class_with_ts() {
     .has_accessor("ap")
     .has_accessor("pap");
 }
+
+#[test]
+fn test_has_decorators_or_auto_accessors() {
+    for (source, expected) in [
+        ("class A { x = '@dec'; /* @dec */ accessor() {} } let accessor;", false),
+        ("@dec class A {}", true),
+        ("class A { @dec m() {} }", true),
+        ("class A { m(@dec x) {} }", true),
+        ("class A { accessor x = 1; }", true),
+        ("const C = class { static accessor #x; };", true),
+    ] {
+        let tester = SemanticTester::ts(source);
+        let semantic = tester.build();
+        assert_eq!(semantic.scoping().has_decorators_or_auto_accessors(), expected, "{source}");
+    }
+}

@@ -47,23 +47,26 @@ impl<'a> StandardDecoratorState<'a> {
         self.named_classes.insert(class.address(), name);
     }
 
-    pub(crate) fn capture_object_property_class_name(
+    /// Capture the names of anonymous classes which are values of an object literal's properties,
+    /// before any key is rewritten.
+    pub(crate) fn capture_object_class_names(
         &mut self,
-        prop: &mut ObjectProperty<'a>,
+        object: &mut ObjectExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Almost no property value is a class, so check that before the key.
-        if !self.enabled
-            || !matches!(prop.value.get_inner_expression(), Expression::ClassExpression(_))
-        {
-            return;
+        for prop in &mut object.properties {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
+            let prop = &mut **prop;
+            // Almost no property value is a class, so check that before the key.
+            if !matches!(prop.value.get_inner_expression(), Expression::ClassExpression(_)) {
+                continue;
+            }
+            // A prototype setter does not perform named evaluation.
+            if prop.key.is_specific_literal_name("__proto__") {
+                continue;
+            }
+            self.capture_class_initializer_name(&mut prop.key, &prop.value, ctx);
         }
-        // A prototype setter does not perform named evaluation.
-        let computed = prop.key.is_computed();
-        if !computed && prop.key.is_specific_literal_name("__proto__") {
-            return;
-        }
-        self.capture_class_initializer_name(&mut prop.key, &prop.value, ctx);
     }
 
     /// Infer name of an anonymous class expression (NamedEvaluation), from its parent node.

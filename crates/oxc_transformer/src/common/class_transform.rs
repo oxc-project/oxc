@@ -14,7 +14,6 @@ pub enum ClassTransform {
     ClassProperties {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
-        decorator_mode: DecoratorMode,
     },
     /// Class-properties handles decorated classes and auto-accessors only.
     StandardDecorators {
@@ -29,7 +28,6 @@ impl ClassTransform {
             Self::ClassProperties {
                 options: properties_options,
                 transform_static_blocks: options.class_static_block,
-                decorator_mode,
             }
         } else if decorator_mode == DecoratorMode::Standard {
             Self::StandardDecorators { transform_static_blocks: options.class_static_block }
