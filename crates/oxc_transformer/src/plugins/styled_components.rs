@@ -54,10 +54,20 @@
 //!
 //! - Babel plugin: <https://github.com/styled-components/babel-plugin-styled-components>
 //! - Documentation: <https://styled-components.com/docs/tooling#babel-plugin>
+//!
+//! ## `componentId` Stability
+//!
+//! Like the Babel plugin, the `componentId` is derived from the module name and the path of the
+//! file relative to its module root (the nearest ancestor directory containing `package.json`),
+//! falling back to hashing the source code when no module root can be found. It never depends on
+//! the absolute location of the project, so the same project produces the same `componentId`s
+//! wherever it is checked out or built.
 
 use std::{
+    borrow::Cow,
     hash::{Hash, Hasher},
     iter::once,
+    path::Path,
 };
 
 use rustc_hash::FxHasher;
@@ -633,7 +643,10 @@ impl<'a> StyledComponents<'a> {
         Str::from_strs_array_in([prefix, count], ctx)
     }
 
-    /// Generates a unique file hash based on the source path or source code.
+    /// Generates a unique file hash based on the source path relative to its module root,
+    /// or the source code.
+    ///
+    /// See [`module_relative_hash_input`] for details.
     fn get_file_hash(state: &TransformState<'a>) -> InlineString<7, u8> {
         #[inline]
         fn base36_encode(mut num: u64) -> InlineString<7, u8> {
@@ -653,8 +666,8 @@ impl<'a> StyledComponents<'a> {
         }
 
         let mut hasher = FxHasher::default();
-        if state.source_path.is_absolute() {
-            state.source_path.hash(&mut hasher);
+        if let Some(hash_input) = module_relative_hash_input(&state.source_path) {
+            hash_input.hash(&mut hasher);
         } else {
             state.source_text.hash(&mut hasher);
         }
@@ -806,6 +819,55 @@ impl<'a> StyledComponents<'a> {
         let value = Expression::new_string_literal(SPAN, value, None, ctx);
         ObjectPropertyKind::new_object_property(SPAN, key, value, false, ctx)
     }
+}
+
+/// Returns the string to hash for the file part of a `componentId`, which is the module name and
+/// the path of the source file relative to its module root.
+///
+/// The module root is the nearest ancestor directory of the source file which contains a
+/// `package.json`. Only the module name and module-relative path are hashed, never the absolute
+/// path, so the generated `componentId`s are identical no matter which absolute directory the
+/// project is checked out or built from. Relative source paths are resolved against the current
+/// directory, like Node.js path APIs, so they produce the same `componentId`s as their absolute
+/// equivalents.
+///
+/// Returns `None` if the source path cannot be resolved to a module root (e.g. a virtual file
+/// name whose directories don't exist on disk), in which case the caller hashes the source code
+/// instead.
+///
+/// This mirrors `getFileHash` in `babel-plugin-styled-components`.
+fn module_relative_hash_input(source_path: &Path) -> Option<String> {
+    // Resolve relative paths against the current directory, like Node.js `path` APIs.
+    let source_path = if source_path.is_absolute() {
+        Cow::Borrowed(source_path)
+    } else {
+        Cow::Owned(std::env::current_dir().ok()?.join(source_path))
+    };
+
+    // Find the nearest ancestor directory containing `package.json`
+    let module_root =
+        source_path.parent()?.ancestors().find(|dir| dir.join("package.json").is_file())?;
+
+    let relative_path = source_path.strip_prefix(module_root).ok()?;
+
+    // Hash the module name followed by the module-relative path, with `/` separators
+    // so the hash is the same on all platforms and unambiguous.
+    let mut hash_input = module_name(module_root);
+    for component in relative_path.components() {
+        hash_input.push('/');
+        hash_input.push_str(&component.as_os_str().to_string_lossy());
+    }
+    Some(hash_input)
+}
+
+/// Returns the `name` field of the `package.json` in `module_root`, or an empty string if the file
+/// cannot be read or parsed, or has no `name` field.
+fn module_name(module_root: &Path) -> String {
+    std::fs::read_to_string(module_root.join("package.json"))
+        .ok()
+        .and_then(|package_json| serde_json::from_str::<serde_json::Value>(&package_json).ok())
+        .and_then(|package_json| package_json.get("name")?.as_str().map(str::to_owned))
+        .unwrap_or_default()
 }
 
 fn is_valid_styled_component_source(source: &str) -> bool {

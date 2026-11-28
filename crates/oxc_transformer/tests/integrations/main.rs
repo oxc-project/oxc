@@ -5,6 +5,7 @@ mod helper_call;
 mod needs_transform;
 mod runtime_helpers;
 mod source_map;
+mod styled_components;
 mod targets;
 
 use std::path::Path;
@@ -38,11 +39,20 @@ pub(crate) fn test_with_source_type(
     source_type: SourceType,
     options: &TransformOptions,
 ) -> Result<String, Diagnostics> {
+    test_with_source_type_and_path(source_text, source_type, Path::new(""), options)
+}
+
+pub(crate) fn test_with_source_type_and_path(
+    source_text: &str,
+    source_type: SourceType,
+    source_path: &Path,
+    options: &TransformOptions,
+) -> Result<String, Diagnostics> {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let ret = Transformer::new(&allocator, Path::new(""), options)
+    let ret = Transformer::new(&allocator, source_path, options)
         .build_with_scoping(scoping, &mut program);
     if !ret.diagnostics.is_empty() {
         return Err(ret.diagnostics);
