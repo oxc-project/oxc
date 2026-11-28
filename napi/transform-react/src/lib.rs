@@ -1,20 +1,5 @@
 #![expect(clippy::needless_pass_by_value)]
 
-#[cfg(all(
-    feature = "allocator",
-    not(any(
-        target_arch = "arm",
-        target_os = "android",
-        target_os = "freebsd",
-        target_os = "windows",
-        target_family = "wasm"
-    ))
-))]
-#[global_allocator]
-static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
-mod options;
-
 use std::path::Path;
 
 use napi::{Task, bindgen_prelude::AsyncTask};
@@ -32,7 +17,21 @@ use oxc_napi::{OxcError, get_source_type};
 use oxc_react_compiler::{CompileResult, compile as react_compiler_compile};
 use oxc_sourcemap::napi::SourceMap;
 
-pub use crate::options::*;
+mod options;
+pub use options::*;
+
+#[cfg(all(
+    feature = "allocator",
+    not(any(
+        target_arch = "arm",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "windows",
+        target_family = "wasm"
+    ))
+))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 /// Result returned by the React Compiler transform.
 #[derive(Default)]
@@ -55,6 +54,52 @@ pub struct TransformResult {
     /// Recoverable React Compiler diagnostics are included when
     /// `reactCompiler.reportDiagnostics` is `true`.
     pub errors: Vec<OxcError>,
+}
+
+pub struct TransformTask {
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+}
+
+#[napi]
+impl Task for TransformTask {
+    type JsValue = TransformResult;
+    type Output = TransformResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(transform_impl(&self.filename, &self.source_text, self.options.take()))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Compile a JavaScript or TypeScript React module asynchronously.
+///
+/// This uses a worker-pool thread and can be slower than `transformSync` for a
+/// single small module.
+#[napi]
+pub fn transform(
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+) -> AsyncTask<TransformTask> {
+    AsyncTask::new(TransformTask { filename, source_text, options })
+}
+
+/// Compile a JavaScript or TypeScript React module synchronously.
+///
+/// The React Compiler runs first on the pristine AST. TypeScript syntax is
+/// removed and configured JSX transforms run afterwards.
+#[napi]
+pub fn transform_sync(
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+) -> TransformResult {
+    transform_impl(&filename, &source_text, options)
 }
 
 fn transform_impl(
@@ -155,50 +200,4 @@ fn error_result(filename: &str, source_text: &str, diagnostics: Diagnostics) -> 
         errors: OxcError::from_diagnostics(filename, source_text, diagnostics),
         ..TransformResult::default()
     }
-}
-
-/// Compile a JavaScript or TypeScript React module synchronously.
-///
-/// The React Compiler runs first on the pristine AST. TypeScript syntax is
-/// removed and configured JSX transforms run afterwards.
-#[napi]
-pub fn transform_sync(
-    filename: String,
-    source_text: String,
-    options: Option<TransformOptions>,
-) -> TransformResult {
-    transform_impl(&filename, &source_text, options)
-}
-
-pub struct TransformTask {
-    filename: String,
-    source_text: String,
-    options: Option<TransformOptions>,
-}
-
-#[napi]
-impl Task for TransformTask {
-    type JsValue = TransformResult;
-    type Output = TransformResult;
-
-    fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(transform_impl(&self.filename, &self.source_text, self.options.take()))
-    }
-
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
-        Ok(result)
-    }
-}
-
-/// Compile a JavaScript or TypeScript React module asynchronously.
-///
-/// This uses a worker-pool thread and can be slower than `transformSync` for a
-/// single small module.
-#[napi]
-pub fn transform(
-    filename: String,
-    source_text: String,
-    options: Option<TransformOptions>,
-) -> AsyncTask<TransformTask> {
-    AsyncTask::new(TransformTask { filename, source_text, options })
 }

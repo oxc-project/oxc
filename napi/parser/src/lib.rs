@@ -3,8 +3,6 @@ use std::mem;
 use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
-#[cfg(feature = "tokens")]
-use oxc::parser::config::RuntimeParserConfig;
 use oxc::{
     allocator::Allocator,
     parser::{ParseOptions, Parser, ParserReturn},
@@ -13,9 +11,32 @@ use oxc::{
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
+#[cfg(feature = "tokens")]
+use oxc::parser::config::RuntimeParserConfig;
+
 mod convert;
 mod types;
 pub use types::*;
+
+// Raw transfer is only supported on 64-bit little-endian systems.
+// Don't include raw transfer code on other platforms (notably WASM32).
+// `raw_transfer_types` still needs to be compiled, as `assert_layouts` refers to those types,
+// but it's all dead code on unsupported platforms, and will be excluded from binary.
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+mod raw_transfer;
+mod raw_transfer_types;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync};
+
+mod generated {
+    // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
+    #[cfg(debug_assertions)]
+    mod assert_layouts;
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    pub mod raw_transfer_constants;
+}
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use generated::raw_transfer_constants;
 
 #[cfg(all(
     feature = "allocator",
@@ -29,32 +50,6 @@ pub use types::*;
 ))]
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
-// Raw transfer is only supported on 64-bit little-endian systems.
-// Don't include raw transfer code on other platforms (notably WASM32).
-// `raw_transfer_types` still needs to be compiled, as `assert_layouts` refers to those types,
-// but it's all dead code on unsupported platforms, and will be excluded from binary.
-#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-mod raw_transfer;
-mod raw_transfer_types;
-#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-pub use raw_transfer::{get_buffer_offset, parse_raw, parse_raw_sync};
-
-/// Returns `true` if raw transfer is supported on this platform.
-#[napi]
-pub fn raw_transfer_supported() -> bool {
-    cfg!(all(target_pointer_width = "64", target_endian = "little"))
-}
-
-mod generated {
-    // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
-    #[cfg(debug_assertions)]
-    mod assert_layouts;
-    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    pub mod raw_transfer_constants;
-}
-#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-use generated::raw_transfer_constants;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum AstType {
@@ -76,27 +71,71 @@ fn get_ast_type(source_type: SourceType, options: &ParserOptions) -> AstType {
     }
 }
 
-fn parse_impl<'a>(
-    allocator: &'a Allocator,
-    source_type: SourceType,
-    source_text: &'a str,
-    options: &ParserOptions,
-) -> ParserReturn<'a> {
-    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
-        preserve_parens: options.preserve_parens.unwrap_or(true),
-        // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
-        // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
-        enable_ident_hashes: options.show_semantic_errors == Some(true),
-        ..ParseOptions::default()
-    });
+/// Returns `true` if raw transfer is supported on this platform.
+#[napi]
+pub fn raw_transfer_supported() -> bool {
+    cfg!(all(target_pointer_width = "64", target_endian = "little"))
+}
 
-    // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
-    // which avoids the runtime branch on whether to collect tokens, and so is faster.
-    // The `experimentalTokens` option in `ParserOptions` is silently ignored in that case.
-    #[cfg(feature = "tokens")]
-    let parser = parser.with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)));
+pub struct ResolveTask {
+    filename: String,
+    source_text: String,
+    options: ParserOptions,
+}
 
-    parser.parse()
+#[napi]
+impl Task for ResolveTask {
+    type JsValue = ParseResult;
+    type Output = ParseResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        let source_text = mem::take(&mut self.source_text);
+        Ok(parse_with_return(&self.filename, &source_text, &self.options))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Parse JS/TS source asynchronously on a separate thread.
+///
+/// Note that not all of the workload can happen on a separate thread.
+/// Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
+/// has to happen on current thread. This synchronous deserialization work typically outweighs
+/// the asynchronous parsing by a factor of between 3 and 20.
+///
+/// i.e. the majority of the workload cannot be parallelized by using this method.
+///
+/// Generally `parseSync` is preferable to use as it does not have the overhead of spawning a thread.
+/// If you need to parallelize parsing multiple files, it is recommended to use worker threads.
+#[napi]
+pub fn parse(
+    filename: String,
+    source_text: String,
+    options: Option<ParserOptions>,
+) -> AsyncTask<ResolveTask> {
+    let options = options.unwrap_or_default();
+    AsyncTask::new(ResolveTask { filename, source_text, options })
+}
+
+/// Parse JS/TS source synchronously on current thread.
+///
+/// This is generally preferable over `parse` (async) as it does not have the overhead
+/// of spawning a thread, and the majority of the workload cannot be parallelized anyway
+/// (see `parse` documentation for details).
+///
+/// If you need to parallelize parsing multiple files, it is recommended to use worker threads
+/// with `parseSync` rather than using `parse`.
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub fn parse_sync(
+    filename: String,
+    source_text: String,
+    options: Option<ParserOptions>,
+) -> ParseResult {
+    let options = options.unwrap_or_default();
+    parse_with_return(&filename, &source_text, &options)
 }
 
 fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
@@ -147,63 +186,25 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     ParseResult { program_and_fixes, module, comments, errors }
 }
 
-/// Parse JS/TS source synchronously on current thread.
-///
-/// This is generally preferable over `parse` (async) as it does not have the overhead
-/// of spawning a thread, and the majority of the workload cannot be parallelized anyway
-/// (see `parse` documentation for details).
-///
-/// If you need to parallelize parsing multiple files, it is recommended to use worker threads
-/// with `parseSync` rather than using `parse`.
-#[napi]
-#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub fn parse_sync(
-    filename: String,
-    source_text: String,
-    options: Option<ParserOptions>,
-) -> ParseResult {
-    let options = options.unwrap_or_default();
-    parse_with_return(&filename, &source_text, &options)
-}
+fn parse_impl<'a>(
+    allocator: &'a Allocator,
+    source_type: SourceType,
+    source_text: &'a str,
+    options: &ParserOptions,
+) -> ParserReturn<'a> {
+    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
+        preserve_parens: options.preserve_parens.unwrap_or(true),
+        // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
+        // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
+        enable_ident_hashes: options.show_semantic_errors == Some(true),
+        ..ParseOptions::default()
+    });
 
-pub struct ResolveTask {
-    filename: String,
-    source_text: String,
-    options: ParserOptions,
-}
+    // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
+    // which avoids the runtime branch on whether to collect tokens, and so is faster.
+    // The `experimentalTokens` option in `ParserOptions` is silently ignored in that case.
+    #[cfg(feature = "tokens")]
+    let parser = parser.with_config(RuntimeParserConfig::new(options.tokens.unwrap_or(false)));
 
-#[napi]
-impl Task for ResolveTask {
-    type JsValue = ParseResult;
-    type Output = ParseResult;
-
-    fn compute(&mut self) -> napi::Result<Self::Output> {
-        let source_text = mem::take(&mut self.source_text);
-        Ok(parse_with_return(&self.filename, &source_text, &self.options))
-    }
-
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
-        Ok(result)
-    }
-}
-
-/// Parse JS/TS source asynchronously on a separate thread.
-///
-/// Note that not all of the workload can happen on a separate thread.
-/// Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
-/// has to happen on current thread. This synchronous deserialization work typically outweighs
-/// the asynchronous parsing by a factor of between 3 and 20.
-///
-/// i.e. the majority of the workload cannot be parallelized by using this method.
-///
-/// Generally `parseSync` is preferable to use as it does not have the overhead of spawning a thread.
-/// If you need to parallelize parsing multiple files, it is recommended to use worker threads.
-#[napi]
-pub fn parse(
-    filename: String,
-    source_text: String,
-    options: Option<ParserOptions>,
-) -> AsyncTask<ResolveTask> {
-    let options = options.unwrap_or_default();
-    AsyncTask::new(ResolveTask { filename, source_text, options })
+    parser.parse()
 }
