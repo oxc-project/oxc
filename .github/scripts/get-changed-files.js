@@ -93,6 +93,23 @@ function getStackComparison() {
 }
 
 /**
+ * For a push, get the commit the branch pointed to before the push.
+ *
+ * A push can add several commits, e.g. when the merge queue merges a group of PRs, or a whole stack, in one go.
+ * Comparing with this commit finds the changes in all of them, not just the last one.
+ *
+ * @returns {string | null} Commit SHA, or `null` if not available
+ */
+function getPushBefore() {
+  const eventPath = process.env.GITHUB_EVENT_PATH;
+  if (!eventPath) return null;
+  const { before } = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+  // `before` is all zeros if the push created the branch
+  if (typeof before !== "string" || /^0+$/.test(before)) return null;
+  return before;
+}
+
+/**
  * Get all files changed between 2 commits (3-dot diff, like a PR's diff)
  * @param {string} repository - Repository name (owner/repo)
  * @param {string} base - Base commit SHA or ref
@@ -145,8 +162,19 @@ async function getChangedFiles() {
         console.error(`Getting changed files for PR #${prNumber}`);
         files = await getPrChangedFiles(repository, prNumber);
       }
+    } else if (eventName === "push" && sha && repository) {
+      // A push can add several commits, so compare with where the branch was before the push,
+      // not just the last commit with its parent
+      const before = getPushBefore();
+      if (before === null) {
+        console.error("Push has no previous commit - returning null (run all)");
+        return null; // Signal to run all
+      }
+      console.error(`Getting changed files for push ${before}...${sha}`);
+      files = await getComparisonChangedFiles(repository, before, sha);
     } else if (sha && repository) {
-      // For push to main, get the commit and compare with parent
+      // Merge queue: compare this entry's commit with its parent. That's only this PR's changes,
+      // but each PR ahead of it in the queue gets its own run, which covers that PR's changes.
       console.error(`Getting changed files for commit ${sha}`);
       const commit = await githubApi(`/repos/${repository}/commits/${sha}`);
       files = commit.files ? commit.files.map((f) => f.filename) : [];
