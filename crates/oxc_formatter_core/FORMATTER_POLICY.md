@@ -126,6 +126,22 @@ Printed text is measured by its display width (`TextWidth` / `text_width`, via `
 This holds for the printer's line width and for every heuristic comparing text with a column budget (`tabWidth`, a share of `printWidth`, a short object key, ...),
 never a byte or UTF-16 length, even where Prettier uses a JS `.length`.
 
+## Shrinking the IR
+
+A perf change may write adjacent pieces as one text (a source slice), or drop a group / fill that decides nothing, when the output stays byte-identical.
+The printer cannot tell:
+
+- Widths add up across a boundary with an ASCII character other than a keycap base (`#`, `*`, a digit) on either side ([Text width](#text-width))
+- `fits_text` measures a multiline text up to its first line break and `print_text` tracks the column through it, joined or not
+- A group around a single group, or one with no line break inside, decides as its content does (its id still has to exist where a condition reads it); so does a fill of one entry, with no separator to decide
+
+What walks the texts after formatting sees them one by one, so a joined boundary must not change what it finds:
+
+- A host's re-escaping of its embedded IR (`escape_template_chars` in xxx-in-js): `${` spans two characters, so no text may end in `$` before one starting with `{`
+- Placeholder substitution (`Placeholder::pieces`, `are_sequential`): the sentinel is ASCII word characters, so a boundary between word characters may form or split one
+- A language's own scan of its IR (htmlish's `escape_script_end`: `</script` in one text)
+- Any other `map_text_in_ir` caller
+
 ## Error semantics
 
 `format()` / `format_to_ir()` return `Err` whenever they cannot produce output they can stand behind:
