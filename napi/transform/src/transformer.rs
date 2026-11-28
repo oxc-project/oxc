@@ -91,18 +91,18 @@ impl Task for TransformTask {
     }
 }
 
-/// Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
+/// Transpile a JavaScript or TypeScript into a target ECMAScript version,
+/// asynchronously on a separate thread.
 ///
-/// Note: This function can be slower than `transform` due to the overhead of spawning a thread.
+/// Note: This function can be slower than `transformSync`,
+/// due to the overhead of running on another thread.
 ///
-/// @param filename The name of the file being transformed. If this is a
-/// relative path, consider setting the {@link TransformOptions#cwd} option.
-/// @param sourceText the source code itself
-/// @param options The options for the transformation. See {@link
-/// TransformOptions} for more information.
-///
-/// @returns a promise that resolves to an object containing the transformed code,
-/// source maps, and any errors that occurred during parsing or transformation.
+/// @param filename - Name of the file being transformed.
+///   If this is a relative path, consider setting the {@link TransformOptions#cwd} option.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link TransformOptions}.
+/// @returns A `Promise` that resolves to an object containing the transformed code, source maps,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 pub fn transform(
     filename: String,
@@ -112,16 +112,15 @@ pub fn transform(
     AsyncTask::new(TransformTask { filename, source_text, options })
 }
 
-/// Transpile a JavaScript or TypeScript into a target ECMAScript version.
+/// Transpile a JavaScript or TypeScript into a target ECMAScript version,
+/// synchronously on current thread.
 ///
-/// @param filename The name of the file being transformed. If this is a
-/// relative path, consider setting the {@link TransformOptions#cwd} option..
-/// @param sourceText the source code itself
-/// @param options The options for the transformation. See {@link
-/// TransformOptions} for more information.
-///
-/// @returns an object containing the transformed code, source maps, and any
-/// errors that occurred during parsing or transformation.
+/// @param filename - Name of the file being transformed.
+///   If this is a relative path, consider setting the {@link TransformOptions#cwd} option.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link TransformOptions}.
+/// @returns An object containing the transformed code, source maps,
+///   and any errors that occurred during parsing or transformation.
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 #[napi]
 pub fn transform_sync(

@@ -92,19 +92,18 @@ impl Task for ModuleRunnerTransformTask {
     }
 }
 
-/// Transform JavaScript code to a Vite Node runnable module.
+/// Transform JavaScript code to a Vite Node runnable module, asynchronously on a separate thread.
 ///
-/// @param filename The name of the file being transformed.
-/// @param sourceText the source code itself
-/// @param options The options for the transformation. See {@link
-/// ModuleRunnerTransformOptions} for more information.
-///
-/// @returns an object containing the transformed code, source maps, and any
-/// errors that occurred during parsing or transformation.
-///
-/// Note: This function can be slower than `moduleRunnerTransformSync` due to the overhead of spawning a thread.
+/// Note: This function can be slower than `moduleRunnerTransformSync`,
+/// due to the overhead of running on another thread.
 ///
 /// @deprecated Only works for Vite.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link ModuleRunnerTransformOptions}.
+/// @returns A `Promise` that resolves to an object containing the transformed code, source maps,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 pub fn module_runner_transform(
     filename: String,
@@ -114,7 +113,15 @@ pub fn module_runner_transform(
     AsyncTask::new(ModuleRunnerTransformTask { filename, source_text, options })
 }
 
+/// Transform JavaScript code to a Vite Node runnable module, synchronously on current thread.
+///
 /// @deprecated Only works for Vite.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link ModuleRunnerTransformOptions}.
+/// @returns An object containing the transformed code, source maps,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn module_runner_transform_sync(
@@ -126,14 +133,6 @@ pub fn module_runner_transform_sync(
 }
 
 /// Transform JavaScript code to a Vite Node runnable module.
-///
-/// @param filename The name of the file being transformed.
-/// @param sourceText the source code itself
-/// @param options The options for the transformation. See {@link
-/// ModuleRunnerTransformOptions} for more information.
-///
-/// @returns an object containing the transformed code, source maps, and any
-/// errors that occurred during parsing or transformation.
 fn module_runner_transform_impl(
     filename: &str,
     source_text: &str,

@@ -156,7 +156,7 @@ export declare const enum ImportNameKind {
 }
 
 /**
- * Parse JS/TS source asynchronously on a separate thread.
+ * Parse JS/TS source, asynchronously on a separate thread.
  *
  * Note that not all of the workload can happen on a separate thread.
  * Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
@@ -165,8 +165,15 @@ export declare const enum ImportNameKind {
  *
  * i.e. the majority of the workload cannot be parallelized by using this method.
  *
- * Generally `parseSync` is preferable to use as it does not have the overhead of spawning a thread.
+ * Generally `parseSync` is preferable to use,
+ * as it does not have the overhead of running on another thread.
  * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
+ *
+ * @param filename - Name of the file being parsed.
+ * @param sourceText - Source code
+ * @param options - Parsing options. See {@link ParserOptions}.
+ * @returns A `Promise` that resolves to an object containing the AST, module information,
+ *   comments, and any errors that occurred during parsing.
  */
 export declare function parse(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 
@@ -212,18 +219,28 @@ export interface ParserOptions {
 }
 
 /**
- * Parse JS/TS source synchronously on current thread.
+ * Parse JS/TS source, synchronously on current thread.
  *
  * This is generally preferable over `parse` (async) as it does not have the overhead
- * of spawning a thread, and the majority of the workload cannot be parallelized anyway
+ * of running on another thread, and the majority of the workload cannot be parallelized anyway
  * (see `parse` documentation for details).
  *
  * If you need to parallelize parsing multiple files, it is recommended to use worker threads
  * with `parseSync` rather than using `parse`.
+ *
+ * @param filename - Name of the file being parsed.
+ * @param sourceText - Source code
+ * @param options - Parsing options. See {@link ParserOptions}.
+ * @returns An object containing the AST, module information, comments,
+ *   and any errors that occurred during parsing.
  */
 export declare function parseSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): ParseResult
 
-/** Returns `true` if raw transfer is supported on this platform. */
+/**
+ * Check if raw transfer is supported on this platform.
+ *
+ * @returns `true` if raw transfer is supported, otherwise `false`.
+ */
 export declare function rawTransferSupported(): boolean
 
 export interface Span {

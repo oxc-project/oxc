@@ -105,9 +105,10 @@ impl Task for ParseRawTask {
     }
 }
 
-/// Parse AST into provided `Uint8Array` buffer, asynchronously.
+/// Parse AST into provided `Uint8Array` buffer, asynchronously on a separate thread.
 ///
-/// Note: This function can be slower than `parseRawSync` due to the overhead of spawning a thread.
+/// Note: This function can be slower than `parseRawSync`,
+/// due to the overhead of running on another thread.
 ///
 /// Source text must be written into the buffer, starting at offset `source_start`,
 /// and its length (in UTF-8 bytes) provided as `source_len`.
@@ -144,7 +145,7 @@ pub fn parse_raw(
     AsyncTask::new(ParseRawTask { filename, buffer, source_start, source_len, options })
 }
 
-/// Parse AST into provided `Uint8Array` buffer, synchronously.
+/// Parse AST into provided `Uint8Array` buffer, synchronously on current thread.
 ///
 /// Source text must be written into the buffer, starting at offset `source_start`,
 /// and its length (in UTF-8 bytes) provided as `source_len`.

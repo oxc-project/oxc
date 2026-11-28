@@ -77,10 +77,19 @@ impl Task for TransformTask {
     }
 }
 
-/// Apply the Relay `graphql` tagged template transform asynchronously.
+/// Apply the Relay `graphql` tagged template transform, asynchronously on a separate thread.
 ///
-/// This uses a worker-pool thread and can be slower than `transformSync` for a
-/// single small module.
+/// Only `graphql` tags are rewritten. TypeScript and JSX syntax are preserved untouched,
+/// so the output composes with any downstream toolchain.
+///
+/// Note: This function can be slower than `transformSync`,
+/// due to the overhead of running on another thread.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link TransformOptions}.
+/// @returns A `Promise` that resolves to an object containing the transformed code, source map,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 pub fn transform(
     filename: String,
@@ -90,10 +99,16 @@ pub fn transform(
     AsyncTask::new(TransformTask { filename, source_text, options })
 }
 
-/// Apply the Relay `graphql` tagged template transform synchronously.
+/// Apply the Relay `graphql` tagged template transform, synchronously on current thread.
 ///
-/// Only `graphql` tags are rewritten; TypeScript and JSX syntax are preserved
-/// untouched, so the output composes with any downstream toolchain.
+/// Only `graphql` tags are rewritten. TypeScript and JSX syntax are preserved untouched,
+/// so the output composes with any downstream toolchain.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link TransformOptions}.
+/// @returns An object containing the transformed code, source map,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 pub fn transform_sync(
     filename: String,

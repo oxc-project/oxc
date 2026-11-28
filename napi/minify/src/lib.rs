@@ -72,9 +72,16 @@ impl Task for MinifyTask {
     }
 }
 
-/// Minify asynchronously.
+/// Minify, asynchronously on a separate thread.
 ///
-/// Note: This function can be slower than `minifySync` due to the overhead of spawning a thread.
+/// Note: This function can be slower than `minifySync`,
+/// due to the overhead of running on another thread.
+///
+/// @param filename - Name of the file being minified.
+/// @param sourceText - Source code
+/// @param options - Minification options. See {@link MinifyOptions}.
+/// @returns A `Promise` that resolves to an object containing the minified code, source map,
+///   and any errors that occurred.
 #[napi]
 pub fn minify(
     filename: String,
@@ -84,7 +91,12 @@ pub fn minify(
     AsyncTask::new(MinifyTask { filename, source_text, options })
 }
 
-/// Minify synchronously.
+/// Minify, synchronously on current thread.
+///
+/// @param filename - Name of the file being minified.
+/// @param sourceText - Source code
+/// @param options - Minification options. See {@link MinifyOptions}.
+/// @returns An object containing the minified code, source map, and any errors that occurred.
 #[napi]
 pub fn minify_sync(
     filename: String,

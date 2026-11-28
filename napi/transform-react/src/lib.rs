@@ -84,10 +84,16 @@ impl Task for TransformTask {
     }
 }
 
-/// Compile a JavaScript or TypeScript React module asynchronously.
+/// Compile a JavaScript or TypeScript React module, asynchronously on a separate thread.
 ///
-/// This uses a worker-pool thread and can be slower than `transformSync` for a
-/// single small module.
+/// Note: This function can be slower than `transformSync`,
+/// due to the overhead of running on another thread.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link TransformOptions}.
+/// @returns A `Promise` that resolves to an object containing the transformed code, source map,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 pub fn transform(
     filename: String,
@@ -97,10 +103,16 @@ pub fn transform(
     AsyncTask::new(TransformTask { filename, source_text, options })
 }
 
-/// Compile a JavaScript or TypeScript React module synchronously.
+/// Compile a JavaScript or TypeScript React module, synchronously on current thread.
 ///
 /// The React Compiler runs first on the pristine AST. TypeScript syntax is
 /// removed and configured JSX transforms run afterwards.
+///
+/// @param filename - Name of the file being transformed.
+/// @param sourceText - Source code
+/// @param options - Transformation options. See {@link TransformOptions}.
+/// @returns An object containing the transformed code, source map,
+///   and any errors that occurred during parsing or transformation.
 #[napi]
 pub fn transform_sync(
     filename: String,
