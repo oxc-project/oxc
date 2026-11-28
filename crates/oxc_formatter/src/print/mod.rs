@@ -1709,7 +1709,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
             });
 
         let format_id = format_with(|f| {
-            if type_parameters.is_none() && extends.is_empty() {
+            // The id's trailing pass would cross `extends`; `format_extends` splits there
+            if type_parameters.is_none() {
                 FormatNodeWithoutTrailingComments(&id).fmt(f);
             } else {
                 write!(f, [id]);
@@ -1735,17 +1736,12 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
                 return;
             };
 
-            let has_leading_own_line_comment =
-                f.context().comments().has_leading_own_line_comment(first_extend.span().start);
-
-            if has_leading_own_line_comment {
-                write!(
-                    f,
-                    FormatTrailingComments::Comments(
-                        f.context().comments().comments_before(first_extend.span().start)
-                    )
-                );
-            }
+            // Those before the keyword trail the id; the ones after it lead the first type
+            // (`extends // c` + break + `B`), so `B` still starts the line after an own-line one
+            let (before_keyword, after_keyword) =
+                f.context().comments().split_at_token_before(first_extend.span().start);
+            write!(f, FormatTrailingComments::Comments(before_keyword));
+            let own_line_block = class::has_own_line_block(after_keyword);
 
             if extends.len() > 1 {
                 write!(
@@ -1757,7 +1753,15 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
                     ]
                 );
             } else {
-                let format_extends = format_with(|f| write!(f, ["extends", space(), extends]));
+                let format_extends = format_with(|f| {
+                    write!(f, "extends");
+                    if own_line_block {
+                        write!(f, hard_line_break());
+                    } else {
+                        write!(f, space());
+                    }
+                    write!(f, extends);
+                });
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)]);
                 } else {
