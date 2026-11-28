@@ -138,7 +138,8 @@ fn take_and_write_line_suffix_comment<'a>(span: Span, f: &mut GraphqlFormatter<'
         write!(f, space());
         write_single_comment(span, f);
     });
-    write!(f, [line_suffix(&content), expand_parent()]);
+    // See `write_trailing_inside_comments` for the boundary
+    write!(f, [line_suffix_boundary(), line_suffix(&content), expand_parent()]);
 }
 
 /// `true` if only whitespace precedes `position` on its source line.
@@ -191,6 +192,11 @@ pub fn flush_trailing_comment_before_break(upper: u32, f: &mut GraphqlFormatter<
 /// `lower_bound` seeds the gap measurement for the first comment;
 /// `None` when the source gap is not measurable (the printed output has already moved past the comment's position),
 /// the comment then goes on its own line.
+///
+/// Each `line_suffix` follows a `line_suffix_boundary`: a comment still pending from an earlier claim
+/// (one moved past tokens, `h: String` + `# a` + `! # b`) ends its line first,
+/// or a same-line one would join it and the two merge into one comment (lossless).
+/// Nothing is pending otherwise, and the boundary is a no-op.
 fn write_trailing_inside_comments<'a>(
     comments: &[Span],
     lower_bound: Option<u32>,
@@ -210,18 +216,18 @@ fn write_trailing_inside_comments<'a>(
             }
             write_single_comment(span, f);
         });
-        write!(f, [line_suffix(&content), expand_parent()]);
+        write!(f, [line_suffix_boundary(), line_suffix(&content), expand_parent()]);
         prev_end = Some(span.end);
     }
 }
 
 /// Fallback flush for comments still pending inside a just-printed node's span:
-/// positions no printer claims (e.g. between a type and its `!`, or after the last argument's directives).
+/// positions no printer claims (a safety net: a comment reaching it is a missing claim point).
 /// Draining them here keeps the positional cursor monotonic,
 /// a later flush point would sit AFTER these comments in the source, making its gap range inverted (start > end).
 ///
-/// The cost: the comments land after the node, possibly crossing remaining in-span tokens (e.g. a type's `!`).
-/// Known "never crosses user content" violation, accepted for monotonicity.
+/// The cost: the comments land after the node, possibly crossing remaining in-span tokens,
+/// so their position is not kept (FORMATTER_POLICY best effort).
 pub fn flush_overlooked_inside_comments(upper_bound: u32, f: &mut GraphqlFormatter<'_, '_>) {
     let leftover = f.context().comments().take_before(upper_bound);
     write_trailing_inside_comments(leftover, None, f);

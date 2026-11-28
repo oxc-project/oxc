@@ -71,13 +71,6 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
   a blank line is a whitespace-only line strictly inside the gap.
   Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
 
-## Known issues
-
-Meant to be fixed, deferred (FORMATTER_POLICY "Fixing").
-
-- Two line comments can merge into one (lossless): `h: String` + break + `# a` + break + `! # b` prints `h: String!` + break + `# a # b`, which re-parses as one comment.
-  `# a` falls back to `flush_overlooked_inside_comments`, and the trailing `# b` lands on its line
-
 ## Verification
 
 Manual checks:

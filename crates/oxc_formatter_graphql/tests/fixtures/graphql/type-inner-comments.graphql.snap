@@ -1,0 +1,67 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# A type prints as one unit: a comment between its name and its closers (`]`, `!`)
+# prints after the whole type, keeping its line relation to the name (as Prettier does).
+type T {
+  sameLine: String # c
+    !
+  ownLine: [String
+    # c
+    ]!
+  list: [String # c
+  ]
+  withDefault(arg: String # c
+    ! = 1, other: Int): Int
+  # A trailing comment on the closer's line starts its own line, never merging into
+  # the own-line one (DIVERGENCES.md#type-inner-comment-merge)
+  merged: String
+    # a
+    ! # b
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# A type prints as one unit: a comment between its name and its closers (`]`, `!`)
+# prints after the whole type, keeping its line relation to the name (as Prettier does).
+type T {
+  sameLine: String! # c
+  ownLine: [String]!
+  # c
+  list: [String] # c
+  withDefault(
+    arg: String! = 1 # c
+    other: Int
+  ): Int
+  # A trailing comment on the closer's line starts its own line, never merging into
+  # the own-line one (DIVERGENCES.md#type-inner-comment-merge)
+  merged: String!
+  # a
+  # b
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# A type prints as one unit: a comment between its name and its closers (`]`, `!`)
+# prints after the whole type, keeping its line relation to the name (as Prettier does).
+type T {
+  sameLine: String! # c
+  ownLine: [String]!
+  # c
+  list: [String] # c
+  withDefault(
+    arg: String! = 1 # c
+    other: Int
+  ): Int
+  # A trailing comment on the closer's line starts its own line, never merging into
+  # the own-line one (DIVERGENCES.md#type-inner-comment-merge)
+  merged: String!
+  # a
+  # b
+}
+
+===================== End =====================

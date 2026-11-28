@@ -142,3 +142,32 @@ type A implements B { # c
 
 Prettier's attachment scatters the comment to the line end, across `implements B {`; same class: `f(x) # c` + break + `: T` is pulled inside the parens (`x # c` before the `)`); ours keeps the position in both.
 
+## type-inner-comment-merge
+
+- Why: invariant
+- Pin: `tests/fixtures/graphql/type-inner-comments.graphql`
+
+```graphql
+# input
+type T {
+  merged: String
+    # a
+    ! # b
+}
+
+# ours
+type T {
+  merged: String!
+  # a
+  # b
+}
+
+# prettier
+type T {
+  merged: String!
+  # a # b
+}
+```
+
+Prettier's output merges the two comments into one (`# a # b` re-parses as a single comment), which loses a comment.
+Both print after the type, as every comment inside a type does (`write_type`); ours starts the trailing one on its own line.
