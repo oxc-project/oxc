@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, match_member_expression},
+    ast::{
+        Expression, IdentifierReference, TSSignature, TSType, TSTypeAnnotation,
+        match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -93,6 +96,7 @@ impl Rule for NoArrayCallbackReference {
             return;
         }
 
+        let mut allows_type_predicate = false;
         if let Some(member_expr) = call_expr.callee.get_member_expr() {
             if member_expr.is_computed() {
                 return;
@@ -108,13 +112,17 @@ impl Rule for NoArrayCallbackReference {
             if object.as_member_expression().is_some() {
                 return;
             }
+
+            allows_type_predicate = member_expr.static_property_name().is_some_and(|name| {
+                name == "every" || name == "filter" || name == "find" || name == "findLast"
+            });
         }
 
         let Some(first_arg) = call_expr.arguments.first() else { return };
 
         let Some(callback_expr) = first_arg.as_expression() else { return };
 
-        if !should_wrap_callback(callback_expr) {
+        if !should_wrap_callback(callback_expr, allows_type_predicate, ctx) {
             return;
         }
 
@@ -122,16 +130,116 @@ impl Rule for NoArrayCallbackReference {
     }
 }
 
-fn should_wrap_callback(expr: &Expression) -> bool {
+fn has_type_predicate_return_type(return_type: Option<&TSTypeAnnotation<'_>>) -> bool {
+    return_type
+        .is_some_and(|annotation| matches!(annotation.type_annotation, TSType::TSTypePredicate(_)))
+}
+
+fn has_type_predicate_ts_type(mut ty: &TSType<'_>) -> bool {
+    while let TSType::TSParenthesizedType(paren) = ty {
+        ty = &paren.type_annotation;
+    }
+    match ty {
+        TSType::TSFunctionType(func_type) => {
+            matches!(func_type.return_type.type_annotation, TSType::TSTypePredicate(_))
+        }
+        TSType::TSTypeLiteral(type_lit) => type_lit.members.iter().any(|member| {
+            matches!(
+                member,
+                TSSignature::TSCallSignatureDeclaration(call_sig)
+                    if has_type_predicate_return_type(call_sig.return_type.as_deref())
+            )
+        }),
+        _ => false,
+    }
+}
+
+fn has_type_predicate_function_type(type_annotation: Option<&TSTypeAnnotation<'_>>) -> bool {
+    type_annotation
+        .is_some_and(|annotation| has_type_predicate_ts_type(&annotation.type_annotation))
+}
+
+fn has_type_predicate_init(expr: &Expression<'_>) -> bool {
+    let mut current = expr;
+    loop {
+        match current {
+            Expression::ParenthesizedExpression(e) => current = &e.expression,
+            Expression::TSAsExpression(e) => {
+                if has_type_predicate_ts_type(&e.type_annotation) {
+                    return true;
+                }
+                current = &e.expression;
+            }
+            Expression::TSSatisfiesExpression(e) => {
+                if has_type_predicate_ts_type(&e.type_annotation) {
+                    return true;
+                }
+                current = &e.expression;
+            }
+            Expression::TSTypeAssertion(e) => {
+                if has_type_predicate_ts_type(&e.type_annotation) {
+                    return true;
+                }
+                current = &e.expression;
+            }
+            Expression::TSInstantiationExpression(e) => current = &e.expression,
+            Expression::TSNonNullExpression(e) => current = &e.expression,
+            _ => break,
+        }
+    }
+    match current.get_inner_expression() {
+        Expression::ArrowFunctionExpression(arrow) => {
+            has_type_predicate_return_type(arrow.return_type.as_deref())
+        }
+        Expression::FunctionExpression(func) => {
+            has_type_predicate_return_type(func.return_type.as_deref())
+        }
+        _ => false,
+    }
+}
+
+fn is_type_predicate_callback(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let decl_node = ctx.symbol_declaration(symbol_id);
+    match decl_node.kind() {
+        AstKind::Function(func) => has_type_predicate_return_type(func.return_type.as_deref()),
+        // Imported callbacks may be type predicates whose signature cannot be checked syntactically.
+        AstKind::ImportSpecifier(_)
+        | AstKind::ImportDefaultSpecifier(_)
+        | AstKind::ImportNamespaceSpecifier(_) => true,
+        AstKind::FormalParameter(param) => {
+            has_type_predicate_function_type(param.type_annotation.as_deref())
+        }
+        AstKind::VariableDeclarator(declarator) => {
+            has_type_predicate_function_type(declarator.type_annotation.as_deref())
+                || declarator.init.as_ref().is_some_and(has_type_predicate_init)
+        }
+        _ => false,
+    }
+}
+
+fn should_wrap_callback(
+    expr: &Expression<'_>,
+    allows_type_predicate: bool,
+    ctx: &LintContext<'_>,
+) -> bool {
     match expr {
-        Expression::Identifier(ident) if is_allowed_builtin(&ident.name) => false,
+        Expression::Identifier(ident)
+            if is_allowed_builtin(&ident.name)
+                || (allows_type_predicate && is_type_predicate_callback(ident, ctx)) =>
+        {
+            false
+        }
         Expression::ConditionalExpression(cond_expr) => {
-            should_wrap_callback(&cond_expr.consequent)
-                || should_wrap_callback(&cond_expr.alternate)
+            should_wrap_callback(&cond_expr.consequent, allows_type_predicate, ctx)
+                || should_wrap_callback(&cond_expr.alternate, allows_type_predicate, ctx)
         }
-        Expression::SequenceExpression(seq_expr) => {
-            seq_expr.expressions.last().is_none_or(|e| should_wrap_callback(e))
-        }
+        Expression::SequenceExpression(seq_expr) => seq_expr
+            .expressions
+            .last()
+            .is_none_or(|e| should_wrap_callback(e, allows_type_predicate, ctx)),
         Expression::ComputedMemberExpression(_)
         | Expression::StaticMemberExpression(_)
         | Expression::PrivateFieldExpression(_)
@@ -305,6 +413,24 @@ fn test() {
         "foo.map(factory.make(x))",
         "foo.reduce(make(x), initialValue)",
         "foo.map(condition ? make(x) : make(y))",
+        // Type predicates on methods with type-predicate overloads
+        "function isString(value: unknown): value is string { return typeof value === 'string'; } foo.filter(isString);",
+        "function isString(value: unknown): value is string { return typeof value === 'string'; } foo.every(isString);",
+        "function isString(value: unknown): value is string { return typeof value === 'string'; } foo.find(isString);",
+        "function isString(value: unknown): value is string { return typeof value === 'string'; } foo.findLast(isString);",
+        "const isPrimitive = (value: unknown): value is number | string => typeof value === 'number' || typeof value === 'string'; export const allPrimitive = (spec: readonly unknown[]): boolean => spec.every(isPrimitive);",
+        "const isString = function (value: unknown): value is string { return typeof value === 'string'; }; foo.filter(isString);",
+        "const isString: (value: unknown) => value is string = value => typeof value === 'string'; foo.filter(isString);",
+        "const isString: { (value: unknown): value is string } = value => typeof value === 'string'; foo.filter(isString);",
+        "const isString = ((value: unknown): value is string => typeof value === 'string') satisfies (value: unknown) => boolean; foo.filter(isString);",
+        "const isString = ((value: unknown) => typeof value === 'string') as (value: unknown) => value is string; foo.filter(isString);",
+        "const isString = ((value: unknown): value is string => typeof value === 'string') as Guard; foo.filter(isString);",
+        "function run(predicate: (value: unknown) => value is string) { foo.filter(predicate); foo.every(predicate); foo.find(predicate); foo.findLast(predicate); }",
+        "function run(predicate: { (value: unknown): value is string }) { foo.filter(predicate); }",
+        "declare function isString(value: unknown): value is string; foo.filter(isString);",
+        "import { isString } from './guards'; foo.filter(isString); foo.every(isString); foo.find(isString); foo.findLast(isString);",
+        "import isString from './guards'; foo.filter(isString);",
+        "function isString(value: unknown): value is string { return typeof value === 'string'; } function isNumber(value: unknown): value is number { return typeof value === 'number'; } foo.filter(condition ? isString : isNumber);",
     ];
 
     let fail = vec![
@@ -336,6 +462,12 @@ fn test() {
                 foo.map(++ bar);
                 foo.map(new Function(''));
             }",
+        "function isString(value: unknown): boolean { return typeof value === 'string'; } foo.filter(isString);",
+        "function isString(value: unknown): value is string { return typeof value === 'string'; } foo.map(isString);",
+        "import { isString } from './guards'; foo.map(isString);",
+        "function isString(value: unknown): value is string { return typeof value === 'string'; } function isObject(value: unknown): boolean { return typeof value === 'object'; } foo.filter(condition ? isString : isObject);",
+        "const isString: { (value: unknown): boolean } = value => typeof value === 'string'; foo.filter(isString);",
+        "try {} catch (callback) { foo.filter(callback); }",
     ];
 
     Tester::new(NoArrayCallbackReference::NAME, NoArrayCallbackReference::PLUGIN, pass, fail)
