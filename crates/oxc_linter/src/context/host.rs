@@ -50,6 +50,11 @@ pub struct ContextSubHost<'a> {
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
+    /// `true` if this script block was parsed with [`ModuleKind::Unambiguous`].
+    /// The parser then chose the module kind from the code: module if it has ESM syntax, otherwise script.
+    ///
+    /// [`ModuleKind::Unambiguous`]: oxc_span::ModuleKind::Unambiguous
+    pub(super) parsed_as_unambiguous: bool,
 }
 
 impl<'a> ContextSubHost<'a> {
@@ -84,6 +89,7 @@ impl<'a> ContextSubHost<'a> {
             disable_directives,
             framework_options: options.framework_options,
             parser_tokens: options.parser_tokens,
+            parsed_as_unambiguous: options.parsed_as_unambiguous,
         }
     }
 
@@ -109,6 +115,13 @@ impl<'a> ContextSubHost<'a> {
         self.framework_options
     }
 
+    /// `true` if this script block was parsed with [`ModuleKind::Unambiguous`].
+    ///
+    /// [`ModuleKind::Unambiguous`]: oxc_span::ModuleKind::Unambiguous
+    pub fn parsed_as_unambiguous(&self) -> bool {
+        self.parsed_as_unambiguous
+    }
+
     /// Source text of this script block.
     #[inline]
     pub fn source_text(&self) -> &'a str {
@@ -121,6 +134,10 @@ pub struct ContextSubHostOptions<'a> {
     pub framework_options: FrameworkOptions,
     pub parser_tokens: ArenaBox<'a, [Token]>,
     pub respect_eslint_disable_directives: bool,
+    /// `true` if the script block was parsed with [`ModuleKind::Unambiguous`].
+    ///
+    /// [`ModuleKind::Unambiguous`]: oxc_span::ModuleKind::Unambiguous
+    pub parsed_as_unambiguous: bool,
 }
 
 impl Default for ContextSubHostOptions<'_> {
@@ -129,6 +146,7 @@ impl Default for ContextSubHostOptions<'_> {
             framework_options: FrameworkOptions::Default,
             parser_tokens: ArenaBox::new_empty_boxed_slice(),
             respect_eslint_disable_directives: true,
+            parsed_as_unambiguous: false,
         }
     }
 }

@@ -15,9 +15,9 @@
    `----
 
   x language-options-plugin(lang): languageOptions:
-  | sourceType: script
+  | sourceType: module
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":false}}
+  | parserOptions: {"sourceType":"module","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":true}}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.js:1:1]
@@ -814,9 +814,9 @@
    `----
 
   x language-options-plugin(lang): languageOptions:
-  | sourceType: script
+  | sourceType: module
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":false,"globalReturn":false,"impliedStrict":false}}
+  | parserOptions: {"sourceType":"module","ecmaFeatures":{"jsx":false,"globalReturn":false,"impliedStrict":true}}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.ts:1:1]
