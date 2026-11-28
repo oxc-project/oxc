@@ -243,32 +243,20 @@ impl Rule for Namespace {
 /// b is a namespace in b.js so the return value is Some("./c")
 ///
 fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<String> {
-    if let Some(entry) =
-        module_record.indirect_export_entries.iter().find(|e| match &e.import_name {
-            ExportImportName::All => {
-                if let ExportExportName::Name(name_span) = &e.export_name {
-                    return name_span.name() == name;
-                }
-
-                false
+    // `import * as ns from 'mod'; export { ns }` is normalized to `export * as ns from 'mod'`
+    // when the module record is built, so `export * as` entries cover both forms. A name
+    // re-exported with `export { name } from 'mod'` is the module's own export, even if the
+    // module also has a local `import * as name` binding.
+    module_record.indirect_export_entries.iter().find_map(|e| {
+        match (&e.import_name, &e.export_name) {
+            (ExportImportName::All, ExportExportName::Name(name_span))
+                if name_span.name() == name =>
+            {
+                e.module_request.as_ref().map(|request| request.name().to_string())
             }
-            ExportImportName::Name(name_span) => {
-                name_span.name() == name
-                    && module_record.import_entries.iter().any(|entry| {
-                        entry.local_name.name() == name && entry.import_name.is_namespace_object()
-                    })
-            }
-            _ => false,
-        })
-    {
-        return entry.module_request.as_ref().map(|name| name.name().to_string());
-    }
-
-    module_record
-        .import_entries
-        .iter()
-        .find(|entry| entry.local_name.name() == name && entry.import_name.is_namespace_object())
-        .map(|entry| entry.module_request.name().to_string())
+            _ => None,
+        }
+    })
 }
 
 fn check_deep_namespace_for_node(
@@ -511,6 +499,11 @@ fn test() {
             r#"import * as lib from "./typescript-export-enum"; export const bar = lib.Foo.BAR;"#,
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/29844
+        (r#"import { Thing } from "./issue-29844/index.js"; Thing.hello();"#, None),
+        // Local `import * as X` plus `export * from` that re-exports the same name
+        // must not treat the exported name as a namespace (removed import_entries fallback).
+        (r#"import { Thing } from "./issue-29844-export-star/index.js"; Thing.hello();"#, None),
     ];
 
     let fail = vec![
