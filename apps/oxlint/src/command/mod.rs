@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use bpaf::Bpaf;
 
 pub use self::{
-    ignore::IgnoreOptions,
+    ignore::{IgnoreOptions, NoIgnoreKinds},
     lint::{
         DebugOption, EnablePlugins, LintCommand, OutputOptions, ReportUnusedDirectives,
         WarningOptions, lint_command,
