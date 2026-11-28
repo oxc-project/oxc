@@ -595,7 +595,11 @@ impl Rule for ExhaustiveDeps {
                 }
             }
 
-            if !ctx.disable_directives().contains(ExhaustiveDeps::NAME, dependency.span) {
+            if !ctx.disable_directives().contains_builtin(
+                ExhaustiveDeps::PLUGIN,
+                ExhaustiveDeps::NAME,
+                dependency.span,
+            ) {
                 unnecessary_dependencies.push(dependency);
             }
         }
