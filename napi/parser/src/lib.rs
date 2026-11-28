@@ -78,7 +78,7 @@ pub fn raw_transfer_supported() -> bool {
 }
 
 /// Async task for [`parse`].
-pub struct ResolveTask {
+pub struct ParseTask {
     /// File path.
     filename: String,
     /// Source text.
@@ -88,7 +88,7 @@ pub struct ResolveTask {
 }
 
 #[napi]
-impl Task for ResolveTask {
+impl Task for ParseTask {
     type JsValue = ParseResult;
     type Output = ParseResult;
 
@@ -121,8 +121,8 @@ pub fn parse(
     filename: String,
     source_text: String,
     options: Option<ParserOptions>,
-) -> AsyncTask<ResolveTask> {
-    AsyncTask::new(ResolveTask { filename, source_text, options })
+) -> AsyncTask<ParseTask> {
+    AsyncTask::new(ParseTask { filename, source_text, options })
 }
 
 /// Parse JS/TS source synchronously on current thread.

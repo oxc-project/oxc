@@ -64,7 +64,7 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 }
 
 /// Async task for [`parse_raw`].
-pub struct ResolveTask {
+pub struct ParseRawTask {
     /// File path.
     filename: String,
     /// Buffer containing the source text, which the AST is written into.
@@ -78,7 +78,7 @@ pub struct ResolveTask {
 }
 
 #[napi]
-impl Task for ResolveTask {
+impl Task for ParseRawTask {
     type JsValue = ();
     type Output = ();
 
@@ -140,8 +140,8 @@ pub fn parse_raw(
     source_start: u32,
     source_len: u32,
     options: Option<ParserOptions>,
-) -> AsyncTask<ResolveTask> {
-    AsyncTask::new(ResolveTask { filename, buffer, source_start, source_len, options })
+) -> AsyncTask<ParseRawTask> {
+    AsyncTask::new(ParseRawTask { filename, buffer, source_start, source_len, options })
 }
 
 /// Parse AST into provided `Uint8Array` buffer, synchronously.
