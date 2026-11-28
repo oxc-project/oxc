@@ -1,0 +1,7 @@
+{
+  "jsPlugins": ["./plugin.js"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "js-plugin/template-marker": "error"
+  }
+}
