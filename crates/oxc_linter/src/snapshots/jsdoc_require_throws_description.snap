@@ -2,38 +2,74 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
-   ╭─[require_throws_description.tsx:3:24]
- 2 │                     /**
- 3 │                      * @throws
-   ·                        ───────
- 4 │                      */
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:1:23]
+ 1 │ function example() {} /** @throws {Error} */
+   ·                       ──────────────────────
    ╰────
   help: Add description comment to `@throws` tag.
 
-  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
-   ╭─[require_throws_description.tsx:3:24]
- 2 │                     /**
- 3 │                      * @exception
-   ·                        ──────────
- 4 │                      */
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:1:23]
+ 1 │ function example() {} /** @exception */
+   ·                       ─────────────────
    ╰────
   help: Add description comment to `@throws` tag.
 
-  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
-   ╭─[require_throws_description.tsx:3:24]
- 2 │                     /**
- 3 │                      * @throws {SomeType}
-   ·                        ───────
- 4 │                      */
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ │    * @throws {TypeError}
+ 3 │ │    * @exception {RangeError}
+ 4 │ ╰─▶  */
    ╰────
   help: Add description comment to `@throws` tag.
 
-  ⚠ jsdoc(require-throws-description): Missing JSDoc `@throws` description.
-   ╭─[require_throws_description.tsx:3:24]
- 2 │                     /**
- 3 │                      * @exception {SomeType}
-   ·                        ──────────
- 4 │                      */
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:1:1]
+ 1 │ ╭─▶ /**
+ 2 │ │    * @throws
+ 3 │ │    * {Error}
+ 4 │ ╰─▶  */
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     /**
+ 3 │ │                        * @throws
+ 4 │ ╰─▶                      */
+ 5 │                       
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     /**
+ 3 │ │                        * @exception
+ 4 │ ╰─▶                      */
+ 5 │                       
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         /**
+ 3 │ │            * @throws {SomeType}
+ 4 │ ╰─▶          */
+ 5 │           
+   ╰────
+  help: Add description comment to `@throws` tag.
+
+  ⚠ jsdoc(require-throws-description): @throws should have a description
+   ╭─[require_throws_description.tsx:2:21]
+ 1 │     
+ 2 │ ╭─▶                     /**
+ 3 │ │                        * @exception {SomeType}
+ 4 │ ╰─▶                      */
+ 5 │                       
    ╰────
   help: Add description comment to `@throws` tag.
