@@ -109,6 +109,7 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type AsteriskPrefixStyle = "always" | "never" | "any";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -1034,6 +1035,8 @@ export interface DummyRuleMap {
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-blank-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBlankBlocks];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
+  "jsdoc/require-asterisk-prefix"?:
+    RuleNoConfig | [AllowWarnDeny, AsteriskPrefixStyle] | [AllowWarnDeny, AsteriskPrefixStyle, AsteriskPrefixOptions];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
@@ -1886,6 +1889,8 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, EmptyTagsConfig]
     | [AllowWarnDeny, NoBlankBlocks]
     | [AllowWarnDeny, NoDefaultsConfig]
+    | [AllowWarnDeny, AsteriskPrefixStyle]
+    | [AllowWarnDeny, AsteriskPrefixStyle, AsteriskPrefixOptions]
     | [AllowWarnDeny, RequireParamConfig]
     | [AllowWarnDeny, RequireParamDescriptionConfig]
     | [AllowWarnDeny, RequireParamTypeConfig]
@@ -2963,6 +2968,26 @@ export interface NoDefaultsConfig {
    * If true, report the presence of optional param names (square brackets) on `@param` tags.
    */
   noOptionalParamNames?: boolean;
+}
+export interface AsteriskPrefixOptions {
+  /**
+   * Override the default for a tag (without `@`) or the block's `*description`.
+   */
+  tags?: AsteriskPrefixTags;
+}
+export interface AsteriskPrefixTags {
+  /**
+   * Require an asterisk on the lines of these tags.
+   */
+  always?: string[];
+  /**
+   * Allow either style on the lines of these tags.
+   */
+  any?: string[];
+  /**
+   * Forbid an asterisk on the lines of these tags.
+   */
+  never?: string[];
 }
 export interface RequireParamConfig {
   /**
