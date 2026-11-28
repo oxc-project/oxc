@@ -121,10 +121,25 @@ impl ScopedWalker {
         let (walk_targets, file_targets) = {
             let mut initial_targets: FxHashSet<PathBuf> = self.paths.iter().cloned().collect();
 
-            // When glob patterns exist, walk from cwd to find matching files during traversal.
+            // When glob patterns exist, walk to find matching files during traversal.
             // Concrete file paths are still added individually as base paths.
             if !self.glob_patterns.is_empty() {
-                initial_targets.insert(self.cwd.clone());
+                // Relative glob patterns are matched against cwd-relative paths,
+                // so the cwd is walked to find matching files at any depth.
+                let has_relative_glob =
+                    self.glob_patterns.iter().any(|pattern| !Path::new(pattern).is_absolute());
+                if has_relative_glob {
+                    initial_targets.insert(self.cwd.clone());
+                }
+                // Absolute glob patterns are matched against absolute paths and
+                // can point outside the cwd, which the cwd walk never reaches.
+                // Walk each pattern's deepest literal directory instead.
+                // e.g. `/home/user/Downloads/*.json` -> `/home/user/Downloads`
+                for pattern in &self.glob_patterns {
+                    if let Some(root) = absolute_glob_walk_root(pattern) {
+                        initial_targets.insert(root);
+                    }
+                }
             }
 
             // Default to `cwd` if no positive paths were specified.
@@ -261,47 +276,109 @@ fn is_glob_pattern(s: &str, cwd: &Path) -> bool {
 /// overrides have the highest priority in the `ignore` crate and would bypass `.gitignore` rules.
 ///
 /// Also tracks concrete target paths (non-glob) because when globs are present,
-/// cwd is added as a base path, which means concrete paths can be visited twice.
-/// (as direct base paths and during the cwd walk)
+/// several base paths can be walked, which means concrete paths can be visited twice.
 /// This struct handles both acceptance and dedup of those paths via `matches()`.
 struct GlobMatcher {
     /// cwd for computing relative paths for glob matching.
     cwd: PathBuf,
-    /// Normalized glob pattern strings for matching via `fast_glob::glob_match`.
-    glob_patterns: Vec<String>,
+    /// Glob patterns matched against paths relative to `cwd`.
+    ///
+    /// Patterns without `/` are prefixed with `**/`
+    /// to match at any depth (gitignore/prettier semantics).
+    /// e.g., `*.js` → `**/*.js`, `foo/**/*.js` stays as-is.
+    relative_glob_patterns: Vec<String>,
+    /// Absolute glob patterns matched against absolute paths.
+    /// e.g., `/home/user/Downloads/*.json`
+    /// These are not cwd-relative and can match files outside the cwd.
+    absolute_glob_patterns: Vec<String>,
     /// Concrete target paths (absolute) specified via CLI.
     /// These are always accepted even when glob filtering is active.
     concrete_paths: FxHashSet<PathBuf>,
-    /// Tracks seen concrete paths to avoid duplicates (visited both as
-    /// direct base paths and via cwd walk).
+    /// Tracks matched paths to avoid duplicates (a path can be visited
+    /// more than once when base paths overlap,
+    /// e.g. the cwd and an absolute glob's directory).
     seen: Mutex<FxHashSet<PathBuf>>,
 }
 
 impl GlobMatcher {
     fn new(cwd: PathBuf, glob_patterns: Vec<String>, target_paths: &[PathBuf]) -> Self {
-        // Normalize glob patterns: patterns without `/` are prefixed with `**/`
+        // Split patterns by the base path they are matched against:
+        // relative patterns against cwd-relative paths, absolute patterns against absolute paths.
+        let (relative_glob_patterns, absolute_glob_patterns) = glob_patterns
+            .into_iter()
+            .partition::<Vec<String>, _>(|pattern| !Path::new(pattern).is_absolute());
+        // Normalize relative glob patterns: patterns without `/` are prefixed with `**/`
         // to match at any depth (gitignore/prettier semantics).
         // e.g., `*.js` → `**/*.js`, `foo/**/*.js` stays as-is.
-        let glob_patterns = glob_patterns
+        let relative_glob_patterns = relative_glob_patterns
             .into_iter()
             .map(|pat| if pat.contains('/') { pat } else { format!("**/{pat}") })
             .collect();
+        // Absolute patterns are kept as-is; they already contain `/`.
         // Store concrete paths (excluding cwd itself) for dedup and acceptance.
         let concrete_paths = target_paths.iter().filter(|p| p.as_path() != cwd).cloned().collect();
-        Self { cwd, glob_patterns, concrete_paths, seen: Mutex::new(FxHashSet::default()) }
+        Self {
+            cwd,
+            relative_glob_patterns,
+            absolute_glob_patterns,
+            concrete_paths,
+            seen: Mutex::new(FxHashSet::default()),
+        }
     }
 
     /// Returns `true` if the path matches any glob pattern or is a concrete target path.
-    /// Concrete paths are deduplicated (they can appear both as direct base paths and via cwd walk).
+    /// Matched paths are deduplicated (they can be visited more than once
+    /// when base paths overlap, e.g. the cwd and an absolute glob's directory).
     fn matches(&self, path: &Path) -> bool {
         // Accept concrete paths (explicitly specified via CLI), with dedup
         if self.concrete_paths.contains(path) {
             return self.seen.lock().unwrap().insert(path.to_path_buf());
         }
 
-        let relative = path.strip_prefix(&self.cwd).unwrap_or(path).to_string_lossy();
-        self.glob_patterns.iter().any(|pattern| glob_match(pattern, relative.as_ref()))
+        // Relative patterns are matched against cwd-relative paths,
+        // absolute patterns against absolute paths.
+        let mut matched = false;
+        if !self.relative_glob_patterns.is_empty() {
+            let relative = path.strip_prefix(&self.cwd).unwrap_or(path).to_string_lossy();
+            matched = self
+                .relative_glob_patterns
+                .iter()
+                .any(|pattern| glob_match(pattern, relative.as_ref()));
+        }
+        if !matched && !self.absolute_glob_patterns.is_empty() {
+            let absolute = path.to_string_lossy();
+            matched = self
+                .absolute_glob_patterns
+                .iter()
+                .any(|pattern| glob_match(pattern, absolute.as_ref()));
+        }
+
+        // A matched path may be visited more than once when base paths overlap;
+        // only the first visit is dispatched for formatting.
+        matched && self.seen.lock().unwrap().insert(path.to_path_buf())
     }
+}
+
+// ---
+
+/// Return the deepest literal directory of an absolute glob pattern,
+/// used as a walk root for the pattern.
+/// e.g. `/home/user/Downloads/*.json` → `/home/user/Downloads`
+///
+/// Every file matched by an absolute glob pattern lives under this directory,
+/// so walking it finds all matching files, even when they are outside the cwd.
+/// Returns `None` for relative patterns, which are covered by the cwd walk.
+fn absolute_glob_walk_root(pattern: &str) -> Option<PathBuf> {
+    if !Path::new(pattern).is_absolute() {
+        return None;
+    }
+    // The text before the first glob metacharacter is a literal path prefix.
+    let literal_prefix = pattern.split(['*', '?', '[', '{']).next()?;
+    // Truncate at the last `/` to get the directory containing the first
+    // glob-shaped path component.
+    let index = literal_prefix.rfind('/')?;
+    let root = if index == 0 { "/" } else { &literal_prefix[..index] };
+    Some(PathBuf::from(root))
 }
 
 // ---
@@ -976,5 +1053,165 @@ mod tests_scope_resolution {
             err1.contains("simulated load failure"),
             "cached Err must surface the underlying loader message, got: {err1}"
         );
+    }
+}
+
+// ---
+
+#[cfg(test)]
+mod tests_glob_walk {
+    use std::{fs, path::PathBuf, sync::mpsc};
+
+    use tempfile::TempDir;
+
+    use super::*;
+
+    /// Run a walk with the given CLI path arguments from `cwd`,
+    /// returning the paths of all files dispatched for formatting, sorted.
+    fn collect_formatted_files(cwd: &Path, paths: &[&str]) -> Vec<PathBuf> {
+        let scopes = ConfigScopes::load(
+            cwd,
+            None,
+            true,
+            #[cfg(feature = "napi")]
+            None,
+        )
+        .expect("scopes");
+
+        let args = paths.iter().map(PathBuf::from).collect::<Vec<_>>();
+        let walker = ScopedWalker::new(cwd.to_path_buf(), &args).expect("create walker");
+
+        let (tx_entry, rx_entry) = mpsc::channel();
+        let (tx_error, _rx_error) = mpsc::channel();
+        walker.run(&scopes, &[], false, &tx_entry, &tx_error).expect("walk");
+        // Drop the last senders so `rx_entry.iter()` terminates
+        drop(tx_error);
+        drop(tx_entry);
+
+        let mut files: Vec<PathBuf> =
+            rx_entry.iter().map(|plan: FormatPlan| plan.path.to_path_buf()).collect();
+        files.sort();
+        files
+    }
+
+    /// Absolute glob patterns must match files outside the cwd.
+    /// <https://github.com/oxc-project/oxc/issues/30442>
+    #[test]
+    fn absolute_glob_matches_files_outside_cwd() {
+        let tmp = TempDir::new().expect("tempdir");
+        let cwd = tmp.path().join("cwd");
+        let target = tmp.path().join("target");
+        fs::create_dir_all(&cwd).expect("create cwd");
+        fs::create_dir_all(&target).expect("create target");
+        fs::write(target.join("a.json"), "{}\n").expect("write a.json");
+        fs::write(target.join("b.json"), "{}\n").expect("write b.json");
+        fs::write(target.join("c.js"), "").expect("write c.js");
+
+        let pattern = target.join("*.json").to_string_lossy().to_string();
+        let files = collect_formatted_files(&cwd, &[&pattern]);
+
+        assert_eq!(
+            files,
+            vec![target.join("a.json"), target.join("b.json")],
+            "absolute glob must match files outside the cwd"
+        );
+    }
+
+    /// Absolute glob patterns must also match when cwd is the matched directory
+    /// (matching is not only about reaching outside the cwd).
+    #[test]
+    fn absolute_glob_matches_files_inside_cwd() {
+        let tmp = TempDir::new().expect("tempdir");
+        let cwd = tmp.path().join("cwd");
+        fs::create_dir_all(&cwd).expect("create cwd");
+        fs::write(cwd.join("a.json"), "{}\n").expect("write a.json");
+
+        let pattern = cwd.join("*.json").to_string_lossy().to_string();
+        let files = collect_formatted_files(&cwd, &[&pattern]);
+
+        assert_eq!(files, vec![cwd.join("a.json")]);
+    }
+
+    /// Absolute glob patterns covering the cwd must not double-dispatch
+    /// files that are reachable from both walk roots.
+    #[test]
+    fn absolute_glob_covering_cwd_does_not_duplicate_files() {
+        let tmp = TempDir::new().expect("tempdir");
+        let cwd = tmp.path().join("cwd");
+        fs::create_dir_all(&cwd).expect("create cwd");
+        fs::write(cwd.join("a.json"), "{}\n").expect("write a.json");
+        fs::write(tmp.path().join("top.json"), "{}\n").expect("write top.json");
+
+        // Pattern's literal directory is an ancestor of the cwd
+        let pattern = tmp.path().join("cwd/**/*.json").to_string_lossy().to_string();
+        let files = collect_formatted_files(&cwd, &[&pattern]);
+
+        assert_eq!(files, vec![cwd.join("a.json")], "each matched file must be dispatched once");
+    }
+
+    /// A file reachable from overlapping walk roots
+    /// (relative glob walking the cwd + a nested concrete dir target)
+    /// must be dispatched exactly once.
+    #[test]
+    fn overlapping_walk_roots_dont_duplicate_files() {
+        let tmp = TempDir::new().expect("tempdir");
+        let cwd = tmp.path().join("cwd");
+        fs::create_dir_all(cwd.join("sub")).expect("create sub");
+        fs::write(cwd.join("sub").join("a.js"), "").expect("write a.js");
+
+        let files = collect_formatted_files(&cwd, &["**/*.js", "sub"]);
+
+        assert_eq!(files, vec![cwd.join("sub").join("a.js")]);
+    }
+
+    /// Relative glob patterns must keep matching files under the cwd,
+    /// including when absolute patterns are present at the same time.
+    #[test]
+    fn relative_glob_still_matches_with_absolute_glob() {
+        let tmp = TempDir::new().expect("tempdir");
+        let cwd = tmp.path().join("cwd");
+        let other = tmp.path().join("other");
+        fs::create_dir_all(cwd.join("nested")).expect("create nested");
+        fs::create_dir_all(&other).expect("create other");
+        fs::write(cwd.join("nested").join("a.json"), "{}\n").expect("write a.json");
+        fs::write(other.join("b.json"), "{}\n").expect("write b.json");
+        fs::write(cwd.join("c.js"), "").expect("write c.js");
+
+        let absolute = other.join("*.json").to_string_lossy().to_string();
+        let files = collect_formatted_files(&cwd, &["nested/*.json", &absolute]);
+
+        assert_eq!(
+            files,
+            vec![cwd.join("nested").join("a.json"), other.join("b.json")],
+            "both relative and absolute glob patterns must match, without duplicates"
+        );
+    }
+
+    #[test]
+    fn absolute_glob_walk_root_extraction() {
+        let cases: &[(&str, Option<&str>)] = &[
+            // Deepest literal directory before the first glob component
+            ("/home/user/Downloads/*.json", Some("/home/user/Downloads")),
+            ("/home/user/Down*/*.json", Some("/home/user")),
+            ("/home/user/{a,b}/*.json", Some("/home/user")),
+            ("/home/user/[ab]/*.json", Some("/home/user")),
+            ("/home/user/x?/*.json", Some("/home/user")),
+            // `**` keeps the directory before it
+            ("/home/user/**/*.json", Some("/home/user")),
+            // Trailing glob at the filesystem root
+            ("/*.json", Some("/")),
+            // Relative patterns are covered by the cwd walk instead
+            ("src/*.json", None),
+            ("*.json", None),
+            ("**/*.json", None),
+        ];
+        for (pattern, expected) in cases {
+            let root = absolute_glob_walk_root(pattern);
+            assert_eq!(
+                root.as_deref(),
+                expected.map(Path::new),
+                "unexpected walk root for pattern `{pattern}`"
+            );
+        }
     }
 }
