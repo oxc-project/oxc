@@ -5,7 +5,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        ChainElement, Expression, FormalParameter, TSLiteral, TSType, TSTypeAnnotation, TSTypeName,
+        ChainElement, Expression, FormalParameter, TSType, TSTypeAnnotation, TSTypeName,
         UnaryOperator,
     },
 };
@@ -196,13 +196,6 @@ fn get_delete_span(
 
 fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> bool {
     match &type_annotation.type_annotation {
-        TSType::TSLiteralType(ts_literal_type) => match &ts_literal_type.literal {
-            TSLiteral::BooleanLiteral(_) => is_init_boolean(init),
-            TSLiteral::NumericLiteral(_) => is_init_number(init),
-            TSLiteral::BigIntLiteral(_) => is_init_bigint(init),
-            TSLiteral::StringLiteral(_) => is_init_string(init),
-            TSLiteral::TemplateLiteral(_) | TSLiteral::UnaryExpression(_) => false,
-        },
         TSType::TSStringKeyword(_) => is_init_string(init),
         TSType::TSBigIntKeyword(_) => is_init_bigint(init),
         TSType::TSBooleanKeyword(_) => is_init_boolean(init),
@@ -667,4 +660,43 @@ fn test() {
     Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn preserves_literal_type_annotations() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "let value: 1 = 1;",
+        "const value: 1 = 1;",
+        "function fn(value: 1 = 1) {}",
+        "const fn = (value: 1 = 1) => {};",
+        "class C { value: 1 = 1; }",
+        "class C { accessor value: 1 = 1; }",
+        "class C { constructor(public value: 1 = 1) {} }",
+        "let value: true = true;",
+        "const value: true = true;",
+        "function fn(value: true = true) {}",
+        "const fn = (value: true = true) => {};",
+        "class C { value: true = true; }",
+        "class C { accessor value: true = true; }",
+        "class C { constructor(public value: true = true) {} }",
+        "let value: 'on' = 'on';",
+        "const value: 'on' = 'on';",
+        "function fn(value: 'on' = 'on') {}",
+        "const fn = (value: 'on' = 'on') => {};",
+        "class C { value: 'on' = 'on'; }",
+        "class C { accessor value: 'on' = 'on'; }",
+        "class C { constructor(public value: 'on' = 'on') {} }",
+        "let value: 1n = 1n;",
+        "const value: 1n = 1n;",
+        "function fn(value: 1n = 1n) {}",
+        "const fn = (value: 1n = 1n) => {};",
+        "class C { value: 1n = 1n; }",
+        "class C { accessor value: 1n = 1n; }",
+        "class C { constructor(public value: 1n = 1n) {} }",
+    ];
+    Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::PLUGIN, pass, vec![])
+        .expect_fix(vec![("let value: number = 1;", "let value = 1;", None)])
+        .test();
 }
