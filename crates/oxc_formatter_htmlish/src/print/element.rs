@@ -51,17 +51,26 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
         return;
     }
 
+    let hug = item.only_child().is_some_and(|only| {
+        t.is_interpolation(only) && t[only].glued_before() && t[only].glued_after()
+    });
+    // No attributes: the opening tag cannot break, so it needs a group only for `hug` to read its id
+    let attr_group = hug || t.element(id).is_some_and(|el| !el.attributes.is_empty());
     let attr_group_id = f.state().group_id("htmlAttributes");
     let print_tag = |f: &mut HtmlishFormatter<'_, 'a>,
                      body: &dyn Format<'a, HtmlishFormatContext<'a>>| {
         write!(
             f,
             group(&format_with(|f| {
-                write!(
-                    f,
-                    group(&format_with(|f| write_opening_tag(t, id, f)))
-                        .with_group_id(Some(attr_group_id))
-                );
+                if attr_group {
+                    write!(
+                        f,
+                        group(&format_with(|f| write_opening_tag(t, id, f)))
+                            .with_group_id(Some(attr_group_id))
+                    );
+                } else {
+                    write_opening_tag(t, id, f);
+                }
                 write!(f, body);
                 write_closing_tag(t, id, f);
             }))
@@ -80,10 +89,6 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
         );
         return;
     };
-
-    let hug = item.only_child().is_some_and(|only| {
-        t.is_interpolation(only) && t[only].glued_before() && t[only].glued_after()
-    });
 
     let line_before = format_with(|f| {
         if hug {
