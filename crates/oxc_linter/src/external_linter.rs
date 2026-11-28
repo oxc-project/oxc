@@ -289,6 +289,7 @@ fn create_invalid_offset_error(span: Span) -> Result<Fix, MergeFixesError> {
 
 #[derive(Clone)]
 pub struct ExternalLinter {
+    #[cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
     #[cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]

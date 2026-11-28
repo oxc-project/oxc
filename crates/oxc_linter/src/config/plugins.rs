@@ -76,6 +76,7 @@ pub fn plugin_display_name(plugin_name: &str) -> &str {
 ///
 /// Returns `false` if it starts with `eslint-plugin-`/`oxlint-plugin-`, or is of the form
 /// `@scope/eslint-plugin`, `@scope/oxlint-plugin`, or a prefixed scoped plugin name.
+#[cfg(any(test, all(target_pointer_width = "64", target_endian = "little")))]
 pub fn is_normal_plugin_name(plugin_name: &str) -> bool {
     let normalized = normalize_plugin_name(plugin_name);
     match normalized {
