@@ -102,7 +102,7 @@ MUST (a violation is a bug even where Prettier disagrees: fixed once found, or l
   - Semantics: neither moving a comment nor keeping its place changes the code's meaning (e.g. a JS cast `/** @type {T} */ (x)` binds to the parens after it; a break after `return` changes what it returns)
   - The next node: a suppression comment, `/*#__PURE__*/`, `istanbul ignore next`, ...
   - The next line: the code that started the line after an own-line comment still starts it, nothing is glued after the comment on its line (`eslint-disable-next-line`, `@ts-expect-error`, ...);
-    moving the comment to the end of the previous line keeps that
+    moving the comment to the end of the previous line keeps that, and so does an operator an option moves to the line start (`experimentalOperatorPosition: "start"`)
   - Best effort instead: a directive bound to its own line (`-line`, `NOLINT`, ...; a `-next-line` variant covers it),
     and any binding this list does not name (range directives, file pragmas, ...) unless a crate's AGENTS.md names it
 - A suppression comment (`prettier-ignore` / `oxfmt-ignore`) targets what follows it, which prints as written
