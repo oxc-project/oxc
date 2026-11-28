@@ -35,4 +35,3 @@ oxc_formatter_tests = { workspace = true }
 
 [lib]
 doctest = false
-test = false
