@@ -6,7 +6,7 @@ use oxc_str::{Ident, IdentHashSet};
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 use rustc_hash::FxHashSet;
 
-use crate::{CompressOptions, symbol_state::SymbolState};
+use crate::{CompressOptions, peephole::ObjectMergeTarget, symbol_state::SymbolState};
 
 /// Compression pipeline selected for this run.
 #[derive(Clone, Copy)]
@@ -119,6 +119,10 @@ pub struct MinifierState<'a> {
     /// Per-pass change accumulator populated by typed mutation helpers and
     /// consumed by `compression_pass` after Normalize and every peephole pass.
     pub(crate) pass_changes: PassChanges<'a>,
+
+    /// Key analysis of the object literal that the last property assignment was
+    /// merged into, reset for each statement list by `minimize_statements`.
+    pub(crate) object_merge_target: ObjectMergeTarget<'a>,
 }
 
 impl<'a> MinifierState<'a> {
@@ -140,6 +144,7 @@ impl<'a> MinifierState<'a> {
                 this_initialized_at: None,
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
+            object_merge_target: ObjectMergeTarget::default(),
         }
     }
 
