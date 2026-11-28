@@ -2,6 +2,7 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
@@ -216,7 +217,9 @@ fn is_var_declarator_or_test_block<'a>(
             }
 
             let parent = ctx.nodes().parent_node(node.id());
-            if matches!(parent.kind(), AstKind::CallExpression(_)) {
+            if let AstKind::CallExpression(parent_call) = parent.kind()
+                && parent_call.callee.address() != node.address()
+            {
                 return is_var_declarator_or_test_block(
                     parent,
                     additional_test_block_functions,
