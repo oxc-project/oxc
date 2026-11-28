@@ -1653,8 +1653,8 @@ fn template_joins_preserve_raw_boundaries() {
     // An escaped backslash followed by zero is not a null escape.
     fold(r#"x = `${z}\\0` + "1\uD800""#, r"x = `${z}\\01\ud800`");
     fold(r#"x = `${z}\\\0` + "1\uD800""#, r"x = `${z}\\\x001\ud800`");
-    // An already escaped dollar must keep its original value.
-    fold(r#"x = `${z}\$` + "{a}\uD800""#, r"x = `${z}\${a}\ud800`");
+    // Removing an unnecessary dollar escape before the join must still preserve the boundary.
+    fold(r#"x = `${z}\$` + "{a}\uD800""#, r"x = `${z}$\{a}\ud800`");
 }
 
 #[test]
@@ -1733,18 +1733,35 @@ fn string_values_with_lone_surrogates_join_templates() {
     // The raw text writes the surrogate as an escape, and a template left without substitutions
     // becomes a string literal.
     fold(r#"x = `a${"\uD800"}b`"#, r#"x = "a\uD800b""#);
-    fold(r#"x = `${"\uD83D"}${"\uDE00"}${a}`"#, r"x = `\ud83d\ude00${a}`");
+    fold(r#"x = `${"\uD83D"}${"\uDE00"}${a}`"#, "x = `😀${a}`");
     fold(r#"x = `p${a}` + "\uDC00""#, r"x = `p${a}\udc00`");
-    fold(r#"x = "\uD83D" + `\uDE00${a}`"#, r"x = `\ud83d\uDE00${a}`");
-    fold(r#"x = `${"`\uD800$"}${a}`"#, r"x = `\`\ud800\$${a}`");
+    fold(r#"x = "\uD83D" + `\uDE00${a}`"#, "x = `😀${a}`");
+    fold(r#"x = `${"`\uD800$"}${a}`"#, r"x = `\`\ud800$${a}`");
     // `concat` joins a pair split across its arguments, as at runtime.
     fold(r#"x = "a".concat("\uD800", "\uDC00")"#, r#"x = "a\u{10000}""#);
     fold(r#"x = "\uD800".concat(a, "\uDC00")"#, r"x = `\ud800${a}\udc00`");
 }
 
 #[test]
+fn test_unescape_dynamic_template_literals() {
+    fold(r"`${window.foo}\u{1F680}`", "`${window.foo}🚀`");
+    fold(r"`\u0061${x}\x62${y}\u{1F680}`", "`a${x}b${y}🚀`");
+    fold(r"`${x}\uD83D\uDE80`", "`${x}🚀`");
+    fold(r"`${x}\u0024\u007By\u007D\u0060\u005C`", r"`${x}\${y}\`\\`");
+    fold(r"`${f()}\$\u0024`", "`${f()}$$`");
+    fold(r"`${x}\u000D\u0000`", r"`${x}\r\0`");
+    fold(r"`${x}\u00001`", r"`${x}\x001`");
+    fold_same(r"`${x}\0${y}`");
+    fold(r"`${x}\uD800\u0061\uDC00`", r"`${x}\ud800a\udc00`");
+    fold_same(r"`${x}\uD800`");
+    fold_same(r"`${x}\uDC00`");
+    fold_same(r"String.raw`${x}\u{1F680}`");
+    fold_same(r"tag`\u0061${x}\u{1F680}`");
+}
+
+#[test]
 fn template_concatenation_preserves_surrogates() {
-    fold(r"`${a}\uD800` + `\uDC00${b}`", r"`${a}\uD800\uDC00${b}`");
+    fold(r"`${a}\uD800` + `\uDC00${b}`", "`${a}\u{10000}${b}`");
     fold(r"`${a}\uD800` + 'x'", r"`${a}\uD800x`");
     fold(r"'x' + `\uDC00${a}`", r"`x\uDC00${a}`");
     fold(r"`\uD800${'x'}\uDC00${a}`", r"`\uD800x\uDC00${a}`");

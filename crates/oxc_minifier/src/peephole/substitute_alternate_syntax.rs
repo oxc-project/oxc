@@ -1395,7 +1395,24 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::TemplateLiteral(t) = &*expr else { return };
+        let Expression::TemplateLiteral(t) = expr else { return };
+        // Tagged templates have observable raw text and do not reach this expression pass.
+        if !t.expressions.is_empty() {
+            for quasi in &mut t.quasis {
+                if !quasi.value.raw.contains('\\') {
+                    continue;
+                }
+                let Some(cooked) = quasi.value.cooked else { continue };
+                let raw = Self::escape_string_for_template_literal(
+                    cooked,
+                    Some(quasi.value.raw.as_str()),
+                );
+                if raw.len() < quasi.value.raw.len() {
+                    quasi.value.raw = Str::from_cow_in(&raw, ctx);
+                    ctx.notice_change();
+                }
+            }
+        }
         if t.may_have_side_effects(ctx) {
             return;
         }
