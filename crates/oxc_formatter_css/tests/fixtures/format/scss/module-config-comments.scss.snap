@@ -59,7 +59,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   // Components
   $box-shadow: variables.$box-shadow,
 
-  /* Spacing */ $spacer: variables.$spacer
+  /* Spacing */
+  $spacer: variables.$spacer
 );
 // A trailing `//` after a comma stays on the comma's line (`line-comment-after-comma.scss`).
 // KNOWN DIVERGENCE (DIVERGENCES.md#own-line-trailing-comment-keeps-line): the own-line `// before close` keeps its
@@ -101,7 +102,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   // Components
   $box-shadow: variables.$box-shadow,
 
-  /* Spacing */ $spacer: variables.$spacer
+  /* Spacing */
+  $spacer: variables.$spacer
 );
 // A trailing `//` after a comma stays on the comma's line (`line-comment-after-comma.scss`).
 // KNOWN DIVERGENCE (DIVERGENCES.md#own-line-trailing-comment-keeps-line): the own-line `// before close` keeps its

@@ -33,7 +33,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
    these pin the own-line sources.
  */
 .a {
-  b: 1px /* c */ 2px;
+  b: 1px /* c */
+    2px;
 }
 .b {
   box-shadow:
@@ -53,11 +54,13 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
    these pin the own-line sources.
  */
 .a {
-  b: 1px /* c */ 2px;
+  b: 1px /* c */
+    2px;
 }
 .b {
   box-shadow:
-    1000px /* long long long long long long long long long long long long comment */ 1000px 2px gray,
+    1000px /* long long long long long long long long long long long long comment */
+      1000px 2px gray,
     1px 1px red;
 }
 

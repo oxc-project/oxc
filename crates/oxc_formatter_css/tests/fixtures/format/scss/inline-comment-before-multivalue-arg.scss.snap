@@ -60,7 +60,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 .b {
   background: linear-gradient(
     90deg,
-    /* block own-line */ #e46c2c 20%,
+    /* block own-line */
+    #e46c2c 20%,
     transparent 100%
   );
 }
@@ -90,7 +91,12 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   );
 }
 .b {
-  background: linear-gradient(90deg, /* block own-line */ #e46c2c 20%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    /* block own-line */
+    #e46c2c 20%,
+    transparent 100%
+  );
 }
 
 ===================== End =====================

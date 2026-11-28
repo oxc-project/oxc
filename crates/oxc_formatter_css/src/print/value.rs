@@ -923,7 +923,14 @@ pub(super) fn write_value_groups<'a>(
                             BlockCommentAfter::HardLine
                         };
                         write!(f, FormatCommentBeforeContent::new(comment, block_after));
-                        x = if !comment.inline && fits { x + 1 } else { 4 };
+                        x = if !comment.inline
+                            && fits
+                            && !comments::ends_source_line(comment, source)
+                        {
+                            x + 1
+                        } else {
+                            4
+                        };
                     }
                     write_comma_group(group_values, gctx, f);
                 }
@@ -1360,7 +1367,7 @@ pub(super) fn write_comma_group<'a>(
                             f.context().comments().take_before(comment.span.end);
                             write!(
                                 f,
-                                FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                                FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space)
                             );
                         }
                     });

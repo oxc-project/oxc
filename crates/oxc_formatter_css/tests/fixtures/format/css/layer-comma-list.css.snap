@@ -29,7 +29,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @layer a, b;
 @layer reset, base, components;
 @layer /* c */ a, b;
-@layer /* c */ a, b;
+@layer /* c */
+  a, b;
 
 /* A comment stays where it is */
 @layer a, b /* c */;
@@ -47,7 +48,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @layer a, b;
 @layer reset, base, components;
 @layer /* c */ a, b;
-@layer /* c */ a, b;
+@layer /* c */
+  a, b;
 
 /* A comment stays where it is */
 @layer a, b /* c */;

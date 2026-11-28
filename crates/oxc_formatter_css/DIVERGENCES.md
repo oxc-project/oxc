@@ -2202,3 +2202,48 @@ A block comment spanning lines inside a value expands its enclosing groups,
 like Prettier's JS, JSONC, HTML and Markdown comments (`literalline` / `hardline` carry a break-parent).
 Prettier's CSS prints the `value-comment` as a raw string with `\n`, so only its width decides:
 the group stays flat when the whole comment, measured as one line, fits.
+
+## block-comment-ending-line
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/block-comment-ending-line.scss`
+- Conformance:
+  - `externals/prettier/less/parens/2.less`
+  - `externals/prettier/scss/map/comment.scss`
+  - `externals/prettier/css/comments/at-rules.css`
+  - `externals/prettier/css/comments/declaration.css`
+  - `externals/prettier/less/comments/between-decl.less`
+  - `externals/prettier/scss/comments/between-decl.scss`
+
+```scss
+/* input */
+a {
+  margin:
+    /* stylelint-disable-next-line */
+    1px 2px;
+  padding: 1px
+    /* stylelint-disable-next-line */
+    2px;
+}
+
+/* ours */
+a {
+  margin:
+    /* stylelint-disable-next-line */
+    1px 2px;
+  padding: 1px /* stylelint-disable-next-line */
+    2px;
+}
+
+/* prettier */
+a {
+  margin:
+    /* stylelint-disable-next-line */ 1px 2px;
+  padding: 1px /* stylelint-disable-next-line */ 2px;
+}
+```
+
+Prettier's output glues the content after a block comment ending its source line onto the comment's line, so it no longer starts the line after it (a `-next-line` target lost).
+Ours keeps that line break wherever a block comment precedes content: declaration values (after the `:`, between words, after a comma), at-rule preludes, map items and call arguments.
+The comment itself may still join the line before it (`padding: 1px /* c */`), which keeps the target;
+a same-line one ending its line keeps the break too, so the second pass, where it is one, prints the same.
