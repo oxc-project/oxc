@@ -1,0 +1,46 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/todo-lint-upstream-bailouts.tsx
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Handle BigIntLiteral expressions", labels: [LabeledSpan { label: None, span: Span { start: 389, end: 391 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value", labels: [LabeledSpan { label: None, span: Span { start: 544, end: 559 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Handle tagged template with interpolations", labels: [LabeledSpan { label: None, span: Span { start: 771, end: 793 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+// @outputMode:"lint" @panicThreshold:"none"
+// Oxc compiles these forms, but upstream React Compiler records a Todo and skips
+// the function, so lint mode reports the same Todos as `eslint-plugin-react-hooks`.
+import { useState } from "react";
+export function BigIntLiteral({ amount }: {
+	amount: bigint;
+}) {
+	const [label] = useState("total");
+	return <span title={label}>{amount === 0n ? "empty" : "paid"}</span>;
+}
+export function RawTaggedTemplate({ value }: {
+	value: string;
+}) {
+	const [label] = useState("raw");
+	const className = String.raw`a\b`;
+	return <span title={label} className={className}>{value}</span>;
+}
+export function TaggedTemplateInterpolation({ value }: {
+	value: string;
+}) {
+	const [label] = useState("interpolated");
+	const className = String.raw`a-${value}`;
+	return <span title={label} className={className}>{value}</span>;
+}
+// Upstream `main` compiles updates to captured variables, so lint mode reports
+// nothing here.
+export function CapturedUpdate({ items }: {
+	items: string[];
+}) {
+	const [label] = useState("count");
+	let count = 0;
+	items.forEach(() => {
+		count++;
+	});
+	return <span title={label}>{count}</span>;
+}

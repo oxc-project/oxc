@@ -5,3 +5,10 @@ input_file: crates/oxc_react_compiler/fixtures/tagged-template-invalid-escape.js
 function component() {
 	return tag`\unicode`;
 }
+
+
+Lint-mode diagnostics (differ from transform):
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value", labels: [LabeledSpan { label: None, span: Span { start: 32, end: 45 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+Lint mode is fatal.

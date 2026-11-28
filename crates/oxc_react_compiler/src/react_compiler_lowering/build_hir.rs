@@ -3752,10 +3752,23 @@ fn lower_expression<'a>(
             value: PrimitiveValue::String(lit.value),
             span: Some(lit.span),
         }),
-        oxc::Expression::BigIntLiteral(lit) => Ok(InstructionValue::Primitive {
-            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw },
-            span: Some(lit.span),
-        }),
+        oxc::Expression::BigIntLiteral(lit) => {
+            // Unlike the TS implementation, BigInt literals are compiled: upstream
+            // records a Todo and keeps the literal as an unsupported node. Lint mode
+            // still records that Todo, so `react/todo` reports the bail-out of the
+            // React Compiler that `eslint-plugin-react-hooks` reports.
+            if builder.environment().output_mode == OutputMode::Lint {
+                builder.record_error(
+                    diagnostics::todo_build_hir_lower_expression_handle_big_int_literal_expressions(
+                        Some(lit.span),
+                    ),
+                )?;
+            }
+            Ok(InstructionValue::Primitive {
+                value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw },
+                span: Some(lit.span),
+            })
+        }
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
             pattern: regexp.regex.pattern.text,
             flags: Str::from_str_in(
@@ -4073,6 +4086,24 @@ fn lower_expression<'a>(
             // instead lowers the tag plus every quasi and every `${...}`
             // subexpression (mirroring `TemplateLiteral`). This is a deliberate
             // divergence from the TS reference.
+            // Unlike the TS implementation, this also compiles templates whose cooked
+            // and raw values differ. Lint mode still records upstream's Todos for both
+            // forms, so `react/todo` reports the bail-outs of the React Compiler that
+            // `eslint-plugin-react-hooks` reports.
+            if builder.environment().output_mode == OutputMode::Lint {
+                if !tagged.quasi.expressions.is_empty() {
+                    builder.record_error(
+                        diagnostics::todo_build_hir_lower_expression_handle_tagged_template_with_interpolations(span),
+                    )?;
+                } else if tagged.quasi.quasis.first().is_some_and(|quasi| {
+                    quasi.value.cooked.and_then(|cooked| cooked.as_str())
+                        != Some(quasi.value.raw.as_str())
+                }) {
+                    builder.record_error(
+                        diagnostics::todo_build_hir_lower_expression_handle_tagged_template_where_cooked_value_different_from_raw_value(span),
+                    )?;
+                }
+            }
             // Evaluation order: the tag is evaluated first, then each interpolated
             // subexpression left-to-right.
             let tag = lower_expression_to_temporary(builder, &tagged.tag)?;
