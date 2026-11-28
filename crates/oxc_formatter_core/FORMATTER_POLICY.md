@@ -3,7 +3,7 @@
 Shared policy for every formatter crate whose `AGENTS.md` links here, built on `oxc_formatter_core` and integrated by `apps/oxfmt`.
 
 Each crate's `AGENTS.md` holds only language-specific rules and the crate-local translation of these policies.
-A conflict between the two is a bug in one of them: until it is fixed, the crate file governs that crate, and the crate file records the conflict as a known violation.
+A conflict between the two is a bug in one of them: until it is fixed, the crate file governs that crate, and the crate file lists the conflict in its "Known issues" (see "Fixing").
 
 ## Fixing
 
@@ -12,17 +12,22 @@ A conflict between the two is a bug in one of them: until it is fixed, the crate
 - Look for the bug's relatives (sites with the same check, assumption, or root cause) and fix them in the same change, or report the ones out of scope
 - Fix in the layer that owns the cause (parser, core, another crate), never compensate downstream
   - The parsers are ours to keep the formatters small and fast: a parser bug is fixed in the parser, even when the fix waits for a release
+- A crate's AGENTS.md "Known issues" lists what is meant to be fixed but deferred: MUST violations ("Comment placement"), conflicts with this policy, and layout problems
+  - Not a low-priority comment placement ("Comment placement": neither ours nor Prettier's), fixed when its site is touched or it is reported
 
 ## Prettier compatibility
 
-- The goal is CONSISTENT, PREDICTABLE, EXPLAINABLE behavior, not 100% parity with Prettier
-  - Consistency and a sound rationale win over parity: the `DIVERGENCES.md` files record where they already did
-  - Conformance is a measure, not a target: a deliberate divergence lowers it and is still correct
-- The single oracle is Prettier's OUTPUT at the pin, the version in `apps/oxfmt/package.json`: the bundle, `apps/oxfmt`'s conformance and fixture verification all use it
+The goal is CONSISTENT, PREDICTABLE, EXPLAINABLE behavior; Prettier is the baseline we respect, not a target to match:
+
+- Every output is explained by a rule of ours, by Prettier's output, or by an admitted divergence (see "Known divergences")
+  - Where a rule of ours applies, it decides; a difference from Prettier is a divergence, recorded (see "Known divergences")
+  - Where none applies, Prettier's output decides: a mismatch no admission reason covers is fixed to match it
+- Conformance is a measure, not a target: a deliberate divergence lowers it and is still correct
+- Prettier means its OUTPUT at the pin, the version in `apps/oxfmt/package.json`: the bundle, `apps/oxfmt`'s conformance and fixture verification all use it
   - Its source code is an analysis aid, never a porting target: pin behavior with fixtures, do not mirror its logic
-  - A mismatch is fixed to match the pin, unless an admission reason decides otherwise (see "Known divergences")
-- Prettier `main` and its issues are evidence, not an oracle: they show whether the pin's output is Prettier's intent, a known bug, or a bug already fixed there
+- Prettier `main` and its issues are evidence, not the baseline: they show whether the pin's output is Prettier's intent, a known bug, or a bug already fixed there
   - Before fixing or admitting a mismatch, check them along with the `DIVERGENCES.md` entries and open oxc issues
+  - Most of all before diverging: a fix there may already be the shape to take, or an upstream discussion may argue against it
   - Following a `main` fix is a judgment call: follow clear bug fixes, stay on the pin for unstable changes or ones the community pushes back on
   - A followed fix is a divergence from the pin, entered under (1)-(3) citing the PR
 
@@ -35,12 +40,13 @@ Every reason is OUR decision factor; Prettier's mechanism (comment attachment, `
 - (1) `semantics`: Prettier's output would change program semantics (fails to re-parse, or re-parses to a different value/structure)
   - Verify semantics claims with the reference compiler/parser (tsc, dart-sass, lessc, ...), not intuition
 - (2) `invariant`: Prettier's output breaks one of our formatter contract invariants; that set is closed, extending it is a policy change
-  - Lossless: every comment is printed, exactly once; comments are the user's, and losing one outranks moving one
+  - Lossless: "Comment placement" below; losing a comment outranks moving one
     (whatever the compiler makes of it: a comment may carry tool meaning, `/*! */`, `-disable`, etc)
-  - Comment placement: the output moves a comment in a way "Comment placement invariants" below forbids
+  - Comment meaning: the output changes a comment's next-node or next-line binding ("Comment placement" below); a changed parse or cast binding is (1)
   - Idempotency: a second pass must reproduce the first, layout included; a formatter with no fixpoint has no defined output
-  - Only the comment itself moving is (2); when the comment stays and the tokens around it change layout, that is (3) `uniform-rule (comment presence never changes layout)`
-  - The `Why` takes no parenthetical except upstream issues; the prose names the broken invariant in one sentence (crosses content, changes line, loses a suppression target, is not a fixpoint)
+  - A comment moving with its meaning intact is not (2): ours keeping its position is (3) `uniform-rule (comment position kept)`;
+    when the comment stays and the tokens around it change layout, that is (3) `uniform-rule (comment presence never changes layout)`
+  - The `Why` takes no parenthetical except upstream issues; the prose names the broken invariant in one sentence (loses or alters a comment, loses a suppression, next-node or `-next-line` target, is not a fixpoint)
 - (3) `uniform-rule`: our output follows a rule we apply uniformly; Prettier's output is admissible, we chose otherwise
   - The only judgment call among (1)-(3); the `Why` names the rule
   - The usual trigger is Prettier's internal inconsistency, one construct printed differently by context:
@@ -79,38 +85,58 @@ Rules:
 - Lifecycle
   - A new conformance failure is acceptable only under this policy; it stays counted as a failure
   - A failing file no entry lists is unclassified
+    - `oxc_formatter` (JS/TS) predates the entries: many of its divergences are not recorded yet, and recording one changes no behavior
   - At a pin bump (`apps/oxfmt/package.json`, then `download-externals`), re-run conformance: an entry no longer observed is deleted, the rest are re-checked against their reason
     - Only `Conformance:` paths are compared (stale-checked), an entry with only a pin is re-checked against Prettier by hand
 - A documented divergence is never "fixed" by following Prettier
 - `DIVERGENCES.md` holds entries only, opening with one back-reference to this section; `AGENTS.md` keeps policy translations and mechanism prose
 
-## Comment placement invariants
+## Comment placement
 
-Two layers of rules; know which one you are editing:
+Comments are the user's: what they mean to machines is a MUST, where they sit is best effort.
 
-- Invariants hold uniformly: violating one is a bug even where Prettier disagrees
-- Compat tables record measured Prettier behavior that is not derivable from principle: extend them by measuring Prettier, never by analogy, and pin every entry in a fixture
+MUST (a violation is a bug even where Prettier disagrees: fixed once found, or listed in "Known issues" while deferred, see "Fixing"):
 
-The invariants (placement only; losing a comment is the lossless contract under reason (2), above all of these):
+- Lossless and idempotent (reason (2)): every comment printed exactly once, its text as written, never added, dropped, or merged into another, the same on a second pass
+- A comment keeps what a compiler or a tool binds it to:
+  - Semantics: neither moving a comment nor keeping its place changes the code's meaning (e.g. a JS cast `/** @type {T} */ (x)` binds to the parens after it; a break after `return` changes what it returns)
+  - The next node: a suppression comment, `/*#__PURE__*/`, `istanbul ignore next`, ...
+  - The next line: the code that started the line after an own-line comment still starts it, nothing is glued after the comment on its line (`eslint-disable-next-line`, `@ts-expect-error`, ...);
+    moving the comment to the end of the previous line keeps that
+  - Best effort instead: a directive bound to its own line (`-line`, `NOLINT`, ...; a `-next-line` variant covers it),
+    and any binding this list does not name (range directives, file pragmas, ...) unless a crate's AGENTS.md names it
+- A suppression comment (`prettier-ignore` / `oxfmt-ignore`) targets what follows it, which prints as written
+  - A trailing one (after content on its line, the opener rule below aside) is an ordinary comment, even where Prettier honors it
+  - JS/TS is the one exception: a trailing one also targets the node it trails (`oxc_formatter`'s AGENTS.md "Suppression")
 
-- A comment never crosses user content (tokens and other comments): it stays on its source side of every token
-- A comment never crosses a line boundary: line-based directives (`eslint-disable-line`, ...) must keep their meaning
-  - Line comments print via `line_suffix`; own-line comments stay own-line
-  - One exception, Prettier's stance since prettier/prettier#1267:
-    - A same-line comment right after an opening delimiter (`{ // c`, `( # c`, `[ // c`) is the body's first leading comment and moves to its own line;
-    - A `-line` directive there loses its target (`-next-line` variants do not)
-    - Applies to every opener uniformly; where Prettier's attachment does something else for a particular opener, that is an artifact to pin as a divergence, not a table to extend
-- A suppression comment (`prettier-ignore` / `oxfmt-ignore`) never loses its target, and its original text is preserved
-- Repositioning is allowed only relative to formatter-OWNED punctuation: the formatter owns terminators (e.g. a statement's `;`) and the trivia up to them; the user owns content
+Best effort, the comment's position: it stays on its source side of every token, own-line comments stay own-line, and a same-line comment keeps its line.
+
+- A site keeps it where it can do so predictably, never at a MUST's expense
+- Every placement is one of two, which keeps it explainable:
+  - Ours, placed by the rules below (the position kept, or the separator and opener rules): a difference from Prettier is a divergence under (3),
+    `uniform-rule (comment position kept)`, or `uniform-rule (opener rule)` for the opener rule
+  - Prettier's: a site not keeping it prints what Prettier prints, which is neither a violation nor an issue;
+    where Prettier's placement breaks a MUST, the site places it otherwise, a divergence under (1) or (2)
+- A site keeping the position is never changed to Prettier's, recorded or not (many JS sites are not): record it instead
+- A placement that is neither is a bug of low priority, unless it also breaks a MUST (see "Fixing" for "Known issues")
+- How a site places a comment, relative to the tokens around it:
+  - Line comments print via `line_suffix`
+  - The formatter owns terminators (e.g. a statement's `;`) and the trivia up to them
+  - The user owns content
   - Terminator vs separator: a terminator cannot be replaced by another token (`;` after a JS statement); a separator can (`,` / `;` between TS interface members)
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
       - Except a same-line line comment: it rides a `line_suffix` and lands just past the separator (`a // c\n, b` -> `a, // c`), the separator cannot follow it on the line;
       - an own-line comment leads what follows the separator instead
-  - Grammar-fixed DELIMITER (braces, a head's parens, an argument list's parens) is neither: it bounds a region and stays user content, never crossed
+  - A grammar-fixed DELIMITER (braces, a head's parens, an argument list's parens) is neither: it bounds a region and stays user content
   - (JS/TS) Redundant expression parentheses are NOT delimiters: the formatter drops them and re-derives parens by its own rules, so any paren in the output is formatter-owned
     - Trailing comment inside the dropped pair moves behind the terminator, even across a re-printed pair
     - The source pair stays user content only where a sub-printer claims it and prints the comment inside (per-language tables)
-    - The line-boundary invariant still gates the move: never across a re-printed paren that ends up on its own line
+    - Never across a re-printed paren that ends up on its own line (the same-line comment keeps its line)
+  - The opener rule, Prettier's stance since prettier/prettier#1267:
+    - A same-line comment right after an opening delimiter (`{ // c`, `( # c`, `[ // c`) is the body's first leading comment and moves to its own line;
+    - A `-line` directive there loses its target (`-next-line` variants do not)
+    - Applies to every opener uniformly; where Prettier's attachment does something else for a particular opener, that is an artifact to pin as a divergence, not a table to extend
+- Compat tables record measured Prettier behavior that is not derivable from principle: extend them by measuring Prettier, never by analogy, and pin every entry in a fixture
 
 Per-language translations (which tokens are terminators, the compat tables, cursor bounds disciplines) live in each crate's AGENTS.md.
 
@@ -150,7 +176,7 @@ Run `clippy` for the same configurations and resolve all warnings.
 Whenever comparing output against Prettier (fixture verification, manual checks), use the oxfmt-bundled one:
 
 ```sh
-# A bare `npx prettier` is NOT installed at the repo root; the bundled one is the same version as the oracle
+# A bare `npx prettier` is NOT installed at the repo root; the bundled one is the pin's version
 node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <parser> --print-width=100 <file>
 ```
 
@@ -176,7 +202,7 @@ cargo test -p <crate>
 cargo insta test --accept -p <crate>
 ```
 
-Every expected output must be verified against the oracle; in a pin fixture, every line except the ones its entry shows as deviating.
+Every expected output must be verified against Prettier at the pin; in a pin fixture, every line except the ones its entry shows as deviating.
 
 ### Prettier conformance (`apps/oxfmt`)
 

@@ -129,8 +129,8 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
 
     // Prettier: `[middles.len() == 1 ? "" : hardline, join(hardline, middles), hardline]`.
     //
-    // NOTE: The single-middle case is a known FORMATTER_POLICY violation
-    // ("own-line comments stay own-line"): an own-line `# c` inlines after the props
+    // NOTE: The single-middle case does not apply FORMATTER_POLICY's best-effort
+    // "comment position kept", as Prettier: an own-line `# c` inlines after the props
     // ```yaml
     // key: &a
     //   # c
@@ -141,7 +141,7 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
     // key: &a # c
     //   a: 1
     // ```
-    // Kept for now: Prettier byte-compat outweighs the invariant.
+    // A `-next-line` directive keeps its target, the line after the comment is unchanged.
     // A block collection's trailing suppression marker is NOT a middle comment:
     // it stays pending so the first item's check can claim it.
     let middles_bound = suppression_flush_bound(is_block_collection, content_start, f);

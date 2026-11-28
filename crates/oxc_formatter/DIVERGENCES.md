@@ -153,7 +153,7 @@ type WithComment = SerializedProps
 ```
 
 Prettier's output changes line (own-line to same-line, behind `& `) and is not a fixpoint (the second pass inlines the type with the comment behind `;`).
-Binary-like chains hoist the comment in both formatters; the own-line invariant over Prettier's internal inconsistency.
+Binary-like chains hoist the comment in both formatters; "comment position kept" (FORMATTER_POLICY, best effort) over Prettier's internal inconsistency.
 
 ## union-suppression-whole
 
@@ -412,7 +412,7 @@ bar = 2;
 /* own line */ quux();
 ```
 
-Prettier attaches the comment as the next statement's leading and measures its break from the source `;`, gluing them (the output changes line, own-line to same-line); ours keeps the comment own-line and its distance to both neighbors as written.
+Prettier attaches the comment as the next statement's leading and measures its break from the source `;`, gluing them (code is glued after an own-line comment, which moves a `-next-line` directive's target); ours keeps the comment own-line and its distance to both neighbors as written.
 
 ## paren-comment-fixpoint
 
@@ -448,7 +448,7 @@ const arrowPlainBody = (a) => b /* c3 */;
   - Prettier 3.10 pulls that own-line comment onto the next member's line (`/* own line */ e = 5;`), changing its line
 - A comment inside a sequence's parenthesized first element leads the sequence, outside the formatter-added parens
 
-Known limitation, shared with upstream: whether these parens survive is a group-fit decision, unknowable when the content end is chosen, so the comment settles only on the second pass when they end up dropped — a short JSX arrow body (`x = (a) => (<div /> /* c */)`), or a `;`-less return argument whose parenthesized binary fits flat (the `asiReturn` pin).
+A known issue (AGENTS.md "Known issues"), shared with upstream: whether these parens survive is a group-fit decision, unknowable when the content end is chosen, so the comment settles only on the second pass when they end up dropped — a short JSX arrow body (`x = (a) => (<div /> /* c */)`), or a `;`-less return argument whose parenthesized binary fits flat (the `asiReturn` pin).
 
 ## binary-cast-own-line-comment
 
@@ -824,7 +824,7 @@ The full callee list is `contains_a_test_pattern` in `src/utils/call_expression.
   - `externals/prettier/js/last-argument-expansion/edge_case.js`
   - `externals/prettier/typescript/call/callee-comments.ts`
 
-A call's `(` and `<` are delimiters (see AGENTS.md "Head-body and operator gaps (class 3)"), so a comment between the callee and the opener stays on the callee side (except AGENTS.md "Open debts").
+A call's `(` and `<` are delimiters (see AGENTS.md "Head-body and operator gaps (class 3)"), so a comment between the callee and the opener stays on the callee side (except the callee cases AGENTS.md "Head-body and operator gaps (class 3)" lists).
 
 ```js
 // input

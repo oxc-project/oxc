@@ -134,7 +134,7 @@ For now, Svelte and Astro are hosted (formatted) by Prettier, but `<script>` goe
 ## Comments
 
 Comments (and parentheses) are where a local fix has side effects; keep the rules below in view.
-The invariants and the invariants-vs-compat-tables split live in FORMATTER_POLICY.md "Comment placement invariants"; this section is their JS/TSX translation.
+The MUST rules, the best-effort position and the compat tables live in FORMATTER_POLICY.md "Comment placement"; this section is their JS/TSX translation.
 Prettier's attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (DIVERGENCES.md#array-hole-comments, DIVERGENCES.md#type-alias-trailing-comment-move).
 
 ### Vocabulary
@@ -175,7 +175,7 @@ Three token classes decide a comment's freedom of movement:
 - (2) Separator and in-head terminator: list separators (`,`, interface / type literal members' `;` ⇄ `,`), the for-head's `;`s, a label's or a single-block case test's `:`.
   The comment stays before the token; only a same-line line comment rides its `line_suffix` past it (`for (a // c\n; b;)` -> `a; // c`, `foo // c\n: b();` -> `foo: // c` + break)
 - (3) Delimiter: a body's `{` `}`, a head's `(` `)`, a call's argument `(` `)` and type argument `<` `>`, the `}`-to-keyword gap.
-  User content: comments never cross it in either direction ("Head-body and operator gaps (class 3)")
+  User content: comments keep their side of it (FORMATTER_POLICY's best-effort position, applied here: "Head-body and operator gaps (class 3)")
 
 Redundant expression parens are formatter-owned, not delimiters (FORMATTER_POLICY):
 a comment inside a dropped pair moves with the content's trailing run; a pair that survives keeps its comments inside (the keeps table below).
@@ -204,7 +204,10 @@ so a comment between a head and its body keeps its side of each, uniformly acros
 - own-line comment keeps its own line
 - comments before a `}`-to-keyword gap (`else`/`catch`/`finally`/`while`) split at the keyword and keep their side
 
-A call's callee-opener gap (callee to `?.`, `<` or `(`; `new`'s callee to `<`) follows the same policy (`FormatBeforeOpener` in `utils/statement_body.rs`, DIVERGENCES.md#callee-arguments-gap-comment), except the cases in "Open debts".
+A call's callee-opener gap (callee to `?.`, `<` or `(`; `new`'s callee to `<`) follows the same policy (`FormatBeforeOpener` in `utils/statement_body.rs`, DIVERGENCES.md#callee-arguments-gap-comment),
+except the gap is not bounded at the `(` for the type arguments and `new`'s callee, nor for a chain's computed-member, call, or optional-call callee:
+they still claim comments across the `(` (`foo<T> // c` + break + `(a)` -> `foo<T>(a); // c`).
+Bounding them also moves a same-line comment right after the `(` own-line (`f<T>( // eslint-disable-line`), as the opener rule (FORMATTER_POLICY) does.
 
 The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expression.rs`, DIVERGENCES.md#binary-cast-own-line-comment), with two additions:
 
@@ -231,6 +234,7 @@ their rustdocs cover how the head's generic trailing pass is kept from claiming 
 A suppression comment protects content; the token classes above still apply to what the node prints around it.
 
 - Target: a trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`), and the outermost node ending there claims it.
+  The one exception to FORMATTER_POLICY's leading-only target, kept because Prettier honors it in JS/TS
 - Placement and target are separate questions: a suppression line comment ending the `=` line (or a property's `:` line) keeps its line (printed right after the operator) and targets the right-hand side
 - Statements and class members: content verbatim, terminator per `semi` (`write_suppressed_statement`, `FormatClassElementWithSemicolon`);
   a node without a terminator of its own prints its whole span.
@@ -252,7 +256,7 @@ except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e.
 
 - A line comment rides a `line_suffix` and takes no width;
   an inline block comment takes width like any token, so it can change what fits
-- Where Prettier lets a comment switch the rule and we follow it, the sites are a compat table (FORMATTER_POLICY "Comment placement invariants")
+- Where Prettier lets a comment switch the rule and we follow it, the sites are a compat table (FORMATTER_POLICY "Comment placement")
 
 Hugging (content glued to its opener, a union printed inline) is such a table.
 A same-line block comment right before the hugged content, pinned in `tests/fixtures/ts/comments/hug-block-comment.ts`:
@@ -308,39 +312,25 @@ The second line of each item is the drift symptom.
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
 
-## Open debts
+## Known issues
 
-Behavior our own rules want otherwise, mostly where it follows Prettier.
-Not accepted, only not fixed yet (for compatibility).
+Meant to be fixed, deferred (FORMATTER_POLICY "Fixing").
 
 ### Comments
 
-- TS-only statements (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`)
-  and class index signatures keep a same-line comment before their `;` (`import A = B /* c */;`), instead of the glued `;` above.
-  The fix is a `FormatContentWithSemicolon` adoption each
-- An own-line comment claimed mid-line inlines onto that line (`const // c` + break), violating "own-line comments stay own-line".
-  See the NOTE in `FormatLeadingComments` (`formatter/trivia.rs`)
 - A type annotation's `:` has no operator-line rule of its own: after `let a: // c` the type prints from column 0 (Prettier too),
   while `type A = // c` breaks + indents (`AssignmentLike`) and only a union indents itself there (`union_type.rs`).
   The fix is the `=` rule at the `TSTypeAnnotation` site (break + indent after a line comment), which also aligns a suppressed union with `type =`
-- The callee-opener gap is not bounded at the `(` for the type arguments and `new`'s callee, nor for a chain's computed-member, call, or optional-call callee:
-  they still claim comments across the `(` (`foo<T> // c` + break + `(a)` -> `foo<T>(a); // c`).
-  Bounding them also moves a same-line comment right after the `(` own-line (`f<T>( // eslint-disable-line`), so it waits for the opener exception (FORMATTER_POLICY) to be revisited
 - A line comment right after the `<` of a hugged single type argument keeps the unbreakable hug: `f<// c` + break + `T>()` prints `T` at column 0.
-  Breaking the hug also decides whether the comment goes own-line or stays on the `<` line, so it waits for the same revisit
-- A same-line block comment after a line-ending one stays before the union's `|` (`// a` + break + `/* b */ | A`),
-  where DIVERGENCES.md#union-leading-pipe-comment-normalization wants `| /* b */ A` (Prettier prints that):
-  the all-or-nothing split in `union_type.rs` keeps the whole list before the `|`
+  Breaking the hug moves the comment own-line, per the opener rule (FORMATTER_POLICY), as Prettier prints
 - An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
-  crossing the `(` onto the previous line (`outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
+  so its next node changes (a `prettier-ignore` there would target `(X | null)`, not `X`; `outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
   The hug decision follows that placement (`first_member_comment`), so a fix changes both
-- An own-line comment right after a heritage keyword (`extends` / `implements`, a class's or an interface's) crosses it:
-  `class A extends` + break + `// c` + break + `B {}` prints `class A` + break + `// c` + break + `extends B {}` (Prettier too),
-  and in a class without a name the comment is flushed past the whole statement, not a fixpoint (`should_group` sees no span before the superclass).
+- In a class without a name, an own-line comment right after `extends` is flushed past the whole statement, not a fixpoint (`should_group` sees no span before the superclass).
   The class head claims every comment before the superclass as the name's trailing ones; the fix bounds that at the keyword
   and breaks + indents after it, as after `=` (Prettier prints that for an `implements` after an `extends`)
-
-The flat JSX arrow body is a limitation, not a debt: the paren decision is a group fit, unknowable at comment time (DIVERGENCES.md#paren-comment-fixpoint).
+- A trailing comment in a short JSX arrow body's parens (`x = (a) => (<div /> /* c */)`) or a `;`-less return argument whose parenthesized binary fits flat
+  settles only on the second pass, not a fixpoint (shared with upstream): whether the parens survive is a group-fit decision, unknown when the content end is chosen (DIVERGENCES.md#paren-comment-fixpoint)
 
 ### Layout
 

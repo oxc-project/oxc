@@ -127,7 +127,7 @@ pub fn write_trailing_comments_before(
 ///
 /// Right after an opener (`(`, `[`) nothing precedes to trail, so every comment prints in place:
 /// same-line block comments glue to it (`for (/* c */;;)`, `[/* c */, a]`),
-/// and a same-line run ending in a line comment moves to its own line as a whole (the opener exception).
+/// and a same-line run ending in a line comment moves to its own line as a whole (the opener rule).
 #[must_use = "a riding line comment needs a line break right after the caller's token"]
 pub fn write_trailing_comments<'a>(comments: &'a [Comment], f: &mut JsFormatter<'_, 'a>) -> bool {
     let Some(first) = comments.first() else { return false };
@@ -148,7 +148,7 @@ pub fn write_trailing_comments<'a>(comments: &'a [Comment], f: &mut JsFormatter<
     // Own-line comments print in place, never via `line_suffix`:
     // deferred, they would escape past the caller's token (and whatever follows before the flush).
     // The hard break both flushes a pending same-line line comment and expands the enclosing group,
-    // as the own-line invariant requires;
+    // as FORMATTER_POLICY's best-effort "comment position kept" applied here requires;
     // the caller's token follows a block comment directly (`/* c */;`),
     // the stable form its own broken output re-parses to.
     for (index, comment) in in_place.iter().enumerate() {

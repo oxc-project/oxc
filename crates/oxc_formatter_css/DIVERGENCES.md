@@ -627,7 +627,7 @@ a {
 }
 ```
 
-A comment before the `;` keeps its place; the gap between it and the `;` is the formatter's (FORMATTER_POLICY.md "Comment placement invariants": terminators and the trivia up to them),
+A comment before the `;` keeps its place; the gap between it and the `;` is the formatter's (FORMATTER_POLICY.md "Comment placement": terminators and the trivia up to them),
 so it is dropped as after any other value (`color: red /* c */ ;` -> `red /* c */;`, matching Prettier).
 Prettier keeps the source gap only after `!important` / `!default` / `!global`: postcss stores the text after the flag verbatim in `raws.important`.
 
@@ -665,7 +665,7 @@ Its JS printer follows the option (`[1, 2\n // own]`), and so do all our formatt
 
 ## own-line-trailing-comment-keeps-line
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `tests/fixtures/format/scss/module-config-comments.scss`, `tests/fixtures/format/scss/paren-tail-own-line-comment.scss`
 - Conformance:
   - `externals/prettier/scss/trailing-comma/issue-6356.scss`
@@ -775,7 +775,7 @@ the same `join(line)` + deferred `lineSuffix` artifact as DIVERGENCES.md#comment
 
 ## line-comment-after-comma
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `tests/fixtures/format/scss/line-comment-after-comma.scss`, `tests/fixtures/format/less/line-comment-after-comma.less`
 - Conformance:
   - `externals/prettier/scss/comments/4594.scss`
@@ -808,7 +808,7 @@ $my-map: (
 ```
 
 A `//` on a comma's line stays on that line (the block comments glued before it come along);
-Prettier moves it below as the next element's leading comment, across the line boundary (`a, // stylelint-disable-line` loses its target).
+Prettier moves it below as the next element's leading comment, changing its line (`a, // stylelint-disable-line` loses its target).
 Prettier keeps the same comment after the LAST comma (`"bar": 2, // Comment`) and its JS printer keeps `1, // c` everywhere:
 the move is where postcss-value-parser hands the comment to the next comma group, not a rule.
 Applies at every comma site: values, function and `@include` arguments, maps, paren lists, `@use ... with`, `@forward` members, `@each`,
@@ -847,7 +847,7 @@ For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{
 
 ## own-line-comment-before-block
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
 - Conformance:
   - `externals/prettier/css/comments/at-rules.css`

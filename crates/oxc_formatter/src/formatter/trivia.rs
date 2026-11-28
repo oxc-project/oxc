@@ -127,7 +127,7 @@ pub enum FormatLeadingComments<'a> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        // NOTE: Known FORMATTER_POLICY violation ("own-line comments stay own-line"):
+        // NOTE: FORMATTER_POLICY's best-effort "comment position kept" is not applied, as Prettier:
         // the line break BEFORE the first comment is never reproduced,
         // so an own-line comment claimed mid-line inlines onto that line
         // ```js
@@ -140,7 +140,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
         // const // c
         //   a = 1
         // ```
-        // Kept for now: Prettier byte-compat outweighs the invariant.
+        // A `-next-line` directive keeps its target, the line after the comment is unchanged.
+        // Not applicable here uniformly: a break before the comment changes semantics
+        // at a no-line-terminator-here position (`return (` + break + `/** @type {X} */ (x))` -> `return` + break, ASI).
         fn format_leading_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             // The claiming node's start (see `lines_after_skipping_terminators`)
