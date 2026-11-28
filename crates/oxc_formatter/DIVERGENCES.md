@@ -1311,3 +1311,42 @@ A longer path (`a.b.c`) still breaks into a list of properties.
 Prettier keeps it only for an identifier object (prettier/prettier#1036, which has no case for `this` or `super`).
 Elsewhere it groups them with an identifier: all three count as a single word for a simple call argument,
 and `this` stays attached as a member chain head like a short identifier (`this.foo()` + break + `.bar()`, prettier/prettier#782).
+
+## heritage-keyword-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/js/comments/heritage-keyword-comment.js`, `tests/fixtures/ts/comments/heritage-keyword-comment.ts`
+- Conformance:
+  - `externals/prettier/js/ignore/issue-9335.js` (a `prettier-ignore` there: Prettier's move also formats the superclass it targets)
+
+```js
+// input
+class Named extends
+// c
+B {}
+class Cast extends
+/** @type {typeof Base} */
+(Base) {}
+
+// ours
+class Named
+  extends // c
+  B {}
+class Cast
+  extends
+  /** @type {typeof Base} */
+  (Base) {}
+
+// prettier
+class Named
+  // c
+  extends B {}
+class Cast
+  extends /** @type {typeof Base} */
+  (Base) {}
+```
+
+Prettier's output moves an own-line comment after `extends` before the keyword in a named class (or one with type parameters), so the superclass no longer starts the line after it (a `-next-line` target lost);
+for an own-line block comment, a JSDoc cast here, its output is not a fixpoint (a second pass glues the cast onto the `extends` line).
+Ours prints every class as Prettier prints an anonymous one: a comment after the keyword leads the superclass, a `//` on the keyword's line (`extends // c` + break + `B`), a block comment on a line of its own.
+Comments before the keyword trail the name or the type parameters, as Prettier prints them.

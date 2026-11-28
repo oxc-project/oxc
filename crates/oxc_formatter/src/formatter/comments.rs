@@ -339,6 +339,26 @@ impl<'a> Comments<'a> {
         comments
     }
 
+    /// The pending comments before `end`, split at the one token among them (a keyword such as `extends`),
+    /// found from `end` backwards as the first gap holding anything but whitespace and the `(`s an expression's span leaves out
+    /// (a lexical byte scan, see the module doc); `([], all)` when no gap holds it.
+    pub(crate) fn split_at_token_before(&self, end: u32) -> (&'a [Comment], &'a [Comment]) {
+        let comments = self.comments_before(end);
+        let mut gap_end = end;
+        for (index, comment) in comments.iter().enumerate().rev() {
+            if !self
+                .source_text
+                .slice_range(comment.span.end, gap_end)
+                .trim_matches(|c: char| c.is_whitespace() || c == '(')
+                .is_empty()
+            {
+                return comments.split_at(index + 1);
+            }
+            gap_end = comment.span.start;
+        }
+        (&[], comments)
+    }
+
     /// Comments sitting between `pos` and a closing source paren (a lexical byte scan, see the module doc).
     /// `None` when there is no such comment or another token intervenes.
     pub(crate) fn comments_before_closing_paren(&self, pos: u32) -> Option<&'a [Comment]> {

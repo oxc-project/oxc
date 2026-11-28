@@ -1,6 +1,6 @@
 ## javascript
 
-1186/1284 (92.37%)
+1185/1284 (92.29%)
 
 ### Failed
 
@@ -158,6 +158,8 @@
   - crates/oxc_formatter/DIVERGENCES.md#start-token-no-double-parens
 - externals/prettier/js/ignore/issue-11077.js (💥, 93.33%)
   - crates/oxc_formatter/DIVERGENCES.md#suppressed-terminator-per-semi
+- externals/prettier/js/ignore/issue-9335.js (💥, 33.33%)
+  - crates/oxc_formatter/DIVERGENCES.md#heritage-keyword-comment
 - externals/prettier/js/last-argument-expansion/edge_case.js (💥, 74.45%)
   - crates/oxc_formatter/DIVERGENCES.md#callee-arguments-gap-comment
 - externals/prettier/js/multiparser-css/styled-components.js (💥, 98.49%)
@@ -207,7 +209,7 @@
   - ❓unclassified
 - externals/prettier/typescript/cast/18406.ts (💥, 84.21%)
   - ❓unclassified
-- externals/prettier/typescript/class-comment/class-implements.ts (💥, 85.71%)
+- externals/prettier/typescript/class-comment/class-implements.ts (💥, 83.52%)
   - ❓unclassified
 - externals/prettier/typescript/class-comment/declare.ts (💥, 72.00%)
   - ❓unclassified
