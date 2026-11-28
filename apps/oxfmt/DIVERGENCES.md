@@ -1067,7 +1067,7 @@ Prettier reads such a `@for`'s as an `*ngFor`'s value, and an `@if`'s in a way o
 
 ## js-in-angular-binding-comment-in-quotes
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `conformance/fixtures/js-in-angular/binding-comment-in-quotes.component.html`
 
 ```html
@@ -1094,7 +1094,7 @@ Prettier reads such a `@for`'s as an `*ngFor`'s value, and an `@if`'s in a way o
 ```
 
 A comment in a binding's value stays in the value, its quotes after it.
-Prettier prints an object binding's comment past the closing quote, which moves it out of the value (Angular reads it as a start-tag comment there).
+Prettier prints an object binding's comment past the closing quote, out of the value: Angular reads it as a start-tag comment there, so only its position changes.
 
 ## js-in-angular-angularjs-attributes-as-written
 

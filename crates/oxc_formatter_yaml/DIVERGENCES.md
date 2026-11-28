@@ -225,7 +225,7 @@ Prettier sometimes emits a newline inside flow brackets while keeping them flat 
 
 ## flow-comment-position
 
-- Why: invariant
+- Why: uniform-rule (opener rule)
 - Pin: `tests/fixtures/yaml/flow-comments.yaml`
 - Conformance:
   - `externals/prettier/yaml/spec/spec-example-6-1-indentation-spaces.yml`
@@ -249,7 +249,7 @@ key: # kept inside the brackets
   [a, b]
 ```
 
-A comment stays at its syntactic position; Prettier's attachment hoists a comment after `[` onto the `key:` line, across the `[` delimiter (user content; the spec-example-6-1 shape).
+A comment after `[` leads the body, as after any opener; Prettier's attachment hoists a comment after `[` onto the `key:` line, across the `[` (the spec-example-6-1 shape).
 
 ## comment-over-indented
 

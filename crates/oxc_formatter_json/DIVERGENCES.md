@@ -4,7 +4,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 ## array-hole-comments
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `tests/fixtures/json/comments/array_hole_comments.json`
 
 ```json

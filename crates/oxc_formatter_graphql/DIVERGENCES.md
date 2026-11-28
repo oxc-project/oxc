@@ -4,7 +4,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 ## comment-after-keyword
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `tests/fixtures/graphql/comments-inside-node-spans.graphql`
 
 ```graphql
@@ -58,11 +58,11 @@ A {
 }
 ```
 
-Prettier's attachment pushes the comment forward across the `type` keyword (user content), own-line to same-line.
+Prettier's attachment pushes the comment forward onto the `type` keyword's line, so `type` no longer starts the line after it (a `-next-line` target lost).
 
 ## fields-block-opener-comment
 
-- Why: uniform-rule (same construct, same output: a selection set's `{ # c`)
+- Why: uniform-rule (opener rule)
 - Pin: `tests/fixtures/graphql/comment-after-opening-delimiter.graphql`
 
 ```graphql
@@ -91,7 +91,7 @@ the `breakParent` it adds pushes a preceding directive onto its own line.
 
 ## argument-list-opener-comment
 
-- Why: invariant
+- Why: uniform-rule (opener rule)
 - Pin: `tests/fixtures/graphql/comment-after-opening-delimiter.graphql`
 
 ```graphql
@@ -113,12 +113,12 @@ query T {
 }
 ```
 
-Prettier's attachment makes the comment a trailing of the field name and `lineSuffix` carries it past `(x: 1)` (user content crossed).
+Prettier's attachment makes the comment a trailing of the field name and `lineSuffix` carries it past `(x: 1)`; ours follows the opener rule.
 Same class: `query R( # c` -> `query R($a: Int) { # c`, `directive @d( # c` -> `directive @d(a: Int) on FIELD # c`.
 
 ## trailing-comment-before-continuation
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `tests/fixtures/graphql/comments-inside-node-spans.graphql`
 
 ```graphql
@@ -140,5 +140,5 @@ type A implements B { # c
 }
 ```
 
-Prettier's attachment scatters the comment to the line end, across `implements B {`; same class: `f(x) # c` + break + `: T` is pulled inside the parens (`x # c` before the `)`), user content crossed in both.
+Prettier's attachment scatters the comment to the line end, across `implements B {`; same class: `f(x) # c` + break + `: T` is pulled inside the parens (`x # c` before the `)`); ours keeps the position in both.
 
