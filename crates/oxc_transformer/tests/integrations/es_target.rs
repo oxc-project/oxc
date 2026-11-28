@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use oxc_span::SourceType;
-use oxc_transformer::{DecoratorOptions, ESTarget, TransformOptions};
+use oxc_transformer::{BabelOptions, DecoratorOptions, ESTarget, TransformOptions};
 
 use crate::{codegen, test, test_with_source_type};
 
@@ -127,6 +127,37 @@ fn standard_decorators_opt_out_keeps_plain_class_field_lowering() {
 }
 
 #[test]
+fn babel_options_standard_decorators() {
+    let source = "@decorate class Example { @decorate method() {} }";
+    let from = |json: &str| {
+        TransformOptions::try_from(&serde_json::from_str::<BabelOptions>(json).unwrap())
+    };
+
+    // `preset-env` does not include the decorators proposal, so its targets alone preserve it.
+    let options = from(r#"{ "presets": [["env", { "targets": { "chrome": "80" } }]] }"#).unwrap();
+    let output = test(source, &options).unwrap();
+    assert!(output.contains("@decorate"));
+    assert!(!output.contains("decorateElement"));
+
+    // Listing the plugin lowers them.
+    for version in ["", r#", { "version": "2023-11" }"#] {
+        let options =
+            from(&format!(r#"{{ "plugins": [["proposal-decorators"{version}]] }}"#)).unwrap();
+        let output = test(source, &options).unwrap();
+        assert!(!output.contains("@decorate"));
+        assert!(output.contains("decorateElement"));
+    }
+
+    // Other proposal versions have different semantics and are rejected.
+    let errors =
+        from(r#"{ "plugins": [["proposal-decorators", { "version": "2022-03" }]] }"#).unwrap_err();
+    assert_eq!(
+        errors,
+        vec![r#"proposal-decorators: version "2022-03" is not supported, only "2023-11" is"#]
+    );
+}
+
+#[test]
 fn target_list_pass() {
     // https://vite.dev/config/build-options.html#build-target
     let target = "es2020,edge88,firefox78,chrome87,safari14";
@@ -152,5 +183,63 @@ fn target_list_fail() {
     for (target, expected) in targets {
         let result = TransformOptions::from_target(target);
         assert_eq!(result.unwrap_err(), expected);
+    }
+}
+
+/// A decorated class whose computed key may collide with a member name gives its public methods
+/// temporary keys. Each keeps the source position of the key it replaces, so a source map lookup
+/// at a member name finds that name, not the start of the member (`@dec` for a decorated one).
+#[test]
+fn standard_decorator_temporary_method_keys_keep_source_positions() {
+    use std::path::Path;
+
+    use oxc_allocator::Allocator;
+    use oxc_codegen::{Codegen, CodegenOptions};
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_transformer::Transformer;
+
+    let source = "const k = 'z';\nclass C {\n  @dec m() {}\n  plain() {}\n  [k]() {}\n}\n";
+    let allocator = Allocator::default();
+    let mut program = Parser::new(&allocator, source, SourceType::mjs()).parse().program;
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let options = TransformOptions {
+        decorator: DecoratorOptions { lower: Some(true), ..DecoratorOptions::default() },
+        ..TransformOptions::from(ESTarget::ES2022)
+    };
+    let ret = Transformer::new(&allocator, Path::new(""), &options)
+        .build_with_scoping(scoping, &mut program);
+    assert!(ret.diagnostics.is_empty());
+    let ret = Codegen::new()
+        .with_options(CodegenOptions {
+            source_map_path: Some("test.js".into()),
+            ..CodegenOptions::default()
+        })
+        .build(&program);
+    let map = ret.map.unwrap();
+
+    // 0-based `(line, column)` of `offset` in `text`.
+    let position = |text: &str, offset: usize| {
+        let line_start = text[..offset].rfind('\n').map_or(0, |i| i + 1);
+        let line = text[..offset].matches('\n').count();
+        (u32::try_from(line).unwrap(), u32::try_from(offset - line_start).unwrap())
+    };
+    // Like a source map consumer: the last mapping at or before `(line, column)` on that line.
+    let original = |(line, column): (u32, u32)| {
+        map.get_tokens()
+            .filter(|t| t.get_dst_line() == line && t.get_dst_col() <= column)
+            .map(|t| (t.get_dst_col(), (t.get_src_line(), t.get_src_col())))
+            .max_by_key(|&(dst_col, _)| dst_col)
+            .map(|(_, src)| src)
+    };
+    let mut temporary_keys = ret.code.match_indices("[_key").map(|(i, _)| i + 1);
+    for member in ["m() {}", "plain() {}", "[k]() {}"] {
+        let key = temporary_keys.next().expect("each public method has a temporary key");
+        assert_eq!(
+            original(position(&ret.code, key)),
+            Some(position(source, source.find(member).unwrap())),
+            "{member}\n{}",
+            ret.code
+        );
     }
 }

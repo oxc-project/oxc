@@ -56,6 +56,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    common::class_lowering::ClassLowering,
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
@@ -70,6 +71,9 @@ use crate::{
 
 pub struct ClassStaticBlock<'a> {
     classes: Vec<ClassState<'a>>,
+    /// Keyed by class body address. Parent hooks record entries before the class's owner is
+    /// known. Body entry takes them, or [`Self::discard_pending_class`] for a class this
+    /// transform does not own.
     pending_classes: FxHashMap<Address, PendingClass<'a>>,
 }
 
@@ -110,22 +114,44 @@ impl<'a> InferredName<'a> {
     }
 }
 
-impl ClassStaticBlock<'_> {
+impl<'a> ClassStaticBlock<'a> {
     pub fn new() -> Self {
         Self { classes: Vec::new(), pending_classes: FxHashMap::default() }
+    }
+
+    /// Whether this transform lowers the static blocks of a class.
+    ///
+    /// A class whose fields class-properties lowers (for standard decorators, when both
+    /// transforms are present) has its static blocks lowered with them. `ES2022` only calls the
+    /// class hooks of this transform for the classes it owns. The statement hook, which runs
+    /// before the class is entered, checks with [`Self::is_skipped`].
+    pub fn owns_class(lowering: ClassLowering) -> bool {
+        !lowering.lowers_fields()
+    }
+
+    fn is_skipped(class: &Class<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        !Self::owns_class(ctx.state.class_lowering_before_entry(class))
+    }
+
+    /// Drop the state that parent hooks recorded for a class owned by class-properties.
+    pub fn discard_pending_class(&mut self, body: &ClassBody<'a>) {
+        self.pending_classes.remove(&body.unstable_address());
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::ClassDeclaration(class) if Self::needs_declaration_initializer(class) => {
+            Statement::ClassDeclaration(class)
+                if Self::needs_declaration_initializer(class) && !Self::is_skipped(class, ctx) =>
+            {
                 let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
                 *stmt = Statement::VariableDeclaration(declaration);
             }
             Statement::ExportDeclaration(export) => {
                 if let Declaration::ClassDeclaration(class) = &mut export.declaration
                     && Self::needs_declaration_initializer(class)
+                    && !Self::is_skipped(class, ctx)
                 {
                     let declaration = Self::class_declaration_initializer(class.take_in(ctx), ctx);
                     export.declaration = Declaration::VariableDeclaration(declaration);
@@ -136,7 +162,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
                 else {
                     return;
                 };
-                if !Self::needs_declaration_initializer(class) {
+                if !Self::needs_declaration_initializer(class) || Self::is_skipped(class, ctx) {
                     return;
                 }
                 let mut class = class.take_in(ctx);
@@ -168,6 +194,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         }
     }
 
+    /// `ES2022` does not call this for class expressions owned by class-properties.
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // Parameter evaluation has no statement list for per-call temporaries. Wrap before
         // capturing object keys so their declarations are inserted inside the fresh scope.
@@ -267,6 +294,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             .pending_classes
             .remove(&body.unstable_address())
             .and_then(|pending| pending.inferred_name);
+
         self.classes.push(ClassState { inferred_name, deferred: None });
 
         // Loop through class body elements and:
@@ -397,8 +425,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
         }
     }
 
+    /// Only called for class expressions this transform owns (see [`Self::owns_class`]).
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ClassExpression(_) = expr else { return };
+        debug_assert!(matches!(expr, Expression::ClassExpression(_)));
         let state = self.classes.pop().expect("class body must be entered first");
         if let Some(name) = state.inferred_name {
             // Let the engine perform NamedEvaluation before static initialization. Setting

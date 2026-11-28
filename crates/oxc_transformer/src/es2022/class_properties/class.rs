@@ -19,8 +19,8 @@ use crate::{
 };
 
 use super::{
-    ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp, PrivateProps,
-    utils::exprs_into_stmts,
+    ClassBindings, ClassDetails, ClassIdentity, ClassProperties, IdentIndexMap, PrivateProp,
+    PrivateProps, utils::exprs_into_stmts,
 };
 
 // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
@@ -43,7 +43,8 @@ use super::{
 impl<'a> ClassProperties<'a> {
     /// Perform first phase of transformation of class.
     ///
-    /// This is the only entry point into the transform upon entering class body.
+    /// This is the only entry point into the transform upon entering class body. Only called for
+    /// classes whose fields this transform lowers (see `unlowered_class` for the others).
     ///
     /// First we check if any transforms are necessary, and exit if not.
     ///
@@ -79,36 +80,12 @@ impl<'a> ClassProperties<'a> {
             !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         let lowering = ctx.state.class_lowering_of(class_scope_id);
-        let mut entry = self.on_body_entry(body, class_name_binding.as_ref(), ctx);
-        let has_auto_accessor = entry.has_auto_accessor;
-        if !lowering.lowers_fields() {
-            // Register private names only when they can shadow a lowered name in an enclosing
-            // class. Other unresolved names belong to untouched classes and are left as-is.
-            let mut private_names = IdentIndexMap::default();
-            if self.private_field_count != 0 {
-                for element in &body.body {
-                    let key = match element {
-                        ClassElement::PropertyDefinition(prop) => &prop.key,
-                        ClassElement::MethodDefinition(method) => &method.key,
-                        ClassElement::AccessorProperty(prop) => &prop.key,
-                        _ => continue,
-                    };
-                    if let PropertyKey::PrivateIdentifier(ident) = key {
-                        private_names.insert(ident.name, ());
-                    }
-                }
-            }
-            self.classes_stack.push(ClassDetails {
-                is_declaration,
-                private_method_helpers_in_class_sequence: false,
-                is_transform_required: false,
-                private_props: PrivateProps::Native(private_names),
-                bindings: ClassBindings::dummy(),
-                has_auto_accessor,
-            });
-            return;
-        }
-        let transform_static_blocks = self.transform_static_blocks || entry.lowers_static_blocks();
+        let mut entry =
+            self.on_body_entry(body, class_name_binding.as_ref(), class_scope_id, lowering, ctx);
+        let temps = entry.temps;
+        let instance_method_extras =
+            entry.state.as_ref().is_some_and(|state| state.instance_method_extras);
+        let transform_static_blocks = self.transform_static_blocks || temps.is_per_evaluation();
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -131,7 +108,7 @@ impl<'a> ClassProperties<'a> {
                     // Create binding for private property key
                     if let Some(name) = prop.key.private_name() {
                         // Note: Current scope is outside class.
-                        let binding = ctx.generate_uid_in_current_hoist_scope(&name);
+                        let binding = temps.create_binding(&name, ctx);
                         private_props
                             .insert(name, PrivateProp::new(binding, prop.r#static, None, false));
                     }
@@ -162,11 +139,8 @@ impl<'a> ClassProperties<'a> {
                             MethodDefinitionKind::Set => &format!("set_{private_name}"),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
-                        let (scope_id, flags) = if private_method_helpers_in_class_sequence {
-                            (ctx.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
-                        } else {
-                            (ctx.current_block_scope_id(), SymbolFlags::Function)
-                        };
+                        let (scope_id, flags) = temps
+                            .private_method_scope(private_method_helpers_in_class_sequence, ctx);
                         let binding = ctx.generate_uid(name, scope_id, flags);
 
                         if let Some(prop) = private_props.get_mut(&private_name) {
@@ -203,6 +177,7 @@ impl<'a> ClassProperties<'a> {
             }
         }
 
+        entry.configure_private_props(&mut private_props);
         self.private_field_count += private_props.len();
 
         // Exit if nothing to transform
@@ -210,14 +185,16 @@ impl<'a> ClassProperties<'a> {
             && !has_static_prop
             && !has_static_private_method_or_static_block
             && !has_instance_private_method
+            && !entry.is_decorated()
         {
             self.classes_stack.push(ClassDetails {
                 is_declaration,
                 private_method_helpers_in_class_sequence,
                 is_transform_required: false,
                 private_props: PrivateProps::Lowered(private_props),
-                bindings: ClassBindings::dummy(),
-                has_auto_accessor,
+                bindings: ClassBindings::dummy(self.private_fields_as_properties),
+                decorators: None,
+                temps,
             });
             return;
         }
@@ -227,20 +204,18 @@ impl<'a> ClassProperties<'a> {
         // temp var for class. Static prop in class declaration doesn't.
         // Anonymous `export default class {}` with static elements always has a temp var,
         // so that static blocks are evaluated after the class is defined.
-        let need_temp_var = entry.static_accessor_binding.is_some()
+        let need_temp_var = entry.is_decorated()
+            || entry.static_accessor_binding.is_some()
             || (is_anonymous_default_export
                 && (has_static_prop || has_static_private_method_or_static_block))
             || (has_static_prop && (!is_declaration || class_name_binding.is_none()));
 
         let outer_hoist_scope_id = ctx.current_hoist_scope_id();
         let class_temp_binding = if need_temp_var {
-            let temp_binding = entry.static_accessor_binding.take().unwrap_or_else(|| {
-                ClassBindings::create_temp_binding(
-                    class_name_binding.as_ref(),
-                    outer_hoist_scope_id,
-                    ctx,
-                )
-            });
+            let temp_binding = entry
+                .static_accessor_binding
+                .take()
+                .unwrap_or_else(|| temps.create_class_binding(class_name_binding.as_ref(), ctx));
             if is_declaration && class_name_binding.is_none() {
                 // Anonymous `export default class {}`. Set class name binding to temp var.
                 // Actual class name will be set to this later.
@@ -250,7 +225,7 @@ impl<'a> ClassProperties<'a> {
                 // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
                 // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
                 // `temp_var_is_created` that tracks whether it's done already or not.
-                ctx.state.var_declarations.insert_var(&temp_binding, &ctx.ast);
+                temps.declare(&temp_binding, ctx);
             }
             Some(temp_binding)
         } else {
@@ -261,10 +236,16 @@ impl<'a> ClassProperties<'a> {
             // `_Class_brand`
             let name = class_name_binding.as_ref().map_or_else(|| "Class", |binding| &binding.name);
             let name = &format!("_{name}_brand");
-            ctx.generate_uid_in_current_hoist_scope(name)
+            temps.create_binding(name, ctx)
         });
 
         let static_private_fields_use_temp = !is_declaration;
+        // A decorated class ignores the `privateFieldsAsProperties` assumption: the decorator
+        // context's `access` object is built from the brand and WeakMap bindings created here
+        // (see `PrivateDecoratorAccess`). Each class records its own storage mode, which private
+        // uses look up.
+        let private_fields_as_properties =
+            self.private_fields_as_properties && !entry.is_decorated();
         let mut class_bindings = ClassBindings::new(
             class_name_binding,
             class_temp_binding,
@@ -272,8 +253,13 @@ impl<'a> ClassProperties<'a> {
             outer_hoist_scope_id,
             static_private_fields_use_temp,
             need_temp_var,
+            private_fields_as_properties,
         );
-        class_bindings.name_is_reassigned = lowering.class_binding_is_reassigned();
+        if lowering.class_binding_is_reassigned() {
+            class_bindings.identity = ClassIdentity::NameReassigned;
+        }
+
+        entry.configure_bindings(&mut class_bindings, &private_props, ctx);
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
@@ -282,11 +268,12 @@ impl<'a> ClassProperties<'a> {
             is_transform_required: true,
             private_props: PrivateProps::Lowered(private_props),
             bindings: class_bindings,
-            has_auto_accessor,
+            decorators: entry.state,
+            temps,
         });
 
         // Exit if no instance properties (public or private)
-        if instance_prop_count == 0 && !has_instance_private_method {
+        if instance_prop_count == 0 && !has_instance_private_method && !instance_method_extras {
             return;
         }
 
@@ -304,10 +291,11 @@ impl<'a> ClassProperties<'a> {
         let mut instance_inits =
             Vec::with_capacity(instance_prop_count + usize::from(has_instance_private_method));
 
-        // `_classPrivateMethodInitSpec(this, _C_brand);`
+        // Install private methods before extra initializers can access them.
         if has_instance_private_method {
             instance_inits.push(self.create_class_private_method_init_spec(ctx));
         }
+        self.push_instance_method_initializers(&mut instance_inits, ctx);
 
         let mut constructor_index = None;
         for (index, element) in body.body.iter_mut().enumerate() {
@@ -317,7 +305,7 @@ impl<'a> ClassProperties<'a> {
                     // Ignore `declare` properties as they don't have any runtime effect,
                     // and will be removed in the TypeScript transform later
                     if !prop.r#static && !prop.declare {
-                        self.convert_instance_property(prop, &mut instance_inits, ctx);
+                        self.on_instance_field_entry(prop, &mut instance_inits, ctx);
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
@@ -403,9 +391,7 @@ impl<'a> ClassProperties<'a> {
         // Static properties and static blocks
         self.current_class_mut().bindings.static_private_fields_use_temp = true;
 
-        // Transform static properties, remove static and instance properties, and move computed keys
-        // to before class
-        self.transform_class_elements(class, ctx);
+        self.on_class_exit(class, ctx);
 
         // Insert temp var for class if required. Name class if required.
         let class_details = self.classes_stack.last_mut();
@@ -464,7 +450,7 @@ impl<'a> ClassProperties<'a> {
                         .is_some_and(|name| name.symbol_id == temp_binding.symbol_id)
                         && ident.symbol_id() != temp_binding.symbol_id)
                 {
-                    ctx.state.var_declarations.insert_var(temp_binding, &ctx.ast);
+                    class_details.temps.declare(temp_binding, ctx);
                 }
 
                 // Insert `_Class = Class` after class.
@@ -511,7 +497,7 @@ impl<'a> ClassProperties<'a> {
         }
 
         if let Some(private_props) = class_details.private_props.lowered() {
-            if self.private_fields_as_properties {
+            if class_details.bindings.private_fields_as_properties() {
                 let props_to_init: Vec<_> = private_props
                     .iter()
                     .filter_map(|(&name, prop)| {
@@ -536,7 +522,10 @@ impl<'a> ClassProperties<'a> {
                 let mut has_method = false;
                 let mut stmts = Vec::new();
                 for prop in private_props.values() {
-                    if prop.is_static || (prop.is_method() && has_method) || prop.is_accessor {
+                    if prop.uses_static_lowering()
+                        || (prop.is_method() && has_method)
+                        || prop.is_accessor
+                    {
                         continue;
                     }
                     if prop.is_method() {
@@ -544,11 +533,11 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         let binding = class_details.bindings.brand();
                         let value = create_new_weakset(ctx);
-                        stmts.push(create_variable_declaration(binding, value, ctx));
+                        stmts.push(class_details.temps.declaration(binding, value, ctx));
                     } else {
                         // `var _prop = new WeakMap();`
                         let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
-                        stmts.push(create_variable_declaration(&prop.binding, value, ctx));
+                        stmts.push(class_details.temps.declaration(&prop.binding, value, ctx));
                     }
                 }
                 if !stmts.is_empty() {
@@ -673,7 +662,7 @@ impl<'a> ClassProperties<'a> {
             // same order of `var` declarations as Babel.
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
             // TODO(improve-on-babel): Simplify this.
-            if self.private_fields_as_properties {
+            if class_details.bindings.private_fields_as_properties() {
                 exprs.extend(private_props.iter().filter_map(|(&name, prop)| {
                     // TODO: Output `_C_brand = new WeakSet()` for private instance method
                     if prop.is_method() || prop.is_accessor {
@@ -702,15 +691,15 @@ impl<'a> ClassProperties<'a> {
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
-                        ctx.state.var_declarations.insert_var(binding, &ctx.ast);
+                        class_details.temps.declare(binding, ctx);
                         let value = create_new_weakset(ctx);
                         return Some(create_assignment(binding, value, SPAN, ctx));
                     }
 
                     // Insert `var _prop;` declaration
-                    ctx.state.var_declarations.insert_var(&prop.binding, &ctx.ast);
+                    class_details.temps.declare(&prop.binding, ctx);
 
-                    if prop.is_static {
+                    if prop.uses_static_lowering() {
                         return None;
                     }
 
@@ -734,7 +723,7 @@ impl<'a> ClassProperties<'a> {
                 };
                 let id = func.id.take().expect("private method binding always has an id");
                 let binding = BoundIdentifier::from_binding_ident(&id);
-                ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+                class_details.temps.declare(&binding, ctx);
                 func.r#type = FunctionType::FunctionExpression;
                 let assignment =
                     create_assignment(&binding, Expression::FunctionExpression(func), SPAN, ctx);
@@ -834,9 +823,10 @@ impl<'a> ClassProperties<'a> {
         &mut self,
         class: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) {
+    ) -> usize {
+        let details = self.current_class();
         let transform_static_blocks =
-            self.transform_static_blocks || self.current_class().has_auto_accessor;
+            self.transform_static_blocks || details.temps.is_per_evaluation();
 
         let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {
@@ -847,9 +837,9 @@ impl<'a> ClassProperties<'a> {
                         "`declare` property should have been removed in the TypeScript plugin's `exit_class`"
                     );
                     if prop.r#static {
-                        self.convert_static_property(prop, ctx);
-                    } else if prop.key.is_computed() {
-                        self.extract_instance_prop_computed_key(prop, ctx);
+                        self.on_static_field(prop, ctx);
+                    } else {
+                        self.on_instance_field_exit(prop, ctx);
                     }
                     return false;
                 }
@@ -860,8 +850,7 @@ impl<'a> ClassProperties<'a> {
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    self.substitute_temp_var_for_method_computed_key(method, ctx);
-                    if let Some(statement) = self.convert_private_method(method, ctx) {
+                    if let Some(statement) = self.on_method(method, ctx) {
                         class_methods.push(statement);
                         return false;
                     }
@@ -877,7 +866,10 @@ impl<'a> ClassProperties<'a> {
         // All methods are moved to after the class, but need to be before static properties
         // TODO(improve-on-babel): Insertion order doesn't matter, and it more clear to insert according to
         // definition order.
+        let class_methods_count = class_methods.len();
         self.insert_after_stmts.splice(0..0, class_methods);
+
+        class_methods_count
     }
 
     /// Flag that static private fields should be transpiled using temp binding,

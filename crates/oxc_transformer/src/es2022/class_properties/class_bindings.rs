@@ -52,6 +52,10 @@ pub(super) struct ClassBindings<'a> {
     pub shadowed_name: Option<BoundIdentifier<'a>>,
     /// Temp var for WeakSet.
     pub brand: Option<BoundIdentifier<'a>>,
+    /// What the class's own bindings refer to once the class is defined.
+    pub identity: ClassIdentity<'a>,
+    /// Effective private-storage mode selected when the owning class is entered.
+    private_fields_as_properties: bool,
     /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
     pub outer_hoist_scope_id: ScopeId,
     /// `true` if should use temp binding for references to class in transpiled static private fields,
@@ -59,9 +63,36 @@ pub(super) struct ClassBindings<'a> {
     pub static_private_fields_use_temp: bool,
     /// `true` if temp var for class has been inserted
     pub temp_var_is_created: bool,
-    /// `true` if legacy decorators reassign the class binding after the class is defined,
-    /// so transpiled static private fields must always use temp binding
-    pub name_is_reassigned: bool,
+}
+
+/// What the class's own bindings refer to once the class is defined, which decides how transpiled
+/// static private members find the original constructor.
+///
+/// Static private members belong to the original constructor. Transpiled code checks it as the
+/// brand, and `Class.#x` can skip the check when `Class` is known to be that constructor.
+pub(super) enum ClassIdentity<'a> {
+    /// The class name and temp var always refer to the original constructor.
+    Stable,
+    /// Legacy decorators reassign the class name after the class is defined:
+    /// `Foo = _decorate([dec], Foo)`. Static private members use the temp var, which keeps the
+    /// original constructor.
+    NameReassigned,
+    /// A standard class decorator may replace the class, so its name can refer to the replacement.
+    /// `Class.#x` never skips the brand check. Static private methods and accessors are checked
+    /// against `static_brand`, a WeakSet holding the original constructor. It is `None` when the
+    /// class has none. Static private fields are stored in WeakMaps instead
+    /// ([`PrivateProp::uses_weakmap`](super::PrivateProp::uses_weakmap)).
+    Decorated { static_brand: Option<BoundIdentifier<'a>> },
+}
+
+impl<'a> ClassIdentity<'a> {
+    /// WeakSet holding the original constructor of a decorated class with static private methods.
+    pub fn static_brand(&self) -> Option<&BoundIdentifier<'a>> {
+        match self {
+            Self::Decorated { static_brand } => static_brand.as_ref(),
+            Self::Stable | Self::NameReassigned => None,
+        }
+    }
 }
 
 impl<'a> ClassBindings<'a> {
@@ -73,29 +104,43 @@ impl<'a> ClassBindings<'a> {
         outer_scope_id: ScopeId,
         static_private_fields_use_temp: bool,
         temp_var_is_created: bool,
+        private_fields_as_properties: bool,
     ) -> Self {
         Self {
             name: name_binding,
             temp: temp_binding,
             shadowed_name: None,
             brand: brand_binding,
+            identity: ClassIdentity::Stable,
+            private_fields_as_properties,
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
-            name_is_reassigned: false,
         }
     }
 
     /// Create dummy `ClassBindings`.
     ///
     /// Used when class needs no transform, and for dummy entry at top of `ClassesStack`.
-    pub fn dummy() -> Self {
-        Self::new(None, None, None, ScopeId::new(0), false, false)
+    pub fn dummy(private_fields_as_properties: bool) -> Self {
+        Self::new(None, None, None, ScopeId::new(0), false, false, private_fields_as_properties)
     }
 
     /// Get `SymbolId` of name binding.
     pub fn name_symbol_id(&self) -> Option<SymbolId> {
         self.name.as_ref().map(|binding| binding.symbol_id)
+    }
+
+    /// Class name whose `Class.#x` can skip the brand check of a static private member.
+    ///
+    /// Only a class declaration's name is known to refer to the class inside its body, and only
+    /// while no class decorator can replace the class.
+    pub fn shortcut_class_symbol_id(&self, is_declaration: bool) -> Option<SymbolId> {
+        if is_declaration && !matches!(self.identity, ClassIdentity::Decorated { .. }) {
+            self.name_symbol_id()
+        } else {
+            None
+        }
     }
 
     /// Get [`BoundIdentifier`] for class brand.
@@ -128,7 +173,9 @@ impl<'a> ClassBindings<'a> {
         &mut self,
         ctx: &mut TraverseCtx<'a>,
     ) -> &BoundIdentifier<'a> {
-        if self.static_private_fields_use_temp || self.name_is_reassigned {
+        if self.static_private_fields_use_temp
+            || matches!(self.identity, ClassIdentity::NameReassigned)
+        {
             // Create temp binding if doesn't already exist
             self.temp.get_or_insert_with(|| {
                 Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
@@ -150,6 +197,23 @@ impl<'a> ClassBindings<'a> {
                 ctx.generate_uid(&name.name, scope_id, SymbolFlags::BlockScopedVariable)
             })
         }
+    }
+
+    /// Whether private names owned by this class use loose property storage.
+    pub fn private_fields_as_properties(&self) -> bool {
+        self.private_fields_as_properties
+    }
+
+    /// Brand for static private uses. Decorated methods retain the original constructor;
+    /// decorated fields use WeakMaps and do not call this selector.
+    pub fn get_or_init_static_private_binding(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> &BoundIdentifier<'a> {
+        if self.identity.static_brand().is_none() {
+            return self.get_or_init_static_binding(ctx);
+        }
+        self.identity.static_brand().unwrap()
     }
 
     /// Generate binding for temp var.

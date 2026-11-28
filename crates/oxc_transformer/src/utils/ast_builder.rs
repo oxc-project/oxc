@@ -490,6 +490,30 @@ pub fn create_variable_declaration<'a>(
     Statement::new_variable_declaration(SPAN, kind, [declarator], false, ctx)
 }
 
+/// Create `let` declaration. The binding keeps its symbol's span.
+pub fn create_let_declaration<'a>(
+    binding: &BoundIdentifier<'a>,
+    init: Expression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Statement<'a> {
+    let span = ctx.scoping().symbol_span(binding.symbol_id);
+    let declarator = VariableDeclarator::new(
+        SPAN,
+        binding.create_spanned_binding_pattern(span, ctx),
+        None,
+        Some(init),
+        false,
+        ctx,
+    );
+    Statement::new_variable_declaration(
+        SPAN,
+        VariableDeclarationKind::Let,
+        [declarator],
+        false,
+        ctx,
+    )
+}
+
 /// Create `new WeakSet()` expression.
 pub fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
     let weak_set = static_ident!("WeakSet");

@@ -32,6 +32,17 @@ use super::{
 };
 
 impl<'a> ClassProperties<'a> {
+    /// Whether the class owning private name `ident` stores private fields as properties.
+    ///
+    /// Only loose mode with standard decorators resolves the owning class: decorated classes opt
+    /// out of loose storage, but no class opts in. Otherwise every class follows the option.
+    #[inline]
+    fn private_field_is_property(&mut self, ident: &PrivateIdentifier<'a>) -> bool {
+        self.private_fields_as_properties
+            && (!self.decorator_state.enabled()
+                || self.classes_stack.private_fields_as_properties(ident))
+    }
+
     /// Transform private field expression.
     ///
     /// Not loose:
@@ -97,13 +108,13 @@ impl<'a> ClassProperties<'a> {
         let ResolvedPrivateProp {
             prop_binding,
             class_bindings,
-            is_static,
+            uses_static_lowering,
             is_method,
             is_accessor,
             is_declaration,
         } = resolved;
 
-        if self.private_fields_as_properties {
+        if class_bindings.private_fields_as_properties() {
             // `_classPrivateFieldLooseBase(object, _prop)[_prop]`
             return Expression::from(Self::create_private_field_member_expr_loose(
                 object,
@@ -115,14 +126,13 @@ impl<'a> ClassProperties<'a> {
 
         let prop_ident = prop_binding.create_read_expression(ctx);
 
-        if is_static {
+        if uses_static_lowering {
             // TODO: Ensure there are tests for nested classes with references to private static props
             // of outer class inside inner class, to make sure we're getting the right `class_bindings`.
 
             // If `object` is reference to class name, there's no need for the class brand assertion
             if let Some((class_symbol_id, object_reference_id)) = Self::shortcut_static_class(
-                is_declaration,
-                class_bindings.name_symbol_id(),
+                class_bindings.shortcut_class_symbol_id(is_declaration),
                 &object,
                 ctx,
             ) {
@@ -147,7 +157,7 @@ impl<'a> ClassProperties<'a> {
                 }
             } else {
                 // `_assertClassBrand(Class, object, _prop)._`
-                let class_binding = class_bindings.get_or_init_static_binding(ctx);
+                let class_binding = class_bindings.get_or_init_static_private_binding(ctx);
                 let class_ident = class_binding.create_read_expression(ctx);
                 if is_method {
                     if is_assignment {
@@ -207,13 +217,11 @@ impl<'a> ClassProperties<'a> {
     // TODO(improve-on-babel): No reason not to use the short version for class expressions too.
     // TODO: Take `&ClassBindings` instead of `Option<SymbolId>`.
     fn shortcut_static_class(
-        is_declaration: bool,
         class_symbol_id: Option<SymbolId>,
         object: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(SymbolId, ReferenceId)> {
-        if is_declaration
-            && let Some(class_symbol_id) = class_symbol_id
+        if let Some(class_symbol_id) = class_symbol_id
             && let Expression::Identifier(ident) = object
         {
             let reference_id = ident.reference_id();
@@ -267,7 +275,7 @@ impl<'a> ClassProperties<'a> {
             unreachable!()
         };
 
-        if self.private_fields_as_properties {
+        if self.private_field_is_property(&field_expr.field) {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
             call_expr.callee.get_inner_expression_mut().replace_with(|callee| {
                 let Expression::PrivateFieldExpression(field_expr) = callee else { unreachable!() };
@@ -347,7 +355,7 @@ impl<'a> ClassProperties<'a> {
         let Some(ResolvedPrivateProp {
             prop_binding,
             class_bindings,
-            is_static,
+            uses_static_lowering,
             is_method,
             is_accessor,
             is_declaration,
@@ -369,7 +377,7 @@ impl<'a> ClassProperties<'a> {
 
         // Get replacement for callee
 
-        if is_static {
+        if uses_static_lowering {
             // `object.#prop(arg)` -> `_assertClassBrand(Class, object, _prop)._.call(object, arg)`
             // or shortcut `_prop._.call(object, arg)`
 
@@ -380,8 +388,7 @@ impl<'a> ClassProperties<'a> {
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`
             if Self::shortcut_static_class(
-                is_declaration,
-                class_bindings.name_symbol_id(),
+                class_bindings.shortcut_class_symbol_id(is_declaration),
                 &object,
                 ctx,
             )
@@ -400,7 +407,7 @@ impl<'a> ClassProperties<'a> {
                     (Self::create_underscore_member_expression(prop_ident, span, ctx), object)
                 }
             } else {
-                let class_binding = class_bindings.get_or_init_static_binding(ctx);
+                let class_binding = class_bindings.get_or_init_static_private_binding(ctx);
                 let class_ident = class_binding.create_read_expression(ctx);
 
                 // Make 2 copies of `object`
@@ -473,9 +480,9 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
-        if matches!(&assign_expr.left, AssignmentTarget::PrivateFieldExpression(_)) {
-            if !self.private_fields_as_properties
-                && assign_expr.operator.to_logical_operator().is_some()
+        if let AssignmentTarget::PrivateFieldExpression(field) = &assign_expr.left {
+            if assign_expr.operator.to_logical_operator().is_some()
+                && !self.private_field_is_property(&field.field)
                 && ctx
                     .ancestors()
                     .take_while(|ancestor| {
@@ -513,13 +520,13 @@ impl<'a> ClassProperties<'a> {
             get_binding,
             set_binding,
             class_bindings,
-            is_static,
+            uses_static_lowering,
             is_declaration,
             is_method,
             is_accessor,
         } = self.classes_stack.find_get_set_private_prop(&field_expr.field);
 
-        if self.private_fields_as_properties {
+        if class_bindings.private_fields_as_properties() {
             // `object.#prop = value` -> `_classPrivateFieldLooseBase(object, _prop)[_prop] = value`
             // Same for all other assignment operators e.g. `+=`, `&&=`, `??=`.
             assign_expr.left.replace_with(|left| {
@@ -546,7 +553,7 @@ impl<'a> ClassProperties<'a> {
         // Can't break this up into separate functions otherwise, as `&BoundIdentifier`s keep `&self` ref
         // taken by `lookup_private_property` alive.
         // TODO: Try to find a way around this.
-        if is_static && !is_method {
+        if uses_static_lowering && !is_method {
             // TODO: No temp var is required if able to use shortcut version, so want to skip calling
             // `class_bindings.get_or_init_temp_binding(ctx)` if shortcut can be used.
             // But can't pass `class_bindings` as a `&mut ClassBinding` into
@@ -556,9 +563,9 @@ impl<'a> ClassProperties<'a> {
             // for shortcut/no shortcut and do the "can we shortcut?" check here.
             // Then only create temp var for the "no shortcut" branch, and clone the resulting binding
             // before passing it to the "no shortcut" method. What a palaver!
-            let class_binding = class_bindings.get_or_init_static_binding(ctx);
+            let class_binding = class_bindings.get_or_init_static_private_binding(ctx);
             let class_binding = class_binding.clone();
-            let class_symbol_id = class_bindings.name_symbol_id();
+            let class_symbol_id = class_bindings.shortcut_class_symbol_id(is_declaration);
             // Unwrap is safe because `is_method` is false, then static private prop is always have a `get_binding`
             // and `set_binding` and they are always are the same.
             let prop_binding = get_binding.cloned().unwrap();
@@ -568,13 +575,12 @@ impl<'a> ClassProperties<'a> {
                 &prop_binding,
                 &class_binding,
                 class_symbol_id,
-                is_declaration,
                 ctx,
             );
         } else if !is_method || !assign_expr.operator.is_assign() || set_binding.is_none() {
             let class_binding = is_method.then(|| {
-                if is_static {
-                    class_bindings.get_or_init_static_binding(ctx).clone()
+                if uses_static_lowering {
+                    class_bindings.get_or_init_static_private_binding(ctx).clone()
                 } else {
                     class_bindings.brand().clone()
                 }
@@ -620,7 +626,6 @@ impl<'a> ClassProperties<'a> {
         prop_binding: &BoundIdentifier<'a>,
         class_binding: &BoundIdentifier<'a>,
         class_symbol_id: Option<SymbolId>,
-        is_declaration: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
@@ -633,7 +638,7 @@ impl<'a> ClassProperties<'a> {
         // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
         // and look up the `SymbolId`.
         let object_reference =
-            Self::shortcut_static_class(is_declaration, class_symbol_id, &field_expr.object, ctx);
+            Self::shortcut_static_class(class_symbol_id, &field_expr.object, ctx);
 
         // If `object` is reference to class name, there's no need for the class brand assertion.
         // `Class.#prop = value` -> `_prop._ = value`
@@ -979,7 +984,7 @@ impl<'a> ClassProperties<'a> {
             _ => unreachable!(),
         };
 
-        if self.private_fields_as_properties {
+        if self.private_field_is_property(&field_expr.field) {
             // `object.#prop++` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]++`
             update_expr.argument.replace_with(|argument| {
                 let SimpleAssignmentTarget::PrivateFieldExpression(field_expr) = argument else {
@@ -1004,7 +1009,7 @@ impl<'a> ClassProperties<'a> {
             get_binding,
             set_binding,
             class_bindings,
-            is_static,
+            uses_static_lowering,
             is_method,
             is_declaration,
             is_accessor,
@@ -1016,7 +1021,7 @@ impl<'a> ClassProperties<'a> {
         // Only doing this first to match the order Babel creates temp vars.
         let object = field_expr.object.get_inner_expression_mut().take_in(ctx);
 
-        if is_static && !is_method {
+        if uses_static_lowering && !is_method {
             // Unwrap is safe because `is_method` is false, then private prop is always have a `get_binding`
             // and `set_binding` and they are always are the same.
             let prop_binding = get_binding.unwrap();
@@ -1044,8 +1049,7 @@ impl<'a> ClassProperties<'a> {
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`.
             let object_reference = Self::shortcut_static_class(
-                is_declaration,
-                class_bindings.name_symbol_id(),
+                class_bindings.shortcut_class_symbol_id(is_declaration),
                 &object,
                 ctx,
             );
@@ -1060,7 +1064,7 @@ impl<'a> ClassProperties<'a> {
                 let get_expr = Self::create_underscore_member_expression(prop_ident, SPAN, ctx);
                 (get_expr, object, None)
             } else {
-                let class_binding = class_bindings.get_or_init_static_binding(ctx);
+                let class_binding = class_bindings.get_or_init_static_private_binding(ctx);
                 let class_ident = class_binding.create_read_expression(ctx);
                 let class_ident2 = class_binding.create_read_expression(ctx);
 
@@ -1152,8 +1156,8 @@ impl<'a> ClassProperties<'a> {
             // Clone as borrow restrictions.
             // TODO: Try to find a way to avoid this.
             let class_binding = is_method.then(|| {
-                if is_static {
-                    class_bindings.get_or_init_static_binding(ctx).clone()
+                if uses_static_lowering {
+                    class_bindings.get_or_init_static_private_binding(ctx).clone()
                 } else {
                     class_bindings.brand().clone()
                 }
@@ -1875,7 +1879,7 @@ impl<'a> ClassProperties<'a> {
         field_expr: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        if self.private_fields_as_properties {
+        if self.private_field_is_property(&field_expr.field) {
             // "object.#prop`xyz`" -> "_classPrivateFieldLooseBase(object, _prop)[_prop]`xyz`"
             //
             // Babel adds an additional `.bind(object)`:
@@ -1970,6 +1974,9 @@ impl<'a> ClassProperties<'a> {
     /// * Static method
     ///   `#method in object` -> `_checkInRHS(object) === Class`
     ///
+    /// * Decorated static method or accessor
+    ///   `#method in object` -> `_static_brand.has(_checkInRHS(object))`
+    ///
     /// * Instance prop
     ///   `#prop in object` -> `_prop.has(_checkInRHS(object))`
     ///
@@ -2002,15 +2009,16 @@ impl<'a> ClassProperties<'a> {
             class_bindings,
             prop_binding,
             is_method,
-            is_static,
+            uses_static_lowering,
             is_accessor,
             ..
         } = self.classes_stack.find_private_prop(&left);
 
-        if is_static {
-            let class_binding = class_bindings.get_or_init_static_binding(ctx);
+        if uses_static_lowering && class_bindings.identity.static_brand().is_none() {
+            let as_properties = class_bindings.private_fields_as_properties();
+            let class_binding = class_bindings.get_or_init_static_private_binding(ctx);
             let class_ident = class_binding.create_read_expression(ctx);
-            let initialized = if is_method || is_accessor || self.private_fields_as_properties {
+            let initialized = if is_method || is_accessor || as_properties {
                 None
             } else {
                 let storage = prop_binding.create_read_expression(ctx);
@@ -2044,7 +2052,9 @@ impl<'a> ClassProperties<'a> {
             };
         }
 
-        let callee = if is_method {
+        let callee = if uses_static_lowering {
+            class_bindings.identity.static_brand().unwrap().create_read_expression(ctx)
+        } else if is_method {
             class_bindings.brand().create_read_expression(ctx)
         } else {
             prop_binding.create_read_expression(ctx)

@@ -1,4 +1,4 @@
-//! Lowering of `accessor` properties.
+//! Lowering of decorated `accessor` properties.
 
 use oxc_allocator::{ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
@@ -21,7 +21,7 @@ use crate::{
     },
 };
 
-use super::StandardDecoratorState;
+use super::{ClassDecoratorTables, StandardDecoratorState};
 use crate::decorator::accessor::{AccessorKeys, GeneratedAccessor, lower_auto_accessors};
 
 impl<'a> StandardDecoratorState<'a> {
@@ -29,6 +29,7 @@ impl<'a> StandardDecoratorState<'a> {
     pub(crate) fn wrap_native_accessor_expression(
         &mut self,
         expression: &mut Expression<'a>,
+        lowering: ClassLowering,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expression else { return };
@@ -52,10 +53,68 @@ impl<'a> StandardDecoratorState<'a> {
             return;
         }
         // A class which lowers its own decorators and accessors wraps them when it is entered.
-        if !ctx.state.class_lowering_before_entry(class).is_native() {
+        if !lowering.is_native() {
             return;
         }
-        if class.id.is_none()
+        self.wrap_class_expression_in_iife(expression, ctx);
+    }
+
+    /// Give a lowered class evaluated in a parameter or field initializer its own scope.
+    ///
+    /// Decorator state (`_init`, decorator arrays, class temporaries) is declared in the nearest
+    /// statement list. A parameter initializer or a field initializer can run many times without
+    /// re-entering that statement list, so every evaluation would share one `_init`:
+    ///
+    /// ```js
+    /// function f(v, C = class { @tag(v) x = 0 }) { return C }
+    /// ```
+    ///
+    /// Wrap the class in `(() => { ...; return class {} })()`. An arrow function keeps `this`,
+    /// `super`, `new.target` and `arguments`, and neither initializer can contain `await` or
+    /// `yield`, so the wrapper is transparent.
+    pub(crate) fn wrap_class_in_initializer(
+        &mut self,
+        expression: &mut Expression<'a>,
+        lowering: ClassLowering,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::ClassExpression(_) = expression else { return };
+        if !lowering.handles_standard_decorators() || !lowering.lowers_fields() {
+            return;
+        }
+        let in_initializer = ctx
+            .ancestors()
+            .take_while(|ancestor| {
+                !matches!(
+                    ancestor,
+                    Ancestor::FunctionBodyStatements(_)
+                        | Ancestor::ArrowFunctionExpressionBody(_)
+                        | Ancestor::StaticBlockBody(_)
+                        | Ancestor::ClassBody(_)
+                )
+            })
+            .any(|ancestor| {
+                matches!(
+                    ancestor,
+                    Ancestor::FormalParameterInitializer(_)
+                        | Ancestor::PropertyDefinitionValue(_)
+                        | Ancestor::AccessorPropertyValue(_)
+                )
+            });
+        if !in_initializer {
+            return;
+        }
+        self.wrap_class_expression_in_iife(expression, ctx);
+    }
+
+    /// Wrap a class expression in an IIFE, capturing its contextual name first.
+    fn wrap_class_expression_in_iife(
+        &mut self,
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Expression::ClassExpression(class) = expression
+            && class.id.is_none()
             && let Some(name) = self.infer_class_expression_name(class.unstable_address(), ctx)
         {
             self.named_classes.insert(class.unstable_address(), name);
@@ -118,29 +177,42 @@ impl<'a> StandardDecoratorState<'a> {
         if lowering.has_auto_accessor() {
             let binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
             let scope_id = class.scope_id();
-            self.lower_auto_accessors(&mut class.body, scope_id, binding.as_ref(), true, ctx);
+            self.lower_auto_accessors(
+                &mut class.body,
+                scope_id,
+                binding.as_ref(),
+                AccessorKeys::Native,
+                // Nothing reads accessor tables for a native class.
+                None,
+                ctx,
+            );
         }
     }
 
     /// Entry phase: lower `accessor` properties to private storage + getter/setter pair.
     ///
-    /// `accessor x = 1` -> `#_x_accessor_storage = 1; get x() { return this.#_x_accessor_storage; } set x(value) { ... }`
+    /// `@dec accessor x = 1` -> `#_x_accessor_storage = 1; @dec get x() { return this.#_x_accessor_storage; } set x(value) { ... }`
+    ///
+    /// Decorators move to the getter, which is recorded so it's decorated with `accessor` kind.
     pub(crate) fn lower_auto_accessors(
         &mut self,
         body: &mut ClassBody<'a>,
         class_scope_id: ScopeId,
         static_binding: Option<&BoundIdentifier<'a>>,
-        native_fields: bool,
+        keys: AccessorKeys,
+        mut tables: Option<&mut ClassDecoratorTables<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let keys = if native_fields { AccessorKeys::Native } else { AccessorKeys::Lowered };
         lower_auto_accessors(
             body,
             class_scope_id,
             static_binding,
             keys,
-            |GeneratedAccessor { storage, setter }, ctx| {
-                if !native_fields {
+            |GeneratedAccessor { storage, getter, setter }, ctx| {
+                if let Some(tables) = &mut tables {
+                    tables.record_accessor(storage, getter, setter);
+                }
+                if keys != AccessorKeys::Native {
                     return;
                 }
                 let key = &setter.key;
@@ -148,7 +220,6 @@ impl<'a> StandardDecoratorState<'a> {
                 if let Expression::ClassExpression(class) = init.without_parentheses()
                     && class.id.is_none()
                     && !self.named_classes.contains_key(&class.address())
-                    && !ctx.state.class_lowering_before_entry(class).is_preserved()
                 {
                     let name = Self::decorator_key_expr(key, ctx);
                     self.named_classes.insert(class.address(), name);

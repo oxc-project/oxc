@@ -33,7 +33,7 @@ pub(super) fn static_key_name<'a>(
 
 /// How [`lower_auto_accessors`] converts computed keys shared by a getter and setter.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum AccessorKeys {
+pub enum AccessorKeys {
     /// Class fields stay native. Every non-identifier key is converted with `toPropertyKey` once
     /// and stored in a temp var before the class.
     Native,
@@ -49,6 +49,7 @@ pub(super) enum AccessorKeys {
 /// traversal visits them.
 pub(super) struct GeneratedAccessor<'r, 'a> {
     pub storage: &'r mut ArenaBox<'a, PropertyDefinition<'a>>,
+    pub getter: &'r ArenaBox<'a, MethodDefinition<'a>>,
     pub setter: &'r ArenaBox<'a, MethodDefinition<'a>>,
 }
 
@@ -192,7 +193,7 @@ pub(super) fn lower_auto_accessors<'a>(
             None,
             ctx,
         );
-        record(GeneratedAccessor { storage: &mut storage, setter: &setter }, ctx);
+        record(GeneratedAccessor { storage: &mut storage, getter: &getter, setter: &setter }, ctx);
         new_body.extend([
             ClassElement::PropertyDefinition(storage),
             ClassElement::MethodDefinition(getter),
