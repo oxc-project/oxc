@@ -1348,5 +1348,6 @@ class Cast
 
 Prettier's output moves an own-line comment after `extends` before the keyword in a named class (or one with type parameters), so the superclass no longer starts the line after it (a `-next-line` target lost);
 for an own-line block comment, a JSDoc cast here, its output is not a fixpoint (a second pass glues the cast onto the `extends` line).
-Ours prints every class as Prettier prints an anonymous one: a comment after the keyword leads the superclass, a `//` on the keyword's line (`extends // c` + break + `B`), a block comment on a line of its own.
+After a class's `implements` or an interface's `extends` its output keeps the comment there (`implements // c` + break + `B` at column 0), but a second pass moves it before the keyword: not a fixpoint either.
+Ours prints every heritage keyword as Prettier prints an anonymous class's `extends`: a comment after the keyword leads the first type, a `//` on the keyword's line (`extends // c` + break + `B`), a block comment on a line of its own.
 Comments before the keyword trail the name or the type parameters, as Prettier prints them.

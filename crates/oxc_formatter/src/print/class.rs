@@ -304,9 +304,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
         let head = format_with(|f| {
             if let Some(id) = self.id() {
                 write!(f, space());
-                if type_parameters.is_none() && (super_class.is_some() || implements.is_empty()) {
+                if type_parameters.is_none() {
                     // The id's trailing pass would claim an end-of-line comment
-                    // and flush it past the body's `{`, or past the `extends` keyword;
+                    // and flush it past the body's `{`, or past a heritage keyword;
                     // leave it for the head-body separator or the split below.
                     FormatNodeWithoutTrailingComments(&id).fmt(f);
                 } else {
@@ -326,10 +326,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                         }
                     )
                 );
-                // With a superclass, the split below prints them (the trailing pass would cross `extends`)
-                if super_class.is_none() && !implements.is_empty() {
-                    type_parameters.format_trailing_comments(f);
-                }
             }
 
             // Handle comments that appear between the class name and the extends keyword.
@@ -340,11 +336,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
             //
             // The logic here ensures these comments are formatted as trailing comments
             // after the class name, maintaining their position before the extends clause.
-            // Only those before `extends`: the ones after it lead the superclass (`extends // c` + break + `B`),
+            // Only those before the first heritage keyword: the ones after it lead the heritage (`extends // c` + break + `B`),
             // so `B` still starts the line after an own-line one (FORMATTER_POLICY "Comment placement")
-            if let Some(super_class) = &super_class {
-                let (comments, _) =
-                    f.context().comments().split_at_token_before(super_class.span().start);
+            let first_heritage = super_class
+                .as_ref()
+                .map(|super_class| super_class.span().start)
+                .or_else(|| implements.first().map(|implements| implements.span().start));
+            if let Some(first_heritage) = first_heritage {
+                let (comments, _) = f.context().comments().split_at_token_before(first_heritage);
                 if comments.iter().any(Comment::preceded_by_newline) {
                     indent(&FormatTrailingComments::Comments(comments)).fmt(f);
                 } else {
@@ -397,15 +396,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     }
                 });
 
-                // The head printed the comments before the keyword.
-                // An own-line block comment after it keeps its line:
-                // inlined (`extends /* c */` + break), a second pass would glue the superclass to it
-                let own_line_block = f
-                    .context()
-                    .comments()
-                    .comments_before(extends.span().start)
-                    .iter()
-                    .any(|c| c.is_block() && c.preceded_by_newline());
+                // The head printed the comments before the keyword
+                let own_line_block = has_own_line_block(
+                    f.context().comments().comments_before(extends.span().start),
+                );
                 let format_extends = format_with(|f| {
                     write!(f, "extends");
                     if own_line_block {
@@ -424,8 +418,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
             }
 
             if !implements.is_empty() {
-                let leading_comments =
-                    f.context().comments().comments_before(implements[0].span().start);
+                // After a superclass, those before the keyword lead it; the ones after it lead the first type
+                let (leading_comments, after_keyword) =
+                    f.context().comments().split_at_token_before(implements[0].span().start);
+                let own_line_block = has_own_line_block(after_keyword);
 
                 if usize::from(super_class.is_some()) + implements.len() > 1 {
                     write!(
@@ -442,13 +438,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     let format_inner = format_with(|f| {
                         write!(
                             f,
-                            [
-                                FormatLeadingComments::Comments(leading_comments),
-                                "implements",
-                                space(),
-                                implements,
-                            ]
+                            [FormatLeadingComments::Comments(leading_comments), "implements"]
                         );
+                        if own_line_block {
+                            write!(f, hard_line_break());
+                        } else {
+                            write!(f, space());
+                        }
+                        write!(f, implements);
                     });
 
                     if group_mode {
@@ -513,11 +510,13 @@ fn should_group<'a>(class: &AstNode<'_, 'a, Class<'a>>, f: &JsFormatter<'_, 'a>)
 
     let comments = f.comments();
 
-    // Without an id the span walk below sees nothing before the superclass
+    // Without an id the span walk below sees nothing before the first heritage
+    let first_heritage = heritage
+        .map(|heritage| heritage.expression.span().start)
+        .or_else(|| class.implements.first().map(|implements| implements.span().start));
     if class.id.is_none()
         && class.type_parameters.is_none()
-        && heritage
-            .is_some_and(|heritage| comments.has_comment_before(heritage.expression.span().start))
+        && first_heritage.is_some_and(|start| comments.has_comment_before(start))
     {
         return true;
     }
@@ -615,6 +614,13 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 /// `in` or `instanceof` would continue the previous property's value as a binary operator.
 /// A string key may be printed unquoted, so it is checked by its value.
 /// See DIVERGENCES.md#string-binary-keyword-class-key
+/// An own-line block comment right after a heritage keyword keeps its line:
+/// inlined (`extends /* c */` + break), a second pass would glue the type to it.
+/// A `//` inlines (`extends // c` + break), as Prettier prints it, and stays put.
+pub fn has_own_line_block(after_keyword: &[Comment]) -> bool {
+    after_keyword.iter().any(|c| c.is_block() && c.preceded_by_newline())
+}
+
 fn is_binary_keyword_key(key: &PropertyKey<'_>) -> bool {
     match key {
         PropertyKey::StaticIdentifier(ident) => matches!(ident.name.as_str(), "in" | "instanceof"),

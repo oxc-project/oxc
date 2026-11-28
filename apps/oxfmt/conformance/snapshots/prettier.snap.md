@@ -193,7 +193,7 @@
 
 ## typescript
 
-646/699 (92.42%)
+647/699 (92.56%)
 
 ### Failed
 
@@ -209,11 +209,9 @@
   - ❓unclassified
 - externals/prettier/typescript/cast/18406.ts (💥, 84.21%)
   - ❓unclassified
-- externals/prettier/typescript/class-comment/class-implements.ts (💥, 83.52%)
+- externals/prettier/typescript/class-comment/class-implements.ts (💥, 91.30%)
   - ❓unclassified
 - externals/prettier/typescript/class-comment/declare.ts (💥, 72.00%)
-  - ❓unclassified
-- externals/prettier/typescript/class-comment/issue-16228.ts (💥, 75.00%)
   - ❓unclassified
 - externals/prettier/typescript/comments/before-body/before-body.ts (💥, 57.89%)
   - ❓unclassified
