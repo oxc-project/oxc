@@ -5974,6 +5974,9 @@
             }
           ]
         },
+        "node/require-child-process-timeout": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "object-shorthand": {
           "anyOf": [
             {
