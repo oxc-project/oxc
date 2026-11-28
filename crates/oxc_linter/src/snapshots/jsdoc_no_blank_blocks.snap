@@ -27,44 +27,37 @@ source: crates/oxc_linter/src/tester.rs
   help: Delete this code.
 
   ⚠ jsdoc(no-blank-blocks): No empty blocks
-   ╭─[no_blank_blocks.tsx:2:24]
- 1 │     
- 2 │ ╭─▶                     /**
- 3 │ │                        *
- 4 │ ╰─▶                      */
- 5 │                       
+   ╭─[no_blank_blocks.tsx:3:22]
+ 2 │                     /**
+ 3 │                      *
+   ·                      ─
+ 4 │                      */
    ╰────
   help: Delete this code.
 
   ⚠ jsdoc(no-blank-blocks): No empty blocks
-   ╭─[no_blank_blocks.tsx:2:24]
- 1 │     
- 2 │ ╭─▶                     /**
- 3 │ │                        *
- 4 │ │                        *
- 5 │ ╰─▶                      */
- 6 │                       
+   ╭─[no_blank_blocks.tsx:4:22]
+ 3 │                      *
+ 4 │                      *
+   ·                      ─
+ 5 │                      */
    ╰────
   help: Delete this code.
 
   ⚠ jsdoc(no-blank-blocks): No empty blocks
-   ╭─[no_blank_blocks.tsx:2:24]
- 1 │     
- 2 │ ╭─▶                     /**
- 3 │ │                        *
- 4 │ │                        *
- 5 │ ╰─▶                      */
- 6 │                       
+   ╭─[no_blank_blocks.tsx:4:22]
+ 3 │                      *
+ 4 │                      *
+   ·                      ─
+ 5 │                      */
    ╰────
 
   ⚠ jsdoc(no-blank-blocks): No empty blocks
-   ╭─[no_blank_blocks.tsx:2:24]
- 1 │     
- 2 │ ╭─▶                     /**
- 3 │ │                        *
- 4 │ │                        *
- 5 │ ╰─▶                      */
- 6 │                       
+   ╭─[no_blank_blocks.tsx:4:22]
+ 3 │                      *
+ 4 │                      *
+   ·                      ─
+ 5 │                      */
    ╰────
 
   ⚠ jsdoc(no-blank-blocks): No empty blocks

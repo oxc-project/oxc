@@ -76,11 +76,13 @@ impl Rule for NoBlankBlocks {
                 continue;
             }
             let content_span = Span::new(comment.span.start + 3, comment.span.end - 2);
-            if !is_blank_jsdoc(ctx.source_range(content_span)) {
+            let content = ctx.source_range(content_span);
+            if !is_blank_jsdoc(content) {
                 continue;
             }
 
-            let diagnostic = no_blank_blocks_diagnostic(content_span);
+            let diagnostic =
+                no_blank_blocks_diagnostic(last_description_line(content_span, content));
             if self.enable_fixer
                 && let Some(span) = fix_span(comment.span, source_text)
             {
@@ -98,6 +100,21 @@ fn is_blank_jsdoc(content: &str) -> bool {
         let line = line.trim();
         line.is_empty() || (index > 0 && line == "*")
     })
+}
+
+/// Mark the final blank line inside the block if it has one.
+fn last_description_line(content_span: Span, content: &str) -> Span {
+    if let Some((body, _)) = content.rsplit_once('\n')
+        && let Some((prefix, line)) = body.rsplit_once('\n')
+    {
+        let star = line.find('*');
+        let offset = prefix.len() + 1 + star.unwrap_or(0);
+        return Span::sized(
+            content_span.start + u32::try_from(offset).expect("offset is inside the comment span"),
+            u32::from(star.is_some()),
+        );
+    }
+    content_span
 }
 
 /// Expands a standalone JSDoc block to include its indentation and following line ending.
