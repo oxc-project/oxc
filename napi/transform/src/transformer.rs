@@ -1,4 +1,4 @@
-use std::{ops::ControlFlow, path::Path};
+use std::{mem, ops::ControlFlow, path::Path};
 
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
@@ -63,9 +63,13 @@ pub struct TransformResult {
     pub errors: Vec<OxcError>,
 }
 
+/// Async task for [`transform`].
 pub struct TransformTask {
+    /// File path.
     filename: String,
+    /// Source text.
     source_text: String,
+    /// Options. `None` if no options provided, or if `compute` has run.
     options: Option<TransformOptions>,
 }
 
@@ -75,7 +79,11 @@ impl Task for TransformTask {
     type Output = TransformResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(transform_impl(&self.filename, &self.source_text, self.options.take()))
+        // Move all data out of the task, so it's dropped here on worker thread
+        let filename = mem::take(&mut self.filename);
+        let source_text = mem::take(&mut self.source_text);
+        let options = self.options.take();
+        Ok(transform_impl(&filename, &source_text, options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {

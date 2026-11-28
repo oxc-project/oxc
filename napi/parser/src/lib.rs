@@ -77,10 +77,14 @@ pub fn raw_transfer_supported() -> bool {
     cfg!(all(target_pointer_width = "64", target_endian = "little"))
 }
 
+/// Async task for [`parse`].
 pub struct ResolveTask {
+    /// File path.
     filename: String,
+    /// Source text.
     source_text: String,
-    options: ParserOptions,
+    /// Options. `None` if no options provided, or if `compute` has run.
+    options: Option<ParserOptions>,
 }
 
 #[napi]
@@ -89,8 +93,11 @@ impl Task for ResolveTask {
     type Output = ParseResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
+        // Move all data out of the task, so it's dropped here on worker thread
+        let filename = mem::take(&mut self.filename);
         let source_text = mem::take(&mut self.source_text);
-        Ok(parse_with_return(&self.filename, &source_text, &self.options))
+        let mut options = self.options.take();
+        Ok(parse_with_return(&filename, &source_text, &mut options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -115,7 +122,6 @@ pub fn parse(
     source_text: String,
     options: Option<ParserOptions>,
 ) -> AsyncTask<ResolveTask> {
-    let options = options.unwrap_or_default();
     AsyncTask::new(ResolveTask { filename, source_text, options })
 }
 
@@ -132,13 +138,29 @@ pub fn parse(
 pub fn parse_sync(
     filename: String,
     source_text: String,
-    options: Option<ParserOptions>,
+    mut options: Option<ParserOptions>,
 ) -> ParseResult {
-    let options = options.unwrap_or_default();
-    parse_with_return(&filename, &source_text, &options)
+    parse_with_return(&filename, &source_text, &mut options)
 }
 
-fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
+/// Parse `source_text`, and convert the AST, module record, comments and errors
+/// to a [`ParseResult`].
+///
+/// The [`SourceType`] to parse as is determined from `filename` and `options`.
+///
+/// `options` are the options as passed in from JS.
+/// If `None`, default options are used, and are written into `options` in place.
+///
+/// `options` is `&mut Option<ParserOptions>`, not an owned `Option<ParserOptions>`, to avoid
+/// copying the options. This function has 2 callers, so it's unlikely to be inlined into them,
+/// and passing the options by value would mean copying them on the stack.
+/// It's `&mut` so that the default options have somewhere to be written to.
+fn parse_with_return(
+    filename: &str,
+    source_text: &str,
+    options: &mut Option<ParserOptions>,
+) -> ParseResult {
+    let options = &*options.get_or_insert_default();
     let allocator = Allocator::default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());

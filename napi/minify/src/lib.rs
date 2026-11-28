@@ -1,6 +1,6 @@
 #![expect(clippy::needless_pass_by_value)]
 
-use std::{collections::BTreeMap, path::PathBuf};
+use std::{collections::BTreeMap, mem, path::PathBuf};
 
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
@@ -44,9 +44,13 @@ pub struct MinifyResult {
     pub mangle_cache: Option<BTreeMap<String, Either<String, bool>>>,
 }
 
+/// Async task for [`minify`].
 pub struct MinifyTask {
+    /// File path.
     filename: String,
+    /// Source text.
     source_text: String,
+    /// Options. `None` if no options provided, or if `compute` has run.
     options: Option<MinifyOptions>,
 }
 
@@ -56,7 +60,11 @@ impl Task for MinifyTask {
     type Output = MinifyResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(minify_impl(&self.filename, &self.source_text, self.options.take()))
+        // Move all data out of the task, so it's dropped here on worker thread
+        let filename = mem::take(&mut self.filename);
+        let source_text = mem::take(&mut self.source_text);
+        let mut options = self.options.take();
+        Ok(minify_impl(&filename, &source_text, &mut options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
@@ -81,17 +89,30 @@ pub fn minify(
 pub fn minify_sync(
     filename: String,
     source_text: String,
-    options: Option<MinifyOptions>,
+    mut options: Option<MinifyOptions>,
 ) -> MinifyResult {
-    minify_impl(&filename, &source_text, options)
+    minify_impl(&filename, &source_text, &mut options)
 }
 
-fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>) -> MinifyResult {
+/// Parse `source_text`, minify it, and generate code.
+///
+/// `options` are the options as passed in from JS.
+/// If `None`, default options are used, and are written into `options` in place.
+///
+/// `options` is `&mut Option<MinifyOptions>`, not an owned `Option<MinifyOptions>`, to avoid
+/// copying the options. This function has 2 callers, so it's unlikely to be inlined into them,
+/// and passing the options by value would mean copying them on the stack.
+/// It's `&mut` so that the default options have somewhere to be written to.
+fn minify_impl(
+    filename: &str,
+    source_text: &str,
+    options: &mut Option<MinifyOptions>,
+) -> MinifyResult {
     use oxc_codegen::CodegenOptions;
 
-    let options = options.unwrap_or_default();
+    let options = &*options.get_or_insert_default();
 
-    let mut minifier_options = match MinifierOptions::try_from(&options) {
+    let mut minifier_options = match MinifierOptions::try_from(options) {
         Ok(options) => options,
         Err(error) => {
             // Options error is not an error in the source text, so don't produce a codeframe

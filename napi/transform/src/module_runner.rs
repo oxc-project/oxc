@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{mem, path::Path};
 
 use napi::{
     Either, Task,
@@ -18,7 +18,7 @@ use oxc::{
 use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
 
-#[derive(Default)]
+#[derive(Clone, Copy, Default)]
 #[napi(object)]
 pub struct ModuleRunnerTransformOptions {
     /// Enable source map generation.
@@ -60,9 +60,13 @@ pub struct ModuleRunnerTransformResult {
     pub errors: Vec<OxcError>,
 }
 
+/// Async task for [`module_runner_transform`].
 pub struct ModuleRunnerTransformTask {
+    /// File path.
     filename: String,
+    /// Source text.
     source_text: String,
+    /// Options. `None` if no options provided.
     options: Option<ModuleRunnerTransformOptions>,
 }
 
@@ -72,7 +76,11 @@ impl Task for ModuleRunnerTransformTask {
     type Output = ModuleRunnerTransformResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(module_runner_transform_impl(&self.filename, &self.source_text, self.options.take()))
+        // Move filename and source text out of the task, so they're dropped here on worker thread.
+        // `ModuleRunnerTransformOptions` is `Copy` so no need to move it.
+        let filename = mem::take(&mut self.filename);
+        let source_text = mem::take(&mut self.source_text);
+        Ok(module_runner_transform_impl(&filename, &source_text, self.options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
