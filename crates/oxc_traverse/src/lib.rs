@@ -158,10 +158,43 @@ pub fn traverse_mut<'a, State, Tr: Traverse<'a, State>>(
     ctx.into_scoping()
 }
 
+/// Guard which resets a [`TraverseCtx`]'s ancestry stack to its initial state when dropped.
+///
+/// `walk_*` functions push `Ancestor`s onto the ancestry stack as they descend the AST, and pop
+/// them off on the way back up. If a visitor method panics, the unwind skips the pending pops, so
+/// the stack would be left containing stale `Ancestor`s. If the `TraverseCtx` is then reused (e.g.
+/// a [`ReusableTraverseCtx`] passed to [`traverse_mut_with_ctx`] again), those stale `Ancestor`s
+/// could be used to violate the aliasing rules which [`TraverseAncestry`] exists to uphold.
+///
+/// This guard resets the stack back to single `Ancestor::None` when dropped, so the safety
+/// invariants of [`TraverseAncestry`] are upheld even if a visitor panics and the panic is caught
+/// by the caller (e.g. with `std::panic::catch_unwind`).
+///
+/// On the normal path (no panic), the stack is already back to its initial state when the guard is
+/// dropped, so the reset is a no-op (a single length comparison).
+struct AncestryResetGuard<'c, 'a, State>(&'c mut TraverseCtx<'a, State>);
+
+impl<State> Drop for AncestryResetGuard<'_, '_, State> {
+    #[inline]
+    fn drop(&mut self) {
+        self.0.ancestry.reset();
+    }
+}
+
 /// Traverse AST with a [`Traverse`] impl, reusing an existing [`ReusableTraverseCtx`].
 ///
 /// [`ReusableTraverseCtx`] is specific to a single AST. It will likely cause malfunction if
 /// `traverse_mut_with_ctx` is called with a [`Program`] and [`ReusableTraverseCtx`] which do not match.
+///
+/// If a visitor method panics, the panic propagates to the caller, and the ancestry stack of the
+/// [`ReusableTraverseCtx`] is reset to its initial state as the panic unwinds. The context can
+/// safely be reused afterwards.
+///
+/// # Panics
+///
+/// Panics if the ancestry stack of `ctx` is not in its initial state (single `Ancestor::None`)
+/// on entry or return. [`ReusableTraverseCtx`] maintains this invariant, so this can only happen
+/// if `ctx` was misused.
 ///
 /// See [`traverse_mut`] for more details of how traversal works.
 pub fn traverse_mut_with_ctx<'a, State, Tr: Traverse<'a, State>>(
@@ -174,8 +207,12 @@ pub fn traverse_mut_with_ctx<'a, State, Tr: Traverse<'a, State>>(
     let ctx = ctx.get_mut();
 
     // Check that `TraverseAncestry`'s stack is in correct state
-    debug_assert_eq!(ctx.ancestors_depth(), 1);
-    debug_assert!(matches!(ctx.parent(), Ancestor::None));
+    assert_eq!(ctx.ancestors_depth(), 1);
+    assert!(matches!(ctx.parent(), Ancestor::None));
+
+    // Ensure `TraverseAncestry`'s stack is back in its initial state when traversal ends, whether
+    // by returning normally or by a panic in a visitor method unwinding out of `walk_ast`
+    let guard = AncestryResetGuard(&mut *ctx);
 
     // SAFETY:
     // `program` is a valid pointer to a `Program<'a>` - it was created from a `&mut Program<'a>`.
@@ -185,17 +222,104 @@ pub fn traverse_mut_with_ctx<'a, State, Tr: Traverse<'a, State>>(
     // so that cannot be changed by the caller.
     //
     // `walk_*` methods never alter the initial entry on `TraverseAncestry`'s stack.
-    // `walk_*` methods always follow a `push` to `TraverseAncestry`'s stack with a corresponding `pop`.
-    // So at end of traversal, `TraverseAncestry`'s stack is always back in the state it was at start
-    // of traversal (single `Ancestor::None` entry).
+    // `walk_*` methods follow a `push` to `TraverseAncestry`'s stack with a corresponding `pop` -
+    // unless a visitor method panics, in which case the unwind skips the pending pops, and
+    // `AncestryResetGuard` resets the stack to its initial state as it is dropped.
     //
     // `ctx` was contained in a `ReusableTraverseCtx<'a>`. `ReusableTraverseCtx<'a>` provides no external
     // interfaces for caller to mutate the `TraverseCtx` it contains.
     //
     // Therefore `TraverseAncestry`'s stack is guaranteed to only contain single `Ancestor::None` entry.
-    unsafe { walk_ast(traverser, program, ctx) };
+    unsafe { walk_ast(traverser, program, &mut *guard.0) };
+
+    drop(guard);
 
     // Check that `TraverseAncestry`'s stack is in correct state
     debug_assert_eq!(ctx.ancestors_depth(), 1);
     debug_assert!(matches!(ctx.parent(), Ancestor::None));
+}
+
+#[cfg(test)]
+mod tests {
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    use oxc_allocator::Allocator;
+    use oxc_ast::ast::{Expression, ExpressionStatement, Program, Statement};
+    use oxc_ast::builder::AstBuilder;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::{SPAN, SourceType};
+
+    use crate::{Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
+
+    /// Visitor which panics partway through traversal, simulating a bug in a transformer pass
+    /// whose panic is caught by an embedding driver.
+    struct PanickingVisitor;
+
+    impl Traverse<'_, ()> for PanickingVisitor {
+        fn enter_expression_statement(
+            &mut self,
+            _node: &mut ExpressionStatement<'_>,
+            _ctx: &mut TraverseCtx<'_, ()>,
+        ) {
+            panic!("simulated bug in a transformer visitor");
+        }
+    }
+
+    /// Visitor which records the ancestry state at the start of a traversal.
+    #[derive(Default)]
+    struct InspectingVisitor {
+        program_entry_depth: usize,
+        program_entry_parent_is_none: bool,
+    }
+
+    impl Traverse<'_, ()> for InspectingVisitor {
+        fn enter_program(&mut self, _node: &mut Program<'_>, ctx: &mut TraverseCtx<'_, ()>) {
+            self.program_entry_depth = ctx.ancestors_depth();
+            self.program_entry_parent_is_none = matches!(ctx.parent(), Ancestor::None);
+        }
+    }
+
+    fn make_program<'a>(ast: &AstBuilder<'a>) -> Program<'a> {
+        let stmt = Statement::new_expression_statement(
+            SPAN,
+            Expression::new_boolean_literal(SPAN, true, ast),
+            ast,
+        );
+        Program::new(SPAN, SourceType::mjs(), "", [], None, [], [stmt], ast)
+    }
+
+    /// Regression test for GH issue #30240: a visitor panic unwinding out of `walk_ast` skips the
+    /// `pop_stack`s which correspond to its `push_stack`s, so `TraverseAncestry`'s stack would be
+    /// left with stale `Ancestor`s. If the panic is caught (`catch_unwind`), reusing the
+    /// `ReusableTraverseCtx` must not expose those stale `Ancestor`s.
+    #[test]
+    fn ancestry_stack_is_reset_after_visitor_panic() {
+        let allocator = Allocator::default();
+        let ast = AstBuilder::new(&allocator);
+        let mut program = make_program(&ast);
+
+        // Semantic analysis assigns the node / scope IDs which `walk_*` methods read
+        let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+        let mut ctx = ReusableTraverseCtx::new((), scoping, &allocator);
+
+        // 1st traversal: panic partway through, and catch the panic like an embedding could
+        let mut panicking = PanickingVisitor;
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            traverse_mut_with_ctx(&mut panicking, &mut program, &mut ctx);
+        }));
+        assert!(result.is_err());
+
+        // 2nd traversal: the reused context must start with a clean ancestry stack
+        // (`enter_program` runs before `walk_program` pushes anything onto the stack)
+        let mut inspecting = InspectingVisitor::default();
+        traverse_mut_with_ctx(&mut inspecting, &mut program, &mut ctx);
+        assert_eq!(inspecting.program_entry_depth, 1);
+        assert!(inspecting.program_entry_parent_is_none);
+
+        // ...and end with a clean ancestry stack
+        // SAFETY: The context is not used again after unwrapping it
+        let ctx = unsafe { ctx.unwrap() };
+        assert_eq!(ctx.ancestors_depth(), 1);
+        assert!(matches!(ctx.parent(), Ancestor::None));
+    }
 }
