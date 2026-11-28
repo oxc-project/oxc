@@ -242,6 +242,9 @@ pub(super) fn write_spaced_keyword(
     write!(f, text(keyword));
 }
 
+/// A type prints as one unit (`[String!]!`): only its closers (`]`, `!`) follow the name,
+/// so a comment between the name and the type's end prints after the whole type,
+/// keeping its line relation to the name (as Prettier does): a same-line one stays on that line, an own-line one gets its own.
 pub(super) fn write_type<'a>(ty: &Type<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     // A wrapped type spelled as printed is one slice, claimed at its start like the piecewise path;
     // a named one is a single text anyway
@@ -251,20 +254,32 @@ pub(super) fn write_type<'a>(ty: &Type<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
         verbatim::write_slice(span, f);
         return;
     }
+    if let Some(name_end) = write_type_tokens(ty, f) {
+        flush_trailing_inside_comments(name_end, span.end, f);
+    }
+}
+
+/// Writes the type's tokens, returning its name's end (`None` for a missing type).
+fn write_type_tokens<'a>(ty: &Type<'a>, f: &mut GraphqlFormatter<'_, 'a>) -> Option<u32> {
     match ty {
-        Type::Named(named) => write_named_type(named, f),
+        Type::Named(named) => {
+            write_named_type(named, f);
+            Some(to_span(named.name.span).end)
+        }
         Type::List(list) => {
             // Claim at the `[` so a leading comment lands before it, not inside at the first name
             flush_leading_comments(to_span(list.span).start, f);
             write!(f, "[");
-            write_type(&list.ty, f);
+            let name_end = write_type_tokens(&list.ty, f);
             write!(f, "]");
+            name_end
         }
         Type::NonNull(non_null) => {
-            write_type(&non_null.ty, f);
+            let name_end = write_type_tokens(&non_null.ty, f);
             write!(f, "!");
+            name_end
         }
-        Type::Missing(_) => {}
+        Type::Missing(_) => None,
     }
 }
 

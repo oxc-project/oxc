@@ -105,8 +105,8 @@ type WithArguments {
   g:
     # before type
     String
-  # comment in an unclaimed position (between the type and its `!`):
-  # falls back to a trailing comment on its own line
+  # comment between a type's name and its `!`: prints after the type on its own line
+  # (tests/fixtures/graphql/type-inner-comments.graphql)
   h: String
     # before bang
     !

@@ -142,7 +142,7 @@ where
         } else {
             flush_leading_comments(start, f);
             write_item(i, f);
-            // Drain positions no inner printer claims (e.g. between a type and its `!`)
+            // Drain positions no inner printer claims (a safety net, see the helper)
             flush_overlooked_inside_comments(end, f);
         }
         prev_end = Some(end);
