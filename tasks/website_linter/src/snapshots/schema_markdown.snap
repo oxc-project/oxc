@@ -813,6 +813,14 @@ default: `false`
 Only for `require-(yields|returns|description|example|param|throws)` rule
 
 
+#### settings.jsdoc.mode
+
+type: `"typescript" | "jsdoc" | "closure" | "permissive"`
+
+
+Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `"typescript"`.
+
+
 #### settings.jsdoc.overrideReplacesDocs
 
 type: `boolean`
@@ -820,6 +828,14 @@ type: `boolean`
 default: `true`
 
 Only for `require-(yields|returns|description|example|param|throws)` rule
+
+
+#### settings.jsdoc.structuredTags
+
+type: `Record<string, object>`
+
+
+Custom tag definitions. `jsdoc/check-tag-names` recognizes each tag name.
 
 
 #### settings.jsdoc.tagNamePreference

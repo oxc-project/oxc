@@ -411,18 +411,16 @@ export type CaseType2 = "camelCase" | "snake_case";
 export type AllowYoda = "never" | "always";
 export type OxlintOverrides = OxlintOverride[];
 export type JestVersionSchema = number | string;
+export type JSDocMode = "typescript" | "jsdoc" | "closure" | "permissive";
 export type TagNamePreference =
   | string
   | {
-      message: string;
-      replacement: string;
+      message?: string;
+      replacement?: string;
       [k: string]: unknown | undefined;
     }
-  | {
-      message: string;
-      [k: string]: unknown | undefined;
-    }
-  | boolean;
+  | boolean
+  | null;
 export type OneOrManyFor_String = string | string[];
 export type CustomComponent =
   | string
@@ -2933,6 +2931,14 @@ export interface CheckTagNamesConfig {
    * Additional tag names to allow.
    */
   definedTags?: string[];
+  /**
+   * Automatically remove tags that are redundant with the type system.
+   */
+  enableFixer?: boolean;
+  /**
+   * Allowed inline tag names, such as `link` in `{@link MyType}`.
+   */
+  inlineTags?: string[];
   /**
    * Whether to allow JSX-related tags:
    * - `jsx`
@@ -7346,9 +7352,23 @@ export interface JSDocPluginSettings {
    */
   implementsReplacesDocs?: boolean;
   /**
+   * Tag vocabulary used by `jsdoc/check-tag-names`. Defaults to `"typescript"`.
+   */
+  mode?: JSDocMode;
+  /**
    * Only for `require-(yields|returns|description|example|param|throws)` rule
    */
   overrideReplacesDocs?: boolean;
+  /**
+   * Custom tag definitions. `jsdoc/check-tag-names` recognizes each tag name.
+   */
+  structuredTags?: {
+    [k: string]:
+      | {
+          [k: string]: unknown | undefined;
+        }
+      | undefined;
+  };
   tagNamePreference?: {
     [k: string]: TagNamePreference | undefined;
   };

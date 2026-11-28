@@ -23,7 +23,10 @@ pub use overrides::OxlintOverrides;
 pub use oxlintrc::{OxlintOptions, Oxlintrc};
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules, RuleConfig, normalize_rule_name};
-pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
+pub use settings::{
+    OxlintSettings, ReactVersion,
+    jsdoc::{JSDocMode, JSDocPluginSettings},
+};
 
 pub use oxc_config::GlobSet;
 

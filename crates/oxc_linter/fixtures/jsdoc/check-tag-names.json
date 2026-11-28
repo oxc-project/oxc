@@ -1,0 +1,1387 @@
+{
+  "valid": [
+    {
+      "code": "\n        /** @default 0 */\n        let a;\n      ",
+      "filename": "file.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @default 0 */\n        declare let a;\n      ",
+      "filename": "file.d.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @abstract */\n        let a;\n      ",
+      "filename": "file.d.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @abstract */\n        declare let a;\n      ",
+      "filename": "file.d.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @abstract */\n        { declare let a; }\n      ",
+      "filename": "file.d.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        function test() {\n          /** @abstract */\n          declare let a;\n        }\n      ",
+      "filename": "file.d.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @template name */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @param param - takes information */\n        function takesOne(param) {}\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @param foo\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @memberof! foo\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @arg foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "param": "arg"
+          }
+        }
+      }
+    },
+    {
+      "code": "\n          /**\n           * @parameter foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "structuredTags": {
+            "parameter": {
+              "name": "namepath-referencing",
+              "required": [
+                "type",
+                "name"
+              ],
+              "type": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "code": "\n          /**\n           * @bar foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "options": [
+        {
+          "definedTags": [
+            "bar"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @baz @bar foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "options": [
+        {
+          "definedTags": [
+            "baz",
+            "bar"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @baz @bar foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "param": "baz",
+            "returns": {
+              "message": "Prefer `bar`",
+              "replacement": "bar"
+            },
+            "todo": false
+          }
+        }
+      }
+    },
+    {
+      "code": "\n      /**\n       * @returns\n       */\n      function quux (foo) {}\n      "
+    },
+    {
+      "code": "\n      /**\n       * @return\n       */\n      function quux (foo) {}\n      ",
+      "settings": {
+        "jsdoc": {
+          "mode": "closure"
+        }
+      }
+    },
+    {
+      "code": "/** \n * @modifies\n * @abstract\n * @access\n * @alias\n * @async\n * @augments\n * @author\n * @borrows\n * @callback\n * @class\n * @classdesc\n * @constant\n * @constructs\n * @copyright\n * @default\n * @deprecated\n * @description\n * @enum\n * @event\n * @example\n * @exports\n * @external\n * @file\n * @fires\n * @function\n * @generator\n * @global\n * @hideconstructor\n * @ignore\n * @implements\n * @inheritdoc\n * @inheritDoc\n * @inner\n * @instance\n * @interface\n * @kind\n * @lends\n * @license\n * @listens\n * @member\n * @memberof\n * @memberof!\n * @mixes\n * @mixin\n * @module\n * @name\n * @namespace\n * @override\n * @package\n * @param\n * @private\n * @property\n * @protected\n * @public\n * @readonly\n * @requires\n * @returns\n * @see\n * @since\n * @static\n * @summary\n * @this\n * @throws\n * @todo\n * @tutorial\n * @type\n * @typedef\n * @variation\n * @version\n * @yields\n */\nfunction quux (foo) {}"
+    },
+    {
+      "code": "/** \n * @modifies\n * @abstract\n * @access\n * @alias\n * @async\n * @augments\n * @author\n * @borrows\n * @callback\n * @class\n * @classdesc\n * @constant\n * @constructs\n * @copyright\n * @default\n * @deprecated\n * @description\n * @enum\n * @event\n * @example\n * @exports\n * @external\n * @file\n * @fires\n * @function\n * @generator\n * @global\n * @hideconstructor\n * @ignore\n * @implements\n * @inheritdoc\n * @inheritDoc\n * @inner\n * @instance\n * @interface\n * @kind\n * @lends\n * @license\n * @listens\n * @member\n * @memberof\n * @memberof!\n * @mixes\n * @mixin\n * @module\n * @name\n * @namespace\n * @override\n * @package\n * @param\n * @private\n * @property\n * @protected\n * @public\n * @readonly\n * @requires\n * @returns\n * @see\n * @since\n * @static\n * @summary\n * @this\n * @throws\n * @todo\n * @tutorial\n * @type\n * @typedef\n * @variation\n * @version\n * @yields\n * @alpha\n * @beta\n * @decorator\n * @eventProperty\n * @experimental\n * @packageDocumentation\n * @privateRemarks\n * @remarks\n * @sealed\n * @category\n * @categoryDescription\n * @disableGroups\n * @document\n * @expand\n * @expandType\n * @group\n * @groupDescription\n * @hidden\n * @hideCategories\n * @hideGroups\n * @inline\n * @inlineType\n * @mergeModuleWith\n * @preventExpand\n * @preventInline\n * @primaryExport\n * @showCategories\n * @showGroups\n * @sortStrategy\n * @useDeclaredType\n * @import\n * @internal\n * @jsx\n * @overload\n * @satisfies\n * @template\n */\nfunction quux (foo) {}",
+      "settings": {
+        "jsdoc": {
+          "mode": "typescript"
+        }
+      }
+    },
+    {
+      "code": "/** \n * @externs\n */\nfunction quux (foo) {}",
+      "settings": {
+        "jsdoc": {
+          "mode": "closure"
+        }
+      }
+    },
+    {
+      "code": "\n          /**\n           *\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @todo\n           */\n          function quux () {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @extends Foo\n           */\n          function quux () {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "augments": {
+              "message": "@extends is to be used over @augments.",
+              "replacement": "extends"
+            }
+          }
+        }
+      }
+    },
+    {
+      "code": "\n          /**\n           * (Set tag name preference to itself to get aliases to\n           *   work along with main tag name.)\n           * @augments Bar\n           * @extends Foo\n           */\n          function quux () {\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "extends": "extends"
+          }
+        }
+      }
+    },
+    {
+      "code": "\n      /**\n       * Registers the `target` class as a transient dependency; each time the dependency is resolved a new instance will be created.\n       *\n       * @param target - The class / constructor function to register as transient.\n       *\n       * @example ```ts\n      @transient()\n      class Foo { }\n      ```\n       * @param Time for a new tag\n       */\n      export function transient<T>(target?: T): T {\n        // ...\n      }\n",
+      "filename": "file.ts"
+    },
+    {
+      "code": "\n        /** @jsx h */\n        /** @jsxFrag Fragment */\n        /** @jsxImportSource preact */\n        /** @jsxRuntime automatic */\n      ",
+      "options": [
+        {
+          "jsxTags": true
+        }
+      ]
+    },
+    {
+      "code": "\n      /**\n       * @internal\n       */\n      ",
+      "settings": {
+        "jsdoc": {
+          "mode": "typescript"
+        }
+      }
+    },
+    {
+      "code": "\n        interface WebTwain {\n          /**\n           * Converts the images specified by the indices to base64 synchronously.\n           * @function WebTwain#ConvertToBase64\n           * @returns {Base64Result}\n\n          ConvertToBase64(): Base64Result;\n          */\n\n          /**\n           * Converts the images specified by the indices to base64 asynchronously.\n           * @function WebTwain#ConvertToBase64\n           * @returns {boolean}\n           */\n          ConvertToBase64(): boolean;\n        }\n      ",
+      "filename": "file.ts"
+    },
+    {
+      "code": "\n        /**\n         * @overload\n         * @satisfies\n         */\n      ",
+      "settings": {
+        "jsdoc": {
+          "mode": "typescript"
+        }
+      }
+    },
+    {
+      "code": "\n        /**\n         * @module\n         * A comment related to the module\n         */\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /**\n         * An {@inline sth} tag in the description and {@another} with a {@link}.\n         * @param {SomeType} name And an {@inlineTag} inside a tag description.\n         * @param {AnotherType} anotherName And yet {@another}\n         */\n      ",
+      "options": [
+        {
+          "inlineTags": [
+            "inline",
+            "another",
+            "inlineTag",
+            "link"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "\n        /**\n         * @typeParam T\n         */\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "template": "typeParam"
+          }
+        }
+      }
+    },
+    {
+      "code": "\n        /**\n         * @ember/debug etc. etc.\n         */\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @public */\n        export const docs = {};\n      ",
+      "filename": "file.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /**\n         * Creates a router.\n         *\n         * @public\n         */\n        export function createRouter () {}\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        export interface Options {\n          /**\n           * @private\n           */\n          name: string;\n        }\n      ",
+      "filename": "file.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @protected */\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ]
+    },
+    {
+      "code": "\n        /**\n         * @prop BASIC - kept because `prop` is explicitly allowed.\n         */\n        const TemplateType = {\n            BASIC: 'basic',\n        };\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "prop": "prop"
+          }
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "code": "/** @type {string} */let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "message": "'@type' is redundant when using a type system."
+        }
+      ],
+      "output": "let a;\n      "
+    },
+    {
+      "code": "/** @type {string} */let a;\n      ",
+      "options": [
+        {
+          "enableFixer": false,
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "message": "'@type' is redundant when using a type system."
+        }
+      ]
+    },
+    {
+      "code": "/** @type {string} */ let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "message": "'@type' is redundant when using a type system."
+        }
+      ],
+      "output": "let a;\n      "
+    },
+    {
+      "code": "/** @type {string} */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "message": "'@type' is redundant when using a type system."
+        }
+      ],
+      "output": "        let a;\n      "
+    },
+    {
+      "code": "\n        /** @type {string} */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@type' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        let a;\n      "
+    },
+    {
+      "code": "\n        /** @type {string} - extra info */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@type' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /** - extra info */\n        let a;\n      "
+    },
+    {
+      "code": "\n        /**\n         * Existing comment.\n         *  @type {string}\n         */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 4,
+          "message": "'@type' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /**\n         * Existing comment.\n         */\n        let a;\n      "
+    },
+    {
+      "code": "\n        /** @abstract */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@abstract' is redundant outside of ambient (`declare`/`.d.ts`) contexts when using a type system."
+        }
+      ],
+      "output": "\n        let a;\n      "
+    },
+    {
+      "code": "\n        /** @abstract */\n        let a;\n      ",
+      "options": [
+        {
+          "enableFixer": false,
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@abstract' is redundant outside of ambient (`declare`/`.d.ts`) contexts when using a type system."
+        }
+      ]
+    },
+    {
+      "code": "\n        const a = {\n          /** @abstract */\n          b: true,\n        };\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@abstract' is redundant outside of ambient (`declare`/`.d.ts`) contexts when using a type system."
+        }
+      ],
+      "output": "\n        const a = {\n          b: true,\n        };\n      "
+    },
+    {
+      "code": "\n        /** @template */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@template' without a name is redundant when using a type system."
+        }
+      ],
+      "output": "\n        let a;\n      "
+    },
+    {
+      "code": "\n        /**\n         * Prior description.\n         *\n         * @template\n         */\n        let a;\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 5,
+          "message": "'@template' without a name is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /**\n         * Prior description.\n         *\n         */\n        let a;\n      "
+    },
+    {
+      "code": "\n        /** @typoo {string} */\n        let a;\n      ",
+      "errors": [
+        {
+          "line": 2,
+          "message": "Invalid JSDoc tag name \"typoo\"."
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @typoo {string} */\n        let a;\n      ",
+      "settings": {
+        "jsdoc": {
+          "structuredTags": {
+            "parameter": {
+              "name": "namepath-referencing",
+              "required": [
+                "type",
+                "name"
+              ],
+              "type": true
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 2,
+          "message": "Invalid JSDoc tag name \"typoo\"."
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @Param\n           */\n          function quux () {\n\n          }\n      ",
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag name \"Param\"."
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @foo\n           */\n          function quux () {\n\n          }\n      ",
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag name \"foo\"."
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @arg foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"arg\" JSDoc tag with \"param\"."
+        }
+      ],
+      "output": "\n          /**\n           * @param foo\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @param foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "param": "arg"
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"param\" JSDoc tag with \"arg\"."
+        }
+      ],
+      "output": "\n          /**\n           * @arg foo\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @constructor foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "tag constructor": "cons"
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"constructor\" JSDoc tag with \"cons\"."
+        }
+      ],
+      "output": "\n          /**\n           * @cons foo\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @arg foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "arg": "somethingDifferent"
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"arg\" JSDoc tag with \"somethingDifferent\"."
+        }
+      ],
+      "output": "\n          /**\n           * @somethingDifferent foo\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @param foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "param": "parameter"
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"param\" JSDoc tag with \"parameter\"."
+        }
+      ],
+      "output": "\n          /**\n           * @parameter foo\n           */\n          function quux (foo) {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @bar foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag name \"bar\"."
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @baz @bar foo\n           */\n          function quux (foo) {\n\n          }\n      ",
+      "options": [
+        {
+          "definedTags": [
+            "bar"
+          ]
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag name \"baz\"."
+        }
+      ]
+    },
+    {
+      "code": "\n            /**\n             * @bar\n             * @baz\n             */\n            function quux (foo) {\n\n            }\n        ",
+      "options": [
+        {
+          "definedTags": [
+            "bar"
+          ]
+        }
+      ],
+      "errors": [
+        {
+          "line": 4,
+          "message": "Invalid JSDoc tag name \"baz\"."
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @todo\n           */\n          function quux () {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "todo": false
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Blacklisted tag found (`@todo`)"
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @todo\n           */\n          function quux () {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "todo": {
+              "message": "Please resolve to-dos or add to the tracker"
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Please resolve to-dos or add to the tracker"
+        }
+      ]
+    },
+    {
+      "code": "\n          /**\n           * @todo\n           */\n          function quux () {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "todo": {
+              "message": "Please use x-todo instead of todo",
+              "replacement": "x-todo"
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Please use x-todo instead of todo"
+        }
+      ],
+      "output": "\n          /**\n           * @x-todo\n           */\n          function quux () {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @todo\n           */\n          function quux () {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "todo": 55
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "message": "Invalid `settings.jsdoc.tagNamePreference`. Values must be falsy, a string, or an object."
+        },
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"todo\" JSDoc tag with \"55\"."
+        }
+      ],
+      "output": "\n          /**\n           * @55\n           */\n          function quux () {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @property {object} a\n           * @prop {boolean} b\n           */\n          function quux () {\n\n          }\n      ",
+      "errors": [
+        {
+          "line": 4,
+          "message": "Invalid JSDoc tag (preference). Replace \"prop\" JSDoc tag with \"property\"."
+        }
+      ],
+      "output": "\n          /**\n           * @property {object} a\n           * @property {boolean} b\n           */\n          function quux () {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @abc foo\n           * @abcd bar\n           */\n          function quux () {\n\n          }\n      ",
+      "options": [
+        {
+          "definedTags": [
+            "abcd"
+          ]
+        }
+      ],
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "abc": "abcd"
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"abc\" JSDoc tag with \"abcd\"."
+        }
+      ],
+      "output": "\n          /**\n           * @abcd foo\n           * @abcd bar\n           */\n          function quux () {\n\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * @abc\n           * @abcd\n           */\n          function quux () {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "abc": "abcd"
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"abc\" JSDoc tag with \"abcd\"."
+        }
+      ],
+      "output": "\n          /**\n           * @abcd\n           * @abcd\n           */\n          function quux () {\n\n          }\n      "
+    },
+    {
+      "code": "\n      /**\n       * @returns\n       */\n      function quux (foo) {}\n      ",
+      "settings": {
+        "jsdoc": {
+          "mode": "closure"
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"returns\" JSDoc tag with \"return\"."
+        }
+      ],
+      "output": "\n      /**\n       * @return\n       */\n      function quux (foo) {}\n      "
+    },
+    {
+      "code": "/** \n * @modifies\n * @abstract\n * @access\n * @alias\n * @async\n * @augments\n * @author\n * @borrows\n * @callback\n * @class\n * @classdesc\n * @constant\n * @constructs\n * @copyright\n * @default\n * @deprecated\n * @description\n * @enum\n * @event\n * @example\n * @exports\n * @external\n * @file\n * @fires\n * @function\n * @generator\n * @global\n * @hideconstructor\n * @ignore\n * @implements\n * @inheritdoc\n * @inheritDoc\n * @inner\n * @instance\n * @interface\n * @kind\n * @lends\n * @license\n * @listens\n * @member\n * @memberof\n * @memberof!\n * @mixes\n * @mixin\n * @module\n * @name\n * @namespace\n * @override\n * @package\n * @param\n * @private\n * @property\n * @protected\n * @public\n * @readonly\n * @requires\n * @returns\n * @see\n * @since\n * @static\n * @summary\n * @this\n * @throws\n * @todo\n * @tutorial\n * @type\n * @typedef\n * @variation\n * @version\n * @yields\n */\nfunction quux (foo) {}",
+      "settings": {
+        "jsdoc": {
+          "mode": "badMode"
+        }
+      },
+      "errors": [
+        {
+          "line": 1,
+          "message": "Unrecognized value `badMode` for `settings.jsdoc.mode`."
+        }
+      ]
+    },
+    {
+      "code": "/** \n * @modifies\n * @abstract\n * @access\n * @alias\n * @async\n * @augments\n * @author\n * @borrows\n * @callback\n * @class\n * @classdesc\n * @constant\n * @constructs\n * @copyright\n * @default\n * @deprecated\n * @description\n * @enum\n * @event\n * @example\n * @exports\n * @external\n * @file\n * @fires\n * @function\n * @generator\n * @global\n * @hideconstructor\n * @ignore\n * @implements\n * @inheritdoc\n * @inheritDoc\n * @inner\n * @instance\n * @interface\n * @kind\n * @lends\n * @license\n * @listens\n * @member\n * @memberof\n * @memberof!\n * @mixes\n * @mixin\n * @module\n * @name\n * @namespace\n * @override\n * @package\n * @param\n * @private\n * @property\n * @protected\n * @public\n * @readonly\n * @requires\n * @returns\n * @see\n * @since\n * @static\n * @summary\n * @this\n * @throws\n * @todo\n * @tutorial\n * @type\n * @typedef\n * @variation\n * @version\n * @yields\n * @alpha\n * @beta\n * @decorator\n * @eventProperty\n * @experimental\n * @packageDocumentation\n * @privateRemarks\n * @remarks\n * @sealed\n * @category\n * @categoryDescription\n * @disableGroups\n * @document\n * @expand\n * @expandType\n * @group\n * @groupDescription\n * @hidden\n * @hideCategories\n * @hideGroups\n * @inline\n * @inlineType\n * @mergeModuleWith\n * @preventExpand\n * @preventInline\n * @primaryExport\n * @showCategories\n * @showGroups\n * @sortStrategy\n * @useDeclaredType\n * @import\n * @internal\n * @jsx\n * @overload\n * @satisfies\n * @template\n */\nfunction quux (foo) {}",
+      "settings": {
+        "jsdoc": {
+          "mode": "jsdoc"
+        }
+      },
+      "errors": [
+        {
+          "line": 72,
+          "message": "Invalid JSDoc tag name \"alpha\"."
+        },
+        {
+          "line": 73,
+          "message": "Invalid JSDoc tag name \"beta\"."
+        },
+        {
+          "line": 74,
+          "message": "Invalid JSDoc tag name \"decorator\"."
+        },
+        {
+          "line": 75,
+          "message": "Invalid JSDoc tag name \"eventProperty\"."
+        },
+        {
+          "line": 76,
+          "message": "Invalid JSDoc tag name \"experimental\"."
+        },
+        {
+          "line": 77,
+          "message": "Invalid JSDoc tag name \"packageDocumentation\"."
+        },
+        {
+          "line": 78,
+          "message": "Invalid JSDoc tag name \"privateRemarks\"."
+        },
+        {
+          "line": 79,
+          "message": "Invalid JSDoc tag name \"remarks\"."
+        },
+        {
+          "line": 80,
+          "message": "Invalid JSDoc tag name \"sealed\"."
+        },
+        {
+          "line": 81,
+          "message": "Invalid JSDoc tag name \"category\"."
+        },
+        {
+          "line": 82,
+          "message": "Invalid JSDoc tag name \"categoryDescription\"."
+        },
+        {
+          "line": 83,
+          "message": "Invalid JSDoc tag name \"disableGroups\"."
+        },
+        {
+          "line": 84,
+          "message": "Invalid JSDoc tag name \"document\"."
+        },
+        {
+          "line": 85,
+          "message": "Invalid JSDoc tag name \"expand\"."
+        },
+        {
+          "line": 86,
+          "message": "Invalid JSDoc tag name \"expandType\"."
+        },
+        {
+          "line": 87,
+          "message": "Invalid JSDoc tag name \"group\"."
+        },
+        {
+          "line": 88,
+          "message": "Invalid JSDoc tag name \"groupDescription\"."
+        },
+        {
+          "line": 89,
+          "message": "Invalid JSDoc tag name \"hidden\"."
+        },
+        {
+          "line": 90,
+          "message": "Invalid JSDoc tag name \"hideCategories\"."
+        },
+        {
+          "line": 91,
+          "message": "Invalid JSDoc tag name \"hideGroups\"."
+        },
+        {
+          "line": 92,
+          "message": "Invalid JSDoc tag name \"inline\"."
+        },
+        {
+          "line": 93,
+          "message": "Invalid JSDoc tag name \"inlineType\"."
+        },
+        {
+          "line": 94,
+          "message": "Invalid JSDoc tag name \"mergeModuleWith\"."
+        },
+        {
+          "line": 95,
+          "message": "Invalid JSDoc tag name \"preventExpand\"."
+        },
+        {
+          "line": 96,
+          "message": "Invalid JSDoc tag name \"preventInline\"."
+        },
+        {
+          "line": 97,
+          "message": "Invalid JSDoc tag name \"primaryExport\"."
+        },
+        {
+          "line": 98,
+          "message": "Invalid JSDoc tag name \"showCategories\"."
+        },
+        {
+          "line": 99,
+          "message": "Invalid JSDoc tag name \"showGroups\"."
+        },
+        {
+          "line": 100,
+          "message": "Invalid JSDoc tag name \"sortStrategy\"."
+        },
+        {
+          "line": 101,
+          "message": "Invalid JSDoc tag name \"useDeclaredType\"."
+        },
+        {
+          "line": 102,
+          "message": "Invalid JSDoc tag name \"import\"."
+        },
+        {
+          "line": 103,
+          "message": "Invalid JSDoc tag name \"internal\"."
+        },
+        {
+          "line": 104,
+          "message": "Invalid JSDoc tag name \"jsx\"."
+        },
+        {
+          "line": 105,
+          "message": "Invalid JSDoc tag name \"overload\"."
+        },
+        {
+          "line": 106,
+          "message": "Invalid JSDoc tag name \"satisfies\"."
+        },
+        {
+          "line": 107,
+          "message": "Invalid JSDoc tag name \"template\"."
+        }
+      ]
+    },
+    {
+      "code": "/** \n * @externs\n */\nfunction quux (foo) {}",
+      "errors": [
+        {
+          "line": 2,
+          "message": "Invalid JSDoc tag name \"externs\"."
+        }
+      ]
+    },
+    {
+      "code": "\n        /** @jsxFrag Fragment */\n        /** @jsxImportSource preact */\n        /** @jsxRuntime automatic */\n      ",
+      "errors": [
+        {
+          "line": 2,
+          "message": "Invalid JSDoc tag name \"jsxFrag\"."
+        },
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag name \"jsxImportSource\"."
+        },
+        {
+          "line": 4,
+          "message": "Invalid JSDoc tag name \"jsxRuntime\"."
+        }
+      ]
+    },
+    {
+      "code": "\n      /**\n       * @constructor\n       */\n      function Test() {\n        this.works = false;\n      }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "returns": "return"
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"constructor\" JSDoc tag with \"class\"."
+        }
+      ],
+      "output": "\n      /**\n       * @class\n       */\n      function Test() {\n        this.works = false;\n      }\n      "
+    },
+    {
+      "code": "\n      /** @typedef {Object} MyObject\n       * @property {string} id - my id\n       */\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@typedef' is redundant when using a type system."
+        },
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n      /**\n       * @property {string} id - my id\n       */\n      "
+    },
+    {
+      "code": "\n      /**\n       * @property {string} id - my id\n       */\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n      /**\n       * id - my id\n       */\n      "
+    },
+    {
+      "code": "\n      /** @typedef {Object} MyObject */\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@typedef' is redundant when using a type system."
+        }
+      ],
+      "output": "\n      "
+    },
+    {
+      "code": "\n      /** @typedef {Object} MyObject\n       */\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 2,
+          "message": "'@typedef' is redundant when using a type system."
+        }
+      ],
+      "output": "\n      "
+    },
+    {
+      "code": "\n          /**\n           * @todo\n           */\n          function quux () {\n\n          }\n      ",
+      "settings": {
+        "jsdoc": {
+          "tagNamePreference": {
+            "todo": {
+              "message": "Please don't use todo"
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "line": 3,
+          "message": "Please don't use todo"
+        }
+      ]
+    },
+    {
+      "code": "\n        /**\n         * An {@inline sth} tag in the description and {@another} with a {@link}.\n         * @param {SomeType} name And an {@inlineTag} inside a tag description.\n         * @param {AnotherType} anotherName And yet {@another}\n         */\n      ",
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc inline tag name \"inline\""
+        },
+        {
+          "line": 3,
+          "message": "Invalid JSDoc inline tag name \"another\""
+        },
+        {
+          "line": 4,
+          "message": "Invalid JSDoc inline tag name \"inlineTag\""
+        },
+        {
+          "line": 5,
+          "message": "Invalid JSDoc inline tag name \"another\""
+        }
+      ]
+    },
+    {
+      "code": "\n        export class Foo {\n          /**\n           * Internal.\n           * @private\n           */\n          private bar = 1;\n        }\n      ",
+      "filename": "file.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 5,
+          "message": "'@private' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        export class Foo {\n          /**\n           * Internal.\n           */\n          private bar = 1;\n        }\n      "
+    },
+    {
+      "code": "\n        /**\n         * @prop BASIC - icon, title, message, expandedMessage, up to two buttons.\n         * @prop IMAGE - icon, title, message, expandedMessage, image, up to two buttons.\n         */\n        declare const TemplateType: {\n            BASIC: 'basic',\n            IMAGE: 'image',\n        }\n      ",
+      "filename": "file.d.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"prop\" JSDoc tag with \"property\"."
+        },
+        {
+          "line": 4,
+          "message": "Invalid JSDoc tag (preference). Replace \"prop\" JSDoc tag with \"property\"."
+        }
+      ],
+      "output": "\n        declare const TemplateType: {\n            /**\n             * icon, title, message, expandedMessage, up to two buttons.\n             */\n            BASIC: 'basic',\n            /**\n             * icon, title, message, expandedMessage, image, up to two buttons.\n             */\n            IMAGE: 'image',\n        }\n      "
+    },
+    {
+      "code": "\n        /**\n         * @prop BASIC - icon, title, message, expandedMessage, up to two buttons.\n         * @prop MISSING - not a property of this object.\n         */\n        declare const TemplateType: {\n            BASIC: 'basic',\n            IMAGE: 'image',\n        }\n      ",
+      "filename": "file.d.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "Invalid JSDoc tag (preference). Replace \"prop\" JSDoc tag with \"property\"."
+        },
+        {
+          "line": 4,
+          "message": "Invalid JSDoc tag (preference). Replace \"prop\" JSDoc tag with \"property\"."
+        }
+      ],
+      "output": "\n        /**\n         * BASIC - icon, title, message, expandedMessage, up to two buttons.\n         * MISSING - not a property of this object.\n         */\n        declare const TemplateType: {\n            BASIC: 'basic',\n            IMAGE: 'image',\n        }\n      "
+    },
+    {
+      "code": "\n        /**\n         * Kinds of template.\n         * @property BASIC - icon, title\n         *   and up to two buttons.\n         * @property IMAGE - image\n         */\n        export const TemplateType = {\n            1: 'one',\n            'IMAGE': 'image',\n            [extra]: true,\n            ...rest,\n            BASIC: 'basic',\n        };\n      ",
+      "filename": "file.ts",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 4,
+          "message": "'@property' is redundant when using a type system."
+        },
+        {
+          "line": 6,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /**\n         * Kinds of template.\n         */\n        export const TemplateType = {\n            1: 'one',\n            /**\n             * image\n             */\n            'IMAGE': 'image',\n            [extra]: true,\n            ...rest,\n            /**\n             * icon, title\n             * and up to two buttons.\n             */\n            BASIC: 'basic',\n        };\n      "
+    },
+    {
+      "code": "\n        /**\n         * @property BASIC - icon, title, message, expandedMessage, up to two buttons.\n         * @property IMAGE - icon, title, message, expandedMessage, image, up to two buttons.\n         */\n        const TemplateType = {\n            /** Already documented. */\n            BASIC: 'basic',\n            IMAGE: 'image',\n        };\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        },
+        {
+          "line": 4,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /**\n         * BASIC - icon, title, message, expandedMessage, up to two buttons.\n         * IMAGE - icon, title, message, expandedMessage, image, up to two buttons.\n         */\n        const TemplateType = {\n            /** Already documented. */\n            BASIC: 'basic',\n            IMAGE: 'image',\n        };\n      "
+    },
+    {
+      "code": "\n        /**\n         * @property a - desc\n         */\n        const [a] = [];\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /**\n         * a - desc\n         */\n        const [a] = [];\n      "
+    },
+    {
+      "code": "\n        /**\n         * @property - orphan\n         */\n        export {};\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /**\n         * - orphan\n         */\n        export {};\n      "
+    },
+    {
+      "code": "\n        /**\n         * @property BASIC - one\n         * @property BASIC - two\n         */\n        const obj = {\n            BASIC: 1,\n        };\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        },
+        {
+          "line": 4,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        /**\n         * BASIC - one\n         * BASIC - two\n         */\n        const obj = {\n            BASIC: 1,\n        };\n      "
+    },
+    {
+      "code": "/** @property BASIC */\nconst obj = {\n    BASIC: 1,\n};\n",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "const obj = {\n    BASIC: 1,\n};\n"
+    },
+    {
+      "code": "/** @property BASIC */const obj = {BASIC: 1};\n",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "const obj = {BASIC: 1};\n"
+    },
+    {
+      "code": "/** @property BASIC - icon\n * @param foo\n */\nconst obj = {\n    BASIC: 1,\n};\n",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 1,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "/**\n * @param foo\n */\nconst obj = {\n    /**\n     * icon\n     */\n    BASIC: 1,\n};\n"
+    },
+    {
+      "code": "/**\n * @param foo\n * @property BASIC - icon */\nconst obj = {\n    BASIC: 1,\n};\n",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "/**\n * @param foo\n */\nconst obj = {\n    /**\n     * icon\n     */\n    BASIC: 1,\n};\n"
+    },
+    {
+      "code": "/**\r\n * Kinds.\r\n * @property BASIC - icon\r\n *\r\n * more\r\n */\r\nconst obj = {\r\n    BASIC: 1,\r\n};\r\n",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "/**\r\n * Kinds.\r\n */\r\nconst obj = {\r\n    /**\r\n     * icon\r\n     *\r\n     * more\r\n     */\r\n    BASIC: 1,\r\n};\r\n"
+    },
+    {
+      "code": "\n        /**\n         * @property\n         */\n        const obj = {\n            BASIC: 1,\n        };\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 3,
+          "message": "'@property' is redundant when using a type system."
+        }
+      ],
+      "output": "\n        const obj = {\n            BASIC: 1,\n        };\n      "
+    },
+    {
+      "code": "\n          class A {\n            /**\n             * The count.\n             * @readonly */\n            count = 1;\n          }\n      ",
+      "options": [
+        {
+          "typed": true
+        }
+      ],
+      "errors": [
+        {
+          "line": 5,
+          "message": "'@readonly' is redundant when using a type system."
+        }
+      ],
+      "output": "\n          class A {\n            /**\n             * The count.\n             */\n            count = 1;\n          }\n      "
+    },
+    {
+      "code": "\n          /**\n           * Unlike @return, this documents the value.\n           * @return {string} The value.\n           */\n          function quux () {}\n      ",
+      "errors": [
+        {
+          "line": 4,
+          "message": "Invalid JSDoc tag (preference). Replace \"return\" JSDoc tag with \"returns\"."
+        }
+      ],
+      "output": "\n          /**\n           * Unlike @return, this documents the value.\n           * @returns {string} The value.\n           */\n          function quux () {}\n      "
+    }
+  ]
+}
