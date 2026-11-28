@@ -5,7 +5,8 @@ pub mod standard;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_traverse::Traverse;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
 
@@ -143,11 +144,46 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     ) {
         if self.mode.is_legacy() {
             self.legacy_decorator.enter_decorator(node, ctx);
+        } else {
+            Self::report_parameter_decorator(node, ctx);
         }
     }
 }
 
+/// Whether the decorator being visited decorates a function parameter.
+fn is_parameter_decorator(ctx: &TraverseCtx<'_>) -> bool {
+    matches!(
+        ctx.parent(),
+        Ancestor::FormalParameterDecorators(_) | Ancestor::FormalParameterRestDecorators(_)
+    )
+}
+
 impl<'a> Decorator<'a> {
+    /// Standard decorators cannot decorate parameters, so report the error that TypeScript
+    /// reports as TS1206 in every non-legacy mode, whether or not decorators are lowered.
+    ///
+    /// The parser reports this for JavaScript files, and for parameters of other functions in
+    /// TypeScript files. It cannot for class methods and constructors in TypeScript files,
+    /// because parameter decorators are valid there with `experimentalDecorators` (legacy mode).
+    fn report_parameter_decorator(
+        decorator: &oxc_ast::ast::Decorator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.state.source_type.is_typescript() {
+            return;
+        }
+        // Decorator -> `FormalParameter(Rest)` -> `FormalParameters` -> `Function` -> `MethodDefinition`
+        if is_parameter_decorator(ctx)
+            && matches!(ctx.ancestor(3), Ancestor::MethodDefinitionValue(_))
+        {
+            ctx.state.error(
+                OxcDiagnostic::error("Decorators are not valid here.")
+                    .with_help("Parameter decorators require `experimentalDecorators` (legacy decorators).")
+                    .with_label(decorator.span),
+            );
+        }
+    }
+
     #[inline]
     pub fn exit_class_at_end(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.mode.is_legacy() {

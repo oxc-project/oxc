@@ -1,0 +1,11 @@
+var _Foo_decorators;
+let _init, _Foo2;
+_Foo_decorators = [[void 0, dec]];
+let _Foo = class Foo {};
+_Foo2 = _Foo;
+_init = babelHelpers.decoratorStart(null);
+_Foo2 = _Foo = babelHelpers.decorateElement(_init, 0, "Foo", _Foo_decorators, _Foo);
+babelHelpers.defineProperty(_Foo, "self", _Foo2);
+babelHelpers.runInitializers(_init, 1, _Foo);
+let Foo = _Foo;
+export { Foo as default };

@@ -333,6 +333,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
         self.decorator_state.wrap_decorated_loop_body(stmt, ctx);
     }
 
+    fn enter_decorator(&mut self, decorator: &mut Decorator<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator_state.capture_decorator_receiver(decorator, ctx);
+    }
+
     fn enter_object_property(
         &mut self,
         property: &mut ObjectProperty<'a>,
@@ -363,6 +367,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_class_declaration_on_exit(class, ctx);
+    }
+
+    #[inline]
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.decorator_state.has_pending_declaration_rewrite() {
+            self.decorator_state.rewrite_decorated_class_statement(stmt, ctx);
+        }
     }
 
     // `#[inline]` for fast exit for expressions which are not `Class`es

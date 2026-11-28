@@ -79,7 +79,7 @@ impl<'a> StandardDecoratorState<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(_) = expression else { return };
-        if !lowering.handles_standard_decorators() || !lowering.lowers_fields() {
+        if !lowering.needs_per_evaluation_state() || !lowering.lowers_fields() {
             return;
         }
         let in_initializer = ctx

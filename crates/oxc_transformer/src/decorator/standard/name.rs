@@ -32,7 +32,7 @@ impl<'a> StandardDecoratorState<'a> {
             return;
         }
         let lowering = ctx.state.class_lowering_before_entry(class);
-        if !lowering.handles_standard_decorators() {
+        if !lowering.needs_per_evaluation_state() {
             return;
         }
         let name = if key.is_computed() {

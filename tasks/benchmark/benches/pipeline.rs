@@ -92,7 +92,14 @@ fn bench_pipeline(criterion: &mut Criterion) {
         // `compile` creates its own `Allocator` and keeps no state between runs,
         // so the compiler and its options can be built once and reused.
         let mut compiler = PipelineCompiler {
-            transform: TransformOptions::from_target("esnext").unwrap(),
+            transform: {
+                // `kitchen-sink.tsx` is `experimentalDecorators` code (it has parameter
+                // decorators). Standard decorators would report an error for them and stop
+                // the pipeline after the transform.
+                let mut options = TransformOptions::from_target("esnext").unwrap();
+                options.decorator.legacy = true;
+                options
+            },
             define: ReplaceGlobalDefinesConfig::new(DEFINES).unwrap(),
             // Common global-variable injections: Node.js polyfills (when bundling for the
             // browser) plus a classic-runtime JSX auto-import. Like the defines, these exercise

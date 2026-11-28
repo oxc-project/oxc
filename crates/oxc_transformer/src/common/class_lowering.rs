@@ -136,13 +136,19 @@ impl ClassLowering {
         self.class_binding_is_reassigned
     }
 
-    /// Whether standard decorator lowering has anything to do for this class.
+    /// Whether standard decorator lowering gives this class per-evaluation state: decorator
+    /// context or auto-accessor storage.
     ///
-    /// When lowering is enabled, such a class owns per-evaluation state (decorator state or
-    /// auto-accessor storage), so each evaluation needs its own block-scoped temporaries. This is
-    /// the single definition of that rule; loop scoping, initializer wrapping, and class
-    /// temporaries all use it.
-    pub fn handles_standard_decorators(self) -> bool {
+    /// Each evaluation of such a class needs its own block-scoped temporaries. This is the single
+    /// definition of that rule; loop scoping, initializer wrapping, and class temporaries all use
+    /// it.
+    pub fn needs_per_evaluation_state(self) -> bool {
+        self.mode != ClassLoweringMode::Preserve && self.depends_on_class_syntax()
+    }
+
+    /// Whether the decision depends on the class's decorators or auto-accessors, rather than
+    /// only on the options.
+    fn depends_on_class_syntax(self) -> bool {
         self.has_decorators || self.has_auto_accessor
     }
 }
@@ -184,7 +190,7 @@ impl ClassLoweringDecisions {
             return;
         }
         let lowering = self.for_untransformed_class(class);
-        if lowering.handles_standard_decorators() {
+        if lowering.depends_on_class_syntax() {
             self.insert(class.scope_id(), lowering);
         }
     }

@@ -298,6 +298,17 @@ fn test() {
     run().unwrap();
 }
 
+/// Transform options for the minifier input. The minifier only works on esnext.
+///
+/// `kitchen-sink.tsx` is `experimentalDecorators` code (it has parameter decorators), so
+/// decorators use legacy semantics, as they would in that file's project. The other files
+/// have no decorators.
+fn esnext_transform_options() -> TransformOptions {
+    let mut options = TransformOptions::from_target("esnext").unwrap();
+    options.decorator.legacy = true;
+    options
+}
+
 /// # Panics
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
@@ -339,10 +350,11 @@ pub fn run() -> Result<(), io::Error> {
             .build(&parsed.program)
             .semantic
             .into_scoping();
-        let transform_options = TransformOptions::from_target("esnext").unwrap();
-        let _ =
+        let transform_options = esnext_transform_options();
+        let transformer_ret =
             Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
                 .build_with_scoping(scoping, &mut parsed.program);
+        assert!(transformer_ret.diagnostics.is_empty());
 
         Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
 
@@ -389,14 +401,15 @@ pub fn run() -> Result<(), io::Error> {
             .into_scoping();
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
-        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let transform_options = esnext_transform_options();
         let ((), transformer_stats) = record_stats_in(&allocator, || {
-            let _ = Transformer::new(
+            let transformer_ret = Transformer::new(
                 &allocator,
                 std::path::Path::new(&file.file_name),
                 &transform_options,
             )
             .build_with_scoping(scoping, &mut parsed.program);
+            assert!(transformer_ret.diagnostics.is_empty());
         });
 
         transformer_entries.push((file, transformer_stats));

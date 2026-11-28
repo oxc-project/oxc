@@ -1,0 +1,4 @@
+{
+  "plugins": [["proposal-decorators", { "version": "2023-11" }], "transform-typescript"],
+  "throws": "Decorators are not valid here."
+}

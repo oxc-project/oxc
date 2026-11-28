@@ -11,6 +11,17 @@ use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 use oxc_transformer::{TransformOptions, Transformer};
 
+/// Transform options for the minifier input. The minifier only works on esnext.
+///
+/// `kitchen-sink.tsx` is `experimentalDecorators` code (it has parameter decorators), so
+/// decorators use legacy semantics, as they would in that file's project. The other benchmark
+/// files have no decorators.
+fn esnext_transform_options() -> TransformOptions {
+    let mut options = TransformOptions::from_target("esnext").unwrap();
+    options.decorator.legacy = true;
+    options
+}
+
 fn bench_minifier(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("minifier");
 
@@ -36,8 +47,7 @@ fn bench_minifier(criterion: &mut Criterion) {
                     .semantic
                     .into_scoping();
 
-                // Minifier only works on esnext.
-                let transform_options = TransformOptions::from_target("esnext").unwrap();
+                let transform_options = esnext_transform_options();
                 let transformer_ret =
                     Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
                         .build_with_scoping(scoping, &mut program);
@@ -68,7 +78,7 @@ fn transform_to_js<'a>(
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
     let scoping =
         SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
-    let transform_options = TransformOptions::from_target("esnext").unwrap();
+    let transform_options = esnext_transform_options();
     let transformer_ret = Transformer::new(allocator, path, &transform_options)
         .build_with_scoping(scoping, &mut program);
     assert!(transformer_ret.diagnostics.is_empty());

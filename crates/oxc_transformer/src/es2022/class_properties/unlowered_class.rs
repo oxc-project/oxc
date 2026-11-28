@@ -13,10 +13,7 @@ use oxc_traverse::Ancestor;
 
 use crate::{common::class_lowering::ClassLowering, context::TraverseCtx};
 
-use super::{
-    ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProps,
-    class_details::ClassTemps,
-};
+use super::{ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProps};
 
 impl<'a> ClassProperties<'a> {
     /// Lower the auto-accessors of a native class.
@@ -46,10 +43,9 @@ impl<'a> ClassProperties<'a> {
             return;
         }
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
-        let lowering = ctx.state.class_lowering_of(class.scope_id().get().unwrap());
-        debug_assert!(!lowering.lowers_fields());
-        let standard = self.decorator_state.enabled();
-        let temps = ClassTemps::new(standard && lowering.handles_standard_decorators(), ctx);
+        debug_assert!(
+            !ctx.state.class_lowering_of(class.scope_id().get().unwrap()).lowers_fields()
+        );
         self.capture_initializer_names(body, ctx);
 
         // Register private names only when they can shadow a lowered name in an enclosing
@@ -75,7 +71,6 @@ impl<'a> ClassProperties<'a> {
             private_props: PrivateProps::Native(private_names),
             bindings: ClassBindings::dummy(false),
             decorators: None,
-            temps,
         });
     }
 
