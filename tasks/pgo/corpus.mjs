@@ -7,6 +7,26 @@ import { pipeline } from "node:stream/promises";
 import { createGzip, createGunzip } from "node:zlib";
 import { sha256 } from "./utils.mjs";
 
+export async function isBundle(filename, size, mapPath) {
+  if (!/\.[cm]?js$/i.test(filename) || /[.-]min\.[cm]?js$/i.test(filename)) return false;
+  if (/[.-](?:bundle|chunk)\.[cm]?js$/i.test(filename)) return true;
+  // Most per-file maps belong to small transpiled modules. Inspect maps for
+  // larger artifacts where combining the input files affects the workload.
+  if (!mapPath || size < 16 * 1024) return false;
+  try {
+    const map = JSON.parse(await readFile(mapPath, "utf8"));
+    return (
+      map?.version === 3
+      && ((Array.isArray(map.sources) && new Set(map.sources).size > 1)
+        || (Array.isArray(map.sections) && map.sections.length > 1))
+    );
+  } catch {
+    // A map is only a hint about the input. Keep usable JavaScript even if
+    // its map cannot be read.
+    return false;
+  }
+}
+
 // Split on LF bytes so JSON strings, Unicode line separators, and UTF-8 sequences
 // remain intact across stream chunks.
 export async function* jsonRecords(input) {
@@ -31,7 +51,13 @@ export class CorpusWriter {
     this.shardBytes = shardBytes;
     this.shards = [];
     this.counts = {};
-    this.preparation = { javascript: 0, transformed: 0, diagnostics: 0, declarations: 0 };
+    this.preparation = {
+      javascript: 0,
+      transformed: 0,
+      diagnostics: 0,
+      declarations: 0,
+      bundles: 0,
+    };
     this.bytes = 0;
     this.records = 0;
   }
@@ -50,7 +76,7 @@ export class CorpusWriter {
     this.stream = undefined;
   }
 
-  async add(record, transformSync) {
+  async add(record, transformSync, bundle = false) {
     const { lang } = record.options;
     const result = transformSync(record.filename, record.code, {
       ...record.options,
@@ -68,6 +94,7 @@ export class CorpusWriter {
     } else {
       this.preparation.javascript++;
     }
+    if (bundle && record.minify !== null) record.bundleIndex = this.preparation.bundles++;
     const line = JSON.stringify(record) + "\n";
     const bytes = Buffer.byteLength(line);
     if (this.stream && this.bytes + bytes > this.shardBytes) await this.closeShard();
@@ -140,6 +167,11 @@ export async function* readShard(directory, shard) {
         || typeof record.filename !== "string"
         || !["js", "jsx", "ts", "tsx", "dts"].includes(record.options?.lang)
         || !["module", "script", "commonjs", "unambiguous"].includes(record.options?.sourceType)
+        || (record.bundleIndex !== undefined
+          && (!Number.isSafeInteger(record.bundleIndex)
+            || record.bundleIndex < 0
+            || record.options.lang !== "js"
+            || record.minify === null))
       ) {
         throw new Error(`Invalid corpus record in ${shard.file}`);
       }
