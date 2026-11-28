@@ -1,7 +1,9 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, MemberExpression, RegExpFlags, VariableDeclarator,
+        Argument, CallExpression, Expression, MemberExpression, RegExpFlags,
+        StaticMemberExpression, VariableDeclarator,
     },
 };
 use oxc_codegen::CodegenOptions;
@@ -18,7 +20,7 @@ use crate::{
     context::LintContext,
     fixer::RuleFixer,
     rule::Rule,
-    utils::is_regexp_callee,
+    utils::{is_regexp_callee, static_string_value},
 };
 
 fn string_literal(span: Span, replacement: &str) -> OxcDiagnostic {
@@ -31,23 +33,31 @@ fn use_replace_all(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn split_join(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `String#replaceAll()` over `String#split().join()`.")
+        .with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferStringReplaceAll;
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers [`String#replaceAll()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll) over [`String#replace()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace) when using a regex with the global flag.
+    /// Prefers [`String#replaceAll()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll) over [`String#replace()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace) when using a regex with the global flag,
+    /// and over `String#split().join()`.
     ///
     /// ### Why is this bad?
     ///
     /// The [`String#replaceAll()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll) method is both faster and safer as you don't have to use a regex and remember to escape it if the string is not a literal. And when used with a regex, it makes the intent clearer.
+    /// It is also clearer than `String#split().join()`, which builds an intermediate array.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// foo.replace(/a/g, bar)
+    /// foo.split('a').join('b')
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -63,15 +73,18 @@ declare_oxc_lint!(
     unicorn,
     pedantic,
     recommended,
-    fix,
+    conditional_fix,
     version = "0.0.18",
-    short_description = "Prefers `String#replaceAll()` over `String#replace()` when using a regex with the global flag.",
+    short_description = "Prefers `String#replaceAll()` over `String#replace()` with a global regex and over `String#split().join()`.",
 );
 
 impl Rule for PreferStringReplaceAll {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::CallExpression(call) => Self::check_call(call, ctx, false),
+            AstKind::CallExpression(call) => {
+                Self::check_call(call, ctx, false);
+                Self::check_split_join(call, ctx);
+            }
             AstKind::VariableDeclarator(declarator) => {
                 if let Some(init) = &declarator.init
                     && is_reg_exp_with_global_flag(init, ctx)
@@ -85,6 +98,77 @@ impl Rule for PreferStringReplaceAll {
 }
 
 impl PreferStringReplaceAll {
+    fn check_split_join<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
+        let Some(join_member) = method_call_with_one_argument(call_expr, "join") else {
+            return;
+        };
+
+        let Expression::CallExpression(split_call) = join_member.object.without_parentheses()
+        else {
+            return;
+        };
+
+        let Some(split_member) = method_call_with_one_argument(split_call, "split") else {
+            return;
+        };
+
+        let Some(separator) = split_call.arguments[0]
+            .as_expression()
+            .and_then(|expr| static_string_value(expr, ctx.allocator()))
+        else {
+            return;
+        };
+
+        if separator.is_empty() {
+            return;
+        }
+
+        let Some(replacement) = call_expr.arguments[0]
+            .as_expression()
+            .and_then(|expr| static_string_value(expr, ctx.allocator()))
+        else {
+            return;
+        };
+
+        let diagnostic = split_join(join_member.property.span);
+
+        // A string with a lone surrogate cannot be printed as a string literal,
+        // and rewriting the call would drop any comment inside it.
+        let (Some(separator), Some(replacement)) = (separator.as_str(), replacement.as_str())
+        else {
+            ctx.diagnostic(diagnostic);
+            return;
+        };
+
+        if ctx.has_comments_between(call_expr.span) {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            // `$` has a special meaning in the replacement of `replaceAll`, but not in `join`.
+            let arguments = format!(
+                "{}, {}",
+                generate_string_literal(fixer, separator),
+                generate_string_literal(fixer, &replacement.cow_replace('$', "$$")),
+            );
+
+            // foo.split('a').join('b') => foo.replaceAll('a', 'b')
+            // (foo.split('a')).join('b') => (foo.replaceAll('a', 'b'))
+            //
+            // The edits start at `split`, not at the `.` before it, so that the fix does not
+            // touch the fix of a preceding `split().join()` in the same chain.
+            let fixer = fixer.for_multifix();
+            let mut fix = fixer.new_fix_with_capacity(3);
+            fix.push(fixer.replace(split_member.property.span, "replaceAll"));
+            fix.push(fixer.replace(split_call.arguments[0].span(), arguments));
+            fix.push(
+                fixer.delete_range(Span::new(join_member.object.span().end, call_expr.span.end)),
+            );
+            fix.with_message("Replace `split().join()` with `replaceAll()`.")
+        });
+    }
+
     fn check_call<'a>(
         call_expr: &CallExpression<'a>,
         ctx: &LintContext<'a>,
@@ -186,6 +270,24 @@ fn generate_string_literal(fixer: RuleFixer<'_, '_>, value: &str) -> String {
         fixer.codegen().with_options(CodegenOptions { single_quote: true, ..Default::default() });
     codegen.print_string(value);
     codegen.into_source_text()
+}
+
+/// Returns the callee member of `call_expr` when it is `<object>.<method>(<argument>)`
+/// with exactly one argument and no optional chaining.
+fn method_call_with_one_argument<'a, 'b>(
+    call_expr: &'b CallExpression<'a>,
+    method: &str,
+) -> Option<&'b StaticMemberExpression<'a>> {
+    if call_expr.optional || call_expr.arguments.len() != 1 {
+        return None;
+    }
+
+    let MemberExpression::StaticMemberExpression(member) = call_expr.callee.get_member_expr()?
+    else {
+        return None;
+    };
+
+    (!member.optional && member.property.name.as_str() == method).then_some(member)
 }
 
 fn is_reg_exp_with_global_flag<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
@@ -333,6 +435,27 @@ fn test() {
         r"const RE = /a/g; foo.replace(unknown, RE)",
         r"const RE = /a/g; foo.replace(...RE, bar)",
         r"const RE = /a/g; const alias = RE.source; foo.replace(alias, bar)",
+        r#"foo.split("").join("b")"#,
+        r#"foo.split("a", 1).join("b")"#,
+        r#"foo.split("a").join()"#,
+        r#"foo.split(separator).join("b")"#,
+        r#"foo.split("a").join(replacement)"#,
+        r#"foo.split("a").join(`${replacement}`)"#,
+        r#"foo.split?.("a").join("b")"#,
+        r#"foo.split("a").join?.("b")"#,
+        r#"foo?.split("a").join("b")"#,
+        r#"foo.split("a")?.join("b")"#,
+        r#"foo[split]("a").join("b")"#,
+        r#"foo.split("a")[join]("b")"#,
+        r#"foo.split(..."a").join("b")"#,
+        r#"foo.split("a").join(..."b")"#,
+        r#"foo.split("a").join(1)"#,
+        r#"foo.split("a")["join"]("b")"#,
+        r#"foo["split"]("a").join("b")"#,
+        r#"(foo?.split("a")).join("b")"#,
+        r#"foo.split("a")!.join("b")"#,
+        r#"(foo.split("a") as string[]).join("b")"#,
+        r#"foo.split("a").map(x => x).join("b")"#,
     ];
 
     let fail = vec![
@@ -394,6 +517,22 @@ export const out2 = s.replace(/a/g, "b");"#,
         r"const pattern = /a/g; const alias = pattern; foo.replace(alias, bar)",
         r"const pattern = /a/g; obj[pattern] = value; foo.replace(pattern, bar)",
         r"const RE = /a/g; const first = RE; const second = (first); foo.replace(first, bar); foo.replace(second, bar); foo.replace(RE, bar)",
+        r#"foo.split("a").join("b")"#,
+        r#"foo.split(`a`).join("b")"#,
+        r#"foo.split("a").join(`b`)"#,
+        r#"foo.split("a" + "b").join("c")"#,
+        r#"(foo).split("a").join("b")"#,
+        r#"(foo.split("a")).join("b")"#,
+        r#"foo.split("_").join("$&")"#,
+        r#"foo.split("_").join("$1")"#,
+        r#"foo.split("_").join("$$")"#,
+        r#"foo.split("a").join("")"#,
+        r#"foo?.bar.split("a").join("b")"#,
+        r#"foo.split("a" as string).join("b" as string)"#,
+        r#"foo.split("\uD83D").join("b")"#,
+        r#"foo.split(/* comment */ "a").join("b")"#,
+        r#"foo.split("a").join(/* comment */ "b")"#,
+        r#"({text: "a.a"}.text.split(".")).join("-");"#,
     ];
 
     let fix = vec![
@@ -635,34 +774,30 @@ export const out2 = s.replace(/a/g, "b");"#,
         //     r"foo.replaceAll(/\r\n\u{1f600}/gv, _)",
         //     r"foo.replaceAll('\r\n\u{1f600}', _)",
         // ),
-        // (
-        //     r#"foo.split("a").join("b")"#,
-        //     r"foo.replaceAll('a', 'b')",
-        // ),
-        // (
-        //     r#"foo.split(`a`).join("b")"#,
-        //     r"foo.replaceAll('a', 'b')",
-        // ),
-        // (
-        //     r#"foo.split("a").join(`b`)"#,
-        //     r"foo.replaceAll('a', 'b')",
-        // ),
-        // (
-        //     r#"foo.split("_").join("$&")"#,
-        //     r"foo.replaceAll('_', '$$&')",
-        // ),
-        // (
-        //     r#"foo.split("_").join("$1")"#,
-        //     r"foo.replaceAll('_', '$$1')",
-        // ),
-        // (
-        //     r#"foo.split("_").join("$$")"#,
-        //     r"foo.replaceAll('_', '$$$$')",
-        // ),
-        // (
-        //     r#"(foo).split("a").join("b")"#,
-        //     r"(foo).replaceAll('a', 'b')",
-        // ),
+        (r#"foo.split("a").join("b")"#, r"foo.replaceAll('a', 'b')"),
+        (r#"foo.split(`a`).join("b")"#, r"foo.replaceAll('a', 'b')"),
+        (r#"foo.split("a").join(`b`)"#, r"foo.replaceAll('a', 'b')"),
+        (r#"foo.split("_").join("$&")"#, r"foo.replaceAll('_', '$$&')"),
+        (r#"foo.split("_").join("$1")"#, r"foo.replaceAll('_', '$$1')"),
+        (r#"foo.split("_").join("$$")"#, r"foo.replaceAll('_', '$$$$')"),
+        (r#"(foo).split("a").join("b")"#, r"(foo).replaceAll('a', 'b')"),
+        (r#"(foo.split("a")).join("b")"#, r"(foo.replaceAll('a', 'b'))"),
+        (r#"foo.split("a" + "b").join("c")"#, r"foo.replaceAll('ab', 'c')"),
+        (r#"foo.split("a").join("")"#, r"foo.replaceAll('a', '')"),
+        (r#"foo.split("'").join("\n")"#, r"foo.replaceAll('\'', '\n')"),
+        (r#"foo?.bar.split("a").join("b")"#, r"foo?.bar.replaceAll('a', 'b')"),
+        (
+            r#"({text: "a.a"}.text.split(".")).join("-");"#,
+            r#"({text: "a.a"}.text.replaceAll('.', '-'));"#,
+        ),
+        (
+            r#"a.split("x").join("y").split("y").join("z")"#,
+            r"a.replaceAll('x', 'y').replaceAll('y', 'z')",
+        ),
+        (r#"foo.split(/* comment */ "a").join("b")"#, r#"foo.split(/* comment */ "a").join("b")"#),
+        ("foo\n\t.split('a')\n\t.join('b')", "foo\n\t.replaceAll('a', 'b')"),
+        (r#"foo.split(("a"),).join("b")"#, r"foo.replaceAll('a', 'b',)"),
+        (r#"foo.split("\uD83D").join("b")"#, r#"foo.split("\uD83D").join("b")"#),
         // (
         //     r#"foo.split(/a+/).join("b")"#,
         //     r"foo.replaceAll(/a+/g, 'b')",
