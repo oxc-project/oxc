@@ -456,6 +456,9 @@ impl Tester {
     /// // the first argument is normally `MyRuleStruct::NAME`.
     /// Tester::new("no-undef", pass, fail).expect_fix(fix).test();
     /// ```
+    ///
+    /// Calling it again adds to the cases already given, so a test can group its fix cases
+    /// (by fix kind, say) in separate calls.
     #[must_use]
     pub fn expect_fix<F: Into<ExpectFixTestCase>>(mut self, expect_fix: Vec<F>) -> Self {
         // prevent `expect_fix` abuse
@@ -464,8 +467,9 @@ impl Tester {
             "You must provide at least one fixer test case to `expect_fix`"
         );
 
-        self.expect_fix =
-            Some(expect_fix.into_iter().map(std::convert::Into::into).collect::<Vec<_>>());
+        self.expect_fix
+            .get_or_insert_with(Vec::new)
+            .extend(expect_fix.into_iter().map(std::convert::Into::into));
         self
     }
 
@@ -475,7 +479,8 @@ impl Tester {
     /// test functions, and only some of them are testing fixes.
     #[must_use]
     pub fn intentionally_allow_no_fix_tests(mut self) -> Self {
-        self.expect_fix = Some(vec![]);
+        // Keeps any fix cases already given.
+        self.expect_fix.get_or_insert_with(Vec::new);
         self
     }
 
