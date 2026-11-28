@@ -1,4 +1,9 @@
-use crate::{test, test_same, test_target};
+use oxc_span::SourceType;
+
+use crate::{
+    CompressOptions, CompressOptionsUnused, default_options, test, test_options, test_same,
+    test_same_options_source_type, test_target,
+};
 
 #[track_caller]
 fn test_value(code: &str, expected: &str) {
@@ -224,6 +229,114 @@ fn test_fold_string_replace_all() {
     test_same("'PreXyzPost'.replaceAll('Xyz', '$\\'')"); // would fold to  'PrePostPost'
     test_same("'PreXyzPostXyz'.replaceAll('Xyz', '$\\'')"); // would fold to 'PrePostXyzPost'
     test_same("'123'.replaceAll('2', '$`')"); // would fold to '113'
+}
+
+#[test]
+fn test_fold_string_replace_all_size() {
+    // The folded literal would be longer than the call.
+    test_same("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')");
+    test_same("x = 'aaaaa'.replaceAll('a', 'aaaaaaa')");
+    test_same("x = 'abcdef'.replaceAll('', 'xxxxx')");
+    test("x = 'aaaaaaa'['replaceAll']('a', 'aaaaaaa')", "x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')");
+    // Same size as the call (32 characters): folds.
+    test("x = 'aaaaa'.replaceAll('a', 'aaaaaa')", "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
+    // The folded literal is shorter.
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaa')", "x = 'aaaaaaaaaaaaaaaaaaaaa'");
+    test("x = 'abcdef'.replaceAll('', 'x')", "x = 'xaxbxcxdxexfx'");
+    // A member access on the result folds the whole chain.
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')[0]", "x = 'a'");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa').charAt(1)", "x = 'a'");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa').length", "x = 49");
+    // An operand that cannot be sized folds as before.
+    test("x = /abcdefghij/.toString()", "x = '/abcdefghij/'");
+    test("x = (-1234567890).toString()", "x = '-1234567890'");
+    // One character longer than the call: kept.
+    test_same("x = 'aaaa'.replaceAll('a', 'aaaaaaaa')");
+    // Escapes count: the call prints 14 backslashes, so the literal is shorter.
+    test(
+        r"x = '\\\\\\\\\\\\\\'.replaceAll('\\', 'aaaaa')",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+    );
+    // Where the parent folds or drops the value, the call folds as before.
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') === 'b'", "x = !1");
+    test("x = !'aaaaaaa'.replaceAll('a', 'aaaaaaa')", "x = !1");
+    test("x = typeof 'aaaaaaa'.replaceAll('a', 'aaaaaaa')", "x = 'string'");
+    test("if ('aaaaaaa'.replaceAll('a', 'aaaaaaa')) x = 1; else x = 2", "x = 1");
+    test("'aaaaaaa'.replaceAll('a', 'aaaaaaa'); x = 1", "x = 1");
+    test(
+        "x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') + 'b'",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab'",
+    );
+    // A binding that stays prints its value: kept. With these tests' default options
+    // (unused bindings kept) that is any binding.
+    test(
+        "function f() { const u = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }",
+        "function f() { let u = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }",
+    );
+    // A binding the compressor drops once it is unused: folds, and the declaration goes.
+    let remove = CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() };
+    test_options(
+        "export function f() { const u = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }",
+        "export function f() {}",
+        &remove,
+    );
+
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') == null", "x = !1");
+    test("x = void 'aaaaaaa'.replaceAll('a', 'aaaaaaa')", "x = void 0");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') ? 1 : 2", "x = 1");
+    test("x = 'aaaaaaa'.replaceAll('a', 'aaaaaaa') && y", "x = y");
+    test("x = ('aaaaaaa'.replaceAll('a', 'aaaaaaa'), y)", "x = y");
+    // As an argument, a returned value, or in `new`, an array or an object it is printed
+    // as it is: kept.
+    test_same("f('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test_same("console.log('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test_same("function f() { return 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }");
+    test_same("x = new Foo('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test_same("x = ['aaaaaaa'.replaceAll('a', 'aaaaaaa')]");
+    test_same("x = { a: 'aaaaaaa'.replaceAll('a', 'aaaaaaa') }");
+    test_same("x.y = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')");
+    // A global function or a `Math`/`String` method can fold its literal
+    // argument: folds as before.
+    test("x = Number('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = NaN");
+    test("x = parseInt('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = NaN");
+    test("x = isNaN('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = !0");
+    // `Number`'s methods don't fold a string argument: kept.
+    test_same("x = Number.isNaN('aaaaaaa'.replaceAll('a', 'aaaaaaa'))");
+    test("x = Math.abs('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = NaN");
+    test("x = String.fromCharCode('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = '\\0'");
+    test(
+        "x = String('aaaaaaa'.replaceAll('a', 'aaaaaaa'))",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+    );
+    test(
+        "x = encodeURIComponent('aaaaaaa'.replaceAll('a', 'aaaaaaa'))",
+        "x = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+    );
+    // So can a method of a string literal.
+    test("x = 'abc'.indexOf('aaaaaaa'.replaceAll('a', 'aaaaaaa'))", "x = -1");
+    // A local function of the same name is any other call: kept.
+    test_same("function g(Number) { return Number('aaaaaaa'.replaceAll('a', 'aaaaaaa')) }");
+    // A local binding's value reaches its uses, which fold it: folds as before.
+    test_options(
+        "function f() { let s; s = 'aaaaaaa'.replaceAll('a', 'aaaaaaa'); return s.length } x = f()",
+        "function f() { return 49 } x = f()",
+        &remove,
+    );
+    // A line feed prints as it is in a template literal, so it costs no escape.
+    test("x = 'aaaaaaaa'.replaceAll('a', '\\n\\n\\n')", &format!("x = '{}'", r"\n".repeat(24)));
+    test_same("x = 'aaaaaaaa'.replaceAll('a', '\\r\\r\\r')");
+    // The call's own literals count every escape they may need: its receiver prints
+    // ten `\n` (56 characters in all), longer than the 48-character template literal.
+    test(
+        r"x = '````````````\n\n\n\n\n\n\n\n\n\n'.replaceAll('`', 'yyy')",
+        &format!("x = '{}{}'", "yyy".repeat(12), r"\n".repeat(10)),
+    );
+    // A script's top-level binding stays even when unused: kept.
+    test_same_options_source_type(
+        "var s = 'aaaaaaa'.replaceAll('a', 'aaaaaaa')",
+        SourceType::script(),
+        &remove,
+    );
 }
 
 #[test]
