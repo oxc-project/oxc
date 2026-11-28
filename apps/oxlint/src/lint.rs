@@ -187,46 +187,52 @@ impl CliRunner {
             paths.push(self.cwd.clone());
         }
 
-        // The walker never filters gitignored walk roots (including roots inside a gitignored directory).
-        // NOTE: Applied regardless of `--no-ignore`.
-        // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
-        // not git's. (Aligns with during walk filtering behavior)
-        let mut gitignore_checker = GitignoreChecker::new();
-        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
+        let paths = if self.options.list_rules && !misc_options.print_config {
+            vec![]
+        } else {
+            // The walker never filters gitignored walk roots (including roots inside a gitignored directory).
+            // NOTE: Applied regardless of `--no-ignore`.
+            // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
+            // not git's. (Aligns with during walk filtering behavior)
+            let mut gitignore_checker = GitignoreChecker::new();
+            paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
 
-        // If explicit paths were provided but all have been filtered,
-        // or the default cwd target is gitignored, return early.
-        if paths.is_empty() {
-            if debug_files {
-                return crate::mode::run_debug_files(
-                    std::iter::empty::<&Path>(),
-                    &self.cwd,
+            // If explicit paths were provided but all have been filtered,
+            // or the default cwd target is gitignored, return early.
+            if paths.is_empty() {
+                if debug_files {
+                    return crate::mode::run_debug_files(
+                        std::iter::empty::<&Path>(),
+                        &self.cwd,
+                        stdout,
+                    );
+                }
+
+                return Self::handle_no_files_found(
                     stdout,
+                    &output_formatter,
+                    now,
+                    None,
+                    misc_options.no_error_on_unmatched_pattern,
                 );
             }
 
-            return Self::handle_no_files_found(
-                stdout,
-                &output_formatter,
-                now,
-                None,
-                misc_options.no_error_on_unmatched_pattern,
-            );
-        }
+            let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
+            let mut paths = walker.paths();
 
-        let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
-        let mut paths = walker.paths();
+            // NAPI tests build `oxlint` with `testing` feature enabled.
+            // In NAPI tests, sort file paths if oxlint is run with `--threads 1`.
+            // This guarantees files are linted in a deterministic order.
+            //
+            // Note: Sorting paths would not be sufficient to guarantee deterministic linting order unless
+            // `--threads 1` is also used, because otherwise linting happens in parallel on multiple threads,
+            // which also produces non-determinism.
+            if cfg!(feature = "testing") && misc_options.threads == Some(1) {
+                paths.sort_unstable();
+            }
 
-        // NAPI tests build `oxlint` with `testing` feature enabled.
-        // In NAPI tests, sort file paths if oxlint is run with `--threads 1`.
-        // This guarantees files are linted in a deterministic order.
-        //
-        // Note: Sorting paths would not be sufficient to guarantee deterministic linting order unless
-        // `--threads 1` is also used, because otherwise linting happens in parallel on multiple threads,
-        // which also produces non-determinism.
-        if cfg!(feature = "testing") && misc_options.threads == Some(1) {
-            paths.sort_unstable();
-        }
+            paths
+        };
 
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
@@ -2129,6 +2135,29 @@ mod test {
             assert_eq!(row[2], expected, "Incorrect default for {plugin}/{name}");
             assert_eq!(row[3], expected, "Incorrect enabled state for {plugin}/{name}");
         }
+    }
+
+    #[test]
+    fn test_rules_in_gitignored_folder() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let repo_path = temp_dir.path();
+        fs::create_dir(repo_path.join(".git")).unwrap();
+        fs::write(repo_path.join(".gitignore"), "ignored/\n").unwrap();
+        let ignored_dir = repo_path.join("ignored");
+        fs::create_dir(&ignored_dir).unwrap();
+
+        // 1. Running `--rules` inside the gitignored directory lists rules and exits 0.
+        let (stdout, result) = Tester::new().with_cwd(ignored_dir).test_output(&["--rules"]);
+        assert!(matches!(result, CliRunResult::None), "{result:?}");
+        assert!(stdout.contains("## Correctness"), "{stdout}");
+        assert!(stdout.contains("Total:"), "{stdout}");
+
+        // 2. Running `--rules ignored` from the repository root also lists rules and exits 0.
+        let (stdout, result) =
+            Tester::new().with_cwd(repo_path.to_path_buf()).test_output(&["--rules", "ignored"]);
+        assert!(matches!(result, CliRunResult::None), "{result:?}");
+        assert!(stdout.contains("## Correctness"), "{stdout}");
+        assert!(stdout.contains("Total:"), "{stdout}");
     }
 
     #[test]
