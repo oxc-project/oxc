@@ -109,6 +109,12 @@ export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
 export type SnapshotHintMode = "always" | "multi";
 export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...unknown[]];
+export type HyphenTags =
+  | {
+      [k: string]: AlwaysNever | undefined;
+    }
+  | HyphenTagKeyword;
+export type HyphenTagKeyword = "any";
 export type AltTextElements = "img" | "object" | "area" | 'input[type="image"]';
 export type AnchorIsValidAspect = "noHref" | "invalidHref" | "preferButton";
 export type Assert = "htmlFor" | "nesting" | "both" | "either";
@@ -1034,6 +1040,8 @@ export interface DummyRuleMap {
   "jsdoc/implements-on-classes"?: RuleNoConfig;
   "jsdoc/no-blank-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBlankBlocks];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
+  "jsdoc/require-hyphen-before-param-description"?:
+    RuleNoConfig | [AllowWarnDeny, AlwaysNever] | [AllowWarnDeny, AlwaysNever, HyphenTagOptions];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
   "jsdoc/require-param-name"?: RuleNoConfig;
@@ -1886,6 +1894,8 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, EmptyTagsConfig]
     | [AllowWarnDeny, NoBlankBlocks]
     | [AllowWarnDeny, NoDefaultsConfig]
+    | [AllowWarnDeny, AlwaysNever]
+    | [AllowWarnDeny, AlwaysNever, HyphenTagOptions]
     | [AllowWarnDeny, RequireParamConfig]
     | [AllowWarnDeny, RequireParamDescriptionConfig]
     | [AllowWarnDeny, RequireParamTypeConfig]
@@ -2963,6 +2973,12 @@ export interface NoDefaultsConfig {
    * If true, report the presence of optional param names (square brackets) on `@param` tags.
    */
   noOptionalParamNames?: boolean;
+}
+export interface HyphenTagOptions {
+  /**
+   * Map tag names to `"always"` or `"never"`. Use `"*"` as a fallback for other tags.
+   */
+  tags?: HyphenTags;
 }
 export interface RequireParamConfig {
   /**

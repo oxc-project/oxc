@@ -272,7 +272,9 @@ impl Rule for CheckTagNames {
                 }
 
                 // If user explicitly blocked, report
-                if let Some(reason) = settings.check_blocked_tag_name(tag_name) {
+                if let Some(reason) = settings
+                    .blocked_tag_message(tag_name, || format!("Unexpected tag `@{tag_name}`."))
+                {
                     ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &reason));
                     continue;
                 }

@@ -97,13 +97,14 @@ impl Default for JSDocPluginSettings {
 }
 
 impl JSDocPluginSettings {
-    /// Only for `check-tag-names` rule
-    /// Return `Some(reason)` if blocked
-    pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<Cow<'_, str>> {
+    /// Return the configured message for a blocked tag, or the rule's default message.
+    pub fn blocked_tag_message(
+        &self,
+        tag_name: &str,
+        default: impl FnOnce() -> String,
+    ) -> Option<Cow<'_, str>> {
         match self.tag_name_preference.get(tag_name) {
-            Some(TagNamePreference::FalseOnly(_)) => {
-                Some(Cow::Owned(format!("Unexpected tag `@{tag_name}`.")))
-            }
+            Some(TagNamePreference::FalseOnly(_)) => Some(Cow::Owned(default())),
             Some(TagNamePreference::ObjectWithMessage { message }) => Some(Cow::Borrowed(message)),
             _ => None,
         }
@@ -122,27 +123,7 @@ impl JSDocPluginSettings {
                 Some(Cow::Borrowed(message))
             }
             _ => {
-                // https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md#default-preferred-aliases
-                let aliased_name = match original_name {
-                    "virtual" => "abstract",
-                    "extends" => "augments",
-                    "constructor" => "class",
-                    "const" => "constant",
-                    "defaultvalue" => "default",
-                    "desc" => "description",
-                    "host" => "external",
-                    "fileoverview" | "overview" => "file",
-                    "emits" => "fires",
-                    "func" | "method" => "function",
-                    "var" => "member",
-                    "arg" | "argument" => "param",
-                    "prop" => "property",
-                    "return" => "returns",
-                    "exception" => "throws",
-                    "yield" => "yields",
-                    _ => original_name,
-                };
-
+                let aliased_name = default_preferred_tag_name(original_name);
                 if aliased_name != original_name {
                     return Some(reason(aliased_name));
                 }
@@ -152,31 +133,53 @@ impl JSDocPluginSettings {
         }
     }
 
+    /// Resolve a configured preference or a default JSDoc alias (e.g. `return` to `returns`).
+    pub fn preferred_tag_name<'s>(&'s self, name: &'s str) -> &'s str {
+        if self.tag_name_preference.values().any(|pref| pref.replacement() == Some(name)) {
+            return name;
+        }
+        self.tag_name_preference.get(name).map_or_else(
+            || default_preferred_tag_name(name),
+            |pref| pref.replacement().unwrap_or(name),
+        )
+    }
+
     /// Only for `check-tag-names` rule
     /// Return all user replacement tag names
     pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
-        self.tag_name_preference
-            .values()
-            .filter_map(|pref| match pref {
-                TagNamePreference::TagNameOnly(replacement)
-                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
-                    Some(replacement.as_str())
-                }
-                _ => None,
-            })
-            .collect()
+        self.tag_name_preference.values().filter_map(TagNamePreference::replacement).collect()
     }
 
     /// Resolve original, known tag name to user preferred name
     /// If not defined, return original name
     pub fn resolve_tag_name<'s>(&'s self, original_name: &'s str) -> &'s str {
-        match self.tag_name_preference.get(original_name) {
-            Some(
-                TagNamePreference::TagNameOnly(replacement)
-                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
-            ) => replacement,
-            _ => original_name,
-        }
+        self.tag_name_preference
+            .get(original_name)
+            .and_then(TagNamePreference::replacement)
+            .unwrap_or(original_name)
+    }
+}
+
+// https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md#default-preferred-aliases
+fn default_preferred_tag_name(original_name: &str) -> &str {
+    match original_name {
+        "virtual" => "abstract",
+        "extends" => "augments",
+        "constructor" => "class",
+        "const" => "constant",
+        "defaultvalue" => "default",
+        "desc" => "description",
+        "host" => "external",
+        "fileoverview" | "overview" => "file",
+        "emits" => "fires",
+        "func" | "method" => "function",
+        "var" => "member",
+        "arg" | "argument" => "param",
+        "prop" => "property",
+        "return" => "returns",
+        "exception" => "throws",
+        "yield" => "yields",
+        _ => original_name,
     }
 }
 
@@ -187,6 +190,16 @@ enum TagNamePreference {
     ObjectWithMessageAndReplacement { message: String, replacement: String },
     ObjectWithMessage { message: String },
     FalseOnly(bool), // Should care `true`...?
+}
+
+impl TagNamePreference {
+    fn replacement(&self) -> Option<&str> {
+        match self {
+            Self::TagNameOnly(name)
+            | Self::ObjectWithMessageAndReplacement { replacement: name, .. } => Some(name),
+            _ => None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -276,9 +289,10 @@ mod test {
     }
 
     #[test]
-    fn check_blocked_tag_name() {
+    fn blocked_tag_message() {
+        let default_message = || "Blocked tag".to_owned();
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
-        assert_eq!(settings.check_blocked_tag_name("foo"), None);
+        assert_eq!(settings.blocked_tag_message("foo", default_message), None);
 
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
@@ -289,11 +303,14 @@ mod test {
         }))
         .unwrap();
         assert_eq!(
-            settings.check_blocked_tag_name("foo"),
-            Some(Cow::Borrowed("Unexpected tag `@foo`."))
+            settings.blocked_tag_message("foo", default_message),
+            Some(Cow::Borrowed("Blocked tag"))
         );
-        assert_eq!(settings.check_blocked_tag_name("bar"), Some(Cow::Borrowed("do not use bar")));
-        assert_eq!(settings.check_blocked_tag_name("baz"), None);
+        assert_eq!(
+            settings.blocked_tag_message("bar", default_message),
+            Some(Cow::Borrowed("do not use bar"))
+        );
+        assert_eq!(settings.blocked_tag_message("baz", default_message), None);
     }
 
     #[test]
