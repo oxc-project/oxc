@@ -56,13 +56,17 @@ fn module_html_open_comment_mid_expression_is_lt(cpu: DynCpu) {
 }
 
 #[test_cpus]
-fn module_html_open_comment_at_line_start_diagnosed(cpu: DynCpu) {
+fn module_html_open_comment_at_line_start_is_operators(cpu: DynCpu) {
+    let src = "x;\n<!-- c\ny;";
+    let ks = kinds_of(src, true, cpu);
+    assert!(ks.contains(&TokenKind::Lt), "expected `<` operator: {ks:?}");
+    assert!(ks.contains(&TokenKind::Bang), "expected `!` operator: {ks:?}");
+    assert!(ks.contains(&TokenKind::MinusMinus), "expected `--` operator: {ks:?}");
+    assert_eq!(diag_codes(src, true, cpu), []);
     let src = "<!-- c\nx;";
     let ks = kinds_of(src, true, cpu);
-    assert!(!ks.contains(&TokenKind::Lt), "line-start form stays a comment: {ks:?}");
-    assert_eq!(diag_codes(src, true, cpu), [DiagCode::HtmlCommentInModule]);
-    let src = "x;\n<!-- c\ny;";
-    assert_eq!(diag_codes(src, true, cpu), [DiagCode::HtmlCommentInModule]);
+    assert!(ks.contains(&TokenKind::Lt), "expected `<` operator: {ks:?}");
+    assert_eq!(diag_codes(src, true, cpu), []);
     assert!(diag_codes(src, false, cpu).is_empty(), "script form is silent");
 }
 

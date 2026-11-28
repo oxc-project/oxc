@@ -1,3 +1,5 @@
 parser_unambiguous_misc Summary:
-AST Parsed     : 537/537 (100.00%)
-Positive Passed: 537/537 (100.00%)
+AST Parsed     : 538/538 (100.00%)
+Positive Passed: 537/538 (99.81%)
+AST: tasks/coverage/misc/fail/html-comment-with-esm.js
+

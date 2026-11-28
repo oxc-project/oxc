@@ -63,8 +63,8 @@ pub(super) fn carve_js(lex: Lex, state: &mut LexState, cpu: impl Cpu) {
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
-                i = if html_open_comment_at(src, s, module, cpu) {
-                    lex_html_open_comment(src, token_start, kinds, op_char, s, module, lanes)
+                i = if html_open_comment_at(src, s, module) {
+                    lex_html_open_comment(src, token_start, kinds, op_char, s, lanes)
                 } else {
                     s + 1
                 };

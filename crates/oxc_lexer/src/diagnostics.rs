@@ -423,9 +423,6 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
             diag(sev, format!("Invalid Character `{}`", offending_char(source, d))).with_label(span)
         }
         DiagCode::InvalidRegexpGrammar => diag(sev, "Invalid regular expression").with_label(span),
-        DiagCode::HtmlCommentInModule => {
-            diag(sev, "HTML comments are not allowed in modules").with_label(span)
-        }
         DiagCode::UnterminatedJsxElement => {
             diag(sev, "JSX element has no corresponding closing tag")
                 .with_label(span)
