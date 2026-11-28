@@ -775,7 +775,7 @@ the same `join(line)` + deferred `lineSuffix` artifact as DIVERGENCES.md#comment
 
 ## line-comment-after-comma
 
-- Why: uniform-rule (comment position kept)
+- Why: semantics (Prettier's output puts the next `@media` query inside the comment; verified with dart-sass)
 - Pin: `tests/fixtures/format/scss/line-comment-after-comma.scss`, `tests/fixtures/format/less/line-comment-after-comma.less`
 - Conformance:
   - `externals/prettier/scss/comments/4594.scss`
@@ -813,41 +813,58 @@ Prettier keeps the same comment after the LAST comma (`"bar": 2, // Comment`) an
 the move is where postcss-value-parser hands the comment to the next comma group, not a rule.
 Applies at every comma site: values, function and `@include` arguments, maps, paren lists, `@use ... with`, `@forward` members, `@each`,
 `@import` paths and modifiers, `@layer`, `@custom-selector`, `@media` query lists and `selector()` lists.
-For `@media` Prettier's move also swallows the next query (`@media a, // c b {`), a semantics bug on its side.
+For `@media` Prettier's move puts the next query on the comment's line, inside it (`@media a, // c b {`): the output no longer parses (dart-sass 1.108).
+Elsewhere the move only changes the comment's line, and ours keeps the position.
 
 ## line-comment-before-block
 
-- Why: invariant
+- Why: semantics (Prettier's output puts the `{` inside the comment; verified with dart-sass)
 - Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
 
 ```scss
 /* input */
+@media screen // c
+{
+  a { color: red; }
+}
 @supports (a: b) // c
 {
   color: red;
 }
 
 /* ours */
+@media screen // c
+{
+  a {
+    color: red;
+  }
+}
 @supports (a: b) // c
 {
   color: red;
 }
 
 /* prettier */
+@media screen // c {
+  a {
+    color: red;
+  }
+}
 @supports (a: b) { // c
   color: red;
 }
 ```
 
+For `@media screen // c`, Prettier puts the `{` on the comment's line, inside the comment: the output no longer parses (dart-sass 1.108).
 A `//` glued to the end of an at-rule prelude stays on that line and the `{` starts the next;
 Prettier moves it past the `{` as the block's first comment for `@media` / `@supports` / `@mixin` / `@include`
 (and keeps it before the `{` for `@page` / `@keyframes` / `@font-face` / `@if`):
 the comment crosses the `{`, a grammar-fixed delimiter.
-For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{` / the comment text, bugs on its side.
+For `@else // c` Prettier's move also loses the comment text; elsewhere ours keeps the position.
 
 ## own-line-comment-before-block
 
-- Why: uniform-rule (comment position kept)
+- Why: invariant
 - Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
 - Conformance:
   - `externals/prettier/css/comments/at-rules.css`
@@ -869,7 +886,7 @@ For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{
 ```
 
 A comment starting a line before an at-rule's `{` keeps its line, the `{` on it or on the next as in the source, as before a JS block (`if (a)\n/* c */ {`);
-Prettier moves it onto the prelude's line: the comment changes line.
+Prettier moves it onto the prelude's line and glues the `{` after it, so `{` no longer starts the line after it (a `-next-line` target lost).
 
 ## at-root-line-comment-indent
 
@@ -1662,7 +1679,7 @@ ours normalizes it like the comment-free sibling (comment presence never changes
 
 ## less-escaped-string-gap
 
-- Why: invariant
+- Why: uniform-rule (same construct, same output: `"a" "b"`)
 - Pin: `tests/fixtures/format/less/escaped-string-gap.less`
 - Conformance:
   - `externals/prettier/less/less-test-suite/snippet: tests-unit/variables/variables.less`
@@ -1679,7 +1696,8 @@ ours normalizes it like the comment-free sibling (comment presence never changes
 @quotes: "~""~";
 ```
 
-Two space-separated values keep their gap (the lossless contract): `"~" "~"` is a two-item list.
+Two space-separated strings keep their gap, as Prettier prints `"a" "b"`: `"~" "~"` is a two-item list.
+Layout only: lessc (4.9.1) reads the glued `"~""~"` as the same list.
 Prettier's `~` handling for escaped strings (`~"..."`) fires on a string whose content is `~` and glues the next value onto it.
 
 ## less-lookup-glue

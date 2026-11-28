@@ -42,6 +42,7 @@ const b = [
 ```
 
 A hole has no node, so Prettier's attachment relocates a comment next to it across the commas (user content, they keep the hole count) to a real element;
+an own-line one then no longer has the hole's `,` starting the line after it (a `-next-line` target lost);
 we keep every comment on its source side of each hole's `,`, in array expressions and array patterns alike.
 Spacing follows the `,` like any separator: a comment before it is glued to it (`/* c */,`, as in `a /* c */,`),
 a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the last hole where Prettier glues it (`, ,/* c */`).
@@ -152,7 +153,8 @@ type WithComment = SerializedProps
   { cause: unknown };
 ```
 
-Prettier's output changes line (own-line to same-line, behind `& `) and is not a fixpoint (the second pass inlines the type with the comment behind `;`).
+Prettier's output is not a fixpoint (the second pass inlines the type with the comment behind `;`); its first pass moves the comment behind `& `, which only changes its line.
+The `&` that ours starts the line after the comment with is the one the option moves to the line start, followed by the same `{`.
 Binary-like chains hoist the comment in both formatters; "comment position kept" (FORMATTER_POLICY, best effort) over Prettier's internal inconsistency.
 
 ## union-suppression-whole
@@ -233,7 +235,7 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
 
 ## eol-comment-after-assign-colon
 
-- Why: invariant (prettier/prettier#14617)
+- Why: uniform-rule (comment position kept; prettier/prettier#14617)
 - Pin: `tests/fixtures/js/comments/assignment-eol-line-comment.js`, `tests/fixtures/ts/comments/operator-eol-line-comment.ts`
 - Conformance:
   - `externals/prettier/js/comments/array-and-object.js`
@@ -241,7 +243,7 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
   - `externals/prettier/js/comments/variable-declarator.js`
   - `externals/prettier/typescript/comments/type-literals.ts`
 
-Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined).
+Prettier moves the comment past the value and its `;`, or onto a line of its own; ours keeps its position.
 An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break).
 Block comments glued after the operator before it stay there, in order; Prettier prints the line comment first and the block on the value's line, crossing the block.
 A line comment before the operator rides its `line_suffix` past the operator and gets the same break; Prettier flushes it past the value.
@@ -328,10 +330,11 @@ Prettier keeps it verbatim too (its trailing attachment), we format it.
 
 ## union-leading-pipe-comment-normalization
 
-- Why: uniform-rule (same construct, same output: an un-parenthesized union source, `| /* c */ A`)
+- Why: invariant
 - Pin: `tests/fixtures/ts/union/leading-pipe-comments.ts`
 
 A union's leading comments normalize to behind the leading `|` (`| /* c */ A`) whenever no comment ends its source line, regardless of the source shape.
+For a nested single-member paren source, Prettier's output is not a fixpoint (its second pass prints `| /* c */ A`); elsewhere ours prints the shape of an un-parenthesized union source, as Prettier does there.
 
 ```ts
 // input
@@ -455,7 +458,7 @@ A known issue (AGENTS.md "Known issues"), shared with upstream: whether these pa
 - Why: invariant (prettier/prettier#19939, prettier/prettier#19958)
 - Pin: `tests/fixtures/ts/comments/binary-cast-own-line-comment.ts`
 
-Prettier's output crosses user content (the operator, the type and its `;`) and changes line (own-line to the operator's line).
+Prettier's output moves an own-line comment before `as const` past `const` and the `;`, so `const` no longer starts the line after it (a `-next-line` target lost); its other moves are end-of-line comments crossing the type and the `;`.
 Comments around the operator keep their source side and their line-start side — the head-body comment policy applied to the operator gap, unifying it with `=`/`:` (`eol-comment-after-assign-colon`) and statement head-body gaps:
 
 - before the operator: trail the expression, never cross the operator — except what the grammar-defined slot cannot hold (no line terminator may precede the operator, a multiline comment's interior counts): those normalize to the type side so the output re-parses
@@ -468,16 +471,24 @@ const eolLine = 1 as // c
 Foo;
 const eolBlock = {} satisfies /* c */
 {};
+const asConst = 1 as
+// c
+const;
 
 // ours
 const eolLine = 1 as // c
   Foo;
 const eolBlock = {} satisfies /* c */ {};
+const asConst = 1 as
+  // c
+  const;
 
 // prettier: relocates the line comment across the type and the `;`,
 // and the block comment backward across the operator
 const eolLine = 1 as Foo; // c
 const eolBlock = {} /* c */ satisfies {};
+const asConst = 1 as const;
+// c
 ```
 
 Prettier is converging on its own piecewise fixes: an own-line comment leads the type on its own line since prettier/prettier#19939, as ours; endOfLine comments are still relocated (prettier/prettier#19958 would normalize them toward own-line); we preserve the written position instead, so the entry outlives them.
@@ -491,6 +502,7 @@ A union type claims the after-operator comments as its leading comments and plac
 - Pin: see the per-shape list below
 
 The head-body comment policy family (see AGENTS.md "Head-body and operator gaps (class 3)"): comments between a head and its body keep their position, where Prettier's attachment relocates them across the delimiters (a body's braces, a head's parens), user content.
+The invariant: an own-line comment pulled inside braces or parens, or hoisted above a label, no longer has the code after it starting its next line (a `-next-line` target lost), and the for-in/for-of head is not a fixpoint.
 
 ```js
 // input
@@ -852,7 +864,8 @@ foo(
 foo(/* c */ a);
 ```
 
-Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as ours) but moves a same-line block comment and an own-line comment into the arguments.
+Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as ours) but moves a same-line block comment and an own-line comment into the arguments,
+where the `(` no longer starts the own-line one's next line (a `-next-line` target lost).
 Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
 Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
 Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
@@ -1225,7 +1238,7 @@ x =
 ```
 
 An own-line comment before a member's `.` stays before it, for `.b` and `.#b` alike.
-Prettier moves it before the object for `.b`, and after the `.` for `.#b`; both cross a token.
+Prettier moves it before the object for `.b`, and after the `.` for `.#b`: in both the member's `.` no longer starts the line after it (a `-next-line` target lost).
 
 ## computed-member-object-paren-break
 
