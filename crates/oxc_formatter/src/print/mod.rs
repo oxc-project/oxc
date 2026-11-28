@@ -1451,7 +1451,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeAnnotation<'a>> {
             _ => {
                 // Line comment after the `:` drops the type to column 0 (`let v: // c` + `Foo`, Prettier too);
                 // a break + indent as after `=` would keep it under the name.
-                // See AGENTS.md "Open debts".
+                // See AGENTS.md "Known issues".
                 let type_annotation = self.type_annotation();
                 if f.comments().has_comment_in_range(self.span.start, type_annotation.span().start)
                 {

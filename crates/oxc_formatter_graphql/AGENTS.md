@@ -42,11 +42,12 @@ Prettier collects them from the token stream and attaches leading/trailing/dangl
 
 This crate instead collects comment spans into a positional cursor, drained in source order by claim points spread through the printers, like the other `oxc_formatter_*` crates.
 
-- The policy's opener exception needs no code: nothing claims a comment right after `{` / `(` / `[`, so `write_sequence`'s leading flush takes it
+- The policy's opener rule needs no code: nothing claims a comment right after `{` / `(` / `[`, so `write_sequence`'s leading flush takes it
   - Prettier's attachment differs for some openers, see DIVERGENCES.md
-- Two known invariant violations, kept deliberately (details live on the helpers' doc comments):
-  - an own-line comment claimed right after a printed literal inlines on that literal's line (`write_leading_comments`)
-  - positions no printer claims fall back to a trailing comment after the node, which may cross remaining in-span tokens (`flush_overlooked_inside_comments`)
+- Positions no printer claims fall back to a trailing comment after the node, which may cross remaining in-span tokens (`flush_overlooked_inside_comments`):
+  the position is not kept there (best effort), but the fallback keeps the cursor monotonic
+- The policy's best-effort "comment position kept" is not applied right after a printed literal:
+  the comment inlines on that literal's line, as Prettier (`write_leading_comments`)
 - Two constraints the code cannot show:
   - the cursor is monotonic: every claim point must drain everything inside the span it just printed, or a later flush point's gap range inverts and panics (issue #24927)
   - trailing claims are bounded at the literal's SOURCE position, or re-formatting is not idempotent (`g: # c` must not become `g # c` + `:`)
@@ -69,6 +70,13 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
 - Blank-line preservation classifies the inter-token gap (`classify_gap`):
   a blank line is a whitespace-only line strictly inside the gap.
   Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
+
+## Known issues
+
+Meant to be fixed, deferred (FORMATTER_POLICY "Fixing").
+
+- Two line comments can merge into one (lossless): `h: String` + break + `# a` + break + `! # b` prints `h: String!` + break + `# a # b`, which re-parses as one comment.
+  `# a` falls back to `flush_overlooked_inside_comments`, and the trailing `# b` lands on its line
 
 ## Verification
 

@@ -691,7 +691,7 @@ pub(super) fn comma_group_is_multi(group: &[ComponentValue<'_>]) -> bool {
 /// a block comment between the group and its comma stays before the comma (`a /* c */, b`),
 /// a same-line `//` there rides past it (`a // c\n,` -> `a, // c`: the comma cannot follow a `//`),
 /// a same-line `//` right after it stays on its line (`a, // c`);
-/// own-line comments and anything past those lead the next group (the line-boundary invariant).
+/// own-line comments and anything past those lead the next group (FORMATTER_POLICY's best-effort "comment position kept").
 pub(super) fn write_group_comma(comma_start: Option<u32>, f: &mut CssFormatter<'_, '_>) {
     let Some(comma) = comma_start else {
         write!(f, ",");
@@ -730,7 +730,7 @@ enum LineCommentAs {
 }
 
 /// A `//` on the line of the comma just written (`a, // c`, `a, /* b */ // c`) stays on that line,
-/// the line-boundary invariant; the block comments glued before it on that line come along.
+/// FORMATTER_POLICY's best-effort "comment position kept"; the block comments glued before it on that line come along.
 /// Prettier's CSS moves them below as the next element's leading comments instead
 /// (its other printers keep them, and so do the other formatter crates), see DIVERGENCES.md#line-comment-after-comma.
 pub(super) fn flush_line_comment_after_comma(comma_start: u32, f: &mut CssFormatter<'_, '_>) {

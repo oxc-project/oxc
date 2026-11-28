@@ -40,7 +40,7 @@ fn write_gap(gap: &[u8], f: &mut GraphqlFormatter<'_, '_>) {
 /// Emit comments that precede a node,
 /// preserving the source's vertical spacing (0/1/blank) between each comment and the next position.
 ///
-/// NOTE: Known FORMATTER_POLICY violation ("own-line comments stay own-line"):
+/// NOTE: FORMATTER_POLICY's best-effort "comment position kept" is not applied, as Prettier:
 /// the line break BEFORE the first comment is never reproduced,
 /// so an own-line comment claimed mid-line (right after `type`, `:`, `=`) inlines onto that line
 /// ```graphql
@@ -55,8 +55,9 @@ fn write_gap(gap: &[u8], f: &mut GraphqlFormatter<'_, '_>) {
 ///   f: Int
 /// }
 /// ```
-/// Kept for now: Prettier byte-compat outweighs the invariant
-/// (fixable in the existing IR: hardline before flushing at the claim points).
+/// A `-next-line` directive keeps its target, the line after the comment is unchanged.
+/// Applying the rule: `hard_line_break` before an own-line first comment (a no-op at a line start),
+/// once the claim points' literals stop carrying a trailing space (`": "`, `" = "`, `"implements "`).
 fn write_leading_comments(comments: &[Span], value_start: u32, f: &mut GraphqlFormatter<'_, '_>) {
     let source = f.context().source_text();
     for (i, &span) in comments.iter().enumerate() {

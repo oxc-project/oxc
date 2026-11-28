@@ -58,12 +58,12 @@ Ownership is a claim discipline, not attachment: each printer claims the comment
   a monotonicity guard (the cursor must never point before a printed position), not a placement rule.
   A comment reaching it is LOST (the lossless contract), so every new value position must claim its leads
 
-#### Placement invariants
+#### Comment placement
 
-The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply; this section records their CSS translation:
+The shared rules (FORMATTER_POLICY.md "Comment placement") apply; this section records their CSS translation:
 
 - `,` is a list SEPARATOR: a comment between an element and its comma stays BEFORE the comma
-  - `a /* c */, b`; comments after it lead the next element, except a `//` on the comma's line (line-boundary rule below)
+  - `a /* c */, b`; comments after it lead the next element, except a `//` on the comma's line (line rules below)
   - Declaration value lists (`write_value_groups`) and function arguments (`write_function`) route every comma through `write_group_comma` with the comma offset paired to its group
   - `split_comma_groups` returns `(group, Option<comma_start>)`; SCSS/Less lists pair `comma_spans`
   - A new comma site must take the pair, the shape makes taking the groups without the commas a visible choice, not an accident
@@ -76,7 +76,7 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
 - The positional cursor makes ownership a bounds discipline, not an attachment one:
   - a flush's upper bound must never extend past the next piece of user content,
   - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
-- Line-boundary rule in CSS terms: `//` comments force a hardline after;
+- Line rules in CSS terms: `//` comments force a hardline after;
   - a `//` on a list `,`'s line stays there (`1, // c`, like JS), together with the block comments glued before it on that line;
     Prettier's CSS moves it below as the next element's leading comment (DIVERGENCES.md#line-comment-after-comma)
   - a `//` before a list `,` rides past it (`a // c\n, b` -> `a, // c`), an own-line comment there leads the next element;
@@ -86,7 +86,8 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
   - inside it, the prelude printer places its own comments, word by word (`value::write_with_comments`: own-line ones lead the word, glued ones trail it),
     and `write_at_rule` writes whatever is still pending before the `;` / `{`, so a prelude comment is never lost
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
-    - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
+    - freezing it own-line would pin a wrapped layout (= not idempotent), so its position is Prettier's
+    - a `-next-line` directive there loses its target, see "Known issues"
   - a `style` attribute's statements share a line when they fit, and its comments take the same separator (`write_statement_separator`):
     they share the line exactly when the declarations do, own-line ones included (a same-line comment pair keeps its space)
 
@@ -207,6 +208,13 @@ Covered: `$var: value !important;` declarations (root and inside rules), `$var` 
 `$(var)` interpolation in property names.
 
 NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(network)`, rejected: DIVERGENCES.md#grammar-owner-rejected), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
+
+## Known issues
+
+Meant to be fixed, deferred (FORMATTER_POLICY "Fixing").
+
+- A value-level own-line block comment joins the value after it (`margin:` + break + `/* stylelint-disable-next-line */` + break + `1px 2px;` -> `/* stylelint-disable-next-line */ 1px 2px;`, Prettier too):
+  the directive's next line is no longer `1px 2px`. A fix keeps the source break after the comment without freezing a wrapped layout (the reason it is a fill item)
 
 ## Verification
 

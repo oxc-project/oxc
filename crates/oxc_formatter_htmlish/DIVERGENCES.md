@@ -1171,7 +1171,7 @@ Prettier puts the `>` on the comment's line, where it is part of the comment: th
 
 ## angular-start-tag-line-comment-placement
 
-- Why: invariant
+- Why: uniform-rule (comment position kept)
 - Pin: `tests/fixtures/angular/angular-start-tag-line-comment-placement.component.html`
 
 ```html
@@ -1194,7 +1194,7 @@ Prettier puts the `>` on the comment's line, where it is part of the comment: th
 ```
 
 A `//` start-tag comment on the line of the attribute before it stays on that line; one on a line of its own stays so.
-Prettier puts every start-tag comment on a line of its own, so a same-line one crosses a line boundary.
+Prettier puts every start-tag comment on a line of its own, so a same-line one changes line.
 One right after the tag name (`<div // c`) moves to its own line, as after any opening delimiter.
 
 ## angular-i18n-content-as-written
