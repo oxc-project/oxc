@@ -466,6 +466,11 @@ impl CodegenOptions {
 #[derive(Default)]
 pub struct MinifyOptions {
     /// Use when minifying an ES module.
+    ///
+    /// `true` parses the source as an ES module, `false` as a classic script.
+    /// When omitted, the module kind is inferred from the file name extension
+    /// (`.js` and `.jsx` detect it from the syntax, `.mjs` is a module, `.cjs`
+    /// is CommonJS), defaulting to an ES module for unknown extensions.
     pub module: Option<bool>,
 
     pub compress: Option<Either<bool, CompressOptions>>,

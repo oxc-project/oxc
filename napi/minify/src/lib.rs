@@ -134,10 +134,15 @@ fn minify_impl(
 
     let allocator = Allocator::default();
 
-    let source_type = if options.module == Some(true) {
-        SourceType::mjs()
-    } else {
-        SourceType::from_path(filename).unwrap_or_default()
+    let source_type = match options.module {
+        // `module: true` forces an ES module parse.
+        Some(true) => SourceType::mjs(),
+        // `module: false` forces a script parse. The file name may be a label
+        // without a JS extension (e.g. an inline `<script>` block), so parsing
+        // it as a module would lose Annex B function hoisting and `"use strict"`.
+        Some(false) => SourceType::script(),
+        // No preference: infer from the file name, defaulting to an ES module.
+        None => SourceType::from_path(filename).unwrap_or_default(),
     };
 
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
