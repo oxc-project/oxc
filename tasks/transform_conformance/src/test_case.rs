@@ -341,7 +341,10 @@ impl TestCase {
         let passed = if let Some(throws) = &babel_options.throws {
             output = throws.cow_replace(" (1:6)", "").into_owned();
             !output.is_empty()
-                && actual_errors.as_ref().is_some_and(|errors| errors.contains(&output))
+                // The renderer wraps long messages onto `  | ` continuation lines.
+                && actual_errors.as_ref().is_some_and(|errors| {
+                    errors.contains(&output) || errors.cow_replace("\n  | ", " ").contains(&output)
+                })
         } else {
             // Get output.js by using our code gen so code comparison can match.
             output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(

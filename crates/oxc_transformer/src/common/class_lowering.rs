@@ -40,19 +40,36 @@ pub struct ClassLowering {
 }
 
 impl ClassLowering {
-    fn compute(class_transform: ClassTransform, class: &Class<'_>) -> Self {
+    fn compute(
+        class_transform: ClassTransform,
+        decorator_mode: DecoratorMode,
+        class: &Class<'_>,
+    ) -> Self {
         let has_decorators = class_has_decorators(class);
         let has_auto_accessor = class_body_has_auto_accessors(&class.body);
-        // Classes with decorators or auto-accessors are preserved for a downstream transform.
-        let mode = if has_decorators || has_auto_accessor {
-            ClassLoweringMode::Preserve
-        } else {
-            match class_transform {
-                ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
-                ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
-            }
-        };
+        // Decorated classes are always preserved for a downstream decorator transform.
+        let mode =
+            if has_decorators || (decorator_mode == DecoratorMode::Preserve && has_auto_accessor) {
+                ClassLoweringMode::Preserve
+            } else {
+                match class_transform {
+                    ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
+                    ClassTransform::None
+                    | ClassTransform::StaticBlocks
+                    | ClassTransform::StandardDecorators { .. } => ClassLoweringMode::Native,
+                }
+            };
         Self { mode, has_decorators, has_auto_accessor, class_binding_is_reassigned: false }
+    }
+
+    /// Whether the class keeps native class fields.
+    pub fn is_native(self) -> bool {
+        self.mode == ClassLoweringMode::Native
+    }
+
+    /// Whether the class keeps its decorators and auto-accessors for a downstream transform.
+    pub fn is_preserved(self) -> bool {
+        self.mode == ClassLoweringMode::Preserve
     }
 
     /// Whether class-properties lowers the fields of this class.
@@ -115,6 +132,11 @@ impl ClassLowering {
         self.class_binding_is_reassigned
     }
 
+    /// Whether standard decorator lowering has anything to do for this class.
+    pub fn handles_standard_decorators(self) -> bool {
+        self.mode != ClassLoweringMode::Preserve && self.has_auto_accessor
+    }
+
     fn depends_on_class_syntax(self) -> bool {
         self.has_decorators || self.has_auto_accessor
     }
@@ -156,10 +178,18 @@ impl ClassLoweringDecisions {
             }
             return;
         }
-        let lowering = ClassLowering::compute(self.class_transform, class);
+        let lowering = self.for_untransformed_class(class);
         if lowering.depends_on_class_syntax() {
             self.insert(class.scope_id(), lowering);
         }
+    }
+
+    /// Inspect a class before its entry hook records its lowering.
+    pub fn for_untransformed_class(&self, class: &Class<'_>) -> ClassLowering {
+        if self.decorator_mode.is_legacy() {
+            return self.default_decision();
+        }
+        ClassLowering::compute(self.class_transform, self.decorator_mode, class)
     }
 
     /// Look up the decision for an entered class, falling back to the program options.
@@ -191,7 +221,9 @@ impl ClassLoweringDecisions {
     fn default_decision(&self) -> ClassLowering {
         let mode = match self.class_transform {
             ClassTransform::ClassProperties { .. } => ClassLoweringMode::LowerAll,
-            ClassTransform::None | ClassTransform::StaticBlocks => ClassLoweringMode::Native,
+            ClassTransform::None
+            | ClassTransform::StaticBlocks
+            | ClassTransform::StandardDecorators { .. } => ClassLoweringMode::Native,
         };
         ClassLowering {
             mode,

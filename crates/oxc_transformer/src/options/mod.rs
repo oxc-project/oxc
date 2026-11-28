@@ -96,6 +96,7 @@ impl TransformOptions {
             typescript: TypeScriptOptions::default(),
             decorator: DecoratorOptions {
                 legacy: true,
+                lower: Some(true),
                 emit_decorator_metadata: true,
                 strict_null_checks: true,
             },
@@ -180,8 +181,20 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             .or_else(|| options.plugins.typescript.clone())
             .unwrap_or_default();
 
+        if let Some(proposal) = &options.plugins.proposal_decorators
+            && !matches!(proposal.version.as_str(), "" | "2023-11")
+        {
+            errors.push(format!(
+                "proposal-decorators: version \"{}\" is not supported, only \"2023-11\" is",
+                proposal.version
+            ));
+        }
+
         let decorator = DecoratorOptions {
             legacy: options.plugins.legacy_decorator.is_some(),
+            // Babel lowers decorators only when its plugin is listed; `preset-env` targets never
+            // enable it, so without the plugin the syntax passes through for a later tool.
+            lower: Some(options.plugins.proposal_decorators.is_some()),
             emit_decorator_metadata: options
                 .plugins
                 .legacy_decorator

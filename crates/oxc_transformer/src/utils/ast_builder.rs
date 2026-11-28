@@ -7,7 +7,22 @@ use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::{Ident, static_ident};
 use oxc_traverse::BoundIdentifier;
 
-use crate::context::TraverseCtx;
+use crate::{
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
+};
+
+/// `_toPropertyKey(value)`
+pub fn create_to_property_key<'a>(
+    value: Expression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
+    helper_call_expr(
+        Helper::ToPropertyKey,
+        ArenaVec::from_value_in(Argument::from(value), ctx),
+        ctx,
+    )
+}
 
 /// Convert a concise arrow body to a block body with an explicit return, and return the block.
 pub fn arrow_function_body_as_function_body_mut<'a, 'b>(
@@ -278,7 +293,34 @@ pub fn create_class_method<'a>(
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
-    ClassElement::new_method_definition(
+    ClassElement::MethodDefinition(create_method_definition(
+        span,
+        decorators,
+        key,
+        kind,
+        params,
+        return_type,
+        stmts,
+        is_static,
+        scope_id,
+        ctx,
+    ))
+}
+
+/// Create a boxed `MethodDefinition` wrapping a function expression.
+fn create_method_definition<'a>(
+    span: Span,
+    decorators: ArenaVec<'a, Decorator<'a>>,
+    key: PropertyKey<'a>,
+    kind: MethodDefinitionKind,
+    params: ArenaBox<'a, FormalParameters<'a>>,
+    return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+    stmts: ArenaVec<'a, Statement<'a>>,
+    is_static: bool,
+    scope_id: ScopeId,
+    ctx: &TraverseCtx<'a>,
+) -> ArenaBox<'a, MethodDefinition<'a>> {
+    MethodDefinition::boxed(
         span,
         MethodDefinitionType::MethodDefinition,
         decorators,
@@ -328,7 +370,7 @@ pub fn create_accessor_method<'a>(
     class_scope_id: ScopeId,
     return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     ctx: &mut TraverseCtx<'a>,
-) -> ClassElement<'a> {
+) -> ArenaBox<'a, MethodDefinition<'a>> {
     let is_getter = kind == MethodDefinitionKind::Get;
     let scope_flags = ScopeFlags::Function
         | ScopeFlags::StrictMode
@@ -386,7 +428,7 @@ pub fn create_accessor_method<'a>(
         (params, stmt)
     };
 
-    create_class_method(
+    create_method_definition(
         span,
         decorators,
         key,

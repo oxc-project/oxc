@@ -1,25 +1,56 @@
 //! Auto-accessor lowering shared by standard and legacy decorators.
 
-use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 use oxc_syntax::scope::ScopeId;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
-    common::{
-        computed_key::create_computed_key_temp_var,
-        duplicate::duplicate_expression,
-        helper_loader::{Helper, helper_call_expr},
-    },
+    common::{computed_key::create_computed_key_temp_var, duplicate::duplicate_expression},
     context::TraverseCtx,
     utils::{
-        ast_builder::{create_accessor_method, take_literal_property_key},
+        ast_builder::{create_accessor_method, create_to_property_key, take_literal_property_key},
         decorated_class::{PrivateNames, is_auto_accessor},
     },
 };
+
+/// Name of a property key for named evaluation: `x`, `"x"`, `1`, `#x` and a computed `["x"]`.
+pub(super) fn static_key_name<'a>(
+    key: &PropertyKey<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Option<JSStr<'a>> {
+    match key {
+        PropertyKey::StringLiteral(lit) => Some(lit.value),
+        PropertyKey::PrivateIdentifier(ident) => {
+            Some(Str::from_strs_array_in(["#", &ident.name], ctx).into())
+        }
+        _ => key.literal_name().map(|name| name.into_js_str_in(ctx)),
+    }
+}
+
+/// How [`lower_auto_accessors`] converts computed keys shared by a getter and setter.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum AccessorKeys {
+    /// Class fields stay native. Every non-identifier key is converted with `toPropertyKey` once
+    /// and stored in a temp var before the class.
+    Native,
+    /// Class-properties lowers the class. Keys other than string and numeric literals are
+    /// converted with `toPropertyKey` once, inline in the getter key.
+    Lowered,
+    /// Legacy decorators keep TypeScript's output: keys are shared without conversion, because
+    /// wrapping them would reorder the `decorate` calls.
+    Legacy,
+}
+
+/// Elements generated for one auto-accessor, passed to the caller's `record` callback before
+/// traversal visits them.
+pub(super) struct GeneratedAccessor<'r, 'a> {
+    pub storage: &'r mut ArenaBox<'a, PropertyDefinition<'a>>,
+    pub setter: &'r ArenaBox<'a, MethodDefinition<'a>>,
+}
 
 /// Replace each runtime auto-accessor in place with storage and a getter/setter pair.
 ///
@@ -29,13 +60,17 @@ use crate::{
 /// get prop() { return this.#_prop_accessor_storage; }
 /// set prop(value) { this.#_prop_accessor_storage = value; }
 /// ```
+///
+/// `record` receives the generated elements of each accessor, for mode-specific metadata.
 pub(super) fn lower_auto_accessors<'a>(
     body: &mut ClassBody<'a>,
     class_scope_id: ScopeId,
     static_binding: Option<&BoundIdentifier<'a>>,
-    native_fields: bool,
+    keys: AccessorKeys,
+    mut record: impl FnMut(GeneratedAccessor<'_, 'a>, &mut TraverseCtx<'a>),
     ctx: &mut TraverseCtx<'a>,
 ) {
+    let native_fields = keys == AccessorKeys::Native;
     let accessor_count = body.body.iter().filter(|element| is_auto_accessor(element)).count();
     if accessor_count == 0 {
         return;
@@ -87,16 +122,20 @@ pub(super) fn lower_auto_accessors<'a>(
                 let name = positional_storage_name(&mut counter, ctx);
                 let mut key = take_literal_property_key(&mut key, ctx)
                     .unwrap_or_else(|| key.into_expression());
-                if native_fields {
-                    key = helper_call_expr(
-                        Helper::ToPropertyKey,
-                        ArenaVec::from_value_in(Argument::from(key), ctx),
-                        ctx,
-                    );
+                // Convert to a property key once before sharing it. Otherwise an object key's
+                // `toString` runs for each method, and they can be defined on different keys.
+                let convert = match keys {
+                    AccessorKeys::Native => true,
+                    AccessorKeys::Lowered => {
+                        !matches!(key, Expression::StringLiteral(_) | Expression::NumericLiteral(_))
+                    }
+                    AccessorKeys::Legacy => false,
+                };
+                if convert {
+                    key = create_to_property_key(key, ctx);
                 }
                 // Share one key between the generated methods:
                 // `accessor [expr]` -> `get [_key = expr]() { ... } set [_key](value) { ... }`.
-                // With native fields, convert to a property key once before sharing it.
                 let (assignment, reference) = if native_fields {
                     create_computed_key_temp_var(key, ctx)
                 } else {
@@ -106,7 +145,7 @@ pub(super) fn lower_auto_accessors<'a>(
             }
         };
         let storage_name = private_names.generate(storage_name, ctx);
-        let storage = PropertyDefinition::boxed(
+        let mut storage = PropertyDefinition::boxed(
             span,
             PropertyDefinitionType::PropertyDefinition,
             [],
@@ -153,7 +192,12 @@ pub(super) fn lower_auto_accessors<'a>(
             None,
             ctx,
         );
-        new_body.extend([ClassElement::PropertyDefinition(storage), getter, setter]);
+        record(GeneratedAccessor { storage: &mut storage, setter: &setter }, ctx);
+        new_body.extend([
+            ClassElement::PropertyDefinition(storage),
+            ClassElement::MethodDefinition(getter),
+            ClassElement::MethodDefinition(setter),
+        ]);
     }
     body.body = new_body;
 }

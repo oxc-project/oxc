@@ -39,6 +39,11 @@ pub fn class_body_has_auto_accessors(body: &ClassBody<'_>) -> bool {
     body.body.iter().any(is_auto_accessor)
 }
 
+/// Whether a class contains runtime static auto-accessors.
+pub fn class_body_has_static_auto_accessor(body: &ClassBody<'_>) -> bool {
+    body.body.iter().any(|element| is_auto_accessor(element) && element.r#static())
+}
+
 /// Whether a class element is a runtime auto-accessor.
 pub fn is_auto_accessor(element: &ClassElement<'_>) -> bool {
     matches!(element, ClassElement::AccessorProperty(prop) if !prop.r#type.is_abstract())

@@ -1,6 +1,6 @@
 commit: 51225612
 
-Passed: 374/494
+Passed: 375/495
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -18,6 +18,7 @@ Passed: 374/494
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
+* babel-plugin-proposal-decorators
 * regexp
 * plugin-tagged-template-transform
 

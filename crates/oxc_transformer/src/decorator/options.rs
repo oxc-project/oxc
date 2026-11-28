@@ -13,6 +13,15 @@ pub struct DecoratorOptions {
     #[serde(skip)]
     pub legacy: bool,
 
+    /// Lower standard auto-accessors. Decorated classes are preserved.
+    ///
+    /// When omitted or `false`, this syntax is preserved for a later transform at any target
+    /// while TypeScript types are still stripped. Set to `true` to lower it.
+    /// Other target-selected transforms still run on unrelated syntax.
+    /// `legacy: true` takes precedence over this option.
+    #[serde(default)]
+    pub lower: Option<bool>,
+
     /// Enables emitting decorator metadata.
     ///
     /// This option is the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
@@ -33,6 +42,7 @@ impl Default for DecoratorOptions {
     fn default() -> Self {
         Self {
             legacy: false,
+            lower: None,
             emit_decorator_metadata: false,
             strict_null_checks: default_as_true(),
         }
@@ -48,6 +58,7 @@ fn default_as_true() -> bool {
 pub enum DecoratorMode {
     Preserve,
     Legacy,
+    Standard,
 }
 
 impl DecoratorMode {
@@ -59,6 +70,12 @@ impl DecoratorMode {
 
 impl DecoratorOptions {
     pub(crate) fn mode(self) -> DecoratorMode {
-        if self.legacy { DecoratorMode::Legacy } else { DecoratorMode::Preserve }
+        if self.legacy {
+            DecoratorMode::Legacy
+        } else if self.lower == Some(true) {
+            DecoratorMode::Standard
+        } else {
+            DecoratorMode::Preserve
+        }
     }
 }

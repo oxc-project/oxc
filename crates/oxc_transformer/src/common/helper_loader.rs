@@ -194,6 +194,7 @@ define_helpers! {
     UsingCtx => "usingCtx",
     TaggedTemplateLiteral => "taggedTemplateLiteral",
     SetFunctionName => "setFunctionName",
+    SetClassName => "setClassName",
 }
 
 impl Helper {
