@@ -1167,6 +1167,60 @@ impl<'a> Codegen<'a> {
     #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping(&mut self, _span: Span) {}
 
+    /// Map the `class` keyword of `class` to the keyword in the source.
+    ///
+    /// A class's span starts at its first decorator, and still does after a transform has moved
+    /// the decorators out of the class. So when the span starts at `@`, find the keyword before
+    /// the class name, type parameters or body, and map to the span start if it is not there.
+    /// `declare` and `abstract` print before the keyword, so those classes map to the span start.
+    ///
+    /// Only whitespace may separate the keyword from what follows it, so a comment there, as in
+    /// `class /* c */ A`, also maps to the span start. A `class` with `//` before it on its line
+    /// may be inside a line comment, as in `class // class` followed by `A` on the next line, so
+    /// that maps to the span start too. The JS codegen port has no comments to check, which is why
+    /// this looks at the text alone.
+    #[cfg(feature = "sourcemap")]
+    fn add_class_keyword_mapping(&mut self, class: &Class<'_>) {
+        if self.sourcemap_builder.is_none() {
+            return;
+        }
+        let mut start = class.span.start;
+        if let Some(source_text) = self.source_text
+            && !class.declare
+            && !class.r#abstract
+            && source_text.as_bytes().get(start as usize) == Some(&b'@')
+            && let Some(anchor) = class
+                .id
+                .as_ref()
+                .map(|id| id.span.start)
+                .or_else(|| class.type_parameters.as_ref().map(|params| params.span.start))
+                .or_else(|| class.heritage.is_none().then_some(class.body.span.start))
+            && let Some(before) = source_text.get(start as usize..anchor as usize)
+            // ECMAScript whitespace, as `String.prototype.trimEnd` trims in the JS codegen port.
+            && let Some(keyword) = before
+                .trim_end_matches(|c| {
+                    oxc_syntax::identifier::is_white_space(c)
+                        || oxc_syntax::line_terminator::is_line_terminator(c)
+                })
+                .strip_suffix("class")
+            && !keyword
+                .rsplit(oxc_syntax::line_terminator::is_line_terminator)
+                .next()
+                .is_some_and(|line| line.contains("//"))
+        {
+            #[expect(clippy::cast_possible_truncation)]
+            {
+                start += keyword.len() as u32;
+            }
+        }
+        self.add_source_mapping(Span::new(start, class.span.end));
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_class_keyword_mapping(&mut self, _class: &Class<'_>) {}
+
     #[cfg(feature = "sourcemap")]
     fn add_source_mapping_end(&mut self, span: Span) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
