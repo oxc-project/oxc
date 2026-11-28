@@ -23,6 +23,9 @@ pub use boolean::*;
 mod optional_chain;
 pub use optional_chain::*;
 
+mod temporary_array;
+pub use temporary_array::is_temporary_array;
+
 // Built-in Error constructors
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
 pub const BUILT_IN_ERRORS: [&str; 10] = [

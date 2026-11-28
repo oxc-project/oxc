@@ -14,6 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_temporary_array,
 };
 
 fn no_array_reverse_diagnostic(span: Span) -> OxcDiagnostic {
@@ -33,11 +34,23 @@ pub struct NoArrayReverse {
     /// array.reverse();
     /// ```
     allow_expression_statement: bool,
+
+    /// When set to `true`, allows reversing fresh arrays created by array literals, spreads,
+    /// `arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without
+    /// making another copy. This avoids the double allocation of `toReversed()` when it is not
+    /// needed. Instance methods are recognized by name, assuming built-in array behavior.
+    ///
+    /// Examples of **correct** code with `allowOnTemporaries` set to `true`:
+    /// ```js
+    /// const reversed = array.map(transform).reverse();
+    /// const values = Object.values(object).reverse();
+    /// ```
+    allow_on_temporaries: bool,
 }
 
 impl Default for NoArrayReverse {
     fn default() -> Self {
-        Self { allow_expression_statement: true }
+        Self { allow_expression_statement: true, allow_on_temporaries: false }
     }
 }
 
@@ -93,6 +106,9 @@ impl Rule for NoArrayReverse {
         if static_property_name != "reverse" {
             return;
         }
+        if self.allow_on_temporaries && is_temporary_array(member_expr.object(), ctx) {
+            return;
+        }
         let is_spread = match member_expr.object() {
             Expression::ArrayExpression(array) => {
                 array.elements.len() == 1
@@ -132,6 +148,25 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            "reversed = [...array].reverse()",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
+        (
+            "[...items].reverse();",
+            Some(serde_json::json!([{
+                "allowOnTemporaries": true,
+                "allowExpressionStatement": false
+            }])),
+        ),
+        (
+            "const result = items.map(fn).reverse();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
+        (
+            "const result = Object.values(object).reverse();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
         ("reversed =[...array].toReversed()", None),
         ("reversed =array.toReversed()", None),
         ("reversed =[...array].reverse", None),
@@ -144,6 +179,14 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "const result = getArray().reverse();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
+        (
+            "const result = items.map(fn).reverse();",
+            Some(serde_json::json!([{ "allowOnTemporaries": false }])),
+        ),
         ("reversed = [...array].reverse()", None),
         ("reversed = [...array]?.reverse()", None),
         ("reversed = array.reverse()", None),
@@ -155,6 +198,11 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            "const result = getArray().reverse();",
+            "const result = getArray().toReversed();",
+            Some(serde_json::json!([{ "allowOnTemporaries": true }])),
+        ),
         ("reversed = [...array].reverse()", "reversed = [...array].toReversed()", None),
         ("reversed = [...array]?.reverse()", "reversed = [...array]?.toReversed()", None),
         (

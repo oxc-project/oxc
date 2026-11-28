@@ -3,6 +3,20 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:27]
+ 1 │ const result = getArray().sort();
+   ·                           ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
+   ╭─[no_array_sort.tsx:1:30]
+ 1 │ const result = items.map(fn).sort();
+   ·                              ────
+   ╰────
+  help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+
+  ⚠ unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
    ╭─[no_array_sort.tsx:1:21]
  1 │ sorted = [...array].sort()
    ·                     ────

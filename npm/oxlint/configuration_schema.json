@@ -13877,6 +13877,12 @@
           "default": true,
           "type": "boolean",
           "markdownDescription": "This rule allows `array.reverse()` as an expression statement by default.\nSet to `false` to forbid `Array#reverse()` even if it's an expression statement.\n\nExamples of **incorrect** code for this rule with this option set to `false`:\n```js\narray.reverse();\n```"
+        },
+        "allowOnTemporaries": {
+          "description": "When set to `true`, allows reversing fresh arrays created by array literals, spreads,\n`arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without\nmaking another copy. This avoids the double allocation of `toReversed()` when it is not\nneeded. Instance methods are recognized by name, assuming built-in array behavior.\n\nExamples of **correct** code with `allowOnTemporaries` set to `true`:\n```js\nconst reversed = array.map(transform).reverse();\nconst values = Object.values(object).reverse();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows reversing fresh arrays created by array literals, spreads,\n`arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without\nmaking another copy. This avoids the double allocation of `toReversed()` when it is not\nneeded. Instance methods are recognized by name, assuming built-in array behavior.\n\nExamples of **correct** code with `allowOnTemporaries` set to `true`:\n```js\nconst reversed = array.map(transform).reverse();\nconst values = Object.values(object).reverse();\n```"
         }
       },
       "additionalProperties": false
@@ -13885,16 +13891,22 @@
       "type": "object",
       "properties": {
         "allowAfterSpread": {
-          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
+          "description": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\nDefaults to `false`, or `true` when `allowOnTemporaries` is enabled.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
+          "markdownDescription": "When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.\nThis avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.\nDefaults to `false`, or `true` when `allowOnTemporaries` is enabled.\n\nExample of **correct** code for this rule with `allowAfterSpread` set to `true`:\n```js\nconst sorted = [...mySet].sort();\n```"
         },
         "allowExpressionStatement": {
           "description": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```",
           "default": true,
           "type": "boolean",
           "markdownDescription": "When set to `true` (default), allows `array.sort()` as an expression statement.\nSet to `false` to forbid `Array#sort()` even if it's an expression statement.\n\nExample of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:\n```js\narray.sort();\n```"
+        },
+        "allowOnTemporaries": {
+          "description": "When set to `true`, allows sorting fresh arrays created by array literals, spreads,\n`arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without\nmaking another copy. This avoids the double allocation of `toSorted()` when it is not\nneeded. Instance methods are recognized by name, assuming built-in array behavior.\n\nImplies `allowAfterSpread: true`; explicitly setting `allowAfterSpread` to `false` is\ninvalid.\n\nExamples of **correct** code with `allowOnTemporaries` set to `true`:\n```js\nconst sorted = array.map(transform).sort(compareFn);\nconst values = Object.values(object).sort();\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows sorting fresh arrays created by array literals, spreads,\n`arr.map()`, `arr.filter()`, `new Array()`, `Array.from()`, `Object.keys()`, etc. without\nmaking another copy. This avoids the double allocation of `toSorted()` when it is not\nneeded. Instance methods are recognized by name, assuming built-in array behavior.\n\nImplies `allowAfterSpread: true`; explicitly setting `allowAfterSpread` to `false` is\ninvalid.\n\nExamples of **correct** code with `allowOnTemporaries` set to `true`:\n```js\nconst sorted = array.map(transform).sort(compareFn);\nconst values = Object.values(object).sort();\n```"
         }
       },
       "additionalProperties": false
