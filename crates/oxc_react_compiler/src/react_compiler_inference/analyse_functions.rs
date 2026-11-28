@@ -24,6 +24,7 @@ use crate::react_compiler_inference::infer_reactive_scope_variables::infer_react
 use crate::react_compiler_optimization::dead_code_elimination;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 use crate::react_compiler_ssa::rewrite_instruction_kinds_based_on_reassignment;
+use crate::react_compiler_validation::validate_no_capitalized_calls;
 use rustc_hash::FxHashSet;
 use std::mem::replace;
 
@@ -112,6 +113,15 @@ fn lower_with_mutation_aliasing<'a, F>(
 where
     F: FnMut(&HirFunction, &Environment),
 {
+    // Unlike the TS implementation, some useMemo callbacks retain their local scope.
+    // Validate their render-time calls without descending into returned handlers.
+    if func.is_memo_callback
+        && env.enable_validations()
+        && env.config.validate_no_capitalized_calls.is_some()
+    {
+        validate_no_capitalized_calls(func, env)?;
+    }
+
     // Phase 1: Recursively analyse nested functions first (depth-first)
     analyse_functions(func, env, debug_logger)?;
 

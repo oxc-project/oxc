@@ -868,6 +868,7 @@ fn lower_inner<'a>(
             instructions,
             generator,
             is_async,
+            is_memo_callback: false,
             directives,
             aliasing_effects: None,
         },

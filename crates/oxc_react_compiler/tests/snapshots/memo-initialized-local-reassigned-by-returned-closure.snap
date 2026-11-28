@@ -1,0 +1,52 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/memo-initialized-local-reassigned-by-returned-closure.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @validateNoFreezingKnownMutableFunctions
+import { useMemo, useSyncExternalStore } from "react";
+const subscribe = () => {
+	return _temp;
+};
+const serverSnapshot = () => {
+	return false;
+};
+export function useValue(read) {
+	const $ = _c(2);
+	let t0;
+	if ($[0] !== read) {
+		t0 = (() => {
+			let cached = null;
+			return () => cached ?? (cached = read());
+		})();
+		$[0] = read;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	const getSnapshot = t0;
+	return useSyncExternalStore(subscribe, getSnapshot, serverSnapshot);
+}
+const first = () => {
+	"use no memo";
+	return { value: 1 };
+};
+const second = () => {
+	"use no memo";
+	return { value: 2 };
+};
+export const FIXTURE_ENTRYPOINT = {
+	fn: (read) => {
+		"use no memo";
+		return useValue(read);
+	},
+	params: [first],
+	sequentialRenders: [
+		first,
+		first,
+		second,
+		second,
+		first
+	]
+};
+function _temp() {}
