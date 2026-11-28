@@ -1,6 +1,5 @@
 use std::ops::Range;
 
-use cow_utils::CowUtils;
 use itertools::Itertools;
 use lazy_regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -440,13 +439,9 @@ impl NoFallthrough {
         if let Some(custom_pattern) = &self.0.comment_pattern {
             custom_pattern.is_match(comment)
         } else {
-            // We are doing a quick check here to see if it starts with the expected "falls" comment,
-            // so that we don't need to initialize the pattern matcher if we don't need it.
-            let comment = comment.trim().cow_to_ascii_lowercase();
-            comment == "falls through"
-                || comment == "fall through"
-                || comment == "fallsthrough"
-                || comment == "fallthrough"
+            // Match ESLint's /falls?\s?through/iu, including surrounding prose.
+            // ECMAScript \s includes BOM but excludes Unicode NEXT LINE (U+0085).
+            lazy_regex::regex_is_match!(r"falls?(?:[\s&&[^\u0085]]|\uFEFF)?through"i, comment)
         }
     }
 }
@@ -782,5 +777,64 @@ fn empty_case_line_terminators() {
     }
     let pass = pass.iter().map(|(code, config)| (code.as_str(), config.clone())).collect();
     let fail = fail.iter().map(|(code, config)| (code.as_str(), config.clone())).collect();
+    Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test();
+}
+
+#[test]
+fn default_comment_pattern() {
+    let rule = NoFallthrough::default();
+    for comment in [
+        "falls through intentionally",
+        "intentional fall through",
+        "fall\tthrough",
+        "falls\nthrough",
+        "falls\u{feff}through",
+        "fallſ through",
+        "fall fall through",
+    ] {
+        assert!(rule.is_comment_fall_through(comment), "{comment:?}");
+    }
+    for separator in "\t\n\u{b}\u{c}\r \u{a0}\u{1680}\u{2000}\u{2001}\u{2002}\u{2003}\u{2004}\u{2005}\u{2006}\u{2007}\u{2008}\u{2009}\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}\u{feff}".chars() {
+        assert!(rule.is_comment_fall_through(&format!("fall{separator}through")), "{separator:?}");
+    }
+    for comment in [
+        "fall  through",
+        "falling through",
+        "falls\u{85}through",
+        "eslint-disable no-fallthrough",
+        "oxlint-disable no-fallthrough",
+    ] {
+        assert!(!rule.is_comment_fall_through(comment), "{comment:?}");
+    }
+}
+
+#[test]
+fn descriptive_fallthrough_comments() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("switch (x) { case 0: a(); /* falls through intentionally */ case 1: b(); }", None),
+        ("switch (x) { case 0: a(); // intentional fall through\n default: b(); }", None),
+        (
+            "switch (x) { case 0: { a(); /* FALLS\tTHROUGH to the next case */ } case 1: b(); }",
+            None,
+        ),
+        (
+            "switch (x) { case 0: a(); /* custom marker */ case 1: b(); }",
+            Some(serde_json::json!([{ "commentPattern": "custom marker" }])),
+        ),
+    ];
+    let fail = vec![
+        ("switch (x) { case 0: a(); /* fall  through */ case 1: b(); }", None),
+        ("switch (x) { case 0: a(); /* falling through */ case 1: b(); }", None),
+        (
+            "switch (x) { case 0: a(); /* falls through intentionally */ case 1: b(); }",
+            Some(serde_json::json!([{ "commentPattern": "custom marker" }])),
+        ),
+        (
+            "switch (x) { case 0: break; /* falls through intentionally */ case 1: b(); }",
+            Some(serde_json::json!([{ "reportUnusedFallthroughComment": true }])),
+        ),
+    ];
     Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test();
 }
