@@ -20,6 +20,9 @@ use crate::{
 pub type ExternalLinterCreateWorkspaceCb =
     Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
+pub type ExternalLinterInitializeWorkersCb =
+    Arc<Box<dyn Fn(usize) -> Result<(), String> + Send + Sync>>;
+
 pub type ExternalLinterDestroyWorkspaceCb =
     Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
@@ -71,7 +74,7 @@ pub type ExternalLinterLintFileCb = Arc<
     >,
 >;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct LoadPluginResult {
     pub name: String,
@@ -293,6 +296,7 @@ pub struct ExternalLinter {
     pub(crate) setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
     #[cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
     pub(crate) lint_file: ExternalLinterLintFileCb,
+    initialize_workers: ExternalLinterInitializeWorkersCb,
     pub create_workspace: ExternalLinterCreateWorkspaceCb,
     pub destroy_workspace: ExternalLinterDestroyWorkspaceCb,
 }
@@ -302,10 +306,29 @@ impl ExternalLinter {
         load_plugin: ExternalLinterLoadPluginCb,
         setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
         lint_file: ExternalLinterLintFileCb,
+        initialize_workers: ExternalLinterInitializeWorkersCb,
         create_workspace: ExternalLinterCreateWorkspaceCb,
         destroy_workspace: ExternalLinterDestroyWorkspaceCb,
     ) -> Self {
-        Self { load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace }
+        Self {
+            load_plugin,
+            setup_rule_configs,
+            lint_file,
+            initialize_workers,
+            create_workspace,
+            destroy_workspace,
+        }
+    }
+
+    /// Initialize JavaScript worker isolates used to execute external rules.
+    ///
+    /// `host_count` includes the main JavaScript isolate. A value of `1` preserves the existing
+    /// single-isolate behavior.
+    ///
+    /// # Errors
+    /// Returns an error if workers cannot be started or initialized.
+    pub fn initialize_workers(&self, host_count: usize) -> Result<(), String> {
+        (self.initialize_workers)(host_count)
     }
 }
 
