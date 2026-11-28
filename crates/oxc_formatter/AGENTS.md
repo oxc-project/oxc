@@ -307,6 +307,8 @@ The second line of each item is the drift symptom.
   - the `=` is laid out for one answer and the union prints the other (hug or expand, who indents)
 - `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
   - a comment near no other one is dropped or misplaced
+- the source-slice fast paths (`word_source_span`, `operator_and_property_span`, `plain_type_name_span`, `colon_and_keyword_type`) ⇄ the leaf `write`s they restate (identifiers, `this`, property names, type references, keyword types)
+  - a comment-free `a.b` / `!a` / `: Foo` / `Foo[]` prints differently from the same shape with a comment
 
 ## Open debts
 
