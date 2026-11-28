@@ -65,8 +65,9 @@ fn transform_impl(
     let relay_options = match options.unwrap_or_default().resolve() {
         Ok(options) => options,
         Err(error) => {
+            // Options error is not an error in the source text, so don't produce a codeframe
             return TransformResult {
-                errors: OxcError::from_diagnostics(filename, source_text, [error]),
+                errors: vec![OxcError::from(&error)],
                 ..TransformResult::default()
             };
         }

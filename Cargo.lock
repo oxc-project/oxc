@@ -2431,7 +2431,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_codegen",
  "oxc_compat",
- "oxc_diagnostics",
  "oxc_minifier",
  "oxc_napi",
  "oxc_parser",

@@ -55,6 +55,13 @@ describe("simple", () => {
     expect(ret.errors.length).toBe(0);
   });
 
+  it("rejects empty legalComments.linked path", () => {
+    const ret = minifySync("test.js", "foo();", { codegen: { legalComments: { linked: "" } } });
+    expect(ret.errors.length).toBe(1);
+    expect(ret.errors[0].message).toContain("legalComments.linked must be a non-empty path");
+    expect(ret.errors[0].codeframe).toBeNull();
+  });
+
   it("defaults to esnext", () => {
     const code = "try { foo } catch (e) {}";
     const ret = minifySync("test.js", code);
@@ -176,6 +183,7 @@ describe("treeshake options", () => {
     });
     expect(ret.errors.length).toBe(1);
     expect(ret.errors[0].message).toContain("Invalid propertyReadSideEffects value");
+    expect(ret.errors[0].codeframe).toBeNull();
   });
 });
 
@@ -372,6 +380,7 @@ describe("property mangling", () => {
     const ret = minifySync("test.js", "obj._field;", { mangleProps: mangleProps as any });
     expect(ret.errors).toHaveLength(1);
     expect(ret.errors[0].message).toContain(message);
+    expect(ret.errors[0].codeframe).toBeNull();
     expect(ret.mangleCache).toBeUndefined();
   });
 });
