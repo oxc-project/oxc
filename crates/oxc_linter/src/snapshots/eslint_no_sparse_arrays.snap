@@ -60,3 +60,36 @@ source: crates/oxc_linter/src/tester.rs
  2 │ 
    ╰────
   help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:2:3]
+ 1 │ const a = [
+ 2 │   ,
+   ·   ▲
+   ·   ╰── unexpected comma
+ 3 │   ,
+   ·   ▲
+   ·   ╰── unexpected comma
+ 4 │ ];
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:4:3]
+ 3 │   ,
+ 4 │   ,
+   ·   ▲
+   ·   ╰── unexpected comma
+ 5 │ ];
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:2:3]
+ 1 │ const a = [
+ 2 │   ,
+   ·   ▲
+   ·   ╰── unexpected comma
+ 3 │   // eslint-disable-next-line no-sparse-arrays
+   ╰────
+  help: remove the comma or insert `undefined`

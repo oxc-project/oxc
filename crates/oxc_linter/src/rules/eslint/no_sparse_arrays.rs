@@ -61,12 +61,18 @@ declare_oxc_lint!(
 impl Rule for NoSparseArrays {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ArrayExpression(array_expr) = node.kind() {
+            // Holes are grouped into one diagnostic per array, with a count-only summary for 10 or
+            // more, because printing a diagnostic per hole is slow for very sparse arrays (#1895).
+            // Directives only check a diagnostic's first label, so filter out disabled holes first.
             let violations = array_expr
                 .elements
                 .iter()
                 .filter_map(|el| match el {
                     ArrayExpressionElement::Elision(elision) => Some(elision),
                     _ => None,
+                })
+                .filter(|elision| {
+                    !ctx.disable_directives().contains(NoSparseArrays::NAME, elision.span)
                 })
                 .map(|elision| {
                     LabeledSpan::at(elision.span.start..elision.span.start, "unexpected comma")
@@ -108,7 +114,11 @@ impl Rule for NoSparseArrays {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["var a = [ 1, 2, ]", "var a = [];"];
+    let pass = vec![
+        "var a = [ 1, 2, ]",
+        "var a = [];",
+        "const a = [\n  , // eslint-disable-line no-sparse-arrays\n  , // eslint-disable-line no-sparse-arrays\n];",
+    ];
 
     let fail = vec![
         "var a = [,];",
@@ -124,6 +134,9 @@ fn test() {
 
 
         , , , , , , , , , , , , , , , , , , ,  2];",
+        "const a = [\n  ,\n  ,\n];",
+        "const a = [\n  // eslint-disable-next-line no-sparse-arrays\n  ,\n  ,\n];",
+        "const a = [\n  ,\n  // eslint-disable-next-line no-sparse-arrays\n  ,\n];",
     ];
 
     Tester::new(NoSparseArrays::NAME, NoSparseArrays::PLUGIN, pass, fail).test_and_snapshot();
