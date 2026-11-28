@@ -804,6 +804,15 @@ impl Linter {
             }
         }
 
+        // Give JS plugins a module, not a script, if the parser chose script only because the code has no ESM syntax.
+        // This applies to `.js`, `.jsx`, `.ts`, and `.tsx` files, and to Astro scripts.
+        // ESLint parses these files as modules: the default of its flat config is `sourceType: "module"`,
+        // except for `.cjs` files. Plugins can depend on this, for example on a module scope above
+        // the top-level functions. Rust rules have already run, so they still see a script.
+        if ctx_host.current_sub_host().parsed_as_unambiguous() && program.source_type.is_script() {
+            program.source_type = program.source_type.with_module(true);
+        }
+
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;
 

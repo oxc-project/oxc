@@ -852,6 +852,10 @@ impl Runtime {
                                     ContextSubHostOptions {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
+                                        parsed_as_unambiguous: section
+                                            .source
+                                            .source_type
+                                            .is_unambiguous(),
                                         respect_eslint_disable_directives,
                                         ..Default::default()
                                     },
@@ -996,6 +1000,10 @@ impl Runtime {
                                         ContextSubHostOptions {
                                             framework_options: section.source.framework_options,
                                             parser_tokens: section.parser_tokens,
+                                            parsed_as_unambiguous: section
+                                                .source
+                                                .source_type
+                                                .is_unambiguous(),
                                             respect_eslint_disable_directives,
                                             ..Default::default()
                                         },
@@ -1139,6 +1147,10 @@ impl Runtime {
                                     ContextSubHostOptions {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
+                                        parsed_as_unambiguous: section
+                                            .source
+                                            .source_type
+                                            .is_unambiguous(),
                                         respect_eslint_disable_directives,
                                         ..Default::default()
                                     },

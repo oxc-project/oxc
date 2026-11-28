@@ -1,0 +1,17 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "source-type-plugin/check": "error"
+  },
+  "overrides": [
+    {
+      "files": ["files/without_esm.js"],
+      "rules": {
+        "no-implicit-globals": "error"
+      }
+    }
+  ]
+}
