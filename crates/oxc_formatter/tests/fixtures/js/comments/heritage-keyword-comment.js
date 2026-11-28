@@ -1,0 +1,20 @@
+// A comment after `extends` stays after it, so the superclass still starts the line after an own-line one
+// (DIVERGENCES.md#heritage-keyword-comment); comments before the keyword trail the name.
+const Anonymous = class extends
+// c
+B {};
+export default class extends
+// c
+B {}
+class Named extends
+// c
+B {}
+class Cast extends
+/** @type {typeof Base} */
+(Base) {}
+class BeforeKeyword // a
+  extends B {}
+class BeforeKeywordOwnLine
+  // a
+  extends B {}
+class Inline /* a */ extends /* b */ B {}

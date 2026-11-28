@@ -326,9 +326,9 @@ Meant to be fixed, deferred (FORMATTER_POLICY "Fixing").
 - An own-line comment right after a kept union's `(` prints outside it (`keyof (` + break + `/* c */ X | null)` -> `keyof /* c */ (X | null)`),
   so its next node changes (a `prettier-ignore` there would target `(X | null)`, not `X`; `outer_leading_comments_len`); Prettier keeps it inside, behind the first `|`.
   The hug decision follows that placement (`first_member_comment`), so a fix changes both
-- In a class without a name, an own-line comment right after `extends` is flushed past the whole statement, not a fixpoint (`should_group` sees no span before the superclass).
-  The class head claims every comment before the superclass as the name's trailing ones; the fix bounds that at the keyword
-  and breaks + indents after it, as after `=` (Prettier prints that for an `implements` after an `extends`)
+- An own-line comment right after a class's `implements` or an interface's `extends` moves before the keyword (Prettier too),
+  so the first type no longer starts the line after it (a `-next-line` target lost).
+  The fix is the class `extends` split (`Comments::split_at_token_before` in `print/class.rs`) at those sites (`print/class.rs` implements, `print/mod.rs` interface)
 - A trailing comment in a short JSX arrow body's parens (`x = (a) => (<div /> /* c */)`) or a `;`-less return argument whose parenthesized binary fits flat
   settles only on the second pass, not a fixpoint (shared with upstream): whether the parens survive is a group-fit decision, unknown when the content end is chosen (DIVERGENCES.md#paren-comment-fixpoint)
 

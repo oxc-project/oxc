@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment after `extends` stays after it, past type parameters too.
+class WithTypeParameters<T> extends
+// c
+B {}
+class BeforeKeyword<T>
+  // a
+  extends B {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment after `extends` stays after it, past type parameters too.
+class WithTypeParameters<T>
+  extends // c
+  B {}
+class BeforeKeyword<T>
+  // a
+  extends B {}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment after `extends` stays after it, past type parameters too.
+class WithTypeParameters<T>
+  extends // c
+  B {}
+class BeforeKeyword<T>
+  // a
+  extends B {}
+
+===================== End =====================

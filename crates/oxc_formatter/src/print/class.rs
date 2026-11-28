@@ -304,9 +304,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
         let head = format_with(|f| {
             if let Some(id) = self.id() {
                 write!(f, space());
-                if type_parameters.is_none() && super_class.is_none() && implements.is_empty() {
+                if type_parameters.is_none() && (super_class.is_some() || implements.is_empty()) {
                     // The id's trailing pass would claim an end-of-line comment
-                    // and flush it past the body's `{`; leave it for the head-body separator.
+                    // and flush it past the body's `{`, or past the `extends` keyword;
+                    // leave it for the head-body separator or the split below.
                     FormatNodeWithoutTrailingComments(&id).fmt(f);
                 } else {
                     write!(f, id);
@@ -325,7 +326,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                         }
                     )
                 );
-                if super_class.is_some() || !implements.is_empty() {
+                // With a superclass, the split below prints them (the trailing pass would cross `extends`)
+                if super_class.is_none() && !implements.is_empty() {
                     type_parameters.format_trailing_comments(f);
                 }
             }
@@ -338,10 +340,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
             //
             // The logic here ensures these comments are formatted as trailing comments
             // after the class name, maintaining their position before the extends clause.
+            // Only those before `extends`: the ones after it lead the superclass (`extends // c` + break + `B`),
+            // so `B` still starts the line after an own-line one (FORMATTER_POLICY "Comment placement")
             if let Some(super_class) = &super_class {
-                let comments = f.context().comments().comments_before(super_class.span().start);
+                let (comments, _) =
+                    f.context().comments().split_at_token_before(super_class.span().start);
                 if comments.iter().any(Comment::preceded_by_newline) {
                     indent(&FormatTrailingComments::Comments(comments)).fmt(f);
+                } else {
+                    FormatTrailingComments::Comments(comments).fmt(f);
                 }
             }
         });
@@ -390,8 +397,24 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     }
                 });
 
-                let format_extends =
-                    format_with(|f| write!(f, ["extends", space(), &format_super]));
+                // The head printed the comments before the keyword.
+                // An own-line block comment after it keeps its line:
+                // inlined (`extends /* c */` + break), a second pass would glue the superclass to it
+                let own_line_block = f
+                    .context()
+                    .comments()
+                    .comments_before(extends.span().start)
+                    .iter()
+                    .any(|c| c.is_block() && c.preceded_by_newline());
+                let format_extends = format_with(|f| {
+                    write!(f, "extends");
+                    if own_line_block {
+                        write!(f, hard_line_break());
+                    } else {
+                        write!(f, space());
+                    }
+                    write!(f, format_super);
+                });
 
                 if group_mode {
                     write!(f, [soft_line_break_or_space(), group(&format_extends)]);
@@ -489,6 +512,15 @@ fn should_group<'a>(class: &AstNode<'_, 'a, Class<'a>>, f: &JsFormatter<'_, 'a>)
     }
 
     let comments = f.comments();
+
+    // Without an id the span walk below sees nothing before the superclass
+    if class.id.is_none()
+        && class.type_parameters.is_none()
+        && heritage
+            .is_some_and(|heritage| comments.has_comment_before(heritage.expression.span().start))
+    {
+        return true;
+    }
 
     let id_span = class.id.as_ref().map(GetSpan::span);
     let type_parameters_span = class.type_parameters.as_ref().map(|t| t.span);
