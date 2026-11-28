@@ -5,3 +5,10 @@ input_file: crates/oxc_react_compiler/fixtures/tagged-template-escaped.js
 function component(value) {
 	return tag`line one\nline two: ${value}\t`;
 }
+
+
+Lint-mode diagnostics (differ from transform):
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Handle tagged template with interpolations", labels: [LabeledSpan { label: None, span: Span { start: 37, end: 72 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+Lint mode is fatal.
