@@ -64,7 +64,7 @@ impl Task for TransformTask {
     type JsValue = TransformResult;
     type Output = TransformResult;
 
-    fn compute(&mut self) -> napi::Result<Self::Output> {
+    fn compute(&mut self) -> napi::Result<TransformResult> {
         // Move all data out of the task, so it's dropped here on worker thread
         let filename = mem::take(&mut self.filename);
         let source_text = mem::take(&mut self.source_text);
@@ -72,7 +72,7 @@ impl Task for TransformTask {
         Ok(transform_impl(&filename, &source_text, options))
     }
 
-    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+    fn resolve(&mut self, _: napi::Env, result: TransformResult) -> napi::Result<TransformResult> {
         Ok(result)
     }
 }
