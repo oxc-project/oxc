@@ -16,9 +16,9 @@ use oxc_formatter_core::{
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_trailing_inside_comments, is_suppression_comment,
-        last_line_has_inline_comment, write_comments, write_statement_separator,
-        write_trailing_same_line_comments,
+        Gap, classify_gap, ends_source_line, flush_trailing_inside_comments,
+        is_suppression_comment, last_line_has_inline_comment, write_comments,
+        write_statement_separator, write_trailing_same_line_comments,
     },
     format::to_span,
     print::{
@@ -385,8 +385,13 @@ pub(super) fn write_declaration_until<'a>(
                 .comments()
                 .iter_before(between_upper)
                 .any(|c| c.inline && c.span.start >= name_span.end));
+    // The value starts the next line after a `//`, and after a block comment ending its source line
+    // (`BlockCommentAfter::Space`)
     let between_breaks = trimmed_between != ":"
-        && trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//");
+        && (trimmed_between.rsplit(['\n', '\r']).next().unwrap_or(trimmed_between).contains("//")
+            || f.context().comments().iter_before(between_upper).last().is_some_and(|c| {
+                !c.inline && c.span.start >= decl.colon_span.end && ends_source_line(*c, source)
+            }));
     // A Less merge marker (`prop+: val` / `prop+_: val`)
     // glues to the property name and its spaces drop, leaving only `:`
     // (as Prettier since #19517; the SPACED `+_` is ours alone, postcss-less cannot parse it).

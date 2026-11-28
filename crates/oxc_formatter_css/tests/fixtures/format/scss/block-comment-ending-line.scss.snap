@@ -1,0 +1,75 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// The content after a block comment ending its source line starts the next line, as written:
+// a `-next-line` directive keeps its target (DIVERGENCES.md#block-comment-ending-line)
+a {
+  margin:
+    /* stylelint-disable-next-line */
+    1px 2px;
+  padding: 1px
+    /* stylelint-disable-next-line */
+    2px;
+  font-family: a,
+    /* stylelint-disable-next-line */
+    b;
+  color: /* same-line, ending its line */
+    red;
+}
+
+$map: (
+  /* comment */
+  key1: value,
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// The content after a block comment ending its source line starts the next line, as written:
+// a `-next-line` directive keeps its target (DIVERGENCES.md#block-comment-ending-line)
+a {
+  margin:
+    /* stylelint-disable-next-line */
+    1px 2px;
+  padding: 1px /* stylelint-disable-next-line */
+    2px;
+  font-family:
+    a,
+    /* stylelint-disable-next-line */
+    b;
+  color: /* same-line, ending its line */
+    red;
+}
+
+$map: (
+  /* comment */
+  key1: value,
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// The content after a block comment ending its source line starts the next line, as written:
+// a `-next-line` directive keeps its target (DIVERGENCES.md#block-comment-ending-line)
+a {
+  margin:
+    /* stylelint-disable-next-line */
+    1px 2px;
+  padding: 1px /* stylelint-disable-next-line */
+    2px;
+  font-family:
+    a,
+    /* stylelint-disable-next-line */
+    b;
+  color: /* same-line, ending its line */
+    red;
+}
+
+$map: (
+  /* comment */
+  key1: value,
+);
+
+===================== End =====================

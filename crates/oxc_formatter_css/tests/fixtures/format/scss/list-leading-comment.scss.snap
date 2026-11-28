@@ -62,7 +62,8 @@ $after-comma: (
 $after-comma-block: (
   k: (
     1,
-    /* c */ 2,
+    /* c */
+    2,
   ),
 );
 $multi-token: (
@@ -121,7 +122,8 @@ $after-comma: (
 $after-comma-block: (
   k: (
     1,
-    /* c */ 2,
+    /* c */
+    2,
   ),
 );
 $multi-token: (

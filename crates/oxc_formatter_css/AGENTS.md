@@ -87,7 +87,8 @@ The shared rules (FORMATTER_POLICY.md "Comment placement") apply; this section r
     and `write_at_rule` writes whatever is still pending before the `;` / `{`, so a prelude comment is never lost
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
     - freezing it own-line would pin a wrapped layout (= not idempotent), so its position is Prettier's
-    - a `-next-line` directive there loses its target, see "Known issues"
+    - the content after a block comment ending its source line still starts the next line (`BlockCommentAfter::Space`, DIVERGENCES.md#block-comment-ending-line):
+      a `-next-line` directive keeps its target, and the output ends the line too, so a second pass agrees
   - a `style` attribute's statements share a line when they fit, and its comments take the same separator (`write_statement_separator`):
     they share the line exactly when the declarations do, own-line ones included (a same-line comment pair keeps its space)
 
@@ -208,13 +209,6 @@ Covered: `$var: value !important;` declarations (root and inside rules), `$var` 
 `$(var)` interpolation in property names.
 
 NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(network)`, rejected: DIVERGENCES.md#grammar-owner-rejected), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
-
-## Known issues
-
-Meant to be fixed, deferred (FORMATTER_POLICY "Fixing").
-
-- A value-level own-line block comment joins the value after it (`margin:` + break + `/* stylelint-disable-next-line */` + break + `1px 2px;` -> `/* stylelint-disable-next-line */ 1px 2px;`, Prettier too):
-  the directive's next line is no longer `1px 2px`. A fix keeps the source break after the comment without freezing a wrapped layout (the reason it is a fill item)
 
 ## Verification
 

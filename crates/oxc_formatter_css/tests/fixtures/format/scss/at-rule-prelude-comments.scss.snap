@@ -116,7 +116,10 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @layer a, /* c */ b;
 @custom-selector :--x a, // c
   b;
-@custom-selector :--x a, /* c */ b;
+@custom-selector :--x
+  a,
+  /* c */
+  b;
 @namespace svg // c
   url(http://www.w3.org/2000/svg);
 @charset "utf-8"; // c
@@ -204,7 +207,10 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @layer a, /* c */ b;
 @custom-selector :--x a, // c
   b;
-@custom-selector :--x a, /* c */ b;
+@custom-selector :--x
+  a,
+  /* c */
+  b;
 @namespace svg // c
   url(http://www.w3.org/2000/svg);
 @charset "utf-8"; // c

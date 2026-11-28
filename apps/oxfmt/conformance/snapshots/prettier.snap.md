@@ -329,14 +329,16 @@
 
 - externals/prettier/css/atrule/supports.css (💥, 95.22%)
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-as-in-rule
-- externals/prettier/css/comments/at-rules.css (💥, 64.23%)
+- externals/prettier/css/comments/at-rules.css (💥, 61.96%)
   - crates/oxc_formatter_css/DIVERGENCES.md#commented-as-uncommented
   - crates/oxc_formatter_css/DIVERGENCES.md#own-line-comment-before-block
   - crates/oxc_formatter_css/DIVERGENCES.md#import-media-feature-flat
   - crates/oxc_formatter_css/DIVERGENCES.md#supports-declaration-as-in-rule
-- externals/prettier/css/comments/declaration.css (💥, 93.26%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#block-comment-ending-line
+- externals/prettier/css/comments/declaration.css (💥, 88.27%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+  - crates/oxc_formatter_css/DIVERGENCES.md#block-comment-ending-line
 - externals/prettier/css/fill-value/fill.css (💥, 93.33%)
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - externals/prettier/css/font/font.css (💥, 79.41%)
@@ -388,7 +390,7 @@
 
 ## scss
 
-118/153 (77.12%)
+116/153 (75.82%)
 
 ### Failed
 
@@ -403,8 +405,9 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/scss/comments/at-rule.scss (💥, 87.50%)
   - crates/oxc_formatter_css/DIVERGENCES.md#at-root-line-comment-indent
-- externals/prettier/scss/comments/between-decl.scss (💥, 97.01%)
+- externals/prettier/scss/comments/between-decl.scss (💥, 94.12%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+  - crates/oxc_formatter_css/DIVERGENCES.md#block-comment-ending-line
 - externals/prettier/scss/comments/custom-properties.scss (💥, 88.89%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/scss/comments/lists.scss (💥, 76.92%)
@@ -417,6 +420,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
 - externals/prettier/scss/map/15193.scss (💥✨, 92.86%)
   - crates/oxc_formatter_css/DIVERGENCES.md#terminator-gap-normalized
+- externals/prettier/scss/map/comment.scss (💥💥, 87.50%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#block-comment-ending-line
 - externals/prettier/scss/map/empty-line-after-function.scss (💥💥, 87.50%)
   - crates/oxc_formatter_css/DIVERGENCES.md#line-comment-after-comma
 - externals/prettier/scss/map/function-argument/functional-argument.scss (💥, 96.00%)
@@ -454,15 +459,16 @@
 
 ## less
 
-225/252 (89.29%)
+224/252 (88.89%)
 
 ### Failed
 
 - externals/prettier/css/font/font.css (💥, 79.41%)
   - crates/oxc_formatter_css/DIVERGENCES.md#slash-spacing
   - crates/oxc_formatter_css/DIVERGENCES.md#math-function-operator-spacing
-- externals/prettier/less/comments/between-decl.less (💥, 94.44%)
+- externals/prettier/less/comments/between-decl.less (💥, 89.19%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
+  - crates/oxc_formatter_css/DIVERGENCES.md#block-comment-ending-line
 - externals/prettier/less/comments/selectors.less (💥, 88.89%)
   - crates/oxc_formatter_css/DIVERGENCES.md#declaration-colon-comments
 - externals/prettier/less/comments/value-lists.less (💥, 76.92%)
@@ -502,6 +508,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#less-escaped-string-gap
 - externals/prettier/less/less/less.less (💥, 99.21%)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-extend-statement-break
+- externals/prettier/less/parens/2.less (💥, 85.71%)
+  - crates/oxc_formatter_css/DIVERGENCES.md#block-comment-ending-line
 - externals/prettier/less/postcss-8-improment/test.less (💥, 88.24%)
   - crates/oxc_formatter_css/DIVERGENCES.md#custom-property-raw-verbatim
 

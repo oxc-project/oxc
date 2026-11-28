@@ -26,7 +26,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 /* DIVERGENCES.md#commented-as-uncommented */
 @keyframes /* c */ foo {
 }
-@keyframes /* c */ foo {
+@keyframes /* c */
+  foo {
 }
 
 /* DIVERGENCES.md#prelude-string-requote */
@@ -45,7 +46,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 /* DIVERGENCES.md#commented-as-uncommented */
 @keyframes /* c */ foo {
 }
-@keyframes /* c */ foo {
+@keyframes /* c */
+  foo {
 }
 
 /* DIVERGENCES.md#prelude-string-requote */

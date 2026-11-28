@@ -51,6 +51,7 @@ fn write_comment_text(comment: CssComment, f: &mut CssFormatter<'_, '_>) {
 #[derive(Clone, Copy, Debug)]
 pub enum BlockCommentAfter {
     None,
+    /// A space, or a hard line when the comment ends its source line (keeps a `-next-line` directive's target)
     Space,
     HardLine,
 }
@@ -78,10 +79,22 @@ impl<'a> Format<'a, CssFormatContext<'a>> for FormatCommentBeforeContent {
         }
         match self.block_after {
             BlockCommentAfter::None => {}
-            BlockCommentAfter::Space => write!(f, space()),
-            BlockCommentAfter::HardLine => write!(f, hard_line_break()),
+            BlockCommentAfter::Space
+                if !ends_source_line(self.comment, f.context().source_text()) =>
+            {
+                write!(f, space());
+            }
+            BlockCommentAfter::Space | BlockCommentAfter::HardLine => write!(f, hard_line_break()),
         }
     }
+}
+
+/// `true` when only spaces or tabs, then a line break, follow the comment.
+pub fn ends_source_line(comment: CssComment, source: SourceText<'_>) -> bool {
+    matches!(
+        source.next_byte_skipping(comment.span.end, |b| matches!(b, b' ' | b'\t')),
+        Some(b'\n' | b'\r')
+    )
 }
 
 /// A `//` comment deferred through `line_suffix`: cannot swallow later tokens, not measured.
