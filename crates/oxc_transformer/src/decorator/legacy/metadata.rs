@@ -625,6 +625,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             TSLiteral::StringLiteral(_) | TSLiteral::TemplateLiteral(_) => Self::global_string(ctx),
             TSLiteral::UnaryExpression(expr) => match expr.argument {
                 Expression::NumericLiteral(_) => Self::global_number(ctx),
+                Expression::BigIntLiteral(_) => Self::global_bigint(ctx),
                 Expression::StringLiteral(_) => Self::global_string(ctx),
                 // Cannot be a type annotation
                 _ => unreachable!(),
